@@ -1,0 +1,10 @@
+{
+"name": "clubhub-frontend",
+"version": "1.0.0",
+"scripts": {
+"dev": "live-server --port=8000"
+},
+"devDependencies": {
+"live-server": "^1.2.2"
+}
+}

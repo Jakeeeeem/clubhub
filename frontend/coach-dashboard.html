@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach Dashboard - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
+            <div class="nav-buttons" id="loggedInNav">
+                <!-- Populated by JavaScript -->
+            </div>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="dashboard container">
+            <div class="dashboard-header">
+                <h1>Coach Dashboard</h1>
+                <p>Manage your teams and coaching activities</p>
+            </div>
+
+            <!-- Dashboard Navigation -->
+            <div class="dashboard-nav">
+                <button class="active" onclick="showCoachSection('overview')">Overview</button>
+                <button onclick="showCoachSection('teams')">My Teams</button>
+                <button onclick="showCoachSection('players')">Players</button>
+                <button onclick="showCoachSection('events')">Events</button>
+                <button onclick="showCoachSection('tactical-board')">Tactical Board</button>
+                <button onclick="showCoachSection('event-finder')">Event Finder</button>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- Overview Section -->
+                <div id="coach-overview" class="dashboard-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-number" id="coachTotalTeams">0</span>
+                            <span class="stat-label">Teams Managed</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="coachTotalPlayers">0</span>
+                            <span class="stat-label">Total Players</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="coachUpcomingEvents">0</span>
+                            <span class="stat-label">Upcoming Events</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="coachWinRate">0%</span>
+                            <span class="stat-label">Win Rate</span>
+                        </div>
+                    </div>
+
+                    <div class="card-grid">
+                        <div class="card">
+                            <h3>Recent Match Results</h3>
+                            <div id="recentMatches">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Today's Schedule</h3>
+                            <div id="todaySchedule">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teams Section -->
+                <div id="coach-teams" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>My Teams</h3>
+                            <button class="btn btn-primary" onclick="showModal('createTeamModal')">Create Team</button>
+                        </div>
+
+                        <div class="card-grid" id="coachTeamsContainer">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Players Section -->
+                <div id="coach-players" class="dashboard-section">
+                    <div class="card">
+                        <h3>Team Players</h3>
+                        
+                        <div class="search-filters">
+                            <div class="form-group">
+                                <label for="teamFilter">Filter by Team</label>
+                                <select id="teamFilter" onchange="filterCoachPlayers()">
+                                    <option value="">All Teams</option>
+                                    <!-- Populated by JavaScript -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="playerSearchCoach">Search Players</label>
+                                <input type="text" id="playerSearchCoach" placeholder="Search by name..." onkeyup="filterCoachPlayers()">
+                            </div>
+                        </div>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Team</th>
+                                    <th>Position</th>
+                                    <th>Age</th>
+                                    <th>Attendance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coachPlayersTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Events Section -->
+                <div id="coach-events" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Team Events</h3>
+                            <button class="btn btn-primary" onclick="showModal('addTeamEventModal')">Add Event</button>
+                        </div>
+
+                        <div class="card-grid" id="coachEventsContainer">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tactical Board Section -->
+                <div id="coach-tactical-board" class="dashboard-section">
+                    <div class="card">
+                        <h3>Tactical Board</h3>
+                        <div class="tactical-board-container">
+                            <div class="formation-selector">
+                                <label for="formationSelect">Formation:</label>
+                                <select id="formationSelect" onchange="setFormation()">
+                                    <option value="4-4-2">4-4-2</option>
+                                    <option value="4-3-3">4-3-3</option>
+                                    <option value="3-5-2">3-5-2</option>
+                                    <option value="4-2-3-1">4-2-3-1</option>
+                                </select>
+                                <button class="btn btn-secondary btn-small" onclick="clearBoard()">Clear</button>
+                                <button class="btn btn-primary btn-small" onclick="saveFormation()">Save</button>
+                            </div>
+                            
+                            <div class="tactical-board" id="tacticalBoard">
+                                <!-- Football pitch will be drawn here -->
+                            </div>
+                            
+                            <div class="player-list">
+                                <h4>Available Players</h4>
+                                <div id="availablePlayers">
+                                    <!-- Player list will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Finder Section -->
+                <div id="coach-event-finder" class="dashboard-section">
+                    <div class="card">
+                        <h3>Event Finder</h3>
+                        
+                        <div class="search-filters">
+                            <div class="form-group">
+                                <label for="eventTypeFilter">Event Type</label>
+                                <select id="eventTypeFilter" onchange="filterEvents()">
+                                    <option value="">All Types</option>
+                                    <option value="tournament">Tournaments</option>
+                                    <option value="training">Training</option>
+                                    <option value="camp">Camps</option>
+                                    <option value="match">Matches</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="eventDateFilter">Date Range</label>
+                                <input type="date" id="eventDateFilter" onchange="filterEvents()">
+                            </div>
+                            <div class="form-group">
+                                <label for="eventLocationFilter">Location</label>
+                                <input type="text" id="eventLocationFilter" placeholder="Search by location..." onkeyup="filterEvents()">
+                            </div>
+                        </div>
+
+                        <div class="card-grid" id="availableEventsContainer">
+                            <!-- Available events will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    
+    <!-- Create Team Modal -->
+    <div id="createTeamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Team</h2>
+                <button class="close" onclick="closeModal('createTeamModal')">&times;</button>
+            </div>
+            <form id="createTeamForm">
+                <div class="form-group">
+                    <label for="teamName">Team Name</label>
+                    <input type="text" id="teamName" required>
+                </div>
+                <div class="form-group">
+                    <label for="teamAgeGroup">Age Group</label>
+                    <select id="teamAgeGroup" required>
+                        <option value="">Select Age Group</option>
+                        <option value="U8">Under 8</option>
+                        <option value="U10">Under 10</option>
+                        <option value="U12">Under 12</option>
+                        <option value="U14">Under 14</option>
+                        <option value="U16">Under 16</option>
+                        <option value="U18">Under 18</option>
+                        <option value="Senior">Senior</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teamSport">Sport</label>
+                    <select id="teamSport" required>
+                        <option value="">Select Sport</option>
+                        <option value="football">Football</option>
+                        <option value="basketball">Basketball</option>
+                        <option value="tennis">Tennis</option>
+                        <option value="rugby">Rugby</option>
+                        <option value="cricket">Cricket</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teamDescription">Description</label>
+                    <textarea id="teamDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Team</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Team Event Modal -->
+    <div id="addTeamEventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Team Event</h2>
+                <button class="close" onclick="closeModal('addTeamEventModal')">&times;</button>
+            </div>
+            <form id="addTeamEventForm">
+                <div class="form-group">
+                    <label for="eventTeamSelect">Select Team</label>
+                    <select id="eventTeamSelect" required>
+                        <!-- Populated by JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teamEventTitle">Event Title</label>
+                    <input type="text" id="teamEventTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="teamEventType">Event Type</label>
+                    <select id="teamEventType" required>
+                        <option value="">Select Type</option>
+                        <option value="training">Training Session</option>
+                        <option value="match">Match</option>
+                        <option value="friendly">Friendly Match</option>
+                        <option value="tournament">Tournament</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teamEventDate">Date</label>
+                    <input type="date" id="teamEventDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="teamEventTime">Time</label>
+                    <input type="time" id="teamEventTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="teamEventLocation">Location</label>
+                    <input type="text" id="teamEventLocation" required>
+                </div>
+                <div class="form-group">
+                    <label for="teamEventOpponent">Opponent (if applicable)</label>
+                    <input type="text" id="teamEventOpponent">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Event</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Player Stats Modal -->
+    <div id="playerStatsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Player Statistics</h2>
+                <button class="close" onclick="closeModal('playerStatsModal')">&times;</button>
+            </div>
+            <div id="playerStatsContent">
+                <!-- Player stats content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Result Modal -->
+    <div id="matchResultModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Record Match Result</h2>
+                <button class="close" onclick="closeModal('matchResultModal')">&times;</button>
+            </div>
+            <form id="matchResultForm">
+                <input type="hidden" id="matchEventId">
+                <div class="form-group">
+                    <label for="homeScore">Home Team Score</label>
+                    <input type="number" id="homeScore" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="awayScore">Away Team Score</label>
+                    <input type="number" id="awayScore" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="matchNotes">Match Notes</label>
+                    <textarea id="matchNotes" rows="4" placeholder="Key moments, player performances, etc."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Player Ratings</label>
+                    <div id="playerRatings">
+                        <!-- Player rating inputs will be populated here -->
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Result</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="coach-dashboard.js"></script>
+    
+    <style>
+        /* Tactical Board Styles */
+        .tactical-board-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 1rem;
+        }
+
+        .formation-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .formation-selector label {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .formation-selector select {
+            padding: 0.5rem;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .tactical-board {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+            border: 3px solid white;
+            border-radius: 8px;
+            position: relative;
+            margin: 2rem auto;
+            background-image: 
+                radial-gradient(circle at 50% 0%, white 1px, transparent 1px),
+                radial-gradient(circle at 50% 100%, white 1px, transparent 1px),
+                linear-gradient(90deg, transparent 49%, white 49%, white 51%, transparent 51%),
+                linear-gradient(0deg, transparent 40%, white 40%, white 42%, transparent 42%),
+                linear-gradient(0deg, transparent 58%, white 58%, white 60%, transparent 60%);
+            background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+        }
+
+        .tactical-board::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        .tactical-board::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .player-position {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #dc2626;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: move;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .player-position:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.5);
+        }
+
+        .player-position.selected {
+            background: #fbbf24;
+            border-color: #f59e0b;
+        }
+
+        .player-list {
+            margin-top: 2rem;
+        }
+
+        .player-list h4 {
+            color: #dc2626;
+            margin-bottom: 1rem;
+        }
+
+        .available-players {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .available-player {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .available-player:hover {
+            background: rgba(220, 38, 38, 0.2);
+            border-color: #dc2626;
+        }
+
+        .available-player.assigned {
+            background: rgba(220, 38, 38, 0.3);
+            border-color: #dc2626;
+            opacity: 0.6;
+        }
+
+        /* Event Cards */
+        .event-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .event-card:hover {
+            border-color: rgba(220, 38, 38, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .event-card h4 {
+            color: #dc2626;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Team Cards */
+        .team-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .team-card:hover {
+            border-color: rgba(220, 38, 38, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .team-card h4 {
+            color: #dc2626;
+            margin-bottom: 1rem;
+        }
+
+        .team-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .team-stat {
+            text-align: center;
+        }
+
+        .team-stat-number {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #dc2626;
+        }
+
+        .team-stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        /* Player Rating Inputs */
+        .player-rating {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(220, 38, 38, 0.1);
+        }
+
+        .player-rating:last-child {
+            border-bottom: none;
+        }
+
+        .player-rating input[type="range"] {
+            width: 100px;
+            margin: 0 1rem;
+        }
+
+        .rating-value {
+            min-width: 30px;
+            text-align: center;
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .tactical-board {
+                height: 300px;
+            }
+            
+            .formation-selector {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .team-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .event-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

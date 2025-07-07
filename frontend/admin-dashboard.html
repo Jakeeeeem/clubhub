@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
+            <div class="nav-buttons" id="loggedInNav">
+                <!-- Populated by JavaScript -->
+            </div>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="dashboard container">
+            <div class="dashboard-header">
+                <h1>Admin Dashboard</h1>
+                <p>Manage your club, events, and members</p>
+            </div>
+
+            <!-- Dashboard Navigation -->
+            <div class="dashboard-nav">
+                <button class="active" onclick="showSection('overview')">Overview</button>
+                <button onclick="showSection('club-profile')">Club Profile</button>
+                <button onclick="showSection('players')">Players</button>
+                <button onclick="showSection('staff')">Staff</button>
+                <button onclick="showSection('teams')">Teams</button>
+                <button onclick="showSection('events')">Events</button>
+                <button onclick="showSection('finances')">Finances</button>
+                <button onclick="showSection('listings')">Listings</button>
+                <button onclick="showSection('documents')">Documents</button>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- Overview Section -->
+                <div id="overview" class="dashboard-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-number" id="totalPlayers">0</span>
+                            <span class="stat-label">Total Players</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="totalStaff">0</span>
+                            <span class="stat-label">Staff Members</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="totalEvents">0</span>
+                            <span class="stat-label">Active Events</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="totalRevenue">£0</span>
+                            <span class="stat-label">Monthly Revenue</span>
+                        </div>
+                    </div>
+
+                    <div class="card-grid">
+                        <div class="card">
+                            <h3>Recent Activity</h3>
+                            <div id="recentActivity">
+                                <div class="item-list-item">
+                                    <div class="item-info">
+                                        <h4>New Player Registration</h4>
+                                        <p>John Smith joined Elite Football Academy</p>
+                                    </div>
+                                    <span class="status-badge status-active">New</span>
+                                </div>
+                                <div class="item-list-item">
+                                    <div class="item-info">
+                                        <h4>Payment Received</h4>
+                                        <p>Monthly fee payment from Sarah Johnson</p>
+                                    </div>
+                                    <span class="status-badge status-paid">Paid</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Upcoming Events</h3>
+                            <div id="upcomingEvents">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Club Profile Section -->
+                <div id="club-profile" class="dashboard-section">
+                    <div class="card">
+                        <h3>Club Information</h3>
+                        <form id="clubProfileForm">
+                            <div class="form-group">
+                                <label for="clubName">Club Name</label>
+                                <input type="text" id="clubName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clubDescription">Description</label>
+                                <textarea id="clubDescription" rows="4"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="clubLocation">Location</label>
+                                <input type="text" id="clubLocation">
+                            </div>
+                            <div class="form-group">
+                                <label for="clubPhilosophy">Club Philosophy</label>
+                                <textarea id="clubPhilosophy" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="clubWebsite">Website</label>
+                                <input type="url" id="clubWebsite">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Players Section -->
+                <div id="players" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Players Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add Player</button>
+                        </div>
+                        
+                        <div class="search-filters">
+                            <div class="form-group">
+                                <label for="playerSearch">Search Players</label>
+                                <input type="text" id="playerSearch" placeholder="Search by name..." onkeyup="filterPlayers()">
+                            </div>
+                            <div class="form-group">
+                                <label for="paymentFilter">Payment Status</label>
+                                <select id="paymentFilter" onchange="filterPlayers()">
+                                    <option value="">All Statuses</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="overdue">Overdue</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Date of Birth</th>
+                                    <th>Payment Status</th>
+                                    <th>Team</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playersTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Staff Section -->
+                <div id="staff" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Staff Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addStaffModal')">Add Staff</button>
+                        </div>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Permissions</th>
+                                    <th>Contact</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Teams Section -->
+                <div id="teams" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Teams Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">Create Team</button>
+                        </div>
+
+                        <div class="card-grid" id="teamsContainer">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events Section -->
+                <div id="events" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Event Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addEventModal')">Create Event</button>
+                        </div>
+
+                        <div class="card-grid" id="eventsContainer">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Finances Section -->
+                <div id="finances" class="dashboard-section">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-number" id="monthlyRevenue">£0</span>
+                            <span class="stat-label">Monthly Revenue</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="overdueAmount">£0</span>
+                            <span class="stat-label">Overdue Payments</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="pendingAmount">£0</span>
+                            <span class="stat-label">Pending Payments</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="totalMembers">0</span>
+                            <span class="stat-label">Paying Members</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Payment Overview</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Amount Due</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentsTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Listings Section -->
+                <div id="listings" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Club Listings</h3>
+                            <button class="btn btn-primary" onclick="showModal('addListingModal')">Create Listing</button>
+                        </div>
+
+                        <div class="card-grid" id="listingsContainer">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents Section -->
+                <div id="documents" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>Document Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addDocumentModal')">Upload Document</button>
+                        </div>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Document Name</th>
+                                    <th>Type</th>
+                                    <th>Upload Date</th>
+                                    <th>Access Level</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentsTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    
+    <!-- Add Player Modal -->
+    <div id="addPlayerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Player</h2>
+                <button class="close" onclick="closeModal('addPlayerModal')">&times;</button>
+            </div>
+            <form id="addPlayerForm">
+                <div class="form-group">
+                    <label for="playerFirstName">First Name</label>
+                    <input type="text" id="playerFirstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="playerLastName">Last Name</label>
+                    <input type="text" id="playerLastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="playerDOB">Date of Birth</label>
+                    <input type="date" id="playerDOB" required>
+                </div>
+                <div class="form-group">
+                    <label for="playerEmail">Email</label>
+                    <input type="email" id="playerEmail">
+                </div>
+                <div class="form-group">
+                    <label for="playerPhone">Phone</label>
+                    <input type="tel" id="playerPhone">
+                </div>
+                <div class="form-group">
+                    <label for="playerFee">Monthly Fee (£)</label>
+                    <input type="number" id="playerFee" value="50" min="0">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Player</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Staff Modal -->
+    <div id="addStaffModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Staff Member</h2>
+                <button class="close" onclick="closeModal('addStaffModal')">&times;</button>
+            </div>
+            <form id="addStaffForm">
+                <div class="form-group">
+                    <label for="staffFirstName">First Name</label>
+                    <input type="text" id="staffFirstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffLastName">Last Name</label>
+                    <input type="text" id="staffLastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffRole">Role</label>
+                    <select id="staffRole" required>
+                        <option value="">Select Role</option>
+                        <option value="coach">Coach</option>
+                        <option value="assistant-coach">Assistant Coach</option>
+                        <option value="treasurer">Treasurer</option>
+                        <option value="coaching-supervisor">Coaching Supervisor</option>
+                        <option value="referee">Referee</option>
+                        <option value="administrator">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="staffEmail">Email</label>
+                    <input type="email" id="staffEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffPhone">Phone</label>
+                    <input type="tel" id="staffPhone">
+                </div>
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="permissions" value="finances"> View Finances</label>
+                        <label><input type="checkbox" name="permissions" value="players"> Manage Players</label>
+                        <label><input type="checkbox" name="permissions" value="events"> Manage Events</label>
+                        <label><input type="checkbox" name="permissions" value="listings"> Manage Listings</label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Staff</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Event Modal -->
+    <div id="addEventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Event</h2>
+                <button class="close" onclick="closeModal('addEventModal')">&times;</button>
+            </div>
+            <form id="addEventForm">
+                <div class="form-group">
+                    <label for="eventTitle">Event Title</label>
+                    <input type="text" id="eventTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventType">Event Type</label>
+                    <select id="eventType" required>
+                        <option value="">Select Type</option>
+                        <option value="training">Training Session</option>
+                        <option value="match">Match</option>
+                        <option value="tournament">Tournament</option>
+                        <option value="camp">Training Camp</option>
+                        <option value="social">Social Event</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="eventDate">Date</label>
+                    <input type="date" id="eventDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventTime">Time</label>
+                    <input type="time" id="eventTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventPrice">Price (£)</label>
+                    <input type="number" id="eventPrice" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="eventCapacity">Capacity</label>
+                    <input type="number" id="eventCapacity" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Event</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="api-service.js"></script>          
+    <script src="stripe-service.js"></script>       
+    <script src="script.js"></script>              
+    <script src="admin-dashboard.js"></script>      
+</body>
+</html>

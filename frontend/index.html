@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClubHub - Sports Club Management Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">ClubHub</div>
+            <div class="nav-buttons" id="navButtons">
+                <button class="btn btn-secondary" onclick="showLogin()">Login</button>
+                <button class="btn btn-primary" onclick="showRegister()">Sign Up</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <h1>Welcome to ClubHub</h1>
+                <p>The ultimate sports club management platform for organizations, coaches, and players</p>
+                <button class="btn btn-primary" onclick="showRegister()">Get Started Today</button>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="container">
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>🏆 Organization Management</h3>
+                        <p>Complete club, event, and tournament management system with comprehensive admin tools.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>👥 Player & Staff Management</h3>
+                        <p>Invite and manage players, coaches, and staff with role-based permissions and tracking.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📅 Event Management</h3>
+                        <p>Create events, manage bookings, and automate communications with integrated payment processing.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>💰 Financial Management</h3>
+                        <p>Track payments, manage overdue accounts, and create payment plans with detailed financial analysis.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎯 Team Management</h3>
+                        <p>Assign players to teams, track results, and use tactical boards for coaching excellence.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔍 Club & Event Discovery</h3>
+                        <p>Find clubs, events, and tournaments with advanced filtering and booking capabilities.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Login to ClubHub</h2>
+                <button class="close" onclick="closeModal('loginModal')">&times;</button>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Account</h2>
+                <button class="close" onclick="closeModal('registerModal')">&times;</button>
+            </div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="accountType">Account Type</label>
+                    <select id="accountType" required onchange="toggleOrgOptions()">
+                        <option value="">Select Account Type</option>
+                        <option value="adult">Adult Account</option>
+                        <option value="organization">Organization</option>
+                    </select>
+                </div>
+                
+                <div id="orgOptions" style="display: none;">
+                    <div class="form-group">
+                        <label>Organization Type (Select all that apply)</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="orgType" value="club"> Club</label>
+                            <label><input type="checkbox" name="orgType" value="event"> Event</label>
+                            <label><input type="checkbox" name="orgType" value="tournament"> Tournament</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script src="script.js"></script>
+
+    </body>
+</html>
