@@ -77,6 +77,18 @@ async function initializePlayerDashboard() {
         AppState.teams = teamsData || [];
         console.log('⚽ Loaded teams from database:', AppState.teams.length);
         
+        // 🔥 NEW: Load player-specific teams
+        if (AppState.currentUser?.id) {
+            try {
+                const playerTeams = await apiService.getPlayerTeams(AppState.currentUser.id);
+                AppState.playerTeams = playerTeams || [];
+                console.log('⚽ Loaded player-specific teams:', AppState.playerTeams.length);
+            } catch (error) {
+                console.log('No player teams found or error:', error.message);
+                AppState.playerTeams = [];
+            }
+        }
+        
         // Load player-specific data
         loadPlayerData();
         loadPlayerStats();
@@ -97,6 +109,7 @@ async function initializePlayerDashboard() {
         AppState.players = [];
         AppState.staff = [];
         AppState.teams = [];
+        AppState.playerTeams = [];
         loadPlayerData();
         loadPlayerStats();
     }
@@ -116,12 +129,33 @@ function setupPlayerEventListeners() {
     }
 }
 
-// 🔥 FIXED: Enhanced data loading with database data
+// 🔥 COMPLETELY FIXED: Enhanced data loading with proper user linking
 function loadPlayerData() {
     console.log('📊 Loading player data from DATABASE...');
     
-    // Find player record for current user by EMAIL
-    const player = AppState.players?.find(p => p.email === AppState.currentUser?.email);
+    // 🔥 FIX: Search by user_id FIRST, then fall back to email
+    let player = null;
+    
+    // Method 1: Find by user_id (most reliable)
+    if (AppState.currentUser?.id) {
+        player = AppState.players?.find(p => p.user_id === AppState.currentUser.id);
+        if (player) {
+            console.log('✅ Player found by user_id:', player.first_name, player.last_name);
+        }
+    }
+    
+    // Method 2: Fall back to email matching if no user_id match
+    if (!player && AppState.currentUser?.email) {
+        player = AppState.players?.find(p => 
+            p.email && p.email.toLowerCase() === AppState.currentUser.email.toLowerCase()
+        );
+        if (player) {
+            console.log('✅ Player found by email:', player.first_name, player.last_name);
+            
+            // 🔥 IMPORTANT: Update the player record to link user_id
+            linkPlayerToUser(player.id, AppState.currentUser.id);
+        }
+    }
     
     if (player) {
         console.log('👤 Player found in database:', player.first_name, player.last_name);
@@ -129,8 +163,8 @@ function loadPlayerData() {
         // Load clubs player belongs to
         playerData.clubs = AppState.clubs?.filter(c => c.id === player.club_id) || [];
         
-        // Load teams player is in
-        playerData.teams = AppState.teams?.filter(t => t.club_id === player.club_id) || [];
+        // 🔥 FIXED: Load teams player is in using the new playerTeams data
+        playerData.teams = AppState.playerTeams || [];
         
         // Load coaches from player's clubs
         const clubIds = playerData.clubs.map(c => c.id);
@@ -155,7 +189,8 @@ function loadPlayerData() {
             teams: playerData.teams.length,
             coaches: playerData.coaches.length,
             events: playerData.listings.length,
-            monthlyFee: player.monthly_fee
+            monthlyFee: player.monthly_fee,
+            linkedByUserId: player.user_id === AppState.currentUser.id
         });
         
         // Show welcome message
@@ -165,9 +200,29 @@ function loadPlayerData() {
             }, 1000);
         }
         
+        // Show team assignment message if player is in teams
+        if (playerData.teams.length > 0) {
+            setTimeout(() => {
+                const teamNames = playerData.teams.map(t => t.name).join(', ');
+                showNotification(`You are assigned to: ${teamNames}`, 'info');
+            }, 2000);
+        }
+        
     } else {
-        console.log('❌ No player record found for current user:', AppState.currentUser?.email);
-        console.log('Available players:', AppState.players?.map(p => p.email));
+        console.log('❌ No player record found for current user:', {
+            userId: AppState.currentUser?.id,
+            email: AppState.currentUser?.email,
+            availablePlayers: AppState.players?.length || 0
+        });
+        
+        // Debug: Show what players we have
+        if (AppState.players?.length > 0) {
+            console.log('🔍 Available players:', AppState.players.map(p => ({
+                name: `${p.first_name} ${p.last_name}`,
+                email: p.email,
+                user_id: p.user_id
+            })));
+        }
         
         // Initialize empty data but still show available events
         playerData = {
@@ -182,8 +237,30 @@ function loadPlayerData() {
         
         // Show info message
         setTimeout(() => {
-            showNotification('No player record found. Contact your club admin to be added as a player.', 'info');
+            showNotification('No player record found. Contact your club admin to be added as a player with your account email.', 'info');
         }, 1000);
+    }
+}
+
+// 🔥 NEW: Function to link player to user account
+async function linkPlayerToUser(playerId, userId) {
+    try {
+        console.log(`🔗 Linking player ${playerId} to user ${userId}...`);
+        
+        // This would make an API call to update the player record
+        const response = await apiService.updatePlayer(playerId, { userId: userId });
+        
+        if (response.success) {
+            console.log('✅ Player successfully linked to user account');
+            
+            // Update local player data
+            const player = AppState.players?.find(p => p.id === playerId);
+            if (player) {
+                player.user_id = userId;
+            }
+        }
+    } catch (error) {
+        console.error('❌ Failed to link player to user:', error);
     }
 }
 
@@ -271,7 +348,7 @@ function showPlayerSection(sectionId) {
 
 // Enhanced Player Statistics
 function loadPlayerStats() {
-    const player = AppState.players?.find(p => p.email === AppState.currentUser?.email);
+    const player = AppState.players?.find(p => p.email === AppState.currentUser?.email || p.user_id === AppState.currentUser?.id);
     
     // Update overview stats
     const playerClubsEl = document.getElementById('playerClubs');
@@ -395,7 +472,7 @@ function loadClubStaff() {
     }).join('');
 }
 
-// Teams Section
+// 🔥 FIXED: Teams Section with proper team data
 function loadPlayerTeams() {
     const container = document.getElementById('playerTeamsContainer');
     if (!container) return;
@@ -406,19 +483,24 @@ function loadPlayerTeams() {
     }
     
     container.innerHTML = playerData.teams.map(team => {
-        const coach = playerData.coaches.find(c => c.id === team.coach_id);
-        
         return `
             <div class="card">
                 <h4>${team.name}</h4>
                 <p><strong>Age Group:</strong> ${team.age_group || 'Not specified'}</p>
                 <p><strong>Sport:</strong> ${team.sport || 'Football'}</p>
                 
-                ${coach ? `
+                ${team.player_assignment ? `
+                    <div style="background: #e8f5e8; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                        <p><strong>Your Position:</strong> ${team.player_assignment.position || 'Not assigned'}</p>
+                        ${team.player_assignment.jersey_number ? `<p><strong>Jersey Number:</strong> ${team.player_assignment.jersey_number}</p>` : ''}
+                    </div>
+                ` : ''}
+                
+                ${team.coach ? `
                     <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
-                        <p><strong>Coach:</strong> ${coach.first_name} ${coach.last_name}</p>
-                        <p style="font-size: 0.9rem; color: #666;">📧 ${coach.email}</p>
-                        <button class="btn btn-small btn-secondary" onclick="contactCoach('${coach.id}')">
+                        <p><strong>Coach:</strong> ${team.coach.name}</p>
+                        <p style="font-size: 0.9rem; color: #666;">📧 ${team.coach.email}</p>
+                        <button class="btn btn-small btn-secondary" onclick="contactCoachByEmail('${team.coach.email}', '${team.coach.name}')">
                             Contact Coach
                         </button>
                     </div>
@@ -923,6 +1005,11 @@ function contactCoach(coachId) {
     }
 }
 
+// 🔥 NEW: Contact coach by email
+function contactCoachByEmail(email, name) {
+    window.location.href = `mailto:${email}?subject=Message from ${AppState.currentUser.first_name || AppState.currentUser.firstName} ${AppState.currentUser.last_name || AppState.currentUser.lastName}&body=Hi ${name},%0D%0A%0D%0A`;
+}
+
 function contactClub(clubId) {
     const club = playerData.clubs.find(c => c.id === clubId);
     if (club) {
@@ -1009,7 +1096,8 @@ function debugPlayerData() {
         events: AppState.events?.length || 0,
         clubs: AppState.clubs?.length || 0,
         players: AppState.players?.length || 0,
-        staff: AppState.staff?.length || 0
+        staff: AppState.staff?.length || 0,
+        playerTeams: AppState.playerTeams?.length || 0
     });
     
     if (AppState.events?.length > 0) {
@@ -1021,6 +1109,9 @@ function debugPlayerData() {
     }
     
     console.log('👤 Current player data:', playerData);
+    
+    // Show in UI too
+    alert(`Debug Info:\n\nTotal Events: ${AppState.events?.length || 0}\nTotal Players: ${AppState.players?.length || 0}\nPlayer Teams: ${AppState.playerTeams?.length || 0}\nPlayer Clubs: ${playerData.clubs.length}\n\nCheck console for detailed info.`);
 }
 
 // Export functions for global access
@@ -1037,6 +1128,7 @@ window.filterPlayerEvents = filterPlayerEvents;
 window.viewClubDetails = viewClubDetails;
 window.contactClub = contactClub;
 window.contactCoach = contactCoach;
+window.contactCoachByEmail = contactCoachByEmail;
 window.viewEventDetails = viewEventDetails;
 window.downloadReceipt = downloadReceipt;
 window.viewDocument = viewDocument;

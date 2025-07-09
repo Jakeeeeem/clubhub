@@ -7,10 +7,15 @@ const router = express.Router();
 // Get admin dashboard data
 router.get('/admin', authenticateToken, requireOrganization, async (req, res) => {
   try {
+    const userId = req.user.id;
+    
     // Get user's clubs
-    const clubsResult = await query(queries.findClubsByOwner, [req.user.id]);
+    const clubsResult = await query(
+      'SELECT * FROM clubs WHERE owner_id = $1 ORDER BY created_at DESC',
+      [userId]
+    );
     const clubs = clubsResult.rows;
-
+    
     if (clubs.length === 0) {
       return res.json({
         clubs: [],
@@ -18,181 +23,126 @@ router.get('/admin', authenticateToken, requireOrganization, async (req, res) =>
         staff: [],
         events: [],
         teams: [],
+        payments: [],
         statistics: {
           total_clubs: 0,
           total_players: 0,
           total_staff: 0,
           total_events: 0,
-          total_teams: 0
+          total_teams: 0,
+          monthly_revenue: 0
         }
       });
     }
-
-    const clubIds = clubs.map(club => club.id);
-
-    // Get players for all clubs
+    
+    const clubIds = clubs.map(c => c.id);
+    const clubIdPlaceholders = clubIds.map((_, i) => `$${i + 1}`).join(',');
+    
+    // Get players with team assignments
     const playersResult = await query(`
-      SELECT * FROM players 
-      WHERE club_id = ANY($1::uuid[])
-      ORDER BY created_at DESC
+      SELECT 
+        p.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'team_id', tp.team_id,
+              'team_name', t.name,
+              'position', tp.position,
+              'jersey_number', tp.jersey_number
+            ) ORDER BY t.name
+          ) FILTER (WHERE tp.team_id IS NOT NULL), 
+          '[]'
+        ) as team_assignments
+      FROM players p
+      LEFT JOIN team_players tp ON p.id = tp.player_id
+      LEFT JOIN teams t ON tp.team_id = t.id
+      WHERE p.club_id = ANY($1)
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
     `, [clubIds]);
-
-    // Get staff for all clubs
+    
+    // Get staff
     const staffResult = await query(`
       SELECT * FROM staff 
-      WHERE club_id = ANY($1::uuid[])
+      WHERE club_id = ANY($1)
       ORDER BY created_at DESC
     `, [clubIds]);
-
-    // Get events for all clubs
-    const eventsResult = await query(`
-      SELECT * FROM events 
-      WHERE club_id = ANY($1::uuid[])
-      ORDER BY event_date DESC
-      LIMIT 20
-    `, [clubIds]);
-
-    // Get teams for all clubs
+    
+    // Get teams with player counts
     const teamsResult = await query(`
-      SELECT t.*, COUNT(tp.player_id) as player_count
+      SELECT 
+        t.*,
+        COUNT(tp.player_id) as player_count,
+        s.first_name as coach_first_name,
+        s.last_name as coach_last_name,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', p.id,
+              'first_name', p.first_name,
+              'last_name', p.last_name,
+              'position', tp.position,
+              'jersey_number', tp.jersey_number
+            ) ORDER BY p.last_name
+          ) FILTER (WHERE p.id IS NOT NULL), 
+          '[]'
+        ) as players
       FROM teams t
       LEFT JOIN team_players tp ON t.id = tp.team_id
-      WHERE t.club_id = ANY($1::uuid[])
-      GROUP BY t.id
+      LEFT JOIN players p ON tp.player_id = p.id
+      LEFT JOIN staff s ON t.coach_id = s.id
+      WHERE t.club_id = ANY($1)
+      GROUP BY t.id, s.first_name, s.last_name
       ORDER BY t.created_at DESC
     `, [clubIds]);
-
-    // Get recent payments
+    
+    // Get events
+    const eventsResult = await query(`
+      SELECT * FROM events 
+      WHERE club_id = ANY($1)
+      ORDER BY event_date DESC
+    `, [clubIds]);
+    
+    // Get payments
     const paymentsResult = await query(`
-      SELECT p.*, pl.first_name, pl.last_name, c.name as club_name
+      SELECT p.*, pl.first_name as player_first_name, pl.last_name as player_last_name
       FROM payments p
       JOIN players pl ON p.player_id = pl.id
-      JOIN clubs c ON p.club_id = c.id
-      WHERE p.club_id = ANY($1::uuid[])
-      ORDER BY p.created_at DESC
-      LIMIT 10
+      WHERE p.club_id = ANY($1)
+      ORDER BY p.due_date DESC
     `, [clubIds]);
-
-    // Get upcoming events
-    const upcomingEventsResult = await query(`
-      SELECT * FROM events 
-      WHERE club_id = ANY($1::uuid[]) AND event_date >= CURRENT_DATE
-      ORDER BY event_date ASC
-      LIMIT 5
-    `, [clubIds]);
-
+    
     // Calculate statistics
-    const statistics = {
-      total_clubs: clubs.length,
-      total_players: playersResult.rows.length,
-      total_staff: staffResult.rows.length,
-      total_events: eventsResult.rows.length,
-      total_teams: teamsResult.rows.length,
-      pending_payments: paymentsResult.rows.filter(p => p.payment_status === 'pending').length,
-      overdue_payments: paymentsResult.rows.filter(p => p.payment_status === 'overdue').length
-    };
-
+    const totalPlayers = playersResult.rows.length;
+    const totalStaff = staffResult.rows.length;
+    const totalEvents = eventsResult.rows.length;
+    const totalTeams = teamsResult.rows.length;
+    const monthlyRevenue = playersResult.rows.reduce((sum, player) => 
+      sum + (parseFloat(player.monthly_fee) || 0), 0
+    );
+    
     res.json({
-      clubs: clubs,
+      clubs,
       players: playersResult.rows,
       staff: staffResult.rows,
       events: eventsResult.rows,
       teams: teamsResult.rows,
       payments: paymentsResult.rows,
-      upcoming_events: upcomingEventsResult.rows,
-      statistics
+      statistics: {
+        total_clubs: clubs.length,
+        total_players: totalPlayers,
+        total_staff: totalStaff,
+        total_events: totalEvents,
+        total_teams: totalTeams,
+        monthly_revenue: monthlyRevenue
+      }
     });
 
   } catch (error) {
-    console.error('Admin dashboard error:', error);
+    console.error('Get admin dashboard error:', error);
     res.status(500).json({
-      error: 'Failed to load dashboard data',
-      message: 'An error occurred while loading dashboard'
-    });
-  }
-});
-
-// Get coach dashboard data
-router.get('/coach', authenticateToken, async (req, res) => {
-  try {
-    // Find staff records for this user
-    const staffResult = await query(`
-      SELECT * FROM staff 
-      WHERE user_id = $1 AND role IN ('coach', 'assistant-coach', 'coaching-supervisor')
-    `, [req.user.id]);
-
-    if (staffResult.rows.length === 0) {
-      return res.status(403).json({
-        error: 'Access denied',
-        message: 'You are not registered as a coach'
-      });
-    }
-
-    const staff = staffResult.rows[0];
-
-    // Get teams coached by this user
-    const teamsResult = await query(`
-      SELECT t.*, c.name as club_name, COUNT(tp.player_id) as player_count
-      FROM teams t
-      JOIN clubs c ON t.club_id = c.id
-      LEFT JOIN team_players tp ON t.id = tp.team_id
-      WHERE t.coach_id = $1
-      GROUP BY t.id, c.name
-      ORDER BY t.created_at DESC
-    `, [staff.id]);
-
-    // Get upcoming events for coached teams
-    const upcomingEventsResult = await query(`
-      SELECT e.*, t.name as team_name
-      FROM events e
-      JOIN teams t ON e.team_id = t.id
-      WHERE t.coach_id = $1 AND e.event_date >= CURRENT_DATE
-      ORDER BY e.event_date ASC
-      LIMIT 10
-    `, [staff.id]);
-
-    // Get players in coached teams
-    const playersResult = await query(`
-      SELECT p.*, tp.position, tp.jersey_number, t.name as team_name
-      FROM players p
-      JOIN team_players tp ON p.id = tp.player_id
-      JOIN teams t ON tp.team_id = t.id
-      WHERE t.coach_id = $1
-      ORDER BY t.name, p.last_name
-    `, [staff.id]);
-
-    // Get recent match results
-    const matchResultsResult = await query(`
-      SELECT e.*, mr.home_score, mr.away_score, mr.result, t.name as team_name
-      FROM events e
-      JOIN match_results mr ON e.id = mr.event_id
-      JOIN teams t ON e.team_id = t.id
-      WHERE t.coach_id = $1 AND e.event_type = 'match'
-      ORDER BY e.event_date DESC
-      LIMIT 5
-    `, [staff.id]);
-
-    const statistics = {
-      teams_coached: teamsResult.rows.length,
-      total_players: playersResult.rows.length,
-      upcoming_events: upcomingEventsResult.rows.length,
-      recent_matches: matchResultsResult.rows.length
-    };
-
-    res.json({
-      staff,
-      teams: teamsResult.rows,
-      players: playersResult.rows,
-      upcoming_events: upcomingEventsResult.rows,
-      recent_matches: matchResultsResult.rows,
-      statistics
-    });
-
-  } catch (error) {
-    console.error('Coach dashboard error:', error);
-    res.status(500).json({
-      error: 'Failed to load dashboard data',
-      message: 'An error occurred while loading dashboard'
+      error: 'Failed to fetch dashboard data',
+      message: 'An error occurred while fetching dashboard data'
     });
   }
 });
@@ -200,91 +150,99 @@ router.get('/coach', authenticateToken, async (req, res) => {
 // Get player dashboard data
 router.get('/player', authenticateToken, async (req, res) => {
   try {
-    // Get all clubs for browsing
-    const clubsResult = await query(queries.findAllClubs);
-
-    // Get user's players (if any)
-    const playersResult = await query(`
-      SELECT p.*, c.name as club_name
-      FROM players p
-      JOIN clubs c ON p.club_id = c.id
-      WHERE p.user_id = $1
-      ORDER BY p.created_at DESC
-    `, [req.user.id]);
-
-    // Get user's bookings
-    const bookingsResult = await query(`
-      SELECT eb.*, e.title, e.event_date, e.event_time, e.location, c.name as club_name
-      FROM event_bookings eb
-      JOIN events e ON eb.event_id = e.id
-      LEFT JOIN clubs c ON e.club_id = c.id
-      WHERE eb.user_id = $1
-      ORDER BY e.event_date DESC
-      LIMIT 10
-    `, [req.user.id]);
-
-    // Get upcoming events the user might be interested in
-    const upcomingEventsResult = await query(`
-      SELECT e.*, c.name as club_name, 
-             COUNT(eb.id) as booking_count
+    const userId = req.user.id;
+    
+    // Find player record for this user
+    const playerResult = await query(
+      'SELECT * FROM players WHERE user_id = $1',
+      [userId]
+    );
+    
+    if (playerResult.rows.length === 0) {
+      // No player record found, return basic data
+      return res.json({
+        player: null,
+        clubs: [],
+        teams: [],
+        events: [],
+        payments: [],
+        bookings: [],
+        applications: []
+      });
+    }
+    
+    const player = playerResult.rows[0];
+    
+    // Get player's club
+    const clubResult = await query(
+      'SELECT * FROM clubs WHERE id = $1',
+      [player.club_id]
+    );
+    
+    // Get player's teams
+    const teamsResult = await query(`
+      SELECT t.*, 
+             tp.position as player_position,
+             tp.jersey_number,
+             s.first_name as coach_first_name,
+             s.last_name as coach_last_name,
+             s.email as coach_email
+      FROM teams t
+      JOIN team_players tp ON t.id = tp.team_id
+      LEFT JOIN staff s ON t.coach_id = s.id
+      WHERE tp.player_id = $1
+      ORDER BY t.name
+    `, [player.id]);
+    
+    // Get all available events
+    const eventsResult = await query(`
+      SELECT e.*, c.name as club_name
       FROM events e
       LEFT JOIN clubs c ON e.club_id = c.id
-      LEFT JOIN event_bookings eb ON e.id = eb.event_id AND eb.booking_status = 'confirmed'
       WHERE e.event_date >= CURRENT_DATE
-      GROUP BY e.id, c.name
       ORDER BY e.event_date ASC
-      LIMIT 10
-    `, []);
-
-    // Get user's payments (if they have players)
-    let payments = [];
-    if (playersResult.rows.length > 0) {
-      const playerIds = playersResult.rows.map(p => p.id);
-      const paymentsResult = await query(`
-        SELECT p.*, pl.first_name, pl.last_name, c.name as club_name
-        FROM payments p
-        JOIN players pl ON p.player_id = pl.id
-        JOIN clubs c ON p.club_id = c.id
-        WHERE p.player_id = ANY($1::uuid[])
-        ORDER BY p.due_date DESC
-        LIMIT 10
-      `, [playerIds]);
-      
-      payments = paymentsResult.rows;
-    }
-
-    // Get user's applications
+    `);
+    
+    // Get player's payments
+    const paymentsResult = await query(`
+      SELECT * FROM payments
+      WHERE player_id = $1
+      ORDER BY due_date DESC
+    `, [player.id]);
+    
+    // Get player's bookings
+    const bookingsResult = await query(`
+      SELECT eb.*, e.title as event_title, e.event_date
+      FROM event_bookings eb
+      JOIN events e ON eb.event_id = e.id
+      WHERE eb.user_id = $1
+      ORDER BY e.event_date DESC
+    `, [userId]);
+    
+    // Get player's applications
     const applicationsResult = await query(`
       SELECT ca.*, c.name as club_name
       FROM club_applications ca
       JOIN clubs c ON ca.club_id = c.id
       WHERE ca.user_id = $1
       ORDER BY ca.submitted_at DESC
-    `, [req.user.id]);
-
-    const statistics = {
-      total_bookings: bookingsResult.rows.length,
-      confirmed_bookings: bookingsResult.rows.filter(b => b.booking_status === 'confirmed').length,
-      pending_payments: payments.filter(p => p.payment_status === 'pending').length,
-      overdue_payments: payments.filter(p => p.payment_status === 'overdue').length,
-      pending_applications: applicationsResult.rows.filter(a => a.application_status === 'pending').length
-    };
-
+    `, [userId]);
+    
     res.json({
-      clubs: clubsResult.rows,
-      players: playersResult.rows,
+      player,
+      clubs: clubResult.rows,
+      teams: teamsResult.rows,
+      events: eventsResult.rows,
+      payments: paymentsResult.rows,
       bookings: bookingsResult.rows,
-      upcoming_events: upcomingEventsResult.rows,
-      payments,
-      applications: applicationsResult.rows,
-      statistics
+      applications: applicationsResult.rows
     });
 
   } catch (error) {
-    console.error('Player dashboard error:', error);
+    console.error('Get player dashboard error:', error);
     res.status(500).json({
-      error: 'Failed to load dashboard data',
-      message: 'An error occurred while loading dashboard'
+      error: 'Failed to fetch player dashboard data',
+      message: 'An error occurred while fetching player dashboard data'
     });
   }
 });

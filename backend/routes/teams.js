@@ -81,6 +81,60 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
+// 🔥 NEW: Get teams for a specific player (by user ID)
+router.get('/player/:userId', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    // First, find the player record for this user
+    const playerResult = await query(
+      'SELECT id, club_id FROM players WHERE user_id = $1',
+      [userId]
+    );
+    
+    if (playerResult.rows.length === 0) {
+      return res.json([]); // No player record found
+    }
+    
+    const player = playerResult.rows[0];
+    
+    // Get all teams this player is assigned to
+    const teamsResult = await query(`
+      SELECT t.*, 
+             tp.position as player_position,
+             tp.jersey_number,
+             s.first_name as coach_first_name,
+             s.last_name as coach_last_name,
+             s.email as coach_email
+      FROM teams t
+      JOIN team_players tp ON t.id = tp.team_id
+      LEFT JOIN staff s ON t.coach_id = s.id
+      WHERE tp.player_id = $1
+      ORDER BY t.name
+    `, [player.id]);
+    
+    const teams = teamsResult.rows.map(team => ({
+      ...team,
+      player_assignment: {
+        position: team.player_position,
+        jersey_number: team.jersey_number
+      },
+      coach: team.coach_first_name ? {
+        name: `${team.coach_first_name} ${team.coach_last_name}`,
+        email: team.coach_email
+      } : null
+    }));
+    
+    res.json(teams);
+    
+  } catch (error) {
+    console.error('Get player teams error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch player teams'
+    });
+  }
+});
+
 // Get specific team
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
@@ -394,9 +448,10 @@ router.delete('/:id', authenticateToken, requireOrganization, async (req, res) =
   }
 });
 
-// Add player to team
+// Add player to team - ENHANCED VERSION
 router.post('/:id/players', authenticateToken, requireOrganization, [
-  body('playerId').isUUID().withMessage('Valid player ID is required'),
+  body('playerId').optional().isUUID().withMessage('Valid player ID required'),
+  body('playerEmail').optional().isEmail().withMessage('Valid email required'),
   body('position').optional().trim(),
   body('jerseyNumber').optional().isInt({ min: 1, max: 99 }).withMessage('Jersey number must be between 1 and 99')
 ], async (req, res) => {
@@ -409,7 +464,7 @@ router.post('/:id/players', authenticateToken, requireOrganization, [
       });
     }
 
-    const { playerId, position, jerseyNumber } = req.body;
+    const { playerId, playerEmail, position, jerseyNumber } = req.body;
 
     // Verify team exists and user has permission
     const teamResult = await query(`
@@ -433,13 +488,24 @@ router.post('/:id/players', authenticateToken, requireOrganization, [
       });
     }
 
-    // Verify player exists and belongs to the same club
-    const playerResult = await query(`
-      SELECT * FROM players 
-      WHERE id = $1 AND club_id = $2
-    `, [playerId, team.club_id]);
+    // 🔥 FIX: Find player by ID or email
+    let player = null;
     
-    if (playerResult.rows.length === 0) {
+    if (playerId) {
+      const playerResult = await query(
+        'SELECT * FROM players WHERE id = $1 AND club_id = $2',
+        [playerId, team.club_id]
+      );
+      player = playerResult.rows[0];
+    } else if (playerEmail) {
+      const playerResult = await query(
+        'SELECT * FROM players WHERE email = $1 AND club_id = $2',
+        [playerEmail, team.club_id]
+      );
+      player = playerResult.rows[0];
+    }
+    
+    if (!player) {
       return res.status(404).json({
         error: 'Player not found',
         message: 'Player does not exist in this club'
@@ -449,7 +515,7 @@ router.post('/:id/players', authenticateToken, requireOrganization, [
     // Check if player is already in the team
     const existingAssignment = await query(
       'SELECT id FROM team_players WHERE team_id = $1 AND player_id = $2',
-      [req.params.id, playerId]
+      [req.params.id, player.id]
     );
     
     if (existingAssignment.rows.length > 0) {
@@ -479,11 +545,16 @@ router.post('/:id/players', authenticateToken, requireOrganization, [
       INSERT INTO team_players (team_id, player_id, position, jersey_number)
       VALUES ($1, $2, $3, $4)
       RETURNING *
-    `, [req.params.id, playerId, position || null, jerseyNumber || null]);
+    `, [req.params.id, player.id, position || null, jerseyNumber || null]);
 
     res.status(201).json({
       message: 'Player added to team successfully',
-      assignment: result.rows[0]
+      assignment: result.rows[0],
+      player: {
+        id: player.id,
+        name: `${player.first_name} ${player.last_name}`,
+        email: player.email
+      }
     });
 
   } catch (error) {

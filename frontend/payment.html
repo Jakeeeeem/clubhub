@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        .payment-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        
+        .payment-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+        }
+        
+        .payment-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+        }
+        
+        .payment-header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        .payment-details {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border-left: 4px solid #007bff;
+        }
+        
+        .amount-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+            margin: 1.5rem 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .payment-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .payment-info div {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .payment-info strong {
+            color: #495057;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .payment-form {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .payment-method {
+            padding: 1.5rem;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: #fafafa;
+        }
+        
+        .payment-method:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+        }
+        
+        .payment-method.selected {
+            border-color: #007bff;
+            background: #e3f2fd;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+        }
+        
+        .payment-method h4 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+            font-size: 1.2rem;
+        }
+        
+        .payment-method p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .payment-method .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        #card-element {
+            padding: 1.2rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+        
+        #card-element:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-message {
+            display: none;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .success-message h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1.8rem;
+        }
+        
+        .error-message {
+            display: none;
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+        
+        .btn-primary:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: linear-gradient(135deg, #20c997, #17a2b8);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .security-badges {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .security-badge {
+            background: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #495057;
+            border: 1px solid #e9ecef;
+        }
+        
+        .demo-notice {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: #212529;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border-left: 4px solid #fd7e14;
+        }
+        
+        .demo-notice strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .payment-container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .amount-display {
+                font-size: 2.5rem;
+            }
+            
+            .payment-header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="window.location.href='index.html'">← Back to ClubHub</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="payment-container container">
+            <!-- Loading State -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <h3>Loading payment details...</h3>
+                <p>Please wait while we prepare your payment...</p>
+            </div>
+
+            <!-- Payment Content -->
+            <div id="paymentContent" style="display: none;">
+                <div class="payment-header">
+                    <h1>💳 Secure Payment</h1>
+                    <p>Complete your payment safely and securely</p>
+                </div>
+
+                <div class="payment-details">
+                    <div class="amount-display" id="paymentAmount">£0.00</div>
+                    
+                    <div class="payment-info">
+                        <div>
+                            <strong>Description:</strong>
+                            <span id="paymentDescription">-</span>
+                        </div>
+                        <div>
+                            <strong>Player:</strong>
+                            <span id="playerName">-</span>
+                        </div>
+                        <div>
+                            <strong>Club:</strong>
+                            <span id="clubName">-</span>
+                        </div>
+                        <div>
+                            <strong>Due Date:</strong>
+                            <span id="dueDate">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-form">
+                    <h3>Choose Payment Method</h3>
+                    
+                    <div class="payment-methods">
+                        <div class="payment-method selected" data-method="card" onclick="selectPaymentMethod('card')">
+                            <div class="icon">💳</div>
+                            <h4>Card Payment</h4>
+                            <p>Pay securely with your debit or credit card via Stripe</p>
+                        </div>
+                        <div class="payment-method" data-method="demo" onclick="selectPaymentMethod('demo')">
+                            <div class="icon">🎮</div>
+                            <h4>Demo Payment</h4>
+                            <p>Simulate payment completion (for demonstration)</p>
+                        </div>
+                    </div>
+
+                    <!-- Card Payment Form -->
+                    <div id="cardPaymentForm">
+                        <form id="payment-form">
+                            <div id="card-element">
+                                <!-- Stripe card element will be inserted here -->
+                            </div>
+                            <div id="card-errors" role="alert" class="error-message"></div>
+                            
+                            <div class="security-badges">
+                                <div class="security-badge">🔒 SSL Encrypted</div>
+                                <div class="security-badge">🛡️ Stripe Secure</div>
+                                <div class="security-badge">💳 PCI Compliant</div>
+                            </div>
+                            
+                            <button type="submit" id="submit-payment" class="btn btn-primary" style="width: 100%;">
+                                <span id="button-text">Complete Payment</span>
+                                <div id="button-spinner" class="spinner" style="display: none; width: 20px; height: 20px; margin: 0 auto;"></div>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Demo Payment Form -->
+                    <div id="demoPaymentForm" style="display: none;">
+                        <div class="demo-notice">
+                            <strong>🎮 Demo Mode Active</strong>
+                            This will simulate a successful payment without charging any card or processing real money.
+                            Perfect for testing the payment flow.
+                        </div>
+                        <button type="button" id="demo-payment" class="btn btn-success" style="width: 100%;">
+                            Simulate Successful Payment
+                        </button>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="success-message">
+                        <h3>✅ Payment Successful!</h3>
+                        <p>Thank you for your payment. You will receive a confirmation email shortly.</p>
+                        <p><strong>Redirecting to ClubHub in <span id="countdown">5</span> seconds...</strong></p>
+                        <button class="btn btn-secondary" onclick="window.location.href='index.html'" style="margin-top: 1rem;">
+                            Return to ClubHub Now
+                        </button>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="error-message">
+                        <h4>❌ Payment Failed</h4>
+                        <p id="errorText">An error occurred while processing your payment.</p>
+                        <button class="btn btn-secondary" onclick="hideError()" style="margin-top: 1rem;">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Not Found Message -->
+            <div id="notFoundMessage" style="display: none;">
+                <div class="payment-form" style="text-align: center;">
+                    <h3>❌ Payment Not Found</h3>
+                    <p>This payment link is invalid, expired, or the payment has already been completed.</p>
+                    <button class="btn btn-secondary" onclick="window.location.href='index.html'">
+                        Return to ClubHub
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Global variables
+        let stripe = null;
+        let elements = null;
+        let cardElement = null;
+        let paymentData = null;
+        let selectedMethod = 'card';
+        const STRIPE_PUBLIC_KEY = 'pk_test_51QWmhEEH5J0SdAOMNMHr4W27vbq4OVNZo6q7JDXKbMNz19Zrv0Q2LBKa1Y6lXO1X1K5JsBNrOa8VxUZYCVPpfWH500YWTL2X7I'; // Replace with your actual Stripe public key
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('💳 Payment page loading...');
+            
+            // Initialize Stripe
+            if (STRIPE_PUBLIC_KEY && STRIPE_PUBLIC_KEY !== 'your_stripe_public_key_here') {
+                stripe = Stripe(STRIPE_PUBLIC_KEY);
+                console.log('✅ Stripe initialized');
+            } else {
+                console.warn('⚠️ Stripe public key not configured');
+            }
+            
+            // Load payment details
+            loadPaymentDetails();
+        });
+
+        // Load payment details from URL parameters
+        async function loadPaymentDetails() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const paymentId = urlParams.get('id');
+                const token = urlParams.get('token');
+
+                if (!paymentId || !token) {
+                    showNotFound();
+                    return;
+                }
+
+                console.log('📄 Loading payment details...');
+                
+                // Fetch payment details from API
+                const response = await fetch(`/api/payments/public/${paymentId}?token=${token}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Payment not found');
+                }
+
+                paymentData = await response.json();
+                displayPaymentDetails();
+                
+                if (stripe) {
+                    setupStripePaymentForm();
+                } else {
+                    console.warn('⚠️ Stripe not available, only demo payments will work');
+                }
+
+            } catch (error) {
+                console.error('❌ Failed to load payment:', error);
+                showNotFound();
+            }
+        }
+
+        // Display payment details
+        function displayPaymentDetails() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('paymentContent').style.display = 'block';
+
+            document.getElementById('paymentAmount').textContent = formatCurrency(paymentData.amount);
+            document.getElementById('paymentDescription').textContent = paymentData.description;
+            document.getElementById('playerName').textContent = paymentData.player.name;
+            document.getElementById('clubName').textContent = paymentData.club.name;
+            document.getElementById('dueDate').textContent = formatDate(paymentData.dueDate);
+
+            console.log('💰 Payment details loaded:', paymentData);
+        }
+
+        // Setup Stripe payment form
+        function setupStripePaymentForm() {
+            if (!stripe) {
+                console.error('❌ Stripe not initialized');
+                return;
+            }
+
+            try {
+                elements = stripe.elements();
+                
+                // Create card element with custom styling
+                cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#424770',
+                            fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                            fontSmoothing: 'antialiased',
+                            '::placeholder': {
+                                color: '#aab7c4',
+                            },
+                        },
+                        invalid: {
+                            color: '#fa755a',
+                            iconColor: '#fa755a'
+                        }
+                    },
+                });
+
+                cardElement.mount('#card-element');
+
+                // Handle card validation errors
+                cardElement.on('change', function(event) {
+                    const displayError = document.getElementById('card-errors');
+                    if (event.error) {
+                        displayError.textContent = event.error.message;
+                        displayError.style.display = 'block';
+                    } else {
+                        displayError.style.display = 'none';
+                        displayError.textContent = '';
+                    }
+                });
+
+                // Handle form submission
+                const form = document.getElementById('payment-form');
+                form.addEventListener('submit', handleCardPayment);
+
+                console.log('💳 Stripe payment form setup complete');
+            } catch (error) {
+                console.error('❌ Failed to setup Stripe form:', error);
+            }
+        }
+
+        // Select payment method
+        function selectPaymentMethod(method) {
+            selectedMethod = method;
+            
+            // Update UI
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelector(`[data-method="${method}"]`).classList.add('selected');
+
+            // Show/hide payment forms
+            if (method === 'card') {
+                document.getElementById('cardPaymentForm').style.display = 'block';
+                document.getElementById('demoPaymentForm').style.display = 'none';
+            } else {
+                document.getElementById('cardPaymentForm').style.display = 'none';
+                document.getElementById('demoPaymentForm').style.display = 'block';
+            }
+        }
+
+        // Handle card payment with Stripe
+        async function handleCardPayment(event) {
+            event.preventDefault();
+
+            if (!stripe || !cardElement) {
+                showError('Payment system not ready. Please refresh the page and try again.');
+                return;
+            }
+
+            setLoadingState(true);
+
+            try {
+                console.log('💳 Creating payment intent...');
+                
+                // Create payment intent
+                const intentResponse = await fetch('/api/payments/create-intent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        amount: paymentData.amount,
+                        paymentId: paymentData.id,
+                        metadata: {
+                            playerName: paymentData.player.name,
+                            clubName: paymentData.club.name,
+                            description: paymentData.description
+                        }
+                    })
+                });
+
+                if (!intentResponse.ok) {
+                    const errorData = await intentResponse.json();
+                    throw new Error(errorData.message || 'Failed to create payment intent');
+                }
+
+                const { clientSecret, paymentIntentId } = await intentResponse.json();
+
+                console.log('💳 Confirming payment with Stripe...');
+
+                // Confirm payment with Stripe
+                const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            name: paymentData.player.name,
+                        },
+                    }
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                console.log('✅ Payment confirmed with Stripe');
+
+                // Confirm payment in our backend
+                await confirmPaymentInBackend(paymentIntent.id, paymentData.id);
+                showSuccess();
+
+            } catch (error) {
+                console.error('❌ Payment failed:', error);
+                showError(error.message);
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        // Handle demo payment
+        async function handleDemoPayment() {
+            setLoadingState(true, 'demo-payment');
+
+            try {
+                console.log('🎮 Processing demo payment...');
+                
+                // Simulate payment processing delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Confirm demo payment in backend
+                await confirmPaymentInBackend('demo_payment_intent', paymentData.id);
+                showSuccess();
+
+            } catch (error) {
+                console.error('❌ Demo payment failed:', error);
+                showError(error.message);
+            } finally {
+                setLoadingState(false, 'demo-payment');
+            }
+        }
+
+        // Confirm payment in backend
+        async function confirmPaymentInBackend(paymentIntentId, paymentId) {
+            const response = await fetch('/api/payments/confirm-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    paymentIntentId: paymentIntentId,
+                    paymentId: paymentId
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to confirm payment');
+            }
+
+            return await response.json();
+        }
+
+        // Set loading state
+        function setLoadingState(loading, buttonId = 'submit-payment') {
+            const button = document.getElementById(buttonId);
+            const buttonText = button.querySelector('#button-text') || button;
+            const buttonSpinner = document.getElementById('button-spinner');
+            
+            if (loading) {
+                button.disabled = true;
+                if (buttonSpinner) {
+                    buttonText.style.display = 'none';
+                    buttonSpinner.style.display = 'block';
+                } else {
+                    buttonText.textContent = 'Processing...';
+                }
+            } else {
+                button.disabled = false;
+                if (buttonSpinner) {
+                    buttonText.style.display = 'block';
+                    buttonSpinner.style.display = 'none';
+                } else {
+                    buttonText.textContent = buttonId === 'demo-payment' ? 'Simulate Successful Payment' : 'Complete Payment';
+                }
+            }
+        }
+
+        // Show success message
+        function showSuccess() {
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('cardPaymentForm').style.display = 'none';
+            document.getElementById('demoPaymentForm').style.display = 'none';
+            document.querySelector('.payment-methods').style.display = 'none';
+            
+            // Countdown timer
+            let countdown = 5;
+            const countdownElement = document.getElementById('countdown');
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    window.location.href = 'index.html';
+                }
+            }, 1000);
+        }
+
+        // Show error message
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+
+        // Hide error message
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Show not found message
+        function showNotFound() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('notFoundMessage').style.display = 'block';
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-GB', {
+                style: 'currency',
+                currency: 'GBP'
+            }).format(amount);
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+
+        // Add demo payment event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            const demoButton = document.getElementById('demo-payment');
+            if (demoButton) {
+                demoButton.addEventListener('click', handleDemoPayment);
+            }
+        });
+
+        // Make functions globally available
+        window.selectPaymentMethod = selectPaymentMethod;
+        window.hideError = hideError;
+
+        console.log('✅ Payment page loaded with complete Stripe integration!');
+    </script>
+</body>
+</html>

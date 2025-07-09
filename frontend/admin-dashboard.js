@@ -283,7 +283,7 @@ async function handleAddEvent(e) {
     }
 }
 
-// 4. ADD PLAYER - NOW SAVES TO DATABASE
+// 4. ADD PLAYER - NOW SAVES TO DATABASE WITH PROPER LINKING
 async function handleAddPlayer(e) {
     e.preventDefault();
     console.log('👤 Adding new player to database...');
@@ -327,9 +327,146 @@ async function handleAddPlayer(e) {
         
         showNotification(`Player ${response.player.first_name} ${response.player.last_name} added successfully!`, 'success');
         
+        // 🔥 NEW: Show team assignment options
+        if (AppState.teams && AppState.teams.length > 0) {
+            setTimeout(() => {
+                if (confirm(`Would you like to assign ${response.player.first_name} ${response.player.last_name} to a team?`)) {
+                    showPlayerTeamAssignment(response.player.id);
+                }
+            }, 1000);
+        }
+        
+        // 🔥 NEW: Generate first payment if monthly fee > 0
+        if (playerData.monthlyFee > 0) {
+            setTimeout(async () => {
+                if (confirm(`Generate first monthly payment of £${playerData.monthlyFee} for ${response.player.first_name}?`)) {
+                    await generatePlayerPayment(response.player.id, playerData.monthlyFee);
+                }
+            }, 2000);
+        }
+        
     } catch (error) {
         console.error('❌ Failed to add player:', error);
         showNotification(error.message || 'Failed to add player', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// 🔥 NEW: Generate payment for player
+async function generatePlayerPayment(playerId, amount) {
+    try {
+        const paymentData = {
+            playerId: playerId,
+            amount: amount,
+            paymentType: 'monthly_fee',
+            description: `Monthly Club Fee - ${new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`,
+            dueDate: new Date().toISOString().split('T')[0] // Today's date
+        };
+        
+        const response = await apiService.createPayment(paymentData);
+        showNotification('Payment generated successfully!', 'success');
+        loadFinances();
+        
+    } catch (error) {
+        console.error('❌ Failed to generate payment:', error);
+        showNotification('Failed to generate payment', 'error');
+    }
+}
+
+// 🔥 FIXED: Function to show team assignment modal
+function showPlayerTeamAssignment(playerId) {
+    const player = AppState.players?.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const teams = AppState.teams || [];
+    if (teams.length === 0) {
+        showNotification('No teams available. Create a team first.', 'info');
+        return;
+    }
+    
+    const teamOptions = teams.map(team => 
+        `<option value="${team.id}">${team.name} (${team.age_group || 'No age group'})</option>`
+    ).join('');
+    
+    const content = `
+        <div class="card">
+            <h3>Assign ${player.first_name} ${player.last_name} to Team</h3>
+            <form id="assignPlayerTeamForm">
+                <div class="form-group">
+                    <label>Select Team:</label>
+                    <select id="assignTeamId" required>
+                        <option value="">Choose a team...</option>
+                        ${teamOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Position (optional):</label>
+                    <input type="text" id="assignPosition" placeholder="e.g., Midfielder, Striker">
+                </div>
+                <div class="form-group">
+                    <label>Jersey Number (optional):</label>
+                    <input type="number" id="assignJerseyNumber" min="1" max="99" placeholder="1-99">
+                </div>
+                <div style="margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary">Assign to Team</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('playerTeamAssignmentModal')" style="margin-left: 1rem;">
+                        Skip
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    const contentContainer = document.getElementById('playerTeamAssignmentContent');
+    if (contentContainer) {
+        contentContainer.innerHTML = content;
+        
+        // Add form submit handler
+        const form = document.getElementById('assignPlayerTeamForm');
+        if (form) {
+            form.addEventListener('submit', (e) => handlePlayerTeamAssignment(e, playerId));
+        }
+        
+        showModal('playerTeamAssignmentModal');
+    }
+}
+
+// 🔥 FIXED: Handle player team assignment
+async function handlePlayerTeamAssignment(e, playerId) {
+    e.preventDefault();
+    
+    try {
+        showLoading(true);
+        
+        const teamId = document.getElementById('assignTeamId')?.value;
+        const position = document.getElementById('assignPosition')?.value;
+        const jerseyNumber = document.getElementById('assignJerseyNumber')?.value;
+        
+        if (!teamId) {
+            showNotification('Please select a team', 'error');
+            return;
+        }
+        
+        const assignmentData = {
+            playerId: playerId,
+            position: position || null,
+            jerseyNumber: jerseyNumber ? parseInt(jerseyNumber) : null
+        };
+        
+        // Add player to team via API
+        const response = await apiService.addPlayerToTeam(teamId, assignmentData);
+        
+        closeModal('playerTeamAssignmentModal');
+        showNotification('Player assigned to team successfully!', 'success');
+        
+        // Refresh team data
+        loadTeams();
+        loadPlayers();
+        
+    } catch (error) {
+        console.error('❌ Failed to assign player to team:', error);
+        showNotification(error.message || 'Failed to assign player to team', 'error');
     } finally {
         showLoading(false);
     }
@@ -444,7 +581,7 @@ function loadUpcomingEvents() {
     `).join('');
 }
 
-// Players Management
+// 🔥 COMPLETELY FIXED: Players Management with proper team display
 function loadPlayers() {
     console.log('👥 Loading players...');
     
@@ -454,22 +591,62 @@ function loadPlayers() {
     if (!tableBody) return;
     
     if (clubPlayers.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="5">No players registered yet</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6">No players registered yet</td></tr>';
         return;
     }
     
-    tableBody.innerHTML = clubPlayers.map(player => `
-        <tr>
-            <td>${player.first_name} ${player.last_name}</td>
-            <td>${formatDate(player.date_of_birth)}</td>
-            <td><span class="status-badge status-${player.payment_status}">${player.payment_status}</span></td>
-            <td>Unassigned</td>
-            <td>
-                <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
-                <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
-            </td>
-        </tr>
-    `).join('');
+    tableBody.innerHTML = clubPlayers.map(player => {
+        // 🔥 FIXED: Use team_assignments from database
+        let teamNames = 'Unassigned';
+        let assignedTeamsCount = 0;
+        
+        if (player.team_assignments && Array.isArray(player.team_assignments) && player.team_assignments.length > 0) {
+            // Filter out null team assignments
+            const validAssignments = player.team_assignments.filter(assignment => assignment.team_id);
+            if (validAssignments.length > 0) {
+                teamNames = validAssignments.map(assignment => assignment.team_name).join(', ');
+                assignedTeamsCount = validAssignments.length;
+            }
+        }
+        
+        return `
+            <tr>
+                <td>${player.first_name} ${player.last_name}</td>
+                <td>${calculateAge(player.date_of_birth)} years</td>
+                <td>${player.email || 'No email'}</td>
+                <td><span class="status-badge status-${player.payment_status}">${player.payment_status}</span></td>
+                <td>
+                    <span style="color: ${assignedTeamsCount > 0 ? '#28a745' : '#dc3545'};">
+                        ${assignedTeamsCount} assigned to team${assignedTeamsCount !== 1 ? 's' : ''}
+                    </span>
+                    <br><small>${teamNames}</small>
+                </td>
+                <td>
+                    <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
+                    ${assignedTeamsCount === 0 ? `
+                        <button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>
+                    ` : ''}
+                    <button class="btn btn-small btn-success" onclick="generatePaymentForPlayer('${player.id}')">💳 Payment</button>
+                    <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// 🔥 NEW: Generate payment for specific player
+async function generatePaymentForPlayer(playerId) {
+    const player = AppState.players?.find(p => p.id === playerId);
+    if (!player) return;
+    
+    if (player.monthly_fee <= 0) {
+        showNotification('Player has no monthly fee set', 'error');
+        return;
+    }
+    
+    if (confirm(`Generate payment of £${player.monthly_fee} for ${player.first_name} ${player.last_name}?`)) {
+        await generatePlayerPayment(playerId, player.monthly_fee);
+    }
 }
 
 // Staff Management
@@ -500,7 +677,7 @@ function loadStaff() {
     `).join('');
 }
 
-// Teams Management
+// 🔥 COMPLETELY FIXED: Teams Management with proper player display
 function loadTeams() {
     console.log('⚽ Loading teams...');
     
@@ -521,19 +698,207 @@ function loadTeams() {
         return;
     }
     
-    teamsContainer.innerHTML = clubTeams.map(team => `
-        <div class="card">
-            <h4>${team.name}</h4>
-            <p><strong>Age Group:</strong> ${team.age_group || 'Not specified'}</p>
-            <p><strong>Sport:</strong> ${team.sport || 'Football'}</p>
-            <p><strong>Description:</strong> ${team.description || 'No description'}</p>
-            <p><strong>Record:</strong> ${team.wins || 0}W - ${team.draws || 0}D - ${team.losses || 0}L</p>
-            <div class="item-actions">
-                <button class="btn btn-small btn-secondary" onclick="viewTeam('${team.id}')">View Details</button>
-                <button class="btn btn-small btn-danger" onclick="removeTeam('${team.id}')">Remove</button>
+    teamsContainer.innerHTML = clubTeams.map(team => {
+        // 🔥 FIXED: Use players array from database response
+        const teamPlayers = team.players || [];
+        const playerCount = teamPlayers.filter(p => p.id).length; // Filter out null players
+        
+        return `
+            <div class="card">
+                <h4>${team.name}</h4>
+                <p><strong>Age Group:</strong> ${team.age_group || 'Not specified'}</p>
+                <p><strong>Sport:</strong> ${team.sport || 'Football'}</p>
+                <p><strong>Description:</strong> ${team.description || 'No description'}</p>
+                <p><strong>Record:</strong> ${team.wins || 0}W - ${team.draws || 0}D - ${team.losses || 0}L</p>
+                <p><strong>Players:</strong> <span style="color: ${playerCount > 0 ? '#28a745' : '#dc3545'};">${playerCount} assigned</span></p>
+                
+                ${team.coach_first_name ? `
+                    <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0;">
+                        <strong>Coach:</strong> ${team.coach_first_name} ${team.coach_last_name}
+                    </div>
+                ` : '<p style="color: #dc3545;"><strong>Coach:</strong> Not assigned</p>'}
+                
+                ${playerCount > 0 ? `
+                    <div style="margin-top: 1rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
+                        <strong>Team Members:</strong>
+                        <ul style="margin: 0.5rem 0; list-style: none; padding: 0;">
+                            ${teamPlayers.filter(p => p.id).slice(0, 5).map(player => 
+                                `<li style="padding: 0.2rem 0;">
+                                    ${player.first_name} ${player.last_name}
+                                    ${player.position ? ` - ${player.position}` : ''}
+                                    ${player.jersey_number ? ` (#${player.jersey_number})` : ''}
+                                </li>`
+                            ).join('')}
+                            ${playerCount > 5 ? `<li style="color: #666; font-style: italic;">... and ${playerCount - 5} more</li>` : ''}
+                        </ul>
+                    </div>
+                ` : ''}
+                
+                <div class="item-actions">
+                    <button class="btn btn-small btn-secondary" onclick="viewTeam('${team.id}')">View Details</button>
+                    <button class="btn btn-small btn-primary" onclick="manageTeamPlayers('${team.id}')">Manage Players</button>
+                    <button class="btn btn-small btn-danger" onclick="removeTeam('${team.id}')">Remove</button>
+                </div>
             </div>
+        `;
+    }).join('');
+}
+
+// 🔥 ENHANCED: Function to manage team players
+function manageTeamPlayers(teamId) {
+    const team = AppState.teams?.find(t => t.id === teamId);
+    if (!team) return;
+    
+    // Get current team players
+    const currentPlayers = team.players || [];
+    const currentPlayerIds = currentPlayers.filter(p => p.id).map(p => p.id);
+    
+    // Get available players (not in this team)
+    const availablePlayers = AppState.players?.filter(player => 
+        !currentPlayerIds.includes(player.id)
+    ) || [];
+    
+    const playerOptions = availablePlayers.map(player => 
+        `<option value="${player.id}">${player.first_name} ${player.last_name}</option>`
+    ).join('');
+    
+    const currentPlayersDisplay = currentPlayers.filter(p => p.id).map(player => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #f8f9fa; border-radius: 4px; margin: 0.5rem 0;">
+            <div>
+                <strong>${player.first_name} ${player.last_name}</strong>
+                ${player.position ? ` - ${player.position}` : ''}
+                ${player.jersey_number ? ` (#${player.jersey_number})` : ''}
+            </div>
+            <button class="btn btn-small btn-danger" onclick="removePlayerFromTeam('${teamId}', '${player.id}')">Remove</button>
         </div>
     `).join('');
+    
+    const content = `
+        <div class="card">
+            <h3>Manage ${team.name} Players</h3>
+            
+            <div style="margin-bottom: 2rem;">
+                <h4>Current Players (${currentPlayers.filter(p => p.id).length})</h4>
+                ${currentPlayers.filter(p => p.id).length > 0 ? currentPlayersDisplay : '<p>No players assigned</p>'}
+            </div>
+            
+            ${availablePlayers.length > 0 ? `
+                <hr style="margin: 2rem 0;">
+                <h4>Add Player to Team</h4>
+                <form id="addPlayerToTeamForm">
+                    <div class="form-group">
+                        <label>Select Player:</label>
+                        <select id="selectPlayerId" required>
+                            <option value="">Choose a player...</option>
+                            ${playerOptions}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Position (optional):</label>
+                        <input type="text" id="playerPositionInTeam" placeholder="e.g., Midfielder, Striker">
+                    </div>
+                    <div class="form-group">
+                        <label>Jersey Number (optional):</label>
+                        <input type="number" id="playerJerseyNumber" min="1" max="99" placeholder="1-99">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add to Team</button>
+                </form>
+            ` : '<p style="color: #666;">No available players to add.</p>'}
+            
+            <div style="margin-top: 2rem;">
+                <button class="btn btn-secondary" onclick="closeModal('manageTeamPlayersModal')">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    
+    const contentContainer = document.getElementById('manageTeamPlayersContent');
+    if (contentContainer) {
+        contentContainer.innerHTML = content;
+        
+        // Add form submit handler
+        const form = document.getElementById('addPlayerToTeamForm');
+        if (form) {
+            form.addEventListener('submit', (e) => handleAddPlayerToTeam(e, teamId));
+        }
+        
+        showModal('manageTeamPlayersModal');
+    }
+}
+
+// 🔥 NEW: Remove player from team
+async function removePlayerFromTeam(teamId, playerId) {
+    if (confirm('Remove player from this team?')) {
+        try {
+            await apiService.removePlayerFromTeam(teamId, playerId);
+            showNotification('Player removed from team successfully!', 'success');
+            
+            // Refresh data
+            const dashboardData = await apiService.getAdminDashboardData();
+            AppState.teams = dashboardData.teams || [];
+            AppState.players = dashboardData.players || [];
+            
+            loadTeams();
+            loadPlayers();
+            
+            // Update the modal if it's still open
+            const modal = document.getElementById('manageTeamPlayersModal');
+            if (modal && modal.style.display === 'block') {
+                manageTeamPlayers(teamId);
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to remove player from team:', error);
+            showNotification(error.message || 'Failed to remove player from team', 'error');
+        }
+    }
+}
+
+// 🔥 ENHANCED: Handle adding player to team
+async function handleAddPlayerToTeam(e, teamId) {
+    e.preventDefault();
+    
+    try {
+        showLoading(true);
+        
+        const playerId = document.getElementById('selectPlayerId')?.value;
+        const position = document.getElementById('playerPositionInTeam')?.value;
+        const jerseyNumber = document.getElementById('playerJerseyNumber')?.value;
+        
+        if (!playerId) {
+            showNotification('Please select a player', 'error');
+            return;
+        }
+        
+        const assignmentData = {
+            playerId: playerId,
+            position: position || null,
+            jerseyNumber: jerseyNumber ? parseInt(jerseyNumber) : null
+        };
+        
+        // Add player to team via API
+        const response = await apiService.addPlayerToTeam(teamId, assignmentData);
+        
+        showNotification('Player added to team successfully!', 'success');
+        
+        // Refresh data
+        const dashboardData = await apiService.getAdminDashboardData();
+        AppState.teams = dashboardData.teams || [];
+        AppState.players = dashboardData.players || [];
+        
+        loadTeams();
+        loadPlayers();
+        
+        // Update the modal
+        manageTeamPlayers(teamId);
+        
+    } catch (error) {
+        console.error('❌ Failed to add player to team:', error);
+        showNotification(error.message || 'Failed to add player to team', 'error');
+    } finally {
+        showLoading(false);
+    }
 }
 
 // Events Management
@@ -567,24 +932,29 @@ function loadEvents() {
     `).join('');
 }
 
-// Finances Management
+// 🔥 ENHANCED: Finances Management with real payment processing
 function loadFinances() {
     console.log('💰 Loading finances...');
     
     const clubPlayers = AppState.players || [];
+    const clubPayments = AppState.payments || [];
     
     // Calculate financial stats
     const monthlyRevenue = clubPlayers.reduce((total, player) => {
         return total + (player.monthly_fee || 0);
     }, 0);
     
-    const overdueAmount = clubPlayers
+    const overdueAmount = clubPayments
         .filter(p => p.payment_status === 'overdue')
-        .reduce((total, player) => total + (player.monthly_fee || 0), 0);
+        .reduce((total, payment) => total + (parseFloat(payment.amount) || 0), 0);
     
-    const pendingAmount = clubPlayers
+    const pendingAmount = clubPayments
         .filter(p => p.payment_status === 'pending')
-        .reduce((total, player) => total + (player.monthly_fee || 0), 0);
+        .reduce((total, payment) => total + (parseFloat(payment.amount) || 0), 0);
+    
+    const paidAmount = clubPayments
+        .filter(p => p.payment_status === 'paid')
+        .reduce((total, payment) => total + (parseFloat(payment.amount) || 0), 0);
     
     const payingMembers = clubPlayers.filter(p => p.payment_status === 'paid').length;
     
@@ -600,38 +970,82 @@ function loadFinances() {
     if (totalMembersEl) totalMembersEl.textContent = payingMembers;
     
     // Load payments table
-    loadPaymentsTable(clubPlayers);
+    loadPaymentsTable(clubPayments);
 }
 
-function loadPaymentsTable(players) {
+function loadPaymentsTable(payments) {
     const tableBody = document.getElementById('paymentsTableBody');
     if (!tableBody) return;
     
-    if (players.length === 0) {
+    if (payments.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="5">No payment records found</td></tr>';
         return;
     }
     
-    tableBody.innerHTML = players.map(player => {
-        const dueDate = new Date();
-        dueDate.setDate(1); // First of current month
-        
+    tableBody.innerHTML = payments.map(payment => {
         return `
             <tr>
-                <td>${player.first_name} ${player.last_name}</td>
-                <td>${formatCurrency(player.monthly_fee || 0)}</td>
-                <td>${formatDate(dueDate.toISOString())}</td>
-                <td><span class="status-badge status-${player.payment_status}">${player.payment_status}</span></td>
+                <td>${payment.player_first_name} ${payment.player_last_name}</td>
+                <td>${formatCurrency(payment.amount || 0)}</td>
+                <td>${formatDate(payment.due_date)}</td>
+                <td><span class="status-badge status-${payment.payment_status}">${payment.payment_status}</span></td>
                 <td>
-                    <button class="btn btn-small btn-primary" onclick="processPayment('${player.id}')">Process Payment</button>
-                    <button class="btn btn-small btn-secondary" onclick="sendReminder('${player.id}')">Send Reminder</button>
+                    ${payment.payment_status !== 'paid' ? `
+                        <button class="btn btn-small btn-primary" onclick="processPaymentAdmin('${payment.id}')">Mark Paid</button>
+                        <button class="btn btn-small btn-info" onclick="sendPaymentLink('${payment.id}')">Send Link</button>
+                    ` : `
+                        <span style="color: #28a745;">✅ Paid</span>
+                    `}
+                    <button class="btn btn-small btn-secondary" onclick="sendReminder('${payment.id}')">Reminder</button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-// Placeholder functions for edit/remove operations
+// 🔥 NEW: Process payment as admin
+async function processPaymentAdmin(paymentId) {
+    if (confirm('Mark this payment as paid?')) {
+        try {
+            await apiService.processPayment(paymentId);
+            showNotification('Payment marked as paid!', 'success');
+            
+            // Refresh data
+            const dashboardData = await apiService.getAdminDashboardData();
+            AppState.payments = dashboardData.payments || [];
+            AppState.players = dashboardData.players || [];
+            
+            loadFinances();
+            loadPlayers();
+            
+        } catch (error) {
+            console.error('❌ Failed to process payment:', error);
+            showNotification('Failed to process payment', 'error');
+        }
+    }
+}
+
+// 🔥 NEW: Send payment link to player
+async function sendPaymentLink(paymentId) {
+    const payment = AppState.payments?.find(p => p.id === paymentId);
+    if (!payment) return;
+    
+    // In a real app, this would send an email with a payment link
+    const paymentLink = `${window.location.origin}/payment?id=${paymentId}`;
+    
+    if (navigator.share) {
+        await navigator.share({
+            title: 'Payment Link',
+            text: `Payment link for ${payment.player_first_name} ${payment.player_last_name}`,
+            url: paymentLink
+        });
+    } else {
+        navigator.clipboard.writeText(paymentLink);
+        showNotification('Payment link copied to clipboard!', 'success');
+    }
+}
+
+// ENHANCED REMOVAL FUNCTIONS WITH PROPER DATABASE CALLS
 async function removePlayer(playerId) {
     if (confirm('Are you sure you want to remove this player?')) {
         try {
@@ -691,6 +1105,20 @@ async function removeEvent(eventId) {
     }
 }
 
+// Helper function to calculate age
+function calculateAge(dateOfBirth) {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    
+    return age;
+}
+
 // Placeholder functions for edit operations
 function editPlayer(playerId) {
     showNotification('Edit player functionality coming soon', 'info');
@@ -707,7 +1135,10 @@ function editEvent(eventId) {
 function viewTeam(teamId) {
     const team = AppState.teams?.find(t => t.id === teamId);
     if (team) {
-        alert(`Team: ${team.name}\nAge Group: ${team.age_group}\nSport: ${team.sport}\nDescription: ${team.description}`);
+        const players = team.players || [];
+        const playersList = players.filter(p => p.id).map(p => `${p.first_name} ${p.last_name}`).join(', ');
+        
+        alert(`Team: ${team.name}\nAge Group: ${team.age_group}\nSport: ${team.sport}\nPlayers: ${playersList || 'None'}\nDescription: ${team.description}`);
     }
 }
 
@@ -715,11 +1146,7 @@ function viewBookings(eventId) {
     showNotification('View bookings functionality coming soon', 'info');
 }
 
-function processPayment(playerId) {
-    showNotification('Payment processing functionality coming soon', 'info');
-}
-
-function sendReminder(playerId) {
+function sendReminder(paymentId) {
     showNotification('Payment reminder sent!', 'success');
 }
 
@@ -727,6 +1154,39 @@ function filterPlayers() {
     // Simple filter implementation
     loadPlayers();
 }
+
+// 🔥 NEW: Add these modal HTML elements to your HTML if they don't exist
+function createRequiredModals() {
+    // Check if modals exist, if not create them
+    if (!document.getElementById('playerTeamAssignmentModal')) {
+        const modalHTML = `
+            <div id="playerTeamAssignmentModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('playerTeamAssignmentModal')">&times;</span>
+                    <div id="playerTeamAssignmentContent"></div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    if (!document.getElementById('manageTeamPlayersModal')) {
+        const modalHTML = `
+            <div id="manageTeamPlayersModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal('manageTeamPlayersModal')">&times;</span>
+                    <div id="manageTeamPlayersContent"></div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+}
+
+// Initialize required modals when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    createRequiredModals();
+});
 
 // Export functions for global access
 window.showSection = showSection;
@@ -739,9 +1199,14 @@ window.editEvent = editEvent;
 window.viewBookings = viewBookings;
 window.removeTeam = removeTeam;
 window.viewTeam = viewTeam;
-window.processPayment = processPayment;
+window.manageTeamPlayers = manageTeamPlayers;
+window.showPlayerTeamAssignment = showPlayerTeamAssignment;
+window.generatePaymentForPlayer = generatePaymentForPlayer;
+window.processPaymentAdmin = processPaymentAdmin;
+window.sendPaymentLink = sendPaymentLink;
 window.sendReminder = sendReminder;
 window.filterPlayers = filterPlayers;
+window.removePlayerFromTeam = removePlayerFromTeam;
 window.initializeAdminDashboard = initializeAdminDashboard;
 
-console.log('✅ Fixed Admin Dashboard loaded - now connected to database!');
+console.log('✅ Complete Fixed Admin Dashboard loaded - now connected to database with team assignments and payment processing!');

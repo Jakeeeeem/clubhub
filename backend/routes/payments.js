@@ -2,6 +2,7 @@ const express = require('express');
 const { query, queries, withTransaction } = require('../config/database');
 const { authenticateToken, requireOrganization } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.get('/', authenticateToken, async (req, res) => {
       SELECT p.*, 
              pl.first_name as player_first_name,
              pl.last_name as player_last_name,
+             pl.email as player_email,
              c.name as club_name
       FROM payments p
       JOIN players pl ON p.player_id = pl.id
@@ -108,6 +110,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
              pl.first_name as player_first_name,
              pl.last_name as player_last_name,
              pl.email as player_email,
+             pl.user_id as player_user_id,
              c.name as club_name,
              c.owner_id
       FROM payments p
@@ -127,7 +130,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
     // Check if user has permission to view this payment
     const hasPermission = payment.owner_id === req.user.id || 
-                         (req.user.accountType === 'adult' && payment.user_id === req.user.id);
+                         (req.user.accountType === 'adult' && payment.player_user_id === req.user.id);
 
     if (!hasPermission) {
       return res.status(403).json({
@@ -205,6 +208,8 @@ router.post('/', authenticateToken, requireOrganization, paymentValidation, asyn
 
     const newPayment = result.rows[0];
 
+    console.log(`💰 Payment created: ${description} - £${amount} for player ${playerId}`);
+
     res.status(201).json({
       message: 'Payment created successfully',
       payment: newPayment
@@ -219,142 +224,152 @@ router.post('/', authenticateToken, requireOrganization, paymentValidation, asyn
   }
 });
 
-// Update payment
-router.put('/:id', authenticateToken, requireOrganization, paymentValidation, async (req, res) => {
+// 🔥 CREATE STRIPE PAYMENT INTENT
+router.post('/create-intent', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
+    const { amount, paymentId, metadata = {} } = req.body;
+
+    if (!amount || amount <= 0) {
       return res.status(400).json({
-        error: 'Validation failed',
-        details: errors.array()
+        error: 'Invalid amount',
+        message: 'Amount must be greater than 0'
       });
     }
 
-    // Check if payment exists and user has permission
-    const paymentResult = await query(`
-      SELECT p.*, c.owner_id 
-      FROM payments p
-      JOIN clubs c ON p.club_id = c.id
-      WHERE p.id = $1
-    `, [req.params.id]);
-    
-    if (paymentResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Payment not found',
-        message: 'Payment with this ID does not exist'
-      });
+    // Get payment details if paymentId provided
+    let paymentDetails = null;
+    if (paymentId) {
+      const paymentResult = await query(`
+        SELECT p.*, pl.first_name, pl.last_name, pl.email, c.name as club_name
+        FROM payments p
+        JOIN players pl ON p.player_id = pl.id
+        JOIN clubs c ON p.club_id = c.id
+        WHERE p.id = $1
+      `, [paymentId]);
+      
+      if (paymentResult.rows.length > 0) {
+        paymentDetails = paymentResult.rows[0];
+      }
     }
 
-    const payment = paymentResult.rows[0];
-    
-    if (payment.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied',
-        message: 'You can only update payments for your own clubs'
-      });
-    }
+    // Create Stripe Payment Intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Convert to pence
+      currency: 'gbp',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        paymentId: paymentId || '',
+        playerName: paymentDetails ? `${paymentDetails.first_name} ${paymentDetails.last_name}` : '',
+        clubName: paymentDetails ? paymentDetails.club_name : '',
+        ...metadata
+      },
+      description: paymentDetails ? paymentDetails.description : `Payment of £${amount}`
+    });
 
-    const { 
-      amount, 
-      paymentType, 
-      description, 
-      dueDate,
-      paymentStatus
-    } = req.body;
-
-    const result = await query(`
-      UPDATE payments SET 
-        amount = $1,
-        payment_type = $2,
-        description = $3,
-        due_date = $4,
-        payment_status = $5,
-        updated_at = NOW()
-      WHERE id = $6
-      RETURNING *
-    `, [
-      amount,
-      paymentType,
-      description,
-      dueDate,
-      paymentStatus || payment.payment_status,
-      req.params.id
-    ]);
-
-    const updatedPayment = result.rows[0];
+    console.log(`💳 Stripe Payment Intent created: ${paymentIntent.id} for £${amount}`);
 
     res.json({
-      message: 'Payment updated successfully',
-      payment: updatedPayment
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      amount: amount,
+      paymentDetails: paymentDetails
     });
 
   } catch (error) {
-    console.error('Update payment error:', error);
+    console.error('Create payment intent error:', error);
     res.status(500).json({
-      error: 'Failed to update payment',
-      message: 'An error occurred while updating the payment'
+      error: 'Failed to create payment intent',
+      message: error.message
     });
   }
 });
 
-// Delete payment
-router.delete('/:id', authenticateToken, requireOrganization, async (req, res) => {
+// 🔥 CONFIRM STRIPE PAYMENT
+router.post('/confirm-payment', async (req, res) => {
   try {
-    // Check if payment exists and user has permission
-    const paymentResult = await query(`
-      SELECT p.*, c.owner_id 
-      FROM payments p
-      JOIN clubs c ON p.club_id = c.id
-      WHERE p.id = $1
-    `, [req.params.id]);
-    
-    if (paymentResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Payment not found',
-        message: 'Payment with this ID does not exist'
-      });
-    }
+    const { paymentIntentId, paymentId } = req.body;
 
-    const payment = paymentResult.rows[0];
-    
-    if (payment.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied',
-        message: 'You can only delete payments for your own clubs'
-      });
-    }
-
-    // Don't allow deletion of paid payments
-    if (payment.payment_status === 'paid') {
+    if (!paymentIntentId) {
       return res.status(400).json({
-        error: 'Cannot delete paid payment',
-        message: 'Paid payments cannot be deleted'
+        error: 'Payment Intent ID is required'
       });
     }
 
-    await query('DELETE FROM payments WHERE id = $1', [req.params.id]);
+    // Retrieve the payment intent from Stripe to verify it succeeded
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(400).json({
+        error: 'Payment not completed',
+        message: 'Payment intent status: ' + paymentIntent.status
+      });
+    }
+
+    // If paymentId provided, mark the payment as paid in our database
+    if (paymentId) {
+      const result = await query(`
+        UPDATE payments SET 
+          payment_status = 'paid',
+          paid_date = NOW(),
+          stripe_payment_intent_id = $1,
+          stripe_charge_id = $2,
+          updated_at = NOW()
+        WHERE id = $3 AND payment_status != 'paid'
+        RETURNING *
+      `, [
+        paymentIntent.id,
+        paymentIntent.latest_charge,
+        paymentId
+      ]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Payment not found or already processed'
+        });
+      }
+
+      // Update player payment status if this was a monthly fee
+      const payment = result.rows[0];
+      if (payment.payment_type === 'monthly_fee') {
+        await query(`
+          UPDATE players SET 
+            payment_status = 'paid',
+            updated_at = NOW()
+          WHERE id = $1
+        `, [payment.player_id]);
+      }
+
+      console.log(`✅ Payment confirmed: ${paymentId} - Stripe: ${paymentIntent.id}`);
+    }
 
     res.json({
-      message: 'Payment deleted successfully'
+      success: true,
+      paymentIntent: {
+        id: paymentIntent.id,
+        status: paymentIntent.status,
+        amount_received: paymentIntent.amount_received
+      }
     });
 
   } catch (error) {
-    console.error('Delete payment error:', error);
+    console.error('Confirm payment error:', error);
     res.status(500).json({
-      error: 'Failed to delete payment',
-      message: 'An error occurred while deleting the payment'
+      error: 'Failed to confirm payment',
+      message: error.message
     });
   }
 });
 
-// Mark payment as paid
-router.patch('/:id/pay', authenticateToken, async (req, res) => {
+// 🔥 MANUAL PAYMENT PROCESSING (for admin)
+router.patch('/:id/mark-paid', authenticateToken, requireOrganization, async (req, res) => {
   try {
-    const { stripePaymentIntentId, stripeChargeId } = req.body;
+    const { notes } = req.body;
 
-    // Get payment details
+    // Get payment details and verify permissions
     const paymentResult = await query(`
-      SELECT p.*, c.owner_id, pl.user_id 
+      SELECT p.*, c.owner_id, pl.first_name, pl.last_name
       FROM payments p
       JOIN clubs c ON p.club_id = c.id
       JOIN players pl ON p.player_id = pl.id
@@ -369,10 +384,8 @@ router.patch('/:id/pay', authenticateToken, async (req, res) => {
 
     const payment = paymentResult.rows[0];
 
-    // Check if user has permission (club owner or player's user)
-    const hasPermission = payment.owner_id === req.user.id || payment.user_id === req.user.id;
-
-    if (!hasPermission) {
+    // Check if user owns the club
+    if (payment.owner_id !== req.user.id) {
       return res.status(403).json({
         error: 'Access denied'
       });
@@ -380,8 +393,7 @@ router.patch('/:id/pay', authenticateToken, async (req, res) => {
 
     if (payment.payment_status === 'paid') {
       return res.status(400).json({
-        error: 'Payment already paid',
-        message: 'This payment has already been processed'
+        error: 'Payment already marked as paid'
       });
     }
 
@@ -390,12 +402,10 @@ router.patch('/:id/pay', authenticateToken, async (req, res) => {
       UPDATE payments SET 
         payment_status = 'paid',
         paid_date = NOW(),
-        stripe_payment_intent_id = $1,
-        stripe_charge_id = $2,
         updated_at = NOW()
-      WHERE id = $3
+      WHERE id = $1
       RETURNING *
-    `, [stripePaymentIntentId || null, stripeChargeId || null, req.params.id]);
+    `, [req.params.id]);
 
     // Update player payment status if this was a monthly fee
     if (payment.payment_type === 'monthly_fee') {
@@ -407,261 +417,200 @@ router.patch('/:id/pay', authenticateToken, async (req, res) => {
       `, [payment.player_id]);
     }
 
+    console.log(`💰 Payment manually marked as paid: ${payment.first_name} ${payment.last_name} - £${payment.amount}`);
+
     res.json({
-      message: 'Payment processed successfully',
+      message: 'Payment marked as paid successfully',
       payment: result.rows[0]
     });
 
   } catch (error) {
-    console.error('Process payment error:', error);
+    console.error('Mark payment as paid error:', error);
     res.status(500).json({
-      error: 'Failed to process payment'
+      error: 'Failed to mark payment as paid'
     });
   }
 });
 
-// Get payment history for a player
-router.get('/history/:playerId', authenticateToken, async (req, res) => {
+// 🔥 GENERATE PAYMENT LINK
+router.get('/:id/payment-link', authenticateToken, requireOrganization, async (req, res) => {
   try {
-    // Verify player exists and user has permission
-    const playerResult = await query(`
-      SELECT p.*, c.owner_id, p.user_id 
-      FROM players p
+    const paymentResult = await query(`
+      SELECT p.*, c.owner_id, pl.first_name, pl.last_name, pl.email
+      FROM payments p
+      JOIN clubs c ON p.club_id = c.id
+      JOIN players pl ON p.player_id = pl.id
+      WHERE p.id = $1
+    `, [req.params.id]);
+    
+    if (paymentResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Payment not found'
+      });
+    }
+
+    const payment = paymentResult.rows[0];
+
+    // Check if user owns the club
+    if (payment.owner_id !== req.user.id) {
+      return res.status(403).json({
+        error: 'Access denied'
+      });
+    }
+
+    if (payment.payment_status === 'paid') {
+      return res.status(400).json({
+        error: 'Payment already completed'
+      });
+    }
+
+    // Generate secure payment token
+    const paymentToken = Buffer.from(`${payment.id}:${payment.created_at}`).toString('base64');
+    const paymentLink = `${req.protocol}://${req.get('host')}/payment.html?id=${payment.id}&token=${paymentToken}`;
+
+    res.json({
+      paymentLink,
+      player: {
+        name: `${payment.first_name} ${payment.last_name}`,
+        email: payment.email
+      },
+      payment: {
+        amount: payment.amount,
+        description: payment.description,
+        dueDate: payment.due_date
+      }
+    });
+
+  } catch (error) {
+    console.error('Generate payment link error:', error);
+    res.status(500).json({
+      error: 'Failed to generate payment link'
+    });
+  }
+});
+
+// 🔥 SEND PAYMENT REMINDER
+router.post('/:id/send-reminder', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const paymentResult = await query(`
+      SELECT p.*, c.owner_id, c.name as club_name, pl.first_name, pl.last_name, pl.email
+      FROM payments p
+      JOIN clubs c ON p.club_id = c.id
+      JOIN players pl ON p.player_id = pl.id
+      WHERE p.id = $1
+    `, [req.params.id]);
+    
+    if (paymentResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Payment not found'
+      });
+    }
+
+    const payment = paymentResult.rows[0];
+
+    // Check if user owns the club
+    if (payment.owner_id !== req.user.id) {
+      return res.status(403).json({
+        error: 'Access denied'
+      });
+    }
+
+    if (payment.payment_status === 'paid') {
+      return res.status(400).json({
+        error: 'Cannot send reminder for paid payment'
+      });
+    }
+
+    // Generate payment link for the reminder
+    const paymentToken = Buffer.from(`${payment.id}:${payment.created_at}`).toString('base64');
+    const paymentLink = `${req.protocol}://${req.get('host')}/payment.html?id=${payment.id}&token=${paymentToken}`;
+
+    // In a real application, you would send an actual email here
+    // For now, we'll just log the reminder details
+    console.log(`📧 Payment reminder would be sent to: ${payment.email}`);
+    console.log(`📄 Payment details: ${payment.description} - £${payment.amount}`);
+    console.log(`🔗 Payment link: ${paymentLink}`);
+
+    res.json({
+      message: 'Payment reminder sent successfully',
+      sentTo: payment.email,
+      paymentLink: paymentLink
+    });
+
+  } catch (error) {
+    console.error('Send payment reminder error:', error);
+    res.status(500).json({
+      error: 'Failed to send payment reminder'
+    });
+  }
+});
+
+// 🔥 PUBLIC PAYMENT DETAILS (for payment page)
+router.get('/public/:id', async (req, res) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token) {
+      return res.status(400).json({
+        error: 'Payment token is required'
+      });
+    }
+
+    // Verify token
+    try {
+      const decoded = Buffer.from(token, 'base64').toString('utf-8');
+      const [paymentId, timestamp] = decoded.split(':');
+      
+      if (paymentId !== req.params.id) {
+        throw new Error('Invalid token');
+      }
+    } catch (error) {
+      return res.status(403).json({
+        error: 'Invalid payment token'
+      });
+    }
+
+    const paymentResult = await query(`
+      SELECT p.*, pl.first_name, pl.last_name, c.name as club_name, c.location
+      FROM payments p
+      JOIN players pl ON p.player_id = pl.id
       JOIN clubs c ON p.club_id = c.id
       WHERE p.id = $1
-    `, [req.params.playerId]);
-
-    if (playerResult.rows.length === 0) {
+    `, [req.params.id]);
+    
+    if (paymentResult.rows.length === 0) {
       return res.status(404).json({
-        error: 'Player not found'
+        error: 'Payment not found'
       });
     }
 
-    const player = playerResult.rows[0];
+    const payment = paymentResult.rows[0];
 
-    // Check if user has permission
-    const hasPermission = player.owner_id === req.user.id || 
-                         (req.user.accountType === 'adult' && player.user_id === req.user.id);
-
-    if (!hasPermission) {
-      return res.status(403).json({
-        error: 'Access denied'
+    if (payment.payment_status === 'paid') {
+      return res.status(400).json({
+        error: 'Payment already completed'
       });
     }
-
-    // Get payment history
-    const paymentsResult = await query(`
-      SELECT * FROM payments
-      WHERE player_id = $1
-      ORDER BY due_date DESC, created_at DESC
-    `, [req.params.playerId]);
-
-    // Calculate statistics
-    const payments = paymentsResult.rows;
-    const stats = {
-      total_payments: payments.length,
-      total_amount: payments.reduce((sum, p) => sum + parseFloat(p.amount), 0),
-      paid_count: payments.filter(p => p.payment_status === 'paid').length,
-      pending_count: payments.filter(p => p.payment_status === 'pending').length,
-      overdue_count: payments.filter(p => p.payment_status === 'overdue').length,
-      total_paid: payments
-        .filter(p => p.payment_status === 'paid')
-        .reduce((sum, p) => sum + parseFloat(p.amount), 0),
-      total_outstanding: payments
-        .filter(p => p.payment_status !== 'paid')
-        .reduce((sum, p) => sum + parseFloat(p.amount), 0)
-    };
 
     res.json({
+      id: payment.id,
+      amount: payment.amount,
+      description: payment.description,
+      dueDate: payment.due_date,
+      paymentType: payment.payment_type,
       player: {
-        id: player.id,
-        first_name: player.first_name,
-        last_name: player.last_name
+        name: `${payment.first_name} ${payment.last_name}`
       },
-      payments,
-      statistics: stats
-    });
-
-  } catch (error) {
-    console.error('Get payment history error:', error);
-    res.status(500).json({
-      error: 'Failed to fetch payment history'
-    });
-  }
-});
-
-// Get club payment summary
-router.get('/club/:clubId/summary', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    // Verify club exists and user owns it
-    const clubResult = await query(queries.findClubById, [req.params.clubId]);
-    if (clubResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Club not found'
-      });
-    }
-
-    const club = clubResult.rows[0];
-    if (club.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied'
-      });
-    }
-
-    // Get payment summary
-    const summaryResult = await query(`
-      SELECT 
-        payment_status,
-        payment_type,
-        COUNT(*) as count,
-        SUM(amount) as total_amount
-      FROM payments
-      WHERE club_id = $1
-      GROUP BY payment_status, payment_type
-      ORDER BY payment_status, payment_type
-    `, [req.params.clubId]);
-
-    // Get overdue payments
-    const overdueResult = await query(`
-      SELECT p.*, pl.first_name, pl.last_name
-      FROM payments p
-      JOIN players pl ON p.player_id = pl.id
-      WHERE p.club_id = $1 
-        AND p.payment_status = 'pending' 
-        AND p.due_date < CURRENT_DATE
-      ORDER BY p.due_date ASC
-    `, [req.params.clubId]);
-
-    // Get recent payments
-    const recentResult = await query(`
-      SELECT p.*, pl.first_name, pl.last_name
-      FROM payments p
-      JOIN players pl ON p.player_id = pl.id
-      WHERE p.club_id = $1 
-        AND p.payment_status = 'paid'
-      ORDER BY p.paid_date DESC
-      LIMIT 10
-    `, [req.params.clubId]);
-
-    // Calculate totals
-    const totals = summaryResult.rows.reduce((acc, row) => {
-      acc.total_amount += parseFloat(row.total_amount);
-      acc.total_count += parseInt(row.count);
-      
-      if (row.payment_status === 'paid') {
-        acc.paid_amount += parseFloat(row.total_amount);
-        acc.paid_count += parseInt(row.count);
-      } else {
-        acc.outstanding_amount += parseFloat(row.total_amount);
-        acc.outstanding_count += parseInt(row.count);
-      }
-      
-      return acc;
-    }, {
-      total_amount: 0,
-      total_count: 0,
-      paid_amount: 0,
-      paid_count: 0,
-      outstanding_amount: 0,
-      outstanding_count: 0
-    });
-
-    res.json({
       club: {
-        id: club.id,
-        name: club.name
-      },
-      summary: summaryResult.rows,
-      totals,
-      overdue_payments: overdueResult.rows,
-      recent_payments: recentResult.rows
-    });
-
-  } catch (error) {
-    console.error('Get club payment summary error:', error);
-    res.status(500).json({
-      error: 'Failed to fetch payment summary'
-    });
-  }
-});
-
-// Create payment intent (for Stripe integration)
-router.post('/create-intent', authenticateToken, [
-  body('amount').isNumeric().withMessage('Amount must be a number'),
-  body('currency').optional().isLength({ min: 3, max: 3 }).withMessage('Currency must be 3 characters'),
-  body('metadata').optional().isObject().withMessage('Metadata must be an object')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: errors.array()
-      });
-    }
-
-    // For now, return a mock payment intent
-    // In production, you would integrate with Stripe here
-    const { amount, currency = 'gbp', metadata = {} } = req.body;
-
-    const mockPaymentIntent = {
-      id: `pi_mock_${Date.now()}`,
-      amount: Math.round(amount * 100), // Convert to pence/cents
-      currency,
-      status: 'requires_payment_method',
-      client_secret: `pi_mock_${Date.now()}_secret_${Math.random().toString(36).substr(2, 9)}`,
-      metadata
-    };
-
-    res.json({
-      payment_intent: mockPaymentIntent
-    });
-
-  } catch (error) {
-    console.error('Create payment intent error:', error);
-    res.status(500).json({
-      error: 'Failed to create payment intent'
-    });
-  }
-});
-
-// Confirm payment (for Stripe integration)
-router.post('/confirm', authenticateToken, [
-  body('paymentIntentId').notEmpty().withMessage('Payment intent ID is required')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: errors.array()
-      });
-    }
-
-    const { paymentIntentId } = req.body;
-
-    // For now, return a mock confirmation
-    // In production, you would confirm with Stripe here
-    const mockConfirmation = {
-      id: paymentIntentId,
-      status: 'succeeded',
-      amount_received: Math.round(Math.random() * 10000), // Mock amount
-      charges: {
-        data: [{
-          id: `ch_mock_${Date.now()}`,
-          status: 'succeeded'
-        }]
+        name: payment.club_name,
+        location: payment.location
       }
-    };
-
-    res.json({
-      payment_intent: mockConfirmation
     });
 
   } catch (error) {
-    console.error('Confirm payment error:', error);
+    console.error('Get public payment error:', error);
     res.status(500).json({
-      error: 'Failed to confirm payment'
+      error: 'Failed to fetch payment details'
     });
   }
 });
@@ -672,7 +621,7 @@ router.post('/generate-monthly-fees/:clubId', authenticateToken, requireOrganiza
     const { month, year } = req.body;
 
     // Verify club exists and user owns it
-    const clubResult = await query(queries.findClubById, [req.params.clubId]);
+    const clubResult = await query('SELECT * FROM clubs WHERE id = $1', [req.params.clubId]);
     if (clubResult.rows.length === 0) {
       return res.status(404).json({
         error: 'Club not found'
@@ -725,6 +674,8 @@ router.post('/generate-monthly-fees/:clubId', authenticateToken, requireOrganiza
         generatedPayments.push(result.rows[0]);
       }
     }
+
+    console.log(`💰 Generated ${generatedPayments.length} monthly fee payments for ${club.name}`);
 
     res.json({
       message: `Generated ${generatedPayments.length} monthly fee payments`,

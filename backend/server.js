@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -13,6 +14,8 @@ const teamRoutes = require('./routes/teams');
 const eventRoutes = require('./routes/events');
 const paymentRoutes = require('./routes/payments');
 const dashboardRoutes = require('./routes/dashboard');
+// 🔥 ADD: Import notifications route
+const notificationRoutes = require('./routes/notifications');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -35,7 +38,9 @@ app.use('/api/', limiter);
 app.use(cors({
   origin: [
     'http://localhost:8000',
-    'http://127.0.0.1:8000',  // Add this line
+    'http://127.0.0.1:8000',
+    'https://clubhubsports.net',           // ← ADD THIS
+    'https://www.clubhubsports.net',       // ← ADD THIS
     process.env.FRONTEND_URL || 'http://localhost:8000'
   ],
   credentials: true,
@@ -53,9 +58,19 @@ app.use('/uploads', express.static('uploads'));
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
-    status: 'OK', 
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// 🔥 ADD: API health check endpoint (this is what your frontend calls)
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'ClubHub API',
+    version: '1.0.0'
   });
 });
 
@@ -68,8 +83,18 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+// 🔥 ADD: Notifications route
+app.use('/api/notifications', notificationRoutes);
 
-// 404 handler
+// 🔥 ADD: Handle 404 for API routes specifically
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    error: 'API endpoint not found',
+    message: `The endpoint ${req.method} ${req.originalUrl} does not exist`
+  });
+});
+
+// 404 handler for all other routes
 app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Route not found',
@@ -86,7 +111,7 @@ async function startServer() {
     // Test database connection
     await connectDB();
     console.log('✅ Database connected successfully');
-
+    
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 ClubHub API server running on port ${PORT}`);
@@ -94,8 +119,9 @@ async function startServer() {
       console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:8000'}`);
       console.log(`💾 Database: ${process.env.DB_NAME}@${process.env.DB_HOST}:${process.env.DB_PORT}`);
       console.log(`📋 Health check: http://localhost:${PORT}/health`);
+      console.log(`📋 API Health check: http://localhost:${PORT}/api/health`);
     });
-
+   
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);

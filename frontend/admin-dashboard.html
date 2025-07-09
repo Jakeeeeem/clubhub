@@ -148,6 +148,7 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Date of Birth</th>
+                                    <th>Email</th>
                                     <th>Payment Status</th>
                                     <th>Team</th>
                                     <th>Actions</th>
@@ -429,6 +430,78 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Create Event</button>
             </form>
+        </div>
+    </div>
+
+    <!-- 🔥 ADDED: Create Team Modal -->
+    <div id="addTeamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Team</h2>
+                <button class="close" onclick="closeModal('addTeamModal')">&times;</button>
+            </div>
+            <form id="addTeamForm">
+                <div class="form-group">
+                    <label for="teamName">Team Name *</label>
+                    <input type="text" id="teamName" name="teamName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teamAgeGroup">Age Group</label>
+                    <select id="teamAgeGroup" name="teamAgeGroup">
+                        <option value="">Select age group...</option>
+                        <option value="U8">Under 8</option>
+                        <option value="U10">Under 10</option>
+                        <option value="U12">Under 12</option>
+                        <option value="U14">Under 14</option>
+                        <option value="U16">Under 16</option>
+                        <option value="U18">Under 18</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Veterans">Veterans</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teamSport">Sport *</label>
+                    <select id="teamSport" name="teamSport" required>
+                        <option value="">Select sport...</option>
+                        <option value="football">Football</option>
+                        <option value="basketball">Basketball</option>
+                        <option value="tennis">Tennis</option>
+                        <option value="rugby">Rugby</option>
+                        <option value="cricket">Cricket</option>
+                        <option value="hockey">Hockey</option>
+                        <option value="volleyball">Volleyball</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teamDescription">Description</label>
+                    <textarea id="teamDescription" name="teamDescription" rows="3" placeholder="Brief description of the team..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Team</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addTeamModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🔥 ADDED: Player Team Assignment Modal -->
+    <div id="playerTeamAssignmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('playerTeamAssignmentModal')">&times;</span>
+            <div id="playerTeamAssignmentContent"></div>
+        </div>
+    </div>
+
+    <!-- 🔥 ADDED: Manage Team Players Modal -->
+    <div id="manageTeamPlayersModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('manageTeamPlayersModal')">&times;</span>
+            <div id="manageTeamPlayersContent"></div>
         </div>
     </div>
 

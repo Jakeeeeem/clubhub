@@ -116,7 +116,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Create new player
+// Create new player - FIXED VERSION
 router.post('/', authenticateToken, requireOrganization, playerValidation, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -156,6 +156,21 @@ router.post('/', authenticateToken, requireOrganization, playerValidation, async
       });
     }
 
+    // 🔥 FIX: Try to find user by email if userId not provided
+    let playerUserId = userId || null;
+    
+    if (!playerUserId && email) {
+      const userResult = await query(
+        'SELECT id FROM users WHERE email = $1',
+        [email]
+      );
+      
+      if (userResult.rows.length > 0) {
+        playerUserId = userResult.rows[0].id;
+        console.log(`🔗 Linked player to existing user account: ${email}`);
+      }
+    }
+
     // Check if email already exists in this club
     if (email) {
       const existingPlayer = await query(
@@ -171,7 +186,12 @@ router.post('/', authenticateToken, requireOrganization, playerValidation, async
       }
     }
 
-    const result = await query(queries.createPlayer, [
+    // 🔥 FIX: Include user_id in the insert query
+    const result = await query(`
+      INSERT INTO players (first_name, last_name, email, phone, date_of_birth, position, club_id, monthly_fee, user_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `, [
       firstName,
       lastName,
       email || null,
@@ -179,7 +199,8 @@ router.post('/', authenticateToken, requireOrganization, playerValidation, async
       dateOfBirth,
       position || null,
       clubId,
-      monthlyFee || 0
+      monthlyFee || 0,
+      playerUserId  // ← This is the key fix!
     ]);
 
     const newPlayer = result.rows[0];
@@ -205,7 +226,7 @@ router.post('/', authenticateToken, requireOrganization, playerValidation, async
   }
 });
 
-// Update player
+// Update player - ENHANCED VERSION
 router.put('/:id', authenticateToken, requireOrganization, playerValidation, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -247,8 +268,24 @@ router.put('/:id', authenticateToken, requireOrganization, playerValidation, asy
       position, 
       monthlyFee,
       paymentStatus,
-      attendanceRate
+      attendanceRate,
+      userId
     } = req.body;
+
+    // 🔥 NEW: Handle user_id linking
+    let playerUserId = userId || player.user_id;
+    
+    if (!playerUserId && email) {
+      const userResult = await query(
+        'SELECT id FROM users WHERE email = $1',
+        [email]
+      );
+      
+      if (userResult.rows.length > 0) {
+        playerUserId = userResult.rows[0].id;
+        console.log(`🔗 Linked player to existing user account during update: ${email}`);
+      }
+    }
 
     const result = await query(`
       UPDATE players SET 
@@ -261,8 +298,9 @@ router.put('/:id', authenticateToken, requireOrganization, playerValidation, asy
         monthly_fee = $7,
         payment_status = $8,
         attendance_rate = $9,
+        user_id = $10,
         updated_at = NOW()
-      WHERE id = $10
+      WHERE id = $11
       RETURNING *
     `, [
       firstName,
@@ -274,6 +312,7 @@ router.put('/:id', authenticateToken, requireOrganization, playerValidation, asy
       monthlyFee || player.monthly_fee,
       paymentStatus || player.payment_status,
       attendanceRate || player.attendance_rate,
+      playerUserId,
       req.params.id
     ]);
 
