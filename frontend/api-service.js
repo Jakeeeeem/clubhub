@@ -1,6 +1,6 @@
 class ApiService {
   constructor() {
-    this.baseURL = 'http://api.clubhubsports.net/api';
+    this.baseURL = 'https://api.clubhubsports.net/api';
     this.token = localStorage.getItem('authToken');
     console.log('🌐 API Service initialized with baseURL:', this.baseURL);
   }
