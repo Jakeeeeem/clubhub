@@ -5,684 +5,475 @@ class ApiService {
     console.log('🌐 API Service initialized with baseURL:', this.baseURL);
   }
 
-   setToken(token) {
-        this.token = token;
-        if (token) {
-            localStorage.setItem('authToken', token);
-        } else {
-            localStorage.removeItem('authToken');
-        }
+  // Helper method to make API calls with enhanced error handling
+  async makeRequest(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+
+    // Add auth token if available
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    // Get authentication headers
-    getHeaders() {
-        const headers = {
-            'Content-Type': 'application/json',
-        };
+    const config = {
+      ...options,
+      headers
+    };
+
+    try {
+      console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+      const response = await fetch(url, config);
+      
+      // Handle different response types
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = await response.text();
+      }
+
+      if (!response.ok) {
+        console.error(`❌ API Error ${response.status}:`, data);
         
-        if (this.token) {
-            headers['Authorization'] = `Bearer ${this.token}`;
-        }
-        
-        return headers;
-    }
-
-    // Generic request method
-    async request(endpoint, options = {}) {
-        const url = `${this.baseURL}${endpoint}`;
-        const config = {
-            headers: this.getHeaders(),
-            ...options,
-        };
-
-        try {
-            console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
-            
-            const response = await fetch(url, config);
-            
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({
-                    error: 'Network error',
-                    message: `HTTP ${response.status}: ${response.statusText}`
-                }));
-                throw new Error(errorData.message || errorData.error || 'API request failed');
-            }
-
-            const data = await response.json();
-            console.log(`✅ API Response: ${options.method || 'GET'} ${url}`, data);
-            
-            return data;
-        } catch (error) {
-            console.error(`❌ API Error: ${options.method || 'GET'} ${url}`, error);
-            throw error;
-        }
-    }
-
-    // AUTH ENDPOINTS
-    async register(userData) {
-        return this.request('/auth/register', {
-            method: 'POST',
-            body: JSON.stringify(userData),
-        });
-    }
-
-    async login(credentials) {
-        const response = await this.request('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify(credentials),
-        });
-        
-        if (response.token) {
-            this.setToken(response.token);
+        // Handle authentication errors
+        if (response.status === 401) {
+          this.handleAuthError();
+          throw new Error(data.message || 'Authentication failed');
         }
         
-        return response;
-    }
-
-    async logout() {
-        const response = await this.request('/auth/logout', {
-            method: 'POST',
-        });
-        
-        this.setToken(null);
-        return response;
-    }
-
-    async getCurrentUser() {
-        return this.request('/auth/me');
-    }
-
-    async findUserByEmail(email) {
-        return this.request(`/auth/find-user?email=${encodeURIComponent(email)}`);
-    }
-
-    // DASHBOARD ENDPOINTS
-    async getAdminDashboardData() {
-        return this.request('/dashboard/admin');
-    }
-
-    async getPlayerDashboardData() {
-        return this.request('/dashboard/player');
-    }
-
-    // CLUB ENDPOINTS
-    async getClubs(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/clubs${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async getClub(clubId) {
-        return this.request(`/clubs/${clubId}`);
-    }
-
-    async createClub(clubData) {
-        return this.request('/clubs', {
-            method: 'POST',
-            body: JSON.stringify(clubData),
-        });
-    }
-
-    async updateClub(clubId, clubData) {
-        return this.request(`/clubs/${clubId}`, {
-            method: 'PUT',
-            body: JSON.stringify(clubData),
-        });
-    }
-
-    async deleteClub(clubId) {
-        return this.request(`/clubs/${clubId}`, {
-            method: 'DELETE',
-        });
-    }
-
-    async applyToClub(clubId, applicationData) {
-        return this.request(`/clubs/${clubId}/apply`, {
-            method: 'POST',
-            body: JSON.stringify(applicationData),
-        });
-    }
-
-    async getClubApplications(clubId) {
-        return this.request(`/clubs/${clubId}/applications`);
-    }
-
-    // PLAYER ENDPOINTS
-    async getPlayers(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/players${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async getPlayer(playerId) {
-        return this.request(`/players/${playerId}`);
-    }
-
-    async createPlayer(playerData) {
-        return this.request('/players', {
-            method: 'POST',
-            body: JSON.stringify(playerData),
-        });
-    }
-
-    async updatePlayer(playerId, playerData) {
-        return this.request(`/players/${playerId}`, {
-            method: 'PUT',
-            body: JSON.stringify(playerData),
-        });
-    }
-
-    async deletePlayer(playerId) {
-        return this.request(`/players/${playerId}`, {
-            method: 'DELETE',
-        });
-    }
-
-    async getPlayerStats(playerId) {
-        return this.request(`/players/${playerId}/stats`);
-    }
-
-    async updatePlayerPaymentStatus(playerId, status) {
-        return this.request(`/players/${playerId}/payment-status`, {
-            method: 'PATCH',
-            body: JSON.stringify({ paymentStatus: status }),
-        });
-    }
-
-    // STAFF ENDPOINTS
-    async getStaff(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/staff${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async getStaffMember(staffId) {
-        return this.request(`/staff/${staffId}`);
-    }
-
-    async createStaff(staffData) {
-        return this.request('/staff', {
-            method: 'POST',
-            body: JSON.stringify(staffData),
-        });
-    }
-
-    async updateStaff(staffId, staffData) {
-        return this.request(`/staff/${staffId}`, {
-            method: 'PUT',
-            body: JSON.stringify(staffData),
-        });
-    }
-
-    async deleteStaff(staffId) {
-        return this.request(`/staff/${staffId}`, {
-            method: 'DELETE',
-        });
-    }
-
-    async getStaffByClub(clubId) {
-        return this.request(`/staff/club/${clubId}`);
-    }
-
-    async updateStaffPermissions(staffId, permissions) {
-        return this.request(`/staff/${staffId}/permissions`, {
-            method: 'PATCH',
-            body: JSON.stringify({ permissions }),
-        });
-    }
-
-    // TEAM ENDPOINTS
-    async getTeams(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/teams${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async getTeam(teamId) {
-        return this.request(`/teams/${teamId}`);
-    }
-
-    async createTeam(teamData) {
-        return this.request('/teams', {
-            method: 'POST',
-            body: JSON.stringify(teamData),
-        });
-    }
-
-    async updateTeam(teamId, teamData) {
-        return this.request(`/teams/${teamId}`, {
-            method: 'PUT',
-            body: JSON.stringify(teamData),
-        });
-    }
-
-    async deleteTeam(teamId) {
-        return this.request(`/teams/${teamId}`, {
-            method: 'DELETE',
-        });
-    }
-
-    async getPlayerTeams(userId) {
-        return this.request(`/teams/player/${userId}`);
-    }
-
-    async assignPlayerToTeam(teamId, assignmentData) {
-        return this.request(`/teams/${teamId}/players`, {
-            method: 'POST',
-            body: JSON.stringify(assignmentData),
-        });
-    }
-
-    async removePlayerFromTeam(teamId, playerId) {
-        return this.request(`/teams/${teamId}/players/${playerId}`, {
-            method: 'DELETE',
-        });
-    }
-
-    async getTeamStats(teamId) {
-        return this.request(`/teams/${teamId}/stats`);
-    }
-
-    // EVENT ENDPOINTS
-    async getEvents(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/events${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async getEvent(eventId) {
-        return this.request(`/events/${eventId}`);
-    }
-
-    async createEvent(eventData) {
-        return this.request('/events', {
-            method: 'POST',
-            body: JSON.stringify(eventData),
-        });
-    }
-
-    async updateEvent(eventId, eventData) {
-        return this.request(`/events/${eventId}`, {
-            method: 'PUT',
-            body: JSON.stringify(eventData),
-        });
-    }
-
-    async deleteEvent(eventId) {
-        return this.request(`/events/${eventId}`, {
-            method: 'DELETE',
-        });
-    }
-
-    async bookEvent(eventId, bookingData) {
-        return this.request(`/events/${eventId}/book`, {
-            method: 'POST',
-            body: JSON.stringify(bookingData),
-        });
-    }
-
-    async cancelEventBooking(bookingId) {
-        return this.request(`/events/bookings/${bookingId}/cancel`, {
-            method: 'POST',
-        });
-    }
-
-    async getEventBookings(eventId) {
-        return this.request(`/events/${eventId}/bookings`);
-    }
-
-    async getUserBookings(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/events/bookings/my-bookings${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async submitAvailability(eventId, availabilityData) {
-        return this.request(`/events/${eventId}/availability`, {
-            method: 'POST',
-            body: JSON.stringify(availabilityData),
-        });
-    }
-
-    async getEventAvailability(eventId) {
-        return this.request(`/events/${eventId}/availability`);
-    }
-
-    // PAYMENT ENDPOINTS
-    async getPayments(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/payments${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async getPayment(paymentId) {
-        return this.request(`/payments/${paymentId}`);
-    }
-
-    async createPayment(paymentData) {
-        return this.request('/payments', {
-            method: 'POST',
-            body: JSON.stringify(paymentData),
-        });
-    }
-
-    async createPaymentIntent(intentData) {
-        return this.request('/payments/create-intent', {
-            method: 'POST',
-            body: JSON.stringify(intentData),
-        });
-    }
-
-    async confirmPayment(paymentIntentId, paymentId) {
-        return this.request('/payments/confirm-payment', {
-            method: 'POST',
-            body: JSON.stringify({
-                paymentIntentId,
-                paymentId,
-            }),
-        });
-    }
-
-    async markPaymentAsPaid(paymentId, notes = '') {
-        return this.request(`/payments/${paymentId}/mark-paid`, {
-            method: 'PATCH',
-            body: JSON.stringify({ notes }),
-        });
-    }
-
-    async generatePaymentLink(paymentId) {
-        return this.request(`/payments/${paymentId}/payment-link`);
-    }
-
-    async sendPaymentReminder(paymentId) {
-        return this.request(`/payments/${paymentId}/send-reminder`, {
-            method: 'POST',
-        });
-    }
-
-    async getPublicPayment(paymentId, token) {
-        return this.request(`/payments/public/${paymentId}?token=${encodeURIComponent(token)}`);
-    }
-
-    async generateMonthlyFees(clubId, month, year) {
-        return this.request(`/payments/generate-monthly-fees/${clubId}`, {
-            method: 'POST',
-            body: JSON.stringify({ month, year }),
-        });
-    }
-
-    // FINANCIAL ENDPOINTS
-    async processStripePayment(paymentData) {
-        return this.request('/payments/process-stripe', {
-            method: 'POST',
-            body: JSON.stringify(paymentData),
-        });
-    }
-
-    async getFinancialSummary(clubId) {
-        return this.request(`/clubs/${clubId}/financial-summary`);
-    }
-
-    async getPaymentAnalytics(clubId, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/clubs/${clubId}/payment-analytics${queryString ? `?${queryString}` : ''}`);
-    }
-
-    // LISTING ENDPOINTS (for public events/camps)
-    async getListings(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/listings${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async createListing(listingData) {
-        return this.request('/listings', {
-            method: 'POST',
-            body: JSON.stringify(listingData),
-        });
-    }
-
-    async updateListing(listingId, listingData) {
-        return this.request(`/listings/${listingId}`, {
-            method: 'PUT',
-            body: JSON.stringify(listingData),
-        });
-    }
-
-    async deleteListing(listingId) {
-        return this.request(`/listings/${listingId}`, {
-            method: 'DELETE',
-        });
-    }
-
-    // DOCUMENT ENDPOINTS
-    async getDocuments(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/documents${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async uploadDocument(documentData) {
-        return this.request('/documents', {
-            method: 'POST',
-            body: JSON.stringify(documentData),
-        });
-    }
-
-    async downloadDocument(documentId) {
-        return this.request(`/documents/${documentId}/download`);
-    }
-
-    async deleteDocument(documentId) {
-        return this.request(`/documents/${documentId}`, {
-            method: 'DELETE',
-        });
-    }
-
-    // NOTIFICATION ENDPOINTS
-    async getNotifications() {
-        return this.request('/notifications');
-    }
-
-    async markNotificationAsRead(notificationId) {
-        return this.request(`/notifications/${notificationId}/read`, {
-            method: 'PATCH',
-        });
-    }
-
-    async sendNotification(notificationData) {
-        return this.request('/notifications', {
-            method: 'POST',
-            body: JSON.stringify(notificationData),
-        });
-    }
-
-    // ANALYTICS ENDPOINTS
-    async getClubAnalytics(clubId, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/clubs/${clubId}/analytics${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async getPlayerAnalytics(playerId, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/players/${playerId}/analytics${queryString ? `?${queryString}` : ''}`);
-    }
-
-    // SEARCH ENDPOINTS
-    async searchClubs(searchTerm, filters = {}) {
-        const params = { search: searchTerm, ...filters };
-        return this.getClubs(params);
-    }
-
-    async searchEvents(searchTerm, filters = {}) {
-        const params = { search: searchTerm, ...filters };
-        return this.getEvents(params);
-    }
-
-    async searchPlayers(searchTerm, filters = {}) {
-        const params = { search: searchTerm, ...filters };
-        return this.getPlayers(params);
-    }
-
-    // UTILITY METHODS
-    async healthCheck() {
-        return this.request('/health');
-    }
-
-    async uploadFile(file, endpoint = '/upload') {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch(`${this.baseURL}${endpoint}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': this.token ? `Bearer ${this.token}` : undefined,
-            },
-            body: formData,
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({
-                error: 'Upload failed',
-                message: `HTTP ${response.status}: ${response.statusText}`
-            }));
-            throw new Error(errorData.message || errorData.error || 'File upload failed');
-        }
-
-        return response.json();
-    }
-
-    // BATCH OPERATIONS
-    async batchCreatePlayers(playersData) {
-        return this.request('/players/batch', {
-            method: 'POST',
-            body: JSON.stringify({ players: playersData }),
-        });
-    }
-
-    async batchUpdatePayments(paymentsData) {
-        return this.request('/payments/batch-update', {
-            method: 'PATCH',
-            body: JSON.stringify({ payments: paymentsData }),
-        });
-    }
-
-    async batchSendInvitations(invitationsData) {
-        return this.request('/invitations/batch', {
-            method: 'POST',
-            body: JSON.stringify({ invitations: invitationsData }),
-        });
-    }
-
-    // REPORTING ENDPOINTS
-    async generateClubReport(clubId, reportType, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/reports/club/${clubId}/${reportType}${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async generatePaymentReport(clubId, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/reports/payments/${clubId}${queryString ? `?${queryString}` : ''}`);
-    }
-
-    async generateAttendanceReport(teamId, params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.request(`/reports/attendance/${teamId}${queryString ? `?${queryString}` : ''}`);
-    }
-
-    // INTEGRATION ENDPOINTS
-    async syncWithExternalCalendar(calendarData) {
-        return this.request('/integrations/calendar/sync', {
-            method: 'POST',
-            body: JSON.stringify(calendarData),
-        });
-    }
-
-    async importPlayersFromCSV(csvData) {
-        return this.request('/integrations/import/players', {
-            method: 'POST',
-            body: JSON.stringify({ csvData }),
-        });
-    }
-
-    async exportClubData(clubId, format = 'json') {
-        return this.request(`/integrations/export/club/${clubId}?format=${format}`);
-    }
-
-    // ERROR HANDLING HELPERS
-    handleApiError(error) {
-        console.error('API Error:', error);
-        
-        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-            this.setToken(null);
-            window.location.href = '/login.html';
-            return;
+        if (response.status === 404) {
+          throw new Error(data.message || 'Resource not found');
         }
         
-        if (error.message.includes('403') || error.message.includes('Forbidden')) {
-            showNotification('You do not have permission to perform this action', 'error');
-            return;
+        if (response.status === 500) {
+          console.error('❌ Server error details:', data);
+          throw new Error(data.message || 'Internal server error. Please check the backend logs.');
         }
         
-        if (error.message.includes('404') || error.message.includes('Not Found')) {
-            showNotification('Requested resource not found', 'error');
-            return;
+        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      console.log(`✅ API Response: ${response.status}`);
+      return data;
+    } catch (error) {
+      console.error(`❌ API Error: ${endpoint}`, error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Cannot connect to server. Please check your internet connection.');
+      }
+      
+      throw error;
+    }
+  }
+
+  // Handle authentication errors
+  handleAuthError() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    this.token = null;
+    
+    if (!window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
+      window.location.href = 'index.html';
+    }
+  }
+
+  // Set auth token
+  setToken(token) {
+    this.token = token;
+    localStorage.setItem('authToken', token);
+  }
+
+  // Clear auth token
+  clearToken() {
+    this.token = null;
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+  }
+
+  // =====================================================
+  // AUTHENTICATION METHODS
+  // =====================================================
+
+  async login(email, password) {
+    const response = await this.makeRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+
+    if (response.token) {
+      this.setToken(response.token);
+      localStorage.setItem('currentUser', JSON.stringify(response.user));
+    }
+
+    return response;
+  }
+
+  async register(userData) {
+    const response = await this.makeRequest('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData)
+    });
+
+    if (response.token) {
+      this.setToken(response.token);
+      localStorage.setItem('currentUser', JSON.stringify(response.user));
+    }
+
+    return response;
+  }
+
+  async logout() {
+    try {
+      await this.makeRequest('/auth/logout', {
+        method: 'POST'
+      });
+    } finally {
+      this.clearToken();
+    }
+  }
+
+  async getCurrentUser() {
+    return await this.makeRequest('/auth/me');
+  }
+
+  // =====================================================
+  // CLUB MANAGEMENT METHODS
+  // =====================================================
+
+  async getClubs() {
+    try {
+      return await this.makeRequest('/clubs');
+    } catch (error) {
+      console.error('❌ Failed to fetch clubs:', error);
+      return [];
+    }
+  }
+
+  async getClubById(id) {
+    return await this.makeRequest(`/clubs/${id}`);
+  }
+
+  async createClub(clubData) {
+    return await this.makeRequest('/clubs', {
+      method: 'POST',
+      body: JSON.stringify(clubData)
+    });
+  }
+
+  async updateClub(id, clubData) {
+    return await this.makeRequest(`/clubs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(clubData)
+    });
+  }
+
+  async deleteClub(id) {
+    return await this.makeRequest(`/clubs/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // =====================================================
+  // PLAYER MANAGEMENT METHODS
+  // =====================================================
+
+  async getPlayers(clubId = null) {
+    try {
+      const endpoint = clubId ? `/players?clubId=${clubId}` : '/players';
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.error('❌ Failed to fetch players:', error);
+      return [];
+    }
+  }
+
+  async getPlayerById(id) {
+    return await this.makeRequest(`/players/${id}`);
+  }
+
+  async createPlayer(playerData) {
+    return await this.makeRequest('/players', {
+      method: 'POST',
+      body: JSON.stringify(playerData)
+    });
+  }
+
+  async updatePlayer(id, playerData) {
+    return await this.makeRequest(`/players/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(playerData)
+    });
+  }
+
+  async deletePlayer(id) {
+    return await this.makeRequest(`/players/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // =====================================================
+  // PAYMENT METHODS - REAL STRIPE INTEGRATION
+  // =====================================================
+
+  async createPaymentIntent(amount, description, metadata = {}) {
+    return await this.makeRequest('/payments/create-intent', {
+      method: 'POST',
+      body: JSON.stringify({
+        amount: Math.round(amount * 100), // Convert to cents
+        description,
+        metadata
+      })
+    });
+  }
+
+  async confirmPayment(paymentIntentId, paymentMethodId = null) {
+    return await this.makeRequest('/payments/confirm', {
+      method: 'POST',
+      body: JSON.stringify({
+        paymentIntentId,
+        paymentMethodId
+      })
+    });
+  }
+
+  async getPayments(filters = {}) {
+    try {
+      const queryParams = new URLSearchParams(filters).toString();
+      const endpoint = queryParams ? `/payments?${queryParams}` : '/payments';
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.error('❌ Failed to fetch payments:', error);
+      return [];
+    }
+  }
+
+  async createPayment(paymentData) {
+    return await this.makeRequest('/payments', {
+      method: 'POST',
+      body: JSON.stringify(paymentData)
+    });
+  }
+
+  async markPaymentAsPaid(paymentId, notes = '') {
+    return await this.makeRequest(`/payments/${paymentId}/mark-paid`, {
+      method: 'PATCH',
+      body: JSON.stringify({ notes })
+    });
+  }
+
+  // =====================================================
+  // EVENT MANAGEMENT METHODS
+  // =====================================================
+
+  async getEvents(clubId = null) {
+    try {
+      const endpoint = clubId ? `/events?clubId=${clubId}` : '/events';
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.error('❌ Failed to fetch events:', error);
+      return [];
+    }
+  }
+
+  async createEvent(eventData) {
+    return await this.makeRequest('/events', {
+      method: 'POST',
+      body: JSON.stringify(eventData)
+    });
+  }
+
+  async bookEvent(eventId, bookingData = {}) {
+    return await this.makeRequest(`/events/${eventId}/book`, {
+      method: 'POST',
+      body: JSON.stringify(bookingData)
+    });
+  }
+
+  async createEventPayment(eventId, playerData) {
+    return await this.makeRequest(`/events/${eventId}/payment`, {
+      method: 'POST',
+      body: JSON.stringify(playerData)
+    });
+  }
+
+  // =====================================================
+  // TEAM MANAGEMENT METHODS
+  // =====================================================
+
+  async getTeams(clubId = null) {
+    try {
+      const endpoint = clubId ? `/teams?clubId=${clubId}` : '/teams';
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.error('❌ Failed to fetch teams:', error);
+      return [];
+    }
+  }
+
+  async createTeam(teamData) {
+    return await this.makeRequest('/teams', {
+      method: 'POST',
+      body: JSON.stringify(teamData)
+    });
+  }
+
+  async addPlayerToTeam(teamId, assignmentData) {
+    return await this.makeRequest(`/teams/${teamId}/players`, {
+      method: 'POST',
+      body: JSON.stringify(assignmentData)
+    });
+  }
+
+  async removePlayerFromTeam(teamId, playerId) {
+    return await this.makeRequest(`/teams/${teamId}/players/${playerId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async getPlayerTeams(userId) {
+    try {
+      return await this.makeRequest(`/teams/player/${userId}`);
+    } catch (error) {
+      console.error('❌ Failed to fetch player teams:', error);
+      return [];
+    }
+  }
+
+  // =====================================================
+  // STAFF MANAGEMENT METHODS
+  // =====================================================
+
+  async getStaff(clubId = null) {
+    try {
+      const endpoint = clubId ? `/staff?clubId=${clubId}` : '/staff';
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.error('❌ Failed to fetch staff:', error);
+      return [];
+    }
+  }
+
+  async createStaff(staffData) {
+    return await this.makeRequest('/staff', {
+      method: 'POST',
+      body: JSON.stringify(staffData)
+    });
+  }
+
+  async deleteStaff(id) {
+    return await this.makeRequest(`/staff/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async deleteTeam(id) {
+    return await this.makeRequest(`/teams/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async updateEvent(id, eventData) {
+    return await this.makeRequest(`/events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(eventData)
+    });
+  }
+
+  async deleteEvent(id) {
+    return await this.makeRequest(`/events/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // =====================================================
+  // DASHBOARD DATA METHODS
+  // =====================================================
+
+  async getAdminDashboardData() {
+    try {
+      return await this.makeRequest('/dashboard/admin');
+    } catch (error) {
+      console.error('❌ Failed to fetch admin dashboard data:', error);
+      return {
+        clubs: [],
+        players: [],
+        staff: [],
+        events: [],
+        teams: [],
+        payments: [],
+        statistics: {
+          total_clubs: 0,
+          total_players: 0,
+          total_staff: 0,
+          total_events: 0,
+          total_teams: 0,
+          monthly_revenue: 0
         }
-        
-        if (error.message.includes('429') || error.message.includes('Too Many Requests')) {
-            showNotification('Too many requests. Please try again later.', 'error');
-            return;
-        }
-        
-        showNotification(error.message || 'An unexpected error occurred', 'error');
+      };
     }
+  }
 
-    // REQUEST INTERCEPTORS
-    setRequestInterceptor(interceptor) {
-        this.requestInterceptor = interceptor;
+  async getPlayerDashboardData() {
+    try {
+      return await this.makeRequest('/dashboard/player');
+    } catch (error) {
+      console.error('❌ Failed to fetch player dashboard data:', error);
+      return {
+        player: null,
+        clubs: [],
+        teams: [],
+        events: [],
+        payments: [],
+        bookings: [],
+        applications: []
+      };
     }
+  }
 
-    setResponseInterceptor(interceptor) {
-        this.responseInterceptor = interceptor;
-    }
+  // =====================================================
+  // UTILITY METHODS
+  // =====================================================
 
-    // CACHING HELPERS
-    enableCaching() {
-        this.cachingEnabled = true;
-        this.cache = new Map();
-    }
+  formatCurrency(amount) {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP'
+    }).format(amount);
+  }
 
-    disableCaching() {
-        this.cachingEnabled = false;
-        this.cache = null;
-    }
+  // =====================================================
+  // HEALTH CHECK
+  // =====================================================
 
-    clearCache() {
-        if (this.cache) {
-            this.cache.clear();
-        }
-    }
+  async healthCheck() {
+    return await this.makeRequest('/health');
+  }
 
-    // RETRY LOGIC
-    async requestWithRetry(endpoint, options = {}, maxRetries = 3) {
-        let lastError;
-        
-        for (let i = 0; i <= maxRetries; i++) {
-            try {
-                return await this.request(endpoint, options);
-            } catch (error) {
-                lastError = error;
-                
-                if (i === maxRetries) {
-                    throw error;
-                }
-                
-                // Wait before retrying (exponential backoff)
-                await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
-            }
-        }
-        
-        throw lastError;
+  async testConnection() {
+    try {
+      console.log('🔍 Testing API connection...');
+      const health = await this.healthCheck();
+      console.log('✅ API Connection successful:', health);
+      return true;
+    } catch (error) {
+      console.error('❌ API Connection failed:', error);
+      return false;
     }
+  }
 }
 
-// Create and export global API service instance
-const apiService = new APIService();
+// Create and export a singleton instance
+const apiService = new ApiService();
 
-// Make it available globally
+// Test connection immediately
+apiService.testConnection();
+
+// Export for use in other files
 window.apiService = apiService;
 
-console.log('✅ Enhanced API Service loaded with full functionality');
-
-export default apiService;
+console.log('✅ Fixed API Service loaded with real payment processing!');
