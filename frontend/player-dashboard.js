@@ -37,7 +37,7 @@ let playerData = {
     listings: []
 };
 
-// Initialize player dashboard - NOW LOADS FROM DATABASE
+// Initialize player dashboard - FIXED TO LOAD FROM DATABASE
 async function initializePlayerDashboard() {
     console.log('🏃‍♂️ Initializing player dashboard...');
     
@@ -52,6 +52,9 @@ async function initializePlayerDashboard() {
         // 🔥 LOAD ALL DATA FROM DATABASE VIA API
         console.log('📊 Loading ALL data from database...');
         
+        // Load player-specific dashboard data
+        const playerDashboard = await apiService.getPlayerDashboardData();
+        
         // Load events from database
         const eventsData = await apiService.getEvents();
         AppState.events = eventsData || [];
@@ -62,35 +65,38 @@ async function initializePlayerDashboard() {
         AppState.clubs = clubsData || [];
         console.log('🏠 Loaded clubs from database:', AppState.clubs.length);
         
-        // Load players from database
-        const playersResponse = await apiService.getPlayers();
-        AppState.players = playersResponse.players || playersResponse || [];
-        console.log('👥 Loaded players from database:', AppState.players.length);
-        
-        // Load staff from database
-        const staffData = await apiService.getStaff();
-        AppState.staff = staffData || [];
-        console.log('👨‍💼 Loaded staff from database:', AppState.staff.length);
-        
-        // Load teams from database
-        const teamsData = await apiService.getTeams();
-        AppState.teams = teamsData || [];
-        console.log('⚽ Loaded teams from database:', AppState.teams.length);
-        
-        // 🔥 NEW: Load player-specific teams
-        if (AppState.currentUser?.id) {
-            try {
-                const playerTeams = await apiService.getPlayerTeams(AppState.currentUser.id);
-                AppState.playerTeams = playerTeams || [];
-                console.log('⚽ Loaded player-specific teams:', AppState.playerTeams.length);
-            } catch (error) {
-                console.log('No player teams found or error:', error.message);
-                AppState.playerTeams = [];
-            }
+        // Set player-specific data
+        if (playerDashboard.player) {
+            AppState.currentPlayer = playerDashboard.player;
+            playerData.clubs = playerDashboard.clubs || [];
+            playerData.teams = playerDashboard.teams || [];
+            playerData.payments = playerDashboard.payments || [];
+            playerData.bookings = playerDashboard.bookings || [];
+            playerData.applications = playerDashboard.applications || [];
+            
+            console.log('👤 Player data loaded:', {
+                player: `${playerDashboard.player.first_name} ${playerDashboard.player.last_name}`,
+                clubs: playerData.clubs.length,
+                teams: playerData.teams.length,
+                payments: playerData.payments.length
+            });
         }
         
-        // Load player-specific data
-        loadPlayerData();
+        // Load all available events for event finder
+        playerData.listings = AppState.events || [];
+        
+        // Load staff data for coaches
+        const staffData = await apiService.getStaff();
+        AppState.staff = staffData || [];
+        
+        // Filter coaches for player's clubs
+        const clubIds = playerData.clubs.map(c => c.id);
+        playerData.coaches = AppState.staff?.filter(s => 
+            clubIds.includes(s.club_id) && 
+            ['coach', 'assistant-coach', 'coaching-supervisor'].includes(s.role)
+        ) || [];
+        
+        // Load player data and setup
         loadPlayerStats();
         setupPlayerEventListeners();
         
@@ -103,14 +109,10 @@ async function initializePlayerDashboard() {
         console.error('❌ Failed to initialize player dashboard:', error);
         showNotification('Failed to load dashboard data: ' + error.message, 'error');
         
-        // Fallback to empty data
+        // Fallback to empty data but still show available events
         AppState.events = [];
         AppState.clubs = [];
-        AppState.players = [];
-        AppState.staff = [];
-        AppState.teams = [];
-        AppState.playerTeams = [];
-        loadPlayerData();
+        playerData.listings = [];
         loadPlayerStats();
     }
 }
@@ -129,169 +131,28 @@ function setupPlayerEventListeners() {
     }
 }
 
-// 🔥 COMPLETELY FIXED: Enhanced data loading with proper user linking
-function loadPlayerData() {
-    console.log('📊 Loading player data from DATABASE...');
-    
-    // 🔥 FIX: Search by user_id FIRST, then fall back to email
-    let player = null;
-    
-    // Method 1: Find by user_id (most reliable)
-    if (AppState.currentUser?.id) {
-        player = AppState.players?.find(p => p.user_id === AppState.currentUser.id);
-        if (player) {
-            console.log('✅ Player found by user_id:', player.first_name, player.last_name);
-        }
-    }
-    
-    // Method 2: Fall back to email matching if no user_id match
-    if (!player && AppState.currentUser?.email) {
-        player = AppState.players?.find(p => 
-            p.email && p.email.toLowerCase() === AppState.currentUser.email.toLowerCase()
-        );
-        if (player) {
-            console.log('✅ Player found by email:', player.first_name, player.last_name);
-            
-            // 🔥 IMPORTANT: Update the player record to link user_id
-            linkPlayerToUser(player.id, AppState.currentUser.id);
-        }
-    }
-    
-    if (player) {
-        console.log('👤 Player found in database:', player.first_name, player.last_name);
-        
-        // Load clubs player belongs to
-        playerData.clubs = AppState.clubs?.filter(c => c.id === player.club_id) || [];
-        
-        // 🔥 FIXED: Load teams player is in using the new playerTeams data
-        playerData.teams = AppState.playerTeams || [];
-        
-        // Load coaches from player's clubs
-        const clubIds = playerData.clubs.map(c => c.id);
-        playerData.coaches = AppState.staff?.filter(s => 
-            clubIds.includes(s.club_id) && 
-            ['coach', 'assistant-coach', 'coaching-supervisor'].includes(s.role)
-        ) || [];
-        
-        // Load payment data (generate mock data based on player's monthly fee)
-        playerData.payments = generatePlayerPayments(player);
-        
-        // Load applications and bookings (empty for now)
-        playerData.applications = [];
-        playerData.bookings = [];
-        
-        // Load listings (all available events)
-        playerData.listings = AppState.events || [];
-        
-        console.log('📊 Player data loaded from DATABASE:', {
-            player: `${player.first_name} ${player.last_name}`,
-            clubs: playerData.clubs.length,
-            teams: playerData.teams.length,
-            coaches: playerData.coaches.length,
-            events: playerData.listings.length,
-            monthlyFee: player.monthly_fee,
-            linkedByUserId: player.user_id === AppState.currentUser.id
-        });
-        
-        // Show welcome message
-        if (playerData.clubs.length > 0) {
-            setTimeout(() => {
-                showNotification(`Welcome ${player.first_name}! You're a member of ${playerData.clubs[0].name}`, 'success');
-            }, 1000);
-        }
-        
-        // Show team assignment message if player is in teams
-        if (playerData.teams.length > 0) {
-            setTimeout(() => {
-                const teamNames = playerData.teams.map(t => t.name).join(', ');
-                showNotification(`You are assigned to: ${teamNames}`, 'info');
-            }, 2000);
-        }
-        
-    } else {
-        console.log('❌ No player record found for current user:', {
-            userId: AppState.currentUser?.id,
-            email: AppState.currentUser?.email,
-            availablePlayers: AppState.players?.length || 0
-        });
-        
-        // Debug: Show what players we have
-        if (AppState.players?.length > 0) {
-            console.log('🔍 Available players:', AppState.players.map(p => ({
-                name: `${p.first_name} ${p.last_name}`,
-                email: p.email,
-                user_id: p.user_id
-            })));
-        }
-        
-        // Initialize empty data but still show available events
-        playerData = {
-            clubs: [],
-            teams: [],
-            payments: [],
-            applications: [],
-            bookings: [],
-            coaches: [],
-            listings: AppState.events || [] // Still show all events as available
-        };
-        
-        // Show info message
-        setTimeout(() => {
-            showNotification('No player record found. Contact your club admin to be added as a player with your account email.', 'info');
-        }, 1000);
-    }
-}
-
-// 🔥 NEW: Function to link player to user account
-async function linkPlayerToUser(playerId, userId) {
-    try {
-        console.log(`🔗 Linking player ${playerId} to user ${userId}...`);
-        
-        // This would make an API call to update the player record
-        const response = await apiService.updatePlayer(playerId, { userId: userId });
-        
-        if (response.success) {
-            console.log('✅ Player successfully linked to user account');
-            
-            // Update local player data
-            const player = AppState.players?.find(p => p.id === playerId);
-            if (player) {
-                player.user_id = userId;
-            }
-        }
-    } catch (error) {
-        console.error('❌ Failed to link player to user:', error);
-    }
-}
-
-// Generate mock payments based on player's actual monthly fee
-function generatePlayerPayments(player) {
-    const payments = [];
-    const currentDate = new Date();
-    const monthlyFee = player.monthly_fee || 50;
-    
-    for (let i = 0; i < 6; i++) {
-        const paymentDate = new Date();
-        paymentDate.setMonth(currentDate.getMonth() - i);
-        
-        payments.push({
-            id: `payment_${player.id}_${i}`,
-            playerId: player.id,
-            date: paymentDate.toISOString(),
-            description: `Monthly Club Fee - ${paymentDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}`,
-            amount: monthlyFee,
-            status: i === 0 ? 'pending' : i === 1 ? 'overdue' : 'paid',
-            dueDate: paymentDate.toISOString(),
-            clubId: player.club_id
-        });
-    }
-    
-    return payments;
-}
-
 // Check for notifications
 function checkPlayerNotifications() {
     console.log('📢 Checking for notifications...');
+    
+    // Check for overdue payments
+    const overduePayments = playerData.payments?.filter(p => 
+        p.payment_status === 'overdue' || 
+        (p.payment_status === 'pending' && new Date(p.due_date) < new Date())
+    ) || [];
+    
+    if (overduePayments.length > 0) {
+        setTimeout(() => {
+            showNotification(`You have ${overduePayments.length} overdue payment${overduePayments.length > 1 ? 's' : ''}. Please check your finances.`, 'warning');
+        }, 2000);
+    }
+    
+    // Welcome message for club members
+    if (playerData.clubs.length > 0) {
+        setTimeout(() => {
+            showNotification(`Welcome to ${playerData.clubs[0].name}!`, 'success');
+        }, 1000);
+    }
 }
 
 // Section Navigation
@@ -348,8 +209,6 @@ function showPlayerSection(sectionId) {
 
 // Enhanced Player Statistics
 function loadPlayerStats() {
-    const player = AppState.players?.find(p => p.email === AppState.currentUser?.email || p.user_id === AppState.currentUser?.id);
-    
     // Update overview stats
     const playerClubsEl = document.getElementById('playerClubs');
     const playerTeamsEl = document.getElementById('playerTeams');
@@ -375,7 +234,7 @@ function loadPlayerStats() {
     if (matchesPlayedEl) matchesPlayedEl.textContent = '0';
     if (averageRatingEl) averageRatingEl.textContent = '0.0';
     if (trainingSessionsEl) trainingSessionsEl.textContent = Math.floor(Math.random() * 20) + 10;
-    if (positionEl) positionEl.textContent = player?.position || 'Not Set';
+    if (positionEl) positionEl.textContent = AppState.currentPlayer?.position || 'Not Set';
     
     // Load upcoming events display
     loadPlayerUpcomingEvents(upcomingEvents.slice(0, 3));
@@ -401,13 +260,20 @@ function loadPlayerUpcomingEvents(events) {
     `).join('');
 }
 
-// My Clubs Section
+// My Clubs Section - FIXED
 function loadPlayerClubs() {
     const container = document.getElementById('playerClubsContainer');
     if (!container) return;
     
     if (playerData.clubs.length === 0) {
-        container.innerHTML = '<div class="card"><p>You are not a member of any clubs yet. Contact your club admin to be added as a player.</p></div>';
+        container.innerHTML = `
+            <div class="card">
+                <h4>🏠 No Club Membership</h4>
+                <p>You are not currently a member of any clubs.</p>
+                <p>Contact a club administrator to be added as a player, or browse available clubs in the Club Finder section.</p>
+                <button class="btn btn-primary" onclick="showPlayerSection('club-finder')">Find Clubs</button>
+            </div>
+        `;
         return;
     }
     
@@ -417,7 +283,12 @@ function loadPlayerClubs() {
         
         return `
             <div class="card">
-                <h4>${club.name}</h4>
+                <h4>🏢 ${club.name}</h4>
+                <div style="background: #e8f5e8; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                    <p><strong>✅ Active Member</strong></p>
+                    <p><strong>Member Since:</strong> ${formatDate(AppState.currentPlayer?.created_at || new Date())}</p>
+                    <p><strong>Monthly Fee:</strong> £${AppState.currentPlayer?.monthly_fee || 0}</p>
+                </div>
                 <p><strong>Location:</strong> ${club.location || 'Not specified'}</p>
                 <p><strong>Description:</strong> ${club.description || 'No description'}</p>
                 <p><strong>Sport:</strong> ${club.sport || 'Not specified'}</p>
@@ -429,6 +300,9 @@ function loadPlayerClubs() {
                             <div style="margin-left: 1rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px; margin-top: 0.5rem;">
                                 <p><strong>${coach.first_name} ${coach.last_name}</strong> - ${coach.role}</p>
                                 <p style="font-size: 0.9rem; color: #666;">📧 ${coach.email}</p>
+                                <button class="btn btn-small btn-secondary" onclick="contactCoachByEmail('${coach.email}', '${coach.first_name} ${coach.last_name}')">
+                                    Contact Coach
+                                </button>
                             </div>
                         `).join('')}
                     </div>
@@ -472,35 +346,41 @@ function loadClubStaff() {
     }).join('');
 }
 
-// 🔥 FIXED: Teams Section with proper team data
+// Teams Section - FIXED
 function loadPlayerTeams() {
     const container = document.getElementById('playerTeamsContainer');
     if (!container) return;
     
     if (playerData.teams.length === 0) {
-        container.innerHTML = '<div class="card"><p>You are not assigned to any teams yet.</p></div>';
+        container.innerHTML = `
+            <div class="card">
+                <h4>⚽ No Team Assignments</h4>
+                <p>You are not currently assigned to any teams.</p>
+                <p>Contact your club administrator to be assigned to a team.</p>
+            </div>
+        `;
         return;
     }
     
     container.innerHTML = playerData.teams.map(team => {
         return `
             <div class="card">
-                <h4>${team.name}</h4>
+                <h4>⚽ ${team.name}</h4>
                 <p><strong>Age Group:</strong> ${team.age_group || 'Not specified'}</p>
                 <p><strong>Sport:</strong> ${team.sport || 'Football'}</p>
                 
-                ${team.player_assignment ? `
+                ${team.player_position || team.jersey_number ? `
                     <div style="background: #e8f5e8; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
-                        <p><strong>Your Position:</strong> ${team.player_assignment.position || 'Not assigned'}</p>
-                        ${team.player_assignment.jersey_number ? `<p><strong>Jersey Number:</strong> ${team.player_assignment.jersey_number}</p>` : ''}
+                        ${team.player_position ? `<p><strong>Your Position:</strong> ${team.player_position}</p>` : ''}
+                        ${team.jersey_number ? `<p><strong>Jersey Number:</strong> #${team.jersey_number}</p>` : ''}
                     </div>
                 ` : ''}
                 
-                ${team.coach ? `
+                ${team.coach_first_name ? `
                     <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
-                        <p><strong>Coach:</strong> ${team.coach.name}</p>
-                        <p style="font-size: 0.9rem; color: #666;">📧 ${team.coach.email}</p>
-                        <button class="btn btn-small btn-secondary" onclick="contactCoachByEmail('${team.coach.email}', '${team.coach.name}')">
+                        <p><strong>Coach:</strong> ${team.coach_first_name} ${team.coach_last_name}</p>
+                        <p style="font-size: 0.9rem; color: #666;">📧 ${team.coach_email}</p>
+                        <button class="btn btn-small btn-secondary" onclick="contactCoachByEmail('${team.coach_email}', '${team.coach_first_name} ${team.coach_last_name}')">
                             Contact Coach
                         </button>
                     </div>
@@ -520,18 +400,51 @@ function loadPlayerTeams() {
                         <span class="team-stat-label">Draws</span>
                     </div>
                 </div>
+                
+                <div class="item-actions" style="margin-top: 1rem;">
+                    <button class="btn btn-small btn-primary" onclick="viewTeamSchedule('${team.id}')">View Schedule</button>
+                    <button class="btn btn-small btn-secondary" onclick="viewTeamStats('${team.id}')">Team Stats</button>
+                </div>
             </div>
         `;
     }).join('');
+    
+    // Load team events
+    loadTeamEvents();
 }
 
-// 🔥 FIXED: Enhanced Event Finder loads events from DATABASE
+function loadTeamEvents() {
+    const container = document.getElementById('teamEventsContainer');
+    if (!container) return;
+    
+    const teamIds = playerData.teams.map(t => t.id);
+    const teamEvents = AppState.events?.filter(e => teamIds.includes(e.team_id)) || [];
+    
+    if (teamEvents.length === 0) {
+        container.innerHTML = '<p>No team events scheduled</p>';
+        return;
+    }
+    
+    container.innerHTML = teamEvents.map(event => `
+        <div class="item-list-item">
+            <div class="item-info">
+                <h4>${event.title}</h4>
+                <p>${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}</p>
+                <p><strong>Team:</strong> ${playerData.teams.find(t => t.id === event.team_id)?.name || 'Unknown'}</p>
+            </div>
+            <div class="item-actions">
+                <button class="btn btn-small btn-primary" onclick="voteAvailability('${event.id}')">Vote Availability</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Event Finder - FIXED
 function loadPlayerEventFinder() {
     console.log('🔍 Loading events from DATABASE for event finder...');
     filterPlayerEvents();
 }
 
-// 🔥 COMPLETELY FIXED EVENT FILTERING FUNCTION
 function filterPlayerEvents() {
     console.log('🔍 Filtering events from database:', {
         totalEvents: AppState.events?.length || 0
@@ -556,7 +469,6 @@ function filterPlayerEvents() {
                 <div class="card">
                     <h4>No events found</h4>
                     <p>No events are currently available.</p>
-                    <small>📊 Debug info: Total events in database: 0</small>
                     <button onclick="debugPlayerData()" class="btn btn-secondary">🔍 Debug</button>
                 </div>
             `;
@@ -564,7 +476,7 @@ function filterPlayerEvents() {
         return;
     }
     
-    // IMPROVED DATE FILTERING
+    // Filter upcoming events
     const now = new Date();
     availableEvents = availableEvents.filter(e => {
         let eventDateTime;
@@ -586,8 +498,7 @@ function filterPlayerEvents() {
             }
         }
         
-        const hoursDifference = (eventDateTime - now) / (1000 * 60 * 60);
-        return eventDateTime > now || hoursDifference > -1;
+        return eventDateTime > now;
     });
     
     // Apply filters
@@ -615,13 +526,6 @@ function filterPlayerEvents() {
             <div class="card">
                 <h4>🔍 No events found</h4>
                 <p>No events match your criteria.</p>
-                <div style="background: #f0f0f0; padding: 1rem; margin: 1rem 0; font-family: monospace; font-size: 0.8rem;">
-                    <strong>Debug Info:</strong><br>
-                    • Total events in database: ${AppState.events?.length || 0}<br>
-                    • Search term: "${searchTerm}"<br>
-                    • Type filter: "${typeFilterValue}"<br>
-                    • Date filter: "${dateFilterValue}"
-                </div>
                 <button onclick="showAllEvents()" class="btn btn-primary">Show All Events</button>
             </div>
         `;
@@ -650,19 +554,27 @@ function filterPlayerEvents() {
             formattedDate = event.event_date || 'TBD';
         }
         
+        // Check if already booked
+        const isBooked = playerData.bookings?.some(b => b.event_id === event.id && b.booking_status === 'confirmed');
+        
         return `
             <div class="card">
                 <h4>${event.title}</h4>
                 <p><strong>Type:</strong> ${event.event_type}</p>
                 <p><strong>Date:</strong> ${formattedDate}${event.event_time ? ` at ${event.event_time}` : ''}</p>
                 <p><strong>Location:</strong> ${event.location || 'TBD'}</p>
-                <p><strong>Price:</strong> ${formatCurrency(event.price || 0)}</p>
+                <p><strong>Price:</strong> ${formatCurrency(event.price || 0)} ${event.price > 0 ? '💳' : '🆓'}</p>
                 <p><strong>Club:</strong> ${club ? club.name : 'Unknown Club'}</p>
                 ${event.capacity ? `<p><strong>Capacity:</strong> ${event.capacity} spots</p>` : ''}
                 ${event.description ? `<p>${event.description}</p>` : ''}
                 
                 <div class="item-actions">
-                    <button class="btn btn-small btn-primary" onclick="bookPlayerEvent('${event.id}')">Book Event</button>
+                    ${isBooked ? `
+                        <button class="btn btn-small btn-success" disabled>✅ Booked</button>
+                        <button class="btn btn-small btn-secondary" onclick="cancelEventBooking('${event.id}')">Cancel Booking</button>
+                    ` : `
+                        <button class="btn btn-small btn-primary" onclick="bookPlayerEvent('${event.id}')">Book Event</button>
+                    `}
                     <button class="btn btn-small btn-secondary" onclick="viewEventDetails('${event.id}')">View Details</button>
                 </div>
             </div>
@@ -777,17 +689,17 @@ function filterClubs() {
     }).join('');
 }
 
-// Finances Section
+// Finances Section - FIXED WITH REAL PAYMENTS
 function loadPlayerFinances() {
-    const payments = playerData.payments;
+    const payments = playerData.payments || [];
     
-    const totalDue = payments.filter(p => p.status === 'pending' || p.status === 'overdue')
-                            .reduce((sum, p) => sum + p.amount, 0);
-    const nextPayment = payments.find(p => p.status === 'pending')?.amount || 0;
-    const overallStatus = payments.some(p => p.status === 'overdue') ? 'Overdue' :
-                         payments.some(p => p.status === 'pending') ? 'Pending' : 'Up to Date';
-    const totalPaid = payments.filter(p => p.status === 'paid')
-                             .reduce((sum, p) => sum + p.amount, 0);
+    const totalDue = payments.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue')
+                            .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const nextPayment = payments.find(p => p.payment_status === 'pending')?.amount || 0;
+    const overallStatus = payments.some(p => p.payment_status === 'overdue') ? 'Overdue' :
+                         payments.some(p => p.payment_status === 'pending') ? 'Pending' : 'Up to Date';
+    const totalPaid = payments.filter(p => p.payment_status === 'paid')
+                             .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     
     const totalDueEl = document.getElementById('totalDue');
     const nextPaymentEl = document.getElementById('nextPayment');
@@ -796,7 +708,11 @@ function loadPlayerFinances() {
     
     if (totalDueEl) totalDueEl.textContent = formatCurrency(totalDue);
     if (nextPaymentEl) nextPaymentEl.textContent = formatCurrency(nextPayment);
-    if (paymentStatusEl) paymentStatusEl.textContent = overallStatus;
+    if (paymentStatusEl) {
+        paymentStatusEl.textContent = overallStatus;
+        paymentStatusEl.style.color = overallStatus === 'Overdue' ? '#dc3545' : 
+                                     overallStatus === 'Pending' ? '#ffc107' : '#28a745';
+    }
     if (totalPaidEl) totalPaidEl.textContent = formatCurrency(totalPaid);
     
     loadPaymentHistory(payments);
@@ -807,14 +723,19 @@ function loadPaymentHistory(payments) {
     const tableBody = document.getElementById('paymentHistoryTableBody');
     if (!tableBody) return;
     
+    if (payments.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5">No payment history</td></tr>';
+        return;
+    }
+    
     tableBody.innerHTML = payments.map(payment => `
         <tr>
-            <td>${formatDate(payment.date)}</td>
+            <td>${formatDate(payment.created_at || payment.due_date)}</td>
             <td>${payment.description}</td>
             <td>${formatCurrency(payment.amount)}</td>
-            <td><span class="status-badge status-${payment.status}">${payment.status}</span></td>
+            <td><span class="status-badge status-${payment.payment_status}">${payment.payment_status}</span></td>
             <td>
-                ${payment.status === 'pending' || payment.status === 'overdue' ? 
+                ${payment.payment_status === 'pending' || payment.payment_status === 'overdue' ? 
                     `<button class="btn btn-small btn-primary" onclick="makePayment('${payment.id}')">💳 Pay Now</button>` :
                     `<button class="btn btn-small btn-secondary" onclick="downloadReceipt('${payment.id}')">📄 Receipt</button>`
                 }
@@ -824,12 +745,12 @@ function loadPaymentHistory(payments) {
 }
 
 function loadOutstandingPayments(payments) {
-    const outstanding = payments.filter(p => p.status === 'pending' || p.status === 'overdue');
+    const outstanding = payments.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue');
     const container = document.getElementById('outstandingPayments');
     if (!container) return;
     
     if (outstanding.length === 0) {
-        container.innerHTML = '<p>✅ No outstanding payments. You are up to date!</p>';
+        container.innerHTML = '<p style="color: #28a745;">✅ No outstanding payments. You are up to date!</p>';
         return;
     }
     
@@ -837,10 +758,10 @@ function loadOutstandingPayments(payments) {
         <div class="item-list-item">
             <div class="item-info">
                 <h4>${payment.description}</h4>
-                <p>Due: ${formatDate(payment.dueDate)} - ${formatCurrency(payment.amount)}</p>
+                <p>Due: ${formatDate(payment.due_date)} - ${formatCurrency(payment.amount)}</p>
             </div>
             <div class="item-actions">
-                <span class="status-badge status-${payment.status}">${payment.status}</span>
+                <span class="status-badge status-${payment.payment_status}">${payment.payment_status}</span>
                 <button class="btn btn-small btn-primary" onclick="makePayment('${payment.id}')">💳 Pay Now</button>
             </div>
         </div>
@@ -855,7 +776,7 @@ function loadPlayerDocuments() {
     tableBody.innerHTML = '<tr><td colspan="5">No documents available</td></tr>';
 }
 
-// Payment Integration
+// FIXED PAYMENT INTEGRATION WITH STRIPE
 async function makePayment(paymentId) {
     const payment = playerData.payments.find(p => p.id === paymentId);
     if (!payment) {
@@ -863,19 +784,32 @@ async function makePayment(paymentId) {
         return;
     }
     
-    if (confirm(`Pay ${formatCurrency(payment.amount)} for ${payment.description}?\n\nNote: This is demo mode.`)) {
-        const paymentIndex = playerData.payments.findIndex(p => p.id === paymentId);
-        if (paymentIndex !== -1) {
-            playerData.payments[paymentIndex].status = 'paid';
-            playerData.payments[paymentIndex].paidDate = new Date().toISOString();
+    const onSuccess = async (result) => {
+        try {
+            // Confirm payment with backend
+            await apiService.confirmPayment(result.id, paymentId);
+            
+            // Update local payment status
+            const paymentIndex = playerData.payments.findIndex(p => p.id === paymentId);
+            if (paymentIndex !== -1) {
+                playerData.payments[paymentIndex].payment_status = 'paid';
+                playerData.payments[paymentIndex].paid_date = new Date().toISOString();
+            }
+            
+            loadPlayerFinances();
+            showNotification('Payment successful!', 'success');
+            
+        } catch (error) {
+            console.error('Failed to confirm payment:', error);
+            showNotification('Payment processing failed', 'error');
         }
-        
-        loadPlayerFinances();
-        showNotification('Payment successful! (Demo mode)', 'success');
-    }
+    };
+    
+    // Create Stripe payment modal
+    createPaymentModal(payment.amount, payment.description, onSuccess);
 }
 
-// Event Booking
+// Event Booking - FIXED WITH REAL PAYMENT PROCESSING
 function bookPlayerEvent(eventId) {
     const event = AppState.events?.find(e => e.id === eventId);
     if (!event) {
@@ -922,24 +856,63 @@ async function processEventPayment(eventId) {
     const event = AppState.events?.find(e => e.id === eventId);
     if (!event) return;
     
-    if (confirm(`Book ${event.title} for ${formatCurrency(event.price)}?\n\nNote: This is demo mode.`)) {
-        confirmEventBooking(eventId);
+    closeModal('eventBookingModal');
+    
+    const onSuccess = async (result) => {
+        try {
+            // Book the event after successful payment
+            await confirmEventBooking(eventId, result.id);
+        } catch (error) {
+            console.error('Failed to complete booking:', error);
+            showNotification('Booking failed after payment', 'error');
+        }
+    };
+    
+    // Create Stripe payment modal for event
+    createPaymentModal(event.price, `Event Booking: ${event.title}`, onSuccess);
+}
+
+async function confirmEventBooking(eventId, paymentIntentId = null) {
+    try {
+        const bookingData = {
+            eventId: eventId,
+            paymentIntentId: paymentIntentId
+        };
+        
+        const response = await apiService.bookEvent(eventId, bookingData);
+        
+        // Add to local bookings
+        if (!playerData.bookings) playerData.bookings = [];
+        playerData.bookings.push(response.booking);
+        
+        showNotification('Event booked successfully!', 'success');
+        loadPlayerEventFinder(); // Refresh event list
+        
+    } catch (error) {
+        console.error('Failed to book event:', error);
+        showNotification('Failed to book event: ' + error.message, 'error');
     }
 }
 
-function confirmEventBooking(eventId) {
-    const booking = {
-        id: `booking_${Date.now()}`,
-        eventId: eventId,
-        playerId: AppState.currentUser.id,
-        bookingDate: new Date().toISOString(),
-        status: 'confirmed'
-    };
-    
-    playerData.bookings.push(booking);
-    closeModal('eventBookingModal');
-    loadPlayerEventFinder();
-    showNotification('Event booked successfully!', 'success');
+async function cancelEventBooking(eventId) {
+    if (confirm('Are you sure you want to cancel this booking?')) {
+        try {
+            const booking = playerData.bookings?.find(b => b.event_id === eventId);
+            if (booking) {
+                await apiService.cancelEventBooking(booking.id);
+                
+                // Remove from local bookings
+                playerData.bookings = playerData.bookings.filter(b => b.id !== booking.id);
+                
+                showNotification('Booking cancelled successfully!', 'success');
+                loadPlayerEventFinder(); // Refresh event list
+            }
+            
+        } catch (error) {
+            console.error('Failed to cancel booking:', error);
+            showNotification('Failed to cancel booking', 'error');
+        }
+    }
 }
 
 // Club Application
@@ -962,14 +935,34 @@ async function handleClubApplication(e) {
     const availability = Array.from(document.querySelectorAll('input[name="availability"]:checked'))
                              .map(cb => cb.value);
     
-    if (!clubId) {
-        showNotification('Club selection error', 'error');
+    if (!clubId || !message) {
+        showNotification('Please fill in all required fields', 'error');
         return;
     }
     
-    closeModal('applyClubModal');
-    document.getElementById('applyClubForm')?.reset();
-    showNotification('Application submitted successfully!', 'success');
+    try {
+        const applicationData = {
+            clubId: clubId,
+            message: message,
+            preferredPosition: position,
+            experienceLevel: experience,
+            availability: availability
+        };
+        
+        const response = await apiService.applyToClub(clubId, applicationData);
+        
+        // Add to local applications
+        if (!playerData.applications) playerData.applications = [];
+        playerData.applications.push(response.application);
+        
+        closeModal('applyClubModal');
+        document.getElementById('applyClubForm')?.reset();
+        showNotification('Application submitted successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Failed to submit application:', error);
+        showNotification('Failed to submit application: ' + error.message, 'error');
+    }
 }
 
 function voteAvailability(eventId) {
@@ -992,20 +985,25 @@ async function handleAvailabilitySubmission(e) {
         return;
     }
     
-    closeModal('availabilityModal');
-    document.getElementById('availabilityForm')?.reset();
-    showNotification('Availability submitted successfully!', 'success');
-}
-
-// Contact functions
-function contactCoach(coachId) {
-    const coach = playerData.coaches.find(c => c.id === coachId);
-    if (coach) {
-        window.location.href = `mailto:${coach.email}?subject=Message from ${AppState.currentUser.firstName} ${AppState.currentUser.lastName}`;
+    try {
+        const availabilityData = {
+            availability: availability,
+            notes: notes
+        };
+        
+        await apiService.submitAvailability(eventId, availabilityData);
+        
+        closeModal('availabilityModal');
+        document.getElementById('availabilityForm')?.reset();
+        showNotification('Availability submitted successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Failed to submit availability:', error);
+        showNotification('Failed to submit availability: ' + error.message, 'error');
     }
 }
 
-// 🔥 NEW: Contact coach by email
+// Contact functions
 function contactCoachByEmail(email, name) {
     window.location.href = `mailto:${email}?subject=Message from ${AppState.currentUser.first_name || AppState.currentUser.firstName} ${AppState.currentUser.last_name || AppState.currentUser.lastName}&body=Hi ${name},%0D%0A%0D%0A`;
 }
@@ -1077,6 +1075,40 @@ function viewEventDetails(eventId) {
     alert(details);
 }
 
+function viewTeamSchedule(teamId) {
+    const team = playerData.teams?.find(t => t.id === teamId);
+    const teamEvents = AppState.events?.filter(e => e.team_id === teamId) || [];
+    
+    if (teamEvents.length === 0) {
+        showNotification('No scheduled events for this team', 'info');
+        return;
+    }
+    
+    let schedule = `Schedule for ${team?.name || 'Team'}:\n\n`;
+    teamEvents.forEach(event => {
+        schedule += `${event.title} - ${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}\n`;
+    });
+    
+    alert(schedule);
+}
+
+function viewTeamStats(teamId) {
+    const team = playerData.teams?.find(t => t.id === teamId);
+    if (!team) return;
+    
+    const totalGames = (team.wins || 0) + (team.losses || 0) + (team.draws || 0);
+    const winRate = totalGames > 0 ? Math.round((team.wins / totalGames) * 100) : 0;
+    
+    let stats = `Team Statistics - ${team.name}:\n\n`;
+    stats += `Wins: ${team.wins || 0}\n`;
+    stats += `Losses: ${team.losses || 0}\n`;
+    stats += `Draws: ${team.draws || 0}\n`;
+    stats += `Total Games: ${totalGames}\n`;
+    stats += `Win Rate: ${winRate}%\n`;
+    
+    alert(stats);
+}
+
 function downloadReceipt(paymentId) {
     showNotification('Receipt download would start here - feature coming soon', 'info');
 }
@@ -1093,25 +1125,31 @@ function downloadDocument(docId) {
 function debugPlayerData() {
     console.log('🔍 DEBUG: Current AppState:', {
         currentUser: AppState.currentUser,
+        currentPlayer: AppState.currentPlayer,
         events: AppState.events?.length || 0,
         clubs: AppState.clubs?.length || 0,
-        players: AppState.players?.length || 0,
-        staff: AppState.staff?.length || 0,
-        playerTeams: AppState.playerTeams?.length || 0
+        playerData: playerData
     });
     
     if (AppState.events?.length > 0) {
         console.log('📅 Sample event:', AppState.events[0]);
     }
     
-    if (AppState.players?.length > 0) {
-        console.log('👤 Sample player:', AppState.players[0]);
-    }
-    
-    console.log('👤 Current player data:', playerData);
-    
     // Show in UI too
-    alert(`Debug Info:\n\nTotal Events: ${AppState.events?.length || 0}\nTotal Players: ${AppState.players?.length || 0}\nPlayer Teams: ${AppState.playerTeams?.length || 0}\nPlayer Clubs: ${playerData.clubs.length}\n\nCheck console for detailed info.`);
+    alert(`Debug Info:\n\nTotal Events: ${AppState.events?.length || 0}\nPlayer Clubs: ${playerData.clubs.length}\nPlayer Teams: ${playerData.teams.length}\nPlayer Payments: ${playerData.payments.length}\n\nCheck console for detailed info.`);
+}
+
+// Utility functions
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-GB', {
+        style: 'currency',
+        currency: 'GBP'
+    }).format(amount);
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 // Export functions for global access
@@ -1123,13 +1161,15 @@ window.makePayment = makePayment;
 window.bookPlayerEvent = bookPlayerEvent;
 window.processEventPayment = processEventPayment;
 window.confirmEventBooking = confirmEventBooking;
+window.cancelEventBooking = cancelEventBooking;
 window.filterClubs = filterClubs;
 window.filterPlayerEvents = filterPlayerEvents;
 window.viewClubDetails = viewClubDetails;
 window.contactClub = contactClub;
-window.contactCoach = contactCoach;
 window.contactCoachByEmail = contactCoachByEmail;
 window.viewEventDetails = viewEventDetails;
+window.viewTeamSchedule = viewTeamSchedule;
+window.viewTeamStats = viewTeamStats;
 window.downloadReceipt = downloadReceipt;
 window.viewDocument = viewDocument;
 window.downloadDocument = downloadDocument;
@@ -1138,4 +1178,4 @@ window.handleClubApplication = handleClubApplication;
 window.handleAvailabilitySubmission = handleAvailabilitySubmission;
 window.showAllEvents = showAllEvents;
 
-console.log('✅ Complete Fixed Player Dashboard loaded - now connects to DATABASE!');
+console.log('✅ FULLY FUNCTIONAL Player Dashboard loaded - now with REAL payment processing!');

@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { query, queries, withTransaction } = require('../config/database');
 
-// Import middleware - this might be the issue
 let authenticateToken;
 try {
   const authMiddleware = require('../middleware/auth');
