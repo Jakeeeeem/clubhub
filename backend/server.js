@@ -14,7 +14,7 @@ const teamRoutes = require('./routes/teams');
 const eventRoutes = require('./routes/events');
 const paymentRoutes = require('./routes/payments');
 const dashboardRoutes = require('./routes/dashboard');
-// 🔥 ADD: Import notifications route
+const invitesRouter = require('./routes/invites');
 const notificationRoutes = require('./routes/notifications');
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -24,23 +24,12 @@ const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use(helmet());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too many requests from this IP, please try again later.'
-  }
-});
-app.use('/api/', limiter);
-
-// CORS configuration
 app.use(cors({
   origin: [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
-    'https://clubhubsports.net',           // ← ADD THIS
-    'https://www.clubhubsports.net',       // ← ADD THIS
+    'https://clubhubsports.net',           
+    'https://www.clubhubsports.net',       
     process.env.FRONTEND_URL || 'http://localhost:8000'
   ],
   credentials: true,
@@ -83,7 +72,7 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-// 🔥 ADD: Notifications route
+app.use('/api/invites', invitesRouter);
 app.use('/api/notifications', notificationRoutes);
 
 // 🔥 ADD: Handle 404 for API routes specifically

@@ -5,7 +5,350 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClubHub - Sports Club Management Platform</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        /* Hero Section Styles */
+        .hero-main {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-main::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="60" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="2.5" fill="rgba(255,255,255,0.1)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            z-index: 2;
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(45deg, #fff, #f0f8ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-hero {
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-hero-primary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.6);
+        }
+
+        .btn-hero-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+        }
+
+        .features-preview {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .feature-preview {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-preview h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Account Types Section */
+        .account-types {
+            padding: 5rem 0;
+            background: #f8f9fa;
+        }
+
+        .account-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .account-type-card {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .account-type-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .account-type-card.organization {
+            border-color: #667eea;
+        }
+
+        .account-type-card.organization::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .account-type-card.player {
+            border-color: #ff6b6b;
+        }
+
+        .account-type-card.player::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+
+        .account-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            margin: 0 auto 2rem auto;
+        }
+
+        .organization .account-icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .player .account-icon {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+
+        .account-type-card h3 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: #333;
+        }
+
+        .account-type-card .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+        }
+
+        .features-list li {
+            padding: 0.75rem 0;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .features-list li::before {
+            content: '✅';
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .pricing-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .pricing-info .price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .pricing-info .period {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Benefits Section */
+        .benefits {
+            padding: 5rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .benefit-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .benefit-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .benefit-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* CTA Section */
+        .final-cta {
+            padding: 5rem 0;
+            background: #fff;
+            text-align: center;
+        }
+
+        .final-cta h2 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .final-cta p {
+            font-size: 1.3rem;
+            color: #666;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .features-preview {
+                grid-template-columns: 1fr;
+            }
+
+            .account-types-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .final-cta h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -15,47 +358,158 @@
                 <button class="btn btn-secondary" onclick="showLogin()">Login</button>
                 <button class="btn btn-primary" onclick="showRegister()">Sign Up</button>
             </div>
+            <div class="nav-buttons" id="loggedInNav" style="display: none;">
+                <!-- Populated by JavaScript when logged in -->
+            </div>
         </nav>
     </header>
 
     <main class="main">
         <!-- Hero Section -->
-        <section class="hero">
-            <div class="container">
-                <h1>Welcome to ClubHub</h1>
-                <p>The ultimate sports club management platform for organizations, coaches, and players</p>
-                <button class="btn btn-primary" onclick="showRegister()">Get Started Today</button>
+        <section class="hero-main">
+            <div class="hero-content">
+                <h1 class="hero-title">Welcome to ClubHub</h1>
+                <p class="hero-subtitle">The complete sports club management platform that connects clubs, coaches, and players in one powerful ecosystem</p>
+                
+                <div class="hero-cta">
+                    <button class="btn-hero btn-hero-primary" onclick="showRegister()">Start Your Journey</button>
+                    <button class="btn-hero btn-hero-secondary" onclick="document.getElementById('account-types').scrollIntoView({behavior: 'smooth'})">Learn More</button>
+                </div>
+
+                <div class="features-preview">
+                    <div class="feature-preview">
+                        <h3>🏢 For Organizations</h3>
+                        <p>Complete club management with player tracking, event organization, and financial tools</p>
+                    </div>
+                    <div class="feature-preview">
+                        <h3>⚽ For Players</h3>
+                        <p>Join clubs, book events, track progress, and manage payments seamlessly</p>
+                    </div>
+                    <div class="feature-preview">
+                        <h3>🎯 For Coaches</h3>
+                        <p>Team management, tactical planning, and performance tracking tools</p>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section class="features">
+        <!-- Account Types Section -->
+        <section class="account-types" id="account-types">
             <div class="container">
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <h3>🏆 Organization Management</h3>
-                        <p>Complete club, event, and tournament management system with comprehensive admin tools.</p>
+                <h2 style="text-align: center; font-size: 3rem; margin-bottom: 3rem; color: #333;">Choose Your Account Type</h2>
+                
+                <div class="account-types-grid">
+                    <!-- Organization Account -->
+                    <div class="account-type-card organization">
+                        <div class="account-icon">🏢</div>
+                        <h3>Organization Account</h3>
+                        <p class="subtitle">Perfect for clubs, academies, and sports organizations</p>
+                        
+                        <ul class="features-list">
+                            <li>Complete club management dashboard</li>
+                            <li>Player registration and tracking</li>
+                            <li>Staff management with role permissions</li>
+                            <li>Event creation and management</li>
+                            <li>Team organization and coaching tools</li>
+                            <li>Financial management and payments</li>
+                            <li>Automated payment collection</li>
+                            <li>Club listings and discovery</li>
+                            <li>Document management system</li>
+                            <li>Advanced reporting and analytics</li>
+                        </ul>
+
+                        <div class="pricing-info">
+                            <div class="price">£29.99</div>
+                            <div class="period">per month</div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="createOrganizationAccount()" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Start Managing Your Club</button>
                     </div>
-                    <div class="feature-card">
-                        <h3>👥 Player & Staff Management</h3>
-                        <p>Invite and manage players, coaches, and staff with role-based permissions and tracking.</p>
+
+                    <!-- Player Account -->
+                    <div class="account-type-card player">
+                        <div class="account-icon">⚽</div>
+                        <h3>Player Account</h3>
+                        <p class="subtitle">Perfect for players and sports enthusiasts</p>
+                        
+                        <ul class="features-list">
+                            <li>Join multiple clubs and teams</li>
+                            <li>Browse and book events</li>
+                            <li>Secure payment processing</li>
+                            <li>Track your progress and stats</li>
+                            <li>Team schedule and availability</li>
+                            <li>Club and event discovery</li>
+                            <li>Direct coach communication</li>
+                            <li>Payment history and receipts</li>
+                            <li>Document access and downloads</li>
+                            <li>Mobile-friendly dashboard</li>
+                        </ul>
+
+                        <div class="pricing-info">
+                            <div class="price">FREE</div>
+                            <div class="period">forever</div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="createPlayerAccount()" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Join as a Player</button>
                     </div>
-                    <div class="feature-card">
-                        <h3>📅 Event Management</h3>
-                        <p>Create events, manage bookings, and automate communications with integrated payment processing.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Benefits Section -->
+        <section class="benefits">
+            <div class="container">
+                <h2 style="text-align: center; font-size: 3rem; margin-bottom: 3rem;">Why Choose ClubHub?</h2>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <span class="benefit-icon">🔒</span>
+                        <h3>Secure & Reliable</h3>
+                        <p>Bank-level security with SSL encryption and secure payment processing through Stripe. Your data is always protected.</p>
                     </div>
-                    <div class="feature-card">
-                        <h3>💰 Financial Management</h3>
-                        <p>Track payments, manage overdue accounts, and create payment plans with detailed financial analysis.</p>
+                    
+                    <div class="benefit-card">
+                        <span class="benefit-icon">📱</span>
+                        <h3>Mobile Optimized</h3>
+                        <p>Access all features on any device. Our responsive design ensures a perfect experience on phones, tablets, and desktops.</p>
                     </div>
-                    <div class="feature-card">
-                        <h3>🎯 Team Management</h3>
-                        <p>Assign players to teams, track results, and use tactical boards for coaching excellence.</p>
+                    
+                    <div class="benefit-card">
+                        <span class="benefit-icon">⚡</span>
+                        <h3>Real-time Updates</h3>
+                        <p>Instant notifications, live scheduling updates, and real-time communication keep everyone connected and informed.</p>
                     </div>
-                    <div class="feature-card">
-                        <h3>🔍 Club & Event Discovery</h3>
-                        <p>Find clubs, events, and tournaments with advanced filtering and booking capabilities.</p>
+                    
+                    <div class="benefit-card">
+                        <span class="benefit-icon">💳</span>
+                        <h3>Easy Payments</h3>
+                        <p>Streamlined payment collection with automatic reminders, payment plans, and comprehensive financial tracking.</p>
                     </div>
+                    
+                    <div class="benefit-card">
+                        <span class="benefit-icon">🎯</span>
+                        <h3>All-in-One Platform</h3>
+                        <p>Everything you need in one place - no more juggling multiple apps or systems. Simplify your club management today.</p>
+                    </div>
+                    
+                    <div class="benefit-card">
+                        <span class="benefit-icon">🏆</span>
+                        <h3>Professional Tools</h3>
+                        <p>Advanced features like tactical boards, performance tracking, and detailed analytics to take your club to the next level.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA Section -->
+        <section class="final-cta">
+            <div class="container">
+                <h2>Ready to Transform Your Club?</h2>
+                <p>Join thousands of clubs and players already using ClubHub to streamline their sports management. Get started today!</p>
+                
+                <div style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn-hero btn-hero-primary" onclick="showRegister()">Start Free Trial</button>
+                    <button class="btn-hero btn-hero-secondary" style="color: #333; border-color: #667eea;" onclick="showLogin()">I Already Have an Account</button>
                 </div>
             </div>
         </section>
@@ -94,8 +548,8 @@
                     <label for="accountType">Account Type</label>
                     <select id="accountType" required onchange="toggleOrgOptions()">
                         <option value="">Select Account Type</option>
-                        <option value="adult">Adult Account</option>
-                        <option value="organization">Organization</option>
+                        <option value="adult">Player Account (Free)</option>
+                        <option value="organization">Organization Account (£29.99/month)</option>
                     </select>
                 </div>
                 
@@ -103,9 +557,9 @@
                     <div class="form-group">
                         <label>Organization Type (Select all that apply)</label>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" name="orgType" value="club"> Club</label>
-                            <label><input type="checkbox" name="orgType" value="event"> Event</label>
-                            <label><input type="checkbox" name="orgType" value="tournament"> Tournament</label>
+                            <label><input type="checkbox" name="orgType" value="club"> Sports Club</label>
+                            <label><input type="checkbox" name="orgType" value="event"> Event Organizer</label>
+                            <label><input type="checkbox" name="orgType" value="tournament"> Tournament Organizer</label>
                         </div>
                     </div>
                 </div>
@@ -137,6 +591,19 @@
 
     <script src="api-service.js"></script>
     <script src="script.js"></script>
+    <script>
+        // Account type specific registration
+        function createOrganizationAccount() {
+            document.getElementById('accountType').value = 'organization';
+            toggleOrgOptions();
+            showModal('registerModal');
+        }
 
-    </body>
+        function createPlayerAccount() {
+            document.getElementById('accountType').value = 'adult';
+            toggleOrgOptions();
+            showModal('registerModal');
+        }
+    </script>
+</body>
 </html>

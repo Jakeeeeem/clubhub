@@ -1,6 +1,10 @@
 class ApiService {
   constructor() {
-    this.baseURL = 'https://api.clubhubsports.net/api';
+    // 🔥 UPDATED: Use your production API URL
+    this.baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? 'http://localhost:3000/api'  // Development
+      : 'https://api.clubhubsports.net/api';  // Production
+    
     this.token = localStorage.getItem('authToken');
     console.log('🌐 API Service initialized with baseURL:', this.baseURL);
   }
@@ -52,7 +56,7 @@ class ApiService {
         
         if (response.status === 500) {
           console.error('❌ Server error details:', data);
-          throw new Error(data.message || 'Internal server error. Please check the backend logs.');
+          throw new Error(data.message || 'Internal server error. Please try again later.');
         }
         
         throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
@@ -142,6 +146,56 @@ class ApiService {
   }
 
   // =====================================================
+  // 🔥 NEW: CLUB INVITE METHODS
+  // =====================================================
+
+  async generateClubInvite(inviteData) {
+    return await this.makeRequest('/invites/generate', {
+      method: 'POST',
+      body: JSON.stringify(inviteData)
+    });
+  }
+
+  async getInviteDetails(token) {
+    return await this.makeRequest(`/invites/details/${token}`);
+  }
+
+  async acceptInvite(token, acceptData) {
+    return await this.makeRequest(`/invites/accept/${token}`, {
+      method: 'POST',
+      body: JSON.stringify(acceptData)
+    });
+  }
+
+  async declineInvite(token, reason = null) {
+    return await this.makeRequest(`/invites/decline/${token}`, {
+      method: 'POST',
+      body: JSON.stringify({ reason })
+    });
+  }
+
+  async getSentInvites(status = null) {
+    const endpoint = status ? `/invites/sent?status=${status}` : '/invites/sent';
+    return await this.makeRequest(endpoint);
+  }
+
+  async getReceivedInvites() {
+    return await this.makeRequest('/invites/received');
+  }
+
+  async resendInvite(inviteId) {
+    return await this.makeRequest(`/invites/resend/${inviteId}`, {
+      method: 'POST'
+    });
+  }
+
+  async cancelInvite(inviteId) {
+    return await this.makeRequest(`/invites/${inviteId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // =====================================================
   // CLUB MANAGEMENT METHODS
   // =====================================================
 
@@ -217,26 +271,26 @@ class ApiService {
   }
 
   // =====================================================
-  // PAYMENT METHODS - REAL STRIPE INTEGRATION
+  // 🔥 FIXED: PAYMENT METHODS WITH STRIPE INTEGRATION
   // =====================================================
 
   async createPaymentIntent(amount, description, metadata = {}) {
     return await this.makeRequest('/payments/create-intent', {
       method: 'POST',
       body: JSON.stringify({
-        amount: Math.round(amount * 100), // Convert to cents
+        amount: amount,
         description,
         metadata
       })
     });
   }
 
-  async confirmPayment(paymentIntentId, paymentMethodId = null) {
-    return await this.makeRequest('/payments/confirm', {
+  async confirmPayment(paymentIntentId, paymentId = null) {
+    return await this.makeRequest('/payments/confirm-payment', {
       method: 'POST',
       body: JSON.stringify({
         paymentIntentId,
-        paymentMethodId
+        paymentId
       })
     });
   }
@@ -266,6 +320,21 @@ class ApiService {
     });
   }
 
+  async generatePaymentLink(paymentId) {
+    return await this.makeRequest(`/payments/${paymentId}/payment-link`);
+  }
+
+  async sendPaymentReminder(paymentId) {
+    return await this.makeRequest(`/payments/${paymentId}/send-reminder`, {
+      method: 'POST'
+    });
+  }
+
+  // 🔥 NEW: Public payment methods for payment page
+  async getPublicPayment(paymentId, token) {
+    return await this.makeRequest(`/payments/public/${paymentId}?token=${token}`);
+  }
+
   // =====================================================
   // EVENT MANAGEMENT METHODS
   // =====================================================
@@ -280,6 +349,10 @@ class ApiService {
     }
   }
 
+  async getEventById(id) {
+    return await this.makeRequest(`/events/${id}`);
+  }
+
   async createEvent(eventData) {
     return await this.makeRequest('/events', {
       method: 'POST',
@@ -287,6 +360,20 @@ class ApiService {
     });
   }
 
+  async updateEvent(id, eventData) {
+    return await this.makeRequest(`/events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(eventData)
+    });
+  }
+
+  async deleteEvent(id) {
+    return await this.makeRequest(`/events/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // 🔥 FIXED: Event booking with payment support
   async bookEvent(eventId, bookingData = {}) {
     return await this.makeRequest(`/events/${eventId}/book`, {
       method: 'POST',
@@ -294,10 +381,39 @@ class ApiService {
     });
   }
 
-  async createEventPayment(eventId, playerData) {
-    return await this.makeRequest(`/events/${eventId}/payment`, {
+  async cancelEventBooking(bookingId) {
+    return await this.makeRequest(`/events/bookings/${bookingId}/cancel`, {
+      method: 'POST'
+    });
+  }
+
+  async getEventBookings(eventId) {
+    return await this.makeRequest(`/events/${eventId}/bookings`);
+  }
+
+  async getUserBookings(status = null, upcoming = null) {
+    let endpoint = '/events/bookings/my-bookings';
+    const params = new URLSearchParams();
+    
+    if (status) params.append('status', status);
+    if (upcoming) params.append('upcoming', upcoming);
+    
+    if (params.toString()) {
+      endpoint += `?${params.toString()}`;
+    }
+    
+    return await this.makeRequest(endpoint);
+  }
+
+  // 🔥 NEW: Book event with payment
+  async bookEventWithPayment(eventId, paymentIntentId, playerData = null) {
+    return await this.makeRequest('/payments/book-event', {
       method: 'POST',
-      body: JSON.stringify(playerData)
+      body: JSON.stringify({
+        eventId,
+        paymentIntentId,
+        playerData
+      })
     });
   }
 
@@ -315,6 +431,10 @@ class ApiService {
     }
   }
 
+  async getTeamById(id) {
+    return await this.makeRequest(`/teams/${id}`);
+  }
+
   async createTeam(teamData) {
     return await this.makeRequest('/teams', {
       method: 'POST',
@@ -322,7 +442,20 @@ class ApiService {
     });
   }
 
-  async addPlayerToTeam(teamId, assignmentData) {
+  async updateTeam(id, teamData) {
+    return await this.makeRequest(`/teams/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(teamData)
+    });
+  }
+
+  async deleteTeam(id) {
+    return await this.makeRequest(`/teams/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async assignPlayerToTeam(teamId, assignmentData) {
     return await this.makeRequest(`/teams/${teamId}/players`, {
       method: 'POST',
       body: JSON.stringify(assignmentData)
@@ -358,6 +491,10 @@ class ApiService {
     }
   }
 
+  async getStaffById(id) {
+    return await this.makeRequest(`/staff/${id}`);
+  }
+
   async createStaff(staffData) {
     return await this.makeRequest('/staff', {
       method: 'POST',
@@ -365,27 +502,15 @@ class ApiService {
     });
   }
 
+  async updateStaff(id, staffData) {
+    return await this.makeRequest(`/staff/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(staffData)
+    });
+  }
+
   async deleteStaff(id) {
     return await this.makeRequest(`/staff/${id}`, {
-      method: 'DELETE'
-    });
-  }
-
-  async deleteTeam(id) {
-    return await this.makeRequest(`/teams/${id}`, {
-      method: 'DELETE'
-    });
-  }
-
-  async updateEvent(id, eventData) {
-    return await this.makeRequest(`/events/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(eventData)
-    });
-  }
-
-  async deleteEvent(id) {
-    return await this.makeRequest(`/events/${id}`, {
       method: 'DELETE'
     });
   }
@@ -436,6 +561,124 @@ class ApiService {
   }
 
   // =====================================================
+  // 🔥 NEW: SUBSCRIPTION METHODS FOR CLUBS
+  // =====================================================
+
+  async createSubscription(priceId, customerId = null) {
+    return await this.makeRequest('/subscriptions/create', {
+      method: 'POST',
+      body: JSON.stringify({
+        priceId,
+        customerId
+      })
+    });
+  }
+
+  async getSubscriptions() {
+    return await this.makeRequest('/subscriptions');
+  }
+
+  async cancelSubscription(subscriptionId) {
+    return await this.makeRequest(`/subscriptions/${subscriptionId}/cancel`, {
+      method: 'POST'
+    });
+  }
+
+  async updateSubscription(subscriptionId, updates) {
+    return await this.makeRequest(`/subscriptions/${subscriptionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates)
+    });
+  }
+
+  // =====================================================
+  // AVAILABILITY AND TEAM COORDINATION
+  // =====================================================
+
+  async submitAvailability(eventId, availabilityData) {
+    return await this.makeRequest(`/events/${eventId}/availability`, {
+      method: 'POST',
+      body: JSON.stringify(availabilityData)
+    });
+  }
+
+  async getEventAvailability(eventId) {
+    return await this.makeRequest(`/events/${eventId}/availability`);
+  }
+
+  // =====================================================
+  // CLUB APPLICATIONS (for players applying to clubs)
+  // =====================================================
+
+  async applyToClub(clubId, applicationData) {
+    return await this.makeRequest(`/clubs/${clubId}/apply`, {
+      method: 'POST',
+      body: JSON.stringify(applicationData)
+    });
+  }
+
+  async getClubApplications(clubId) {
+    return await this.makeRequest(`/clubs/${clubId}/applications`);
+  }
+
+  async reviewApplication(applicationId, decision, notes = null) {
+    return await this.makeRequest(`/clubs/applications/${applicationId}/review`, {
+      method: 'POST',
+      body: JSON.stringify({ decision, notes })
+    });
+  }
+
+  // =====================================================
+  // 🔥 FIXED: PRODUCTION-READY PAYMENT PROCESSING
+  // =====================================================
+
+  // Create a payment intent for any type of payment
+  async createPaymentForAmount(amount, description, metadata = {}) {
+    if (!amount || amount <= 0) {
+      throw new Error('Invalid payment amount');
+    }
+
+    try {
+      console.log(`💳 Creating payment intent for £${amount}`);
+      
+      const response = await this.makeRequest('/payments/create-intent', {
+        method: 'POST',
+        body: JSON.stringify({
+          amount: amount,
+          description: description || `ClubHub Payment of £${amount}`,
+          metadata: {
+            source: 'clubhub_web',
+            environment: window.location.hostname.includes('localhost') ? 'development' : 'production',
+            ...metadata
+          }
+        })
+      });
+
+      console.log('✅ Payment intent created:', response.paymentIntentId);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to create payment intent:', error);
+      throw error;
+    }
+  }
+
+  // Process membership payment
+  async processMembershipPayment(playerId, amount, description) {
+    return await this.createPaymentForAmount(amount, description, {
+      type: 'membership',
+      playerId: playerId
+    });
+  }
+
+  // Process event booking payment
+  async processEventPayment(eventId, amount, description) {
+    return await this.createPaymentForAmount(amount, description, {
+      type: 'event_booking',
+      eventId: eventId
+    });
+  }
+
+  // =====================================================
   // UTILITY METHODS
   // =====================================================
 
@@ -465,15 +708,94 @@ class ApiService {
       return false;
     }
   }
+
+  // =====================================================
+  // 🔥 NEW: HELPER METHODS FOR FINDING USERS
+  // =====================================================
+
+  async findUserByEmail(email) {
+    try {
+      return await this.makeRequest(`/users/find-by-email?email=${encodeURIComponent(email)}`);
+    } catch (error) {
+      // This is expected to fail if user doesn't exist
+      return null;
+    }
+  }
+
+  // =====================================================
+  // 🔥 NEW: NOTIFICATIONS AND MESSAGING
+  // =====================================================
+
+  async sendClubInviteEmail(inviteId) {
+    return await this.makeRequest(`/invites/${inviteId}/send-email`, {
+      method: 'POST'
+    });
+  }
+
+  async getNotifications() {
+    try {
+      return await this.makeRequest('/notifications');
+    } catch (error) {
+      console.error('❌ Failed to fetch notifications:', error);
+      return [];
+    }
+  }
+
+  async markNotificationAsRead(notificationId) {
+    return await this.makeRequest(`/notifications/${notificationId}/read`, {
+      method: 'PATCH'
+    });
+  }
+
+  // =====================================================
+  // 🔥 NEW: CLUB STATISTICS AND ANALYTICS
+  // =====================================================
+
+  async getClubStats(clubId) {
+    return await this.makeRequest(`/clubs/${clubId}/stats`);
+  }
+
+  async getPlayerStats(playerId) {
+    return await this.makeRequest(`/players/${playerId}/stats`);
+  }
+
+  async getTeamStats(teamId) {
+    return await this.makeRequest(`/teams/${teamId}/stats`);
+  }
+
+  // =====================================================
+  // 🔥 NEW: MONTHLY FEE GENERATION
+  // =====================================================
+
+  async generateMonthlyFees(clubId, month = null, year = null) {
+    const body = {};
+    if (month) body.month = month;
+    if (year) body.year = year;
+
+    return await this.makeRequest(`/payments/generate-monthly-fees/${clubId}`, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+  }
 }
 
 // Create and export a singleton instance
 const apiService = new ApiService();
 
-// Test connection immediately
-apiService.testConnection();
+// Test connection immediately (only in development)
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  apiService.testConnection();
+}
 
 // Export for use in other files
 window.apiService = apiService;
 
-console.log('✅ Fixed API Service loaded with real payment processing!');
+// 🔥 PRODUCTION READY: Enhanced error handling and logging
+window.addEventListener('error', function(event) {
+  if (event.error && event.error.message && event.error.message.includes('apiService')) {
+    console.error('🚨 API Service Error:', event.error);
+    // Could send to error tracking service in production
+  }
+});
+
+console.log('✅ Enhanced API Service loaded with full payment processing and invite system!');
