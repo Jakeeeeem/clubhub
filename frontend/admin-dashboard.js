@@ -236,6 +236,87 @@ async function handleAddPlayer(e) {
         
         showNotification(`Player ${response.player.first_name} ${response.player.last_name} added successfully!`, 'success');
         
+        // Handle invite form submission
+document.getElementById('invitePlayerForm').addEventListener('submit', handleInvitePlayer);
+
+async function handleInvitePlayer(e) {
+    e.preventDefault();
+    
+    try {
+        showLoading(true);
+        
+        const inviteData = {
+            email: document.getElementById('inviteEmail').value,
+            firstName: document.getElementById('inviteFirstName').value,
+            lastName: document.getElementById('inviteLastName').value,
+            clubRole: document.getElementById('inviteRole').value,
+            message: document.getElementById('inviteMessage').value
+        };
+        
+        const response = await apiService.generateClubInvite(inviteData);
+        
+        // Show the invite link to copy/share
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        modal.id = 'inviteLinkModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✅ Invite Sent!</h2>
+                    <button class="close" onclick="closeModal('inviteLinkModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Invite created for:</strong> ${inviteData.email}</p>
+                    <p><strong>Share this link with the player:</strong></p>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+                        <input type="text" value="${response.inviteLink}" readonly style="width: 100%; padding: 0.5rem;" id="inviteLink">
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="copyInviteLink()">📋 Copy Link</button>
+                        <button class="btn btn-success" onclick="shareInviteLink('${response.inviteLink}', '${inviteData.email}')">📧 Share</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        closeModal('invitePlayerModal');
+        document.getElementById('invitePlayerForm').reset();
+        
+        showNotification('Invite created successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Failed to create invite:', error);
+        showNotification('Failed to create invite: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function copyInviteLink() {
+    const linkInput = document.getElementById('inviteLink');
+    linkInput.select();
+    navigator.clipboard.writeText(linkInput.value);
+    showNotification('Invite link copied to clipboard!', 'success');
+}
+
+function shareInviteLink(link, email) {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Club Invitation',
+            text: `You're invited to join our club!`,
+            url: link
+        });
+    } else {
+        // Fallback - open email client
+        const subject = encodeURIComponent('You\'re invited to join our club!');
+        const body = encodeURIComponent(`Hi!\n\nYou're invited to join our club on ClubHub.\n\nClick this link to accept: ${link}\n\nLooking forward to having you on the team!`);
+        window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+    }
+}
         // Generate first payment if monthly fee > 0
         if (playerData.monthlyFee > 0) {
             setTimeout(async () => {
