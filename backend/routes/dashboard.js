@@ -142,82 +142,102 @@ router.get('/admin', authenticateToken, requireOrganization, async (req, res) =>
     console.error('Get admin dashboard error:', error);
     res.status(500).json({
       error: 'Failed to fetch dashboard data',
-      message: 'An error occurred while fetching dashboard data'
+      message: 'An error occurred while fetching dashboard data',
+      details: error.message
     });
   }
 });
 
-// Get player dashboard data
+// 🔥 FIXED: Get player dashboard data
 router.get('/player', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log('📊 Loading player dashboard for user:', userId);
     
-    // Find player record for this user
-    const playerResult = await query(
-      'SELECT * FROM players WHERE user_id = $1',
-      [userId]
-    );
+    // Find player record for this user - FIXED QUERY
+    const playerResult = await query(`
+      SELECT p.*, c.name as club_name, c.id as club_id
+      FROM players p
+      LEFT JOIN clubs c ON p.club_id = c.id
+      WHERE p.user_id = $1
+      ORDER BY p.created_at DESC
+      LIMIT 1
+    `, [userId]);
     
-    if (playerResult.rows.length === 0) {
-      // No player record found, return basic data
-      return res.json({
-        player: null,
-        clubs: [],
-        teams: [],
-        events: [],
-        payments: [],
-        bookings: [],
-        applications: []
-      });
+    let player = null;
+    let clubIds = [];
+    
+    if (playerResult.rows.length > 0) {
+      player = playerResult.rows[0];
+      if (player.club_id) {
+        clubIds = [player.club_id];
+      }
+      console.log('✅ Found player record:', player.first_name, player.last_name);
+    } else {
+      console.log('ℹ️ No player record found for user:', userId);
     }
     
-    const player = playerResult.rows[0];
+    // Get player's clubs (either from player record or empty)
+    let clubs = [];
+    if (clubIds.length > 0) {
+      const clubsResult = await query(`
+        SELECT * FROM clubs WHERE id = ANY($1)
+      `, [clubIds]);
+      clubs = clubsResult.rows;
+    }
     
-    // Get player's club
-    const clubResult = await query(
-      'SELECT * FROM clubs WHERE id = $1',
-      [player.club_id]
-    );
+    // Get player's teams (only if player exists)
+    let teams = [];
+    if (player) {
+      const teamsResult = await query(`
+        SELECT t.*, 
+               tp.position as player_position,
+               tp.jersey_number,
+               s.first_name as coach_first_name,
+               s.last_name as coach_last_name,
+               s.email as coach_email
+        FROM teams t
+        JOIN team_players tp ON t.id = tp.team_id
+        LEFT JOIN staff s ON t.coach_id = s.id
+        WHERE tp.player_id = $1
+        ORDER BY t.name
+      `, [player.id]);
+      teams = teamsResult.rows;
+    }
     
-    // Get player's teams
-    const teamsResult = await query(`
-      SELECT t.*, 
-             tp.position as player_position,
-             tp.jersey_number,
-             s.first_name as coach_first_name,
-             s.last_name as coach_last_name,
-             s.email as coach_email
-      FROM teams t
-      JOIN team_players tp ON t.id = tp.team_id
-      LEFT JOIN staff s ON t.coach_id = s.id
-      WHERE tp.player_id = $1
-      ORDER BY t.name
-    `, [player.id]);
-    
-    // Get all available events
+    // Get all available events (public events)
     const eventsResult = await query(`
       SELECT e.*, c.name as club_name
       FROM events e
       LEFT JOIN clubs c ON e.club_id = c.id
       WHERE e.event_date >= CURRENT_DATE
       ORDER BY e.event_date ASC
+      LIMIT 50
     `);
     
-    // Get player's payments
-    const paymentsResult = await query(`
-      SELECT * FROM payments
-      WHERE player_id = $1
-      ORDER BY due_date DESC
-    `, [player.id]);
+    // Get player's payments (only if player exists)
+    let payments = [];
+    if (player) {
+      const paymentsResult = await query(`
+        SELECT * FROM payments
+        WHERE player_id = $1
+        ORDER BY due_date DESC
+      `, [player.id]);
+      payments = paymentsResult.rows;
+    }
     
-    // Get player's bookings
-    const bookingsResult = await query(`
-      SELECT eb.*, e.title as event_title, e.event_date
-      FROM event_bookings eb
-      JOIN events e ON eb.event_id = e.id
-      WHERE eb.user_id = $1
-      ORDER BY e.event_date DESC
-    `, [userId]);
+    // Get player's bookings (only if player exists)
+    let bookings = [];
+    if (player) {
+      const bookingsResult = await query(`
+        SELECT eb.*, e.title as event_title, e.event_date
+        FROM event_bookings eb
+        JOIN events e ON eb.event_id = e.id
+        WHERE eb.user_id = $1
+        ORDER BY e.event_date DESC
+      `, [userId]);
+      bookings = bookingsResult.rows;
+    }
     
     // Get player's applications
     const applicationsResult = await query(`
@@ -228,13 +248,21 @@ router.get('/player', authenticateToken, async (req, res) => {
       ORDER BY ca.submitted_at DESC
     `, [userId]);
     
+    console.log('📊 Player dashboard data loaded:', {
+      hasPlayer: !!player,
+      clubsCount: clubs.length,
+      teamsCount: teams.length,
+      eventsCount: eventsResult.rows.length,
+      paymentsCount: payments.length
+    });
+    
     res.json({
       player,
-      clubs: clubResult.rows,
-      teams: teamsResult.rows,
+      clubs,
+      teams,
       events: eventsResult.rows,
-      payments: paymentsResult.rows,
-      bookings: bookingsResult.rows,
+      payments,
+      bookings,
       applications: applicationsResult.rows
     });
 
@@ -242,7 +270,8 @@ router.get('/player', authenticateToken, async (req, res) => {
     console.error('Get player dashboard error:', error);
     res.status(500).json({
       error: 'Failed to fetch player dashboard data',
-      message: 'An error occurred while fetching player dashboard data'
+      message: 'An error occurred while fetching player dashboard data',
+      details: error.message
     });
   }
 });

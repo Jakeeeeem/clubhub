@@ -1,123 +1,146 @@
+let PlayerDashboardState = {
+    player: null,
+    clubs: [],
+    teams: [],
+    events: [],
+    payments: [],
+    bookings: [],
+    applications: [],
+    documents: [],
+    isLoading: false
+};
+
+// Initialize Player Dashboard
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🏃‍♂️ Player dashboard loading...');
     
-    // Wait for main app to initialize first
+    // Wait for dependencies to load
     setTimeout(() => {
-        if (AppState.currentUser) {
-            initializePlayerDashboard();
-        } else {
-            // Check every 100ms until user is loaded
-            const checkUser = setInterval(() => {
-                if (AppState.currentUser) {
-                    clearInterval(checkUser);
-                    initializePlayerDashboard();
-                }
-            }, 100);
-            
-            // Give up after 30 seconds
-            setTimeout(() => {
-                clearInterval(checkUser);
-                if (!AppState.currentUser) {
-                    console.log('No user found, redirecting to login');
-                    window.location.href = 'index.html';
-                }
-            }, 30000);
+        if (typeof apiService === 'undefined') {
+            console.error('❌ API Service not loaded');
+            showNotification('System error: API service not available', 'error');
+            return;
         }
-    }, 1000);
+        
+        if (typeof createPaymentModal === 'undefined') {
+            console.warn('⚠️ Payment modal not available - payments will redirect to payment page');
+        }
+        
+        initializePlayerDashboard();
+    }, 500);
 });
 
-// Enhanced player data object
-let playerData = {
-    clubs: [],
-    teams: [],
-    payments: [],
-    applications: [],
-    bookings: [],
-    coaches: [],
-    listings: []
-};
-
-// Initialize player dashboard - FIXED TO LOAD FROM DATABASE
 async function initializePlayerDashboard() {
     console.log('🏃‍♂️ Initializing player dashboard...');
     
-    // Check if apiService is available
-    if (typeof apiService === 'undefined') {
-        console.error('❌ apiService not loaded! Check script order in HTML.');
-        showNotification('API service not available. Please refresh the page.', 'error');
-        return;
-    }
-    
     try {
-        // 🔥 LOAD ALL DATA FROM DATABASE VIA API
-        console.log('📊 Loading ALL data from database...');
+        showLoading(true);
         
-        // Load player-specific dashboard data
-        const playerDashboard = await apiService.getPlayerDashboardData();
+        // Load player data with error handling
+        await loadPlayerDataWithFallback();
         
-        // Load events from database
-        const eventsData = await apiService.getEvents();
-        AppState.events = eventsData || [];
-        console.log('📅 Loaded events from database:', AppState.events.length);
+        // Load all dashboard sections
+        loadPlayerOverview();
+        loadPlayerClubs();
+        loadPlayerTeams();
+        loadPlayerFinances();
+        loadClubFinder();
+        loadEventFinder();
+        loadPlayerDocuments();
+        loadPlayerListings();
+        setupEventListeners();
         
-        // Load clubs from database
-        const clubsData = await apiService.getClubs();
-        AppState.clubs = clubsData || [];
-        console.log('🏠 Loaded clubs from database:', AppState.clubs.length);
-        
-        // Set player-specific data
-        if (playerDashboard.player) {
-            AppState.currentPlayer = playerDashboard.player;
-            playerData.clubs = playerDashboard.clubs || [];
-            playerData.teams = playerDashboard.teams || [];
-            playerData.payments = playerDashboard.payments || [];
-            playerData.bookings = playerDashboard.bookings || [];
-            playerData.applications = playerDashboard.applications || [];
-            
-            console.log('👤 Player data loaded:', {
-                player: `${playerDashboard.player.first_name} ${playerDashboard.player.last_name}`,
-                clubs: playerData.clubs.length,
-                teams: playerData.teams.length,
-                payments: playerData.payments.length
-            });
-        }
-        
-        // Load all available events for event finder
-        playerData.listings = AppState.events || [];
-        
-        // Load staff data for coaches
-        const staffData = await apiService.getStaff();
-        AppState.staff = staffData || [];
-        
-        // Filter coaches for player's clubs
-        const clubIds = playerData.clubs.map(c => c.id);
-        playerData.coaches = AppState.staff?.filter(s => 
-            clubIds.includes(s.club_id) && 
-            ['coach', 'assistant-coach', 'coaching-supervisor'].includes(s.role)
-        ) || [];
-        
-        // Load player data and setup
-        loadPlayerStats();
-        setupPlayerEventListeners();
-        
-        // Check for notifications
-        checkPlayerNotifications();
-        
-        console.log('✅ Player dashboard initialized with DATABASE data');
+        console.log('✅ Player dashboard initialized successfully');
         
     } catch (error) {
         console.error('❌ Failed to initialize player dashboard:', error);
-        showNotification('Failed to load dashboard data: ' + error.message, 'error');
-        
-        // Fallback to empty data but still show available events
-        AppState.events = [];
-        AppState.clubs = [];
-        playerData.listings = [];
-        loadPlayerStats();
+        showNotification('Failed to load dashboard: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
     }
 }
 
-function setupPlayerEventListeners() {
+async function loadPlayerDataWithFallback() {
+    console.log('📊 Loading player data with fallback...');
+    
+    try {
+        // Try to load from player dashboard endpoint first
+        try {
+            const dashboardData = await apiService.getPlayerDashboardData();
+            console.log('✅ Loaded from player dashboard API:', dashboardData);
+            
+            PlayerDashboardState.player = dashboardData.player;
+            PlayerDashboardState.clubs = dashboardData.clubs || [];
+            PlayerDashboardState.teams = dashboardData.teams || [];
+            PlayerDashboardState.events = dashboardData.events || [];
+            PlayerDashboardState.payments = dashboardData.payments || [];
+            PlayerDashboardState.bookings = dashboardData.bookings || [];
+            PlayerDashboardState.applications = dashboardData.applications || [];
+            
+            return;
+        } catch (error) {
+            console.warn('⚠️ Player dashboard API failed, trying individual endpoints:', error);
+        }
+        
+        // Fallback to individual API calls
+        const loadPromises = [
+            apiService.getEvents().then(data => PlayerDashboardState.events = data || []).catch(e => {
+                console.warn('Failed to load events:', e);
+                PlayerDashboardState.events = [];
+            }),
+            apiService.getClubs().then(data => PlayerDashboardState.clubs = data || []).catch(e => {
+                console.warn('Failed to load clubs:', e);
+                PlayerDashboardState.clubs = [];
+            }),
+            apiService.getTeams().then(data => PlayerDashboardState.teams = data || []).catch(e => {
+                console.warn('Failed to load teams:', e);
+                PlayerDashboardState.teams = [];
+            }),
+            apiService.getPayments().then(data => PlayerDashboardState.payments = data || []).catch(e => {
+                console.warn('Failed to load payments:', e);
+                PlayerDashboardState.payments = [];
+            }),
+            apiService.getUserBookings().then(data => PlayerDashboardState.bookings = data || []).catch(e => {
+                console.warn('Failed to load bookings:', e);
+                PlayerDashboardState.bookings = [];
+            })
+        ];
+        
+        await Promise.all(loadPromises);
+        
+        // Try to find current user as player
+        if (AppState.currentUser) {
+            const currentUserEmail = AppState.currentUser.email;
+            console.log('🔍 Looking for player with email:', currentUserEmail);
+            
+            // Check if user exists in any club as a player
+            PlayerDashboardState.clubs.forEach(club => {
+                if (club.players) {
+                    const playerRecord = club.players.find(p => p.email === currentUserEmail);
+                    if (playerRecord) {
+                        PlayerDashboardState.player = playerRecord;
+                        console.log('✅ Found player record:', playerRecord);
+                    }
+                }
+            });
+        }
+        
+        console.log('📊 Loaded data successfully:', {
+            events: PlayerDashboardState.events.length,
+            clubs: PlayerDashboardState.clubs.length,
+            teams: PlayerDashboardState.teams.length,
+            payments: PlayerDashboardState.payments.length,
+            bookings: PlayerDashboardState.bookings.length,
+            hasPlayer: !!PlayerDashboardState.player
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to load player data:', error);
+        throw error;
+    }
+}
+
+function setupEventListeners() {
     // Form submissions
     const applyClubForm = document.getElementById('applyClubForm');
     const availabilityForm = document.getElementById('availabilityForm');
@@ -129,43 +152,439 @@ function setupPlayerEventListeners() {
     if (availabilityForm) {
         availabilityForm.addEventListener('submit', handleAvailabilitySubmission);
     }
+    
+    console.log('📋 Player dashboard event listeners setup');
 }
 
-// Check for notifications
-function checkPlayerNotifications() {
-    console.log('📢 Checking for notifications...');
+// Load dashboard sections
+function loadPlayerOverview() {
+    console.log('📊 Loading player overview...');
     
-    // Check for overdue payments
-    const overduePayments = playerData.payments?.filter(p => 
-        p.payment_status === 'overdue' || 
-        (p.payment_status === 'pending' && new Date(p.due_date) < new Date())
-    ) || [];
+    const playerClubsCount = PlayerDashboardState.clubs.length;
+    const playerTeamsCount = PlayerDashboardState.teams.length;
+    const upcomingEventsCount = PlayerDashboardState.events.filter(e => new Date(e.event_date) > new Date()).length;
     
-    if (overduePayments.length > 0) {
-        setTimeout(() => {
-            showNotification(`You have ${overduePayments.length} overdue payment${overduePayments.length > 1 ? 's' : ''}. Please check your finances.`, 'warning');
-        }, 2000);
-    }
+    // Update stats
+    updateStatElement('playerClubs', playerClubsCount);
+    updateStatElement('playerTeams', playerTeamsCount);
+    updateStatElement('playerEvents', upcomingEventsCount);
+    updateStatElement('playerAttendance', '85%'); // Placeholder
     
-    // Welcome message for club members
-    if (playerData.clubs.length > 0) {
-        setTimeout(() => {
-            showNotification(`Welcome to ${playerData.clubs[0].name}!`, 'success');
-        }, 1000);
+    loadUpcomingEvents();
+    loadRecentActivity();
+    loadPerformanceSummary();
+}
+
+function updateStatElement(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = value;
     }
 }
 
-// Section Navigation
+function loadUpcomingEvents() {
+    const upcomingContainer = document.getElementById('playerUpcomingEvents');
+    if (!upcomingContainer) return;
+    
+    const now = new Date();
+    const upcoming = PlayerDashboardState.events
+        .filter(e => new Date(e.event_date) > now)
+        .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+        .slice(0, 5);
+    
+    if (upcoming.length === 0) {
+        upcomingContainer.innerHTML = '<p>No upcoming events</p>';
+        return;
+    }
+    
+    upcomingContainer.innerHTML = upcoming.map(event => `
+        <div class="item-list-item">
+            <div class="item-info">
+                <h4>${event.title}</h4>
+                <p>${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}</p>
+                <p>Price: ${formatCurrency(event.price || 0)}</p>
+            </div>
+            <div class="item-actions">
+                <button class="btn btn-small btn-primary" onclick="bookEvent('${event.id}')">Book</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadRecentActivity() {
+    const activityContainer = document.getElementById('playerRecentActivity');
+    if (!activityContainer) return;
+    
+    const recentBookings = PlayerDashboardState.bookings.slice(0, 3);
+    
+    if (recentBookings.length === 0) {
+        activityContainer.innerHTML = '<p>No recent activity</p>';
+        return;
+    }
+    
+    activityContainer.innerHTML = recentBookings.map(booking => `
+        <div class="item-list-item">
+            <div class="item-info">
+                <h4>${booking.title}</h4>
+                <p>${formatDate(booking.event_date)} - ${booking.booking_status}</p>
+            </div>
+            <span class="status-badge status-${booking.booking_status}">${booking.booking_status}</span>
+        </div>
+    `).join('');
+}
+
+function loadPerformanceSummary() {
+    updateStatElement('playerMatchesPlayed', PlayerDashboardState.bookings.filter(b => b.event_type === 'match').length);
+    updateStatElement('playerAverageRating', '4.2'); // Placeholder
+    updateStatElement('playerTrainingSessions', PlayerDashboardState.bookings.filter(b => b.event_type === 'training').length);
+    updateStatElement('playerPosition', PlayerDashboardState.player?.position || 'Not Set');
+}
+
+function loadPlayerClubs() {
+    console.log('🏢 Loading player clubs...');
+    
+    const clubsContainer = document.getElementById('playerClubsContainer');
+    if (!clubsContainer) return;
+    
+    if (PlayerDashboardState.clubs.length === 0) {
+        clubsContainer.innerHTML = `
+            <div class="empty-state">
+                <h4>No clubs joined yet</h4>
+                <p>Find and apply to clubs to get started</p>
+                <button class="btn btn-primary" onclick="showPlayerSection('club-finder')">Find Clubs</button>
+            </div>
+        `;
+        return;
+    }
+    
+    clubsContainer.innerHTML = PlayerDashboardState.clubs.map(club => `
+        <div class="card">
+            <h4>${club.name}</h4>
+            <p><strong>Location:</strong> ${club.location || 'Not specified'}</p>
+            <p><strong>Sport:</strong> ${club.sport || 'Not specified'}</p>
+            <p><strong>Members:</strong> ${club.member_count || 0}</p>
+            <p>${club.description || 'No description available'}</p>
+            <div class="item-actions">
+                <button class="btn btn-small btn-secondary" onclick="viewClubDetails('${club.id}')">View Details</button>
+                <button class="btn btn-small btn-primary" onclick="viewClubEvents('${club.id}')">View Events</button>
+            </div>
+        </div>
+    `).join('');
+    
+    // Load club staff
+    loadClubStaff();
+}
+
+function loadClubStaff() {
+    const staffTableBody = document.getElementById('clubStaffTableBody');
+    if (!staffTableBody) return;
+    
+    let allStaff = [];
+    
+    // Collect staff from all clubs
+    PlayerDashboardState.clubs.forEach(club => {
+        if (club.staff) {
+            club.staff.forEach(staff => {
+                allStaff.push({
+                    ...staff,
+                    club_name: club.name
+                });
+            });
+        }
+    });
+    
+    if (allStaff.length === 0) {
+        staffTableBody.innerHTML = '<tr><td colspan="4">No staff information available</td></tr>';
+        return;
+    }
+    
+    staffTableBody.innerHTML = allStaff.map(staff => `
+        <tr>
+            <td>${staff.first_name} ${staff.last_name}</td>
+            <td>${staff.role}</td>
+            <td>${staff.email || 'N/A'}</td>
+            <td>${staff.club_name}</td>
+        </tr>
+    `).join('');
+}
+
+function loadPlayerTeams() {
+    console.log('⚽ Loading player teams...');
+    
+    const teamsContainer = document.getElementById('playerTeamsContainer');
+    if (!teamsContainer) return;
+    
+    if (PlayerDashboardState.teams.length === 0) {
+        teamsContainer.innerHTML = `
+            <div class="empty-state">
+                <h4>No teams joined yet</h4>
+                <p>Join a club to be assigned to teams</p>
+                <button class="btn btn-primary" onclick="showPlayerSection('club-finder')">Find Clubs</button>
+            </div>
+        `;
+        return;
+    }
+    
+    teamsContainer.innerHTML = PlayerDashboardState.teams.map(team => `
+        <div class="card">
+            <h4>${team.name}</h4>
+            <p><strong>Age Group:</strong> ${team.age_group || 'Not specified'}</p>
+            <p><strong>Sport:</strong> ${team.sport || 'Not specified'}</p>
+            <p><strong>Position:</strong> ${team.player_position || 'Not assigned'}</p>
+            <p><strong>Jersey Number:</strong> ${team.jersey_number || 'Not assigned'}</p>
+            ${team.coach ? `<p><strong>Coach:</strong> ${team.coach.name}</p>` : ''}
+            <div class="item-actions">
+                <button class="btn btn-small btn-secondary" onclick="viewTeamDetails('${team.id}')">View Team</button>
+                <button class="btn btn-small btn-primary" onclick="viewTeamEvents('${team.id}')">Team Events</button>
+            </div>
+        </div>
+    `).join('');
+    
+    loadTeamEvents();
+}
+
+function loadTeamEvents() {
+    const eventsContainer = document.getElementById('teamEventsContainer');
+    if (!eventsContainer) return;
+    
+    // Filter events for user's teams
+    const teamIds = PlayerDashboardState.teams.map(t => t.id);
+    const teamEvents = PlayerDashboardState.events.filter(e => teamIds.includes(e.team_id));
+    
+    if (teamEvents.length === 0) {
+        eventsContainer.innerHTML = '<p>No team events found</p>';
+        return;
+    }
+    
+    eventsContainer.innerHTML = teamEvents.map(event => `
+        <div class="event-item" style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 8px;">
+            <h4>${event.title}</h4>
+            <p><strong>Date:</strong> ${formatDate(event.event_date)}</p>
+            <p><strong>Type:</strong> ${event.event_type}</p>
+            <div class="item-actions">
+                <button class="btn btn-small btn-primary" onclick="submitAvailability('${event.id}')">Submit Availability</button>
+                <button class="btn btn-small btn-secondary" onclick="viewEventDetails('${event.id}')">View Details</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadPlayerFinances() {
+    console.log('💰 Loading player finances...');
+    
+    const payments = PlayerDashboardState.payments;
+    const totalDue = payments.filter(p => p.payment_status === 'pending').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const totalPaid = payments.filter(p => p.payment_status === 'paid').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const nextPayment = payments.find(p => p.payment_status === 'pending');
+    
+    // Update financial stats
+    updateStatElement('totalDue', formatCurrency(totalDue));
+    updateStatElement('totalPaid', formatCurrency(totalPaid));
+    updateStatElement('nextPayment', nextPayment ? formatCurrency(nextPayment.amount) : '£0');
+    updateStatElement('paymentStatus', totalDue > 0 ? 'Outstanding' : 'Up to Date');
+    
+    loadPaymentHistory();
+    loadOutstandingPayments();
+}
+
+function loadPaymentHistory() {
+    const tableBody = document.getElementById('paymentHistoryTableBody');
+    if (!tableBody) return;
+    
+    const payments = PlayerDashboardState.payments;
+    
+    if (payments.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5">No payment history found</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = payments.map(payment => `
+        <tr>
+            <td>${formatDate(payment.due_date)}</td>
+            <td>${payment.description}</td>
+            <td>${formatCurrency(payment.amount)}</td>
+            <td><span class="status-badge status-${payment.payment_status}">${payment.payment_status}</span></td>
+            <td>
+                ${payment.payment_status === 'pending' ? `
+                    <button class="btn btn-small btn-primary" onclick="payNow('${payment.id}', ${payment.amount}, '${payment.description}')">Pay Now</button>
+                ` : payment.payment_status === 'paid' ? `
+                    <span style="color: #28a745;">✅ Paid</span>
+                ` : ''}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function loadOutstandingPayments() {
+    const container = document.getElementById('outstandingPayments');
+    if (!container) return;
+    
+    const outstanding = PlayerDashboardState.payments.filter(p => p.payment_status === 'pending');
+    
+    if (outstanding.length === 0) {
+        container.innerHTML = '<p>No outstanding payments</p>';
+        return;
+    }
+    
+    container.innerHTML = outstanding.map(payment => `
+        <div class="payment-item" style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 8px; background: #fff3cd;">
+            <h4>${payment.description}</h4>
+            <p><strong>Amount:</strong> ${formatCurrency(payment.amount)}</p>
+            <p><strong>Due Date:</strong> ${formatDate(payment.due_date)}</p>
+            <button class="btn btn-primary" onclick="payNow('${payment.id}', ${payment.amount}, '${payment.description}')">Pay Now</button>
+        </div>
+    `).join('');
+}
+
+function loadClubFinder() {
+    console.log('🔍 Loading club finder...');
+    
+    const clubsContainer = document.getElementById('availableClubsContainer');
+    if (!clubsContainer) return;
+    
+    if (PlayerDashboardState.clubs.length === 0) {
+        clubsContainer.innerHTML = `
+            <div class="empty-state">
+                <h4>No clubs available</h4>
+                <p>Check back later for new clubs</p>
+                <button class="btn btn-primary" onclick="refreshClubData()">Refresh</button>
+            </div>
+        `;
+        return;
+    }
+    
+    displayClubs(PlayerDashboardState.clubs);
+}
+
+function displayClubs(clubs) {
+    const clubsContainer = document.getElementById('availableClubsContainer');
+    if (!clubsContainer) return;
+    
+    clubsContainer.innerHTML = clubs.map(club => `
+        <div class="card">
+            <h4>${club.name}</h4>
+            <p><strong>Location:</strong> ${club.location || 'Not specified'}</p>
+            <p><strong>Sport:</strong> ${club.sport || 'Not specified'}</p>
+            <p><strong>Members:</strong> ${club.member_count || 0}</p>
+            <p>${club.description || 'No description available'}</p>
+            <div class="item-actions">
+                <button class="btn btn-small btn-primary" onclick="applyToClub('${club.id}', '${club.name}')">Apply</button>
+                <button class="btn btn-small btn-secondary" onclick="viewClubDetails('${club.id}')">View Details</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadEventFinder() {
+    console.log('📅 Loading event finder...');
+    
+    const eventsContainer = document.getElementById('availablePlayerEventsContainer');
+    if (!eventsContainer) return;
+    
+    // Show ALL events by default
+    displayEvents(PlayerDashboardState.events);
+}
+
+function displayEvents(events) {
+    const eventsContainer = document.getElementById('availablePlayerEventsContainer');
+    if (!eventsContainer) return;
+    
+    if (events.length === 0) {
+        eventsContainer.innerHTML = `
+            <div class="empty-state">
+                <h4>No events found</h4>
+                <p>Try adjusting your search criteria or check back later</p>
+                <button class="btn btn-primary" onclick="refreshEventData()">Refresh Events</button>
+            </div>
+        `;
+        return;
+    }
+    
+    eventsContainer.innerHTML = events.map(event => `
+        <div class="card">
+            <h4>${event.title}</h4>
+            <p><strong>Type:</strong> ${event.event_type}</p>
+            <p><strong>Date:</strong> ${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}</p>
+            <p><strong>Location:</strong> ${event.location || 'TBD'}</p>
+            <p><strong>Price:</strong> ${formatCurrency(event.price || 0)}</p>
+            <p><strong>Available Spots:</strong> ${event.spots_available || 'Unlimited'}</p>
+            <p>${event.description || 'No description available'}</p>
+            <div class="item-actions">
+                <button class="btn btn-small btn-primary" onclick="bookEvent('${event.id}')">Book Event</button>
+                <button class="btn btn-small btn-secondary" onclick="viewEventDetails('${event.id}')">View Details</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadPlayerDocuments() {
+    console.log('📄 Loading player documents...');
+    
+    const tableBody = document.getElementById('playerDocumentsTableBody');
+    if (!tableBody) return;
+    
+    // Mock documents for now - replace with real API call when available
+    const documents = [
+        {
+            id: '1',
+            name: 'Club Handbook',
+            type: 'PDF',
+            club_name: 'Elite Football Academy',
+            updated_at: '2024-01-15'
+        },
+        {
+            id: '2',
+            name: 'Training Schedule',
+            type: 'PDF',
+            club_name: 'Elite Football Academy',
+            updated_at: '2024-01-20'
+        },
+        {
+            id: '3',
+            name: 'Safety Guidelines',
+            type: 'PDF',
+            club_name: 'Elite Football Academy',
+            updated_at: '2024-01-10'
+        }
+    ];
+    
+    if (documents.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5">No documents available</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = documents.map(doc => `
+        <tr>
+            <td>${doc.name}</td>
+            <td>${doc.type}</td>
+            <td>${doc.club_name}</td>
+            <td>${formatDate(doc.updated_at)}</td>
+            <td>
+                <button class="btn btn-small btn-primary" onclick="downloadDocument('${doc.id}')">Download</button>
+                <button class="btn btn-small btn-secondary" onclick="viewDocument('${doc.id}')">View</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function loadPlayerListings() {
+    console.log('📋 Loading player listings...');
+    
+    // This function will be called when listings section is implemented
+    // For now, we'll handle this in the showPlayerSection function
+}
+
+// Event handlers
 function showPlayerSection(sectionId) {
+    console.log('🔄 Showing player section:', sectionId);
+    
     // Hide all sections
-    const sections = document.querySelectorAll('.dashboard-section');
-    sections.forEach(section => {
+    document.querySelectorAll('.dashboard-section').forEach(section => {
         section.classList.remove('active');
     });
     
     // Remove active class from all nav buttons
-    const navButtons = document.querySelectorAll('.dashboard-nav button');
-    navButtons.forEach(button => {
+    document.querySelectorAll('.dashboard-nav button').forEach(button => {
         button.classList.remove('active');
     });
     
@@ -181,10 +600,10 @@ function showPlayerSection(sectionId) {
         clickedButton.classList.add('active');
     }
     
-    // Load section-specific content
+    // Load section-specific data
     switch(sectionId) {
         case 'overview':
-            loadPlayerStats();
+            loadPlayerOverview();
             break;
         case 'my-clubs':
             loadPlayerClubs();
@@ -199,983 +618,509 @@ function showPlayerSection(sectionId) {
             loadClubFinder();
             break;
         case 'event-finder':
-            loadPlayerEventFinder();
+            loadEventFinder();
             break;
         case 'documents':
             loadPlayerDocuments();
             break;
+        case 'listings':
+            showNotification('Listings feature coming soon!', 'info');
+            break;
     }
 }
 
-// Enhanced Player Statistics
-function loadPlayerStats() {
-    // Update overview stats
-    const playerClubsEl = document.getElementById('playerClubs');
-    const playerTeamsEl = document.getElementById('playerTeams');
-    const playerEventsEl = document.getElementById('playerEvents');
+// Fixed event booking with proper payment handling
+async function bookEvent(eventId) {
+    console.log('📅 Booking event:', eventId);
     
-    if (playerClubsEl) playerClubsEl.textContent = playerData.clubs.length;
-    if (playerTeamsEl) playerTeamsEl.textContent = playerData.teams.length;
-    
-    // Calculate upcoming events
-    const now = new Date();
-    const upcomingEvents = AppState.events?.filter(e => 
-        new Date(e.event_date) > now
-    ) || [];
-    
-    if (playerEventsEl) playerEventsEl.textContent = upcomingEvents.length;
-    
-    // Update performance stats
-    const matchesPlayedEl = document.getElementById('playerMatchesPlayed');
-    const averageRatingEl = document.getElementById('playerAverageRating');
-    const trainingSessionsEl = document.getElementById('playerTrainingSessions');
-    const positionEl = document.getElementById('playerPosition');
-    
-    if (matchesPlayedEl) matchesPlayedEl.textContent = '0';
-    if (averageRatingEl) averageRatingEl.textContent = '0.0';
-    if (trainingSessionsEl) trainingSessionsEl.textContent = Math.floor(Math.random() * 20) + 10;
-    if (positionEl) positionEl.textContent = AppState.currentPlayer?.position || 'Not Set';
-    
-    // Load upcoming events display
-    loadPlayerUpcomingEvents(upcomingEvents.slice(0, 3));
-}
-
-function loadPlayerUpcomingEvents(events) {
-    const container = document.getElementById('playerUpcomingEvents');
-    if (!container) return;
-    
-    if (events.length === 0) {
-        container.innerHTML = '<p>No upcoming events</p>';
-        return;
-    }
-    
-    container.innerHTML = events.map(event => `
-        <div class="item-list-item">
-            <div class="item-info">
-                <h4>${event.title}</h4>
-                <p>${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}</p>
-            </div>
-            <span class="status-badge status-active">${event.event_type}</span>
-        </div>
-    `).join('');
-}
-
-// My Clubs Section - FIXED
-function loadPlayerClubs() {
-    const container = document.getElementById('playerClubsContainer');
-    if (!container) return;
-    
-    if (playerData.clubs.length === 0) {
-        container.innerHTML = `
-            <div class="card">
-                <h4>🏠 No Club Membership</h4>
-                <p>You are not currently a member of any clubs.</p>
-                <p>Contact a club administrator to be added as a player, or browse available clubs in the Club Finder section.</p>
-                <button class="btn btn-primary" onclick="showPlayerSection('club-finder')">Find Clubs</button>
-            </div>
-        `;
-        return;
-    }
-    
-    container.innerHTML = playerData.clubs.map(club => {
-        // Get coaches for this club
-        const clubCoaches = playerData.coaches.filter(c => c.club_id === club.id);
-        
-        return `
-            <div class="card">
-                <h4>🏢 ${club.name}</h4>
-                <div style="background: #e8f5e8; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
-                    <p><strong>✅ Active Member</strong></p>
-                    <p><strong>Member Since:</strong> ${formatDate(AppState.currentPlayer?.created_at || new Date())}</p>
-                    <p><strong>Monthly Fee:</strong> £${AppState.currentPlayer?.monthly_fee || 0}</p>
-                </div>
-                <p><strong>Location:</strong> ${club.location || 'Not specified'}</p>
-                <p><strong>Description:</strong> ${club.description || 'No description'}</p>
-                <p><strong>Sport:</strong> ${club.sport || 'Not specified'}</p>
-                
-                ${clubCoaches.length > 0 ? `
-                    <div style="margin-top: 1rem;">
-                        <strong>Your Coaches:</strong>
-                        ${clubCoaches.map(coach => `
-                            <div style="margin-left: 1rem; padding: 0.5rem; background: #f8f9fa; border-radius: 4px; margin-top: 0.5rem;">
-                                <p><strong>${coach.first_name} ${coach.last_name}</strong> - ${coach.role}</p>
-                                <p style="font-size: 0.9rem; color: #666;">📧 ${coach.email}</p>
-                                <button class="btn btn-small btn-secondary" onclick="contactCoachByEmail('${coach.email}', '${coach.first_name} ${coach.last_name}')">
-                                    Contact Coach
-                                </button>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-                
-                <div class="item-actions" style="margin-top: 1rem;">
-                    <button class="btn btn-small btn-primary" onclick="viewClubDetails('${club.id}')">View Details</button>
-                    <button class="btn btn-small btn-secondary" onclick="contactClub('${club.id}')">Contact Club</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    // Load club staff table
-    loadClubStaff();
-}
-
-function loadClubStaff() {
-    const tableBody = document.getElementById('clubStaffTableBody');
-    if (!tableBody) return;
-    
-    if (playerData.coaches.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4">No coaching staff information available</td></tr>';
-        return;
-    }
-    
-    tableBody.innerHTML = playerData.coaches.map(coach => {
-        const club = playerData.clubs.find(c => c.id === coach.club_id);
-        return `
-            <tr>
-                <td>${coach.first_name} ${coach.last_name}</td>
-                <td>${coach.role}</td>
-                <td>
-                    <a href="mailto:${coach.email}" class="btn btn-small btn-secondary">
-                        📧 ${coach.email}
-                    </a>
-                </td>
-                <td>${club ? club.name : 'Unknown'}</td>
-            </tr>
-        `;
-    }).join('');
-}
-
-// Teams Section - FIXED
-function loadPlayerTeams() {
-    const container = document.getElementById('playerTeamsContainer');
-    if (!container) return;
-    
-    if (playerData.teams.length === 0) {
-        container.innerHTML = `
-            <div class="card">
-                <h4>⚽ No Team Assignments</h4>
-                <p>You are not currently assigned to any teams.</p>
-                <p>Contact your club administrator to be assigned to a team.</p>
-            </div>
-        `;
-        return;
-    }
-    
-    container.innerHTML = playerData.teams.map(team => {
-        return `
-            <div class="card">
-                <h4>⚽ ${team.name}</h4>
-                <p><strong>Age Group:</strong> ${team.age_group || 'Not specified'}</p>
-                <p><strong>Sport:</strong> ${team.sport || 'Football'}</p>
-                
-                ${team.player_position || team.jersey_number ? `
-                    <div style="background: #e8f5e8; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
-                        ${team.player_position ? `<p><strong>Your Position:</strong> ${team.player_position}</p>` : ''}
-                        ${team.jersey_number ? `<p><strong>Jersey Number:</strong> #${team.jersey_number}</p>` : ''}
-                    </div>
-                ` : ''}
-                
-                ${team.coach_first_name ? `
-                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
-                        <p><strong>Coach:</strong> ${team.coach_first_name} ${team.coach_last_name}</p>
-                        <p style="font-size: 0.9rem; color: #666;">📧 ${team.coach_email}</p>
-                        <button class="btn btn-small btn-secondary" onclick="contactCoachByEmail('${team.coach_email}', '${team.coach_first_name} ${team.coach_last_name}')">
-                            Contact Coach
-                        </button>
-                    </div>
-                ` : '<p><strong>Coach:</strong> Not assigned</p>'}
-                
-                <div class="team-stats">
-                    <div class="team-stat">
-                        <span class="team-stat-number">${team.wins || 0}</span>
-                        <span class="team-stat-label">Wins</span>
-                    </div>
-                    <div class="team-stat">
-                        <span class="team-stat-number">${team.losses || 0}</span>
-                        <span class="team-stat-label">Losses</span>
-                    </div>
-                    <div class="team-stat">
-                        <span class="team-stat-number">${team.draws || 0}</span>
-                        <span class="team-stat-label">Draws</span>
-                    </div>
-                </div>
-                
-                <div class="item-actions" style="margin-top: 1rem;">
-                    <button class="btn btn-small btn-primary" onclick="viewTeamSchedule('${team.id}')">View Schedule</button>
-                    <button class="btn btn-small btn-secondary" onclick="viewTeamStats('${team.id}')">Team Stats</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    // Load team events
-    loadTeamEvents();
-}
-
-function loadTeamEvents() {
-    const container = document.getElementById('teamEventsContainer');
-    if (!container) return;
-    
-    const teamIds = playerData.teams.map(t => t.id);
-    const teamEvents = AppState.events?.filter(e => teamIds.includes(e.team_id)) || [];
-    
-    if (teamEvents.length === 0) {
-        container.innerHTML = '<p>No team events scheduled</p>';
-        return;
-    }
-    
-    container.innerHTML = teamEvents.map(event => `
-        <div class="item-list-item">
-            <div class="item-info">
-                <h4>${event.title}</h4>
-                <p>${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}</p>
-                <p><strong>Team:</strong> ${playerData.teams.find(t => t.id === event.team_id)?.name || 'Unknown'}</p>
-            </div>
-            <div class="item-actions">
-                <button class="btn btn-small btn-primary" onclick="voteAvailability('${event.id}')">Vote Availability</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Event Finder - FIXED
-function loadPlayerEventFinder() {
-    console.log('🔍 Loading events from DATABASE for event finder...');
-    filterPlayerEvents();
-}
-
-function filterPlayerEvents() {
-    console.log('🔍 Filtering events from database:', {
-        totalEvents: AppState.events?.length || 0
-    });
-    
-    const searchInput = document.getElementById('eventSearchInput');
-    const typeFilter = document.getElementById('playerEventTypeFilter');
-    const dateFilter = document.getElementById('playerEventDateFilter');
-    
-    const searchTerm = searchInput?.value.toLowerCase() || '';
-    const typeFilterValue = typeFilter?.value || '';
-    const dateFilterValue = dateFilter?.value || '';
-    
-    // Get ALL events from database
-    let availableEvents = AppState.events || [];
-    console.log('📅 Starting with events:', availableEvents.length);
-    
-    if (availableEvents.length === 0) {
-        const container = document.getElementById('availablePlayerEventsContainer');
-        if (container) {
-            container.innerHTML = `
-                <div class="card">
-                    <h4>No events found</h4>
-                    <p>No events are currently available.</p>
-                    <button onclick="debugPlayerData()" class="btn btn-secondary">🔍 Debug</button>
-                </div>
-            `;
-        }
-        return;
-    }
-    
-    // Filter upcoming events
-    const now = new Date();
-    availableEvents = availableEvents.filter(e => {
-        let eventDateTime;
-        
-        if (e.event_date && e.event_time) {
-            eventDateTime = new Date(`${e.event_date}T${e.event_time}`);
-        } else if (e.event_date) {
-            eventDateTime = new Date(e.event_date);
-        } else {
-            return false;
-        }
-        
-        if (isNaN(eventDateTime.getTime())) {
-            if (e.event_date.includes('/')) {
-                const [day, month, year] = e.event_date.split('/');
-                eventDateTime = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${e.event_time || '00:00:00'}`);
-            } else {
-                return false;
-            }
-        }
-        
-        return eventDateTime > now;
-    });
-    
-    // Apply filters
-    if (searchTerm) {
-        availableEvents = availableEvents.filter(event => 
-            event.title.toLowerCase().includes(searchTerm) ||
-            (event.description || '').toLowerCase().includes(searchTerm) ||
-            (event.location || '').toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    if (typeFilterValue) {
-        availableEvents = availableEvents.filter(event => event.event_type === typeFilterValue);
-    }
-    
-    if (dateFilterValue) {
-        availableEvents = availableEvents.filter(event => event.event_date >= dateFilterValue);
-    }
-    
-    const container = document.getElementById('availablePlayerEventsContainer');
-    if (!container) return;
-    
-    if (availableEvents.length === 0) {
-        container.innerHTML = `
-            <div class="card">
-                <h4>🔍 No events found</h4>
-                <p>No events match your criteria.</p>
-                <button onclick="showAllEvents()" class="btn btn-primary">Show All Events</button>
-            </div>
-        `;
-        return;
-    }
-    
-    // Display filtered events
-    container.innerHTML = availableEvents.map(event => {
-        const club = AppState.clubs?.find(c => c.id === event.club_id);
-        
-        let formattedDate = 'TBD';
-        try {
-            if (event.event_date) {
-                const eventDate = new Date(event.event_date);
-                if (!isNaN(eventDate.getTime())) {
-                    formattedDate = eventDate.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: '2-digit', 
-                        year: 'numeric'
-                    });
-                } else {
-                    formattedDate = event.event_date;
-                }
-            }
-        } catch (error) {
-            formattedDate = event.event_date || 'TBD';
-        }
-        
-        // Check if already booked
-        const isBooked = playerData.bookings?.some(b => b.event_id === event.id && b.booking_status === 'confirmed');
-        
-        return `
-            <div class="card">
-                <h4>${event.title}</h4>
-                <p><strong>Type:</strong> ${event.event_type}</p>
-                <p><strong>Date:</strong> ${formattedDate}${event.event_time ? ` at ${event.event_time}` : ''}</p>
-                <p><strong>Location:</strong> ${event.location || 'TBD'}</p>
-                <p><strong>Price:</strong> ${formatCurrency(event.price || 0)} ${event.price > 0 ? '💳' : '🆓'}</p>
-                <p><strong>Club:</strong> ${club ? club.name : 'Unknown Club'}</p>
-                ${event.capacity ? `<p><strong>Capacity:</strong> ${event.capacity} spots</p>` : ''}
-                ${event.description ? `<p>${event.description}</p>` : ''}
-                
-                <div class="item-actions">
-                    ${isBooked ? `
-                        <button class="btn btn-small btn-success" disabled>✅ Booked</button>
-                        <button class="btn btn-small btn-secondary" onclick="cancelEventBooking('${event.id}')">Cancel Booking</button>
-                    ` : `
-                        <button class="btn btn-small btn-primary" onclick="bookPlayerEvent('${event.id}')">Book Event</button>
-                    `}
-                    <button class="btn btn-small btn-secondary" onclick="viewEventDetails('${event.id}')">View Details</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Helper function to show all events (for debugging)
-function showAllEvents() {
-    const container = document.getElementById('availablePlayerEventsContainer');
-    if (!container || !AppState.events || AppState.events.length === 0) return;
-    
-    container.innerHTML = AppState.events.map(event => {
-        const club = AppState.clubs?.find(c => c.id === event.club_id);
-        
-        return `
-            <div class="card" style="border: 2px solid orange;">
-                <h4>${event.title} <span style="color: orange;">[ALL EVENTS]</span></h4>
-                <p><strong>Type:</strong> ${event.event_type}</p>
-                <p><strong>Date:</strong> ${event.event_date}${event.event_time ? ` at ${event.event_time}` : ''}</p>
-                <p><strong>Location:</strong> ${event.location || 'TBD'}</p>
-                <p><strong>Price:</strong> ${formatCurrency(event.price || 0)}</p>
-                <p><strong>Club:</strong> ${club ? club.name : 'Unknown Club'}</p>
-                ${event.capacity ? `<p><strong>Capacity:</strong> ${event.capacity}</p>` : ''}
-                ${event.description ? `<p>${event.description}</p>` : ''}
-                
-                <div class="item-actions">
-                    <button class="btn btn-small btn-primary" onclick="bookPlayerEvent('${event.id}')">Book Event</button>
-                    <button class="btn btn-small btn-secondary" onclick="viewEventDetails('${event.id}')">View Details</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Club Finder
-function loadClubFinder() {
-    filterClubs();
-}
-
-function filterClubs() {
-    const searchInput = document.getElementById('clubSearchInput');
-    const typeFilter = document.getElementById('clubTypeFilter');
-    const sportFilter = document.getElementById('clubSportFilter');
-    
-    const searchTerm = searchInput?.value.toLowerCase() || '';
-    const typeFilterValue = typeFilter?.value || '';
-    const sportFilterValue = sportFilter?.value || '';
-    
-    let availableClubs = AppState.clubs?.filter(club => {
-        return !playerData.clubs.some(playerClub => playerClub.id === club.id);
-    }) || [];
-    
-    // Apply filters
-    if (searchTerm) {
-        availableClubs = availableClubs.filter(club => 
-            club.name.toLowerCase().includes(searchTerm) ||
-            (club.location || '').toLowerCase().includes(searchTerm) ||
-            (club.description || '').toLowerCase().includes(searchTerm)
-        );
-    }
-    
-    if (typeFilterValue) {
-        availableClubs = availableClubs.filter(club => 
-            club.types && club.types.includes(typeFilterValue)
-        );
-    }
-    
-    if (sportFilterValue) {
-        availableClubs = availableClubs.filter(club => 
-            (club.sport || '').toLowerCase() === sportFilterValue
-        );
-    }
-    
-    const container = document.getElementById('availableClubsContainer');
-    if (!container) return;
-    
-    if (availableClubs.length === 0) {
-        container.innerHTML = '<div class="card"><p>No clubs found matching your criteria.</p></div>';
-        return;
-    }
-    
-    container.innerHTML = availableClubs.map(club => {
-        const clubStaff = AppState.staff?.filter(s => s.club_id === club.id) || [];
-        const coaches = clubStaff.filter(s => ['coach', 'assistant-coach'].includes(s.role));
-        
-        return `
-            <div class="card">
-                <h4>${club.name}</h4>
-                <p><strong>Location:</strong> ${club.location || 'Not specified'}</p>
-                <p><strong>Sport:</strong> ${club.sport || 'Not specified'}</p>
-                
-                ${coaches.length > 0 ? `
-                    <div style="margin: 1rem 0; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
-                        <strong>Coaching Staff:</strong>
-                        ${coaches.map(coach => `
-                            <p style="margin: 0.25rem 0; font-size: 0.9rem;">
-                                ${coach.first_name} ${coach.last_name} - ${coach.role}
-                            </p>
-                        `).join('')}
-                    </div>
-                ` : ''}
-                
-                <p>${club.description || 'No description available'}</p>
-                
-                <div class="item-actions">
-                    <button class="btn btn-small btn-primary" onclick="applyToClub('${club.id}')">Apply to Join</button>
-                    <button class="btn btn-small btn-secondary" onclick="viewClubDetails('${club.id}')">View Details</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Finances Section - FIXED WITH REAL PAYMENTS
-function loadPlayerFinances() {
-    const payments = playerData.payments || [];
-    
-    const totalDue = payments.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue')
-                            .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const nextPayment = payments.find(p => p.payment_status === 'pending')?.amount || 0;
-    const overallStatus = payments.some(p => p.payment_status === 'overdue') ? 'Overdue' :
-                         payments.some(p => p.payment_status === 'pending') ? 'Pending' : 'Up to Date';
-    const totalPaid = payments.filter(p => p.payment_status === 'paid')
-                             .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    
-    const totalDueEl = document.getElementById('totalDue');
-    const nextPaymentEl = document.getElementById('nextPayment');
-    const paymentStatusEl = document.getElementById('paymentStatus');
-    const totalPaidEl = document.getElementById('totalPaid');
-    
-    if (totalDueEl) totalDueEl.textContent = formatCurrency(totalDue);
-    if (nextPaymentEl) nextPaymentEl.textContent = formatCurrency(nextPayment);
-    if (paymentStatusEl) {
-        paymentStatusEl.textContent = overallStatus;
-        paymentStatusEl.style.color = overallStatus === 'Overdue' ? '#dc3545' : 
-                                     overallStatus === 'Pending' ? '#ffc107' : '#28a745';
-    }
-    if (totalPaidEl) totalPaidEl.textContent = formatCurrency(totalPaid);
-    
-    loadPaymentHistory(payments);
-    loadOutstandingPayments(payments);
-}
-
-function loadPaymentHistory(payments) {
-    const tableBody = document.getElementById('paymentHistoryTableBody');
-    if (!tableBody) return;
-    
-    if (payments.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="5">No payment history</td></tr>';
-        return;
-    }
-    
-    tableBody.innerHTML = payments.map(payment => `
-        <tr>
-            <td>${formatDate(payment.created_at || payment.due_date)}</td>
-            <td>${payment.description}</td>
-            <td>${formatCurrency(payment.amount)}</td>
-            <td><span class="status-badge status-${payment.payment_status}">${payment.payment_status}</span></td>
-            <td>
-                ${payment.payment_status === 'pending' || payment.payment_status === 'overdue' ? 
-                    `<button class="btn btn-small btn-primary" onclick="makePayment('${payment.id}')">💳 Pay Now</button>` :
-                    `<button class="btn btn-small btn-secondary" onclick="downloadReceipt('${payment.id}')">📄 Receipt</button>`
-                }
-            </td>
-        </tr>
-    `).join('');
-}
-
-function loadOutstandingPayments(payments) {
-    const outstanding = payments.filter(p => p.payment_status === 'pending' || p.payment_status === 'overdue');
-    const container = document.getElementById('outstandingPayments');
-    if (!container) return;
-    
-    if (outstanding.length === 0) {
-        container.innerHTML = '<p style="color: #28a745;">✅ No outstanding payments. You are up to date!</p>';
-        return;
-    }
-    
-    container.innerHTML = outstanding.map(payment => `
-        <div class="item-list-item">
-            <div class="item-info">
-                <h4>${payment.description}</h4>
-                <p>Due: ${formatDate(payment.due_date)} - ${formatCurrency(payment.amount)}</p>
-            </div>
-            <div class="item-actions">
-                <span class="status-badge status-${payment.payment_status}">${payment.payment_status}</span>
-                <button class="btn btn-small btn-primary" onclick="makePayment('${payment.id}')">💳 Pay Now</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Documents Section
-function loadPlayerDocuments() {
-    const tableBody = document.getElementById('playerDocumentsTableBody');
-    if (!tableBody) return;
-    
-    tableBody.innerHTML = '<tr><td colspan="5">No documents available</td></tr>';
-}
-
-// FIXED PAYMENT INTEGRATION WITH STRIPE
-async function makePayment(paymentId) {
-    const payment = playerData.payments.find(p => p.id === paymentId);
-    if (!payment) {
-        showNotification('Payment not found', 'error');
-        return;
-    }
-    
-    const onSuccess = async (result) => {
-        try {
-            // Confirm payment with backend
-            await apiService.confirmPayment(result.id, paymentId);
-            
-            // Update local payment status
-            const paymentIndex = playerData.payments.findIndex(p => p.id === paymentId);
-            if (paymentIndex !== -1) {
-                playerData.payments[paymentIndex].payment_status = 'paid';
-                playerData.payments[paymentIndex].paid_date = new Date().toISOString();
-            }
-            
-            loadPlayerFinances();
-            showNotification('Payment successful!', 'success');
-            
-        } catch (error) {
-            console.error('Failed to confirm payment:', error);
-            showNotification('Payment processing failed', 'error');
-        }
-    };
-    
-    // Create Stripe payment modal
-    createPaymentModal(payment.amount, payment.description, onSuccess);
-}
-
-// Event Booking - FIXED WITH REAL PAYMENT PROCESSING
-function bookPlayerEvent(eventId) {
-    const event = AppState.events?.find(e => e.id === eventId);
+    const event = PlayerDashboardState.events.find(e => e.id === eventId);
     if (!event) {
         showNotification('Event not found', 'error');
         return;
     }
     
-    const club = AppState.clubs?.find(c => c.id === event.club_id);
-    
-    const content = `
-        <div class="card">
-            <h3>${event.title}</h3>
-            <p><strong>Club:</strong> ${club ? club.name : 'Unknown'}</p>
-            <p><strong>Date:</strong> ${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}</p>
-            <p><strong>Location:</strong> ${event.location || 'TBD'}</p>
-            <p><strong>Price:</strong> ${formatCurrency(event.price || 0)}</p>
-            ${event.description ? `<p><strong>Description:</strong> ${event.description}</p>` : ''}
-            
-            <div style="margin-top: 2rem;">
-                ${event.price > 0 ? `
-                    <button class="btn btn-primary" onclick="processEventPayment('${eventId}')">
-                        💳 Pay ${formatCurrency(event.price)} & Book
-                    </button>
-                ` : `
-                    <button class="btn btn-primary" onclick="confirmEventBooking('${eventId}')">
-                        ✅ Confirm Free Booking
-                    </button>
-                `}
-                <button class="btn btn-secondary" onclick="closeModal('eventBookingModal')" style="margin-left: 1rem;">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    `;
-    
-    const contentContainer = document.getElementById('eventBookingContent');
-    if (contentContainer) {
-        contentContainer.innerHTML = content;
-        showModal('eventBookingModal');
-    }
-}
-
-async function processEventPayment(eventId) {
-    const event = AppState.events?.find(e => e.id === eventId);
-    if (!event) return;
-    
-    closeModal('eventBookingModal');
-    
-    const onSuccess = async (result) => {
-        try {
-            // Book the event after successful payment
-            await confirmEventBooking(eventId, result.id);
-        } catch (error) {
-            console.error('Failed to complete booking:', error);
-            showNotification('Booking failed after payment', 'error');
-        }
-    };
-    
-    // Create Stripe payment modal for event
-    createPaymentModal(event.price, `Event Booking: ${event.title}`, onSuccess);
-}
-
-async function confirmEventBooking(eventId, paymentIntentId = null) {
     try {
-        const bookingData = {
-            eventId: eventId,
-            paymentIntentId: paymentIntentId
-        };
-        
-        const response = await apiService.bookEvent(eventId, bookingData);
-        
-        // Add to local bookings
-        if (!playerData.bookings) playerData.bookings = [];
-        playerData.bookings.push(response.booking);
-        
-        showNotification('Event booked successfully!', 'success');
-        loadPlayerEventFinder(); // Refresh event list
+        if (event.price > 0) {
+            // Event requires payment
+            console.log('💳 Event requires payment, showing payment options...');
+            
+            if (typeof createPaymentModal !== 'undefined') {
+                // Use payment modal if available
+                const onSuccess = async (paymentResult) => {
+                    console.log('✅ Payment successful:', paymentResult);
+                    
+                    try {
+                        await apiService.bookEventWithPayment(eventId, paymentResult.id);
+                        showNotification('Event booked successfully!', 'success');
+                        await loadPlayerDataWithFallback();
+                        loadPlayerOverview();
+                    } catch (error) {
+                        console.error('❌ Failed to complete booking:', error);
+                        showNotification('Payment successful but booking failed: ' + error.message, 'error');
+                    }
+                };
+                
+                const onError = (error) => {
+                    console.error('❌ Payment failed:', error);
+                    showNotification('Payment failed: ' + error.message, 'error');
+                };
+                
+                createPaymentModal(event.price, event.title, onSuccess, onError);
+            } else {
+                // Fallback to payment page
+                const paymentData = {
+                    amount: event.price,
+                    description: event.title,
+                    eventId: eventId
+                };
+                
+                const paymentUrl = `payment.html?amount=${paymentData.amount}&description=${encodeURIComponent(paymentData.description)}&eventId=${paymentData.eventId}`;
+                window.open(paymentUrl, '_blank');
+            }
+        } else {
+            // Free event - book directly
+            console.log('🆓 Free event, booking directly...');
+            
+            await apiService.bookEvent(eventId);
+            showNotification('Event booked successfully!', 'success');
+            
+            await loadPlayerDataWithFallback();
+            loadPlayerOverview();
+        }
         
     } catch (error) {
-        console.error('Failed to book event:', error);
+        console.error('❌ Failed to book event:', error);
         showNotification('Failed to book event: ' + error.message, 'error');
     }
 }
 
-async function cancelEventBooking(eventId) {
-    if (confirm('Are you sure you want to cancel this booking?')) {
-        try {
-            const booking = playerData.bookings?.find(b => b.event_id === eventId);
-            if (booking) {
-                await apiService.cancelEventBooking(booking.id);
+// Payment function with fallback
+async function payNow(paymentId, amount, description) {
+    console.log('💳 Processing payment:', paymentId, amount, description);
+    
+    try {
+        if (typeof createPaymentModal !== 'undefined') {
+            // Use payment modal if available
+            const onSuccess = async (paymentResult) => {
+                console.log('✅ Payment successful:', paymentResult);
                 
-                // Remove from local bookings
-                playerData.bookings = playerData.bookings.filter(b => b.id !== booking.id);
-                
-                showNotification('Booking cancelled successfully!', 'success');
-                loadPlayerEventFinder(); // Refresh event list
-            }
+                try {
+                    await apiService.confirmPayment(paymentResult.id, paymentId);
+                    showNotification('Payment successful!', 'success');
+                    await loadPlayerDataWithFallback();
+                    loadPlayerFinances();
+                } catch (error) {
+                    console.error('❌ Failed to confirm payment:', error);
+                    showNotification('Payment successful but confirmation failed: ' + error.message, 'error');
+                }
+            };
             
-        } catch (error) {
-            console.error('Failed to cancel booking:', error);
-            showNotification('Failed to cancel booking', 'error');
+            const onError = (error) => {
+                console.error('❌ Payment failed:', error);
+                showNotification('Payment failed: ' + error.message, 'error');
+            };
+            
+            createPaymentModal(amount, description, onSuccess, onError);
+        } else {
+            // Fallback to payment page
+            const paymentUrl = `payment.html?paymentId=${paymentId}&amount=${amount}&description=${encodeURIComponent(description)}`;
+            window.open(paymentUrl, '_blank');
         }
+        
+    } catch (error) {
+        console.error('❌ Failed to process payment:', error);
+        showNotification('Failed to process payment: ' + error.message, 'error');
     }
 }
 
-// Club Application
-function applyToClub(clubId) {
-    const applyClubIdField = document.getElementById('applyClubId');
-    if (applyClubIdField) {
-        applyClubIdField.value = clubId;
-        showModal('applyClubModal');
+// Club application
+async function applyToClub(clubId, clubName) {
+    console.log('📝 Applying to club:', clubId, clubName);
+    
+    // Set the club ID and name in the form
+    document.getElementById('applyClubId').value = clubId;
+    
+    // Update modal title
+    const modalTitle = document.querySelector('#applyClubModal .modal-header h2');
+    if (modalTitle) {
+        modalTitle.textContent = `Apply to ${clubName}`;
     }
+    
+    // Show the modal
+    showModal('applyClubModal');
 }
 
 async function handleClubApplication(e) {
     e.preventDefault();
     
-    const clubId = document.getElementById('applyClubId')?.value;
-    const message = document.getElementById('applicationMessage')?.value;
-    const position = document.getElementById('playerPosition')?.value;
-    const experience = document.getElementById('playerExperience')?.value;
-    
-    const availability = Array.from(document.querySelectorAll('input[name="availability"]:checked'))
-                             .map(cb => cb.value);
-    
-    if (!clubId || !message) {
-        showNotification('Please fill in all required fields', 'error');
-        return;
-    }
-    
     try {
+        const clubId = document.getElementById('applyClubId').value;
+        const message = document.getElementById('applicationMessage').value;
+        const position = document.getElementById('playerPosition').value;
+        const experience = document.getElementById('playerExperience').value;
+        
+        const availability = Array.from(document.querySelectorAll('input[name="availability"]:checked'))
+                                  .map(cb => cb.value);
+        
         const applicationData = {
-            clubId: clubId,
-            message: message,
+            message,
             preferredPosition: position,
             experienceLevel: experience,
-            availability: availability
+            availability
         };
         
-        const response = await apiService.applyToClub(clubId, applicationData);
-        
-        // Add to local applications
-        if (!playerData.applications) playerData.applications = [];
-        playerData.applications.push(response.application);
+        await apiService.applyToClub(clubId, applicationData);
         
         closeModal('applyClubModal');
-        document.getElementById('applyClubForm')?.reset();
         showNotification('Application submitted successfully!', 'success');
         
+        // Clear form
+        document.getElementById('applyClubForm').reset();
+        
     } catch (error) {
-        console.error('Failed to submit application:', error);
+        console.error('❌ Failed to submit application:', error);
         showNotification('Failed to submit application: ' + error.message, 'error');
     }
 }
 
-function voteAvailability(eventId) {
-    const availabilityEventIdField = document.getElementById('availabilityEventId');
-    if (availabilityEventIdField) {
-        availabilityEventIdField.value = eventId;
-        showModal('availabilityModal');
-    }
+// Availability submission
+function submitAvailability(eventId) {
+    console.log('📝 Submitting availability for event:', eventId);
+    
+    // Set event ID in form
+    document.getElementById('availabilityEventId').value = eventId;
+    
+    // Show modal
+    showModal('availabilityModal');
 }
 
 async function handleAvailabilitySubmission(e) {
     e.preventDefault();
     
-    const eventId = document.getElementById('availabilityEventId')?.value;
-    const availability = document.querySelector('input[name="availability"]:checked')?.value;
-    const notes = document.getElementById('availabilityNotes')?.value;
-    
-    if (!availability) {
-        showNotification('Please select your availability', 'error');
-        return;
-    }
-    
     try {
+        const eventId = document.getElementById('availabilityEventId').value;
+        const availability = document.querySelector('input[name="availability"]:checked')?.value;
+        const notes = document.getElementById('availabilityNotes').value;
+        
+        if (!availability) {
+            showNotification('Please select your availability', 'error');
+            return;
+        }
+        
         const availabilityData = {
-            availability: availability,
-            notes: notes
+            availability,
+            notes
         };
         
         await apiService.submitAvailability(eventId, availabilityData);
         
         closeModal('availabilityModal');
-        document.getElementById('availabilityForm')?.reset();
         showNotification('Availability submitted successfully!', 'success');
         
+        // Clear form
+        document.getElementById('availabilityForm').reset();
+        
     } catch (error) {
-        console.error('Failed to submit availability:', error);
+        console.error('❌ Failed to submit availability:', error);
         showNotification('Failed to submit availability: ' + error.message, 'error');
     }
 }
 
-// Contact functions
-function contactCoachByEmail(email, name) {
-    window.location.href = `mailto:${email}?subject=Message from ${AppState.currentUser.first_name || AppState.currentUser.firstName} ${AppState.currentUser.last_name || AppState.currentUser.lastName}&body=Hi ${name},%0D%0A%0D%0A`;
-}
-
-function contactClub(clubId) {
-    const club = playerData.clubs.find(c => c.id === clubId);
-    if (club) {
-        const coaches = playerData.coaches.filter(c => c.club_id === clubId);
-        if (coaches.length > 0) {
-            const email = coaches[0].email;
-            window.location.href = `mailto:${email}?subject=Inquiry about ${club.name}`;
-        } else {
-            showNotification('No contact information available for this club', 'info');
-        }
+// Filter functions
+function filterPlayerEvents() {
+    const searchTerm = document.getElementById('eventSearchInput')?.value.toLowerCase() || '';
+    const typeFilter = document.getElementById('playerEventTypeFilter')?.value || '';
+    const dateFilter = document.getElementById('playerEventDateFilter')?.value || '';
+    
+    let filteredEvents = [...PlayerDashboardState.events];
+    
+    if (searchTerm) {
+        filteredEvents = filteredEvents.filter(event => 
+            event.title.toLowerCase().includes(searchTerm) ||
+            (event.description && event.description.toLowerCase().includes(searchTerm)) ||
+            (event.location && event.location.toLowerCase().includes(searchTerm))
+        );
     }
+    
+    if (typeFilter) {
+        filteredEvents = filteredEvents.filter(event => event.event_type === typeFilter);
+    }
+    
+    if (dateFilter) {
+        filteredEvents = filteredEvents.filter(event => event.event_date >= dateFilter);
+    }
+    
+    console.log('📅 Filtered events:', filteredEvents.length, 'from', PlayerDashboardState.events.length);
+    displayEvents(filteredEvents);
 }
 
-// Utility functions
+function filterClubs() {
+    const searchTerm = document.getElementById('clubSearchInput')?.value.toLowerCase() || '';
+    const typeFilter = document.getElementById('clubTypeFilter')?.value || '';
+    const sportFilter = document.getElementById('clubSportFilter')?.value || '';
+    
+    let filteredClubs = [...PlayerDashboardState.clubs];
+    
+    if (searchTerm) {
+        filteredClubs = filteredClubs.filter(club => 
+            club.name.toLowerCase().includes(searchTerm) ||
+            (club.location && club.location.toLowerCase().includes(searchTerm)) ||
+            (club.description && club.description.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    if (typeFilter) {
+        filteredClubs = filteredClubs.filter(club => 
+            club.types && club.types.includes(typeFilter)
+        );
+    }
+    
+    if (sportFilter) {
+        filteredClubs = filteredClubs.filter(club => club.sport === sportFilter);
+    }
+    
+    console.log('🏢 Filtered clubs:', filteredClubs.length, 'from', PlayerDashboardState.clubs.length);
+    displayClubs(filteredClubs);
+}
+
+// View functions
 function viewClubDetails(clubId) {
-    const club = AppState.clubs?.find(c => c.id === clubId);
-    if (!club) return;
+    console.log('👁️ View club details:', clubId);
     
-    const clubStaff = AppState.staff?.filter(s => s.club_id === clubId) || [];
-    const coaches = clubStaff.filter(s => ['coach', 'assistant-coach'].includes(s.role));
-    
-    let details = `Club Details:\n\n`;
-    details += `Name: ${club.name}\n`;
-    details += `Location: ${club.location || 'Not specified'}\n`;
-    details += `Sport: ${club.sport || 'Not specified'}\n`;
-    
-    if (coaches.length > 0) {
-        details += `\nCoaching Staff:\n`;
-        coaches.forEach(coach => {
-            details += `- ${coach.first_name} ${coach.last_name} (${coach.role})\n`;
-        });
-    }
-    
-    details += `\nDescription: ${club.description || 'No description available'}`;
-    
-    if (club.philosophy) {
-        details += `\n\nPhilosophy: ${club.philosophy}`;
-    }
-    
-    alert(details);
-}
-
-function viewEventDetails(eventId) {
-    const event = AppState.events?.find(e => e.id === eventId);
-    if (!event) return;
-    
-    const club = AppState.clubs?.find(c => c.id === event.club_id);
-    
-    let details = `Event Details:\n\n`;
-    details += `Title: ${event.title}\n`;
-    details += `Type: ${event.event_type}\n`;
-    details += `Date: ${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}\n`;
-    details += `Location: ${event.location || 'TBD'}\n`;
-    details += `Price: ${formatCurrency(event.price || 0)}\n`;
-    details += `Club: ${club ? club.name : 'Unknown'}\n`;
-    
-    if (event.capacity) {
-        details += `Capacity: ${event.capacity}\n`;
-    }
-    
-    if (event.description) {
-        details += `\nDescription: ${event.description}`;
-    }
-    
-    alert(details);
-}
-
-function viewTeamSchedule(teamId) {
-    const team = playerData.teams?.find(t => t.id === teamId);
-    const teamEvents = AppState.events?.filter(e => e.team_id === teamId) || [];
-    
-    if (teamEvents.length === 0) {
-        showNotification('No scheduled events for this team', 'info');
+    const club = PlayerDashboardState.clubs.find(c => c.id === clubId);
+    if (!club) {
+        showNotification('Club not found', 'error');
         return;
     }
     
-    let schedule = `Schedule for ${team?.name || 'Team'}:\n\n`;
-    teamEvents.forEach(event => {
-        schedule += `${event.title} - ${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}\n`;
-    });
+    // Create club details modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.id = 'clubDetailsModal';
     
-    alert(schedule);
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>${club.name}</h2>
+                <button class="close" onclick="closeModal('clubDetailsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Location:</strong> ${club.location || 'Not specified'}</p>
+                <p><strong>Sport:</strong> ${club.sport || 'Not specified'}</p>
+                <p><strong>Members:</strong> ${club.member_count || 0}</p>
+                <p><strong>Description:</strong> ${club.description || 'No description available'}</p>
+                ${club.philosophy ? `<p><strong>Philosophy:</strong> ${club.philosophy}</p>` : ''}
+                ${club.website ? `<p><strong>Website:</strong> <a href="${club.website}" target="_blank">${club.website}</a></p>` : ''}
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-primary" onclick="applyToClub('${club.id}', '${club.name}')">Apply to Club</button>
+                    <button class="btn btn-secondary" onclick="closeModal('clubDetailsModal')">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }
 
-function viewTeamStats(teamId) {
-    const team = playerData.teams?.find(t => t.id === teamId);
-    if (!team) return;
+function viewEventDetails(eventId) {
+    console.log('👁️ View event details:', eventId);
     
-    const totalGames = (team.wins || 0) + (team.losses || 0) + (team.draws || 0);
-    const winRate = totalGames > 0 ? Math.round((team.wins / totalGames) * 100) : 0;
-    
-    let stats = `Team Statistics - ${team.name}:\n\n`;
-    stats += `Wins: ${team.wins || 0}\n`;
-    stats += `Losses: ${team.losses || 0}\n`;
-    stats += `Draws: ${team.draws || 0}\n`;
-    stats += `Total Games: ${totalGames}\n`;
-    stats += `Win Rate: ${winRate}%\n`;
-    
-    alert(stats);
-}
-
-function downloadReceipt(paymentId) {
-    showNotification('Receipt download would start here - feature coming soon', 'info');
-}
-
-function viewDocument(docId) {
-    showNotification('Document viewer would open here - feature coming soon', 'info');
-}
-
-function downloadDocument(docId) {
-    showNotification('Document download would start here - feature coming soon', 'info');
-}
-
-// Debug function to check what data we have
-function debugPlayerData() {
-    console.log('🔍 DEBUG: Current AppState:', {
-        currentUser: AppState.currentUser,
-        currentPlayer: AppState.currentPlayer,
-        events: AppState.events?.length || 0,
-        clubs: AppState.clubs?.length || 0,
-        playerData: playerData
-    });
-    
-    if (AppState.events?.length > 0) {
-        console.log('📅 Sample event:', AppState.events[0]);
+    const event = PlayerDashboardState.events.find(e => e.id === eventId);
+    if (!event) {
+        showNotification('Event not found', 'error');
+        return;
     }
     
-    // Show in UI too
-    alert(`Debug Info:\n\nTotal Events: ${AppState.events?.length || 0}\nPlayer Clubs: ${playerData.clubs.length}\nPlayer Teams: ${playerData.teams.length}\nPlayer Payments: ${playerData.payments.length}\n\nCheck console for detailed info.`);
+    // Create event details modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.id = 'eventDetailsModal';
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>${event.title}</h2>
+                <button class="close" onclick="closeModal('eventDetailsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Type:</strong> ${event.event_type}</p>
+                <p><strong>Date:</strong> ${formatDate(event.event_date)}${event.event_time ? ` at ${event.event_time}` : ''}</p>
+                <p><strong>Location:</strong> ${event.location || 'TBD'}</p>
+                <p><strong>Price:</strong> ${formatCurrency(event.price || 0)}</p>
+                <p><strong>Capacity:</strong> ${event.capacity || 'Unlimited'}</p>
+                <p><strong>Available Spots:</strong> ${event.spots_available || 'Unlimited'}</p>
+                <p><strong>Description:</strong> ${event.description || 'No description available'}</p>
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-primary" onclick="bookEvent('${event.id}'); closeModal('eventDetailsModal')">Book Event</button>
+                    <button class="btn btn-secondary" onclick="closeModal('eventDetailsModal')">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }
 
-// Utility functions
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('en-GB', {
-        style: 'currency',
-        currency: 'GBP'
-    }).format(amount);
+function viewTeamDetails(teamId) {
+    console.log('👁️ View team details:', teamId);
+    
+    const team = PlayerDashboardState.teams.find(t => t.id === teamId);
+    if (!team) {
+        showNotification('Team not found', 'error');
+        return;
+    }
+    
+    // Create team details modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.id = 'teamDetailsModal';
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>${team.name}</h2>
+                <button class="close" onclick="closeModal('teamDetailsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Age Group:</strong> ${team.age_group || 'Not specified'}</p>
+                <p><strong>Sport:</strong> ${team.sport || 'Not specified'}</p>
+                <p><strong>Your Position:</strong> ${team.player_position || 'Not assigned'}</p>
+                <p><strong>Your Jersey Number:</strong> ${team.jersey_number || 'Not assigned'}</p>
+                ${team.coach ? `<p><strong>Coach:</strong> ${team.coach.name} (${team.coach.email})</p>` : '<p><strong>Coach:</strong> Not assigned</p>'}
+                <p><strong>Description:</strong> ${team.description || 'No description available'}</p>
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-primary" onclick="viewTeamEvents('${team.id}'); closeModal('teamDetailsModal')">View Team Events</button>
+                    <button class="btn btn-secondary" onclick="closeModal('teamDetailsModal')">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }
 
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+function viewClubEvents(clubId) {
+    console.log('📅 View club events:', clubId);
+    
+    const clubEvents = PlayerDashboardState.events.filter(e => e.club_id === clubId);
+    
+    if (clubEvents.length === 0) {
+        showNotification('No events found for this club', 'info');
+        return;
+    }
+    
+    // Switch to event finder and filter by club
+    showPlayerSection('event-finder');
+    displayEvents(clubEvents);
+}
+
+function viewTeamEvents(teamId) {
+    console.log('📅 View team events:', teamId);
+    
+    const teamEvents = PlayerDashboardState.events.filter(e => e.team_id === teamId);
+    
+    if (teamEvents.length === 0) {
+        showNotification('No events found for this team', 'info');
+        return;
+    }
+    
+    // Switch to event finder and filter by team
+    showPlayerSection('event-finder');
+    displayEvents(teamEvents);
+}
+
+// Document functions
+function downloadDocument(documentId) {
+    console.log('📥 Download document:', documentId);
+    showNotification('Document download feature coming soon!', 'info');
+}
+
+function viewDocument(documentId) {
+    console.log('👁️ View document:', documentId);
+    showNotification('Document viewer coming soon!', 'info');
+}
+
+// Refresh functions
+async function refreshEventData() {
+    console.log('🔄 Refreshing event data...');
+    
+    try {
+        showLoading(true);
+        const events = await apiService.getEvents();
+        PlayerDashboardState.events = events || [];
+        displayEvents(PlayerDashboardState.events);
+        showNotification('Events refreshed successfully!', 'success');
+    } catch (error) {
+        console.error('❌ Failed to refresh events:', error);
+        showNotification('Failed to refresh events: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function refreshClubData() {
+    console.log('🔄 Refreshing club data...');
+    
+    try {
+        showLoading(true);
+        const clubs = await apiService.getClubs();
+        PlayerDashboardState.clubs = clubs || [];
+        displayClubs(PlayerDashboardState.clubs);
+        showNotification('Clubs refreshed successfully!', 'success');
+    } catch (error) {
+        console.error('❌ Failed to refresh clubs:', error);
+        showNotification('Failed to refresh clubs: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function refreshAllData() {
+    console.log('🔄 Refreshing all player data...');
+    
+    try {
+        showLoading(true);
+        await loadPlayerDataWithFallback();
+        
+        // Reload current section
+        const activeSection = document.querySelector('.dashboard-section.active');
+        if (activeSection) {
+            const sectionId = activeSection.id.replace('player-', '');
+            showPlayerSection(sectionId);
+        }
+        
+        showNotification('All data refreshed successfully!', 'success');
+    } catch (error) {
+        console.error('❌ Failed to refresh data:', error);
+        showNotification('Failed to refresh data: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
 }
 
 // Export functions for global access
-window.initializePlayerDashboard = initializePlayerDashboard;
 window.showPlayerSection = showPlayerSection;
+window.bookEvent = bookEvent;
+window.payNow = payNow;
 window.applyToClub = applyToClub;
-window.voteAvailability = voteAvailability;
-window.makePayment = makePayment;
-window.bookPlayerEvent = bookPlayerEvent;
-window.processEventPayment = processEventPayment;
-window.confirmEventBooking = confirmEventBooking;
-window.cancelEventBooking = cancelEventBooking;
-window.filterClubs = filterClubs;
-window.filterPlayerEvents = filterPlayerEvents;
-window.viewClubDetails = viewClubDetails;
-window.contactClub = contactClub;
-window.contactCoachByEmail = contactCoachByEmail;
-window.viewEventDetails = viewEventDetails;
-window.viewTeamSchedule = viewTeamSchedule;
-window.viewTeamStats = viewTeamStats;
-window.downloadReceipt = downloadReceipt;
-window.viewDocument = viewDocument;
-window.downloadDocument = downloadDocument;
-window.debugPlayerData = debugPlayerData;
 window.handleClubApplication = handleClubApplication;
+window.submitAvailability = submitAvailability;
 window.handleAvailabilitySubmission = handleAvailabilitySubmission;
-window.showAllEvents = showAllEvents;
+window.filterPlayerEvents = filterPlayerEvents;
+window.filterClubs = filterClubs;
+window.viewClubDetails = viewClubDetails;
+window.viewEventDetails = viewEventDetails;
+window.viewTeamDetails = viewTeamDetails;
+window.viewClubEvents = viewClubEvents;
+window.viewTeamEvents = viewTeamEvents;
+window.downloadDocument = downloadDocument;
+window.viewDocument = viewDocument;
+window.refreshEventData = refreshEventData;
+window.refreshClubData = refreshClubData;
+window.refreshAllData = refreshAllData;
+window.initializePlayerDashboard = initializePlayerDashboard;
 
-console.log('✅ FULLY FUNCTIONAL Player Dashboard loaded - now with REAL payment processing!');
+console.log('✅ Complete Player Dashboard loaded successfully!');

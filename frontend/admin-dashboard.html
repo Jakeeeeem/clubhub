@@ -120,18 +120,15 @@
                 </div>
 
                 <!-- Players Section -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3>Players Management</h3>
-                    <div>
-                        <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add Player</button>
-                        <button class="btn btn-success" onclick="showModal('invitePlayerModal')">📧 Invite Player</button>
-                    </div>
-                </div>
                 <div id="players" class="dashboard-section">
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>Players Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add Player</button>
+                            <div>
+                                <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add Player</button>
+                                <button class="btn btn-success" onclick="enhancedInvitePlayer()">📧 Invite Players</button>
+                                <button class="btn btn-info" onclick="generateShareableInviteLink()">🔗 Generate Invite Link</button>
+                            </div>
                         </div>
                         
                         <div class="search-filters">
@@ -154,10 +151,11 @@
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Date of Birth</th>
+                                    <th>Age</th>
                                     <th>Email</th>
                                     <th>Payment Status</th>
                                     <th>Team</th>
+                                    <th>Monthly Fee</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -266,7 +264,12 @@
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>Club Listings</h3>
-                            <button class="btn btn-primary" onclick="showModal('addListingModal')">Create Listing</button>
+                            <button class="btn btn-primary" onclick="createListingModal()">📋 Create Listing</button>
+                        </div>
+
+                        <div style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+                            <h4 style="margin: 0 0 0.5rem 0;">📢 What are listings?</h4>
+                            <p style="margin: 0;">Listings help you promote your club, recruit players, advertise camps, or announce trials. They're visible to all ClubHub users and can help grow your club!</p>
                         </div>
 
                         <div class="card-grid" id="listingsContainer">
@@ -280,7 +283,17 @@
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>Document Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('addDocumentModal')">Upload Document</button>
+                            <button class="btn btn-primary" onclick="createDocumentUploadModal()">📄 Upload Document</button>
+                        </div>
+
+                        <div style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+                            <h4 style="margin: 0 0 0.5rem 0;">📋 Document Benefits:</h4>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                <li>Share handbooks, schedules, and important information</li>
+                                <li>Control access by member type (players, staff, public)</li>
+                                <li>Keep everyone updated with the latest documents</li>
+                                <li>Track downloads and engagement</li>
+                            </ul>
                         </div>
 
                         <table class="table">
@@ -440,7 +453,7 @@
         </div>
     </div>
 
-    <!-- 🔥 ADDED: Create Team Modal -->
+    <!-- Create Team Modal -->
     <div id="addTeamModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -496,63 +509,149 @@
         </div>
     </div>
 
-    <!-- 🔥 ADDED: Player Team Assignment Modal -->
-    <div id="playerTeamAssignmentModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('playerTeamAssignmentModal')">&times;</span>
-            <div id="playerTeamAssignmentContent"></div>
-        </div>
-    </div>
-
-    <!-- 🔥 ADDED: Manage Team Players Modal -->
-    <div id="manageTeamPlayersModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('manageTeamPlayersModal')">&times;</span>
-            <div id="manageTeamPlayersContent"></div>
-        </div>
-    </div>
-
-    <!-- Invite Player Modal -->
-<div id="invitePlayerModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>📧 Invite Player to Club</h2>
-            <button class="close" onclick="closeModal('invitePlayerModal')">&times;</button>
-        </div>
-        <form id="invitePlayerForm">
-            <div class="form-group">
-                <label for="inviteEmail">Email Address *</label>
-                <input type="email" id="inviteEmail" required placeholder="player@example.com">
-            </div>
-            <div class="form-group">
-                <label for="inviteFirstName">First Name</label>
-                <input type="text" id="inviteFirstName" placeholder="John">
-            </div>
-            <div class="form-group">
-                <label for="inviteLastName">Last Name</label>
-                <input type="text" id="inviteLastName" placeholder="Smith">
-            </div>
-            <div class="form-group">
-                <label for="inviteRole">Role</label>
-                <select id="inviteRole">
-                    <option value="player">Player</option>
-                    <option value="coach">Coach</option>
-                    <option value="staff">Staff</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="inviteMessage">Personal Message (Optional)</label>
-                <textarea id="inviteMessage" rows="3" placeholder="Welcome to our club! We'd love to have you join our team..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">📧 Send Invite</button>
-        </form>
-    </div>
-</div>
-
+    <!-- Enhanced Scripts Loading -->
     <script src="https://js.stripe.com/v3/"></script>
     <script src="api-service.js"></script>          
     <script src="stripe-service.js"></script>       
     <script src="script.js"></script>              
-    <script src="admin-dashboard.js"></script>      
+    <script src="admin-dashboard.js"></script>
+    
+    <!-- Load enhanced invite system -->
+    <script>
+        // Load enhanced invite system after other scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load enhanced features after a short delay to ensure all dependencies are loaded
+            setTimeout(() => {
+                if (typeof enhancedInvitePlayer === 'undefined') {
+                    console.log('📧 Loading enhanced invite system...');
+                    
+                    // Load the enhanced invite system script
+                    const script = document.createElement('script');
+                    script.src = 'enhanced-invite-system.js';
+                    script.onload = () => {
+                        console.log('✅ Enhanced invite system loaded!');
+                    };
+                    script.onerror = () => {
+                        console.warn('⚠️ Enhanced invite system failed to load, using fallback');
+                        // Fallback functions
+                        window.enhancedInvitePlayer = function() {
+                            showModal('invitePlayerModal');
+                        };
+                        window.generateShareableInviteLink = function() {
+                            showNotification('Shareable invite feature coming soon!', 'info');
+                        };
+                        window.createListingModal = function() {
+                            showNotification('Listings feature coming soon!', 'info');
+                        };
+                        window.createDocumentUploadModal = function() {
+                            showNotification('Document upload feature coming soon!', 'info');
+                        };
+                        window.loadListings = function() {
+                            console.log('Loading listings...');
+                        };
+                        window.loadDocuments = function() {
+                            console.log('Loading documents...');
+                        };
+                    };
+                    document.head.appendChild(script);
+                }
+            }, 1000);
+        });
+        
+        // Enhanced showSection function to handle new sections
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.dashboard-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav buttons
+            const navButtons = document.querySelectorAll('.dashboard-nav button');
+            navButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Add active class to clicked button
+            const clickedButton = document.querySelector(`[onclick*="showSection('${sectionId}')"]`);
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+            
+            // Update content based on section
+            switch(sectionId) {
+                case 'overview':
+                    if (typeof loadDashboardStats === 'function') loadDashboardStats();
+                    break;
+                case 'players':
+                    if (typeof loadPlayers === 'function') loadPlayers();
+                    break;
+                case 'staff':
+                    if (typeof loadStaff === 'function') loadStaff();
+                    break;
+                case 'teams':
+                    if (typeof loadTeams === 'function') loadTeams();
+                    break;
+                case 'events':
+                    if (typeof loadEvents === 'function') loadEvents();
+                    break;
+                case 'finances':
+                    if (typeof loadFinances === 'function') loadFinances();
+                    break;
+                case 'club-profile':
+                    if (typeof loadClubData === 'function') loadClubData();
+                    break;
+                case 'listings':
+                    if (typeof loadListings === 'function') {
+                        loadListings();
+                    } else {
+                        console.log('📋 Listings section selected');
+                        // Show placeholder content
+                        const listingsContainer = document.getElementById('listingsContainer');
+                        if (listingsContainer && listingsContainer.children.length === 0) {
+                            listingsContainer.innerHTML = `
+                                <div class="card">
+                                    <h4>📋 Club Listings</h4>
+                                    <p>Create listings to promote your club, recruit players, or advertise events.</p>
+                                    <button class="btn btn-primary" onclick="createListingModal()">Create Your First Listing</button>
+                                </div>
+                            `;
+                        }
+                    }
+                    break;
+                case 'documents':
+                    if (typeof loadDocuments === 'function') {
+                        loadDocuments();
+                    } else {
+                        console.log('📄 Documents section selected');
+                        // Show placeholder content
+                        const documentsTableBody = document.getElementById('documentsTableBody');
+                        if (documentsTableBody && documentsTableBody.children.length === 0) {
+                            documentsTableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                                        <div>
+                                            <h4>📄 No Documents Yet</h4>
+                                            <p>Upload documents to share with your club members</p>
+                                            <button class="btn btn-primary" onclick="createDocumentUploadModal()">Upload First Document</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    }
+                    break;
+            }
+        }
+        
+        // Make showSection globally available
+        window.showSection = showSection;
+    </script>
 </body>
 </html>
