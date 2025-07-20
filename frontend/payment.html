@@ -315,27 +315,27 @@
                 </div>
 
                 <div class="payment-details">
-                    <div class="amount-display" id="paymentAmount">£0.00</div>
-                    
-                    <div class="payment-info">
-                        <div>
-                            <strong>Description:</strong>
-                            <span id="paymentDescription">-</span>
-                        </div>
-                        <div>
-                            <strong>Player:</strong>
-                            <span id="playerName">-</span>
-                        </div>
-                        <div>
-                            <strong>Club:</strong>
-                            <span id="clubName">-</span>
-                        </div>
-                        <div>
-                            <strong>Due Date:</strong>
-                            <span id="dueDate">-</span>
-                        </div>
-                    </div>
-                </div>
+    <div class="amount-display" id="paymentAmount" style="color: #000;">£0.00</div>
+    
+    <div class="payment-info">
+        <div>
+            <strong>Description:</strong>
+            <span id="paymentDescription" style="color: #000;">-</span>
+        </div>
+        <div>
+            <strong>Player:</strong>
+            <span id="playerName" style="color: #000;">-</span>
+        </div>
+        <div>
+            <strong>Club:</strong>
+            <span id="clubName" style="color: #000;">-</span>
+        </div>
+        <div>
+            <strong>Due Date:</strong>
+            <span id="dueDate" style="color: #000;">-</span>
+        </div>
+    </div>
+</div>
 
                 <div class="payment-form">
                     <h3>Choose Payment Method</h3>
@@ -468,14 +468,17 @@
         }
 
         // Populate paymentData (normally from backend, simplified here)
-        paymentData = {
-            id: paymentId,
-            amount: parseFloat(amount),
-            description,
-            player: { name: "John Doe" },
-            club: { name: "ClubHub FC" },
-            dueDate: "2025-07-31"
-        };
+        const response = await fetch(`/api/payments/${paymentId}`);
+const data = await response.json();
+
+paymentData = {
+  id: data.id,
+  amount: data.amount,
+  description: data.description,
+  player: data.player,
+  club: data.club,
+  dueDate: data.dueDate
+};
 
         console.log("✅ Payment details loaded:", paymentData);
 
