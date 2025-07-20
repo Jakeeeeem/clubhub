@@ -455,49 +455,55 @@
 
         // Load payment details from URL parameters
         async function loadPaymentDetails() {
-            try {
-                const params = new URLSearchParams(window.location.search);
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const paymentId = params.get("paymentId") || params.get("eventId");
+        const amount = params.get("amount");
+        const description = decodeURIComponent(params.get("description") || "");
 
-                const paymentId = params.get("paymentId") || params.get("eventId");
-                const amount = params.get("amount");
-                const description = decodeURIComponent(params.get("description") || "");
+        if (!paymentId || !amount) {
+            console.error("❌ Missing payment ID or amount in URL params.");
+            showNotFound();
+            return;
+        }
 
-                if (!paymentId || !amount) {
-                    console.error("❌ Missing payment ID or amount in URL params.");
-                    showNotFound();
-                    return;
-               }
+        // Populate paymentData (normally from backend, simplified here)
+        paymentData = {
+            id: paymentId,
+            amount: parseFloat(amount),
+            description,
+            player: { name: "John Doe" },
+            club: { name: "ClubHub FC" },
+            dueDate: "2025-07-31"
+        };
 
-                console.log("✅ Payment details loaded:", { paymentId, amount, description });
+        console.log("✅ Payment details loaded:", paymentData);
 
-                document.getElementById("paymentAmount").textContent = `$${parseFloat(amount).toFixed(2)}`;
-                document.getElementById("paymentDescription").textContent = description;
+        displayPaymentDetails();
+        setupStripePaymentForm();
 
-    if      (typeof Stripe !== "undefined") {
-      const stripe = Stripe("your-publishable-key"); // Replace with your Stripe publishable key
-      console.log("✅ Stripe initialized successfully");
-      
-      // Optional: create a checkout session or handle custom logic
-      // You could also attach logic to a "Pay Now" button here
+        // ✅ These lines were previously outside the try block — now correctly inside
+        document.getElementById("paymentAmount").textContent = `$${parseFloat(amount).toFixed(2)}`;
+        document.getElementById("paymentDescription").textContent = description;
+
+        if (typeof Stripe !== "undefined") {
+            stripe = Stripe("your-publishable-key"); // Replace with your Stripe publishable key
+            console.log("✅ Stripe initialized successfully");
+        }
+
+        const payButton = document.getElementById("pay-now-button");
+        if (payButton) {
+            payButton.addEventListener("click", () => {
+                console.log("💳 Simulated payment click:", paymentId);
+                alert("✅ Payment simulated (demo mode)");
+            });
+            console.log("✅ Demo payment button event listener attached");
+        }
+
+    } catch (error) {
+        console.error("❌ Error loading payment details:", error.message);
+        showError("Could not load payment details. Please refresh and try again.");
     }
-
-    // Attach event to demo payment button
-    const payButton = document.getElementById("pay-now-button");
-    if (payButton) {
-      payButton.addEventListener("click", () => {
-        console.log("💳 Simulated payment click:", paymentId);
-        // Simulate or initiate payment flow
-        // In production: redirect to Stripe Checkout or handle with Elements
-        alert("✅ Payment simulated (demo mode)");
-      });
-
-      console.log("✅ Demo payment button event listener attached");
-    }
-
-  } catch (error) {
-    console.error("❌ Error loading payment details:", error.message);
-  }
-}
 
         // Display payment details
         function displayPaymentDetails() {
@@ -839,6 +845,8 @@ function safeSetText(id, value) {
         window.hideError = hideError;
 
         console.log('✅ Complete payment page loaded successfully!');
+    }
     </script>
 </body>
 </html>
+        
