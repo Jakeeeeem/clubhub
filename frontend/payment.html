@@ -470,8 +470,8 @@
 
                 console.log("✅ Payment details loaded:", { paymentId, amount, description });
 
-                document.getElementById("payment-amount").textContent = `$${parseFloat(amount).toFixed(2)}`;
-                document.getElementById("payment-description").textContent = description;
+                document.getElementById("paymentAmount").textContent = `$${parseFloat(amount).toFixed(2)}`;
+                document.getElementById("paymentDescription").textContent = description;
 
     if      (typeof Stripe !== "undefined") {
       const stripe = Stripe("your-publishable-key"); // Replace with your Stripe publishable key
@@ -501,14 +501,16 @@
 
         // Display payment details
         function displayPaymentDetails() {
-    document.getElementById('loading')?.style?.setProperty('display', 'none');
-    document.getElementById('paymentContent')?.style?.setProperty('display', 'block');
+    console.log('🔍 paymentData:', paymentData); // Confirm it's defined
 
     safeSetText('paymentAmount', formatCurrency(paymentData.amount));
     safeSetText('paymentDescription', paymentData.description);
-    safeSetText('playerName', paymentData.player?.name);
-    safeSetText('clubName', paymentData.club?.name);
+    safeSetText('playerName', paymentData.player.name);
+    safeSetText('clubName', paymentData.club.name);
     safeSetText('dueDate', formatDate(paymentData.dueDate));
+
+    document.getElementById('loading')?.style?.setProperty('display', 'none');
+    document.getElementById('paymentContent')?.style?.setProperty('display', 'block');
 
     console.log('💰 Payment details displayed');
 }
