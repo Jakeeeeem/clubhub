@@ -458,12 +458,13 @@
             try {
                 const params = new URLSearchParams(window.location.search);
 
-                const paymentId = params.get("paymentId");
+                const paymentId = params.get("paymentId") || params.get("eventId");
                 const amount = params.get("amount");
                 const description = decodeURIComponent(params.get("description") || "");
 
                 if (!paymentId || !amount) {
                     console.error("❌ Missing payment ID or amount in URL params.");
+                    showNotFound();
                     return;
                }
 
