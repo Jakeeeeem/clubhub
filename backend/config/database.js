@@ -6,11 +6,11 @@ const dbConfig = {
   port: parseInt(process.env.DB_PORT) || 5432,
   database: process.env.DB_NAME || 'clubhub',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'Jake1812',
+  password: process.env.DB_PASSWORD,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 };
 
 // Create connection pool

@@ -102,10 +102,19 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// 🔥 FIXED: CREATE STRIPE PAYMENT INTENT - PRODUCTION READY
+// 🔥 CREATE STRIPE PAYMENT INTENT
 router.post('/create-intent', async (req, res) => {
   try {
     const { amount, paymentId, metadata = {} } = req.body;
+
+    // Validate Stripe is configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('❌ STRIPE_SECRET_KEY not configured');
+      return res.status(500).json({
+        error: 'Payment system not configured',
+        message: 'Please contact support - payment system unavailable'
+      });
+    }
 
     if (!amount || amount <= 0) {
       return res.status(400).json({
@@ -114,60 +123,113 @@ router.post('/create-intent', async (req, res) => {
       });
     }
 
-    // Get payment details if paymentId provided
+    // Check minimum amount for GBP (30p)
+    if (amount < 0.30) {
+      return res.status(400).json({
+        error: 'Amount too small',
+        message: 'Minimum payment amount is £0.30'
+      });
+    }
+
     let paymentDetails = null;
     if (paymentId) {
-      const paymentResult = await query(`
-        SELECT p.*, pl.first_name, pl.last_name, pl.email, c.name as club_name
-        FROM payments p
-        JOIN players pl ON p.player_id = pl.id
-        JOIN clubs c ON p.club_id = c.id
-        WHERE p.id = $1
-      `, [paymentId]);
-      
-      if (paymentResult.rows.length > 0) {
+      try {
+        const paymentResult = await query(`
+          SELECT p.*, pl.first_name, pl.last_name, pl.email, c.name as club_name
+          FROM payments p
+          JOIN players pl ON p.player_id = pl.id
+          JOIN clubs c ON p.club_id = c.id
+          WHERE p.id = $1
+        `, [paymentId]);
+        
+        if (paymentResult.rows.length === 0) {
+          return res.status(404).json({
+            error: 'Payment not found',
+            message: 'The payment record could not be found'
+          });
+        }
+
         paymentDetails = paymentResult.rows[0];
+        
+        // Check if already paid
+        if (paymentDetails.payment_status === 'paid') {
+          return res.status(400).json({
+            error: 'Payment already completed',
+            message: 'This payment has already been processed'
+          });
+        }
+      } catch (dbError) {
+        console.error('❌ Database error fetching payment:', dbError);
+        return res.status(500).json({
+          error: 'Database error',
+          message: 'Unable to fetch payment details'
+        });
       }
     }
 
     // Create Stripe Payment Intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to pence
-      currency: 'gbp',
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      metadata: {
-        paymentId: paymentId || '',
-        playerName: paymentDetails ? `${paymentDetails.first_name} ${paymentDetails.last_name}` : '',
-        clubName: paymentDetails ? paymentDetails.club_name : '',
-        environment: process.env.NODE_ENV || 'development',
-        ...metadata
-      },
-      description: paymentDetails ? paymentDetails.description : `ClubHub Payment of £${amount}`,
-      statement_descriptor: 'CLUBHUB*', // Appears on customer's bank statement
-      receipt_email: paymentDetails ? paymentDetails.email : metadata.email
-    });
+    try {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to pence
+        currency: 'gbp',
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        metadata: {
+          paymentId: paymentId || '',
+          playerName: paymentDetails ? `${paymentDetails.first_name} ${paymentDetails.last_name}` : '',
+          clubName: paymentDetails ? paymentDetails.club_name : '',
+          environment: process.env.NODE_ENV || 'development',
+          timestamp: new Date().toISOString(),
+          ...metadata
+        },
+        description: paymentDetails ? paymentDetails.description : `ClubHub Payment of £${amount}`,
+        statement_descriptor: 'CLUBHUB*',
+        receipt_email: paymentDetails ? paymentDetails.email : metadata.email
+      });
 
-    console.log(`💳 Stripe Payment Intent created: ${paymentIntent.id} for £${amount}`);
+      console.log(`💳 Stripe Payment Intent created: ${paymentIntent.id} for £${amount}`);
 
-    res.json({
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-      amount: amount,
-      paymentDetails: paymentDetails
-    });
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        amount: amount,
+        paymentDetails: paymentDetails
+      });
+
+    } catch (stripeError) {
+      console.error('❌ Stripe API error:', stripeError);
+      
+      if (stripeError.code === 'api_key_invalid') {
+        return res.status(500).json({
+          error: 'Payment system configuration error',
+          message: 'Please contact support - invalid API configuration'
+        });
+      }
+      
+      if (stripeError.code === 'rate_limit') {
+        return res.status(429).json({
+          error: 'Too many requests',
+          message: 'Please wait a moment and try again'
+        });
+      }
+
+      return res.status(500).json({
+        error: 'Payment system error',
+        message: 'Unable to create payment intent. Please try again.'
+      });
+    }
 
   } catch (error) {
-    console.error('Create payment intent error:', error);
+    console.error('❌ Create payment intent error:', error);
     res.status(500).json({
-      error: 'Failed to create payment intent',
-      message: error.message
+      error: 'Internal server error',
+      message: 'An unexpected error occurred. Please try again.'
     });
   }
 });
 
-// 🔥 FIXED: CONFIRM STRIPE PAYMENT - PRODUCTION READY
+// 🔥 CONFIRM STRIPE PAYMENT
 router.post('/confirm-payment', async (req, res) => {
   try {
     const { paymentIntentId, paymentId } = req.body;
@@ -178,51 +240,75 @@ router.post('/confirm-payment', async (req, res) => {
       });
     }
 
-    // Retrieve the payment intent from Stripe to verify it succeeded
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({
+        error: 'Payment system not configured'
+      });
+    }
+
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    } catch (stripeError) {
+      console.error('❌ Failed to retrieve payment intent:', stripeError);
+      return res.status(400).json({
+        error: 'Invalid payment intent',
+        message: 'Could not verify payment with Stripe'
+      });
+    }
 
     if (paymentIntent.status !== 'succeeded') {
       return res.status(400).json({
         error: 'Payment not completed',
-        message: 'Payment intent status: ' + paymentIntent.status
+        message: `Payment status: ${paymentIntent.status}`,
+        status: paymentIntent.status
       });
     }
 
-    // If paymentId provided, mark the payment as paid in our database
+    // If paymentId provided, update our database
     if (paymentId) {
-      const result = await query(`
-        UPDATE payments SET 
-          payment_status = 'paid',
-          paid_date = NOW(),
-          stripe_payment_intent_id = $1,
-          stripe_charge_id = $2,
-          updated_at = NOW()
-        WHERE id = $3 AND payment_status != 'paid'
-        RETURNING *
-      `, [
-        paymentIntent.id,
-        paymentIntent.latest_charge,
-        paymentId
-      ]);
+      try {
+        const result = await query(`
+          UPDATE payments SET 
+            payment_status = 'paid',
+            paid_date = NOW(),
+            stripe_payment_intent_id = $1,
+            stripe_charge_id = $2,
+            updated_at = NOW()
+          WHERE id = $3 AND payment_status != 'paid'
+          RETURNING *
+        `, [
+          paymentIntent.id,
+          paymentIntent.latest_charge,
+          paymentId
+        ]);
 
-      if (result.rows.length === 0) {
-        return res.status(404).json({
-          error: 'Payment not found or already processed'
+        if (result.rows.length === 0) {
+          return res.status(404).json({
+            error: 'Payment not found or already processed'
+          });
+        }
+
+        const payment = result.rows[0];
+        
+        // Update player payment status if this was a monthly fee
+        if (payment.payment_type === 'monthly_fee') {
+          await query(`
+            UPDATE players SET 
+              payment_status = 'paid',
+              updated_at = NOW()
+            WHERE id = $1
+          `, [payment.player_id]);
+        }
+
+        console.log(`✅ Payment confirmed: ${paymentId} - Stripe: ${paymentIntent.id}`);
+      } catch (dbError) {
+        console.error('❌ Database error updating payment:', dbError);
+        return res.status(500).json({
+          error: 'Database error',
+          message: 'Payment was processed but could not update records'
         });
       }
-
-      // Update player payment status if this was a monthly fee
-      const payment = result.rows[0];
-      if (payment.payment_type === 'monthly_fee') {
-        await query(`
-          UPDATE players SET 
-            payment_status = 'paid',
-            updated_at = NOW()
-          WHERE id = $1
-        `, [payment.player_id]);
-      }
-
-      console.log(`✅ Payment confirmed: ${paymentId} - Stripe: ${paymentIntent.id}`);
     }
 
     res.json({
@@ -230,20 +316,20 @@ router.post('/confirm-payment', async (req, res) => {
       paymentIntent: {
         id: paymentIntent.id,
         status: paymentIntent.status,
-        amount_received: paymentIntent.amount_received
+        amount_received: paymentIntent.amount_received / 100
       }
     });
 
   } catch (error) {
-    console.error('Confirm payment error:', error);
+    console.error('❌ Confirm payment error:', error);
     res.status(500).json({
       error: 'Failed to confirm payment',
-      message: error.message
+      message: 'An unexpected error occurred'
     });
   }
 });
 
-// 🔥 FIXED: PUBLIC PAYMENT DETAILS (for payment page)
+// 🔥 PUBLIC PAYMENT DETAILS (for payment page)
 router.get('/public/:id', async (req, res) => {
   try {
     const { token } = req.query;
@@ -254,66 +340,87 @@ router.get('/public/:id', async (req, res) => {
       });
     }
 
-    // Verify token
+    // Verify token format and decode
+    let paymentId, timestamp;
     try {
       const decoded = Buffer.from(token, 'base64').toString('utf-8');
-      const [paymentId, timestamp] = decoded.split(':');
+      [paymentId, timestamp] = decoded.split(':');
+      
+      if (!paymentId || !timestamp) {
+        throw new Error('Invalid token format');
+      }
       
       if (paymentId !== req.params.id) {
-        throw new Error('Invalid token');
+        throw new Error('Token mismatch');
       }
-    } catch (error) {
+    } catch (tokenError) {
       return res.status(403).json({
-        error: 'Invalid payment token'
+        error: 'Invalid payment token',
+        message: 'The payment link is invalid or has been tampered with'
       });
     }
 
-    const paymentResult = await query(`
-      SELECT p.*, pl.first_name, pl.last_name, c.name as club_name, c.location
-      FROM payments p
-      JOIN players pl ON p.player_id = pl.id
-      JOIN clubs c ON p.club_id = c.id
-      WHERE p.id = $1
-    `, [req.params.id]);
-    
-    if (paymentResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Payment not found'
-      });
-    }
-
-    const payment = paymentResult.rows[0];
-
-    if (payment.payment_status === 'paid') {
-      return res.status(400).json({
-        error: 'Payment already completed'
-      });
-    }
-
-    res.json({
-      id: payment.id,
-      amount: payment.amount,
-      description: payment.description,
-      dueDate: payment.due_date,
-      paymentType: payment.payment_type,
-      player: {
-        name: `${payment.first_name} ${payment.last_name}`
-      },
-      club: {
-        name: payment.club_name,
-        location: payment.location
+    try {
+      const paymentResult = await query(`
+        SELECT p.*, pl.first_name, pl.last_name, c.name as club_name, c.location
+        FROM payments p
+        JOIN players pl ON p.player_id = pl.id
+        JOIN clubs c ON p.club_id = c.id
+        WHERE p.id = $1
+      `, [req.params.id]);
+      
+      if (paymentResult.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Payment not found',
+          message: 'This payment record does not exist'
+        });
       }
-    });
+
+      const payment = paymentResult.rows[0];
+
+      if (payment.payment_status === 'paid') {
+        return res.status(400).json({
+          error: 'Payment already completed',
+          message: 'This payment has already been processed',
+          paidDate: payment.paid_date
+        });
+      }
+
+      const isOverdue = new Date() > new Date(payment.due_date);
+
+      res.json({
+        id: payment.id,
+        amount: payment.amount,
+        description: payment.description,
+        dueDate: payment.due_date,
+        paymentType: payment.payment_type,
+        isOverdue,
+        player: {
+          name: `${payment.first_name} ${payment.last_name}`
+        },
+        club: {
+          name: payment.club_name,
+          location: payment.location
+        }
+      });
+
+    } catch (dbError) {
+      console.error('❌ Database error fetching public payment:', dbError);
+      return res.status(500).json({
+        error: 'Database error',
+        message: 'Unable to fetch payment details'
+      });
+    }
 
   } catch (error) {
-    console.error('Get public payment error:', error);
+    console.error('❌ Get public payment error:', error);
     res.status(500).json({
-      error: 'Failed to fetch payment details'
+      error: 'Internal server error'
     });
   }
 });
 
-// 🔥 NEW: GENERATE PAYMENT LINK WITH PROPER TOKEN
+// 🔥 GENERATE PAYMENT LINK
 router.get('/:id/payment-link', authenticateToken, requireOrganization, async (req, res) => {
   try {
     const paymentResult = await query(`
@@ -332,7 +439,6 @@ router.get('/:id/payment-link', authenticateToken, requireOrganization, async (r
 
     const payment = paymentResult.rows[0];
 
-    // Check if user owns the club
     if (payment.owner_id !== req.user.id) {
       return res.status(403).json({
         error: 'Access denied'
@@ -345,10 +451,7 @@ router.get('/:id/payment-link', authenticateToken, requireOrganization, async (r
       });
     }
 
-    // Generate secure payment token
     const paymentToken = Buffer.from(`${payment.id}:${payment.created_at}`).toString('base64');
-    
-    // 🔥 FIXED: Use your actual domain
     const baseUrl = process.env.BASE_URL || 'https://clubhubsports.net';
     const paymentLink = `${baseUrl}/payment.html?id=${payment.id}&token=${paymentToken}`;
 
@@ -373,7 +476,7 @@ router.get('/:id/payment-link', authenticateToken, requireOrganization, async (r
   }
 });
 
-// 🔥 NEW: BOOK EVENT WITH PAYMENT
+// 🔥 BOOK EVENT WITH PAYMENT
 router.post('/book-event', authenticateToken, async (req, res) => {
   try {
     const { eventId, paymentIntentId, playerData } = req.body;
@@ -384,9 +487,8 @@ router.post('/book-event', authenticateToken, async (req, res) => {
       });
     }
 
-    // Get event details
     const eventResult = await query(`
-      SELECT e.*, c.name as club_name
+      SELECT e.*, c.name as club_name, c.owner_id
       FROM events e
       LEFT JOIN clubs c ON e.club_id = c.id
       WHERE e.id = $1
@@ -394,34 +496,44 @@ router.post('/book-event', authenticateToken, async (req, res) => {
 
     if (eventResult.rows.length === 0) {
       return res.status(404).json({
-        error: 'Event not found'
+        error: 'Event not found',
+        message: 'The specified event does not exist'
       });
     }
 
     const event = eventResult.rows[0];
 
-    // Check if event requires payment and payment was provided
     if (event.price > 0 && !paymentIntentId) {
       return res.status(400).json({
-        error: 'Payment required for this event'
+        error: 'Payment required',
+        message: `This event costs £${event.price}. Payment is required to book.`
       });
     }
 
     // Verify payment if provided
     if (paymentIntentId) {
-      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-      
-      if (paymentIntent.status !== 'succeeded') {
-        return res.status(400).json({
-          error: 'Payment not completed'
-        });
-      }
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        
+        if (paymentIntent.status !== 'succeeded') {
+          return res.status(400).json({
+            error: 'Payment not completed',
+            message: `Payment status: ${paymentIntent.status}`
+          });
+        }
 
-      // Verify amount matches
-      const expectedAmount = Math.round(event.price * 100);
-      if (paymentIntent.amount !== expectedAmount) {
+        const expectedAmount = Math.round(event.price * 100);
+        if (paymentIntent.amount !== expectedAmount) {
+          return res.status(400).json({
+            error: 'Payment amount mismatch',
+            message: `Expected £${event.price}, but received £${paymentIntent.amount / 100}`
+          });
+        }
+      } catch (stripeError) {
+        console.error('❌ Stripe verification error:', stripeError);
         return res.status(400).json({
-          error: 'Payment amount mismatch'
+          error: 'Payment verification failed',
+          message: 'Could not verify payment with Stripe'
         });
       }
     }
@@ -439,31 +551,13 @@ router.post('/book-event', authenticateToken, async (req, res) => {
       });
     }
 
-    // Check capacity
-    const bookingsCount = await query(`
-      SELECT COUNT(*) as count
-      FROM event_bookings
-      WHERE event_id = $1 AND booking_status = 'confirmed'
-    `, [eventId]);
-
-    const currentBookings = parseInt(bookingsCount.rows[0].count);
-    
-    if (event.capacity && currentBookings >= event.capacity) {
-      return res.status(400).json({
-        error: 'Event is full',
-        message: 'No more spots available for this event'
-      });
-    }
-
     // Create booking in transaction
     const booking = await withTransaction(async (client) => {
       let playerId = null;
 
-      // If player data is provided, create or find player
       if (playerData) {
         const { firstName, lastName, email, phone, dateOfBirth } = playerData;
         
-        // Try to find existing player
         const existingPlayer = await client.query(`
           SELECT id FROM players 
           WHERE email = $1 AND club_id = $2
@@ -472,7 +566,6 @@ router.post('/book-event', authenticateToken, async (req, res) => {
         if (existingPlayer.rows.length > 0) {
           playerId = existingPlayer.rows[0].id;
         } else if (event.club_id) {
-          // Create new player
           const newPlayer = await client.query(`
             INSERT INTO players (first_name, last_name, email, phone, date_of_birth, club_id, user_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -483,24 +576,11 @@ router.post('/book-event', authenticateToken, async (req, res) => {
         }
       }
 
-      // Create booking
       const bookingResult = await client.query(`
         INSERT INTO event_bookings (event_id, user_id, player_id, amount_paid, stripe_payment_intent_id, booking_status)
         VALUES ($1, $2, $3, $4, $5, 'confirmed')
         RETURNING *
       `, [eventId, req.user.id, playerId, event.price || 0, paymentIntentId]);
-
-      // Update spots available
-      if (event.capacity) {
-        await client.query(`
-          UPDATE events 
-          SET spots_available = capacity - (
-            SELECT COUNT(*) FROM event_bookings 
-            WHERE event_id = $1 AND booking_status = 'confirmed'
-          )
-          WHERE id = $1
-        `, [eventId]);
-      }
 
       return bookingResult.rows[0];
     });
@@ -537,15 +617,8 @@ router.post('/', authenticateToken, requireOrganization, paymentValidation, asyn
       });
     }
 
-    const { 
-      playerId, 
-      amount, 
-      paymentType, 
-      description, 
-      dueDate 
-    } = req.body;
+    const { playerId, amount, paymentType, description, dueDate } = req.body;
 
-    // Verify player exists and belongs to user's club
     const playerResult = await query(`
       SELECT p.*, c.owner_id 
       FROM players p
@@ -573,14 +646,7 @@ router.post('/', authenticateToken, requireOrganization, paymentValidation, asyn
       INSERT INTO payments (player_id, club_id, amount, payment_type, description, due_date)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
-    `, [
-      playerId,
-      player.club_id,
-      amount,
-      paymentType,
-      description,
-      dueDate
-    ]);
+    `, [playerId, player.club_id, amount, paymentType, description, dueDate]);
 
     const newPayment = result.rows[0];
 
@@ -596,132 +662,6 @@ router.post('/', authenticateToken, requireOrganization, paymentValidation, asyn
     res.status(500).json({
       error: 'Failed to create payment',
       message: 'An error occurred while creating the payment'
-    });
-  }
-});
-
-// Mark payment as paid manually
-router.patch('/:id/mark-paid', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    const { notes } = req.body;
-
-    // Get payment details and verify permissions
-    const paymentResult = await query(`
-      SELECT p.*, c.owner_id, pl.first_name, pl.last_name
-      FROM payments p
-      JOIN clubs c ON p.club_id = c.id
-      JOIN players pl ON p.player_id = pl.id
-      WHERE p.id = $1
-    `, [req.params.id]);
-    
-    if (paymentResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Payment not found'
-      });
-    }
-
-    const payment = paymentResult.rows[0];
-
-    // Check if user owns the club
-    if (payment.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied'
-      });
-    }
-
-    if (payment.payment_status === 'paid') {
-      return res.status(400).json({
-        error: 'Payment already marked as paid'
-      });
-    }
-
-    // Update payment status
-    const result = await query(`
-      UPDATE payments SET 
-        payment_status = 'paid',
-        paid_date = NOW(),
-        updated_at = NOW()
-      WHERE id = $1
-      RETURNING *
-    `, [req.params.id]);
-
-    // Update player payment status if this was a monthly fee
-    if (payment.payment_type === 'monthly_fee') {
-      await query(`
-        UPDATE players SET 
-          payment_status = 'paid',
-          updated_at = NOW()
-        WHERE id = $1
-      `, [payment.player_id]);
-    }
-
-    console.log(`💰 Payment manually marked as paid: ${payment.first_name} ${payment.last_name} - £${payment.amount}`);
-
-    res.json({
-      message: 'Payment marked as paid successfully',
-      payment: result.rows[0]
-    });
-
-  } catch (error) {
-    console.error('Mark payment as paid error:', error);
-    res.status(500).json({
-      error: 'Failed to mark payment as paid'
-    });
-  }
-});
-
-// Send payment reminder
-router.post('/:id/send-reminder', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    const paymentResult = await query(`
-      SELECT p.*, c.owner_id, c.name as club_name, pl.first_name, pl.last_name, pl.email
-      FROM payments p
-      JOIN clubs c ON p.club_id = c.id
-      JOIN players pl ON p.player_id = pl.id
-      WHERE p.id = $1
-    `, [req.params.id]);
-    
-    if (paymentResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Payment not found'
-      });
-    }
-
-    const payment = paymentResult.rows[0];
-
-    // Check if user owns the club
-    if (payment.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied'
-      });
-    }
-
-    if (payment.payment_status === 'paid') {
-      return res.status(400).json({
-        error: 'Cannot send reminder for paid payment'
-      });
-    }
-
-    // Generate payment link for the reminder
-    const paymentToken = Buffer.from(`${payment.id}:${payment.created_at}`).toString('base64');
-    const baseUrl = process.env.BASE_URL || 'https://clubhubsports.net';
-    const paymentLink = `${baseUrl}/payment.html?id=${payment.id}&token=${paymentToken}`;
-
-    // In a real application, you would send an actual email here
-    console.log(`📧 Payment reminder would be sent to: ${payment.email}`);
-    console.log(`📄 Payment details: ${payment.description} - £${payment.amount}`);
-    console.log(`🔗 Payment link: ${paymentLink}`);
-
-    res.json({
-      message: 'Payment reminder sent successfully',
-      sentTo: payment.email,
-      paymentLink: paymentLink
-    });
-
-  } catch (error) {
-    console.error('Send payment reminder error:', error);
-    res.status(500).json({
-      error: 'Failed to send payment reminder'
     });
   }
 });

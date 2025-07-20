@@ -427,21 +427,29 @@
         let cardElement = null;
         let paymentData = null;
         let selectedMethod = 'card';
-        const STRIPE_PUBLIC_KEY = 'pk_test_51QWmhEEH5J0SdAOMNMHr4W27vbq4OVNZo6q7JDXKbMNz19Zrv0Q2LBKa1Y6lXO1X1K5JsBNrOa8VxUZYCVPpfWH500YWTL2X7I'; // Replace with your actual Stripe public key
+        
+        // 🔥 IMPORTANT: Use your actual Stripe public key
+        const STRIPE_PUBLIC_KEY = 'pk_live_51RZtoWRthpGbefAaiw5yuuXStTeNqyKMJplgHQVxxBpPqDTGp4xsu1tfUrQLlWqsGDyfhaROF9J9gjmDB8OhDCnz00HMu7iQ0o';
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             console.log('💳 Payment page loading...');
             
-            // Initialize Stripe
-            if (STRIPE_PUBLIC_KEY && STRIPE_PUBLIC_KEY !== 'your_stripe_public_key_here') {
-                stripe = Stripe(STRIPE_PUBLIC_KEY);
-                console.log('✅ Stripe initialized');
-            } else {
-                console.warn('⚠️ Stripe public key not configured');
+            if (!STRIPE_PUBLIC_KEY || STRIPE_PUBLIC_KEY === 'your_stripe_public_key_here') {
+                console.error('❌ Stripe public key not configured properly');
+                showError('Payment system configuration error. Please contact support.');
+                return;
             }
             
-            // Load payment details
+            try {
+                stripe = Stripe(STRIPE_PUBLIC_KEY);
+                console.log('✅ Stripe initialized successfully');
+            } catch (error) {
+                console.error('❌ Failed to initialize Stripe:', error);
+                showError('Failed to initialize payment system. Please refresh the page.');
+                return;
+            }
+            
             loadPaymentDetails();
         });
 
@@ -453,21 +461,36 @@
                 const token = urlParams.get('token');
 
                 if (!paymentId || !token) {
+                    console.error('❌ Missing payment ID or token');
                     showNotFound();
                     return;
                 }
 
-                console.log('📄 Loading payment details...');
+                console.log('📄 Loading payment details for ID:', paymentId);
                 
-                // Fetch payment details from API
-                const response = await fetch(`/api/payments/public/${paymentId}?token=${token}`);
+                const response = await fetch(`/api/payments/public/${paymentId}?token=${encodeURIComponent(token)}`);
                 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Payment not found');
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ API Error:', response.status, errorData);
+                    
+                    if (response.status === 400 && errorData.error === 'Payment already completed') {
+                        showError('This payment has already been completed.');
+                    } else if (response.status === 403) {
+                        showError('Invalid or expired payment link.');
+                    } else if (response.status === 404) {
+                        showError('Payment not found.');
+                    } else {
+                        showError(`Failed to load payment details. (Error ${response.status})`);
+                    }
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    return;
                 }
 
                 paymentData = await response.json();
+                console.log('✅ Payment data loaded:', paymentData);
+                
                 displayPaymentDetails();
                 
                 if (stripe) {
@@ -478,7 +501,8 @@
 
             } catch (error) {
                 console.error('❌ Failed to load payment:', error);
-                showNotFound();
+                showError('Failed to load payment details. Please check your connection and try again.');
+                document.getElementById('loading').style.display = 'none';
             }
         }
 
@@ -493,20 +517,20 @@
             document.getElementById('clubName').textContent = paymentData.club.name;
             document.getElementById('dueDate').textContent = formatDate(paymentData.dueDate);
 
-            console.log('💰 Payment details loaded:', paymentData);
+            console.log('💰 Payment details displayed');
         }
 
         // Setup Stripe payment form
         function setupStripePaymentForm() {
             if (!stripe) {
                 console.error('❌ Stripe not initialized');
+                showError('Payment system not ready. Please refresh the page.');
                 return;
             }
 
             try {
                 elements = stripe.elements();
                 
-                // Create card element with custom styling
                 cardElement = elements.create('card', {
                     style: {
                         base: {
@@ -527,7 +551,6 @@
 
                 cardElement.mount('#card-element');
 
-                // Handle card validation errors
                 cardElement.on('change', function(event) {
                     const displayError = document.getElementById('card-errors');
                     if (event.error) {
@@ -539,13 +562,13 @@
                     }
                 });
 
-                // Handle form submission
                 const form = document.getElementById('payment-form');
                 form.addEventListener('submit', handleCardPayment);
 
                 console.log('💳 Stripe payment form setup complete');
             } catch (error) {
                 console.error('❌ Failed to setup Stripe form:', error);
+                showError('Failed to setup payment form. Please refresh the page.');
             }
         }
 
@@ -553,13 +576,11 @@
         function selectPaymentMethod(method) {
             selectedMethod = method;
             
-            // Update UI
             document.querySelectorAll('.payment-method').forEach(el => {
                 el.classList.remove('selected');
             });
             document.querySelector(`[data-method="${method}"]`).classList.add('selected');
 
-            // Show/hide payment forms
             if (method === 'card') {
                 document.getElementById('cardPaymentForm').style.display = 'block';
                 document.getElementById('demoPaymentForm').style.display = 'none';
@@ -579,11 +600,11 @@
             }
 
             setLoadingState(true);
+            hideError();
 
             try {
                 console.log('💳 Creating payment intent...');
                 
-                // Create payment intent
                 const intentResponse = await fetch('/api/payments/create-intent', {
                     method: 'POST',
                     headers: {
@@ -601,15 +622,18 @@
                 });
 
                 if (!intentResponse.ok) {
-                    const errorData = await intentResponse.json();
-                    throw new Error(errorData.message || 'Failed to create payment intent');
+                    const errorData = await intentResponse.json().catch(() => ({}));
+                    throw new Error(errorData.message || `Server error: ${intentResponse.status}`);
                 }
 
                 const { clientSecret, paymentIntentId } = await intentResponse.json();
 
+                if (!clientSecret) {
+                    throw new Error('Invalid payment intent response from server');
+                }
+
                 console.log('💳 Confirming payment with Stripe...');
 
-                // Confirm payment with Stripe
                 const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
                     payment_method: {
                         card: cardElement,
@@ -620,7 +644,12 @@
                 });
 
                 if (error) {
+                    console.error('❌ Stripe payment error:', error);
                     throw new Error(error.message);
+                }
+
+                if (paymentIntent.status !== 'succeeded') {
+                    throw new Error(`Payment failed with status: ${paymentIntent.status}`);
                 }
 
                 console.log('✅ Payment confirmed with Stripe');
@@ -631,7 +660,7 @@
 
             } catch (error) {
                 console.error('❌ Payment failed:', error);
-                showError(error.message);
+                showError(error.message || 'Payment failed. Please try again.');
             } finally {
                 setLoadingState(false);
             }
@@ -640,6 +669,7 @@
         // Handle demo payment
         async function handleDemoPayment() {
             setLoadingState(true, 'demo-payment');
+            hideError();
 
             try {
                 console.log('🎮 Processing demo payment...');
@@ -648,12 +678,12 @@
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
                 // Confirm demo payment in backend
-                await confirmPaymentInBackend('demo_payment_intent', paymentData.id);
+                await confirmPaymentInBackend('demo_payment_intent_' + Date.now(), paymentData.id);
                 showSuccess();
 
             } catch (error) {
                 console.error('❌ Demo payment failed:', error);
-                showError(error.message);
+                showError(error.message || 'Demo payment failed. Please try again.');
             } finally {
                 setLoadingState(false, 'demo-payment');
             }
@@ -673,34 +703,46 @@
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to confirm payment');
+                const errorData = await response.json().catch(() => ({}));
+                console.error('❌ Backend confirmation failed:', response.status, errorData);
+                throw new Error(errorData.message || `Server error: ${response.status}`);
             }
 
-            return await response.json();
+            const result = await response.json();
+            console.log('✅ Payment confirmed in backend:', result);
+            return result;
         }
 
         // Set loading state
         function setLoadingState(loading, buttonId = 'submit-payment') {
             const button = document.getElementById(buttonId);
-            const buttonText = button.querySelector('#button-text') || button;
-            const buttonSpinner = document.getElementById('button-spinner');
+            if (!button) return;
+            
+            const buttonText = button.querySelector('#button-text') || button.querySelector('span') || button;
+            const buttonSpinner = button.querySelector('#button-spinner') || document.getElementById('button-spinner');
             
             if (loading) {
                 button.disabled = true;
-                if (buttonSpinner) {
+                if (buttonSpinner && buttonText) {
                     buttonText.style.display = 'none';
                     buttonSpinner.style.display = 'block';
                 } else {
-                    buttonText.textContent = 'Processing...';
+                    const originalText = button.textContent;
+                    button.setAttribute('data-original-text', originalText);
+                    button.textContent = 'Processing...';
                 }
             } else {
                 button.disabled = false;
-                if (buttonSpinner) {
+                if (buttonSpinner && buttonText) {
                     buttonText.style.display = 'block';
                     buttonSpinner.style.display = 'none';
                 } else {
-                    buttonText.textContent = buttonId === 'demo-payment' ? 'Simulate Successful Payment' : 'Complete Payment';
+                    const originalText = button.getAttribute('data-original-text');
+                    if (originalText) {
+                        button.textContent = originalText;
+                    } else {
+                        button.textContent = buttonId === 'demo-payment' ? 'Simulate Successful Payment' : 'Complete Payment';
+                    }
                 }
             }
         }
@@ -717,7 +759,9 @@
             const countdownElement = document.getElementById('countdown');
             const countdownInterval = setInterval(() => {
                 countdown--;
-                countdownElement.textContent = countdown;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
                 if (countdown <= 0) {
                     clearInterval(countdownInterval);
                     window.location.href = 'index.html';
@@ -727,13 +771,28 @@
 
         // Show error message
         function showError(message) {
-            document.getElementById('errorText').textContent = message;
-            document.getElementById('errorMessage').style.display = 'block';
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            if (errorText) {
+                errorText.textContent = message || 'An unexpected error occurred.';
+            }
+            if (errorMessage) {
+                errorMessage.style.display = 'block';
+            }
+            
+            // Auto-hide error after 10 seconds
+            setTimeout(() => {
+                hideError();
+            }, 10000);
         }
 
         // Hide error message
         function hideError() {
-            document.getElementById('errorMessage').style.display = 'none';
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
         }
 
         // Show not found message
@@ -759,19 +818,22 @@
             });
         }
 
-        // Add demo payment event listener
+        // Setup demo payment button event listener
         document.addEventListener('DOMContentLoaded', function() {
-            const demoButton = document.getElementById('demo-payment');
-            if (demoButton) {
-                demoButton.addEventListener('click', handleDemoPayment);
-            }
+            setTimeout(() => {
+                const demoButton = document.getElementById('demo-payment');
+                if (demoButton) {
+                    demoButton.addEventListener('click', handleDemoPayment);
+                    console.log('✅ Demo payment button event listener attached');
+                }
+            }, 100);
         });
 
         // Make functions globally available
         window.selectPaymentMethod = selectPaymentMethod;
         window.hideError = hideError;
 
-        console.log('✅ Payment page loaded with complete Stripe integration!');
+        console.log('✅ Complete payment page loaded successfully!');
     </script>
 </body>
 </html>
