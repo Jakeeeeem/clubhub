@@ -244,9 +244,9 @@ router.get('/player', authenticateToken, async (req, res) => {
       SELECT ca.*, c.name as club_name
       FROM club_applications ca
       JOIN clubs c ON ca.club_id = c.id
-      WHERE ca.user_id = $1
-      ORDER BY ca.submitted_at DESC
-    `, [userId]);
+      WHERE ca.player_id = $1
+      ORDER BY ca.applied_at DESC
+`   , [player?.id]);
     
     console.log('📊 Player dashboard data loaded:', {
       hasPlayer: !!player,
