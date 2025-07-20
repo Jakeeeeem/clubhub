@@ -468,17 +468,14 @@
         }
 
         // Populate paymentData (normally from backend, simplified here)
-        const response = await fetch(`/api/payments/${paymentId}`);
-const data = await response.json();
-
-paymentData = {
-  id: data.id,
-  amount: data.amount,
-  description: data.description,
-  player: data.player,
-  club: data.club,
-  dueDate: data.dueDate
-};
+        paymentData = {
+            id: paymentId,
+            amount: parseFloat(amount),
+            description,
+            player: { name: "John Doe" },
+            club: { name: "ClubHub FC" },
+            dueDate: "2025-07-31"
+        };
 
         console.log("✅ Payment details loaded:", paymentData);
 
