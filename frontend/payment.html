@@ -456,55 +456,47 @@
         // Load payment details from URL parameters
         async function loadPaymentDetails() {
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const paymentId = urlParams.get('id');
-                const token = urlParams.get('token');
+                const params = new URLSearchParams(window.location.search);
 
-                if (!paymentId || !token) {
-                    console.error('❌ Missing payment ID or token');
-                    showNotFound();
+                const paymentId = params.get("paymentId");
+                const amount = params.get("amount");
+                const description = decodeURIComponent(params.get("description") || "");
+
+                if (!paymentId || !amount) {
+                    console.error("❌ Missing payment ID or amount in URL params.");
                     return;
-                }
+               }
 
-                console.log('📄 Loading payment details for ID:', paymentId);
-                
-                const response = await fetch(`/api/payments/public/${paymentId}?token=${encodeURIComponent(token)}`);
-                
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    console.error('❌ API Error:', response.status, errorData);
-                    
-                    if (response.status === 400 && errorData.error === 'Payment already completed') {
-                        showError('This payment has already been completed.');
-                    } else if (response.status === 403) {
-                        showError('Invalid or expired payment link.');
-                    } else if (response.status === 404) {
-                        showError('Payment not found.');
-                    } else {
-                        showError(`Failed to load payment details. (Error ${response.status})`);
-                    }
-                    
-                    document.getElementById('loading').style.display = 'none';
-                    return;
-                }
+                console.log("✅ Payment details loaded:", { paymentId, amount, description });
 
-                paymentData = await response.json();
-                console.log('✅ Payment data loaded:', paymentData);
-                
-                displayPaymentDetails();
-                
-                if (stripe) {
-                    setupStripePaymentForm();
-                } else {
-                    console.warn('⚠️ Stripe not available, only demo payments will work');
-                }
+                document.getElementById("payment-amount").textContent = `$${parseFloat(amount).toFixed(2)}`;
+                document.getElementById("payment-description").textContent = description;
 
-            } catch (error) {
-                console.error('❌ Failed to load payment:', error);
-                showError('Failed to load payment details. Please check your connection and try again.');
-                document.getElementById('loading').style.display = 'none';
-            }
-        }
+    if      (typeof Stripe !== "undefined") {
+      const stripe = Stripe("your-publishable-key"); // Replace with your Stripe publishable key
+      console.log("✅ Stripe initialized successfully");
+      
+      // Optional: create a checkout session or handle custom logic
+      // You could also attach logic to a "Pay Now" button here
+    }
+
+    // Attach event to demo payment button
+    const payButton = document.getElementById("pay-now-button");
+    if (payButton) {
+      payButton.addEventListener("click", () => {
+        console.log("💳 Simulated payment click:", paymentId);
+        // Simulate or initiate payment flow
+        // In production: redirect to Stripe Checkout or handle with Elements
+        alert("✅ Payment simulated (demo mode)");
+      });
+
+      console.log("✅ Demo payment button event listener attached");
+    }
+
+  } catch (error) {
+    console.error("❌ Error loading payment details:", error.message);
+  }
+}
 
         // Display payment details
         function displayPaymentDetails() {
