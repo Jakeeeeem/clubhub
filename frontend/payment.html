@@ -501,17 +501,27 @@
 
         // Display payment details
         function displayPaymentDetails() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('paymentContent').style.display = 'block';
+    document.getElementById('loading')?.style?.setProperty('display', 'none');
+    document.getElementById('paymentContent')?.style?.setProperty('display', 'block');
 
-            document.getElementById('paymentAmount').textContent = formatCurrency(paymentData.amount);
-            document.getElementById('paymentDescription').textContent = paymentData.description;
-            document.getElementById('playerName').textContent = paymentData.player.name;
-            document.getElementById('clubName').textContent = paymentData.club.name;
-            document.getElementById('dueDate').textContent = formatDate(paymentData.dueDate);
+    safeSetText('paymentAmount', formatCurrency(paymentData.amount));
+    safeSetText('paymentDescription', paymentData.description);
+    safeSetText('playerName', paymentData.player?.name);
+    safeSetText('clubName', paymentData.club?.name);
+    safeSetText('dueDate', formatDate(paymentData.dueDate));
 
-            console.log('💰 Payment details displayed');
-        }
+    console.log('💰 Payment details displayed');
+}
+
+// Helper function
+function safeSetText(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.textContent = value;
+    } else {
+        console.warn(`⚠️ Element with ID "${id}" not found`);
+    }
+}
 
         // Setup Stripe payment form
         function setupStripePaymentForm() {
