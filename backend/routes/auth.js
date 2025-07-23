@@ -170,11 +170,13 @@ router.post('/login', loginValidation, async (req, res) => {
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
-      return res.status(401).json({
-        error: 'Invalid credentials',
-        message: 'Email or password is incorrect'
-      });
-    }
+  return res.status(401).json({
+    error: 'Incorrect password',
+    message: 'The password you entered is incorrect. Please try again.',
+    field: 'password'
+  });
+}
+
 
     // Generate token
     const token = generateToken(user);

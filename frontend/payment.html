@@ -616,28 +616,30 @@ function safeSetText(id, value) {
             try {
                 console.log('💳 Creating payment intent...');
                 
-                const intentResponse = await fetch('/api/payments/create-intent', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        amount: paymentData.amount,
-                        paymentId: paymentData.id,
-                        metadata: {
-                            playerName: paymentData.player.name,
-                            clubName: paymentData.club.name,
-                            description: paymentData.description
-                        }
-                    })
-                });
+               const intentResponse = await fetch('/api/payments/create-intent', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+        amount: paymentData.amount,
+        paymentId: paymentData.id,
+        metadata: {
+            playerName: paymentData.player.name,
+            clubName: paymentData.club.name,
+            description: paymentData.description
+        }
+    })
+});
 
-                if (!intentResponse.ok) {
-                    const errorData = await intentResponse.json().catch(() => ({}));
-                    throw new Error(errorData.message || `Server error: ${intentResponse.status}`);
-                }
+// Parse the JSON once
+const intentData = await intentResponse.json().catch(() => ({}));
 
-                const { clientSecret, paymentIntentId } = await intentResponse.json();
+if (!intentResponse.ok) {
+    throw new Error(intentData.message || `Server error: ${intentResponse.status}`);
+}
+
+const { clientSecret, paymentIntentId } = intentData;
 
                 if (!clientSecret) {
                     throw new Error('Invalid payment intent response from server');

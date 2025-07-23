@@ -199,46 +199,61 @@ function clearAuthData() {
 }
 
 async function handleLogin(e) {
-    e.preventDefault();
+  e.preventDefault();
+  
+  // Clear previous errors
+  document.querySelectorAll('.field-error').forEach(el => el.remove());
+  document.querySelectorAll('input').forEach(input => input.style.borderColor = '');
+  
+  try {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
     
-    try {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        
-        console.log('🔐 Attempting login for:', email);
-        
-        // Check if API service is available
-        if (typeof apiService === 'undefined') {
-            throw new Error('API service not available. Please refresh the page and try again.');
-        }
-        
-        const response = await apiService.login(email, password);
-        console.log('✅ Login response received');
-        
-        AppState.currentUser = response.user;
-        AppState.userType = response.user.account_type;
-        
-        // Store user data in localStorage for persistence
-        localStorage.setItem('currentUser', JSON.stringify(response.user));
-        localStorage.setItem('userType', response.user.account_type);
-        
-        console.log('💾 User data stored in localStorage');
-        
-        closeModal('loginModal');
-        updateNavigation();
-        
-        // Load initial data
-        await loadInitialData();
-        
-        // Redirect to appropriate dashboard
-        redirectToDashboard();
-        
-        showNotification('Login successful!', 'success');
-        
-    } catch (error) {
-        console.error('❌ Login failed:', error);
-        showNotification(error.message || 'Login failed. Please try again.', 'error');
+    const response = await apiService.login(email, password);
+    
+    AppState.currentUser = response.user;
+    AppState.userType = response.user.account_type;
+    
+    localStorage.setItem('currentUser', JSON.stringify(response.user));
+    localStorage.setItem('userType', response.user.account_type);
+    
+    closeModal('loginModal');
+    updateNavigation();
+    await loadInitialData();
+    redirectToDashboard();
+    
+    showNotification('Login successful!', 'success');
+    
+  } catch (error) {
+    console.error('❌ Login failed:', error);
+    
+    if (error.message && error.message.toLowerCase().includes('password')) {
+      const passwordField = document.getElementById('loginPassword');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'field-error';
+      errorDiv.style.cssText = 'color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem; font-weight: 500;';
+      errorDiv.textContent = 'Incorrect password. Please try again.';
+      
+      passwordField.parentElement.appendChild(errorDiv);
+      passwordField.focus();
+      passwordField.select();
+      passwordField.style.borderColor = '#dc2626';
+      
+    } else if (error.message && error.message.toLowerCase().includes('email')) {
+      const emailField = document.getElementById('loginEmail');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'field-error';
+      errorDiv.style.cssText = 'color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem; font-weight: 500;';
+      errorDiv.textContent = 'Email not found. Please check your email address.';
+      
+      emailField.parentElement.appendChild(errorDiv);
+      emailField.focus();
+      emailField.style.borderColor = '#dc2626';
+      
+    } else {
+      showNotification(error.message || 'Login failed. Please try again.', 'error');
     }
+  }
 }
 
 async function handleRegister(e) {
