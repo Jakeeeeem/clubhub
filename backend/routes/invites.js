@@ -378,12 +378,6 @@ router.delete('/:inviteId', authenticateToken, requireOrganization, async (req, 
   }
 });
 
-module.exports = router;('Generate invite error:', error);
-    res.status(500).json({
-      error: 'Failed to generate invite',
-      message: 'An error occurred while generating the invite'
-    });
-
 // 🔥 FIXED: GET INVITE DETAILS (PUBLIC)
 router.get('/details/:token', async (req, res) => {
   try {
@@ -690,3 +684,5 @@ router.post('/decline/:token', optionalAuth, async (req, res) => {
   } catch (error) {
     console.error("Error sending invite:", error);
   }})
+
+  module.exports = router;
