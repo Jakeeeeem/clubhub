@@ -610,13 +610,15 @@ class ApiService {
     });
   }
 
-  // Enhanced invite methods
   async generateClubInvite(inviteData) {
-    return await this.makeRequest('/invites/generate', {
-      method: 'POST',
-      body: JSON.stringify(inviteData)
-    });
-  }
+  return await this.makeRequest('/invites/generate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(inviteData)
+  });
+}
 
   async getInviteDetails(token) {
     return await this.makeRequest(`/invites/details/${token}`);
