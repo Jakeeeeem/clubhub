@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -254,18 +255,13 @@
             color: #666;
         }
         
-        .decline-reason {
+        .not-logged-in {
             display: none;
-            margin-top: 1rem;
-        }
-        
-        .decline-reason textarea {
-            width: 100%;
-            padding: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-top: 0.5rem;
-            resize: vertical;
+            text-align: center;
+            background: #e3f2fd;
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #2196f3;
         }
         
         @media (max-width: 768px) {
@@ -312,6 +308,19 @@
                 <p>Please wait while we load your club invitation...</p>
             </div>
 
+            <!-- Not Logged In State -->
+            <div id="notLoggedIn" class="not-logged-in">
+                <h3>🔐 Login Required</h3>
+                <p>You need to be logged in to accept this club invitation.</p>
+                <p>Please log in to your ClubHub account to continue.</p>
+                <button class="btn btn-accept" onclick="redirectToLogin()" style="margin: 1rem;">
+                    Login to ClubHub
+                </button>
+                <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
+                    Don't have an account? <a href="index.html" style="color: #007bff;">Sign up here</a>
+                </p>
+            </div>
+
             <!-- Invite Content -->
             <div id="inviteContent" style="display: none;">
                 <div class="invite-header">
@@ -328,6 +337,78 @@
                                 <strong>Location:</strong>
                                 <span id="clubLocation">-</span>
                             </div>
+                            <div>
+                                <strong>Sport:</strong>
+                                <span id="clubSport">-</span>
+                            </div>
+                        </div>
+                        
+                        <div id="clubDescription" style="margin-top: 1rem; font-style: italic;">
+                            <!-- Club description will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="invite-role">
+                        <h3>Your Role</h3>
+                        <p>You're being invited to join as: <strong><span id="clubRole">Player</span></strong></p>
+                        <div id="teamAssignment" style="display: none; margin-top: 1rem;">
+                            <p>🏆 You'll be assigned to: <strong><span id="teamName"></span></strong></p>
+                        </div>
+                    </div>
+
+                    <div id="personalMessageSection" class="personal-message" style="display: none;">
+                        <h4>Message from the Club</h4>
+                        <p id="personalMessage"></p>
+                    </div>
+
+                    <div class="invite-meta">
+                        <span>Invited by: <strong><span id="inviterName">-</span></strong></span>
+                        <span>Expires: <strong><span id="expiresAt">-</span></strong></span>
+                    </div>
+
+                    <div class="terms-section">
+                        <h4>Club Membership Terms</h4>
+                        <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                            <li>By joining this club, you agree to follow club rules and guidelines</li>
+                            <li>You may be required to pay membership fees as determined by the club</li>
+                            <li>Your contact information will be shared with club administrators</li>
+                            <li>You can leave the club at any time through your dashboard</li>
+                        </ul>
+                        
+                        <div class="terms-checkbox">
+                            <input type="checkbox" id="acceptTerms">
+                            <label for="acceptTerms">I accept the club membership terms and conditions</label>
+                        </div>
+                    </div>
+
+                    <div class="invite-actions">
+                        <button id="acceptBtn" class="btn btn-accept" onclick="acceptInvite()" disabled>
+                            ✅ Accept & Join Club
+                        </button>
+                        <button id="declineBtn" class="btn btn-decline" onclick="declineInvite()" style="display: none;">
+                            ❌ Decline Invitation
+                        </button>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="success-message">
+                        <h3>🎉 Welcome to the Club!</h3>
+                        <p>You have successfully joined <strong><span id="successClubName"></span></strong>!</p>
+                        <p>You can now access your player dashboard and start participating in activities.</p>
+                        <button class="btn btn-secondary" onclick="window.location.href='player-dashboard.html'" style="margin-top: 1rem;">
+                            Go to Your Dashboard
+                        </button>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="error-message">
+                        <h4>❌ Something went wrong</h4>
+                        <p id="errorText">An error occurred while processing your invitation.</p>
+                        <button class="btn btn-secondary" onclick="hideError()" style="margin-top: 1rem;">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Expired/Invalid Invite -->
@@ -337,24 +418,6 @@
                 <button class="btn btn-secondary" onclick="window.location.href='index.html'">
                     Return to ClubHub
                 </button>
-            </div>
-
-            <!-- Not Logged In -->
-            <div id="notLoggedIn" class="invite-details" style="display: none;">
-                <div class="invite-header">
-                    <h1>🔐 Login Required</h1>
-                    <p>You need to be logged in to accept this club invitation</p>
-                </div>
-                
-                <div style="text-align: center; padding: 2rem;">
-                    <p>Please log in with the email address that received this invitation.</p>
-                    <button class="btn btn-accept" onclick="redirectToLogin()" style="margin: 1rem;">
-                        Login to ClubHub
-                    </button>
-                    <p style="margin-top: 1rem; font-size: 0.9rem; color: #666;">
-                        Don't have an account? <a href="index.html" style="color: #007bff;">Sign up here</a>
-                    </p>
-                </div>
             </div>
         </div>
     </main>
@@ -367,8 +430,6 @@
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📧 Club invite page loading...');
-            
-            // Check if user is logged in
             checkAuthStatus();
         });
 
@@ -450,16 +511,27 @@
             document.getElementById('inviterName').textContent = inviteData.inviter.name;
             document.getElementById('expiresAt').textContent = formatDate(inviteData.invite.expiresAt);
 
+            // Show team assignment if exists
+            if (inviteData.invite.teamName) {
+                document.getElementById('teamName').textContent = inviteData.invite.teamName;
+                document.getElementById('teamAssignment').style.display = 'block';
+            }
+
             // Show personal message if exists
             if (inviteData.invite.personalMessage) {
                 document.getElementById('personalMessage').textContent = inviteData.invite.personalMessage;
                 document.getElementById('personalMessageSection').style.display = 'block';
             }
 
-            // Check if user email matches invite email
-            if (currentUser.email !== inviteData.invite.email) {
+            // For public/shareable invites, don't check email match
+            if (!inviteData.invite.isPublic && currentUser.email !== inviteData.invite.email) {
                 showError(`This invitation was sent to ${inviteData.invite.email}. Please log in with that email address.`);
                 return;
+            }
+
+            // Show decline button only for non-public invites
+            if (!inviteData.invite.isPublic) {
+                document.getElementById('declineBtn').style.display = 'inline-block';
             }
 
             // Setup terms checkbox
@@ -513,28 +585,22 @@
             }
         }
 
-        // Show decline options
-        function showDeclineOptions() {
-            document.getElementById('declineSection').style.display = 'block';
-            document.getElementById('acceptBtn').style.display = 'none';
-            document.getElementById('declineBtn').style.display = 'none';
-        }
-
-        // Hide decline options
-        function hideDeclineOptions() {
-            document.getElementById('declineSection').style.display = 'none';
-            document.getElementById('acceptBtn').style.display = 'inline-block';
-            document.getElementById('declineBtn').style.display = 'inline-block';
-        }
-
-        // Decline invitation
+        // Decline invitation (only for non-public invites)
         async function declineInvite() {
+            if (inviteData.invite.isPublic) {
+                showError('Shareable invites cannot be declined');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to decline this invitation?')) {
+                return;
+            }
+
             try {
                 setLoadingState(true);
                 
                 const urlParams = new URLSearchParams(window.location.search);
                 const token = urlParams.get('token');
-                const reason = document.getElementById('declineReason').value;
 
                 console.log('❌ Declining club invitation...');
 
@@ -544,7 +610,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        reason: reason
+                        reason: 'User declined'
                     })
                 });
 
@@ -580,11 +646,11 @@
             if (loading) {
                 acceptBtn.disabled = true;
                 acceptBtn.textContent = 'Processing...';
-                declineBtn.disabled = true;
+                if (declineBtn) declineBtn.disabled = true;
             } else {
                 acceptBtn.disabled = !document.getElementById('acceptTerms').checked;
                 acceptBtn.textContent = '✅ Accept & Join Club';
-                declineBtn.disabled = false;
+                if (declineBtn) declineBtn.disabled = false;
             }
         }
 
@@ -636,8 +702,6 @@
 
         // Make functions globally available
         window.acceptInvite = acceptInvite;
-        window.showDeclineOptions = showDeclineOptions;
-        window.hideDeclineOptions = hideDeclineOptions;
         window.declineInvite = declineInvite;
         window.hideError = hideError;
         window.redirectToLogin = redirectToLogin;
@@ -645,81 +709,4 @@
         console.log('✅ Club invite page loaded successfully!');
     </script>
 </body>
-</html>                <div>
-                                <strong>Sport:</strong>
-                                <span id="clubSport">-</span>
-                            </div>
-                        </div>
-                        
-                        <div id="clubDescription" style="margin-top: 1rem; font-style: italic;">
-                            <!-- Club description will be loaded here -->
-                        </div>
-                    </div>
-
-                    <div class="invite-role">
-                        <h3>Your Role</h3>
-                        <p>You're being invited to join as: <strong><span id="clubRole">Player</span></strong></p>
-                    </div>
-
-                    <div id="personalMessageSection" class="personal-message" style="display: none;">
-                        <h4>Personal Message from the Club</h4>
-                        <p id="personalMessage"></p>
-                    </div>
-
-                    <div class="invite-meta">
-                        <span>Invited by: <strong><span id="inviterName">-</span></strong></span>
-                        <span>Expires: <strong><span id="expiresAt">-</span></strong></span>
-                    </div>
-
-                    <div class="terms-section">
-                        <h4>Club Membership Terms</h4>
-                        <ul style="margin: 1rem 0; padding-left: 1.5rem;">
-                            <li>By joining this club, you agree to follow club rules and guidelines</li>
-                            <li>You may be required to pay membership fees as determined by the club</li>
-                            <li>Your contact information will be shared with club administrators</li>
-                            <li>You can leave the club at any time through your dashboard</li>
-                        </ul>
-                        
-                        <div class="terms-checkbox">
-                            <input type="checkbox" id="acceptTerms">
-                            <label for="acceptTerms">I accept the club membership terms and conditions</label>
-                        </div>
-                    </div>
-
-                    <div class="invite-actions">
-                        <button id="acceptBtn" class="btn btn-accept" onclick="acceptInvite()" disabled>
-                            ✅ Accept & Join Club
-                        </button>
-                        <button id="declineBtn" class="btn btn-decline" onclick="showDeclineOptions()">
-                            ❌ Decline Invitation
-                        </button>
-                    </div>
-
-                    <div id="declineSection" class="decline-reason">
-                        <h4>Why are you declining? (Optional)</h4>
-                        <textarea id="declineReason" placeholder="Let the club know why you're declining..." rows="3"></textarea>
-                        <div style="margin-top: 1rem;">
-                            <button class="btn btn-decline" onclick="declineInvite()">Confirm Decline</button>
-                            <button class="btn btn-secondary" onclick="hideDeclineOptions()" style="margin-left: 1rem;">Cancel</button>
-                        </div>
-                    </div>
-
-                    <!-- Success Message -->
-                    <div id="successMessage" class="success-message">
-                        <h3>🎉 Welcome to the Club!</h3>
-                        <p>You have successfully joined <strong><span id="successClubName"></span></strong>!</p>
-                        <p>You can now access your club dashboard and start participating in activities.</p>
-                        <button class="btn btn-secondary" onclick="window.location.href='player-dashboard.html'" style="margin-top: 1rem;">
-                            Go to Your Dashboard
-                        </button>
-                    </div>
-
-                    <!-- Error Message -->
-                    <div id="errorMessage" class="error-message">
-                        <h4>❌ Something went wrong</h4>
-                        <p id="errorText">An error occurred while processing your invitation.</p>
-                        <button class="btn btn-secondary" onclick="hideError()" style="margin-top: 1rem;">
-                            Try Again
-                        </button>
-                    </div>
-                </div>
+</html>

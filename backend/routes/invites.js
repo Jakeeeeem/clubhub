@@ -7,14 +7,14 @@ const crypto = require('crypto');
 const router = express.Router();
 
 const inviteValidation = [
-  body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
+  body('email').optional().isEmail().normalizeEmail().withMessage('Please provide a valid email'),
   body('firstName').optional().trim(),
   body('lastName').optional().trim(),
   body('message').optional().trim(),
   body('clubRole').optional().isIn(['player', 'coach', 'staff']).withMessage('Invalid club role')
 ];
 
-// 🔥 FIXED: GENERATE CLUB INVITE LINK WITH TEAM ASSIGNMENT
+// 🔥 GENERATE SHAREABLE CLUB INVITE LINK
 router.post('/generate', authenticateToken, requireOrganization, inviteValidation, async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -26,20 +26,20 @@ router.post('/generate', authenticateToken, requireOrganization, inviteValidatio
     }
 
     const { 
-      email, 
-      firstName, 
-      lastName, 
-      message, 
+      email = null, // Make email optional for shareable links
+      firstName = '', 
+      lastName = '', 
+      message = '', 
       clubRole = 'player',
       clubId,
-      teamId, // NEW: Add team assignment
-      isPublic = false
+      teamId = null,
+      isPublic = true // Default to public/shareable invites
     } = req.body;
 
     // Get user's club
     let userClubId = clubId;
     if (!userClubId) {
-      const clubResult = await query('SELECT id FROM clubs WHERE owner_id = $1 LIMIT 1', [req.user.id]);
+      const clubResult = await query('SELECT id, name FROM clubs WHERE owner_id = $1 LIMIT 1', [req.user.id]);
       if (clubResult.rows.length === 0) {
         return res.status(404).json({
           error: 'No club found',
@@ -71,11 +71,11 @@ router.post('/generate', authenticateToken, requireOrganization, inviteValidatio
       }
     }
 
-    // For public invites, use a special marker email
-    const inviteEmail = isPublic ? `public-${Date.now()}@invite.clubhub` : email;
+    // For shareable invites, use a timestamp-based email
+    const inviteEmail = isPublic ? `invite-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@${club.name.toLowerCase().replace(/\s+/g, '')}.clubhub` : email;
 
-    // Check if invite already exists for this email and club (only for non-public invites)
-    if (!isPublic) {
+    // Check if specific email invite already exists (only for non-public invites)
+    if (!isPublic && email) {
       const existingInvite = await query(`
         SELECT id, invite_status FROM club_invites 
         WHERE email = $1 AND club_id = $2 AND invite_status = 'pending'
@@ -103,9 +103,9 @@ router.post('/generate', authenticateToken, requireOrganization, inviteValidatio
 
     // Generate secure invite token
     const inviteToken = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+    const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year for shareable links
 
-    // Create invite record with team assignment
+    // Create invite record
     const inviteResult = await query(`
       INSERT INTO club_invites (
         email, 
@@ -132,7 +132,7 @@ router.post('/generate', authenticateToken, requireOrganization, inviteValidatio
       clubRole,
       inviteToken,
       expiresAt,
-      message || null,
+      message || `Join ${club.name} - a great sports club!`,
       teamId || null,
       isPublic
     ]);
@@ -140,245 +140,39 @@ router.post('/generate', authenticateToken, requireOrganization, inviteValidatio
     const invite = inviteResult.rows[0];
 
     // Generate invite link
-    const baseUrl = process.env.BASE_URL || 'https://clubhubsports.net';
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
     const inviteLink = `${baseUrl}/invite.html?token=${inviteToken}`;
 
-    console.log(`📧 Club invite generated for ${inviteEmail} to join ${club.name}`);
-    if (teamId) {
-      console.log(`⚽ Invite includes team assignment: ${teamId}`);
-    }
+    console.log(`📧 ${isPublic ? 'Shareable' : 'Email'} invite generated for ${club.name}`);
     console.log(`🔗 Invite link: ${inviteLink}`);
 
     res.status(201).json({
       message: 'Club invite generated successfully',
       invite: {
         id: invite.id,
-        email: invite.email,
+        email: isPublic ? null : invite.email,
         clubName: club.name,
         clubRole: invite.club_role,
         expiresAt: invite.expires_at,
         inviteLink: inviteLink,
-        hasTeamAssignment: !!teamId
+        hasTeamAssignment: !!teamId,
+        isPublic: isPublic,
+        isShareable: true
       },
-      inviteLink: inviteLink
+      inviteLink: inviteLink,
+      success: true
     });
 
   } catch (error) {
-    console.error('Decline invite error:', error);
+    console.error('Generate invite error:', error);
     res.status(500).json({
-      error: 'Failed to decline invite'
+      error: 'Failed to generate invite',
+      message: 'An unexpected error occurred while generating the invite'
     });
   }
 });
 
-// 🔥 NEW: GET CLUB'S SENT INVITES
-router.get('/sent', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    const { status } = req.query;
-
-    // Get user's club
-    const clubResult = await query('SELECT id FROM clubs WHERE owner_id = $1', [req.user.id]);
-    if (clubResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'No club found'
-      });
-    }
-
-    const clubId = clubResult.rows[0].id;
-
-    let queryText = `
-      SELECT ci.*, u.first_name as inviter_first_name, u.last_name as inviter_last_name
-      FROM club_invites ci
-      JOIN users u ON ci.invited_by = u.id
-      WHERE ci.club_id = $1
-    `;
-    const queryParams = [clubId];
-
-    if (status) {
-      queryText += ` AND ci.invite_status = $2`;
-      queryParams.push(status);
-    }
-
-    queryText += ` ORDER BY ci.created_at DESC`;
-
-    const result = await query(queryText, queryParams);
-
-    res.json({
-      invites: result.rows.map(invite => ({
-        id: invite.id,
-        email: invite.email,
-        firstName: invite.first_name,
-        lastName: invite.last_name,
-        clubRole: invite.club_role,
-        inviteStatus: invite.invite_status,
-        createdAt: invite.created_at,
-        expiresAt: invite.expires_at,
-        acceptedAt: invite.accepted_at,
-        declinedAt: invite.declined_at,
-        personalMessage: invite.personal_message,
-        inviter: `${invite.inviter_first_name} ${invite.inviter_last_name}`
-      }))
-    });
-
-  } catch (error) {
-    console.error('Get sent invites error:', error);
-    res.status(500).json({
-      error: 'Failed to fetch sent invites'
-    });
-  }
-});
-
-// 🔥 NEW: GET USER'S RECEIVED INVITES
-router.get('/received', authenticateToken, async (req, res) => {
-  try {
-    const result = await query(`
-      SELECT ci.*, c.name as club_name, c.description as club_description,
-             u.first_name as inviter_first_name, u.last_name as inviter_last_name
-      FROM club_invites ci
-      JOIN clubs c ON ci.club_id = c.id
-      JOIN users u ON ci.invited_by = u.id
-      WHERE ci.email = $1
-      ORDER BY ci.created_at DESC
-    `, [req.user.email]);
-
-    res.json({
-      invites: result.rows.map(invite => ({
-        id: invite.id,
-        clubName: invite.club_name,
-        clubDescription: invite.club_description,
-        clubRole: invite.club_role,
-        inviteStatus: invite.invite_status,
-        createdAt: invite.created_at,
-        expiresAt: invite.expires_at,
-        personalMessage: invite.personal_message,
-        inviter: `${invite.inviter_first_name} ${invite.inviter_last_name}`,
-        inviteToken: invite.invite_status === 'pending' ? invite.invite_token : null
-      }))
-    });
-
-  } catch (error) {
-    console.error('Get received invites error:', error);
-    res.status(500).json({
-      error: 'Failed to fetch received invites'
-    });
-  }
-});
-
-// 🔥 NEW: RESEND INVITE
-router.post('/resend/:inviteId', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    // Get invite details and verify permissions
-    const inviteResult = await query(`
-      SELECT ci.*, c.owner_id, c.name as club_name
-      FROM club_invites ci
-      JOIN clubs c ON ci.club_id = c.id
-      WHERE ci.id = $1
-    `, [req.params.inviteId]);
-
-    if (inviteResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Invite not found'
-      });
-    }
-
-    const invite = inviteResult.rows[0];
-
-    // Check if user owns the club
-    if (invite.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied'
-      });
-    }
-
-    // Check if invite is still pending
-    if (invite.invite_status !== 'pending') {
-      return res.status(400).json({
-        error: 'Cannot resend',
-        message: 'Can only resend pending invites'
-      });
-    }
-
-    // Generate new token and extend expiry
-    const newToken = crypto.randomBytes(32).toString('hex');
-    const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    // Update invite
-    await query(`
-      UPDATE club_invites SET 
-        invite_token = $1,
-        expires_at = $2,
-        updated_at = NOW()
-      WHERE id = $3
-    `, [newToken, newExpiresAt, req.params.inviteId]);
-
-    // Generate new invite link
-    const baseUrl = process.env.BASE_URL || 'https://clubhubsports.net';
-    const inviteLink = `${baseUrl}/invite.html?token=${newToken}`;
-
-    console.log(`🔄 Club invite resent: ${invite.email} for ${invite.club_name}`);
-
-    res.json({
-      message: 'Invite resent successfully',
-      inviteLink: inviteLink
-    });
-
-  } catch (error) {
-    console.error('Resend invite error:', error);
-    res.status(500).json({
-      error: 'Failed to resend invite'
-    });
-  }
-});
-
-// 🔥 NEW: CANCEL INVITE
-router.delete('/:inviteId', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    // Get invite details and verify permissions
-    const inviteResult = await query(`
-      SELECT ci.*, c.owner_id
-      FROM club_invites ci
-      JOIN clubs c ON ci.club_id = c.id
-      WHERE ci.id = $1
-    `, [req.params.inviteId]);
-
-    if (inviteResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Invite not found'
-      });
-    }
-
-    const invite = inviteResult.rows[0];
-
-    // Check if user owns the club
-    if (invite.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied'
-      });
-    }
-
-    // Update invite status to cancelled
-    await query(`
-      UPDATE club_invites SET 
-        invite_status = 'cancelled',
-        updated_at = NOW()
-      WHERE id = $1
-    `, [req.params.inviteId]);
-
-    console.log(`🚫 Club invite cancelled: ${invite.email}`);
-
-    res.json({
-      message: 'Invite cancelled successfully'
-    });
-
-  } catch (error) {
-    console.error('Cancel invite error:', error);
-    res.status(500).json({
-      error: 'Failed to cancel invite'
-    });
-  }
-});
-
-// 🔥 FIXED: GET INVITE DETAILS (PUBLIC)
+// 🔥 GET INVITE DETAILS (PUBLIC)
 router.get('/details/:token', async (req, res) => {
   try {
     const { token } = req.params;
@@ -440,6 +234,7 @@ router.get('/details/:token', async (req, res) => {
         teamName: invite.team_name
       },
       club: {
+        id: invite.club_id,
         name: invite.club_name,
         description: invite.club_description,
         location: invite.club_location,
@@ -458,7 +253,7 @@ router.get('/details/:token', async (req, res) => {
   }
 });
 
-// 🔥 FIXED: ACCEPT CLUB INVITE WITH TEAM ASSIGNMENT
+// 🔥 ACCEPT CLUB INVITE (WORKS WITH SHAREABLE LINKS)
 router.post('/accept/:token', authenticateToken, async (req, res) => {
   try {
     const { token } = req.params;
@@ -510,7 +305,7 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
       });
     }
 
-    // Check if user email matches invite email (only for non-public invites)
+    // For non-public invites, check email match
     if (!invite.is_public && req.user.email !== invite.email) {
       return res.status(403).json({
         error: 'Email mismatch',
@@ -548,13 +343,13 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW())
         RETURNING *
       `, [
-        invite.first_name || req.user.first_name || req.user.firstName,
-        invite.last_name || req.user.last_name || req.user.lastName,
+        invite.first_name || req.user.first_name || req.user.firstName || '',
+        invite.last_name || req.user.last_name || req.user.lastName || '',
         req.user.email,
         req.user.id,
         invite.club_id,
         invite.club_role === 'player' ? null : invite.club_role,
-        50, // Default monthly fee - can be updated by admin
+        50 // Default monthly fee
       ]);
 
       const newPlayer = playerResult.rows[0];
@@ -569,15 +364,18 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
         console.log(`⚽ Player assigned to team: ${invite.team_name}`);
       }
 
-      // Update invite status
-      await client.query(`
-        UPDATE club_invites SET 
-          invite_status = 'accepted',
-          accepted_at = NOW(),
-          accepted_by = $1,
-          updated_at = NOW()
-        WHERE id = $2
-      `, [req.user.id, invite.id]);
+      // For shareable/public invites, don't mark as used - leave as pending for reuse
+      if (!invite.is_public) {
+        // Update invite status for specific email invites
+        await client.query(`
+          UPDATE club_invites SET 
+            invite_status = 'accepted',
+            accepted_at = NOW(),
+            accepted_by = $1,
+            updated_at = NOW()
+          WHERE id = $2
+        `, [req.user.id, invite.id]);
+      }
 
       // Create welcome payment if monthly fee > 0
       if (newPlayer.monthly_fee > 0) {
@@ -620,7 +418,8 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
       team: result.teamAssigned ? {
         assigned: true,
         name: result.teamName
-      } : null
+      } : null,
+      success: true
     });
 
   } catch (error) {
@@ -632,7 +431,7 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
   }
 });
 
-// 🔥 FIXED: DECLINE CLUB INVITE
+// 🔥 DECLINE CLUB INVITE
 router.post('/decline/:token', optionalAuth, async (req, res) => {
   try {
     const { token } = req.params;
@@ -665,6 +464,14 @@ router.post('/decline/:token', optionalAuth, async (req, res) => {
       });
     }
 
+    // Don't decline shareable invites - they should remain active
+    if (invite.is_public) {
+      return res.status(400).json({
+        error: 'Cannot decline shareable invite',
+        message: 'Shareable invites cannot be declined'
+      });
+    }
+
     // Update invite status
     await query(`
       UPDATE club_invites SET 
@@ -682,7 +489,70 @@ router.post('/decline/:token', optionalAuth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error sending invite:", error);
-  }})
+    console.error('Decline invite error:', error);
+    res.status(500).json({
+      error: 'Failed to decline invite'
+    });
+  }
+});
 
-  module.exports = router;
+// 🔥 GET CLUB'S SENT INVITES
+router.get('/sent', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    // Get user's club
+    const clubResult = await query('SELECT id FROM clubs WHERE owner_id = $1', [req.user.id]);
+    if (clubResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'No club found'
+      });
+    }
+
+    const clubId = clubResult.rows[0].id;
+
+    let queryText = `
+      SELECT ci.*, u.first_name as inviter_first_name, u.last_name as inviter_last_name
+      FROM club_invites ci
+      JOIN users u ON ci.invited_by = u.id
+      WHERE ci.club_id = $1
+    `;
+    const queryParams = [clubId];
+
+    if (status) {
+      queryText += ` AND ci.invite_status = $2`;
+      queryParams.push(status);
+    }
+
+    queryText += ` ORDER BY ci.created_at DESC`;
+
+    const result = await query(queryText, queryParams);
+
+    res.json({
+      invites: result.rows.map(invite => ({
+        id: invite.id,
+        email: invite.is_public ? 'Shareable Link' : invite.email,
+        firstName: invite.first_name,
+        lastName: invite.last_name,
+        clubRole: invite.club_role,
+        inviteStatus: invite.invite_status,
+        createdAt: invite.created_at,
+        expiresAt: invite.expires_at,
+        acceptedAt: invite.accepted_at,
+        declinedAt: invite.declined_at,
+        personalMessage: invite.personal_message,
+        inviter: `${invite.inviter_first_name} ${invite.inviter_last_name}`,
+        isPublic: invite.is_public,
+        inviteToken: invite.invite_token
+      }))
+    });
+
+  } catch (error) {
+    console.error('Get sent invites error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch sent invites'
+    });
+  }
+});
+
+module.exports = router;
