@@ -680,3 +680,27 @@ select, select option {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.payment-details {
+    color: #000000 !important;
+}
+
+.payment-details .amount-display {
+    color: #000000 !important;
+}
+
+.payment-info strong {
+    color: #000000 !important;
+}
+
+.payment-info span {
+    color: #000000 !important;
+}
+
+#paymentAmount,
+#paymentDescription,
+#playerName,
+#clubName,
+#dueDate {
+    color: #000000 !important;
+}
