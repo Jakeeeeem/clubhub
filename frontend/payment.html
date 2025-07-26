@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -420,6 +421,9 @@
         </div>
     </main>
 
+    <!-- Include API Service -->
+    <script src="js/api.js"></script>
+
     <script>
         // Global variables
         let stripe = null;
@@ -428,7 +432,7 @@
         let paymentData = null;
         let selectedMethod = 'card';
         
-        // 🔥 IMPORTANT: Use your actual Stripe public key
+        // 🔥 Use your actual Stripe public key from the service
         const STRIPE_PUBLIC_KEY = 'pk_live_51RZtoWRthpGbefAaiw5yuuXStTeNqyKMJplgHQVxxBpPqDTGp4xsu1tfUrQLlWqsGDyfhaROF9J9gjmDB8OhDCnz00HMu7iQ0o';
 
         // Initialize page
@@ -455,81 +459,126 @@
 
         // Load payment details from URL parameters
         async function loadPaymentDetails() {
-    try {
-        const params = new URLSearchParams(window.location.search);
-        const paymentId = params.get("paymentId") || params.get("eventId");
-        const amount = params.get("amount");
-        const description = decodeURIComponent(params.get("description") || "");
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const paymentId = params.get('id');
+                const token = params.get('token');
+                const amount = params.get('amount');
+                const description = params.get('description');
 
-        if (!paymentId || !amount) {
-            console.error("❌ Missing payment ID or amount in URL params.");
-            showNotFound();
-            return;
+                // Check if we have URL parameters for direct payment (like from events)
+                if (amount && description && !paymentId) {
+                    // Direct payment from URL parameters
+                    paymentData = {
+                        id: `direct_${Date.now()}`,
+                        amount: parseFloat(amount),
+                        description: decodeURIComponent(description),
+                        player: { name: 'Guest User' },
+                        club: { name: 'ClubHub' },
+                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
+                    };
+                    
+                    console.log('✅ Direct payment details loaded:', paymentData);
+                    displayPaymentDetails();
+                    setupStripePaymentForm();
+                    return;
+                }
+
+                // Check if we have payment ID and token for database lookup
+                if (!paymentId) {
+                    console.error('❌ No payment ID provided');
+                    showNotFound();
+                    return;
+                }
+
+                if (!token && !amount) {
+                    console.error('❌ No token or amount provided');
+                    showNotFound();
+                    return;
+                }
+
+                // Try to fetch payment details from API if we have proper parameters
+                if (token && window.apiService) {
+                    try {
+                        const paymentDetails = await window.apiService.getPublicPayment(paymentId, token);
+                        paymentData = paymentDetails;
+                        console.log('✅ Payment details loaded from API:', paymentData);
+                    } catch (apiError) {
+                        console.warn('⚠️ Could not fetch from API, using URL parameters:', apiError);
+                        
+                        // Fallback to URL parameters
+                        if (amount && description) {
+                            paymentData = {
+                                id: paymentId,
+                                amount: parseFloat(amount),
+                                description: decodeURIComponent(description || 'Payment'),
+                                player: { name: 'Player' },
+                                club: { name: 'Club' },
+                                dueDate: new Date().toISOString()
+                            };
+                        } else {
+                            showNotFound();
+                            return;
+                        }
+                    }
+                } else {
+                    // No API service or token, use URL parameters if available
+                    if (amount) {
+                        paymentData = {
+                            id: paymentId,
+                            amount: parseFloat(amount),
+                            description: decodeURIComponent(description || 'Payment'),
+                            player: { name: 'Player' },
+                            club: { name: 'Club' },
+                            dueDate: new Date().toISOString()
+                        };
+                    } else {
+                        console.error('❌ Insufficient payment data');
+                        showNotFound();
+                        return;
+                    }
+                }
+
+                displayPaymentDetails();
+                setupStripePaymentForm();
+
+            } catch (error) {
+                console.error('❌ Error loading payment details:', error);
+                showError('Could not load payment details. Please refresh and try again.');
+            }
         }
-
-        // Populate paymentData (normally from backend, simplified here)
-        paymentData = {
-            id: paymentId,
-            amount: parseFloat(amount),
-            description,
-            player: { name: "John Doe" },
-            club: { name: "ClubHub FC" },
-            dueDate: "2025-07-31"
-        };
-
-        console.log("✅ Payment details loaded:", paymentData);
-
-        displayPaymentDetails();
-        setupStripePaymentForm();
-
-        // ✅ These lines were previously outside the try block — now correctly inside
-        document.getElementById("paymentAmount").textContent = `$${parseFloat(amount).toFixed(2)}`;
-        document.getElementById("paymentDescription").textContent = description;
-
-        if (typeof Stripe !== "undefined") {
-            stripe = Stripe("your-publishable-key"); // Replace with your Stripe publishable key
-            console.log("✅ Stripe initialized successfully");
-        }
-
-        const payButton = document.getElementById("pay-now-button");
-        if (payButton) {
-            payButton.addEventListener("click", () => {
-                console.log("💳 Simulated payment click:", paymentId);
-                alert("✅ Payment simulated (demo mode)");
-            });
-            console.log("✅ Demo payment button event listener attached");
-        }
-
-    } catch (error) {
-        console.error("❌ Error loading payment details:", error.message);
-        showError("Could not load payment details. Please refresh and try again.");
-    }
 
         // Display payment details
         function displayPaymentDetails() {
-    console.log('🔍 paymentData:', paymentData); // Confirm it's defined
+            if (!paymentData) {
+                console.error('❌ No payment data to display');
+                showNotFound();
+                return;
+            }
 
-    safeSetText('paymentAmount', formatCurrency(paymentData.amount));
-    safeSetText('paymentDescription', paymentData.description);
-    safeSetText('playerName', paymentData.player.name);
-    safeSetText('clubName', paymentData.club.name);
-    safeSetText('dueDate', formatDate(paymentData.dueDate));
+            console.log('🔍 Displaying payment data:', paymentData);
 
-    document.getElementById('loading')?.style?.setProperty('display', 'none');
-    document.getElementById('paymentContent')?.style?.setProperty('display', 'block');
+            safeSetText('paymentAmount', formatCurrency(paymentData.amount));
+            safeSetText('paymentDescription', paymentData.description);
+            safeSetText('playerName', paymentData.player?.name || 'N/A');
+            safeSetText('clubName', paymentData.club?.name || 'N/A');
+            safeSetText('dueDate', formatDate(paymentData.dueDate));
 
-    console.log('💰 Payment details displayed');
-}
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('paymentContent').style.display = 'block';
 
-// Helper function
-function safeSetText(id, value) {
-    const el = document.getElementById(id);
-    if (el) {
-        el.textContent = value;
-    } else {
-        console.warn(`⚠️ Element with ID "${id}" not found`);
-    }
-}
+            console.log('💰 Payment details displayed');
+        }
+
+        // Helper function to safely set text content
+        function safeSetText(id, value) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.textContent = value || 'N/A';
+            } else {
+                console.warn(`⚠️ Element with ID "${id}" not found`);
+            }
+        }
 
         // Setup Stripe payment form
         function setupStripePaymentForm() {
@@ -610,36 +659,56 @@ function safeSetText(id, value) {
                 return;
             }
 
+            if (!paymentData) {
+                showError('Payment data not loaded. Please refresh the page.');
+                return;
+            }
+
             setLoadingState(true);
             hideError();
 
             try {
                 console.log('💳 Creating payment intent...');
                 
-               const intentResponse = await fetch('/api/payments/create-intent', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-        amount: paymentData.amount,
-        paymentId: paymentData.id,
-        metadata: {
-            playerName: paymentData.player.name,
-            clubName: paymentData.club.name,
-            description: paymentData.description
-        }
-    })
-});
+                // Use API service if available, otherwise make direct request
+                let intentData;
+                if (window.apiService) {
+                    intentData = await window.apiService.createPaymentIntent({
+                        amount: paymentData.amount,
+                        paymentId: paymentData.id,
+                        metadata: {
+                            playerName: paymentData.player?.name || 'N/A',
+                            clubName: paymentData.club?.name || 'N/A',
+                            description: paymentData.description
+                        }
+                    });
+                } else {
+                    // Fallback direct API call
+                    const response = await fetch(`${getBaseURL()}/api/payments/create-intent`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            amount: paymentData.amount,
+                            paymentId: paymentData.id,
+                            metadata: {
+                                playerName: paymentData.player?.name || 'N/A',
+                                clubName: paymentData.club?.name || 'N/A',
+                                description: paymentData.description
+                            }
+                        })
+                    });
 
-// Parse the JSON once
-const intentData = await intentResponse.json().catch(() => ({}));
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || `Server error: ${response.status}`);
+                    }
 
-if (!intentResponse.ok) {
-    throw new Error(intentData.message || `Server error: ${intentResponse.status}`);
-}
+                    intentData = await response.json();
+                }
 
-const { clientSecret, paymentIntentId } = intentData;
+                const { clientSecret, paymentIntentId } = intentData;
 
                 if (!clientSecret) {
                     throw new Error('Invalid payment intent response from server');
@@ -651,7 +720,7 @@ const { clientSecret, paymentIntentId } = intentData;
                     payment_method: {
                         card: cardElement,
                         billing_details: {
-                            name: paymentData.player.name,
+                            name: paymentData.player?.name || 'Customer',
                         },
                     }
                 });
@@ -704,26 +773,48 @@ const { clientSecret, paymentIntentId } = intentData;
 
         // Confirm payment in backend
         async function confirmPaymentInBackend(paymentIntentId, paymentId) {
-            const response = await fetch('/api/payments/confirm-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    paymentIntentId: paymentIntentId,
-                    paymentId: paymentId
-                })
-            });
+            try {
+                let result;
+                if (window.apiService) {
+                    result = await window.apiService.confirmPayment(paymentIntentId, paymentId);
+                } else {
+                    // Fallback direct API call
+                    const response = await fetch(`${getBaseURL()}/api/payments/confirm-payment`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            paymentIntentId: paymentIntentId,
+                            paymentId: paymentId
+                        })
+                    });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('❌ Backend confirmation failed:', response.status, errorData);
-                throw new Error(errorData.message || `Server error: ${response.status}`);
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('❌ Backend confirmation failed:', response.status, errorData);
+                        throw new Error(errorData.message || `Server error: ${response.status}`);
+                    }
+
+                    result = await response.json();
+                }
+
+                console.log('✅ Payment confirmed in backend:', result);
+                return result;
+            } catch (error) {
+                console.error('❌ Backend confirmation error:', error);
+                // Don't throw error here - payment may have succeeded on Stripe side
+                console.warn('⚠️ Payment may have succeeded but backend confirmation failed');
+                return null;
             }
+        }
 
-            const result = await response.json();
-            console.log('✅ Payment confirmed in backend:', result);
-            return result;
+        // Get base URL for API calls
+        function getBaseURL() {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return 'http://localhost:3000';
+            }
+            return 'https://api.clubhubsports.net';
         }
 
         // Set loading state
@@ -824,11 +915,17 @@ const { clientSecret, paymentIntentId } = intentData;
 
         // Format date
         function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric'
-            });
+            if (!dateString) return 'N/A';
+            try {
+                return new Date(dateString).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            } catch (error) {
+                console.warn('Date formatting error:', error);
+                return 'N/A';
+            }
         }
 
         // Setup demo payment button event listener
@@ -847,7 +944,6 @@ const { clientSecret, paymentIntentId } = intentData;
         window.hideError = hideError;
 
         console.log('✅ Complete payment page loaded successfully!');
-    }
     </script>
 </body>
 </html>
