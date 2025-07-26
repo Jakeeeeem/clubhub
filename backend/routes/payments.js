@@ -810,49 +810,6 @@ router.use((error, req, res, next) => {
   });
 });
 
-router.get('/test-stripe-key', async (req, res) => {
-  try {
-    console.log('🔍 Testing Stripe key...');
-    console.log('Key exists:', !!process.env.STRIPE_SECRET_KEY);
-    console.log('Key starts with:', process.env.STRIPE_SECRET_KEY?.substring(0, 15));
-    
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return res.status(500).json({
-        success: false,
-        error: 'Stripe secret key not configured',
-        key_exists: false
-      });
-    }
-    
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    
-    // Simple test - create a customer
-    const customer = await stripe.customers.create({
-      email: 'test@clubhub.com',
-      name: 'Test Customer'
-    });
-    
-    console.log('✅ Stripe test successful, customer created:', customer.id);
-    
-    res.json({
-      success: true,
-      message: 'Stripe key is working!',
-      test_customer_id: customer.id,
-      key_preview: process.env.STRIPE_SECRET_KEY?.substring(0, 15) + '...',
-      stripe_mode: process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'LIVE' : 'TEST'
-    });
-    
-  } catch (error) {
-    console.error('❌ Stripe test failed:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      code: error.code,
-      type: error.type,
-      key_exists: !!process.env.STRIPE_SECRET_KEY,
-      key_preview: process.env.STRIPE_SECRET_KEY?.substring(0, 15) + '...'
-    });
-  }
-});
+
 
 module.exports = router;

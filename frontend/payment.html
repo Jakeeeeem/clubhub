@@ -433,13 +433,13 @@
         let selectedMethod = 'card';
         
         // 🔥 Use your actual Stripe public key from the service
-        const STRIPE_PUBLIC_KEY = 'pk_live_51RZtoWRthpGbefAaiw5yuuXStTeNqyKMJplgHQVxxBpPqDTGp4xsu1tfUrQLlWqsGDyfhaROF9J9gjmDB8OhDCnz00HMu7iQ0o';
+        const STRIPE_PUBLIC_KEY = 'pk_test_51RZtoWRthpGbefAas22ARQ7NRy9GkmO7FpHup0tk02R96H81EDJBJ668LgUdMWT5XOVQAnAoq809E920SAlMoRMi001d7v3lyr';
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             console.log('💳 Payment page loading...');
             
-            if (!STRIPE_PUBLIC_KEY || STRIPE_PUBLIC_KEY === 'your_stripe_public_key_here') {
+            if (!STRIPE_PUBLIC_KEY || STRIPE_PUBLIC_KEY === 'pk_test_51RZtoWRthpGbefAas22ARQ7NRy9GkmO7FpHup0tk02R96H81EDJBJ668LgUdMWT5XOVQAnAoq809E920SAlMoRMi001d7v3lyr') {
                 console.error('❌ Stripe public key not configured properly');
                 showError('Payment system configuration error. Please contact support.');
                 return;
