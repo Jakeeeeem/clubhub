@@ -211,24 +211,24 @@ router.post('/create-intent', async (req, res) => {
 
     // Create Stripe Payment Intent
     try {
-      const paymentIntentData = {
-        amount: Math.round(numericAmount * 100), // Convert to pence
-        currency: 'gbp',
-        automatic_payment_methods: {
-          enabled: true,
-        },
-        metadata: {
-          paymentId: paymentId || 'direct_payment',
-          playerName: paymentDetails ? `${paymentDetails.first_name} ${paymentDetails.last_name}` : metadata.playerName || 'Customer',
-          clubName: paymentDetails ? paymentDetails.club_name : metadata.clubName || 'ClubHub',
-          environment: process.env.NODE_ENV || 'development',
-          timestamp: new Date().toISOString(),
-          source: 'clubhub_payment_page',
-          ...metadata
-        },
-        description: paymentDetails ? paymentDetails.description : metadata.description || `ClubHub Payment of £${numericAmount}`,
-        statement_descriptor: 'CLUBHUB*',
-      };
+  const paymentIntentData = {
+    amount: Math.round(numericAmount * 100), // Convert to pence
+    currency: 'gbp',
+    automatic_payment_methods: {
+      enabled: true,
+    },
+    metadata: {
+      paymentId: paymentId || 'direct_payment',
+      playerName: paymentDetails ? `${paymentDetails.first_name} ${paymentDetails.last_name}` : metadata.playerName || 'Customer',
+      clubName: paymentDetails ? paymentDetails.club_name : metadata.clubName || 'ClubHub',
+      environment: process.env.NODE_ENV || 'development',
+      timestamp: new Date().toISOString(),
+      source: 'clubhub_payment_page',
+      ...metadata
+    },
+    description: paymentDetails ? paymentDetails.description : metadata.description || `ClubHub Payment of £${numericAmount}`,
+    statement_descriptor_suffix: 'CLUBHUB', // ✅ FIXED!
+  };
 
       // Add receipt email if available
       const email = paymentDetails?.email || metadata.email;
