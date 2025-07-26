@@ -427,7 +427,7 @@ function loadOutstandingPayments() {
     }
     
     container.innerHTML = outstanding.map(payment => `
-        <div class="payment-item" style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 8px; background: #fff3cd;">
+        <div class="payment-item" style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 8px; background: #000000;">
             <h4>${payment.description}</h4>
             <p><strong>Amount:</strong> ${formatCurrency(payment.amount)}</p>
             <p><strong>Due Date:</strong> ${formatDate(payment.due_date)}</p>

@@ -447,30 +447,41 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Load payment details from URL parameters
         async function loadPaymentDetails() {
-            try {
-                const params = new URLSearchParams(window.location.search);
-                const paymentId = params.get('id');
-                const token = params.get('token');
-                const amount = params.get('amount');
-                const description = params.get('description');
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const paymentId = params.get('id');
+        const token = params.get('token');
+        const amount = params.get('amount');
+        const description = params.get('description');
+        const eventId = params.get('eventId');
 
-                // Check if we have URL parameters for direct payment (like from events)
-                if (amount && description && !paymentId) {
-                    // Direct payment from URL parameters
-                    paymentData = {
-                        id: `direct_${Date.now()}`,
-                        amount: parseFloat(amount),
-                        description: decodeURIComponent(description),
-                        player: { name: 'Guest User' },
-                        club: { name: 'ClubHub' },
-                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
-                    };
-                    
-                    console.log('✅ Direct payment details loaded:', paymentData);
-                    displayPaymentDetails();
-                    setupStripePaymentForm();
-                    return;
-                }
+        // Check if we have URL parameters for direct payment (like from events)
+        if (amount && description && !paymentId) {
+            // Get current user info if available
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            
+            // Direct payment from URL parameters
+            paymentData = {
+                id: `direct_${Date.now()}`,
+                amount: parseFloat(amount),
+                description: decodeURIComponent(description),
+                player: { 
+                    name: currentUser.first_name && currentUser.last_name 
+                        ? `${currentUser.first_name} ${currentUser.last_name}` 
+                        : 'Guest User' 
+                },
+                club: { name: 'ClubHub' },
+                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+                paymentType: eventId ? 'event_booking' : 'general',
+                isOverdue: false
+            };
+            
+            console.log('✅ Direct payment details loaded:', paymentData);
+            displayPaymentDetails();
+            setupStripePaymentForm();
+            return;
+        }
+
 
                 // Check if we have payment ID and token for database lookup
                 if (!paymentId) {
