@@ -420,9 +420,6 @@
         </div>
     </main>
 
-    <!-- Include API Service -->
-    <script src="js/api.js"></script>
-
     <script>
         // Global variables
         let stripe = null;
@@ -433,27 +430,20 @@
         
          const STRIPE_PUBLIC_KEY = 'pk_test_51RZtoWRthpGbefAas22ARQ7NRy9GkmO7FpHup0tk02R96H81EDJBJ668LgUdMWT5XOVQAnAoq809E920SAlMoRMi001d7v3lyr';
 
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('💳 Payment page loading...');
-            
-            if (!STRIPE_PUBLIC_KEY || STRIPE_PUBLIC_KEY === 'pk_test_51RZtoWRthpGbefAas22ARQ7NRy9GkmO7FpHup0tk02R96H81EDJBJ668LgUdMWT5XOVQAnAoq809E920SAlMoRMi001d7v3lyr') {
-                console.error('❌ Stripe public key not configured properly');
-                showError('Payment system configuration error. Please contact support.');
-                return;
-            }
-            
-            try {
-                stripe = Stripe(STRIPE_PUBLIC_KEY);
-                console.log('✅ Stripe initialized successfully');
-            } catch (error) {
-                console.error('❌ Failed to initialize Stripe:', error);
-                showError('Failed to initialize payment system. Please refresh the page.');
-                return;
-            }
-            
-            loadPaymentDetails();
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('💳 Payment page loading...');
+    
+    try {
+        stripe = Stripe(STRIPE_PUBLIC_KEY);
+        console.log('✅ Stripe initialized successfully');
+    } catch (error) {
+        console.error('❌ Failed to initialize Stripe:', error);
+        showError('Failed to initialize payment system. Please refresh the page.');
+        return;
+    }
+    
+    loadPaymentDetails();
+});
 
         // Load payment details from URL parameters
         async function loadPaymentDetails() {
