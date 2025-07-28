@@ -347,34 +347,31 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
     console.log('🔄 Starting transaction to accept invite...');
 
     // Accept invite in transaction with enhanced error handling
-    const result = await withTransaction(async (client) => {
-      try {
-        console.log('👤 Creating player record...');
-        
-        // Create player record
-        const playerResult = await client.query(`
-          INSERT INTO players (
-            first_name, 
-            last_name, 
-            email, 
-            user_id, 
-            club_id, 
-            position, 
-            monthly_fee,
-            payment_status,
-            created_at
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW())
-          RETURNING *
-        `, [
-          invite.first_name || req.user.first_name || req.user.firstName || '',
-          invite.last_name || req.user.last_name || req.user.lastName || '',
-          req.user.email,
-          req.user.id,
-          invite.club_id,
-          invite.club_role === 'player' ? null : invite.club_role,
-          50 // Default monthly fee
-        ]);
+    const playerResult = await client.query(`
+  INSERT INTO players (
+    first_name, 
+    last_name, 
+    email, 
+    user_id, 
+    club_id, 
+    position, 
+    monthly_fee,
+    payment_status,
+    date_of_birth,
+    created_at
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW())
+  RETURNING *
+`, [
+  invite.first_name || req.user.first_name || req.user.firstName || '',
+  invite.last_name || req.user.last_name || req.user.lastName || '',
+  req.user.email,
+  req.user.id,
+  invite.club_id,
+  invite.club_role === 'player' ? null : invite.club_role,
+  50, // Default monthly fee
+  '1990-01-01' // Default date of birth
+]);
 
         const newPlayer = playerResult.rows[0];
         console.log('✅ Player created:', newPlayer.id);
