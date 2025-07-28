@@ -1,6 +1,7 @@
 const express = require('express');
 const { query, queries, withTransaction } = require('../config/database');
 const { authenticateToken, requireOrganization, optionalAuth } = require('../middleware/auth');
+const emailService = require('../services/email-service');
 const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
 

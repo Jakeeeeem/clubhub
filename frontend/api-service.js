@@ -12,15 +12,12 @@ class ApiService {
     this.testConnection();
   }
 
-  getBaseURL() {
+   getBaseURL() {
     const hostname = window.location.hostname;
     const port = window.location.port;
     
     // Local development
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      if (port === '3000' || port === '8080' || port === '5000') {
-        return `http://${hostname}:3000/api`; // Backend typically runs on 3000
-      }
       return 'http://localhost:3000/api';
     }
     
@@ -37,7 +34,6 @@ class ApiService {
     const url = `${this.baseURL}${endpoint}`;
     const requestId = `${options.method || 'GET'}_${endpoint}`;
     
-    // Initialize retry count for this request
     if (!this.retryCount[requestId]) {
       this.retryCount[requestId] = 0;
     }
@@ -71,7 +67,6 @@ class ApiService {
         data = await response.json();
       } else {
         const text = await response.text();
-        // Try to parse as JSON, fallback to text
         try {
           data = JSON.parse(text);
         } catch {
@@ -87,36 +82,16 @@ class ApiService {
           throw new Error('Authentication required');
         }
         
-        if (response.status === 404) {
-          throw new Error(data.message || 'Resource not found');
-        }
-        
-        if (response.status === 403) {
-          throw new Error(data.message || 'Access forbidden');
-        }
-        
-        if (response.status === 429) {
-          throw new Error(data.message || 'Too many requests. Please try again later.');
-        }
-        
-        if (response.status >= 500) {
-          console.error('❌ Server error details:', data);
-          throw new Error(data.message || `Server error: ${response.status}`);
-        }
-        
         throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      // Reset retry count on success
       this.retryCount[requestId] = 0;
-      
       console.log(`✅ API Response: ${response.status}`);
       return data;
       
     } catch (error) {
       console.error(`❌ API Error: ${endpoint}`, error);
       
-      // Handle network errors with retry logic
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         if (this.retryCount[requestId] < this.maxRetries) {
           this.retryCount[requestId]++;
@@ -152,7 +127,124 @@ class ApiService {
     localStorage.removeItem('currentUser');
   }
 
-  // Authentication methods
+  // =========================== ENHANCED INVITE METHODS ===========================
+
+  async generateClubInvite(inviteData) {
+    console.log('📧 Generating club invite:', inviteData);
+    
+    try {
+      const response = await this.makeRequest('/invites/generate', {
+        method: 'POST',
+        body: JSON.stringify(inviteData)
+      });
+      
+      console.log('✅ Club invite generated:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to generate club invite:', error);
+      throw error;
+    }
+  }
+
+  async getInviteDetails(token) {
+    console.log('📄 Fetching invite details for token:', token);
+    
+    try {
+      const response = await this.makeRequest(`/invites/details/${token}`);
+      console.log('✅ Invite details fetched:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to fetch invite details:', error);
+      throw error;
+    }
+  }
+
+  async acceptClubInvite(token, acceptData = {}) {
+    console.log('✅ Accepting club invite:', { token, acceptData });
+    
+    try {
+      const response = await this.makeRequest(`/invites/accept/${token}`, {
+        method: 'POST',
+        body: JSON.stringify(acceptData)
+      });
+      
+      console.log('✅ Club invite accepted:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to accept club invite:', error);
+      throw error;
+    }
+  }
+
+  async declineClubInvite(token, reason = null) {
+    console.log('❌ Declining club invite:', { token, reason });
+    
+    try {
+      const response = await this.makeRequest(`/invites/decline/${token}`, {
+        method: 'POST',
+        body: JSON.stringify({ reason })
+      });
+      
+      console.log('✅ Club invite declined:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to decline club invite:', error);
+      throw error;
+    }
+  }
+
+  async getSentInvites(status = null) {
+    console.log('📋 Fetching sent invites...');
+    
+    try {
+      const endpoint = status ? `/invites/sent?status=${status}` : '/invites/sent';
+      const response = await this.makeRequest(endpoint);
+      console.log('✅ Sent invites fetched:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to fetch sent invites:', error);
+      throw error;
+    }
+  }
+
+  // =========================== EMAIL METHODS ===========================
+
+  async sendEmail(emailData) {
+    console.log('📧 Sending email:', emailData);
+    
+    try {
+      const response = await this.makeRequest('/email/send', {
+        method: 'POST',
+        body: JSON.stringify(emailData)
+      });
+      
+      console.log('✅ Email sent:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to send email:', error);
+      throw error;
+    }
+  }
+
+  async sendInviteEmail(inviteData) {
+    console.log('📧 Sending invite email:', inviteData);
+    
+    try {
+      const response = await this.makeRequest('/email/send-invite', {
+        method: 'POST',
+        body: JSON.stringify(inviteData)
+      });
+      
+      console.log('✅ Invite email sent:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to send invite email:', error);
+      throw error;
+    }
+  }
+
+  // =========================== AUTHENTICATION METHODS ===========================
+
   async login(email, password) {
     const response = await this.makeRequest('/auth/login', {
       method: 'POST',
@@ -195,73 +287,17 @@ class ApiService {
     return await this.makeRequest('/auth/me');
   }
 
-  // 🔥 ENHANCED PAYMENT METHODS
-  async createPaymentIntent(paymentData) {
-    console.log('💳 Creating payment intent:', paymentData);
-    
+  async findUserByEmail(email) {
     try {
-      const response = await this.makeRequest('/payments/create-intent', {
-        method: 'POST',
-        body: JSON.stringify(paymentData)
-      });
-      
-      console.log('✅ Payment intent created:', response);
-      return response;
+      return await this.makeRequest(`/auth/find-user?email=${encodeURIComponent(email)}`);
     } catch (error) {
-      console.error('❌ Failed to create payment intent:', error);
-      throw error;
+      console.log('No user found with email:', email);
+      return null;
     }
   }
 
-  async confirmPayment(paymentIntentId, paymentId = null) {
-    console.log('✅ Confirming payment:', { paymentIntentId, paymentId });
-    
-    try {
-      const response = await this.makeRequest('/payments/confirm-payment', {
-        method: 'POST',
-        body: JSON.stringify({
-          paymentIntentId,
-          paymentId
-        })
-      });
-      
-      console.log('✅ Payment confirmed:', response);
-      return response;
-    } catch (error) {
-      console.error('❌ Failed to confirm payment:', error);
-      throw error;
-    }
-  }
+  // =========================== CLUB METHODS ===========================
 
-  async getPublicPayment(paymentId, token) {
-    console.log('🔍 Fetching public payment:', { paymentId, token });
-    
-    try {
-      const response = await this.makeRequest(`/payments/public/${paymentId}?token=${encodeURIComponent(token)}`);
-      console.log('✅ Public payment fetched:', response);
-      return response;
-    } catch (error) {
-      console.error('❌ Failed to fetch public payment:', error);
-      throw error;
-    }
-  }
-
-  async generatePaymentLink(paymentId) {
-    return await this.makeRequest(`/payments/${paymentId}/payment-link`);
-  }
-
-  async bookEventWithPayment(eventId, paymentIntentId, playerData = null) {
-    return await this.makeRequest('/payments/book-event', {
-      method: 'POST',
-      body: JSON.stringify({
-        eventId,
-        paymentIntentId,
-        playerData
-      })
-    });
-  }
-
-  // Enhanced club methods
   async getClubs() {
     try {
       const clubs = await this.makeRequest('/clubs');
@@ -307,7 +343,44 @@ class ApiService {
     });
   }
 
-  // Enhanced events methods
+  // =========================== PLAYER METHODS ===========================
+
+  async getPlayers(clubId = null) {
+    try {
+      const endpoint = clubId ? `/players?clubId=${clubId}` : '/players';
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.warn('❌ Failed to fetch players:', error);
+      return [];
+    }
+  }
+
+  async getPlayerById(id) {
+    return await this.makeRequest(`/players/${id}`);
+  }
+
+  async createPlayer(playerData) {
+    return await this.makeRequest('/players', {
+      method: 'POST',
+      body: JSON.stringify(playerData)
+    });
+  }
+
+  async updatePlayer(id, playerData) {
+    return await this.makeRequest(`/players/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(playerData)
+    });
+  }
+
+  async deletePlayer(id) {
+    return await this.makeRequest(`/players/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // =========================== EVENT METHODS ===========================
+
   async getEvents(clubId = null) {
     try {
       const endpoint = clubId ? `/events?clubId=${clubId}&upcoming=true` : '/events?upcoming=true';
@@ -378,61 +451,8 @@ class ApiService {
     }
   }
 
-  // Payment methods
-  async getPayments(filters = {}) {
-    try {
-      const queryParams = new URLSearchParams(filters).toString();
-      const endpoint = queryParams ? `/payments?${queryParams}` : '/payments';
-      return await this.makeRequest(endpoint);
-    } catch (error) {
-      console.warn('❌ Failed to fetch payments:', error);
-      return [];
-    }
-  }
+  // =========================== TEAM METHODS ===========================
 
-  async createPayment(paymentData) {
-    return await this.makeRequest('/payments', {
-      method: 'POST',
-      body: JSON.stringify(paymentData)
-    });
-  }
-
-  // Players methods
-  async getPlayers(clubId = null) {
-    try {
-      const endpoint = clubId ? `/players?clubId=${clubId}` : '/players';
-      return await this.makeRequest(endpoint);
-    } catch (error) {
-      console.warn('❌ Failed to fetch players:', error);
-      return [];
-    }
-  }
-
-  async getPlayerById(id) {
-    return await this.makeRequest(`/players/${id}`);
-  }
-
-  async createPlayer(playerData) {
-    return await this.makeRequest('/players', {
-      method: 'POST',
-      body: JSON.stringify(playerData)
-    });
-  }
-
-  async updatePlayer(id, playerData) {
-    return await this.makeRequest(`/players/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(playerData)
-    });
-  }
-
-  async deletePlayer(id) {
-    return await this.makeRequest(`/players/${id}`, {
-      method: 'DELETE'
-    });
-  }
-
-  // Teams methods
   async getTeams(clubId = null) {
     try {
       const endpoint = clubId ? `/teams?clubId=${clubId}` : '/teams';
@@ -454,7 +474,34 @@ class ApiService {
     });
   }
 
-  // Staff methods
+  async updateTeam(id, teamData) {
+    return await this.makeRequest(`/teams/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(teamData)
+    });
+  }
+
+  async deleteTeam(id) {
+    return await this.makeRequest(`/teams/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async assignPlayerToTeam(teamId, assignmentData) {
+    return await this.makeRequest(`/teams/${teamId}/players`, {
+      method: 'POST',
+      body: JSON.stringify(assignmentData)
+    });
+  }
+
+  async removePlayerFromTeam(teamId, playerId) {
+    return await this.makeRequest(`/teams/${teamId}/players/${playerId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // =========================== STAFF METHODS ===========================
+
   async getStaff(clubId = null) {
     try {
       const endpoint = clubId ? `/staff?clubId=${clubId}` : '/staff';
@@ -472,7 +519,94 @@ class ApiService {
     });
   }
 
-  // Dashboard methods with robust fallbacks
+  async updateStaff(id, staffData) {
+    return await this.makeRequest(`/staff/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(staffData)
+    });
+  }
+
+  async deleteStaff(id) {
+    return await this.makeRequest(`/staff/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // =========================== PAYMENT METHODS ===========================
+
+  async getPayments(filters = {}) {
+    try {
+      const queryParams = new URLSearchParams(filters).toString();
+      const endpoint = queryParams ? `/payments?${queryParams}` : '/payments';
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.warn('❌ Failed to fetch payments:', error);
+      return [];
+    }
+  }
+
+  async createPayment(paymentData) {
+    return await this.makeRequest('/payments', {
+      method: 'POST',
+      body: JSON.stringify(paymentData)
+    });
+  }
+
+  async createPaymentIntent(paymentData) {
+    console.log('💳 Creating payment intent:', paymentData);
+    
+    try {
+      const response = await this.makeRequest('/payments/create-intent', {
+        method: 'POST',
+        body: JSON.stringify(paymentData)
+      });
+      
+      console.log('✅ Payment intent created:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to create payment intent:', error);
+      throw error;
+    }
+  }
+
+  async confirmPayment(paymentIntentId, paymentId = null) {
+    console.log('✅ Confirming payment:', { paymentIntentId, paymentId });
+    
+    try {
+      const response = await this.makeRequest('/payments/confirm-payment', {
+        method: 'POST',
+        body: JSON.stringify({
+          paymentIntentId,
+          paymentId
+        })
+      });
+      
+      console.log('✅ Payment confirmed:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to confirm payment:', error);
+      throw error;
+    }
+  }
+
+  async markPaymentAsPaid(paymentId) {
+    return await this.makeRequest(`/payments/${paymentId}/mark-paid`, {
+      method: 'POST'
+    });
+  }
+
+  async generatePaymentLink(paymentId) {
+    return await this.makeRequest(`/payments/${paymentId}/payment-link`);
+  }
+
+  async sendPaymentReminder(paymentId) {
+    return await this.makeRequest(`/payments/${paymentId}/send-reminder`, {
+      method: 'POST'
+    });
+  }
+
+  // =========================== DASHBOARD METHODS ===========================
+
   async getAdminDashboardData() {
     try {
       return await this.makeRequest('/dashboard/admin');
@@ -547,7 +681,8 @@ class ApiService {
     }
   }
 
-  // Fallback methods
+  // =========================== FALLBACK METHODS ===========================
+
   getAdminDashboardFallback() {
     console.log('📚 Using admin dashboard fallback data');
     return {
@@ -581,7 +716,12 @@ class ApiService {
     };
   }
 
-  // Utility methods
+  // =========================== UTILITY METHODS ===========================
+
+  cacheClubs(clubs) {
+    localStorage.setItem('cachedClubs', JSON.stringify(clubs));
+  }
+
   formatCurrency(amount) {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
@@ -589,11 +729,6 @@ class ApiService {
     }).format(amount);
   }
 
-  cacheClubs(clubs) {
-    localStorage.setItem('cachedClubs', JSON.stringify(clubs));
-  }
-
-  // Health check
   async healthCheck() {
     try {
       return await this.makeRequest('/health');
@@ -615,7 +750,6 @@ class ApiService {
     }
   }
 }
-
 // Create and export a singleton instance
 const apiService = new ApiService();
 
