@@ -160,36 +160,36 @@ async function generateShareableInviteLink() {
     try {
         showLoading(true);
         
-        if (!InviteSystemState.currentClub && (!AppState.clubs || AppState.clubs.length === 0)) {
+        const currentClub = InviteSystemState.currentClub || AppState?.clubs?.[0];
+        console.log('🏢 Current club:', currentClub);
+        
+        if (!currentClub) {
             showNotification('Please create a club profile first', 'error');
             return;
         }
         
-        const clubId = InviteSystemState.currentClub?.id || AppState.clubs?.[0]?.id;
-        const clubName = InviteSystemState.currentClub?.name || AppState.clubs?.[0]?.name;
-        
-        console.log('🔗 Generating shareable invite link for club:', clubName);
-        
         const inviteData = {
-            email: null,
-            firstName: '',
-            lastName: '',
-            clubRole: 'player',
-            message: `Join ${clubName} - a great sports club for players of all levels!`,
-            clubId: clubId,
             isPublic: true,
-            sendEmail: false
+            clubRole: 'player',
+            message: `Join ${currentClub.name} - a great sports club!`
         };
         
+        console.log('📧 Sending invite data:', inviteData);
+        
         const response = await apiService.generateClubInvite(inviteData);
-        console.log('✅ Shareable invite generated:', response);
         
         closeModal('enhancedInviteModal');
-        showShareableInviteLinkModal(response.inviteLink, clubName);
+        showShareableInviteLinkModal(response.inviteLink, currentClub.name);
         showNotification('Shareable invite link generated successfully!', 'success');
         
     } catch (error) {
-        console.error('❌ Failed to generate shareable invite link:', error);
+        console.error('❌ Full error object:', error);
+        
+        // Log validation details if available
+        if (error.message.includes('400')) {
+            console.log('🔍 This is a validation error - checking API response...');
+        }
+        
         showNotification('Failed to generate invite link: ' + error.message, 'error');
     } finally {
         showLoading(false);
