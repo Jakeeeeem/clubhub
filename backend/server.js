@@ -14,8 +14,6 @@ const eventRoutes = require('./routes/events');
 const paymentRoutes = require('./routes/payments');
 const dashboardRoutes = require('./routes/dashboard');
 const invitesRouter = require('./routes/invites');
-const inviteRoutes = require('./routes/invites');
-app.use('/api/invites', inviteRoutes);
 const notificationRoutes = require('./routes/notifications');
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -162,6 +160,9 @@ app.use('/api/payments', paymentRoutes); // 🔥 Your payment routes
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/invites', invitesRouter);
 app.use('/api/notifications', notificationRoutes);
+
+const inviteRoutes = require('./routes/invites');
+app.use('/api/invites', inviteRoutes);
 
 // Handle 404 for API routes specifically
 app.use('/api/*', (req, res) => {
