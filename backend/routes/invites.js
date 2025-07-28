@@ -188,14 +188,14 @@ router.get('/details/:token', async (req, res) => {
     // Get invite details with team information
     const inviteResult = await query(`
       SELECT ci.*, c.name as club_name, c.description as club_description, 
-             c.location as club_location, c.sport as club_sport,
-             u.first_name as inviter_first_name, u.last_name as inviter_last_name,
-             t.name as team_name
-      FROM club_invites ci
-      JOIN clubs c ON ci.club_id = c.id
-      JOIN users u ON ci.invited_by = u.id
-      LEFT JOIN teams t ON ci.team_id = t.id
-      WHERE ci.invite_token = $1
+       c.location as club_location, c.sport as club_sport,
+       u.first_name as inviter_first_name, u.last_name as inviter_last_name,
+       t.name as team_name
+FROM club_invites ci
+JOIN clubs c ON ci.club_id::text = c.id::text
+JOIN users u ON ci.invited_by::text = u.id::text
+LEFT JOIN teams t ON ci.team_id::text = t.id::text
+WHERE ci.invite_token = $1;
     `, [token]);
 
     if (inviteResult.rows.length === 0) {
