@@ -261,6 +261,8 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
     const { token } = req.params;
     const { acceptTerms } = req.body;
 
+    console.log('✅ Processing invite acceptance for token:', token.substring(0, 10) + '...');
+
     if (!token) {
       return res.status(400).json({
         error: 'Invite token is required'
@@ -273,16 +275,20 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
       });
     }
 
-    // Get invite details with team info
+    // 🔥 FIXED QUERY WITH PROPER TYPE CASTING FOR ACCEPT
+    console.log('🔍 Looking up invite for acceptance...');
     const inviteResult = await query(`
       SELECT ci.*, c.name as club_name, c.id as club_id, t.name as team_name
       FROM club_invites ci
-      JOIN clubs c ON ci.club_id = c.id
-      LEFT JOIN teams t ON ci.team_id = t.id
+      JOIN clubs c ON ci.club_id::text = c.id::text
+      LEFT JOIN teams t ON ci.team_id::text = t.id::text
       WHERE ci.invite_token = $1
     `, [token]);
 
+    console.log('📊 Accept query results:', inviteResult.rows.length);
+
     if (inviteResult.rows.length === 0) {
+      console.log('❌ No invite found for acceptance');
       return res.status(404).json({
         error: 'Invite not found',
         message: 'This invite link is invalid'
@@ -290,9 +296,16 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
     }
 
     const invite = inviteResult.rows[0];
+    console.log('✅ Found invite:', {
+      id: invite.id,
+      club_name: invite.club_name,
+      invite_status: invite.invite_status,
+      is_public: invite.is_public
+    });
 
     // Check if invite has expired
     if (new Date() > new Date(invite.expires_at)) {
+      console.log('⏰ Invite has expired');
       return res.status(410).json({
         error: 'Invite expired',
         message: 'This invite link has expired'
@@ -301,6 +314,7 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
 
     // Check if invite is still pending
     if (invite.invite_status !== 'pending') {
+      console.log('🚫 Invite not pending:', invite.invite_status);
       return res.status(410).json({
         error: 'Invite no longer valid',
         message: `This invite has been ${invite.invite_status}`
@@ -309,102 +323,127 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
 
     // For non-public invites, check email match
     if (!invite.is_public && req.user.email !== invite.email) {
+      console.log('📧 Email mismatch');
       return res.status(403).json({
         error: 'Email mismatch',
         message: 'You must be logged in with the email address that received this invite'
       });
     }
 
-    // Check if user is already a member
+    // 🔥 FIXED CHECK FOR EXISTING MEMBER WITH TYPE CASTING
+    console.log('🔍 Checking if user is already a member...');
     const existingMember = await query(`
-      SELECT id FROM players WHERE user_id = $1 AND club_id = $2
-    `, [req.user.id, invite.club_id]);
+      SELECT id FROM players WHERE user_id::text = $1::text AND club_id::text = $2::text
+    `, [req.user.id.toString(), invite.club_id.toString()]);
 
     if (existingMember.rows.length > 0) {
+      console.log('👥 User is already a member');
       return res.status(409).json({
         error: 'Already a member',
         message: 'You are already a member of this club'
       });
     }
 
-    // Accept invite in transaction
+    console.log('🔄 Starting transaction to accept invite...');
+
+    // Accept invite in transaction with enhanced error handling
     const result = await withTransaction(async (client) => {
-      // Create player record
-      const playerResult = await client.query(`
-        INSERT INTO players (
-          first_name, 
-          last_name, 
-          email, 
-          user_id, 
-          club_id, 
-          position, 
-          monthly_fee,
-          payment_status,
-          created_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW())
-        RETURNING *
-      `, [
-        invite.first_name || req.user.first_name || req.user.firstName || '',
-        invite.last_name || req.user.last_name || req.user.lastName || '',
-        req.user.email,
-        req.user.id,
-        invite.club_id,
-        invite.club_role === 'player' ? null : invite.club_role,
-        50 // Default monthly fee
-      ]);
-
-      const newPlayer = playerResult.rows[0];
-
-      // If team was specified in invite, assign player to team
-      if (invite.team_id) {
-        await client.query(`
-          INSERT INTO team_players (team_id, player_id, joined_at)
-          VALUES ($1, $2, NOW())
-        `, [invite.team_id, newPlayer.id]);
+      try {
+        console.log('👤 Creating player record...');
         
-        console.log(`⚽ Player assigned to team: ${invite.team_name}`);
-      }
-
-      // For shareable/public invites, don't mark as used - leave as pending for reuse
-      if (!invite.is_public) {
-        // Update invite status for specific email invites
-        await client.query(`
-          UPDATE club_invites SET 
-            invite_status = 'accepted',
-            accepted_at = NOW(),
-            accepted_by = $1,
-            updated_at = NOW()
-          WHERE id = $2
-        `, [req.user.id, invite.id]);
-      }
-
-      // Create welcome payment if monthly fee > 0
-      if (newPlayer.monthly_fee > 0) {
-        await client.query(`
-          INSERT INTO payments (
-            player_id, 
+        // Create player record
+        const playerResult = await client.query(`
+          INSERT INTO players (
+            first_name, 
+            last_name, 
+            email, 
+            user_id, 
             club_id, 
-            amount, 
-            payment_type, 
-            description, 
-            due_date,
-            payment_status
+            position, 
+            monthly_fee,
+            payment_status,
+            created_at
           )
-          VALUES ($1, $2, $3, 'monthly_fee', $4, $5, 'pending')
+          VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW())
+          RETURNING *
         `, [
-          newPlayer.id,
+          invite.first_name || req.user.first_name || req.user.firstName || '',
+          invite.last_name || req.user.last_name || req.user.lastName || '',
+          req.user.email,
+          req.user.id,
           invite.club_id,
-          newPlayer.monthly_fee,
-          `Welcome payment for ${invite.club_name}`,
-          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+          invite.club_role === 'player' ? null : invite.club_role,
+          50 // Default monthly fee
         ]);
-      }
 
-      return { player: newPlayer, teamAssigned: !!invite.team_id, teamName: invite.team_name };
+        const newPlayer = playerResult.rows[0];
+        console.log('✅ Player created:', newPlayer.id);
+
+        // If team was specified in invite, assign player to team
+        if (invite.team_id) {
+          console.log('⚽ Assigning player to team...');
+          await client.query(`
+            INSERT INTO team_players (team_id, player_id, joined_at)
+            VALUES ($1, $2, NOW())
+          `, [invite.team_id, newPlayer.id]);
+          
+          console.log(`✅ Player assigned to team: ${invite.team_name}`);
+        }
+
+        // For shareable/public invites, don't mark as used - leave as pending for reuse
+        if (!invite.is_public) {
+          console.log('📝 Updating invite status...');
+          // Update invite status for specific email invites
+          await client.query(`
+            UPDATE club_invites SET 
+              invite_status = 'accepted',
+              accepted_at = NOW(),
+              accepted_by = $1,
+              updated_at = NOW()
+            WHERE id = $2
+          `, [req.user.id, invite.id]);
+          console.log('✅ Invite marked as accepted');
+        } else {
+          console.log('🔗 Keeping shareable invite active for reuse');
+        }
+
+        // Create welcome payment if monthly fee > 0
+        if (newPlayer.monthly_fee > 0) {
+          console.log('💰 Creating welcome payment...');
+          await client.query(`
+            INSERT INTO payments (
+              player_id, 
+              club_id, 
+              amount, 
+              payment_type, 
+              description, 
+              due_date,
+              payment_status
+            )
+            VALUES ($1, $2, $3, 'monthly_fee', $4, $5, 'pending')
+          `, [
+            newPlayer.id,
+            invite.club_id,
+            newPlayer.monthly_fee,
+            `Welcome payment for ${invite.club_name}`,
+            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+          ]);
+          console.log('✅ Welcome payment created');
+        }
+
+        return { 
+          player: newPlayer, 
+          teamAssigned: !!invite.team_id, 
+          teamName: invite.team_name 
+        };
+
+      } catch (transactionError) {
+        console.error('❌ Transaction error:', transactionError);
+        throw transactionError;
+      }
     });
 
-    console.log(`✅ Club invite accepted: ${req.user.email} joined ${invite.club_name}`);
+    console.log(`🎉 Club invite accepted successfully: ${req.user.email} joined ${invite.club_name}`);
 
     res.json({
       message: 'Successfully joined the club!',
@@ -425,10 +464,21 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Accept invite error:', error);
+    console.error('❌ Accept invite error:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      hint: error.hint
+    });
+    
     res.status(500).json({
       error: 'Failed to accept invite',
-      message: 'An error occurred while accepting the invite'
+      message: 'An error occurred while accepting the invite',
+      debug: {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }
     });
   }
 });
