@@ -14,6 +14,8 @@ const eventRoutes = require('./routes/events');
 const paymentRoutes = require('./routes/payments');
 const dashboardRoutes = require('./routes/dashboard');
 const invitesRouter = require('./routes/invites');
+const inviteRoutes = require('./routes/invites');
+app.use('/api/invites', inviteRoutes);
 const notificationRoutes = require('./routes/notifications');
 const { errorHandler } = require('./middleware/errorHandler');
 
