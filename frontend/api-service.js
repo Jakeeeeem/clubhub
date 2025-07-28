@@ -12,21 +12,26 @@ class ApiService {
     this.testConnection();
   }
 
-   getBaseURL() {
+  getBaseURL() {
     const hostname = window.location.hostname;
     const port = window.location.port;
     
-    // Local development
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:3000/api';
-    }
+    console.log('🔍 Detecting environment:', { hostname, port });
     
-    // Production
-    if (hostname.includes('clubhubsports.net')) {
+    // Production environment
+    if (hostname === 'clubhubsports.net' || hostname === 'www.clubhubsports.net') {
+      console.log('🌍 Production environment detected');
       return 'https://api.clubhubsports.net/api';
     }
     
-    // Fallback
+    // Local development
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      console.log('🏠 Local development environment detected');
+      return 'http://localhost:3000/api';
+    }
+    
+    // Fallback for unknown environments
+    console.log('❓ Unknown environment, using production API');
     return 'https://api.clubhubsports.net/api';
   }
 
@@ -716,18 +721,7 @@ class ApiService {
     };
   }
 
-  // =========================== UTILITY METHODS ===========================
-
-  cacheClubs(clubs) {
-    localStorage.setItem('cachedClubs', JSON.stringify(clubs));
-  }
-
-  formatCurrency(amount) {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP'
-    }).format(amount);
-  }
+  // =========================== HEALTH CHECK METHODS ===========================
 
   async healthCheck() {
     try {
@@ -749,7 +743,21 @@ class ApiService {
       return false;
     }
   }
+
+  // =========================== UTILITY METHODS ===========================
+
+  cacheClubs(clubs) {
+    localStorage.setItem('cachedClubs', JSON.stringify(clubs));
+  }
+
+  formatCurrency(amount) {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP'
+    }).format(amount);
+  }
 }
+
 // Create and export a singleton instance
 const apiService = new ApiService();
 
@@ -763,4 +771,4 @@ window.addEventListener('error', function(event) {
   }
 });
 
-console.log('✅ Enhanced API Service loaded with robust error handling and fallbacks!');
+console.log('✅ Complete Production API Service loaded with proper environment detection!');

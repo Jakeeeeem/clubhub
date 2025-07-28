@@ -426,9 +426,13 @@
         let inviteData = null;
         let currentUser = null;
         
+        // 🔥 PRODUCTION API CONFIGURATION
+        const API_BASE_URL = 'https://api.clubhubsports.net/api';
+        
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             console.log('📧 Club invite page loading...');
+            console.log('🔗 API Base URL:', API_BASE_URL);
             checkAuthStatus();
         });
 
@@ -466,44 +470,51 @@
 
         // Load invite details from URL parameters
         async function loadInviteDetails() {
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
-        
-        console.log('📄 Loading invite details for token:', token);
-        
-        // Test different API URLs
-        const apiUrls = [
-            `/api/invites/details/${token}`,
-            `https://api.clubhubsports.net/api/invites/details/${token}`,
-            `https://clubhubsports.net/api/invites/details/${token}`
-        ];
-        
-        for (const url of apiUrls) {
-            console.log(`🔍 Testing URL: ${url}`);
             try {
-                const response = await fetch(url);
-                console.log(`📡 Response status for ${url}:`, response.status);
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('✅ Success with URL:', url);
-                    console.log('📊 Data:', data);
-                    displayInviteDetails(data);
-                    return;
+                if (!token) {
+                    throw new Error('No invitation token provided');
                 }
+                
+                console.log('📄 Loading invite details for token:', token);
+                console.log('🔗 Full API URL:', `${API_BASE_URL}/invites/details/${token}`);
+                
+                const response = await fetch(`${API_BASE_URL}/invites/details/${token}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+                
+                console.log(`📡 Response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                        console.log('❌ Error details:', errorData);
+                    } catch (parseError) {
+                        console.log('❌ Could not parse error response');
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                console.log('✅ Success! Invite data:', data);
+                inviteData = data;
+                displayInviteDetails();
+                
             } catch (error) {
-                console.log(`❌ Failed with ${url}:`, error.message);
+                console.error('❌ Failed to load invite:', error);
+                showExpiredInvite(error.message);
             }
         }
-        
-        throw new Error('All API URLs failed');
-        
-    } catch (error) {
-        console.error('❌ Failed to load invite:', error);
-        showExpiredInvite(error.message);
-    }
-}
 
         // Display invite details
         function displayInviteDetails() {
@@ -550,7 +561,7 @@
                 document.getElementById('acceptBtn').disabled = !this.checked;
             });
 
-            console.log('💌 Invite details loaded:', inviteData);
+            console.log('💌 Invite details loaded successfully');
         }
 
         // Accept invitation
@@ -567,8 +578,9 @@
                 const token = urlParams.get('token');
 
                 console.log('✅ Accepting club invitation...');
+                console.log('🔗 Accept URL:', `${API_BASE_URL}/invites/accept/${token}`);
 
-                const response = await fetch(`/api/invites/accept/${token}`, {
+                const response = await fetch(`${API_BASE_URL}/invites/accept/${token}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -579,12 +591,24 @@
                     })
                 });
 
+                console.log(`📡 Accept response status: ${response.status}`);
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to accept invitation');
+                    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                        console.log('❌ Accept error details:', errorData);
+                    } catch (parseError) {
+                        console.log('❌ Could not parse accept error response');
+                    }
+                    
+                    throw new Error(errorMessage);
                 }
 
                 const result = await response.json();
+                console.log('✅ Invite accepted successfully:', result);
                 showSuccess(result.club.name);
 
             } catch (error) {
@@ -614,7 +638,7 @@
 
                 console.log('❌ Declining club invitation...');
 
-                const response = await fetch(`/api/invites/decline/${token}`, {
+                const response = await fetch(`${API_BASE_URL}/invites/decline/${token}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -716,7 +740,7 @@
         window.hideError = hideError;
         window.redirectToLogin = redirectToLogin;
 
-        console.log('✅ Club invite page loaded successfully!');
+        console.log('✅ Production Club invite page loaded successfully!');
     </script>
 </body>
 </html>
