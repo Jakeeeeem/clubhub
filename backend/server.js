@@ -266,5 +266,17 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
+app._router.stack.forEach(function(r){
+  if (r.route && r.route.path){
+    console.log('📍 Route:', r.route.path)
+  } else if (r.name === 'router') {
+    r.handle.stack.forEach(function(rr){
+      if (rr.route) {
+        console.log('📍 Route:', r.regexp.source + rr.route.path);
+      }
+    });
+  }
+});
+
 // Start the server
 startServer();

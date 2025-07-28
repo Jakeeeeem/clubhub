@@ -466,33 +466,44 @@
 
         // Load invite details from URL parameters
         async function loadInviteDetails() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        console.log('📄 Loading invite details for token:', token);
+        
+        // Test different API URLs
+        const apiUrls = [
+            `/api/invites/details/${token}`,
+            `https://api.clubhubsports.net/api/invites/details/${token}`,
+            `https://clubhubsports.net/api/invites/details/${token}`
+        ];
+        
+        for (const url of apiUrls) {
+            console.log(`🔍 Testing URL: ${url}`);
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const token = urlParams.get('token');
-
-                if (!token) {
-                    showExpiredInvite('No invitation token provided');
+                const response = await fetch(url);
+                console.log(`📡 Response status for ${url}:`, response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Success with URL:', url);
+                    console.log('📊 Data:', data);
+                    displayInviteDetails(data);
                     return;
                 }
-
-                console.log('📄 Loading invite details...');
-                
-                // Fetch invite details from API
-                const response = await fetch(`/api/invites/details/${token}`);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Invitation not found');
-                }
-
-                inviteData = await response.json();
-                displayInviteDetails();
-
             } catch (error) {
-                console.error('❌ Failed to load invite:', error);
-                showExpiredInvite(error.message);
+                console.log(`❌ Failed with ${url}:`, error.message);
             }
         }
+        
+        throw new Error('All API URLs failed');
+        
+    } catch (error) {
+        console.error('❌ Failed to load invite:', error);
+        showExpiredInvite(error.message);
+    }
+}
 
         // Display invite details
         function displayInviteDetails() {
