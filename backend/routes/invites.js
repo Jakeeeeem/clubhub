@@ -4,6 +4,7 @@ const { authenticateToken, requireOrganization, optionalAuth } = require('../mid
 const emailService = require('../services/email-service');
 const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
+const cors = require('cors');
 
 const router = express.Router();
 
