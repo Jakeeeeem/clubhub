@@ -12,9 +12,12 @@ const inviteValidation = [
   body('email').optional().isEmail().normalizeEmail().withMessage('Please provide a valid email'),
   body('firstName').optional().trim(),
   body('lastName').optional().trim(),
+  body('dateOfBirth').optional().isISO8601().withMessage('Please provide a valid date of birth'), // 🔥 NEW
   body('message').optional().trim(),
-  body('clubRole').optional().isIn(['player', 'coach', 'staff']).withMessage('Invalid club role')
+  body('clubRole').optional().isIn(['player', 'coach', 'staff']).withMessage('Invalid club role'),
+  body('teamId').optional().isUUID().withMessage('Invalid team ID') // 🔥 NEW
 ];
+
 
 // 🔥 GENERATE SHAREABLE CLUB INVITE LINK
 router.post('/generate', authenticateToken, requireOrganization, inviteValidation, async (req, res) => {
@@ -27,16 +30,18 @@ router.post('/generate', authenticateToken, requireOrganization, inviteValidatio
       });
     }
 
-    const { 
-      email = null, // Make email optional for shareable links
+     const { 
+      email = null,
       firstName = '', 
       lastName = '', 
+      dateOfBirth = null, // 🔥 NEW
       message = '', 
       clubRole = 'player',
       clubId,
       teamId = null,
-      isPublic = true // Default to public/shareable invites
+      isPublic = true
     } = req.body;
+
 
     // Get user's club
     let userClubId = clubId;
@@ -113,6 +118,7 @@ router.post('/generate', authenticateToken, requireOrganization, inviteValidatio
         email, 
         first_name, 
         last_name, 
+        date_of_birth,
         club_id, 
         invited_by, 
         club_role, 
@@ -123,12 +129,13 @@ router.post('/generate', authenticateToken, requireOrganization, inviteValidatio
         is_public,
         invite_status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending')
       RETURNING *
     `, [
       inviteEmail,
       firstName || null,
       lastName || null,
+      dateOfBirth || null, // 🔥 NEW
       userClubId,
       req.user.id,
       clubRole,
@@ -347,7 +354,12 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
     console.log('🔄 Starting transaction to accept invite...');
 
     // Accept invite in transaction with enhanced error handling
-    const playerResult = await client.query(`
+    const result = await withTransaction(async (client) => {
+      try {
+        console.log('👤 Creating player record...');
+        
+        // Create player record
+       const playerResult = await client.query(`
   INSERT INTO players (
     first_name, 
     last_name, 
@@ -370,8 +382,9 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
   invite.club_id,
   invite.club_role === 'player' ? null : invite.club_role,
   50, // Default monthly fee
-  '1990-01-01' // Default date of birth
+  invite.date_of_birth || '1990-01-01' // 🔥 Use date from invite or default
 ]);
+
 
         const newPlayer = playerResult.rows[0];
         console.log('✅ Player created:', newPlayer.id);

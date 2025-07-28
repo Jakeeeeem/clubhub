@@ -1683,6 +1683,22 @@ function filterPlayers() {
     loadPlayers();
 }
 
+async function loadTeamsForInvite() {
+    try {
+        const teams = await apiService.getTeams();
+        const teamSelect = document.getElementById('inviteTeam');
+        
+        if (teamSelect && teams.length > 0) {
+            teamSelect.innerHTML = '<option value="">No team assignment</option>';
+            teams.forEach(team => {
+                teamSelect.innerHTML += `<option value="${team.id}">${team.name} (${team.age_group || 'All ages'})</option>`;
+            });
+        }
+    } catch (error) {
+        console.warn('Failed to load teams:', error);
+    }
+}
+
 // Export functions for global access
 window.showSection = showSection;
 window.removePlayer = removePlayer;

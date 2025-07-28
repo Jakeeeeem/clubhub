@@ -198,7 +198,7 @@ router.post('/', authenticateToken, requireOrganization, eventValidation, async 
       });
     }
 
-    const { 
+    let { 
       title, 
       description, 
       eventType, 
@@ -212,9 +212,22 @@ router.post('/', authenticateToken, requireOrganization, eventValidation, async 
       opponent
     } = req.body;
 
+    // 🔧 FIXED: Get user's club if not provided
+    let userClubId = clubId;
+    if (!userClubId) {
+      const clubResult = await query('SELECT id FROM clubs WHERE owner_id = $1 LIMIT 1', [req.user.id]);
+      if (clubResult.rows.length === 0) {
+        return res.status(404).json({
+          error: 'No club found',
+          message: 'You must have a club to create events'
+        });
+      }
+      userClubId = clubResult.rows[0].id;
+    }
+
     // Verify club exists and user owns it (if specified)
     if (clubId) {
-      const clubResult = await query(queries.findClubById, [clubId]);
+      const clubResult = await query('SELECT * FROM clubs WHERE id = $1', [clubId]);
       if (clubResult.rows.length === 0) {
         return res.status(404).json({
           error: 'Club not found',
@@ -233,13 +246,7 @@ router.post('/', authenticateToken, requireOrganization, eventValidation, async 
 
     // Verify team exists and belongs to the club (if specified)
     if (teamId) {
-      const teamResult = await query(`
-        SELECT t.*, c.owner_id 
-        FROM teams t
-        JOIN clubs c ON t.club_id = c.id
-        WHERE t.id = $1
-      `, [teamId]);
-      
+      const teamResult = await query('SELECT * FROM teams WHERE id = $1', [teamId]);
       if (teamResult.rows.length === 0) {
         return res.status(404).json({
           error: 'Team not found',
@@ -248,7 +255,9 @@ router.post('/', authenticateToken, requireOrganization, eventValidation, async 
       }
 
       const team = teamResult.rows[0];
-      if (team.owner_id !== req.user.id) {
+      
+      // 🔧 FIXED: Check if team belongs to user's club
+      if (team.club_id !== userClubId) {
         return res.status(403).json({
           error: 'Access denied',
           message: 'You can only create events for teams in your own clubs'
@@ -261,7 +270,16 @@ router.post('/', authenticateToken, requireOrganization, eventValidation, async 
       }
     }
 
-    const result = await query(queries.createEvent, [
+    // 🔧 FIXED: Use proper query for creating event
+    const result = await query(`
+      INSERT INTO events (
+        title, description, event_type, event_date, event_time, 
+        location, price, capacity, spots_available, club_id, 
+        team_id, opponent, created_by, created_at, updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+      RETURNING *
+    `, [
       title,
       description || null,
       eventType,
@@ -271,7 +289,7 @@ router.post('/', authenticateToken, requireOrganization, eventValidation, async 
       price || 0,
       capacity || null,
       capacity || null, // spots_available initially equals capacity
-      clubId || null,
+      clubId || userClubId,
       teamId || null,
       opponent || null,
       req.user.id
@@ -456,7 +474,7 @@ router.post('/:id/book', authenticateToken, [
     const { playerData } = req.body;
 
     // Get event details
-    const eventResult = await query(queries.findEventById, [req.params.id]);
+    const eventResult = await query('SELECT * FROM events WHERE id = $1', [req.params.id]);
     if (eventResult.rows.length === 0) {
       return res.status(404).json({
         error: 'Event not found',
@@ -586,7 +604,7 @@ router.post('/bookings/:bookingId/cancel', authenticateToken, async (req, res) =
     const booking = bookingResult.rows[0];
 
     // Get event details
-    const eventResult = await query(queries.findEventById, [booking.event_id]);
+    const eventResult = await query('SELECT * FROM events WHERE id = $1', [booking.event_id]);
     const event = eventResult.rows[0];
 
     // Check if event is in the future (allow cancellation up to event time)
@@ -715,7 +733,7 @@ router.get('/bookings/my-bookings', authenticateToken, async (req, res) => {
     // Filter by status if provided
     if (status) {
       paramCount++;
-      queryText += ` AND eb.booking_status = ${paramCount}`;
+      queryText += ` AND eb.booking_status = $${paramCount}`;
       queryParams.push(status);
     }
 

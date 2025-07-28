@@ -62,6 +62,7 @@ async function enhancedInvitePlayer() {
                 </div>
                 
                 <!-- Email Invite Form -->
+                <!-- Enhanced Email Invite Form with Date of Birth -->
                 <div id="emailInviteForm" style="display: none;">
                     <h3>📧 Send Email Invite</h3>
                     <form id="emailInviteFormElement">
@@ -69,26 +70,50 @@ async function enhancedInvitePlayer() {
                             <label for="inviteEmail">Email Address *</label>
                             <input type="email" id="inviteEmail" required placeholder="player@example.com">
                         </div>
-                        <div class="form-group">
-                            <label for="inviteFirstName">First Name</label>
-                            <input type="text" id="inviteFirstName" placeholder="John">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="inviteFirstName">First Name *</label>
+                                <input type="text" id="inviteFirstName" required placeholder="John">
+                            </div>
+                            <div class="form-group">
+                                <label for="inviteLastName">Last Name *</label>
+                                <input type="text" id="inviteLastName" required placeholder="Smith">
+                            </div>
                         </div>
+                        
+                        <!-- 🔥 NEW: Date of Birth Field -->
                         <div class="form-group">
-                            <label for="inviteLastName">Last Name</label>
-                            <input type="text" id="inviteLastName" placeholder="Smith">
+                            <label for="inviteDateOfBirth">Date of Birth *</label>
+                            <input type="date" id="inviteDateOfBirth" required 
+                                   max="2010-12-31" min="1950-01-01"
+                                   title="Please enter the player's date of birth">
+                            <small style="color: #666; font-size: 0.9rem;">Required for player registration and age group assignment</small>
                         </div>
-                        <div class="form-group">
-                            <label for="inviteRole">Role</label>
-                            <select id="inviteRole">
-                                <option value="player">Player</option>
-                                <option value="coach">Coach</option>
-                                <option value="staff">Staff</option>
-                            </select>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="inviteRole">Role</label>
+                                <select id="inviteRole">
+                                    <option value="player">Player</option>
+                                    <option value="coach">Coach</option>
+                                    <option value="staff">Staff</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="inviteTeam">Assign to Team (optional)</label>
+                                <select id="inviteTeam">
+                                    <option value="">No team assignment</option>
+                                    <!-- Teams will be populated by JavaScript -->
+                                </select>
+                            </div>
                         </div>
+                        
                         <div class="form-group">
                             <label for="inviteMessage">Personal Message</label>
                             <textarea id="inviteMessage" rows="3" placeholder="Welcome to our club! We'd love to have you join our team..."></textarea>
                         </div>
+                        
                         <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                             <button type="submit" class="btn btn-primary" style="flex: 1;">📧 Send Email Invite</button>
                             <button type="button" class="btn btn-secondary" onclick="hideEmailInviteForm()">Cancel</button>
@@ -124,14 +149,16 @@ async function handleEmailInviteSubmission(e) {
             email: document.getElementById('inviteEmail').value,
             firstName: document.getElementById('inviteFirstName').value,
             lastName: document.getElementById('inviteLastName').value,
+            dateOfBirth: document.getElementById('inviteDateOfBirth').value, // 🔥 NEW
             clubRole: document.getElementById('inviteRole').value,
+            teamId: document.getElementById('inviteTeam').value || null, // 🔥 NEW
             message: document.getElementById('inviteMessage').value,
             clubId: InviteSystemState.currentClub?.id || AppState.clubs?.[0]?.id,
             isPublic: false,
             sendEmail: true
         };
         
-        console.log('📧 Sending email invite:', inviteData);
+        console.log('📧 Sending enhanced email invite:', inviteData);
         
         const response = await apiService.generateClubInvite(inviteData);
         
