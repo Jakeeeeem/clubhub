@@ -176,6 +176,12 @@ router.get('/player', authenticateToken, async (req, res) => {
     } else {
       console.log('ℹ️ No player record found for user:', userId);
     }
+
+    let attendance = null;
+    if(player){
+      attendance = player.attendance_rate;
+      console.log("attendance is:", attendance);
+    }
     
     // Get player's clubs (either from player record or empty)
     let clubs = [];
@@ -247,7 +253,7 @@ router.get('/player', authenticateToken, async (req, res) => {
       WHERE ca.player_id = $1
       ORDER BY ca.applied_at DESC
 `   , [player?.id]);
-    
+
     console.log('📊 Player dashboard data loaded:', {
       hasPlayer: !!player,
       clubsCount: clubs.length,
@@ -258,6 +264,7 @@ router.get('/player', authenticateToken, async (req, res) => {
     
     res.json({
       player,
+      attendance,
       clubs,
       teams,
       events: eventsResult.rows,

@@ -670,8 +670,10 @@ class ApiService {
           this.getUserBookings()
         ]);
         
+        // Added attendance | 07.08.25 BM
         return {
           player: null,
+          attendance: null,
           clubs: clubs.status === 'fulfilled' ? clubs.value : [],
           teams: teams.status === 'fulfilled' ? teams.value : [],
           events: events.status === 'fulfilled' ? events.value : [],

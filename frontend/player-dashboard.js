@@ -1,5 +1,7 @@
+// Added attendance | 07.08.25 BM
 let PlayerDashboardState = {
     player: null,
+    attendance: null,
     clubs: [],
     teams: [],
     events: [],
@@ -69,7 +71,9 @@ async function loadPlayerDataWithFallback() {
             const dashboardData = await apiService.getPlayerDashboardData();
             console.log('✅ Loaded from player dashboard API:', dashboardData);
             
+            // Added attendance 07.08.25 | BM
             PlayerDashboardState.player = dashboardData.player;
+            PlayerDashboardState.attendance = dashboardData.attendance;
             PlayerDashboardState.clubs = dashboardData.clubs || [];
             PlayerDashboardState.teams = dashboardData.teams || [];
             PlayerDashboardState.events = dashboardData.events || [];
@@ -164,11 +168,11 @@ function loadPlayerOverview() {
     const playerTeamsCount = PlayerDashboardState.teams.length;
     const upcomingEventsCount = PlayerDashboardState.events.filter(e => new Date(e.event_date) > new Date()).length;
     
-    // Update stats
+    // Update stats | Added Attendance | 07.28.25 BM
     updateStatElement('playerClubs', playerClubsCount);
     updateStatElement('playerTeams', playerTeamsCount);
     updateStatElement('playerEvents', upcomingEventsCount);
-    updateStatElement('playerAttendance', '85%'); // Placeholder
+    updateStatElement('playerAttendance', PlayerDashboardState.attendance+'%'); // Placeholder
     
     loadUpcomingEvents();
     loadRecentActivity();
@@ -460,6 +464,8 @@ function displayClubs(clubs) {
     const clubsContainer = document.getElementById('availableClubsContainer');
     if (!clubsContainer) return;
     
+    // Temp fix to apply button - Club names all contain ' which interrupts the innerHTML, have added .replace to get rid of the ' from string. | 06.08.25 BM
+    // Applying to club without invite doesn't seem to function yet anyways, missing from api-service.js
     clubsContainer.innerHTML = clubs.map(club => `
         <div class="card">
             <h4>${club.name}</h4>
@@ -467,8 +473,8 @@ function displayClubs(clubs) {
             <p><strong>Sport:</strong> ${club.sport || 'Not specified'}</p>
             <p><strong>Members:</strong> ${club.member_count || 0}</p>
             <p>${club.description || 'No description available'}</p>
-            <div class="item-actions">
-                <button class="btn btn-small btn-primary" onclick="applyToClub('${club.id}', '${club.name}')">Apply</button>
+            <div class="item-actions">  
+                <button class="btn btn-small btn-primary" onclick='applyToClub("${club.id}", "${club.name.replace("'", "")}")'>Apply</button>
                 <button class="btn btn-small btn-secondary" onclick="viewClubDetails('${club.id}')">View Details</button>
             </div>
         </div>
@@ -892,6 +898,10 @@ function viewClubDetails(clubId) {
         showNotification('Club not found', 'error');
         return;
     }
+
+    // If an instance of this modal is already in the DOM, remove it before creating a new one. Avoids duplicate DOMS as well as closeModal failing on second instance of a modal with same name.
+    const prevModal = document.getElementById('clubDetailsModal');
+    if (prevModal) prevModal.remove();
     
     // Create club details modal
     const modal = document.createElement('div');
@@ -932,6 +942,10 @@ function viewEventDetails(eventId) {
         return;
     }
     
+    // If an instance of this modal is already in the DOM, remove it before creating a new one. Avoids duplicate DOMS as well as closeModal failing on second instance of a modal with same name.
+    const prevModal = document.getElementById('eventDetailsModal');
+    if (prevModal) prevModal.remove();
+
     // Create event details modal
     const modal = document.createElement('div');
     modal.className = 'modal';
@@ -972,6 +986,10 @@ function viewTeamDetails(teamId) {
         return;
     }
     
+    // If an instance of this modal is already in the DOM, remove it before creating a new one. Avoids duplicate DOMS as well as closeModal failing on second instance of a modal with same name.
+    const prevModal = document.getElementById('teamDetailsModal');
+    if (prevModal) prevModal.remove();
+
     // Create team details modal
     const modal = document.createElement('div');
     modal.className = 'modal';

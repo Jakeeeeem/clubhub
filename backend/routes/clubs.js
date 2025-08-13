@@ -18,6 +18,7 @@ const clubValidation = [
 ];
 
 // Get all clubs (public)
+//Changed all instances of '${paramCount}' to '$${paramCount}' | 06.08.25 BM
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sport, location, types, limit = 50 } = req.query;
@@ -37,19 +38,19 @@ router.get('/', optionalAuth, async (req, res) => {
     // Search by name or description
     if (search) {
       paramCount++;
-      queryText += ` AND (c.name ILIKE ${paramCount} OR c.description ILIKE ${paramCount})`;
+      queryText += ` AND (c.name ILIKE $${paramCount} OR c.description ILIKE $${paramCount})`;
       queryParams.push(`%${search}%`);
     }
 
     // Filter by sport
     if (sport) {
       paramCount++;
-      queryText += ` AND c.sport ILIKE ${paramCount}`;
+      queryText += ` AND c.sport ILIKE $${paramCount}`;
       queryParams.push(`%${sport}%`);
     }    // Filter by location
     if (location) {
       paramCount++;
-      queryText += ` AND c.location ILIKE ${paramCount}`;
+      queryText += ` AND c.location ILIKE $${paramCount}`;
       queryParams.push(`%${location}%`);
     }
 
@@ -57,14 +58,17 @@ router.get('/', optionalAuth, async (req, res) => {
     if (types) {
       const typesArray = Array.isArray(types) ? types : [types];
       paramCount++;
-      queryText += ` AND c.types && ${paramCount}::text[]`;
+      queryText += ` AND c.types && $${paramCount}::text[]`;
       queryParams.push(typesArray);
     }
 
+    // Incremented paramCount outside of queryText to ensure correct positional placeholder for limit clause | 06.08.25 BM
+
+    paramCount++;
     queryText += ` 
       GROUP BY c.id
       ORDER BY c.created_at DESC
-      LIMIT ${paramCount + 1}
+      LIMIT $${paramCount}
     `;
     queryParams.push(parseInt(limit));
 
