@@ -28,12 +28,14 @@ body {
     top: 0;
     z-index: 1000;
     border-bottom: 1px solid rgba(220, 38, 38, 0.2);
+    height: 80px;
 }
 
 .nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: 100%;
 }
 
 select, select option {
@@ -45,9 +47,20 @@ select, select option {
     font-size: 2rem;
     font-weight: bold;
     color: #dc2626;
+    gap: 12px;
     text-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
     cursor: pointer;
+    height: 100%;
+    align-items: center;
+    display: flex;
 }
+
+.logo-image {
+    height: 80px;
+    width: auto;
+    cursor: pointer;
+}
+
 
 .nav-buttons {
     display: flex;

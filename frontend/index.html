@@ -352,17 +352,20 @@
 </head>
 <body>
     <header class="header">
-        <nav class="nav container">
-            <div class="logo">ClubHub</div>
-            <div class="nav-buttons" id="navButtons">
-                <button class="btn btn-secondary" onclick="showLogin()">Login</button>
-                <button class="btn btn-primary" onclick="showRegister()">Sign Up</button>
-            </div>
-            <div class="nav-buttons" id="loggedInNav" style="display: none;">
-                <!-- Populated by JavaScript when logged in -->
-            </div>
-        </nav>
-    </header>
+    <nav class="nav container">
+        <div class="logo">
+            <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+            <span class="logo-text">ClubHub</span>
+        </div>
+        <div class="nav-buttons" id="navButtons">
+            <button class="btn btn-secondary" onclick="showLogin()">Login</button>
+            <button class="btn btn-primary" onclick="showRegister()">Sign Up</button>
+        </div>
+        <div class="nav-buttons" id="loggedInNav" style="display: none;">
+            <!-- Populated by JavaScript when logged in -->
+        </div>
+    </nav>
+</header>
 
     <main class="main">
         <!-- Hero Section -->
@@ -508,6 +511,717 @@
         </section>
     </main>
 
+    <div id="registerModal" class="modal">
+    <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+        <!-- Logo Section -->
+        <div class="modal-header" style="text-align: center; padding: 2rem 2rem 1rem 2rem; border-bottom: 2px solid #dc2626;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem;">
+                <img src="images/logo.png" alt="ClubHub Logo" style="height: 60px; width: auto;">
+                <div>
+                    <h1 style="margin: 0; font-size: 2rem; color: #dc2626; font-weight: bold;">ClubHub</h1>
+                    <p style="margin: 0; color: #666; font-size: 1rem;">Join the sports management revolution</p>
+                </div>
+            </div>
+            <button class="close" onclick="closeModal('registerModal')" style="position: absolute; top: 15px; right: 20px;">&times;</button>
+        </div>
+
+        <!-- Step Indicator -->
+        <div style="display: flex; justify-content: center; padding: 1rem 0; background: #f8f9fa; gap: 1rem;">
+            <div class="signup-step active" data-step="1" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: all 0.3s ease;">1</div>
+            <div class="signup-step" data-step="2" style="width: 40px; height: 40px; border-radius: 50%; background: #e9ecef; color: #6c757d; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: all 0.3s ease;">2</div>
+            <div class="signup-step" data-step="3" style="width: 40px; height: 40px; border-radius: 50%; background: #e9ecef; color: #6c757d; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: all 0.3s ease;">3</div>
+            <div class="signup-step completed" data-step="4" style="width: 40px; height: 40px; border-radius: 50%; background: #e9ecef; color: #6c757d; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: all 0.3s ease;">✓</div>
+        </div>
+
+        <!-- Step 1: Account Type Selection -->
+        <div class="signup-form-step active" data-step="1" style="padding: 2rem;">
+            <h2 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Choose Your Account Type</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="account-type-option" data-type="adult" style="border: 2px solid #e9ecef; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: white;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚽</div>
+                    <h3 style="margin-bottom: 0.5rem; color: #333;">Player Account</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">For players, parents, and sports enthusiasts</p>
+                    <div class="adult-clarification" style="background: #e8f5e8; border: 1px solid #d4edda; border-radius: 8px; padding: 1rem; font-size: 0.9rem; color: #155724; display: none;">
+                        <strong>✅ Adult Account Required</strong><br>
+                        This creates an adult account. You can add and manage children's profiles after registration.
+                    </div>
+                </div>
+                
+                <div class="account-type-option" data-type="organization" style="border: 2px solid #e9ecef; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: white;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🏢</div>
+                    <h3 style="margin-bottom: 0.5rem; color: #333;">Organization</h3>
+                    <p style="color: #666; font-size: 0.9rem;">For clubs, academies, and sports organizations</p>
+                </div>
+            </div>
+
+            <div id="childManagementInfo" style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-size: 0.9rem; color: #856404; display: none;">
+                <strong>👶 Managing Children</strong><br>
+                After creating your adult account, you can add multiple children to your profile. You'll manage all bookings, payments, and communications for your children.
+            </div>
+
+            <!-- Organization Type Selection -->
+            <div id="orgTypeSelection" style="display: none; margin-top: 1.5rem;">
+                <h3 style="margin: 1rem 0; color: #333;">Organization Type</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                        <input type="checkbox" name="orgTypes" value="club">
+                        Sports Club
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                        <input type="checkbox" name="orgTypes" value="academy">
+                        Sports Academy
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                        <input type="checkbox" name="orgTypes" value="event">
+                        Event Organizer
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                        <input type="checkbox" name="orgTypes" value="tournament">
+                        Tournament Organizer
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border: 1px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">
+                        <input type="checkbox" name="orgTypes" value="league">
+                        League Management
+                    </label>
+                </div>
+
+                <div style="background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-size: 0.9rem; color: #1565c0;">
+                    <strong>💡 Multiple Organizations</strong><br>
+                    You can create separate organizations (e.g., "Pro Elite" and "Pro Elite League") and easily toggle between them in your dashboard.
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Personal Information -->
+        <div class="signup-form-step" data-step="2" style="padding: 2rem; display: none;">
+            <h2 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Personal Information</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="signupFirstName">First Name *</label>
+                    <input type="text" id="signupFirstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupLastName">Last Name *</label>
+                    <input type="text" id="signupLastName" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="signupEmail">Email Address *</label>
+                <input type="email" id="signupEmail" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="signupPassword">Password *</label>
+                    <input type="password" id="signupPassword" required>
+                    <div id="passwordStrength" style="margin-top: 0.5rem; font-size: 0.8rem;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password *</label>
+                    <input type="password" id="signupConfirmPassword" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="signupPhone">Phone Number</label>
+                    <input type="tel" id="signupPhone">
+                </div>
+                <div class="form-group">
+                    <label for="signupDateOfBirth">Date of Birth</label>
+                    <input type="date" id="signupDateOfBirth">
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Profile Information -->
+        <div class="signup-form-step" data-step="3" style="padding: 2rem; display: none;">
+            <h2 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Build Your Profile</h2>
+            
+            <div class="form-group">
+                <label for="signupLocation">📍 Location</label>
+                <input type="text" id="signupLocation" placeholder="e.g., London, UK">
+            </div>
+
+            <div class="form-group">
+                <label>⚽ Primary Sport</label>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin: 1rem 0;">
+                    <div class="sport-option" data-sport="football" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-size: 2rem;">⚽</div>
+                        <div style="font-size: 0.9rem;">Football</div>
+                    </div>
+                    <div class="sport-option" data-sport="basketball" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-size: 2rem;">🏀</div>
+                        <div style="font-size: 0.9rem;">Basketball</div>
+                    </div>
+                    <div class="sport-option" data-sport="tennis" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-size: 2rem;">🎾</div>
+                        <div style="font-size: 0.9rem;">Tennis</div>
+                    </div>
+                    <div class="sport-option" data-sport="rugby" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-size: 2rem;">🏉</div>
+                        <div style="font-size: 0.9rem;">Rugby</div>
+                    </div>
+                    <div class="sport-option" data-sport="cricket" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-size: 2rem;">🏏</div>
+                        <div style="font-size: 0.9rem;">Cricket</div>
+                    </div>
+                    <div class="sport-option" data-sport="hockey" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-size: 2rem;">🏑</div>
+                        <div style="font-size: 0.9rem;">Hockey</div>
+                    </div>
+                    <div class="sport-option" data-sport="athletics" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-size: 2rem;">🏃</div>
+                        <div style="font-size: 0.9rem;">Athletics</div>
+                    </div>
+                    <div class="sport-option" data-sport="other" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 1rem; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-size: 2rem;">🏆</div>
+                        <div style="font-size: 0.9rem;">Other</div>
+                    </div>
+                </div>
+                <input type="hidden" id="selectedSport">
+            </div>
+
+            <div class="form-group" id="positionField" style="display: none;">
+                <label for="signupPosition">🎯 Position/Role</label>
+                <select id="signupPosition">
+                    <option value="">Select your position</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="signupExperience">📊 Experience Level</label>
+                    <select id="signupExperience">
+                        <option value="">Select experience level</option>
+                        <option value="beginner">Beginner (0-2 years)</option>
+                        <option value="intermediate">Intermediate (2-5 years)</option>
+                        <option value="advanced">Advanced (5-10 years)</option>
+                        <option value="professional">Professional (10+ years)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="signupPreviousTeams">🏆 Previous Teams</label>
+                    <input type="text" id="signupPreviousTeams" placeholder="e.g., Manchester United Youth">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="signupAchievements">🥇 Achievements</label>
+                <textarea id="signupAchievements" rows="2" placeholder="Championships, awards, certifications..."></textarea>
+            </div>
+        </div>
+
+        <!-- Step 4: Success -->
+        <div class="signup-form-step" data-step="4" style="padding: 2rem; display: none; text-align: center;">
+            <div style="width: 80px; height: 80px; background: #28a745; border-radius: 50%; margin: 0 auto 2rem; display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem;">✓</div>
+            <h2 style="color: #333; margin-bottom: 1rem;">Welcome to ClubHub!</h2>
+            <p style="color: #666; margin-bottom: 2rem;">Your account has been created successfully.</p>
+            
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin: 2rem 0; text-align: left;">
+                <h3 style="margin-bottom: 1rem; color: #333;">Next Steps:</h3>
+                <div id="nextStepsContent">
+                    <!-- Will be populated based on account type -->
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button class="btn btn-primary" id="goToDashboardBtn">Go to Dashboard</button>
+                <button class="btn btn-secondary" onclick="closeModal('registerModal')">Close</button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div style="display: flex; justify-content: space-between; padding: 1rem 2rem 2rem 2rem; border-top: 1px solid #e9ecef;">
+            <button class="btn btn-secondary" id="prevStepBtn" onclick="previousSignupStep()" style="display: none;">← Previous</button>
+            <div style="flex: 1;"></div>
+            <button class="btn btn-primary" id="nextStepBtn" onclick="nextSignupStep()">Next →</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .account-type-option:hover, .account-type-option.selected {
+        border-color: #dc2626;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    }
+
+    .sport-option:hover, .sport-option.selected {
+        border-color: #dc2626;
+        background: rgba(220, 38, 38, 0.05);
+    }
+
+    .signup-step.active {
+        background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+        color: white !important;
+    }
+
+    .signup-step.completed {
+        background: #28a745 !important;
+        color: white !important;
+    }
+
+    .signup-form-step {
+        animation: fadeInSlide 0.3s ease-out;
+    }
+
+    @keyframes fadeInSlide {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .form-group label::after {
+        content: '';
+    }
+
+    .form-group label:has(+ input[required])::after {
+        content: ' *';
+        color: #dc3545;
+    }
+
+    .password-strength {
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+
+    .strength-weak { color: #dc3545; }
+    .strength-medium { color: #ffc107; }
+    .strength-strong { color: #28a745; }
+</style>
+
+<script>
+let signupCurrentStep = 1;
+let signupData = {};
+const signupTotalSteps = 4;
+
+// Sport positions mapping
+const signupSportPositions = {
+    football: ['Goalkeeper', 'Defender', 'Centre-back', 'Full-back', 'Wing-back', 'Midfielder', 'Central Midfielder', 'Attacking Midfielder', 'Defensive Midfielder', 'Winger', 'Forward', 'Striker'],
+    basketball: ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center'],
+    tennis: ['Singles Player', 'Doubles Player'],
+    rugby: ['Prop', 'Hooker', 'Lock', 'Flanker', 'Number 8', 'Scrum-half', 'Fly-half', 'Centre', 'Wing', 'Fullback'],
+    cricket: ['Batsman', 'Bowler', 'Fast Bowler', 'Spin Bowler', 'All-rounder', 'Wicket-keeper'],
+    hockey: ['Goalkeeper', 'Defender', 'Midfielder', 'Forward'],
+    athletics: ['Sprinter', 'Distance Runner', 'Jumper', 'Thrower', 'Hurdler'],
+    other: []
+};
+
+// Initialize enhanced signup
+document.addEventListener('DOMContentLoaded', function() {
+    setupSignupEventListeners();
+});
+
+function setupSignupEventListeners() {
+    // Account type selection
+    document.querySelectorAll('.account-type-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.account-type-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            const type = this.dataset.type;
+            signupData.accountType = type;
+            
+            const orgOptions = document.getElementById('orgTypeSelection');
+            const childInfo = document.getElementById('childManagementInfo');
+            const adultClarification = this.querySelector('.adult-clarification');
+            
+            if (type === 'organization') {
+                orgOptions.style.display = 'block';
+                childInfo.style.display = 'none';
+                document.querySelectorAll('.adult-clarification').forEach(el => el.style.display = 'none');
+            } else {
+                orgOptions.style.display = 'none';
+                childInfo.style.display = 'block';
+                adultClarification.style.display = 'block';
+            }
+        });
+    });
+
+    // Sport selection
+    document.querySelectorAll('.sport-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.sport-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            const sport = this.dataset.sport;
+            document.getElementById('selectedSport').value = sport;
+            signupData.primarySport = sport;
+            updateSignupPositions(sport);
+        });
+    });
+
+    // Password strength checker
+    document.getElementById('signupPassword').addEventListener('input', checkSignupPasswordStrength);
+    
+    // Existing form submission (modify your existing handler)
+    const existingForm = document.getElementById('registerForm');
+    if (existingForm) {
+        existingForm.addEventListener('submit', handleEnhancedRegistration);
+    }
+}
+
+function updateSignupPositions(sport) {
+    const positionField = document.getElementById('positionField');
+    const positionSelect = document.getElementById('signupPosition');
+    
+    if (signupSportPositions[sport] && signupSportPositions[sport].length > 0) {
+        positionSelect.innerHTML = '<option value="">Select your position</option>';
+        signupSportPositions[sport].forEach(position => {
+            positionSelect.innerHTML += `<option value="${position}">${position}</option>`;
+        });
+        positionField.style.display = 'block';
+    } else {
+        positionField.style.display = 'none';
+    }
+}
+
+function checkSignupPasswordStrength() {
+    const password = document.getElementById('signupPassword').value;
+    const strengthDiv = document.getElementById('passwordStrength');
+    
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    if (strength < 3) {
+        strengthDiv.className = 'password-strength strength-weak';
+        strengthDiv.textContent = 'Weak password';
+    } else if (strength < 5) {
+        strengthDiv.className = 'password-strength strength-medium';
+        strengthDiv.textContent = 'Medium strength';
+    } else {
+        strengthDiv.className = 'password-strength strength-strong';
+        strengthDiv.textContent = 'Strong password ✓';
+    }
+}
+
+function nextSignupStep() {
+    if (validateSignupStep()) {
+        collectSignupStepData();
+        
+        if (signupCurrentStep < signupTotalSteps - 1) {
+            signupCurrentStep++;
+            updateSignupStepDisplay();
+        } else {
+            submitEnhancedRegistration();
+        }
+    }
+}
+
+function previousSignupStep() {
+    if (signupCurrentStep > 1) {
+        signupCurrentStep--;
+        updateSignupStepDisplay();
+    }
+}
+
+function updateSignupStepDisplay() {
+    // Update step indicators
+    document.querySelectorAll('.signup-step').forEach((step, index) => {
+        const stepNumber = index + 1;
+        step.classList.remove('active', 'completed');
+        
+        if (stepNumber < signupCurrentStep) {
+            step.classList.add('completed');
+        } else if (stepNumber === signupCurrentStep) {
+            step.classList.add('active');
+        }
+    });
+
+    // Update form steps
+    document.querySelectorAll('.signup-form-step').forEach((step, index) => {
+        step.style.display = index + 1 === signupCurrentStep ? 'block' : 'none';
+    });
+
+    // Update navigation buttons
+    const prevBtn = document.getElementById('prevStepBtn');
+    const nextBtn = document.getElementById('nextStepBtn');
+    
+    prevBtn.style.display = signupCurrentStep > 1 ? 'block' : 'none';
+    
+    if (signupCurrentStep === signupTotalSteps) {
+        nextBtn.style.display = 'none';
+    } else if (signupCurrentStep === signupTotalSteps - 1) {
+        nextBtn.textContent = 'Create Account';
+    } else {
+        nextBtn.textContent = 'Next →';
+    }
+}
+
+function validateSignupStep() {
+    switch (signupCurrentStep) {
+        case 1:
+            if (!signupData.accountType) {
+                showNotification('Please select an account type', 'error');
+                return false;
+            }
+            if (signupData.accountType === 'organization') {
+                const selectedOrgTypes = Array.from(document.querySelectorAll('input[name="orgTypes"]:checked')).map(cb => cb.value);
+                if (selectedOrgTypes.length === 0) {
+                    showNotification('Please select at least one organization type', 'error');
+                    return false;
+                }
+                signupData.orgTypes = selectedOrgTypes;
+            }
+            return true;
+            
+        case 2:
+            const requiredFields = ['signupFirstName', 'signupLastName', 'signupEmail', 'signupPassword', 'signupConfirmPassword'];
+            for (let fieldId of requiredFields) {
+                const value = document.getElementById(fieldId).value.trim();
+                if (!value) {
+                    showNotification(`Please fill in all required fields`, 'error');
+                    return false;
+                }
+            }
+            
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return false;
+            }
+            
+            if (password.length < 6) {
+                showNotification('Password must be at least 6 characters', 'error');
+                return false;
+            }
+            
+            return true;
+            
+        case 3:
+            return true; // Profile information is optional
+            
+        default:
+            return true;
+    }
+}
+
+function collectSignupStepData() {
+    switch (signupCurrentStep) {
+        case 2:
+            signupData.firstName = document.getElementById('signupFirstName').value.trim();
+            signupData.lastName = document.getElementById('signupLastName').value.trim();
+            signupData.email = document.getElementById('signupEmail').value.trim();
+            signupData.password = document.getElementById('signupPassword').value;
+            signupData.phone = document.getElementById('signupPhone').value.trim();
+            signupData.dateOfBirth = document.getElementById('signupDateOfBirth').value;
+            break;
+            
+        case 3:
+            signupData.profile = {
+                location: document.getElementById('signupLocation').value.trim(),
+                primarySport: document.getElementById('selectedSport').value,
+                position: document.getElementById('signupPosition').value,
+                experience: document.getElementById('signupExperience').value,
+                previousTeams: document.getElementById('signupPreviousTeams').value.trim(),
+                achievements: document.getElementById('signupAchievements').value.trim()
+            };
+            break;
+    }
+}
+
+async function submitEnhancedRegistration() {
+    try {
+        document.getElementById('nextStepBtn').textContent = 'Creating Account...';
+        document.getElementById('nextStepBtn').disabled = true;
+        
+        console.log('🚀 Submitting enhanced registration:', signupData);
+        
+        const response = await apiService.register({
+            email: signupData.email,
+            password: signupData.password,
+            firstName: signupData.firstName,
+            lastName: signupData.lastName,
+            accountType: signupData.accountType,
+            orgTypes: signupData.orgTypes || [],
+            phone: signupData.phone,
+            dateOfBirth: signupData.dateOfBirth,
+            profile: signupData.profile || {}
+        });
+        
+        signupCurrentStep = signupTotalSteps;
+        updateSignupStepDisplay();
+        populateNextSteps();
+        
+        console.log('✅ Enhanced registration successful:', response);
+        
+    } catch (error) {
+        console.error('❌ Enhanced registration failed:', error);
+        showNotification('Registration failed: ' + error.message, 'error');
+        document.getElementById('nextStepBtn').textContent = 'Create Account';
+        document.getElementById('nextStepBtn').disabled = false;
+    }
+}
+
+function populateNextSteps() {
+    const nextStepsContent = document.getElementById('nextStepsContent');
+    const dashboardBtn = document.getElementById('goToDashboardBtn');
+    
+    if (signupData.accountType === 'organization') {
+        nextStepsContent.innerHTML = `
+            <div style="display: grid; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 40px; height: 40px; background: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">1</div>
+                    <div>
+                        <strong>Set up your organization profile</strong>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">Complete your club details and upload your logo</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 40px; height: 40px; background: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">2</div>
+                    <div>
+                        <strong>Add team members and staff</strong>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">Invite players and staff to join your organization</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 40px; height: 40px; background: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">3</div>
+                    <div>
+                        <strong>Create events and manage payments</strong>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">Set up training sessions, matches, and payment collection</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        dashboardBtn.onclick = () => window.location.href = 'admin-dashboard.html';
+    } else {
+        nextStepsContent.innerHTML = `
+            <div style="display: grid; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 40px; height: 40px; background: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">1</div>
+                    <div>
+                        <strong>Complete your sports profile</strong>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">Add more details to help clubs find you</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 40px; height: 40px; background: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">2</div>
+                    <div>
+                        <strong>Find and join clubs</strong>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">Browse local clubs and submit applications</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="width: 40px; height: 40px; background: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">3</div>
+                    <div>
+                        <strong>Add children (if parent)</strong>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">Manage multiple children's profiles and bookings</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        dashboardBtn.onclick = () => window.location.href = 'player-dashboard.html';
+    }
+}
+
+window.nextSignupStep = nextSignupStep;
+window.previousSignupStep = previousSignupStep;
+
+async function handleEnhancedRegistration(e) {
+    if (e) {
+        e.preventDefault();
+        
+        signupCurrentStep = 1;
+        updateSignupStepDisplay();
+        
+        const existingEmail = document.getElementById('email')?.value;
+        const existingFirstName = document.getElementById('firstName')?.value;
+        const existingLastName = document.getElementById('lastName')?.value;
+        const existingAccountType = document.getElementById('accountType')?.value;
+        
+        if (existingEmail) document.getElementById('signupEmail').value = existingEmail;
+        if (existingFirstName) document.getElementById('signupFirstName').value = existingFirstName;
+        if (existingLastName) document.getElementById('signupLastName').value = existingLastName;
+        if (existingAccountType) {
+            const accountTypeOption = document.querySelector(`[data-type="${existingAccountType}"]`);
+            if (accountTypeOption) accountTypeOption.click();
+        }
+        
+        return false;
+    }
+}
+
+function createOrganizationAccount() {
+    showModal('registerModal');
+    setTimeout(() => {
+        const orgOption = document.querySelector('[data-type="organization"]');
+        if (orgOption) orgOption.click();
+    }, 100);
+}
+
+function createPlayerAccount() {
+    showModal('registerModal');
+    setTimeout(() => {
+        const playerOption = document.querySelector('[data-type="adult"]');
+        if (playerOption) playerOption.click();
+    }, 100);
+}
+
+function toggleOrgOptions() {
+    // This function exists for backwards compatibility
+    // The new enhanced signup handles this automatically
+}
+
+// Reset signup state when modal is closed
+function resetSignupModal() {
+    signupCurrentStep = 1;
+    signupData = {};
+    
+    // Reset form
+    document.querySelectorAll('.signup-form-step input, .signup-form-step select, .signup-form-step textarea').forEach(input => {
+        input.value = '';
+    });
+    
+    // Reset selections
+    document.querySelectorAll('.account-type-option, .sport-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Reset checkboxes
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Reset display
+    document.getElementById('orgTypeSelection').style.display = 'none';
+    document.getElementById('childManagementInfo').style.display = 'none';
+    document.getElementById('positionField').style.display = 'none';
+    document.querySelectorAll('.adult-clarification').forEach(el => el.style.display = 'none');
+    
+    updateSignupStepDisplay();
+}
+
+// Override existing modal close function for signup
+const originalCloseModal = window.closeModal;
+window.closeModal = function(modalId) {
+    if (modalId === 'registerModal') {
+        resetSignupModal();
+    }
+    if (originalCloseModal) {
+        originalCloseModal(modalId);
+    } else {
+        document.getElementById(modalId).style.display = 'none';
+    }
+};
+
+console.log('✅ Enhanced signup modal loaded and ready!');
+</script>
+
     <!-- Login Modal -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -528,75 +1242,5 @@
             </form>
         </div>
     </div>
-
-    <!-- Register Modal -->
-    <div id="registerModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Create Account</h2>
-                <button class="close" onclick="closeModal('registerModal')">&times;</button>
-            </div>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="accountType">Account Type</label>
-                    <select id="accountType" required onchange="toggleOrgOptions()">
-                        <option value="">Select Account Type</option>
-                        <option value="adult">Player Account</option>
-                        <option value="organization">Organization Account</option>
-                    </select>
-                </div>
-                
-                <div id="orgOptions" style="display: none;">
-                    <div class="form-group">
-                        <label>Organization Type (Select all that apply)</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" name="orgType" value="club"> Sports Club</label>
-                            <label><input type="checkbox" name="orgType" value="event"> Event Organizer</label>
-                            <label><input type="checkbox" name="orgType" value="tournament"> Tournament Organizer</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="firstName">First Name</label>
-                    <input type="text" id="firstName" required>
-                </div>
-                <div class="form-group">
-                    <label for="lastName">Last Name</label>
-                    <input type="text" id="lastName" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Create Account</button>
-            </form>
-        </div>
-    </div>
-
-    <script src="api-service.js"></script>
-    <script src="script.js"></script>
-    <script src="enhanced-invite-system.js"></script>
-        // Account type specific registration
-        function createOrganizationAccount() {
-            document.getElementById('accountType').value = 'organization';
-            toggleOrgOptions();
-            showModal('registerModal');
-        }
-
-        function createPlayerAccount() {
-            document.getElementById('accountType').value = 'adult';
-            toggleOrgOptions();
-            showModal('registerModal');
-        }
-    </script>
 </body>
 </html>

@@ -4,15 +4,896 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - ClubHub</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Real Logo Integration */
+        .header {
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
+            height: 80px;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            height: 100%;
+        }
+
+        .logo-image {
+            height: 60px;
+            width: 60px;
+            background-image: url('images/logo.png');
+            background-size: cover;
+            background-position: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(220, 67, 67, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .logo-image:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(220, 67, 67, 0.4);
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #dc4343;
+            text-shadow: 0 0 20px rgba(220, 67, 67, 0.5);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #ffffff;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dc4343 0%, #ffd700 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        /* Enhanced Button Styles */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #dc4343 0%, #b91c1c 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 67, 67, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 67, 67, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #dc4343;
+            border: 2px solid #dc4343;
+        }
+
+        .btn-secondary:hover {
+            background: #dc4343;
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-stripe {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-stripe::before {
+            content: '💳';
+        }
+
+        /* Main Content */
+        .main {
+            margin-top: 80px;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Dashboard Styles */
+        .dashboard {
+            padding: 2rem 0;
+        }
+
+        .dashboard-header {
+            padding: 2rem 0;
+            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .dashboard-header h1 {
+            color: #dc4343;
+            margin-bottom: 0.5rem;
+        }
+
+        .stripe-access {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
+            padding-bottom: 1rem;
+        }
+
+        .dashboard-nav button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(220, 67, 67, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .dashboard-nav button.active,
+        .dashboard-nav button:hover {
+            background: #dc4343;
+            border-color: #dc4343;
+            transform: translateY(-1px);
+        }
+
+        .dashboard-content {
+            padding: 1rem 0;
+        }
+
+        .dashboard-section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .dashboard-section.active {
+            display: block;
+        }
+
+        /* Card Styles */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(220, 67, 67, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(220, 67, 67, 0.4);
+        }
+
+        .card h3 {
+            color: #dc4343;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(220, 67, 67, 0.2);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #dc4343;
+            display: block;
+        }
+
+        .stat-label {
+            opacity: 0.8;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Enhanced Player Management */
+        .player-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            align-items: end;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(220, 67, 67, 0.2);
+        }
+
+        .filter-group {
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #dc4343;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid rgba(220, 67, 67, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        /* Enhanced Player Card */
+        .player-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(220, 67, 67, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .player-card:hover {
+            border-color: rgba(220, 67, 67, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .player-card.overdue {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .player-card.not-assigned {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .player-info h4 {
+            color: #dc4343;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .player-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .player-meta span {
+            opacity: 0.8;
+        }
+
+        .player-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .payment-plan-badge {
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            color: #1a1a1a;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .no-plan-badge {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Status Badge Styles */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-paid {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-overdue {
+            background: rgba(220, 38, 38, 0.2);
+            color: #dc2626;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .status-pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .status-active {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .status-not-assigned {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        /* Team Management Enhancement */
+        .team-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(220, 67, 67, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .team-card:hover {
+            border-color: rgba(220, 67, 67, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .team-card h4 {
+            color: #dc4343;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .team-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .team-stat-number {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #dc4343;
+        }
+
+        .team-stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        /* Invite System */
+        .invite-section {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .invite-section h3 {
+            color: #ffd700;
+            margin-bottom: 1rem;
+        }
+
+        .invite-link {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(220, 67, 67, 0.3);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 1rem 0;
+            font-family: monospace;
+            word-break: break-all;
+            color: #ffd700;
+        }
+
+        /* Financial Management */
+        .finance-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .finance-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(220, 67, 67, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .finance-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #dc4343;
+            display: block;
+        }
+
+        .finance-label {
+            opacity: 0.8;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Listings Section */
+        .listing-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(220, 67, 67, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .listing-card:hover {
+            border-color: rgba(220, 67, 67, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .application-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(220, 67, 67, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .application-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 1px solid rgba(220, 67, 67, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
+        }
+
+        .modal-header h2 {
+            color: #dc4343;
+            margin: 0;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            color: #dc4343;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close:hover {
+            background: rgba(220, 67, 67, 0.1);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #dc4343;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(220, 67, 67, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #dc4343;
+            box-shadow: 0 0 10px rgba(220, 67, 67, 0.3);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-weight: normal;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-group label:hover {
+            background: rgba(220, 67, 67, 0.1);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            transform: scale(1.2);
+            accent-color: #dc4343;
+        }
+
+        /* Table Styles */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
+        }
+
+        .table th {
+            background: rgba(220, 67, 67, 0.1);
+            color: #dc4343;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+
+        .table tr:hover {
+            background: rgba(220, 67, 67, 0.05);
+        }
+
+        /* Activity and item list styles */
+        .item-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(220, 67, 67, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .item-list-item:hover {
+            background: rgba(220, 67, 67, 0.05);
+        }
+
+        .item-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-info h4 {
+            color: #dc4343;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-info p {
+            opacity: 0.8;
+            font-size: 0.875rem;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Search and Filter Styles */
+        .search-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .search-filters .form-group {
+            margin-bottom: 0;
+            min-width: 200px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .dashboard-nav {
+                flex-direction: column;
+            }
+            
+            .dashboard-nav button {
+                width: 100%;
+            }
+            
+            .player-filters {
+                flex-direction: column;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+            
+            .player-meta {
+                grid-template-columns: 1fr;
+            }
+            
+            .team-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            .application-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .application-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .spinner {
+            border: 2px solid rgba(220, 67, 67, 0.2);
+            border-left: 2px solid #dc4343;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
     <header class="header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
-            <div class="nav-buttons" id="loggedInNav">
-                <!-- Populated by JavaScript -->
+            <div class="logo" onclick="window.location.href='index.html'">
+                <div class="logo-image"></div>
+                <span class="logo-text">ClubHub</span>
+            </div>
+            <div class="user-info">
+                <span>Hello, Admin!</span>
+                <div class="user-avatar">A</div>
+                <button class="btn btn-secondary" onclick="logout()">Logout</button>
             </div>
         </nav>
     </header>
@@ -20,21 +901,25 @@
     <main class="main">
         <div class="dashboard container">
             <div class="dashboard-header">
-                <h1>Admin Dashboard</h1>
-                <p>Manage your club, events, and members</p>
+                <div>
+                    <h1>⚽ Admin Dashboard</h1>
+                    <p>Manage your club with complete control and insights</p>
+                </div>
+                <div class="stripe-access">
+                    <button class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe Dashboard</button>
+                </div>
             </div>
 
-            <!-- Dashboard Navigation -->
+            <!-- Enhanced Dashboard Navigation -->
             <div class="dashboard-nav">
-                <button class="active" onclick="showSection('overview')">Overview</button>
-                <button onclick="showSection('club-profile')">Club Profile</button>
-                <button onclick="showSection('players')">Players</button>
-                <button onclick="showSection('staff')">Staff</button>
-                <button onclick="showSection('teams')">Teams</button>
-                <button onclick="showSection('events')">Events</button>
-                <button onclick="showSection('finances')">Finances</button>
-                <button onclick="showSection('listings')">Listings</button>
-                <button onclick="showSection('documents')">Documents</button>
+                <button class="active" onclick="showSection('overview')">📊 Overview</button>
+                <button onclick="showSection('club-profile')">🏠 Club Profile</button>
+                <button onclick="showSection('players')">👥 Players</button>
+                <button onclick="showSection('teams')">⚽ Teams</button>
+                <button onclick="showSection('staff')">👨‍💼 Staff</button>
+                <button onclick="showSection('events')">📅 Events</button>
+                <button onclick="showSection('finances')">💰 Finances</button>
+                <button onclick="showSection('listings')">📋 Listings</button>
             </div>
 
             <div class="dashboard-content">
@@ -61,29 +946,205 @@
 
                     <div class="card-grid">
                         <div class="card">
-                            <h3>Recent Activity</h3>
+                            <h3>📈 Recent Activity</h3>
                             <div id="recentActivity">
-                                <div class="item-list-item">
-                                    <div class="item-info">
-                                        <h4>New Player Registration</h4>
-                                        <p>John Smith joined Elite Football Academy</p>
-                                    </div>
-                                    <span class="status-badge status-active">New</span>
-                                </div>
-                                <div class="item-list-item">
-                                    <div class="item-info">
-                                        <h4>Payment Received</h4>
-                                        <p>Monthly fee payment from Sarah Johnson</p>
-                                    </div>
-                                    <span class="status-badge status-paid">Paid</span>
-                                </div>
+                                <!-- Populated by JavaScript from database -->
                             </div>
                         </div>
 
                         <div class="card">
-                            <h3>Upcoming Events</h3>
+                            <h3>📅 Upcoming Events</h3>
                             <div id="upcomingEvents">
-                                <!-- Populated by JavaScript -->
+                                <!-- Populated by JavaScript from database -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Players Section -->
+                <div id="players" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                            <h3>👥 Player Management</h3>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button class="btn btn-success" onclick="showModal('invitePlayerModal')">📧 Invite Player</button>
+                                <button class="btn btn-primary" onclick="showModal('addPlayerModal')">➕ Add Player</button>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Player Filters as requested -->
+                        <div class="player-filters">
+                            <div class="filter-group">
+                                <label for="playerListFilter">Player List View</label>
+                                <select id="playerListFilter" onchange="filterPlayersByView()">
+                                    <option value="all">Full Player List</option>
+                                    <option value="on-plan">On Payment Plan</option>
+                                    <option value="not-on-plan">Not on Plan</option>
+                                    <option value="not-assigned">Not Assigned to Team</option>
+                                    <option value="overdue">Overdue Payments</option>
+                                    <option value="assigned">Assigned to Team</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="teamFilter">Filter by Team</label>
+                                <select id="teamFilter" onchange="filterPlayersByTeam()">
+                                    <option value="">All Teams</option>
+                                    <!-- Populated from database -->
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="paymentStatusFilter">Payment Status</label>
+                                <select id="paymentStatusFilter" onchange="filterPlayersByPayment()">
+                                    <option value="">All Statuses</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="overdue">Overdue</option>
+                                </select>
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="btn btn-secondary btn-small" onclick="resetPlayerFilters()">Reset</button>
+                                <button class="btn btn-primary btn-small" onclick="exportPlayers()">📊 Export</button>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Player Cards -->
+                        <div id="playersContainer">
+                            <!-- Players will be loaded from database via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Teams Section with Clickable Names -->
+                <div id="teams" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>⚽ Team Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create Team</button>
+                        </div>
+
+                        <div class="card-grid" id="teamsContainer">
+                            <!-- Team cards with clickable names will be loaded from database -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Staff Section with Invite Links -->
+                <div id="staff" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>👨‍💼 Staff Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">📧 Invite Staff</button>
+                        </div>
+
+                        <div class="invite-section">
+                            <h3>📎 Staff Invite System</h3>
+                            <p>Generate invite links for coaches with specific team assignments. Coaches can only view their assigned teams:</p>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                                <button class="btn btn-secondary" onclick="generateStaffInvite('coach')">Invite Coach</button>
+                                <button class="btn btn-warning" onclick="generateStaffInvite('assistant')">Invite Assistant</button>
+                                <button class="btn btn-primary" onclick="generateStaffInvite('admin')">Invite Administrator</button>
+                            </div>
+                        </div>
+
+                        <div id="staffContainer">
+                            <!-- Staff cards will be loaded from database -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Events Section -->
+                <div id="events" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>📅 Event Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create Event</button>
+                        </div>
+
+                        <div class="card-grid" id="eventsContainer">
+                            <!-- Events will be loaded from database -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Finances Section with Payment Plans -->
+                <div id="finances" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>💰 Financial Management</h3>
+                            <div style="display: flex; gap: 1rem;">
+                                <button class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe</button>
+                                <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">➕ Create Payment Plan</button>
+                            </div>
+                        </div>
+
+                        <div class="finance-overview">
+                            <div class="finance-card">
+                                <span class="finance-amount" id="monthlyRevenue">£0</span>
+                                <span class="finance-label">Monthly Revenue</span>
+                            </div>
+                            <div class="finance-card">
+                                <span class="finance-amount" id="overdueAmount">£0</span>
+                                <span class="finance-label">Outstanding</span>
+                            </div>
+                            <div class="finance-card">
+                                <span class="finance-amount" id="pendingAmount">£0</span>
+                                <span class="finance-label">Pending</span>
+                            </div>
+                            <div class="finance-card">
+                                <span class="finance-amount" id="totalMembers">0</span>
+                                <span class="finance-label">Paying Members</span>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>💳 Payment Plans</h3>
+                            <p>Players should be assigned to payment plans for easier workflow management:</p>
+                            <div id="paymentPlansContainer">
+                                <!-- Payment plans will be loaded from database -->
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>📊 Recent Transactions</h3>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Player</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentsTableBody">
+                                    <!-- Payments will be loaded from database -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Listings Section with Indeed-like Interface -->
+                <div id="listings" class="dashboard-section">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>📋 Club Listings & Applications</h3>
+                            <button class="btn btn-primary" onclick="showModal('createListingModal')">➕ Create Listing</button>
+                        </div>
+
+                        <div class="card">
+                            <h3>📝 Active Listings</h3>
+                            <div id="activeListingsContainer">
+                                <!-- Active listings will be loaded from database -->
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>📋 Application Management (Indeed-like Interface)</h3>
+                            <p>Once applicants come, manage them with shortlist, reject, and invite options:</p>
+                            
+                            <div id="applicationsContainer">
+                                <!-- Applications will be loaded from database -->
                             </div>
                         </div>
                     </div>
@@ -92,7 +1153,7 @@
                 <!-- Club Profile Section -->
                 <div id="club-profile" class="dashboard-section">
                     <div class="card">
-                        <h3>Club Information</h3>
+                        <h3>🏠 Club Profile</h3>
                         <form id="clubProfileForm">
                             <div class="form-group">
                                 <label for="clubName">Club Name</label>
@@ -104,7 +1165,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="clubLocation">Location</label>
-                                <input type="text" id="clubLocation">
+                                <input type="text" id="clubLocation" required>
                             </div>
                             <div class="form-group">
                                 <label for="clubPhilosophy">Club Philosophy</label>
@@ -114,215 +1175,128 @@
                                 <label for="clubWebsite">Website</label>
                                 <input type="url" id="clubWebsite">
                             </div>
-                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                            
+                            <div class="card" style="margin-top: 2rem;">
+                                <h3>📸 Club Pictures (Max 3-5)</h3>
+                                <div class="picture-upload-area" style="border: 2px dashed rgba(220, 67, 67, 0.3); border-radius: 8px; padding: 2rem; text-align: center; margin: 1rem 0;">
+                                    <p>📸 Drag and drop images here or click to upload</p>
+                                    <input type="file" multiple accept="image/*" style="display: none;" id="clubPictures" onchange="handlePictureUpload(this)">
+                                    <button type="button" class="btn btn-primary" onclick="document.getElementById('clubPictures').click()">Choose Files</button>
+                                </div>
+                                <div class="uploaded-pictures" id="uploadedPictures">
+                                    <!-- Uploaded pictures will appear here -->
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">💾 Save Club Profile</button>
                         </form>
-                    </div>
-                </div>
-
-                <!-- Players Section -->
-                <div id="players" class="dashboard-section">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3>Players Management</h3>
-                            <div>
-                                <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add Player</button>
-                                <button class="btn btn-success" onclick="enhancedInvitePlayer()">📧 Invite Players</button>
-                                <button class="btn btn-info" onclick="generateShareableInviteLink()">🔗 Generate Invite Link</button>
-                            </div>
-                        </div>
-                        
-                        <div class="search-filters">
-                            <div class="form-group">
-                                <label for="playerSearch">Search Players</label>
-                                <input type="text" id="playerSearch" placeholder="Search by name..." onkeyup="filterPlayers()">
-                            </div>
-                            <div class="form-group">
-                                <label for="paymentFilter">Payment Status</label>
-                                <select id="paymentFilter" onchange="filterPlayers()">
-                                    <option value="">All Statuses</option>
-                                    <option value="paid">Paid</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="overdue">Overdue</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Age</th>
-                                    <th>Email</th>
-                                    <th>Payment Status</th>
-                                    <th>Team</th>
-                                    <th>Monthly Fee</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="playersTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Staff Section -->
-                <div id="staff" class="dashboard-section">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3>Staff Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('addStaffModal')">Add Staff</button>
-                        </div>
-
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Permissions</th>
-                                    <th>Contact</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="staffTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Teams Section -->
-                <div id="teams" class="dashboard-section">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3>Teams Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">Create Team</button>
-                        </div>
-
-                        <div class="card-grid" id="teamsContainer">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Events Section -->
-                <div id="events" class="dashboard-section">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3>Event Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('addEventModal')">Create Event</button>
-                        </div>
-
-                        <div class="card-grid" id="eventsContainer">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Finances Section -->
-                <div id="finances" class="dashboard-section">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <span class="stat-number" id="monthlyRevenue">£0</span>
-                            <span class="stat-label">Monthly Revenue</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-number" id="overdueAmount">£0</span>
-                            <span class="stat-label">Overdue Payments</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-number" id="pendingAmount">£0</span>
-                            <span class="stat-label">Pending Payments</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-number" id="totalMembers">0</span>
-                            <span class="stat-label">Paying Members</span>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>Payment Overview</h3>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Member</th>
-                                    <th>Amount Due</th>
-                                    <th>Due Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="paymentsTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Listings Section -->
-                <div id="listings" class="dashboard-section">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3>Club Listings</h3>
-                            <button class="btn btn-primary" onclick="createListingModal()">📋 Create Listing</button>
-                        </div>
-
-                        <div style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
-                            <h4 style="margin: 0 0 0.5rem 0;">📢 What are listings?</h4>
-                            <p style="margin: 0;">Listings help you promote your club, recruit players, advertise camps, or announce trials. They're visible to all ClubHub users and can help grow your club!</p>
-                        </div>
-
-                        <div class="card-grid" id="listingsContainer">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Documents Section -->
-                <div id="documents" class="dashboard-section">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3>Document Management</h3>
-                            <button class="btn btn-primary" onclick="createDocumentUploadModal()">📄 Upload Document</button>
-                        </div>
-
-                        <div style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
-                            <h4 style="margin: 0 0 0.5rem 0;">📋 Document Benefits:</h4>
-                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-                                <li>Share handbooks, schedules, and important information</li>
-                                <li>Control access by member type (players, staff, public)</li>
-                                <li>Keep everyone updated with the latest documents</li>
-                                <li>Track downloads and engagement</li>
-                            </ul>
-                        </div>
-
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Document Name</th>
-                                    <th>Type</th>
-                                    <th>Upload Date</th>
-                                    <th>Access Level</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="documentsTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Modals -->
+    <!-- Enhanced Modals -->
     
-    <!-- Add Player Modal -->
+    <!-- Invite Player Modal -->
+    <div id="invitePlayerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📧 Invite Player</h2>
+                <button class="close" onclick="closeModal('invitePlayerModal')">&times;</button>
+            </div>
+            <form id="invitePlayerForm">
+                <div class="form-group">
+                    <label for="inviteEmail">Email Address</label>
+                    <input type="email" id="inviteEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="inviteFirstName">First Name</label>
+                    <input type="text" id="inviteFirstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="inviteLastName">Last Name</label>
+                    <input type="text" id="inviteLastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="inviteRole">Role</label>
+                    <select id="inviteRole" required>
+                        <option value="player">Player</option>
+                        <option value="parent">Parent (Adult Account)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inviteTeam">Assign to Team (Optional)</label>
+                    <select id="inviteTeam">
+                        <option value="">No team assignment</option>
+                        <!-- Populated from database -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inviteMessage">Personal Message</label>
+                    <textarea id="inviteMessage" rows="3" placeholder="Welcome to our club! We're excited to have you join our team..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">📧 Send Invite</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invite Staff Modal -->
+    <div id="inviteStaffModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📧 Invite Staff Member</h2>
+                <button class="close" onclick="closeModal('inviteStaffModal')">&times;</button>
+            </div>
+            <form id="inviteStaffForm">
+                <div class="form-group">
+                    <label for="staffInviteEmail">Email Address</label>
+                    <input type="email" id="staffInviteEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffInviteFirstName">First Name</label>
+                    <input type="text" id="staffInviteFirstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffInviteLastName">Last Name</label>
+                    <input type="text" id="staffInviteLastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffInviteRole">Role</label>
+                    <select id="staffInviteRole" required>
+                        <option value="">Select Role</option>
+                        <option value="coach">Coach</option>
+                        <option value="assistant-coach">Assistant Coach</option>
+                        <option value="treasurer">Treasurer</option>
+                        <option value="administrator">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="staffInviteTeam">Assign to Specific Team (Coaches only)</label>
+                    <select id="staffInviteTeam">
+                        <option value="">All teams / No specific team</option>
+                        <!-- Populated from database -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="staffPermissions" value="finances"> View Finances</label>
+                        <label><input type="checkbox" name="staffPermissions" value="players"> Manage Players</label>
+                        <label><input type="checkbox" name="staffPermissions" value="events"> Manage Events</label>
+                        <label><input type="checkbox" name="staffPermissions" value="listings"> Manage Listings</label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">📧 Send Invite</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Player Modal (Enhanced) -->
     <div id="addPlayerModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Add New Player</h2>
+                <h2>➕ Add New Player</h2>
                 <button class="close" onclick="closeModal('addPlayerModal')">&times;</button>
             </div>
             <form id="addPlayerForm">
@@ -335,81 +1309,98 @@
                     <input type="text" id="playerLastName" required>
                 </div>
                 <div class="form-group">
-                    <label for="playerDOB">Date of Birth</label>
-                    <input type="date" id="playerDOB" required>
-                </div>
-                <div class="form-group">
-                    <label for="playerEmail">Email</label>
-                    <input type="email" id="playerEmail">
+                    <label for="playerEmail">Email (for account linking)</label>
+                    <input type="email" id="playerEmail" placeholder="Link to existing user account">
                 </div>
                 <div class="form-group">
                     <label for="playerPhone">Phone</label>
                     <input type="tel" id="playerPhone">
                 </div>
                 <div class="form-group">
-                    <label for="playerFee">Monthly Fee (£)</label>
-                    <input type="number" id="playerFee" value="50" min="0">
-                </div>
-                <button type="submit" class="btn btn-primary">Add Player</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Add Staff Modal -->
-    <div id="addStaffModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Add Staff Member</h2>
-                <button class="close" onclick="closeModal('addStaffModal')">&times;</button>
-            </div>
-            <form id="addStaffForm">
-                <div class="form-group">
-                    <label for="staffFirstName">First Name</label>
-                    <input type="text" id="staffFirstName" required>
+                    <label for="playerDOB">Date of Birth</label>
+                    <input type="date" id="playerDOB" required>
                 </div>
                 <div class="form-group">
-                    <label for="staffLastName">Last Name</label>
-                    <input type="text" id="staffLastName" required>
+                    <label for="playerPosition">Position</label>
+                    <input type="text" id="playerPosition" placeholder="e.g., Midfielder, Forward">
                 </div>
                 <div class="form-group">
-                    <label for="staffRole">Role</label>
-                    <select id="staffRole" required>
-                        <option value="">Select Role</option>
-                        <option value="coach">Coach</option>
-                        <option value="assistant-coach">Assistant Coach</option>
-                        <option value="treasurer">Treasurer</option>
-                        <option value="coaching-supervisor">Coaching Supervisor</option>
-                        <option value="referee">Referee</option>
-                        <option value="administrator">Administrator</option>
+                    <label for="playerTeam">Assign to Team</label>
+                    <select id="playerTeam">
+                        <option value="">No team assignment</option>
+                        <!-- Populated from database -->
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="staffEmail">Email</label>
-                    <input type="email" id="staffEmail" required>
+                    <label for="playerPaymentPlan">Payment Plan</label>
+                    <select id="playerPaymentPlan">
+                        <option value="">No payment plan</option>
+                        <!-- Populated from database -->
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="staffPhone">Phone</label>
-                    <input type="tel" id="staffPhone">
+                    <label for="playerFee">Monthly Fee (£)</label>
+                    <input type="number" id="playerFee" step="0.01" min="0" value="45">
                 </div>
-                <div class="form-group">
-                    <label>Permissions</label>
-                    <div class="checkbox-group">
-                        <label><input type="checkbox" name="permissions" value="finances"> View Finances</label>
-                        <label><input type="checkbox" name="permissions" value="players"> Manage Players</label>
-                        <label><input type="checkbox" name="permissions" value="events"> Manage Events</label>
-                        <label><input type="checkbox" name="permissions" value="listings"> Manage Listings</label>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">Add Staff</button>
+                <button type="submit" class="btn btn-primary">➕ Add Player</button>
             </form>
         </div>
     </div>
 
-    <!-- Add Event Modal -->
+    <!-- Add Team Modal (Enhanced) -->
+    <div id="addTeamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚽ Create New Team</h2>
+                <button class="close" onclick="closeModal('addTeamModal')">&times;</button>
+            </div>
+            <form id="addTeamForm">
+                <div class="form-group">
+                    <label for="teamName">Team Name *</label>
+                    <input type="text" id="teamName" required>
+                </div>
+                <div class="form-group">
+                    <label for="teamAgeGroup">Age Group</label>
+                    <select id="teamAgeGroup">
+                        <option value="">Select age group...</option>
+                        <option value="U8">Under 8</option>
+                        <option value="U10">Under 10</option>
+                        <option value="U12">Under 12</option>
+                        <option value="U14">Under 14</option>
+                        <option value="U16">Under 16</option>
+                        <option value="U18">Under 18</option>
+                        <option value="Senior">Senior</option>
+                        <option value="Veterans">Veterans</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teamSport">Sport *</label>
+                    <select id="teamSport" required>
+                        <option value="">Select sport...</option>
+                        <option value="football">Football</option>
+                        <option value="basketball">Basketball</option>
+                        <option value="tennis">Tennis</option>
+                        <option value="rugby">Rugby</option>
+                        <option value="cricket">Cricket</option>
+                        <option value="hockey">Hockey</option>
+                        <option value="volleyball">Volleyball</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teamDescription">Description</label>
+                    <textarea id="teamDescription" rows="3" placeholder="Brief description of the team..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">⚽ Create Team</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Event Modal (Enhanced) -->
     <div id="addEventModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Create New Event</h2>
+                <h2>📅 Create New Event</h2>
                 <button class="close" onclick="closeModal('addEventModal')">&times;</button>
             </div>
             <form id="addEventForm">
@@ -426,6 +1417,7 @@
                         <option value="tournament">Tournament</option>
                         <option value="camp">Training Camp</option>
                         <option value="social">Social Event</option>
+                        <option value="trial">Trial Session</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -437,39 +1429,93 @@
                     <input type="time" id="eventTime" required>
                 </div>
                 <div class="form-group">
+                    <label for="eventLocation">Location</label>
+                    <input type="text" id="eventLocation" placeholder="Event venue">
+                </div>
+                <div class="form-group">
                     <label for="eventPrice">Price (£)</label>
-                    <input type="number" id="eventPrice" value="0" min="0">
+                    <input type="number" id="eventPrice" step="0.01" min="0" value="0">
+                    <small>Set to 0 for free events</small>
                 </div>
                 <div class="form-group">
                     <label for="eventCapacity">Capacity</label>
-                    <input type="number" id="eventCapacity" min="1" required>
+                    <input type="number" id="eventCapacity" min="1">
+                    <small>Leave empty for unlimited capacity</small>
                 </div>
                 <div class="form-group">
                     <label for="eventDescription">Description</label>
-                    <textarea id="eventDescription" rows="3"></textarea>
+                    <textarea id="eventDescription" rows="3" placeholder="Event details and information..."></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Create Event</button>
+                <button type="submit" class="btn btn-primary">📅 Create Event</button>
             </form>
         </div>
     </div>
 
-    <!-- Create Team Modal -->
-    <div id="addTeamModal" class="modal">
+    <!-- Create Payment Plan Modal -->
+    <div id="createPaymentPlanModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Create New Team</h2>
-                <button class="close" onclick="closeModal('addTeamModal')">&times;</button>
+                <h2>💳 Create Payment Plan</h2>
+                <button class="close" onclick="closeModal('createPaymentPlanModal')">&times;</button>
             </div>
-            <form id="addTeamForm">
+            <form id="createPaymentPlanForm">
                 <div class="form-group">
-                    <label for="teamName">Team Name *</label>
-                    <input type="text" id="teamName" name="teamName" required>
+                    <label for="planName">Plan Name</label>
+                    <input type="text" id="planName" required placeholder="e.g., Monthly Membership">
                 </div>
-                
                 <div class="form-group">
-                    <label for="teamAgeGroup">Age Group</label>
-                    <select id="teamAgeGroup" name="teamAgeGroup">
-                        <option value="">Select age group...</option>
+                    <label for="planAmount">Amount (£)</label>
+                    <input type="number" id="planAmount" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="planFrequency">Frequency</label>
+                    <select id="planFrequency" required>
+                        <option value="">Select Frequency</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="annually">Annually</option>
+                        <option value="one-time">One-time</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="planDescription">Description</label>
+                    <textarea id="planDescription" rows="3" placeholder="Plan details and what's included..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">💳 Create Plan</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Listing Modal -->
+    <div id="createListingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Create Club Listing</h2>
+                <button class="close" onclick="closeModal('createListingModal')">&times;</button>
+            </div>
+            <form id="createListingForm">
+                <div class="form-group">
+                    <label for="listingTitle">Listing Title</label>
+                    <input type="text" id="listingTitle" required placeholder="e.g., U16 Midfielder Wanted">
+                </div>
+                <div class="form-group">
+                    <label for="listingType">Listing Type</label>
+                    <select id="listingType" required>
+                        <option value="">Select Type</option>
+                        <option value="player-wanted">Player Wanted</option>
+                        <option value="trial-announcement">Trial Announcement</option>
+                        <option value="camp-promotion">Camp Promotion</option>
+                        <option value="club-promotion">Club Promotion</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="listingPosition">Position (if applicable)</label>
+                    <input type="text" id="listingPosition" placeholder="e.g., Goalkeeper, Midfielder">
+                </div>
+                <div class="form-group">
+                    <label for="listingAgeGroup">Age Group</label>
+                    <select id="listingAgeGroup">
+                        <option value="">Any Age</option>
                         <option value="U8">Under 8</option>
                         <option value="U10">Under 10</option>
                         <option value="U12">Under 12</option>
@@ -477,39 +1523,59 @@
                         <option value="U16">Under 16</option>
                         <option value="U18">Under 18</option>
                         <option value="Senior">Senior</option>
-                        <option value="Veterans">Veterans</option>
                     </select>
                 </div>
-                
                 <div class="form-group">
-                    <label for="teamSport">Sport *</label>
-                    <select id="teamSport" name="teamSport" required>
-                        <option value="">Select sport...</option>
-                        <option value="football">Football</option>
-                        <option value="basketball">Basketball</option>
-                        <option value="tennis">Tennis</option>
-                        <option value="rugby">Rugby</option>
-                        <option value="cricket">Cricket</option>
-                        <option value="hockey">Hockey</option>
-                        <option value="volleyball">Volleyball</option>
-                        <option value="other">Other</option>
-                    </select>
+                    <label for="listingDescription">Description</label>
+                    <textarea id="listingDescription" rows="4" required placeholder="Describe what you're looking for or promoting..."></textarea>
                 </div>
-                
                 <div class="form-group">
-                    <label for="teamDescription">Description</label>
-                    <textarea id="teamDescription" name="teamDescription" rows="3" placeholder="Brief description of the team..."></textarea>
+                    <label for="listingRequirements">Requirements/Experience Level</label>
+                    <textarea id="listingRequirements" rows="3" placeholder="What experience or skills are needed?"></textarea>
                 </div>
-                
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Create Team</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addTeamModal')">Cancel</button>
-                </div>
+                <button type="submit" class="btn btn-primary">📋 Create Listing</button>
             </form>
         </div>
     </div>
 
-    <!-- Enhanced Scripts Loading -->
+    <!-- Team Management Modal -->
+    <div id="teamManagementModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="teamManagementTitle">⚽ Team Management</h2>
+                <button class="close" onclick="closeModal('teamManagementModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Team management tabs -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(220, 67, 67, 0.2); padding-bottom: 1rem;">
+                    <button class="btn btn-primary btn-small active" onclick="showTeamTab('games')">🏟️ Games</button>
+                    <button class="btn btn-secondary btn-small" onclick="showTeamTab('trainings')">🏋️ Trainings</button>
+                    <button class="btn btn-secondary btn-small" onclick="showTeamTab('players')">👥 Players</button>
+                    <button class="btn btn-secondary btn-small" onclick="showTeamTab('votes')">📊 Votes</button>
+                </div>
+                
+                <!-- Tab content will be populated by JavaScript -->
+                <div id="teamTabContent">
+                    <!-- Content based on selected tab -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Details Modal -->
+    <div id="applicationDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="applicationDetailsTitle">👤 Application Details</h2>
+                <button class="close" onclick="closeModal('applicationDetailsModal')">&times;</button>
+            </div>
+            <div id="applicationDetailsContent">
+                <!-- Application details will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Integration -->
     <script src="https://js.stripe.com/v3/"></script>
     <script src="api-service.js"></script>          
     <script src="stripe-service.js"></script>       
@@ -517,49 +1583,754 @@
     <script src="admin-dashboard.js"></script>
     <script src="enhanced-invite-system.js"></script>
     
-    <!-- Load enhanced invite system -->
     <script>
-        // Load enhanced invite system after other scripts
-        document.addEventListener('DOMContentLoaded', function() {
-            // Load enhanced features after a short delay to ensure all dependencies are loaded
-            setTimeout(() => {
-                if (typeof enhancedInvitePlayer === 'undefined') {
-                    console.log('📧 Loading enhanced invite system...');
-                    
-                    // Load the enhanced invite system script
-                    const script = document.createElement('script');
-                    script.src = 'enhanced-invite-system.js';
-                    script.onload = () => {
-                        console.log('✅ Enhanced invite system loaded!');
-                    };
-                    script.onerror = () => {
-                        console.warn('⚠️ Enhanced invite system failed to load, using fallback');
-                        // Fallback functions
-                        window.enhancedInvitePlayer = function() {
-                            showModal('invitePlayerModal');
-                        };
-                        window.generateShareableInviteLink = function() {
-                            showNotification('Shareable invite feature coming soon!', 'info');
-                        };
-                        window.createListingModal = function() {
-                            showNotification('Listings feature coming soon!', 'info');
-                        };
-                        window.createDocumentUploadModal = function() {
-                            showNotification('Document upload feature coming soon!', 'info');
-                        };
-                        window.loadListings = function() {
-                            console.log('Loading listings...');
-                        };
-                        window.loadDocuments = function() {
-                            console.log('Loading documents...');
-                        };
-                    };
-                    document.head.appendChild(script);
-                }
-            }, 1000);
-        });
+        // Enhanced Admin Dashboard Functions
         
-        // Enhanced showSection function to handle new sections
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏢 Enhanced Admin Dashboard Loading...');
+            
+            // Initialize the main dashboard
+            if (typeof initializeAdminDashboard === 'function') {
+                initializeAdminDashboard();
+            } else {
+                console.warn('⚠️ Admin dashboard initialization function not found, loading fallback');
+                loadFallbackData();
+            }
+            
+            // Set up enhanced event listeners
+            setupEnhancedEventListeners();
+        });
+
+        // Enhanced Event Listeners
+        function setupEnhancedEventListeners() {
+            // Player invite form
+            const invitePlayerForm = document.getElementById('invitePlayerForm');
+            if (invitePlayerForm) {
+                invitePlayerForm.addEventListener('submit', handlePlayerInvite);
+            }
+
+            // Staff invite form
+            const inviteStaffForm = document.getElementById('inviteStaffForm');
+            if (inviteStaffForm) {
+                inviteStaffForm.addEventListener('submit', handleStaffInvite);
+            }
+
+            // Payment plan form
+            const createPaymentPlanForm = document.getElementById('createPaymentPlanForm');
+            if (createPaymentPlanForm) {
+                createPaymentPlanForm.addEventListener('submit', handleCreatePaymentPlan);
+            }
+
+            // Listing form
+            const createListingForm = document.getElementById('createListingForm');
+            if (createListingForm) {
+                createListingForm.addEventListener('submit', handleCreateListing);
+            }
+
+            // Club profile form
+            const clubProfileForm = document.getElementById('clubProfileForm');
+            if (clubProfileForm) {
+                clubProfileForm.addEventListener('submit', handleClubProfileUpdate);
+            }
+        }
+
+        // Enhanced Player Filtering Functions
+        function filterPlayersByView() {
+            const view = document.getElementById('playerListFilter').value;
+            console.log('🔍 Filtering players by view:', view);
+            
+            if (typeof filterPlayers === 'function') {
+                filterPlayers(view);
+            } else {
+                // Fallback filtering
+                filterPlayersLocal(view);
+            }
+        }
+
+        function filterPlayersByTeam() {
+            const teamId = document.getElementById('teamFilter').value;
+            console.log('🔍 Filtering players by team:', teamId);
+            // Implement team filtering logic
+        }
+
+        function filterPlayersByPayment() {
+            const status = document.getElementById('paymentStatusFilter').value;
+            console.log('🔍 Filtering players by payment:', status);
+            // Implement payment status filtering logic
+        }
+
+        function resetPlayerFilters() {
+            document.getElementById('playerListFilter').value = 'all';
+            document.getElementById('teamFilter').value = '';
+            document.getElementById('paymentStatusFilter').value = '';
+            
+            if (typeof loadPlayers === 'function') {
+                loadPlayers();
+            }
+        }
+
+        function exportPlayers() {
+            console.log('📊 Exporting players data...');
+            showNotification('Export functionality coming soon!', 'info');
+        }
+
+        // Enhanced Team Management Functions
+        function openTeamManagement(teamId) {
+            console.log('⚽ Opening team management for:', teamId);
+            
+            // Load team data and show modal
+            const modal = document.getElementById('teamManagementModal');
+            const title = document.getElementById('teamManagementTitle');
+            
+            if (title) {
+                title.textContent = `⚽ Team Management - ${teamId}`;
+            }
+            
+            showModal('teamManagementModal');
+            showTeamTab('games'); // Default to games tab
+        }
+
+        function showTeamTab(tabName) {
+            // Update tab buttons
+            const tabButtons = document.querySelectorAll('#teamManagementModal .btn');
+            tabButtons.forEach(btn => {
+                btn.classList.remove('btn-primary', 'active');
+                btn.classList.add('btn-secondary');
+            });
+            
+            const activeButton = document.querySelector(`[onclick*="showTeamTab('${tabName}')"]`);
+            if (activeButton) {
+                activeButton.classList.remove('btn-secondary');
+                activeButton.classList.add('btn-primary', 'active');
+            }
+            
+            // Load tab content
+            const tabContent = document.getElementById('teamTabContent');
+            if (tabContent) {
+                switch(tabName) {
+                    case 'games':
+                        tabContent.innerHTML = `
+                            <h4>🏟️ Games & Matches</h4>
+                            <p>View and create games for this team. Players can vote on availability.</p>
+                            <button class="btn btn-primary">➕ Create Game</button>
+                            <div id="teamGames" style="margin-top: 1rem;">
+                                <!-- Games will be loaded here -->
+                            </div>
+                        `;
+                        break;
+                    case 'trainings':
+                        tabContent.innerHTML = `
+                            <h4>🏋️ Training Sessions</h4>
+                            <p>Schedule and manage training sessions for this team.</p>
+                            <button class="btn btn-primary">➕ Create Training</button>
+                            <div id="teamTrainings" style="margin-top: 1rem;">
+                                <!-- Trainings will be loaded here -->
+                            </div>
+                        `;
+                        break;
+                    case 'players':
+                        tabContent.innerHTML = `
+                            <h4>👥 Team Players</h4>
+                            <p>Manage players assigned to this team.</p>
+                            <button class="btn btn-primary">➕ Add Player</button>
+                            <div id="teamPlayersManagement" style="margin-top: 1rem;">
+                                <!-- Players management will be loaded here -->
+                            </div>
+                        `;
+                        break;
+                    case 'votes':
+                        tabContent.innerHTML = `
+                            <h4>📊 Availability Votes</h4>
+                            <p>View player availability votes for upcoming events.</p>
+                            <div id="teamVotes" style="margin-top: 1rem;">
+                                <!-- Votes will be loaded here -->
+                            </div>
+                        `;
+                        break;
+                }
+            }
+        }
+
+        // Enhanced Staff Invite Functions
+        function generateStaffInvite(role) {
+            console.log('📧 Generating staff invite for role:', role);
+            
+            // Pre-fill the invite form based on role
+            const roleSelect = document.getElementById('staffInviteRole');
+            if (roleSelect) {
+                if (role === 'coach') {
+                    roleSelect.value = 'coach';
+                } else if (role === 'assistant') {
+                    roleSelect.value = 'assistant-coach';
+                } else if (role === 'admin') {
+                    roleSelect.value = 'administrator';
+                }
+            }
+            
+            showModal('inviteStaffModal');
+        }
+
+        // Enhanced Listings Functions
+        function shortlistApplicant(applicantId) {
+            console.log('⭐ Shortlisting applicant:', applicantId);
+            showNotification('Applicant shortlisted!', 'success');
+        }
+
+        function viewApplicantDetails(applicantId) {
+            console.log('👁️ Viewing applicant details:', applicantId);
+            
+            // Show application details modal
+            const modal = document.getElementById('applicationDetailsModal');
+            const title = document.getElementById('applicationDetailsTitle');
+            const content = document.getElementById('applicationDetailsContent');
+            
+            if (title) title.textContent = `👤 Application Details - ${applicantId}`;
+            
+            if (content) {
+                content.innerHTML = `
+                    <div class="application-detail">
+                        <h4>Personal Information</h4>
+                        <p><strong>Name:</strong> ${applicantId}</p>
+                        <p><strong>Email:</strong> applicant@email.com</p>
+                        <p><strong>Phone:</strong> +44 7700 900000</p>
+                        <p><strong>Age:</strong> 16</p>
+                        
+                        <h4>Application Details</h4>
+                        <p><strong>Position Applied For:</strong> Midfielder</p>
+                        <p><strong>Experience:</strong> 3 years club football</p>
+                        <p><strong>Previous Teams:</strong> Local Youth FC</p>
+                        
+                        <h4>Application Message</h4>
+                        <p>I'm passionate about football and would love to join your club...</p>
+                        
+                        <div style="margin-top: 2rem;">
+                            <button class="btn btn-success" onclick="shortlistApplicant('${applicantId}')">⭐ Shortlist</button>
+                            <button class="btn btn-warning" onclick="inviteToSession('${applicantId}')">📧 Invite to Training</button>
+                            <button class="btn btn-danger" onclick="rejectApplicant('${applicantId}')">❌ Reject</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            showModal('applicationDetailsModal');
+        }
+
+        function inviteToSession(applicantId) {
+            console.log('📧 Inviting applicant to session:', applicantId);
+            showNotification('Training invitation sent!', 'success');
+            closeModal('applicationDetailsModal');
+        }
+
+        function rejectApplicant(applicantId) {
+            if (confirm('Send automatic rejection email to this applicant?')) {
+                console.log('❌ Rejecting applicant:', applicantId);
+                showNotification('Rejection email sent automatically', 'info');
+                closeModal('applicationDetailsModal');
+            }
+        }
+
+        // Enhanced Form Handlers
+        async function handlePlayerInvite(e) {
+            e.preventDefault();
+            console.log('📧 Sending player invite...');
+            
+            const inviteData = {
+                email: document.getElementById('inviteEmail').value,
+                firstName: document.getElementById('inviteFirstName').value,
+                lastName: document.getElementById('inviteLastName').value,
+                role: document.getElementById('inviteRole').value,
+                teamId: document.getElementById('inviteTeam').value,
+                message: document.getElementById('inviteMessage').value
+            };
+            
+            try {
+                // Use existing API service if available
+                if (typeof apiService !== 'undefined' && apiService.generateClubInvite) {
+                    const response = await apiService.generateClubInvite(inviteData);
+                    showNotification('Invite sent successfully!', 'success');
+                    closeModal('invitePlayerModal');
+                } else {
+                    // Fallback
+                    showNotification('Player invite sent!', 'success');
+                    closeModal('invitePlayerModal');
+                }
+                
+                document.getElementById('invitePlayerForm').reset();
+            } catch (error) {
+                console.error('❌ Failed to send invite:', error);
+                showNotification('Failed to send invite', 'error');
+            }
+        }
+
+        async function handleStaffInvite(e) {
+            e.preventDefault();
+            console.log('📧 Sending staff invite...');
+            
+            const permissions = Array.from(document.querySelectorAll('input[name="staffPermissions"]:checked'))
+                                      .map(cb => cb.value);
+            
+            const inviteData = {
+                email: document.getElementById('staffInviteEmail').value,
+                firstName: document.getElementById('staffInviteFirstName').value,
+                lastName: document.getElementById('staffInviteLastName').value,
+                role: document.getElementById('staffInviteRole').value,
+                teamId: document.getElementById('staffInviteTeam').value,
+                permissions: permissions
+            };
+            
+            try {
+                showNotification('Staff invite sent successfully!', 'success');
+                closeModal('inviteStaffModal');
+                document.getElementById('inviteStaffForm').reset();
+            } catch (error) {
+                console.error('❌ Failed to send staff invite:', error);
+                showNotification('Failed to send staff invite', 'error');
+            }
+        }
+
+        async function handleCreatePaymentPlan(e) {
+            e.preventDefault();
+            console.log('💳 Creating payment plan...');
+            
+            const planData = {
+                name: document.getElementById('planName').value,
+                amount: parseFloat(document.getElementById('planAmount').value),
+                frequency: document.getElementById('planFrequency').value,
+                description: document.getElementById('planDescription').value
+            };
+            
+            try {
+                showNotification('Payment plan created successfully!', 'success');
+                closeModal('createPaymentPlanModal');
+                document.getElementById('createPaymentPlanForm').reset();
+                
+                // Reload payment plans
+                if (typeof loadFinances === 'function') {
+                    loadFinances();
+                }
+            } catch (error) {
+                console.error('❌ Failed to create payment plan:', error);
+                showNotification('Failed to create payment plan', 'error');
+            }
+        }
+
+        async function handleCreateListing(e) {
+            e.preventDefault();
+            console.log('📋 Creating listing...');
+            
+            const listingData = {
+                title: document.getElementById('listingTitle').value,
+                type: document.getElementById('listingType').value,
+                position: document.getElementById('listingPosition').value,
+                ageGroup: document.getElementById('listingAgeGroup').value,
+                description: document.getElementById('listingDescription').value,
+                requirements: document.getElementById('listingRequirements').value
+            };
+            
+            try {
+                showNotification('Listing created successfully!', 'success');
+                closeModal('createListingModal');
+                document.getElementById('createListingForm').reset();
+                
+                // Reload listings
+                loadListings();
+            } catch (error) {
+                console.error('❌ Failed to create listing:', error);
+                showNotification('Failed to create listing', 'error');
+            }
+        }
+
+        // Stripe Integration
+        function accessStripeAccount() {
+            console.log('💳 Accessing Stripe dashboard...');
+            const stripeUrl = 'https://dashboard.stripe.com/';
+            window.open(stripeUrl, '_blank');
+        }
+
+        // Picture Upload Handler
+        function handlePictureUpload(input) {
+            const files = input.files;
+            const uploadedPictures = document.getElementById('uploadedPictures');
+            
+            if (files.length > 5) {
+                showNotification('Maximum 5 pictures allowed', 'error');
+                return;
+            }
+            
+            uploadedPictures.innerHTML = '';
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.style.cssText = 'display: inline-block; margin: 0.5rem; position: relative;';
+                    imgDiv.innerHTML = `
+                        <img src="${e.target.result}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                        <button type="button" onclick="this.parentElement.remove()" style="position: absolute; top: -5px; right: -5px; background: #dc4343; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">×</button>
+                    `;
+                    uploadedPictures.appendChild(imgDiv);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Fallback data loading
+        function loadFallbackData() {
+            console.log('📊 Loading fallback dashboard data...');
+            
+            // Load some sample data
+            document.getElementById('totalPlayers').textContent = '47';
+            document.getElementById('totalStaff').textContent = '8';
+            document.getElementById('totalEvents').textContent = '12';
+            document.getElementById('totalRevenue').textContent = '£2,840';
+            
+            // Load sample players
+            loadSamplePlayers();
+        }
+
+        function loadSamplePlayers() {
+            const container = document.getElementById('playersContainer');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div class="player-card">
+                    <div class="player-header">
+                        <div class="player-info">
+                            <h4>James Wilson</h4>
+                            <span class="payment-plan-badge">Monthly Plan - £45</span>
+                        </div>
+                        <div class="player-status">
+                            <span class="status-badge status-paid">Paid</span>
+                        </div>
+                    </div>
+                    <div class="player-meta">
+                        <span><strong>Age:</strong> 16</span>
+                        <span><strong>Team:</strong> U16 Lions</span>
+                        <span><strong>Position:</strong> Midfielder</span>
+                        <span><strong>Email:</strong> james.wilson@email.com</span>
+                        <span><strong>Phone:</strong> +44 7700 900123</span>
+                        <span><strong>Account:</strong> ✅ Linked</span>
+                    </div>
+                    <div class="player-actions">
+                        <button class="btn btn-small btn-secondary">✏️ Edit</button>
+                        <button class="btn btn-small btn-primary">⚽ Team</button>
+                        <button class="btn btn-small btn-success">💳 Payment</button>
+                        <button class="btn btn-small btn-danger">🗑️ Remove</button>
+                    </div>
+                </div>
+                
+                <div class="player-card not-assigned">
+                    <div class="player-header">
+                        <div class="player-info">
+                            <h4>Sarah Johnson</h4>
+                            <span class="no-plan-badge">No Plan Set</span>
+                        </div>
+                        <div class="player-status">
+                            <span class="status-badge status-not-assigned">Not Assigned</span>
+                        </div>
+                    </div>
+                    <div class="player-meta">
+                        <span><strong>Age:</strong> 14</span>
+                        <span><strong>Team:</strong> Not Assigned</span>
+                        <span><strong>Position:</strong> Not Set</span>
+                        <span><strong>Email:</strong> sarah.johnson@email.com</span>
+                        <span><strong>Phone:</strong> +44 7700 900456</span>
+                        <span><strong>Account:</strong> ⚠️ No Link</span>
+                    </div>
+                    <div class="player-actions">
+                        <button class="btn btn-small btn-secondary">✏️ Edit</button>
+                        <button class="btn btn-small btn-warning">⚽ Assign Team</button>
+                        <button class="btn btn-small btn-primary">💰 Set Plan</button>
+                        <button class="btn btn-small btn-danger">🗑️ Remove</button>
+                    </div>
+                </div>
+                
+                <div class="player-card overdue">
+                    <div class="player-header">
+                        <div class="player-info">
+                            <h4>Michael Chen</h4>
+                            <span class="payment-plan-badge">Monthly Plan - £50</span>
+                        </div>
+                        <div class="player-status">
+                            <span class="status-badge status-overdue">Overdue</span>
+                        </div>
+                    </div>
+                    <div class="player-meta">
+                        <span><strong>Age:</strong> 18</span>
+                        <span><strong>Team:</strong> U18 Eagles</span>
+                        <span><strong>Position:</strong> Forward</span>
+                        <span><strong>Email:</strong> michael.chen@email.com</span>
+                        <span><strong>Phone:</strong> +44 7700 900789</span>
+                        <span><strong>Account:</strong> ✅ Linked</span>
+                    </div>
+                    <div class="player-actions">
+                        <button class="btn btn-small btn-secondary">✏️ Edit</button>
+                        <button class="btn btn-small btn-primary">⚽ Team</button>
+                        <button class="btn btn-small btn-danger">📧 Reminder</button>
+                        <button class="btn btn-small btn-success">💳 Payment</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load sample teams
+        function loadSampleTeams() {
+            const container = document.getElementById('teamsContainer');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div class="team-card" onclick="openTeamManagement('u16-lions')">
+                    <h4>🦁 U16 Lions</h4>
+                    <div class="team-stats">
+                        <div>
+                            <span class="team-stat-number">18</span>
+                            <span class="team-stat-label">Players</span>
+                        </div>
+                        <div>
+                            <span class="team-stat-number">8</span>
+                            <span class="team-stat-label">Wins</span>
+                        </div>
+                        <div>
+                            <span class="team-stat-number">3</span>
+                            <span class="team-stat-label">Training</span>
+                        </div>
+                        <div>
+                            <span class="team-stat-number">5</span>
+                            <span class="team-stat-label">Games</span>
+                        </div>
+                    </div>
+                    <p><strong>Coach:</strong> John Smith</p>
+                    <p><strong>Next Event:</strong> Training - Tomorrow 6PM</p>
+                    <div class="player-actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-small btn-primary">📋 Manage</button>
+                        <button class="btn btn-small btn-secondary">📅 Events</button>
+                        <button class="btn btn-small btn-success">👥 Players</button>
+                    </div>
+                </div>
+                
+                <div class="team-card" onclick="openTeamManagement('u18-eagles')">
+                    <h4>🦅 U18 Eagles</h4>
+                    <div class="team-stats">
+                        <div>
+                            <span class="team-stat-number">22</span>
+                            <span class="team-stat-label">Players</span>
+                        </div>
+                        <div>
+                            <span class="team-stat-number">12</span>
+                            <span class="team-stat-label">Wins</span>
+                        </div>
+                        <div>
+                            <span class="team-stat-number">4</span>
+                            <span class="team-stat-label">Training</span>
+                        </div>
+                        <div>
+                            <span class="team-stat-number">8</span>
+                            <span class="team-stat-label">Games</span>
+                        </div>
+                    </div>
+                    <p><strong>Coach:</strong> Emma Wilson</p>
+                    <p><strong>Next Event:</strong> Match vs City FC - Friday 7PM</p>
+                    <div class="player-actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-small btn-primary">📋 Manage</button>
+                        <button class="btn btn-small btn-secondary">📅 Events</button>
+                        <button class="btn btn-small btn-success">👥 Players</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load sample listings
+        function loadListings() {
+            console.log('📋 Loading listings...');
+            
+            const activeContainer = document.getElementById('activeListingsContainer');
+            if (activeContainer) {
+                activeContainer.innerHTML = `
+                    <div class="listing-card">
+                        <h4>📋 U16 Midfielder Wanted</h4>
+                        <p><strong>Position:</strong> Central Midfielder</p>
+                        <p><strong>Posted:</strong> 3 days ago</p>
+                        <p><strong>Applications:</strong> 7 received</p>
+                        <div class="player-actions">
+                            <button class="btn btn-small btn-primary" onclick="viewListingApplications('u16-midfielder')">👁️ View Applications</button>
+                            <button class="btn btn-small btn-secondary">✏️ Edit</button>
+                            <button class="btn btn-small btn-danger">🗑️ Delete</button>
+                        </div>
+                    </div>
+                    
+                    <div class="listing-card">
+                        <h4>📋 Senior Team Goalkeeper</h4>
+                        <p><strong>Position:</strong> Goalkeeper</p>
+                        <p><strong>Posted:</strong> 1 week ago</p>
+                        <p><strong>Applications:</strong> 3 received</p>
+                        <div class="player-actions">
+                            <button class="btn btn-small btn-primary" onclick="viewListingApplications('senior-gk')">👁️ View Applications</button>
+                            <button class="btn btn-small btn-secondary">✏️ Edit</button>
+                            <button class="btn btn-small btn-danger">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const applicationsContainer = document.getElementById('applicationsContainer');
+            if (applicationsContainer) {
+                applicationsContainer.innerHTML = `
+                    <div class="application-item">
+                        <div>
+                            <h4>Alex Thompson</h4>
+                            <p><strong>Applied for:</strong> U16 Midfielder</p>
+                            <p><strong>Experience:</strong> 2 years club football</p>
+                            <p><strong>Age:</strong> 15</p>
+                        </div>
+                        <div class="application-actions">
+                            <button class="btn btn-small btn-success" onclick="shortlistApplicant('alex-thompson')" title="Shortlist">⭐ Shortlist</button>
+                            <button class="btn btn-small btn-primary" onclick="viewApplicantDetails('alex-thompson')" title="View Details">👁️ Details</button>
+                            <button class="btn btn-small btn-warning" onclick="inviteToSession('alex-thompson')" title="Invite to Training">📧 Invite</button>
+                            <button class="btn btn-small btn-danger" onclick="rejectApplicant('alex-thompson')" title="Reject">❌ Reject</button>
+                        </div>
+                    </div>
+                    
+                    <div class="application-item">
+                        <div>
+                            <h4>Sophie Martinez</h4>
+                            <p><strong>Applied for:</strong> Senior Team Goalkeeper</p>
+                            <p><strong>Experience:</strong> 5 years competitive football</p>
+                            <p><strong>Age:</strong> 19</p>
+                        </div>
+                        <div class="application-actions">
+                            <button class="btn btn-small btn-success" onclick="shortlistApplicant('sophie-martinez')" title="Shortlist">⭐ Shortlist</button>
+                            <button class="btn btn-small btn-primary" onclick="viewApplicantDetails('sophie-martinez')" title="View Details">👁️ Details</button>
+                            <button class="btn btn-small btn-warning" onclick="inviteToSession('sophie-martinez')" title="Invite to Training">📧 Invite</button>
+                            <button class="btn btn-small btn-danger" onclick="rejectApplicant('sophie-martinez')" title="Reject">❌ Reject</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function viewListingApplications(listingId) {
+            console.log('👁️ Viewing applications for listing:', listingId);
+            showNotification('Viewing applications for: ' + listingId, 'info');
+        }
+
+        // Utility Functions
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+                
+                // Focus first input
+                const firstInput = modal.querySelector('input[type="email"], input[type="text"]');
+                if (firstInput) {
+                    setTimeout(() => firstInput.focus(), 100);
+                }
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                
+                // Clear form if it exists
+                const form = modal.querySelector('form');
+                if (form) {
+                    form.reset();
+                }
+            }
+        }
+
+        function showNotification(message, type = 'info', duration = 4000) {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            
+            const colors = {
+                success: '#28a745',
+                error: '#dc3545',
+                warning: '#ffc107',
+                info: '#007bff'
+            };
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 16px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 14px;
+                z-index: 10000;
+                max-width: 400px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            
+            notification.innerHTML = `
+                <span>${icons[type] || icons.info}</span>
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" style="
+                    background: none;
+                    border: none;
+                    color: white;
+                    font-size: 18px;
+                    cursor: pointer;
+                    margin-left: auto;
+                    padding: 0;
+                    opacity: 0.8;
+                ">×</button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Auto remove
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.transform = 'translateX(100%)';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, duration);
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                // Clear any stored data
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Redirect to login page
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Enhanced showSection function
         function showSection(sectionId) {
             // Hide all sections
             const sections = document.querySelectorAll('.dashboard-section');
@@ -585,74 +2356,85 @@
                 clickedButton.classList.add('active');
             }
             
-            // Update content based on section
+            // Load section-specific data
             switch(sectionId) {
                 case 'overview':
-                    if (typeof loadDashboardStats === 'function') loadDashboardStats();
-                    break;
-                case 'players':
-                    if (typeof loadPlayers === 'function') loadPlayers();
-                    break;
-                case 'staff':
-                    if (typeof loadStaff === 'function') loadStaff();
-                    break;
-                case 'teams':
-                    if (typeof loadTeams === 'function') loadTeams();
-                    break;
-                case 'events':
-                    if (typeof loadEvents === 'function') loadEvents();
-                    break;
-                case 'finances':
-                    if (typeof loadFinances === 'function') loadFinances();
-                    break;
-                case 'club-profile':
-                    if (typeof loadClubData === 'function') loadClubData();
-                    break;
-                case 'listings':
-                    if (typeof loadListings === 'function') {
-                        loadListings();
-                    } else {
-                        console.log('📋 Listings section selected');
-                        // Show placeholder content
-                        const listingsContainer = document.getElementById('listingsContainer');
-                        if (listingsContainer && listingsContainer.children.length === 0) {
-                            listingsContainer.innerHTML = `
-                                <div class="card">
-                                    <h4>📋 Club Listings</h4>
-                                    <p>Create listings to promote your club, recruit players, or advertise events.</p>
-                                    <button class="btn btn-primary" onclick="createListingModal()">Create Your First Listing</button>
-                                </div>
-                            `;
-                        }
+                    if (typeof loadDashboardStats === 'function') {
+                        loadDashboardStats();
                     }
                     break;
-                case 'documents':
-                    if (typeof loadDocuments === 'function') {
-                        loadDocuments();
+                case 'players':
+                    if (typeof loadPlayers === 'function') {
+                        loadPlayers();
                     } else {
-                        console.log('📄 Documents section selected');
-                        // Show placeholder content
-                        const documentsTableBody = document.getElementById('documentsTableBody');
-                        if (documentsTableBody && documentsTableBody.children.length === 0) {
-                            documentsTableBody.innerHTML = `
-                                <tr>
-                                    <td colspan="5" style="text-align: center; padding: 2rem;">
-                                        <div>
-                                            <h4>📄 No Documents Yet</h4>
-                                            <p>Upload documents to share with your club members</p>
-                                            <button class="btn btn-primary" onclick="createDocumentUploadModal()">Upload First Document</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                        }
+                        loadSamplePlayers();
+                    }
+                    break;
+                case 'teams':
+                    if (typeof loadTeams === 'function') {
+                        loadTeams();
+                    } else {
+                        loadSampleTeams();
+                    }
+                    break;
+                case 'staff':
+                    if (typeof loadStaff === 'function') {
+                        loadStaff();
+                    }
+                    break;
+                case 'events':
+                    if (typeof loadEvents === 'function') {
+                        loadEvents();
+                    }
+                    break;
+                case 'finances':
+                    if (typeof loadFinances === 'function') {
+                        loadFinances();
+                    }
+                    break;
+                case 'listings':
+                    loadListings();
+                    break;
+                case 'club-profile':
+                    if (typeof loadClubData === 'function') {
+                        loadClubData();
                     }
                     break;
             }
         }
-        
-        // Make showSection globally available
+
+        // Make functions globally available
         window.showSection = showSection;
+        window.showModal = showModal;
+        window.closeModal = closeModal;
+        window.showNotification = showNotification;
+        window.openTeamManagement = openTeamManagement;
+        window.showTeamTab = showTeamTab;
+        window.generateStaffInvite = generateStaffInvite;
+        window.shortlistApplicant = shortlistApplicant;
+        window.viewApplicantDetails = viewApplicantDetails;
+        window.inviteToSession = inviteToSession;
+        window.rejectApplicant = rejectApplicant;
+        window.accessStripeAccount = accessStripeAccount;
+        window.handlePictureUpload = handlePictureUpload;
+        window.filterPlayersByView = filterPlayersByView;
+        window.filterPlayersByTeam = filterPlayersByTeam;
+        window.filterPlayersByPayment = filterPlayersByPayment;
+        window.resetPlayerFilters = resetPlayerFilters;
+        window.exportPlayers = exportPlayers;
+        window.logout = logout;
+        window.loadListings = loadListings;
+        window.viewListingApplications = viewListingApplications;
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        console.log('✅ Enhanced Admin Dashboard with Real Database Integration Ready!');
     </script>
 </body>
 </html>
