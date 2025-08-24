@@ -857,14 +857,14 @@
         window.showLogin = showLogin;
         window.showRegister = showRegister;
 
-        // Basic form handling (will be enhanced when script.js loads)
+        // Basic form handling (will be enhanced when app.js loads)
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
 
         if (loginForm) {
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                console.log('Login form submitted - waiting for script.js to handle authentication');
+                console.log('Login form submitted - waiting for app.js to handle authentication');
                 
                 // Show loading state
                 const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -877,7 +877,7 @@
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
                     
-                    // Show message if script.js hasn't loaded yet
+                    // Show message if app.js hasn't loaded yet
                     if (!window.AppState || !window.apiService) {
                         alert('System loading... Please try again in a moment.');
                     }
@@ -909,7 +909,7 @@
                     return;
                 }
 
-                console.log('Register form submitted - waiting for script.js to handle registration');
+                console.log('Register form submitted - waiting for app.js to handle registration');
                 
                 // Show loading state
                 const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -922,7 +922,7 @@
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
                     
-                    // Show message if script.js hasn't loaded yet
+                    // Show message if app.js hasn't loaded yet
                     if (!window.AppState || !window.apiService) {
                         alert('System loading... Please try again in a moment.');
                     }
@@ -931,7 +931,7 @@
         }
     </script>
 
-    <!-- Load external scripts after DOM is ready -->
+    <!-- Load external scripts and handle authentication -->
     <script>
         // Load external scripts dynamically to prevent blocking
         function loadScript(src, callback) {
@@ -945,7 +945,6 @@
             document.head.appendChild(script);
         }
 
-        // Load scripts in sequence
         setTimeout(() => {
             console.log('Loading external scripts...');
             
@@ -953,29 +952,47 @@
             loadScript('api-service.js', function() {
                 console.log('API service loaded');
                 
-                // Then load script.js
                 loadScript('script.js', function() {
-                    console.log('script.js loaded');
+                    console.log('Script.js loaded successfully');
                     
-                    // Override form handlers if script.js loaded successfully
-                    if (window.AppState && typeof window.handleLogin === 'function') {
+                    
+                    if (window.handleLogin && window.handleRegister) {
                         const loginForm = document.getElementById('loginForm');
+                        const registerForm = document.getElementById('registerForm');
+                        
                         if (loginForm) {
-                            // Remove existing listeners and add proper handler
                             const newLoginForm = loginForm.cloneNode(true);
                             loginForm.parentNode.replaceChild(newLoginForm, loginForm);
                             newLoginForm.addEventListener('submit', window.handleLogin);
+                            console.log('✅ Login form handler updated');
                         }
-                    }
-
-                    if (window.AppState && typeof window.handleRegister === 'function') {
-                        const registerForm = document.getElementById('registerForm');
+                        
                         if (registerForm) {
-                            // Remove existing listeners and add proper handler
                             const newRegisterForm = registerForm.cloneNode(true);
                             registerForm.parentNode.replaceChild(newRegisterForm, registerForm);
                             newRegisterForm.addEventListener('submit', window.handleRegister);
+                            console.log('✅ Register form handler updated');
+                            
+                            // Re-setup account type styling
+                            const accountTypeRadios = newRegisterForm.querySelectorAll('input[name="accountType"]');
+                            accountTypeRadios.forEach(radio => {
+                                radio.addEventListener('change', function() {
+                                    // Remove selected style from all labels
+                                    newRegisterForm.querySelectorAll('input[name="accountType"]').forEach(r => {
+                                        r.parentElement.style.borderColor = '#e9ecef';
+                                        r.parentElement.style.backgroundColor = 'white';
+                                    });
+                                    
+                                    // Add selected style to chosen label
+                                    if (this.checked) {
+                                        this.parentElement.style.borderColor = '#dc2626';
+                                        this.parentElement.style.backgroundColor = 'rgba(220, 38, 38, 0.05)';
+                                    }
+                                });
+                            });
                         }
+                        
+                        console.log('✅ All form handlers successfully updated with script.js handlers');
                     }
                 });
             });
