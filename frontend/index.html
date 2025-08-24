@@ -857,14 +857,14 @@
         window.showLogin = showLogin;
         window.showRegister = showRegister;
 
-        // Basic form handling (will be enhanced when server.js loads)
+        // Basic form handling (will be enhanced when script.js loads)
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
 
         if (loginForm) {
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                console.log('Login form submitted - waiting for server.js to handle authentication');
+                console.log('Login form submitted - waiting for script.js to handle authentication');
                 
                 // Show loading state
                 const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -877,7 +877,7 @@
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
                     
-                    // Show message if server.js hasn't loaded yet
+                    // Show message if script.js hasn't loaded yet
                     if (!window.AppState || !window.apiService) {
                         alert('System loading... Please try again in a moment.');
                     }
@@ -909,7 +909,7 @@
                     return;
                 }
 
-                console.log('Register form submitted - waiting for server.js to handle registration');
+                console.log('Register form submitted - waiting for script.js to handle registration');
                 
                 // Show loading state
                 const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -922,7 +922,7 @@
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
                     
-                    // Show message if server.js hasn't loaded yet
+                    // Show message if script.js hasn't loaded yet
                     if (!window.AppState || !window.apiService) {
                         alert('System loading... Please try again in a moment.');
                     }
@@ -953,11 +953,11 @@
             loadScript('api-service.js', function() {
                 console.log('API service loaded');
                 
-                // Then load server.js
-                loadScript('server.js', function() {
-                    console.log('server.js loaded');
+                // Then load script.js
+                loadScript('script.js', function() {
+                    console.log('script.js loaded');
                     
-                    // Override form handlers if server.js loaded successfully
+                    // Override form handlers if script.js loaded successfully
                     if (window.AppState && typeof window.handleLogin === 'function') {
                         const loginForm = document.getElementById('loginForm');
                         if (loginForm) {
