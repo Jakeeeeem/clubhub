@@ -6,7 +6,7 @@
     <title>ClubHub - Sports Club Management Platform</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Hero Section Styles */
+        /* Landing page specific styles only */
         .hero-main {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 90vh;
@@ -16,22 +16,7 @@
             text-align: center;
             position: relative;
             overflow: hidden;
-        }
-
-        .hero-main::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="60" cy="40" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="2.5" fill="rgba(255,255,255,0.1)"/></svg>');
-            animation: float 20s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+            margin-top: 80px;
         }
 
         .hero-content {
@@ -50,7 +35,6 @@
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
 
         .hero-subtitle {
@@ -80,8 +64,6 @@
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
-            position: relative;
-            overflow: hidden;
         }
 
         .btn-hero-primary {
@@ -122,15 +104,10 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .feature-preview h3 {
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Account Types Section */
         .account-types {
             padding: 5rem 0;
             background: #f8f9fa;
+            color: #333;
         }
 
         .account-types-grid {
@@ -148,7 +125,6 @@
             padding: 3rem;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
-            border: 3px solid transparent;
             position: relative;
             overflow: hidden;
         }
@@ -156,10 +132,6 @@
         .account-type-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-        }
-
-        .account-type-card.organization {
-            border-color: #667eea;
         }
 
         .account-type-card.organization::before {
@@ -170,10 +142,6 @@
             right: 0;
             height: 5px;
             background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .account-type-card.player {
-            border-color: #ff6b6b;
         }
 
         .account-type-card.player::before {
@@ -194,7 +162,6 @@
             align-items: center;
             justify-content: center;
             font-size: 2.5rem;
-            margin-bottom: 2rem;
             margin: 0 auto 2rem auto;
         }
 
@@ -204,20 +171,6 @@
 
         .player .account-icon {
             background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-        }
-
-        .account-type-card h3 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            text-align: center;
-            color: #333;
-        }
-
-        .account-type-card .subtitle {
-            color: #666;
-            text-align: center;
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
         }
 
         .features-list {
@@ -234,36 +187,12 @@
             color: #555;
         }
 
-        .features-list li:last-child {
-            border-bottom: none;
-        }
-
         .features-list li::before {
             content: '✅';
             margin-right: 1rem;
             font-size: 1.2rem;
         }
 
-        .pricing-info {
-            background: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin: 2rem 0;
-            text-align: center;
-        }
-
-        .pricing-info .price {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .pricing-info .period {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        /* Benefits Section */
         .benefits {
             padding: 5rem 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -290,16 +219,11 @@
             display: block;
         }
 
-        .benefit-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        /* CTA Section */
         .final-cta {
             padding: 5rem 0;
             background: #fff;
             text-align: center;
+            color: #333;
         }
 
         .final-cta h2 {
@@ -317,208 +241,11 @@
             margin-right: auto;
         }
 
-        /* Basic Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-            position: relative;
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-header {
-            padding: 2rem 2rem 1rem 2rem;
-            border-bottom: 1px solid #eee;
-            position: relative;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            color: #333;
-        }
-
-        .close {
-            position: absolute;
-            right: 20px;
-            top: 15px;
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            line-height: 1;
-        }
-
-        .close:hover {
-            color: #000;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-            box-sizing: border-box;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #dc2626;
-        }
-
-        .btn {
-            background: #dc2626;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: background 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .btn:hover {
-            background: #b91c1c;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background: #545862;
-        }
-
-        .btn-primary {
-            background: #dc2626;
-        }
-
-        .btn-primary:hover {
-            background: #b91c1c;
-        }
-
-        /* Header Styles */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            padding: 1rem 0;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
-
-        .nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo-image {
-            height: 40px;
-            width: auto;
-        }
-
-        .logo-text {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #dc2626;
-        }
-
-        .nav-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        .main {
-            margin-top: 80px;
-        }
-
-        /* Responsive Design */
         @media (max-width: 768px) {
-            .hero-title {
-                font-size: 2.5rem;
-            }
-
-            .hero-subtitle {
-                font-size: 1.2rem;
-            }
-
-            .hero-cta {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .features-preview {
-                grid-template-columns: 1fr;
-            }
-
-            .account-types-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .benefits-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .final-cta h2 {
-                font-size: 2rem;
-            }
+            .hero-title { font-size: 2.5rem; }
+            .features-preview { grid-template-columns: 1fr; }
+            .account-types-grid { grid-template-columns: 1fr; }
+            .benefits-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -526,59 +253,56 @@
     <header class="header">
         <nav class="nav container">
             <div class="logo">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" onerror="this.style.display='none'">
                 <span class="logo-text">ClubHub</span>
             </div>
-            <div class="nav-buttons" id="navButtons">
-                <button class="btn btn-secondary" id="loginBtn">Login</button>
-                <button class="btn btn-primary" id="signupBtn">Sign Up</button>
+            <div class="nav-buttons" id="loggedOutNav">
+                <button class="btn btn-secondary" onclick="showModal('loginModal')">Login</button>
+                <button class="btn btn-primary" onclick="showSignupOptions()">Sign Up</button>
             </div>
             <div class="nav-buttons" id="loggedInNav" style="display: none;">
-                <!-- Populated by JavaScript when logged in -->
+                <!-- Populated by enhanced-login-handler.js -->
             </div>
         </nav>
     </header>
 
     <main class="main">
-        <!-- Hero Section -->
         <section class="hero-main">
             <div class="hero-content">
                 <h1 class="hero-title">Welcome to ClubHub</h1>
                 <p class="hero-subtitle">The complete sports club management platform that connects clubs, coaches, and players in one powerful ecosystem</p>
                 
                 <div class="hero-cta">
-                    <button class="btn-hero btn-hero-primary" id="heroSignupBtn">Start Your Journey</button>
-                    <button class="btn-hero btn-hero-secondary" id="heroLearnMoreBtn">Learn More</button>
+                    <button class="btn-hero btn-hero-primary" onclick="showSignupOptions()">Start Your Journey</button>
+                    <button class="btn-hero btn-hero-secondary" onclick="document.getElementById('account-types').scrollIntoView({behavior: 'smooth'})">Learn More</button>
                 </div>
 
                 <div class="features-preview">
                     <div class="feature-preview">
-                        <h3>🏢 For Organizations</h3>
+                        <h3>For Organizations</h3>
                         <p>Complete club management with player tracking, event organization, and financial tools</p>
                     </div>
                     <div class="feature-preview">
-                        <h3>⚽ For Players</h3>
+                        <h3>For Players</h3>
                         <p>Join clubs, book events, track progress, and manage payments seamlessly</p>
                     </div>
                     <div class="feature-preview">
-                        <h3>🎯 For Coaches</h3>
+                        <h3>For Coaches</h3>
                         <p>Team management, tactical planning, and performance tracking tools</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Account Types Section -->
         <section class="account-types" id="account-types">
             <div class="container">
                 <h2 style="text-align: center; font-size: 3rem; margin-bottom: 3rem; color: #333;">Choose Your Account Type</h2>
                 
                 <div class="account-types-grid">
-                    <!-- Organization Account -->
                     <div class="account-type-card organization">
                         <div class="account-icon">🏢</div>
                         <h3>Organization Account</h3>
-                        <p class="subtitle">Perfect for clubs, academies, and sports organizations</p>
+                        <p class="subtitle" style="color: #666; text-align: center; margin-bottom: 2rem; font-size: 1.1rem;">Perfect for clubs, academies, and sports organizations</p>
                         
                         <ul class="features-list">
                             <li>Complete club management dashboard</li>
@@ -593,14 +317,13 @@
                             <li>Advanced reporting and analytics</li>
                         </ul>
 
-                        <button class="btn btn-primary" id="createOrgBtn" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Start Managing Your Club</button>
+                        <button class="btn btn-primary" onclick="goToSignup('organization')" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Start Managing Your Club</button>
                     </div>
 
-                    <!-- Player Account -->
                     <div class="account-type-card player">
                         <div class="account-icon">⚽</div>
                         <h3>Player Account</h3>
-                        <p class="subtitle">Perfect for players and sports enthusiasts</p>
+                        <p class="subtitle" style="color: #666; text-align: center; margin-bottom: 2rem; font-size: 1.1rem;">Perfect for players and sports enthusiasts</p>
                         
                         <ul class="features-list">
                             <li>Join multiple clubs and teams</li>
@@ -615,13 +338,12 @@
                             <li>Mobile-friendly dashboard</li>
                         </ul>
 
-                        <button class="btn btn-primary" id="createPlayerBtn" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Join as a Player</button>
+                        <button class="btn btn-primary" onclick="goToSignup('adult')" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Join as a Player</button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Benefits Section -->
         <section class="benefits">
             <div class="container">
                 <h2 style="text-align: center; font-size: 3rem; margin-bottom: 3rem;">Why Choose ClubHub?</h2>
@@ -666,337 +388,107 @@
             </div>
         </section>
 
-        <!-- Final CTA Section -->
         <section class="final-cta">
             <div class="container">
                 <h2>Ready to Transform Your Club?</h2>
                 <p>Join thousands of clubs and players already using ClubHub to streamline their sports management. Get started today!</p>
                 
                 <div style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn-hero btn-hero-primary" id="finalSignupBtn">Start Now</button>
-                    <button class="btn-hero btn-hero-secondary" style="color: #333; border-color: #667eea;" id="finalLoginBtn">I Already Have an Account</button>
+                    <button class="btn-hero btn-hero-primary" onclick="showSignupOptions()">Start Now</button>
+                    <button class="btn-hero btn-hero-secondary" style="color: #333; border-color: #667eea;" onclick="showModal('loginModal')">I Already Have an Account</button>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Login Modal -->
+    <!-- Login Modal - uses your existing modal styles -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Login to ClubHub</h2>
-                <button class="close" id="loginModalClose">&times;</button>
+                <button class="close" onclick="closeModal('loginModal')">&times;</button>
             </div>
-            <div style="padding: 2rem;">
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="loginEmail">Email</label>
-                        <input type="email" id="loginEmail" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
-                </form>
-            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
         </div>
     </div>
 
     <!-- Register Modal -->
     <div id="registerModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2>Join ClubHub</h2>
-                <button class="close" id="registerModalClose">&times;</button>
+                <h2>Get Started with ClubHub</h2>
+                <button class="close" onclick="closeModal('registerModal')">&times;</button>
             </div>
-            <div style="padding: 2rem;">
-                <form id="registerForm">
-                    <div class="form-group">
-                        <label>Account Type</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
-                            <label style="border: 2px solid #e9ecef; padding: 1rem; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s ease;">
-                                <input type="radio" name="accountType" value="adult" style="margin-right: 0.5rem;">
-                                <div style="font-size: 2rem; margin: 0.5rem 0;">⚽</div>
-                                <strong>Player</strong>
-                            </label>
-                            <label style="border: 2px solid #e9ecef; padding: 1rem; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s ease;">
-                                <input type="radio" name="accountType" value="organization" style="margin-right: 0.5rem;">
-                                <div style="font-size: 2rem; margin: 0.5rem 0;">🏢</div>
-                                <strong>Organization</strong>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label for="firstName">First Name</label>
-                            <input type="text" id="firstName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="lastName">Last Name</label>
-                            <input type="text" id="lastName" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" id="email" required>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="confirmPassword">Confirm Password</label>
-                            <input type="password" id="confirmPassword" required>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
-                </form>
+            <div style="padding: 2rem; text-align: center;">
+                <p style="margin-bottom: 2rem; color: #333;">Choose how you'd like to register:</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <a href="signup.html?type=adult" class="btn btn-primary" style="padding: 1rem; font-size: 1.1rem; text-decoration: none; display: block;">
+                        ⚽ Register as Player/Parent
+                    </a>
+                    <a href="signup.html?type=organization" class="btn btn-primary" style="padding: 1rem; font-size: 1.1rem; text-decoration: none; display: block;">
+                        🏢 Register as Organization
+                    </a>
+                    <a href="signup.html" class="btn btn-secondary" style="padding: 1rem; font-size: 1.1rem; text-decoration: none; display: block;">
+                        📝 Full Registration Form
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Immediately define essential functions to prevent ReferenceError
-        function showModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.style.display = 'block';
-                document.body.style.overflow = 'hidden';
+        // Simple functions that work with your enhanced login handler
+        function showSignupOptions() {
+            if (typeof showModal === 'function') {
+                showModal('registerModal');
+            } else {
+                // Fallback if enhanced handler not loaded
+                document.getElementById('registerModal').style.display = 'block';
             }
         }
 
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }
+        function goToSignup(type) {
+            window.location.href = `signup.html?type=${type}`;
         }
 
-        function showLogin() {
-            showModal('loginModal');
-        }
-
-        function showRegister() {
-            showModal('registerModal');
-        }
-
-        // Set up event listeners immediately when DOM loads
+        // Simple compatibility layer
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Setting up immediate event listeners...');
-
-            // Login button events
-            const loginBtn = document.getElementById('loginBtn');
-            const finalLoginBtn = document.getElementById('finalLoginBtn');
-            const loginModalClose = document.getElementById('loginModalClose');
-
-            if (loginBtn) loginBtn.addEventListener('click', showLogin);
-            if (finalLoginBtn) finalLoginBtn.addEventListener('click', showLogin);
-            if (loginModalClose) loginModalClose.addEventListener('click', () => closeModal('loginModal'));
-
-            // Register button events  
-            const signupBtn = document.getElementById('signupBtn');
-            const heroSignupBtn = document.getElementById('heroSignupBtn');
-            const finalSignupBtn = document.getElementById('finalSignupBtn');
-            const createOrgBtn = document.getElementById('createOrgBtn');
-            const createPlayerBtn = document.getElementById('createPlayerBtn');
-            const registerModalClose = document.getElementById('registerModalClose');
-
-            if (signupBtn) signupBtn.addEventListener('click', showRegister);
-            if (heroSignupBtn) heroSignupBtn.addEventListener('click', showRegister);
-            if (finalSignupBtn) finalSignupBtn.addEventListener('click', showRegister);
-            if (createOrgBtn) createOrgBtn.addEventListener('click', showRegister);
-            if (createPlayerBtn) createPlayerBtn.addEventListener('click', showRegister);
-            if (registerModalClose) registerModalClose.addEventListener('click', () => closeModal('registerModal'));
-
-            // Learn more button
-            const heroLearnMoreBtn = document.getElementById('heroLearnMoreBtn');
-            if (heroLearnMoreBtn) {
-                heroLearnMoreBtn.addEventListener('click', function() {
-                    document.getElementById('account-types').scrollIntoView({behavior: 'smooth'});
-                });
+            console.log('ClubHub landing page loaded');
+            
+            // Check if enhanced login handler exists
+            if (typeof checkAuthStatus === 'function') {
+                checkAuthStatus();
+                console.log('Enhanced login handler detected');
+            } else {
+                console.log('Enhanced login handler not found - basic functionality only');
             }
-
-            // Modal click outside to close
-            window.addEventListener('click', function(e) {
-                if (e.target.classList.contains('modal')) {
-                    closeModal(e.target.id);
-                }
-            });
-
-            // Account type radio button styling
-            const accountTypeRadios = document.querySelectorAll('input[name="accountType"]');
-            accountTypeRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    // Remove selected style from all labels
-                    document.querySelectorAll('input[name="accountType"]').forEach(r => {
-                        r.parentElement.style.borderColor = '#e9ecef';
-                        r.parentElement.style.backgroundColor = 'white';
-                    });
-                    
-                    // Add selected style to chosen label
-                    if (this.checked) {
-                        this.parentElement.style.borderColor = '#dc2626';
-                        this.parentElement.style.backgroundColor = 'rgba(220, 38, 38, 0.05)';
-                    }
-                });
-            });
-
-            console.log('✅ Immediate event listeners set up successfully');
         });
 
-        // Make functions globally available
-        window.showModal = showModal;
-        window.closeModal = closeModal;
-        window.showLogin = showLogin;
-        window.showRegister = showRegister;
-
-        // Basic form handling (will be enhanced when app.js loads)
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-
-        if (loginForm) {
-            loginForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                console.log('Login form submitted - waiting for app.js to handle authentication');
-                
-                // Show loading state
-                const submitBtn = e.target.querySelector('button[type="submit"]');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Connecting...';
-                submitBtn.disabled = true;
-
-                // Reset after 3 seconds if no response
-                setTimeout(() => {
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                    
-                    // Show message if app.js hasn't loaded yet
-                    if (!window.AppState || !window.apiService) {
-                        alert('System loading... Please try again in a moment.');
-                    }
-                }, 3000);
-            });
-        }
-
-        if (registerForm) {
-            registerForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Basic validation
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                const accountType = document.querySelector('input[name="accountType"]:checked');
-
-                if (!accountType) {
-                    alert('Please select an account type');
-                    return;
-                }
-
-                if (password !== confirmPassword) {
-                    alert('Passwords do not match');
-                    return;
-                }
-
-                if (password.length < 6) {
-                    alert('Password must be at least 6 characters');
-                    return;
-                }
-
-                console.log('Register form submitted - waiting for app.js to handle registration');
-                
-                // Show loading state
-                const submitBtn = e.target.querySelector('button[type="submit"]');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Creating Account...';
-                submitBtn.disabled = true;
-
-                // Reset after 3 seconds if no response
-                setTimeout(() => {
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                    
-                    // Show message if app.js hasn't loaded yet
-                    if (!window.AppState || !window.apiService) {
-                        alert('System loading... Please try again in a moment.');
-                    }
-                }, 3000);
-            });
-        }
-    </script>
-
-    <!-- Load external scripts and handle authentication -->
-    <script>
-        // Load external scripts dynamically to prevent blocking
-        function loadScript(src, callback) {
-            const script = document.createElement('script');
-            script.src = src;
-            script.onload = callback;
-            script.onerror = function() {
-                console.warn(`Failed to load script: ${src}`);
-                if (callback) callback();
+        // Basic fallback functions in case enhanced handler fails to load
+        if (typeof showModal === 'undefined') {
+            window.showModal = function(modalId) {
+                document.getElementById(modalId).style.display = 'block';
             };
-            document.head.appendChild(script);
-        }
-
-        setTimeout(() => {
-            console.log('Loading external scripts...');
             
-            // Load API service first
-            loadScript('api-service.js', function() {
-                console.log('API service loaded');
-                
-                loadScript('script.js', function() {
-                    console.log('Script.js loaded successfully');
-                    
-                    
-                    if (window.handleLogin && window.handleRegister) {
-                        const loginForm = document.getElementById('loginForm');
-                        const registerForm = document.getElementById('registerForm');
-                        
-                        if (loginForm) {
-                            const newLoginForm = loginForm.cloneNode(true);
-                            loginForm.parentNode.replaceChild(newLoginForm, loginForm);
-                            newLoginForm.addEventListener('submit', window.handleLogin);
-                            console.log('✅ Login form handler updated');
-                        }
-                        
-                        if (registerForm) {
-                            const newRegisterForm = registerForm.cloneNode(true);
-                            registerForm.parentNode.replaceChild(newRegisterForm, registerForm);
-                            newRegisterForm.addEventListener('submit', window.handleRegister);
-                            console.log('✅ Register form handler updated');
-                            
-                            // Re-setup account type styling
-                            const accountTypeRadios = newRegisterForm.querySelectorAll('input[name="accountType"]');
-                            accountTypeRadios.forEach(radio => {
-                                radio.addEventListener('change', function() {
-                                    // Remove selected style from all labels
-                                    newRegisterForm.querySelectorAll('input[name="accountType"]').forEach(r => {
-                                        r.parentElement.style.borderColor = '#e9ecef';
-                                        r.parentElement.style.backgroundColor = 'white';
-                                    });
-                                    
-                                    // Add selected style to chosen label
-                                    if (this.checked) {
-                                        this.parentElement.style.borderColor = '#dc2626';
-                                        this.parentElement.style.backgroundColor = 'rgba(220, 38, 38, 0.05)';
-                                    }
-                                });
-                            });
-                        }
-                        
-                        console.log('✅ All form handlers successfully updated with script.js handlers');
-                    }
-                });
-            });
-        }, 100);
+            window.closeModal = function(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            };
+        }
     </script>
+
+    <!-- Load your existing handlers -->
+    <script src="js/api-service.js" onerror="console.log('API service not found')"></script>
+    <script src="js/enhanced-login-handler.js" onerror="console.log('Enhanced login handler not found')"></script>
 </body>
 </html>
