@@ -212,6 +212,38 @@ class ApiService {
     }
   }
 
+   /* ------------ Stripe Connect (player payouts) ------------ */
+
+
+  async ensureStripeAccount() {
+    return this.makeRequest('/payments/stripe/account', { method: 'POST' });
+  }
+
+  async getStripeOnboardingLink() {
+    return this.makeRequest('/payments/stripe/onboarding-link', { method: 'POST' });
+  }
+
+  async getStripeDashboardLink() {
+    return this.makeRequest('/payments/stripe/dashboard-link', { method: 'POST' });
+  }
+
+  /* ------------ Payment plans (assignment) ------------ */
+
+  async listPaymentPlans() {
+    return this.makeRequest('/payments/plans');
+  }
+
+  async assignMeToPlan(planId) {
+    return this.makeRequest('/payments/assign-plan', {
+      method: 'POST',
+      body: JSON.stringify({ planId })
+    });
+  }
+  
+  async unassignMeFromPlan() {
+    return this.makeRequest('/payments/unassign-plan', { method: 'POST' });
+  }
+
   // =========================== EMAIL METHODS ===========================
 
   async sendEmail(emailData) {

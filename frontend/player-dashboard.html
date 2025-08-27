@@ -1,386 +1,417 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player Dashboard - ClubHub</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://js.stripe.com/v3/"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Player Dashboard - ClubHub</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
-    <header class="header">
-        <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
-            <div class="nav-buttons" id="loggedInNav">
-                <!-- Populated by JavaScript -->
+  <header class="header">
+    <nav class="nav container">
+      <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
+      <div class="nav-buttons" id="loggedInNav">
+        <!-- Populated by JS -->
+        <button class="btn btn-secondary" id="logoutBtn" style="display:none">Logout</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main">
+    <div class="dashboard container">
+      <div class="dashboard-header">
+        <h1>Player Dashboard</h1>
+        <p>Track your progress and manage your activities</p>
+      </div>
+
+      <!-- Dashboard Navigation -->
+      <div class="dashboard-nav">
+        <button class="active" onclick="showPlayerSection('overview')">Overview</button>
+        <button onclick="showPlayerSection('my-clubs')">My Clubs</button>
+        <button onclick="showPlayerSection('teams')">Teams</button>
+        <button onclick="showPlayerSection('finances')">Finances</button>
+        <button onclick="showPlayerSection('players')">Players</button>
+        <button onclick="showPlayerSection('club-finder')">Club Finder</button>
+        <button onclick="showPlayerSection('event-finder')">Event Finder</button>
+        <button onclick="showPlayerSection('documents')">Documents</button>
+      </div>
+
+      <div class="dashboard-content">
+        <!-- Overview -->
+        <div id="player-overview" class="dashboard-section active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-number" id="playerClubs">0</span>
+              <span class="stat-label">Active Clubs</span>
             </div>
-        </nav>
-    </header>
+            <div class="stat-card">
+              <span class="stat-number" id="playerTeams">0</span>
+              <span class="stat-label">Teams</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="playerEvents">0</span>
+              <span class="stat-label">Upcoming Events</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="playerAttendance">0</span>
+              <span class="stat-label">Attendance</span>
+            </div>
+          </div>
 
-    <main class="main">
-        <div class="dashboard container">
-            <div class="dashboard-header">
-                <h1>Player Dashboard</h1>
-                <p>Track your progress and manage your activities</p>
+          <div class="card-grid">
+            <div class="card">
+              <h3>Recent Activity</h3>
+              <div id="playerRecentActivity"></div>
             </div>
 
-            <!-- Dashboard Navigation -->
-            <div class="dashboard-nav">
-                <button class="active" onclick="showPlayerSection('overview')">Overview</button>
-                <button onclick="showPlayerSection('my-clubs')">My Clubs</button>
-                <button onclick="showPlayerSection('teams')">Teams</button>
-                <button onclick="showPlayerSection('finances')">Finances</button>
-                <button onclick="showPlayerSection('club-finder')">Club Finder</button>
-                <button onclick="showPlayerSection('event-finder')">Event Finder</button>
-                <button onclick="showPlayerSection('documents')">Documents</button>
+            <div class="card">
+              <h3>Upcoming Events</h3>
+              <div id="playerUpcomingEvents"></div>
             </div>
+          </div>
 
-            <div class="dashboard-content">
-                <!-- Overview Section -->
-                <div id="player-overview" class="dashboard-section active">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <span class="stat-number" id="playerClubs">0</span>
-                            <span class="stat-label">Active Clubs</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-number" id="playerTeams">0</span>
-                            <span class="stat-label">Teams</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-number" id="playerEvents">0</span>
-                            <span class="stat-label">Upcoming Events</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-number" id="playerAttendance">0</span>
-                            <span class="stat-label">Attendance</span>
-                        </div>
-                    </div>
-
-                    <div class="card-grid">
-                        <div class="card">
-                            <h3>Recent Activity</h3>
-                            <div id="playerRecentActivity">
-                                <div class="item-list-item">
-                                    <div class="item-info">
-                                        <h4>Training Session</h4>
-                                        <p>Elite Football Academy - Yesterday</p>
-                                    </div>
-                                    <span class="status-badge status-paid">Attended</span>
-                                </div>
-                                <div class="item-list-item">
-                                    <div class="item-info">
-                                        <h4>Match vs City Lions</h4>
-                                        <p>Won 3-1 - Last Week</p>
-                                    </div>
-                                    <span class="status-badge status-paid">Played</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <h3>Upcoming Events</h3>
-                            <div id="playerUpcomingEvents">
-                                <!-- Populated by JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>Performance Summary</h3>
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <span class="stat-number" id="playerMatchesPlayed">0</span>
-                                <span class="stat-label">Matches Played</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-number" id="playerAverageRating">0.0</span>
-                                <span class="stat-label">Average Rating</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-number" id="playerTrainingSessions">0</span>
-                                <span class="stat-label">Training Sessions</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-number" id="playerPosition">Not Set</span>
-                                <span class="stat-label">Position</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- My Clubs Section -->
-                <div id="player-my-clubs" class="dashboard-section">
-                    <div class="card">
-                        <h3>My Clubs</h3>
-                        <div class="card-grid" id="playerClubsContainer">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>Club Staff</h3>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Contact</th>
-                                    <th>Club</th>
-                                </tr>
-                            </thead>
-                            <tbody id="clubStaffTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Teams Section -->
-                <div id="player-teams" class="dashboard-section">
-                    <div class="card">
-                        <h3>My Teams</h3>
-                        <div class="card-grid" id="playerTeamsContainer">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>Team Events & Availability</h3>
-                        <div id="teamEventsContainer">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Finances Section -->
-                <div id="player-finances" class="dashboard-section">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <span class="stat-number" id="totalDue">£0</span>
-                            <span class="stat-label">Total Due</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-number" id="nextPayment">£0</span>
-                            <span class="stat-label">Next Payment</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-number" id="paymentStatus">Up to Date</span>
-                            <span class="stat-label">Status</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-number" id="totalPaid">£0</span>
-                            <span class="stat-label">Total Paid</span>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>Payment History</h3>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="paymentHistoryTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="card">
-                        <h3>Outstanding Payments</h3>
-                        <div id="outstandingPayments">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Club Finder Section -->
-                <div id="player-club-finder" class="dashboard-section">
-                    <div class="card">
-                        <h3>Find Clubs</h3>
-                        
-                        <div class="search-filters">
-                            <div class="form-group">
-                                <label for="clubSearchInput">Search Clubs</label>
-                                <input type="text" id="clubSearchInput" placeholder="Search by name or location..." onkeyup="filterClubs()">
-                            </div>
-                            <div class="form-group">
-                                <label for="clubTypeFilter">Club Type</label>
-                                <select id="clubTypeFilter" onchange="filterClubs()">
-                                    <option value="">All Types</option>
-                                    <option value="club">Club</option>
-                                    <option value="event">Event Organizer</option>
-                                    <option value="tournament">Tournament Organizer</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="clubSportFilter">Sport</label>
-                                <select id="clubSportFilter" onchange="filterClubs()">
-                                    <option value="">All Sports</option>
-                                    <option value="football">Football</option>
-                                    <option value="basketball">Basketball</option>
-                                    <option value="tennis">Tennis</option>
-                                    <option value="rugby">Rugby</option>
-                                    <option value="cricket">Cricket</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="card-grid" id="availableClubsContainer">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Event Finder Section -->
-                <div id="player-event-finder" class="dashboard-section">
-                    <div class="card">
-                        <h3>Find Events</h3>
-                        
-                        <div class="search-filters">
-                            <div class="form-group">
-                                <label for="eventSearchInput">Search Events</label>
-                                <input type="text" id="eventSearchInput" placeholder="Search events..." onkeyup="filterPlayerEvents()">
-                            </div>
-                            <div class="form-group">
-                                <label for="playerEventTypeFilter">Event Type</label>
-                                <select id="playerEventTypeFilter" onchange="filterPlayerEvents()">
-                                    <option value="">All Types</option>
-                                    <option value="camp">Holiday Camps</option>
-                                    <option value="tournament">Tournaments</option>
-                                    <option value="talent-id">Talent ID</option>
-                                    <option value="training">Training</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="playerEventDateFilter">Date From</label>
-                                <input type="date" id="playerEventDateFilter" onchange="filterPlayerEvents()">
-                            </div>
-                        </div>
-
-                        <div class="card-grid" id="availablePlayerEventsContainer">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Documents Section -->
-                <div id="player-documents" class="dashboard-section">
-                    <div class="card">
-                        <h3>Accessible Documents</h3>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Document Name</th>
-                                    <th>Type</th>
-                                    <th>Club</th>
-                                    <th>Last Updated</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="playerDocumentsTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+          <div class="card">
+            <h3>Performance Summary</h3>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <span class="stat-number" id="playerMatchesPlayed">0</span>
+                <span class="stat-label">Matches Played</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-number" id="playerAverageRating">0.0</span>
+                <span class="stat-label">Average Rating</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-number" id="playerTrainingSessions">0</span>
+                <span class="stat-label">Training Sessions</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-number" id="playerPosition">Not Set</span>
+                <span class="stat-label">Position</span>
+              </div>
             </div>
+          </div>
         </div>
-    </main>
 
-    <!-- Modals -->
-    
-    <!-- Apply to Club Modal -->
-    <div id="applyClubModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Apply to Club</h2>
-                <button class="close" onclick="closeModal('applyClubModal')">&times;</button>
-            </div>
-            <form id="applyClubForm">
-                <input type="hidden" id="applyClubId">
-                <div class="form-group">
-                    <label for="applicationMessage">Application Message</label>
-                    <textarea id="applicationMessage" rows="4" placeholder="Tell the club why you'd like to join..." required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="playerPosition">Preferred Position</label>
-                    <input type="text" id="playerPosition" placeholder="e.g., Midfielder, Forward, Defender">
-                </div>
-                <div class="form-group">
-                    <label for="playerExperience">Experience Level</label>
-                    <select id="playerExperience" required>
-                        <option value="">Select Experience</option>
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                        <option value="professional">Professional</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="availability">Availability</label>
-                    <div class="checkbox-group">
-                        <label><input type="checkbox" name="availability" value="weekdays"> Weekdays</label>
-                        <label><input type="checkbox" name="availability" value="weekends"> Weekends</label>
-                        <label><input type="checkbox" name="availability" value="evenings"> Evenings</label>
-                        <label><input type="checkbox" name="availability" value="mornings"> Mornings</label>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">Submit Application</button>
-            </form>
+        <!-- My Clubs -->
+        <div id="player-my-clubs" class="dashboard-section">
+          <div class="card">
+            <h3>My Clubs</h3>
+            <div class="card-grid" id="playerClubsContainer"></div>
+          </div>
+
+          <div class="card">
+            <h3>Club Staff</h3>
+            <table class="table">
+              <thead>
+              <tr><th>Name</th><th>Role</th><th>Contact</th><th>Club</th></tr>
+              </thead>
+              <tbody id="clubStaffTableBody"></tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- Teams -->
+        <div id="player-teams" class="dashboard-section">
+          <div class="card">
+            <h3>My Teams</h3>
+            <div class="card-grid" id="playerTeamsContainer"></div>
+          </div>
+
+          <div class="card">
+            <h3>Team Events & Availability</h3>
+            <div id="teamEventsContainer"></div>
+          </div>
+        </div>
+
+        <!-- Finances -->
+        <div id="player-finances" class="dashboard-section">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-number" id="totalDue">£0</span>
+              <span class="stat-label">Total Due</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="nextPayment">£0</span>
+              <span class="stat-label">Next Payment</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="paymentStatus">Up to Date</span>
+              <span class="stat-label">Status</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number" id="totalPaid">£0</span>
+              <span class="stat-label">Total Paid</span>
+            </div>
+          </div>
+
+          <!-- Stripe Connect Account -->
+          <div class="card">
+            <h3>Stripe Payouts Account</h3>
+            <div id="stripeAccountStatus">
+              <p>Set up your payouts account to receive money.</p>
+              <div class="item-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-primary" id="stripeOnboardBtn">Create / Link Stripe Account</button>
+                <button class="btn btn-secondary" id="stripeManageBtn" disabled>Manage Account</button>
+                <button class="btn" id="stripeRefreshBtn">Refresh Status</button>
+              </div>
+              <div id="stripeAccountInfo" style="margin-top:8px;color:#666"></div>
+            </div>
+          </div>
+
+          <!-- Payment Plans -->
+          <div class="card">
+            <h3>Payment Plan</h3>
+            <div id="planAssignRow" class="search-filters" style="align-items:flex-end">
+              <div class="form-group">
+                <label for="planSelector">Choose Plan</label>
+                <select id="planSelector"></select>
+              </div>
+              <div class="form-group">
+                <label for="planStartDate">Start Date</label>
+                <input type="date" id="planStartDate"/>
+              </div>
+              <button class="btn btn-primary" id="assignPlanBtn">Assign / Update Plan</button>
+            </div>
+            <div id="currentPlanInfo" style="margin-top:10px;"></div>
+          </div>
+
+          <div class="card">
+            <h3>Payment History</h3>
+            <table class="table">
+              <thead>
+              <tr><th>Date</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="paymentHistoryTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <h3>Outstanding Payments</h3>
+            <div id="outstandingPayments"></div>
+          </div>
+        </div>
+
+        <!-- Players list & filters -->
+        <div id="player-players" class="dashboard-section">
+          <div class="card">
+            <h3>Players</h3>
+            <div class="search-filters" style="gap:8px;flex-wrap:wrap">
+              <button class="btn btn-secondary filter-tab active" data-filter="all">Full player list</button>
+              <button class="btn btn-secondary filter-tab" data-filter="on-plan">On payment plan</button>
+              <button class="btn btn-secondary filter-tab" data-filter="not-on-plan">Not on plan</button>
+              <button class="btn btn-secondary filter-tab" data-filter="assigned">Assigned to team</button>
+              <button class="btn btn-secondary filter-tab" data-filter="unassigned">Not assigned to team</button>
+              <button class="btn btn-secondary filter-tab" data-filter="overdue">Overdue</button>
+            </div>
+            <div class="card-grid" id="playersListContainer" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <!-- Club Finder -->
+        <div id="player-club-finder" class="dashboard-section">
+          <div class="card">
+            <h3>Find Clubs</h3>
+            <div class="search-filters">
+              <div class="form-group">
+                <label for="clubSearchInput">Search Clubs</label>
+                <input type="text" id="clubSearchInput" placeholder="Search by name or location..." onkeyup="filterClubs()">
+              </div>
+              <div class="form-group">
+                <label for="clubTypeFilter">Club Type</label>
+                <select id="clubTypeFilter" onchange="filterClubs()">
+                  <option value="">All Types</option>
+                  <option value="club">Club</option>
+                  <option value="event">Event Organizer</option>
+                  <option value="tournament">Tournament Organizer</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="clubSportFilter">Sport</label>
+                <select id="clubSportFilter" onchange="filterClubs()">
+                  <option value="">All Sports</option>
+                  <option value="football">Football</option>
+                  <option value="basketball">Basketball</option>
+                  <option value="tennis">Tennis</option>
+                  <option value="rugby">Rugby</option>
+                  <option value="cricket">Cricket</option>
+                </select>
+              </div>
+            </div>
+            <div class="card-grid" id="availableClubsContainer"></div>
+          </div>
+        </div>
+
+        <!-- Event Finder -->
+        <div id="player-event-finder" class="dashboard-section">
+          <div class="card">
+            <h3>Find Events</h3>
+            <div class="search-filters">
+              <div class="form-group">
+                <label for="eventSearchInput">Search Events</label>
+                <input type="text" id="eventSearchInput" placeholder="Search events..." onkeyup="filterPlayerEvents()">
+              </div>
+              <div class="form-group">
+                <label for="playerEventTypeFilter">Event Type</label>
+                <select id="playerEventTypeFilter" onchange="filterPlayerEvents()">
+                  <option value="">All Types</option>
+                  <option value="camp">Holiday Camps</option>
+                  <option value="tournament">Tournaments</option>
+                  <option value="talent-id">Talent ID</option>
+                  <option value="training">Training</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="playerEventDateFilter">Date From</label>
+                <input type="date" id="playerEventDateFilter" onchange="filterPlayerEvents()">
+              </div>
+            </div>
+            <div class="card-grid" id="availablePlayerEventsContainer"></div>
+          </div>
+        </div>
+
+        <!-- Documents -->
+        <div id="player-documents" class="dashboard-section">
+          <div class="card">
+            <h3>Accessible Documents</h3>
+            <table class="table">
+              <thead>
+              <tr><th>Document Name</th><th>Type</th><th>Club</th><th>Last Updated</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="playerDocumentsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
+  </main>
 
-    <!-- Event Booking Modal -->
-    <div id="eventBookingModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Book Event</h2>
-                <button class="close" onclick="closeModal('eventBookingModal')">&times;</button>
-            </div>
-            <div id="eventBookingContent">
-                <!-- Event booking content will be populated here -->
-            </div>
+  <!-- Modals -->
+  <div id="applyClubModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Apply to Club</h2>
+        <button class="close" onclick="closeModal('applyClubModal')">&times;</button>
+      </div>
+      <form id="applyClubForm">
+        <input type="hidden" id="applyClubId">
+        <div class="form-group">
+          <label for="applicationMessage">Application Message</label>
+          <textarea id="applicationMessage" rows="4" placeholder="Tell the club why you'd like to join..." required></textarea>
         </div>
-    </div>
-
-    <!-- Availability Modal -->
-    <div id="availabilityModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Vote Availability</h2>
-                <button class="close" onclick="closeModal('availabilityModal')">&times;</button>
-            </div>
-            <form id="availabilityForm">
-                <input type="hidden" id="availabilityEventId">
-                <div class="form-group">
-                    <label>Can you attend this event?</label>
-                    <div class="checkbox-group">
-                        <label><input type="radio" name="availability" value="yes"> Yes, I can attend</label>
-                        <label><input type="radio" name="availability" value="no"> No, I cannot attend</label>
-                        <label><input type="radio" name="availability" value="maybe"> Maybe</label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="availabilityNotes">Additional Notes</label>
-                    <textarea id="availabilityNotes" rows="3" placeholder="Any additional information..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Submit Availability</button>
-            </form>
+        <div class="form-group">
+          <label for="playerPosition">Preferred Position</label>
+          <input type="text" id="playerPosition" placeholder="e.g., Midfielder, Forward, Defender">
         </div>
-    </div>
 
-    <script src="https://js.stripe.com/v3/"></script>
-    <script src="api-service.js"></script>          
-    <script src="stripe-service.js"></script>       
-    <script src="script.js"></script>              
-    <script src="player-dashboard.js"></script>  
-    <script src="enhanced-invite-system.js"></script>
+        <div class="form-group">
+          <label for="playerExperience">Experience Level</label>
+          <select id="playerExperience" required>
+            <option value="">Select experience</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+            <option value="professional">Professional</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Availability</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="availability" value="weekdays"> Weekdays</label>
+            <label><input type="checkbox" name="availability" value="weekends"> Weekends</label>
+            <label><input type="checkbox" name="availability" value="evenings"> Evenings</label>
+            <label><input type="checkbox" name="availability" value="mornings"> Mornings</label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit Application</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Event Booking Modal -->
+  <div id="eventBookingModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Book Event</h2>
+        <button class="close" onclick="closeModal('eventBookingModal')">&times;</button>
+      </div>
+      <div id="eventBookingContent">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Availability Modal -->
+  <div id="availabilityModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Vote Availability</h2>
+        <button class="close" onclick="closeModal('availabilityModal')">&times;</button>
+      </div>
+      <form id="availabilityForm">
+        <input type="hidden" id="availabilityEventId">
+        <div class="form-group">
+          <label>Can you attend this event?</label>
+          <div class="checkbox-group">
+            <label><input type="radio" name="availability" value="yes"> Yes, I can attend</label>
+            <label><input type="radio" name="availability" value="no"> No, I cannot attend</label>
+            <label><input type="radio" name="availability" value="maybe"> Maybe</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="availabilityNotes">Additional Notes</label>
+          <textarea id="availabilityNotes" rows="3" placeholder="Any additional information..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Availability</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Manage Account Modal  -->
+  <div id="accountModal" class="modal" style="display:none">
+    <div class="modal-content" style="max-width:600px;">
+      <div class="modal-header">
+        <h2>Manage Account</h2>
+        <button class="close" onclick="closeModal('accountModal')">&times;</button>
+      </div>
+      <form id="accountForm">
+        <div class="form-group">
+          <label for="accFirstName">First name</label>
+          <input type="text" id="accFirstName" required>
+        </div>
+        <div class="form-group">
+          <label for="accLastName">Last name</label>
+          <input type="text" id="accLastName" required>
+        </div>
+        <div class="form-group">
+          <label for="accLocation">Location</label>
+          <input type="text" id="accLocation">
+        </div>
+        <div class="form-group">
+          <label for="accSport">Primary sport</label>
+          <input type="text" id="accSport">
+        </div>
+        <div class="form-group">
+          <label for="accBio">Bio</label>
+          <textarea id="accBio" rows="3"></textarea>
+        </div>
+        <div class="item-actions" style="margin-top:.5rem;">
+          <button type="submit" class="btn btn-primary">Save changes</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('accountModal')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="api-service.js"></script>
+  <script src="stripe-service.js"></script>
+  <script src="script.js"></script>
+  <script src="enhanced-login-handler.js"></script>
+  <script src="player-dashboard.js"></script>
+  <script src="enhanced-invite-system.js"></script>
 </body>
 </html>
