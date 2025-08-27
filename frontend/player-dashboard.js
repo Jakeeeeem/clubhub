@@ -21,39 +21,64 @@ let PlayerDashboardState = {
   isLoading: false
 };
 
-/* ---------- Boot ---------- */
-document.addEventListener('DOMContentLoaded', () => {
-  // Make sure nav shows logout
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.style.display = 'inline-block';
-    logoutBtn.addEventListener('click', () => {
-      if (typeof window.handleLogout === 'function') {
-        window.handleLogout();
-      } else {
-        // Fallback if not present for some reason
-        localStorage.clear();
-        window.location.href = 'index.html';
-      }
-    });
-  }
+function setupNavButtons() {
+  const navContainer = document.getElementById("loggedInNav");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-  // Wait a tick for apiService/script.js/enhanced-login-handler.js
-  setTimeout(() => {
-    if (typeof apiService === 'undefined') {
-      console.error('❌ API Service not loaded');
-      showNotification('System error: API service not available', 'error');
-      return;
+  // Clear anything previously added
+  navContainer.innerHTML = "";
+
+  if (AppState.currentUser) {
+    // Account button
+    const accountBtn = document.createElement("button");
+    accountBtn.className = "btn btn-primary";
+    accountBtn.textContent = `${AppState.currentUser.first_name || "My"} Account`;
+    accountBtn.onclick = () => {
+      window.location.href = "account.html";
+    };
+
+    // Ensure the Logout button exists and wire it
+    if (logoutBtn) {
+      logoutBtn.style.display = "inline-block";
+      logoutBtn.onclick = async () => {
+        try {
+          await apiService.logout();
+          AppState.currentUser = null;
+          localStorage.removeItem("currentUser");
+          window.location.href = "index.html";
+        } catch (err) {
+          console.error("Logout failed:", err);
+        }
+      };
     }
-    initializePlayerDashboard();
-  }, 300);
-});
 
-/* ---------- Initialize ---------- */
+    // Add both to the nav
+    navContainer.appendChild(accountBtn);
+    if (logoutBtn) navContainer.appendChild(logoutBtn);
+
+  } else {
+    // Not logged in → show Login button
+    const loginBtn = document.createElement("button");
+    loginBtn.className = "btn btn-primary";
+    loginBtn.textContent = "Login";
+    loginBtn.onclick = () => (window.location.href = "index.html");
+    navContainer.appendChild(loginBtn);
+
+    // Hide logout if present
+    if (logoutBtn) logoutBtn.style.display = "none";
+  }
+}
+
+/* ---------- Boot ---------- */
 async function initializePlayerDashboard() {
   console.log('🏃‍♂️ Initializing player dashboard...');
   try {
+    AppState.currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    setupNavButtons();
+
     showLoading(true);
+
+    // Wire UI
     wirePlayersFilterTabs();
     wireStripeButtons();
     wirePlanButtons();
@@ -61,7 +86,6 @@ async function initializePlayerDashboard() {
 
     await loadPlayerDataWithFallback();
 
-    // Initial content render
     loadPlayerOverview();
     loadPlayerClubs();
     loadPlayerTeams();
@@ -70,7 +94,6 @@ async function initializePlayerDashboard() {
     loadEventFinder();
     loadPlayerDocuments();
 
-    // Extra: players tab + plans + stripe
     await Promise.all([
       loadPlayersList(),
       refreshStripeStatus(),

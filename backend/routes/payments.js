@@ -24,6 +24,103 @@ router.use(cors({
 // Handle preflight requests
 router.options('*', cors());
 
+// ---------- STRIPE CONNECT (PAYOUTS ACCOUNT) ENDPOINTS ----------
+
+// Helper: get or create a Stripe Connect account for the current user
+async function getOrCreateStripeConnectAccount(user) {
+  // You need a column to store the Stripe account id. We'll use users.stripe_account_id
+  const userResult = await query(`SELECT id, email, first_name, last_name, stripe_account_id FROM users WHERE id = $1`, [user.id]);
+  if (userResult.rows.length === 0) throw new Error('User not found');
+  const dbUser = userResult.rows[0];
+
+  let accountId = dbUser.stripe_account_id;
+
+  if (!accountId) {
+    // Create an Express (Connect) account
+    const account = await stripe.accounts.create({
+      type: 'express',
+      email: dbUser.email,
+      business_type: 'individual',
+      capabilities: {
+        transfers: { requested: true },
+        card_payments: { requested: true },
+      },
+      metadata: {
+        app_user_id: String(dbUser.id),
+      }
+    });
+
+    accountId = account.id;
+    await query(`UPDATE users SET stripe_account_id = $1, updated_at = NOW() WHERE id = $2`, [accountId, user.id]);
+  }
+
+  // Always fetch latest status
+  const account = await stripe.accounts.retrieve(accountId);
+  return account;
+}
+
+// GET /api/payments/stripe/connect/status
+router.get('/stripe/connect/status', authenticateToken, async (req, res) => {
+  try {
+    const account = await getOrCreateStripeConnectAccount(req.user);
+    res.json({
+      linked: true,
+      account_id: account.id,
+      payouts_enabled: !!account.payouts_enabled,
+      details_submitted: !!account.details_submitted,
+      requirements: account.requirements?.currently_due || [],
+    });
+  } catch (err) {
+    if (String(err.message).includes('User not found')) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    console.error('Stripe connect status error:', err);
+    res.status(500).json({ error: 'Failed to fetch Stripe account status' });
+  }
+});
+
+// POST /api/payments/stripe/connect/onboard
+router.post('/stripe/connect/onboard', authenticateToken, async (req, res) => {
+  try {
+    const account = await getOrCreateStripeConnectAccount(req.user);
+
+    const refresh_url = (process.env.FRONTEND_URL || 'https://clubhubsports.net') + '/player-dashboard.html';
+    const return_url  = (process.env.FRONTEND_URL || 'https://clubhubsports.net') + '/player-dashboard.html';
+
+    const link = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url,
+      return_url,
+      type: 'account_onboarding'
+    });
+
+    res.json({ url: link.url });
+  } catch (err) {
+    console.error('Stripe onboarding error:', err);
+    res.status(500).json({ error: 'Failed to create onboarding link' });
+  }
+});
+
+router.get('/stripe/connect/manage', authenticateToken, async (req, res) => {
+  try {
+    const account = await getOrCreateStripeConnectAccount(req.user);
+
+    const return_url  = (process.env.FRONTEND_URL || 'https://clubhubsports.net') + '/player-dashboard.html';
+
+    const link = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: return_url,
+      return_url,
+      type: 'account_update'
+    });
+
+    res.json({ url: link.url });
+  } catch (err) {
+    console.error('Stripe manage link error:', err);
+    res.status(500).json({ error: 'Failed to create account management link' });
+  }
+});
+
 // Validation rules
 const paymentValidation = [
   body('playerId').optional().isUUID().withMessage('Valid player ID is required'),
@@ -747,6 +844,73 @@ router.post('/', authenticateToken, requireOrganization, paymentValidation, asyn
         details: errors.array()
       });
     }
+
+    router.get('/plans', authenticateToken, async (req, res) => {
+  try {
+    const result = await query(`SELECT id, name, price, interval, active FROM plans WHERE active = true ORDER BY name ASC`, []);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get plans error:', err);
+    res.status(500).json({ error: 'Failed to load plans' });
+  }
+});
+
+// GET /api/payments/plan/current  -> current user’s plan (if any)
+router.get('/plan/current', authenticateToken, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT pp.id as player_plan_id, p.id as plan_id, p.name, p.price, p.interval, pp.start_date, pp.is_active
+      FROM player_plans pp
+      INNER JOIN plans p ON p.id = pp.plan_id
+      WHERE pp.user_id = $1 AND pp.is_active = true
+      ORDER BY pp.start_date DESC
+      LIMIT 1
+    `, [req.user.id]);
+
+    if (result.rows.length === 0) return res.json(null);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Get current plan error:', err);
+    res.status(500).json({ error: 'Failed to load current plan' });
+  }
+});
+
+// POST /api/payments/plan/assign  -> assign/update plan for current user
+router.post('/plan/assign', authenticateToken, [
+  body('planId').notEmpty().withMessage('planId is required'),
+  body('startDate').optional().isISO8601().withMessage('Invalid startDate')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+
+    const { planId, startDate } = req.body;
+
+    // Verify plan exists and active
+    const planRes = await query(`SELECT id, name, price, interval FROM plans WHERE id = $1 AND active = true`, [planId]);
+    if (planRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found or inactive' });
+    }
+
+    await withTransaction(async (client) => {
+      // Deactivate existing plans for this user
+      await client.query(`UPDATE player_plans SET is_active = false, updated_at = NOW() WHERE user_id = $1 AND is_active = true`, [req.user.id]);
+
+      // Assign new plan
+      await client.query(`
+        INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
+        VALUES ($1, $2, $3, true, NOW(), NOW())
+      `, [req.user.id, planId, startDate || new Date()]);
+
+      // Optionally: create first upcoming payment row here if you need
+    });
+
+    res.json({ success: true, message: 'Plan assigned/updated' });
+  } catch (err) {
+    console.error('Assign plan error:', err);
+    res.status(500).json({ error: 'Failed to assign plan' });
+  }
+});
 
     const { playerId, amount, paymentType, description, dueDate } = req.body;
 
