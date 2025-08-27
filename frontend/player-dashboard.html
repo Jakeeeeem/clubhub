@@ -407,11 +407,41 @@
   </div>
 
   <script src="https://js.stripe.com/v3/"></script>
-  <script src="api-service.js"></script>
-  <script src="stripe-service.js"></script>
-  <script src="script.js"></script>
-  <script src="enhanced-login-handler.js"></script>
-  <script src="player-dashboard.js"></script>
-  <script src="enhanced-invite-system.js"></script>
+
+<!-- Core services FIRST -->
+<script src="api-service.js"></script>
+<script>
+  // Make sure AppState exists on this page
+  window.AppState = window.AppState || {};
+  try {
+    AppState.currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+  } catch (_) { AppState.currentUser = null; }
+
+  // Safe fallbacks if these helpers aren't included on this page
+  window.showLoading = window.showLoading || function(){};
+  window.showNotification = window.showNotification || function(msg){ console.log('ℹ️', msg); };
+  window.showModal = window.showModal || function(id){ document.getElementById(id)?.classList.add('open'); };
+  window.closeModal = window.closeModal || function(id){ document.getElementById(id)?.classList.remove('open'); };
+</script>
+
+<!-- Stripe service (needs apiService + Stripe) -->
+<script src="stripe-service.js"></script>
+
+<!-- Any shared utils -->
+<script src="script.js"></script>
+
+<!-- Player dashboard LAST -->
+<script src="player-dashboard.js"></script>
+
+<!-- Final boot -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof initializePlayerDashboard === 'function') {
+      initializePlayerDashboard();
+    } else {
+      console.error('initializePlayerDashboard() not found');
+    }
+  });
+</script>
 </body>
 </html>

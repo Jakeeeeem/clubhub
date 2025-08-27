@@ -24,9 +24,11 @@ let PlayerDashboardState = {
 function setupNavButtons() {
   const navContainer = document.getElementById("loggedInNav");
   const logoutBtn = document.getElementById("logoutBtn");
+  if (!navContainer) return;  // <-- ADD THIS LINE
 
   // Clear anything previously added
   navContainer.innerHTML = "";
+}
 
   if (AppState.currentUser) {
     // Account button
@@ -67,7 +69,6 @@ function setupNavButtons() {
     // Hide logout if present
     if (logoutBtn) logoutBtn.style.display = "none";
   }
-}
 
 /* ---------- Boot ---------- */
 async function initializePlayerDashboard() {
