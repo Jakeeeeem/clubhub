@@ -46,7 +46,6 @@ app.use(helmet({
   },
 }));
 
-// 🔥 ENHANCED CORS - Fixed for payment system
 app.use(cors({
   origin: [
     'http://localhost:8000',
@@ -135,7 +134,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 🔥 ENHANCED API health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
@@ -156,7 +154,7 @@ app.use('/api/players', playerRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/events', eventRoutes);
-app.use('/api/payments', paymentRoutes); // 🔥 Your payment routes
+app.use('/api/payments', paymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/invites', invitesRoutes);
 app.use('/api/notifications', notificationRoutes);
