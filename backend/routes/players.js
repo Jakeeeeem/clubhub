@@ -116,6 +116,68 @@ router.get('/:id', authenticateToken, async (req, res) => {
   }
 });
 
+router.get('/filtered/:filter', authenticateToken, async (req, res) => {
+  try {
+    const { filter } = req.params;
+    const { clubId } = req.query;
+    
+    let queryText = `
+      SELECT p.*, 
+             CASE WHEN pp.plan_id IS NOT NULL THEN true ELSE false END as has_payment_plan,
+             CASE WHEN tp.team_id IS NOT NULL THEN true ELSE false END as has_team_assignment,
+             pay.overdue_count,
+             t.name as team_name
+      FROM players p
+      LEFT JOIN player_plans pp ON pp.user_id = p.user_id AND pp.is_active = true
+      LEFT JOIN team_players tp ON tp.player_id = p.id  
+      LEFT JOIN teams t ON t.id = tp.team_id
+      LEFT JOIN (
+        SELECT player_id, COUNT(*) as overdue_count 
+        FROM payments 
+        WHERE payment_status = 'overdue' 
+        GROUP BY player_id
+      ) pay ON pay.player_id = p.id
+      WHERE 1=1
+    `;
+    
+    const queryParams = [];
+    let paramCount = 0;
+
+    if (clubId) {
+      paramCount++;
+      queryText += ` AND p.club_id = $${paramCount}`;
+      queryParams.push(clubId);
+    }
+
+    switch(filter) {
+      case 'on-plan':
+        queryText += ` AND pp.plan_id IS NOT NULL`;
+        break;
+      case 'not-on-plan':
+        queryText += ` AND pp.plan_id IS NULL`;
+        break;
+      case 'not-assigned':
+        queryText += ` AND tp.team_id IS NULL`;
+        break;
+      case 'assigned':
+        queryText += ` AND tp.team_id IS NOT NULL`;
+        break;
+      case 'overdue':
+        queryText += ` AND pay.overdue_count > 0`;
+        break;
+    }
+
+    queryText += ` ORDER BY p.created_at DESC`;
+    
+    const result = await query(queryText, queryParams);
+    res.json(result.rows);
+    
+  } catch (error) {
+    console.error('Get filtered players error:', error);
+    res.status(500).json({ error: 'Failed to fetch filtered players' });
+  }
+});
+
 // Create new player - FIXED VERSION
 router.post('/', authenticateToken, requireOrganization, playerValidation, async (req, res) => {
   try {

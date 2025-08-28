@@ -21,7 +21,7 @@
     <div class="dashboard container">
       <div class="dashboard-header">
         <h1>Player Dashboard</h1>
-        <p>Track your progress and manage your activities</p>
+        <p>Manage your sports activities, subscriptions, and bookings</p>
       </div>
 
       <!-- Dashboard Navigation -->
@@ -29,10 +29,10 @@
         <button class="active" onclick="showPlayerSection('overview')">Overview</button>
         <button onclick="showPlayerSection('my-clubs')">My Clubs</button>
         <button onclick="showPlayerSection('teams')">Teams</button>
-        <button onclick="showPlayerSection('finances')">Finances</button>
-        <button onclick="showPlayerSection('players')">Players</button>
-        <button onclick="showPlayerSection('club-finder')">Club Finder</button>
-        <button onclick="showPlayerSection('event-finder')">Event Finder</button>
+        <button onclick="showPlayerSection('subscriptions')">Subscriptions</button>
+        <button onclick="showPlayerSection('payments')">Payments</button>
+        <button onclick="showPlayerSection('club-finder')">Find Clubs</button>
+        <button onclick="showPlayerSection('event-finder')">Find Events</button>
         <button onclick="showPlayerSection('documents')">Documents</button>
       </div>
 
@@ -124,8 +124,47 @@
           </div>
         </div>
 
-        <!-- Finances -->
-        <div id="player-finances" class="dashboard-section">
+        <!-- Subscriptions -->
+        <div id="player-subscriptions" class="dashboard-section">
+          <div class="card">
+            <h3>My Subscription</h3>
+            <div id="currentPlanInfo" style="margin-bottom: 2rem;"></div>
+            
+            <div class="subscription-benefits"></div>
+          </div>
+
+          <div class="card">
+            <h3>Change Subscription Plan</h3>
+            <div id="planAssignRow" class="search-filters" style="align-items:flex-end">
+              <div class="form-group">
+                <label for="planSelector">Choose Plan</label>
+                <select id="planSelector"></select>
+              </div>
+              <div class="form-group">
+                <label for="planStartDate">Start Date</label>
+                <input type="date" id="planStartDate"/>
+              </div>
+              <button class="btn btn-primary" id="assignPlanBtn">Update Subscription</button>
+            </div>
+          </div>
+
+          <!-- Stripe Connect Account -->
+          <div class="card">
+            <h3>Payout Account Setup</h3>
+            <p>Set up your payout account to receive payments and refunds.</p>
+            <div id="stripeAccountStatus">
+              <div class="item-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-primary" id="stripeOnboardBtn">Create / Link Stripe Account</button>
+                <button class="btn btn-secondary" id="stripeManageBtn" disabled>Manage Account</button>
+                <button class="btn" id="stripeRefreshBtn">Refresh Status</button>
+              </div>
+              <div id="stripeAccountInfo" style="margin-top:8px;color:#666"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payments -->
+        <div id="player-payments" class="dashboard-section">
           <div class="stats-grid">
             <div class="stat-card">
               <span class="stat-number" id="totalDue">£0</span>
@@ -145,37 +184,6 @@
             </div>
           </div>
 
-          <!-- Stripe Connect Account -->
-          <div class="card">
-            <h3>Stripe Payouts Account</h3>
-            <div id="stripeAccountStatus">
-              <p>Set up your payouts account to receive money.</p>
-              <div class="item-actions" style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-primary" id="stripeOnboardBtn">Create / Link Stripe Account</button>
-                <button class="btn btn-secondary" id="stripeManageBtn" disabled>Manage Account</button>
-                <button class="btn" id="stripeRefreshBtn">Refresh Status</button>
-              </div>
-              <div id="stripeAccountInfo" style="margin-top:8px;color:#666"></div>
-            </div>
-          </div>
-
-          <!-- Payment Plans -->
-          <div class="card">
-            <h3>Payment Plan</h3>
-            <div id="planAssignRow" class="search-filters" style="align-items:flex-end">
-              <div class="form-group">
-                <label for="planSelector">Choose Plan</label>
-                <select id="planSelector"></select>
-              </div>
-              <div class="form-group">
-                <label for="planStartDate">Start Date</label>
-                <input type="date" id="planStartDate"/>
-              </div>
-              <button class="btn btn-primary" id="assignPlanBtn">Assign / Update Plan</button>
-            </div>
-            <div id="currentPlanInfo" style="margin-top:10px;"></div>
-          </div>
-
           <div class="card">
             <h3>Payment History</h3>
             <table class="table">
@@ -189,22 +197,6 @@
           <div class="card">
             <h3>Outstanding Payments</h3>
             <div id="outstandingPayments"></div>
-          </div>
-        </div>
-
-        <!-- Players list & filters -->
-        <div id="player-players" class="dashboard-section">
-          <div class="card">
-            <h3>Players</h3>
-            <div class="search-filters" style="gap:8px;flex-wrap:wrap">
-              <button class="btn btn-secondary filter-tab active" data-filter="all">Full player list</button>
-              <button class="btn btn-secondary filter-tab" data-filter="on-plan">On payment plan</button>
-              <button class="btn btn-secondary filter-tab" data-filter="not-on-plan">Not on plan</button>
-              <button class="btn btn-secondary filter-tab" data-filter="assigned">Assigned to team</button>
-              <button class="btn btn-secondary filter-tab" data-filter="unassigned">Not assigned to team</button>
-              <button class="btn btn-secondary filter-tab" data-filter="overdue">Overdue</button>
-            </div>
-            <div class="card-grid" id="playersListContainer" style="margin-top:12px"></div>
           </div>
         </div>
 
@@ -245,7 +237,7 @@
         <!-- Event Finder -->
         <div id="player-event-finder" class="dashboard-section">
           <div class="card">
-            <h3>Find Events</h3>
+            <h3>Find and Book Events</h3>
             <div class="search-filters">
               <div class="form-group">
                 <label for="eventSearchInput">Search Events</label>
@@ -259,6 +251,7 @@
                   <option value="tournament">Tournaments</option>
                   <option value="talent-id">Talent ID</option>
                   <option value="training">Training</option>
+                  <option value="match">Matches</option>
                 </select>
               </div>
               <div class="form-group">
@@ -273,7 +266,7 @@
         <!-- Documents -->
         <div id="player-documents" class="dashboard-section">
           <div class="card">
-            <h3>Accessible Documents</h3>
+            <h3>My Documents</h3>
             <table class="table">
               <thead>
               <tr><th>Document Name</th><th>Type</th><th>Club</th><th>Last Updated</th><th>Actions</th></tr>
@@ -347,7 +340,7 @@
   <div id="availabilityModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Vote Availability</h2>
+        <h2>Submit Availability</h2>
         <button class="close" onclick="closeModal('availabilityModal')">&times;</button>
       </div>
       <form id="availabilityForm">
@@ -369,7 +362,7 @@
     </div>
   </div>
 
-  <!-- Manage Account Modal  -->
+  <!-- Manage Account Modal -->
   <div id="accountModal" class="modal" style="display:none">
     <div class="modal-content" style="max-width:600px;">
       <div class="modal-header">
@@ -405,7 +398,7 @@
     </div>
   </div>
 
-  <!-- Core services FIRST -->
+  <!-- Core services -->
   <script src="api-service.js"></script>
   
   <script>
@@ -446,33 +439,6 @@
       if (modal) modal.style.display = 'none';
     };
 
-    // Safe updateNavigation function to replace the broken one in script.js
-    window.updateNavigation = function() {
-      const loggedInNav = document.getElementById('loggedInNav');
-      if (!loggedInNav) return;
-
-      if (AppState.currentUser && AppState.currentUser.first_name) {
-        const firstName = AppState.currentUser.first_name || 'User';
-        const firstLetter = firstName.charAt(0).toUpperCase();
-        
-        loggedInNav.innerHTML = `
-          <div class="user-info" style="display: flex; align-items: center; gap: 10px;">
-            <div class="user-avatar" style="
-              width: 32px; height: 32px; border-radius: 50%; 
-              background: #007bff; color: white; display: flex; 
-              align-items: center; justify-content: center; font-weight: bold;
-            ">${firstLetter}</div>
-            <span>Welcome, ${firstName}</span>
-          </div>
-          <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
-        `;
-      } else {
-        loggedInNav.innerHTML = `
-          <button class="btn btn-primary" onclick="window.location.href='index.html'">Login</button>
-        `;
-      }
-    };
-
     // Safe logout function
     window.logout = function() {
       try {
@@ -491,9 +457,6 @@
       
       window.location.href = 'index.html';
     };
-
-    // Update navigation immediately
-    updateNavigation();
   </script>
 
   <!-- Stripe service -->

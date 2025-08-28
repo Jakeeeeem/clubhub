@@ -907,6 +907,7 @@
                 </div>
                 <div class="stripe-access">
                     <button class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe Dashboard</button>
+                    <button class="btn btn-warning" onclick="generateShareableInviteLink()">🔗 Generate Invite Link</button>
                 </div>
             </div>
 
@@ -967,7 +968,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
                             <h3>👥 Player Management</h3>
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <button class="btn btn-success" onclick="showModal('invitePlayerModal')">📧 Invite Player</button>
+                                <button class="btn btn-success" onclick="enhancedInvitePlayer()">📧 Invite Player</button>
                                 <button class="btn btn-primary" onclick="showModal('addPlayerModal')">➕ Add Player</button>
                             </div>
                         </div>
@@ -1636,18 +1637,168 @@
         }
 
         // Enhanced Player Filtering Functions
-        function filterPlayersByView() {
-            const view = document.getElementById('playerListFilter').value;
-            console.log('🔍 Filtering players by view:', view);
-            
-            if (typeof filterPlayers === 'function') {
-                filterPlayers(view);
-            } else {
-                // Fallback filtering
-                filterPlayersLocal(view);
-            }
+        async function filterPlayersByView() {
+    const view = document.getElementById('playerListFilter').value;
+    console.log('Filtering players by view:', view);
+    
+    showLoading(true);
+    try {
+        let filteredPlayers;
+        
+        if (view === 'all') {
+            // Load all players
+            filteredPlayers = await apiService.getPlayers();
+        } else {
+            // Get filtered players
+            const clubId = AppState.clubs?.[0]?.id;
+            filteredPlayers = await apiService.getFilteredPlayers(view, clubId);
         }
+        
+        // Update the display
+        function displayFilteredPlayers(players, filterType) {
+    const container = document.getElementById('playersContainer');
+    if (!container) return;
+    
+    if (!players || players.length === 0) {
+        const filterNames = {
+            'all': 'players',
+            'on-plan': 'players on payment plans',
+            'not-on-plan': 'players not on payment plans', 
+            'assigned': 'players assigned to teams',
+            'not-assigned': 'players not assigned to teams',
+            'overdue': 'players with overdue payments'
+        };
+        
+        container.innerHTML = `
+            <div class="empty-state" style="text-align: center; padding: 2rem;">
+                <h4>No ${filterNames[filterType] || 'players'} found</h4>
+                <p>Try a different filter or add some players to your club</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = players.map(player => {
+        const hasPaymentPlan = player.has_payment_plan || player.payment_plan;
+        const hasTeamAssignment = player.has_team_assignment || player.team_name;
+        const isOverdue = player.overdue_count > 0;
+        
+        return `
+            <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
+                <div class="player-header">
+                    <div class="player-info">
+                        <h4>${player.first_name} ${player.last_name}</h4>
+                        ${hasPaymentPlan ? 
+                            `<span class="payment-plan-badge">On Payment Plan</span>` : 
+                            `<span class="no-plan-badge">No Plan Set</span>`
+                        }
+                    </div>
+                    <div class="player-status">
+                        <span class="status-badge status-${player.payment_status || 'pending'}">${player.payment_status || 'Pending'}</span>
+                    </div>
+                </div>
+                <div class="player-meta">
+                    <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
+                    <span><strong>Team:</strong> ${player.team_name || 'Not assigned'}</span>
+                    <span><strong>Email:</strong> ${player.email || 'No email'}</span>
+                    <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
+                    <span><strong>Monthly Fee:</strong> £${player.monthly_fee || 0}</span>
+                </div>
+                <div class="player-actions">
+                    <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
+                    ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
+                    ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
+                    <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
 
+// ADD this new function for individual payment plan assignment
+async function assignPaymentPlan(playerId) {
+    try {
+        // Load available payment plans
+        const plans = await apiService.makeRequest('/payments/plans');
+        
+        if (!plans || plans.length === 0) {
+            showNotification('No payment plans available. Create a payment plan first.', 'error');
+            return;
+        }
+        
+        // Create selection modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        modal.id = 'assignPlanModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Assign Payment Plan</h2>
+                    <button class="close" onclick="closeModal('assignPlanModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="selectPlan">Choose Payment Plan</label>
+                        <select id="selectPlan" required>
+                            <option value="">Select a plan...</option>
+                            ${plans.map(plan => `
+                                <option value="${plan.id}">${plan.name} - £${plan.price}/${plan.interval}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planStartDate">Start Date</label>
+                        <input type="date" id="planStartDate" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" onclick="confirmPlanAssignment('${playerId}')">Assign Plan</button>
+                        <button class="btn btn-secondary" onclick="closeModal('assignPlanModal')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+    } catch (error) {
+        console.error('Failed to load payment plans:', error);
+        showNotification('Failed to load payment plans', 'error');
+    }
+}
+
+// ADD this function to confirm plan assignment
+async function confirmPlanAssignment(playerId) {
+    const planId = document.getElementById('selectPlan').value;
+    const startDate = document.getElementById('planStartDate').value;
+    
+    if (!planId) {
+        showNotification('Please select a payment plan', 'error');
+        return;
+    }
+    
+    try {
+        await apiService.bulkAssignPaymentPlan([playerId], planId, startDate);
+        closeModal('assignPlanModal');
+        showNotification('Payment plan assigned successfully!', 'success');
+        
+        // Refresh the current view
+        filterPlayersByView();
+        
+    } catch (error) {
+        console.error('Failed to assign payment plan:', error);
+        showNotification('Failed to assign payment plan: ' + error.message, 'error');
+    }
+}
+        
+    } catch (error) {
+        console.error('Failed to filter players:', error);
+        showNotification('Failed to filter players: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
         function filterPlayersByTeam() {
             const teamId = document.getElementById('teamFilter').value;
             console.log('🔍 Filtering players by team:', teamId);

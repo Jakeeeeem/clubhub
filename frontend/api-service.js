@@ -642,6 +642,28 @@ class ApiService {
     });
   }
 
+  async getFilteredPlayers(filter, clubId = null) {
+  try {
+    const endpoint = clubId ? 
+      `/players/filtered/${filter}?clubId=${clubId}` : 
+      `/players/filtered/${filter}`;
+    return await this.makeRequest(endpoint);
+  } catch (error) {
+    console.warn('Failed to fetch filtered players:', error);
+    return [];
+  }
+}
+
+async bulkAssignPaymentPlan(playerIds, planId, startDate) {
+  return await this.makeRequest('/payments/bulk-assign-plan', {
+    method: 'POST',
+    body: JSON.stringify({ 
+      playerIds, 
+      planId, 
+      startDate: startDate || new Date().toISOString().split('T')[0]
+    })
+  });
+}
   // =========================== DASHBOARD METHODS ===========================
 
   async getAdminDashboardData() {

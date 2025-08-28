@@ -974,6 +974,40 @@ router.use((error, req, res, next) => {
   });
 });
 
-
+router.post('/bulk-assign-plan', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const { playerIds, planId, startDate } = req.body;
+    
+    if (!playerIds || !Array.isArray(playerIds) || playerIds.length === 0) {
+      return res.status(400).json({ error: 'Player IDs array is required' });
+    }
+    
+    if (!planId) {
+      return res.status(400).json({ error: 'Plan ID is required' });
+    }
+    
+    await withTransaction(async (client) => {
+      for (const playerId of playerIds) {
+        // Deactivate existing plans
+        await client.query(`
+          UPDATE player_plans SET is_active = false, updated_at = NOW()
+          WHERE user_id = (SELECT user_id FROM players WHERE id = $1)
+        `, [playerId]);
+        
+        // Assign new plan
+        await client.query(`
+          INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
+          SELECT p.user_id, $1, $2, true, NOW(), NOW()
+          FROM players p WHERE p.id = $3 AND p.user_id IS NOT NULL
+        `, [planId, startDate || new Date(), playerId]);
+      }
+    });
+    
+    res.json({ success: true, message: `Payment plans assigned to ${playerIds.length} players` });
+  } catch (error) {
+    console.error('Bulk assign plans error:', error);
+    res.status(500).json({ error: 'Failed to assign payment plans' });
+  }
+});
 
 module.exports = router;
