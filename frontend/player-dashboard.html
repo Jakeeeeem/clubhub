@@ -13,7 +13,6 @@
       <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
       <div class="nav-buttons" id="loggedInNav">
         <!-- Populated by JS -->
-        <button class="btn btn-secondary" id="logoutBtn" style="display:none">Logout</button>
       </div>
     </nav>
   </header>
@@ -406,42 +405,122 @@
     </div>
   </div>
 
-  <script src="https://js.stripe.com/v3/"></script>
-
-<!-- Core services FIRST -->
-<script src="api-service.js"></script>
-<script>
-  // Make sure AppState exists on this page
-  window.AppState = window.AppState || {};
-  try {
-    AppState.currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
-  } catch (_) { AppState.currentUser = null; }
-
-  // Safe fallbacks if these helpers aren't included on this page
-  window.showLoading = window.showLoading || function(){};
-  window.showNotification = window.showNotification || function(msg){ console.log('ℹ️', msg); };
-  window.showModal = window.showModal || function(id){ document.getElementById(id)?.classList.add('open'); };
-  window.closeModal = window.closeModal || function(id){ document.getElementById(id)?.classList.remove('open'); };
-</script>
-
-<!-- Stripe service (needs apiService + Stripe) -->
-<script src="stripe-service.js"></script>
-
-<!-- Any shared utils -->
-<script src="script.js"></script>
-
-<!-- Player dashboard LAST -->
-<script src="player-dashboard.js"></script>
-
-<!-- Final boot -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof initializePlayerDashboard === 'function') {
-      initializePlayerDashboard();
-    } else {
-      console.error('initializePlayerDashboard() not found');
+  <!-- Core services FIRST -->
+  <script src="api-service.js"></script>
+  
+  <script>
+    // Initialize AppState safely
+    window.AppState = window.AppState || {};
+    try {
+      AppState.currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+    } catch (_) { 
+      AppState.currentUser = null; 
     }
-  });
-</script>
+
+    // Fallback functions for missing script.js functions
+    window.showLoading = window.showLoading || function(show) { 
+      console.log('Loading:', show); 
+    };
+    
+    window.showNotification = window.showNotification || function(msg, type = 'info') { 
+      console.log(`${type.toUpperCase()}: ${msg}`);
+      // Create a simple notification
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 9999;
+        padding: 12px 20px; border-radius: 4px; color: white; font-weight: bold;
+        background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#007bff'};
+      `;
+      notification.textContent = msg;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 5000);
+    };
+    
+    window.showModal = window.showModal || function(id) { 
+      const modal = document.getElementById(id);
+      if (modal) modal.style.display = 'block';
+    };
+    
+    window.closeModal = window.closeModal || function(id) { 
+      const modal = document.getElementById(id);
+      if (modal) modal.style.display = 'none';
+    };
+
+    // Safe updateNavigation function to replace the broken one in script.js
+    window.updateNavigation = function() {
+      const loggedInNav = document.getElementById('loggedInNav');
+      if (!loggedInNav) return;
+
+      if (AppState.currentUser && AppState.currentUser.first_name) {
+        const firstName = AppState.currentUser.first_name || 'User';
+        const firstLetter = firstName.charAt(0).toUpperCase();
+        
+        loggedInNav.innerHTML = `
+          <div class="user-info" style="display: flex; align-items: center; gap: 10px;">
+            <div class="user-avatar" style="
+              width: 32px; height: 32px; border-radius: 50%; 
+              background: #007bff; color: white; display: flex; 
+              align-items: center; justify-content: center; font-weight: bold;
+            ">${firstLetter}</div>
+            <span>Welcome, ${firstName}</span>
+          </div>
+          <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+        `;
+      } else {
+        loggedInNav.innerHTML = `
+          <button class="btn btn-primary" onclick="window.location.href='index.html'">Login</button>
+        `;
+      }
+    };
+
+    // Safe logout function
+    window.logout = function() {
+      try {
+        if (typeof apiService !== 'undefined' && apiService.logout) {
+          apiService.logout().catch(console.warn);
+        }
+      } catch (e) {
+        console.warn('API logout failed:', e);
+      }
+      
+      // Clear everything
+      AppState.currentUser = null;
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userType');
+      
+      window.location.href = 'index.html';
+    };
+
+    // Update navigation immediately
+    updateNavigation();
+  </script>
+
+  <!-- Stripe service -->
+  <script src="stripe-service.js"></script>
+
+  <!-- Optional script.js - load without breaking if missing -->
+  <script>
+    const scriptEl = document.createElement('script');
+    scriptEl.src = 'script.js';
+    scriptEl.onerror = function() {
+      console.warn('script.js failed to load - using fallback functions');
+    };
+    document.head.appendChild(scriptEl);
+  </script>
+
+  <!-- Player dashboard -->
+  <script src="player-dashboard.js"></script>
+
+  <!-- Initialize -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof initializePlayerDashboard === 'function') {
+        initializePlayerDashboard();
+      } else {
+        console.error('initializePlayerDashboard() not found');
+      }
+    });
+  </script>
 </body>
 </html>
