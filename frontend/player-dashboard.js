@@ -395,7 +395,7 @@ function loadOutstandingPayments() {
   }
 
   const paymentsHTML = outstanding.map(p => 
-    '<div class="payment-item" style="border:1px solid #ddd;padding:1rem;margin:.5rem 0;border-radius:8px;background:#fff8f0;">' +
+    '<div class="payment-item" style="border:1px solid #000000ff;padding:1rem;margin:.5rem 0;border-radius:8px;background:#fff8f0;">' +
       '<h4>' + escapeHTML(p.description || 'Payment') + '</h4>' +
       '<p><strong>Amount:</strong> ' + formatCurrency(p.amount) + '</p>' +
       '<p><strong>Due Date:</strong> ' + formatDate(p.due_date) + '</p>' +
