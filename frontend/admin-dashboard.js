@@ -1055,6 +1055,8 @@ function loadFinances() {
     if (totalMembersEl) totalMembersEl.textContent = payingMembers;
     
     loadPaymentsTable(clubPayments);
+
+    loadPaymentPlans();
 }
 
 function loadPaymentsTable(payments) {
