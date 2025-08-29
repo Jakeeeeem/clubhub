@@ -28,35 +28,52 @@ router.options('*', cors());
 
 // Helper: get or create a Stripe Connect account for the current user
 async function getOrCreateStripeConnectAccount(user) {
-  // You need a column to store the Stripe account id. We'll use users.stripe_account_id
-  const userResult = await query(`SELECT id, email, first_name, last_name, stripe_account_id FROM users WHERE id = $1`, [user.id]);
-  if (userResult.rows.length === 0) throw new Error('User not found');
-  const dbUser = userResult.rows[0];
-
-  let accountId = dbUser.stripe_account_id;
-
-  if (!accountId) {
-    // Create an Express (Connect) account
-    const account = await stripe.accounts.create({
-      type: 'express',
-      email: dbUser.email,
-      business_type: 'individual',
-      capabilities: {
-        transfers: { requested: true },
-        card_payments: { requested: true },
-      },
-      metadata: {
-        app_user_id: String(dbUser.id),
+  try {
+    // Check if stripe_account_id column exists, if not, add it
+    const userResult = await query(`
+      SELECT id, email, first_name, last_name, stripe_account_id 
+      FROM users 
+      WHERE id = $1
+    `, [user.id]).catch(async (err) => {
+      if (err.message.includes('column "stripe_account_id" does not exist')) {
+        console.log('Adding stripe_account_id column to users table...');
+        await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_account_id VARCHAR(255)`);
+        return await query(`SELECT id, email, first_name, last_name, stripe_account_id FROM users WHERE id = $1`, [user.id]);
       }
+      throw err;
     });
 
-    accountId = account.id;
-    await query(`UPDATE users SET stripe_account_id = $1, updated_at = NOW() WHERE id = $2`, [accountId, user.id]);
-  }
+    if (userResult.rows.length === 0) throw new Error('User not found');
+    const dbUser = userResult.rows[0];
 
-  // Always fetch latest status
-  const account = await stripe.accounts.retrieve(accountId);
-  return account;
+    let accountId = dbUser.stripe_account_id;
+
+    if (!accountId) {
+      // Create an Express (Connect) account
+      const account = await stripe.accounts.create({
+        type: 'express',
+        email: dbUser.email,
+        business_type: 'individual',
+        capabilities: {
+          transfers: { requested: true },
+          card_payments: { requested: true },
+        },
+        metadata: {
+          app_user_id: String(dbUser.id),
+        }
+      });
+
+      accountId = account.id;
+      await query(`UPDATE users SET stripe_account_id = $1, updated_at = NOW() WHERE id = $2`, [accountId, user.id]);
+    }
+
+    // Always fetch latest status
+    const account = await stripe.accounts.retrieve(accountId);
+    return account;
+  } catch (err) {
+    console.error('Stripe Connect account error:', err);
+    throw err;
+  }
 }
 
 // GET /api/payments/stripe/connect/status
@@ -71,11 +88,14 @@ router.get('/stripe/connect/status', authenticateToken, async (req, res) => {
       requirements: account.requirements?.currently_due || [],
     });
   } catch (err) {
+    console.error('Stripe connect status error:', err);
     if (String(err.message).includes('User not found')) {
       return res.status(404).json({ error: 'User not found' });
     }
-    console.error('Stripe connect status error:', err);
-    res.status(500).json({ error: 'Failed to fetch Stripe account status' });
+    res.status(500).json({ 
+      error: 'Failed to fetch Stripe account status',
+      message: err.message 
+    });
   }
 });
 
@@ -121,15 +141,6 @@ router.get('/stripe/connect/manage', authenticateToken, async (req, res) => {
   }
 });
 
-// Validation rules
-const paymentValidation = [
-  body('playerId').optional().isUUID().withMessage('Valid player ID is required'),
-  body('amount').isNumeric().withMessage('Amount must be a number'),
-  body('paymentType').optional().isIn(['monthly_fee', 'event_booking', 'registration', 'equipment']).withMessage('Invalid payment type'),
-  body('description').optional().trim().isLength({ min: 1 }).withMessage('Description is required'),
-  body('dueDate').optional().isISO8601().withMessage('Please provide a valid due date')
-];
-
 // Health check endpoint
 router.get('/health', (req, res) => {
   res.json({ 
@@ -138,6 +149,205 @@ router.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// GET /api/payments/plans - Get all active plans
+router.get('/plans', authenticateToken, async (req, res) => {
+  try {
+    // First, ensure the plans table exists
+    await query(`
+      CREATE TABLE IF NOT EXISTS plans (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        price DECIMAL(10,2) NOT NULL DEFAULT 0,
+        amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+        interval VARCHAR(50) DEFAULT 'month',
+        active BOOLEAN DEFAULT true,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Insert default plans if table is empty
+    const countResult = await query('SELECT COUNT(*) as count FROM plans');
+    if (parseInt(countResult.rows[0].count) === 0) {
+      await query(`
+        INSERT INTO plans (name, price, amount, interval, active, description) VALUES
+        ('Basic Plan', 29.99, 29.99, 'month', true, 'Basic monthly subscription'),
+        ('Premium Plan', 49.99, 49.99, 'month', true, 'Premium monthly subscription'),
+        ('Annual Plan', 299.99, 299.99, 'year', true, 'Annual subscription with discount')
+      `);
+    }
+
+    const result = await query(`
+      SELECT id, name, 
+             COALESCE(price, amount, 0) as price,
+             COALESCE(amount, price, 0) as amount,
+             interval, active, description, created_at 
+      FROM plans 
+      WHERE active = true 
+      ORDER BY price ASC
+    `);
+    
+    console.log('Plans loaded:', result.rows.length);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get plans error:', err);
+    res.status(500).json({ 
+      error: 'Failed to load plans',
+      message: err.message 
+    });
+  }
+});
+
+// GET /api/payments/plan/current - Get current user's plan
+router.get('/plan/current', authenticateToken, async (req, res) => {
+  try {
+    // Ensure player_plans table exists
+    await query(`
+      CREATE TABLE IF NOT EXISTS player_plans (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        plan_id INTEGER REFERENCES plans(id),
+        start_date TIMESTAMP DEFAULT NOW(),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    const result = await query(`
+      SELECT 
+        pp.id as player_plan_id, 
+        p.id as plan_id, 
+        p.name, 
+        COALESCE(p.price, p.amount, 0) as price,
+        COALESCE(p.amount, p.price, 0) as amount,
+        p.interval, 
+        pp.start_date, 
+        pp.is_active,
+        pp.created_at
+      FROM player_plans pp
+      INNER JOIN plans p ON p.id = pp.plan_id
+      WHERE pp.user_id = $1 AND pp.is_active = true
+      ORDER BY pp.start_date DESC
+      LIMIT 1
+    `, [req.user.id]);
+
+    console.log('Current plan for user:', req.user.id, result.rows.length ? 'found' : 'none');
+    
+    if (result.rows.length === 0) {
+      return res.json(null);
+    }
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Get current plan error:', err);
+    res.status(500).json({ 
+      error: 'Failed to load current plan',
+      message: err.message 
+    });
+  }
+});
+
+// POST /api/payments/plan/assign - Assign/update plan for current user
+router.post('/plan/assign', authenticateToken, [
+  body('planId').notEmpty().withMessage('planId is required'),
+  body('startDate').optional().isISO8601().withMessage('Invalid startDate')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        error: 'Validation failed', 
+        details: errors.array() 
+      });
+    }
+
+    const { planId, startDate } = req.body;
+
+    // Verify plan exists and active
+    const planRes = await query(`
+      SELECT id, name, COALESCE(price, amount, 0) as price, interval 
+      FROM plans 
+      WHERE id = $1 AND active = true
+    `, [planId]);
+    
+    if (planRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found or inactive' });
+    }
+
+    await withTransaction(async (client) => {
+      // Deactivate existing plans for this user
+      await client.query(`
+        UPDATE player_plans 
+        SET is_active = false, updated_at = NOW() 
+        WHERE user_id = $1 AND is_active = true
+      `, [req.user.id]);
+
+      // Assign new plan
+      await client.query(`
+        INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
+        VALUES ($1, $2, $3, true, NOW(), NOW())
+      `, [req.user.id, planId, startDate || new Date()]);
+    });
+
+    console.log('Plan assigned:', planId, 'to user:', req.user.id);
+    res.json({ success: true, message: 'Plan assigned/updated' });
+  } catch (err) {
+    console.error('Assign plan error:', err);
+    res.status(500).json({ 
+      error: 'Failed to assign plan',
+      message: err.message 
+    });
+  }
+});
+
+// POST /api/payments/bulk-assign-plan
+router.post('/bulk-assign-plan', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const { playerIds, planId, startDate } = req.body;
+    
+    if (!playerIds || !Array.isArray(playerIds) || playerIds.length === 0) {
+      return res.status(400).json({ error: 'Player IDs array is required' });
+    }
+    
+    if (!planId) {
+      return res.status(400).json({ error: 'Plan ID is required' });
+    }
+    
+    await withTransaction(async (client) => {
+      for (const playerId of playerIds) {
+        // Deactivate existing plans
+        await client.query(`
+          UPDATE player_plans SET is_active = false, updated_at = NOW()
+          WHERE user_id = (SELECT user_id FROM players WHERE id = $1)
+        `, [playerId]);
+        
+        // Assign new plan
+        await client.query(`
+          INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
+          SELECT p.user_id, $1, $2, true, NOW(), NOW()
+          FROM players p WHERE p.id = $3 AND p.user_id IS NOT NULL
+        `, [planId, startDate || new Date(), playerId]);
+      }
+    });
+    
+    res.json({ success: true, message: `Payment plans assigned to ${playerIds.length} players` });
+  } catch (error) {
+    console.error('Bulk assign plans error:', error);
+    res.status(500).json({ error: 'Failed to assign payment plans' });
+  }
+});
+
+// Validation rules
+const paymentValidation = [
+  body('playerId').optional().isUUID().withMessage('Valid player ID is required'),
+  body('amount').isNumeric().withMessage('Amount must be a number'),
+  body('paymentType').optional().isIn(['monthly_fee', 'event_booking', 'registration', 'equipment']).withMessage('Invalid payment type'),
+  body('description').optional().trim().isLength({ min: 1 }).withMessage('Description is required'),
+  body('dueDate').optional().isISO8601().withMessage('Please provide a valid due date')
+];
 
 // Get all payments (with filters)
 router.get('/', authenticateToken, async (req, res) => {
@@ -226,16 +436,16 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// 🔥 CREATE STRIPE PAYMENT INTENT - ENHANCED
+// CREATE STRIPE PAYMENT INTENT - ENHANCED
 router.post('/create-intent', async (req, res) => {
   try {
-    console.log('💳 Creating payment intent with data:', req.body);
+    console.log('Creating payment intent with data:', req.body);
     
     const { amount, paymentId, metadata = {} } = req.body;
 
     // Validate Stripe is configured
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('❌ STRIPE_SECRET_KEY not configured');
+      console.error('STRIPE_SECRET_KEY not configured');
       return res.status(500).json({
         error: 'Payment system not configured',
         message: 'Please contact support - payment system unavailable',
@@ -297,35 +507,35 @@ router.post('/create-intent', async (req, res) => {
             });
           }
         } else {
-          console.warn(`⚠️ Payment record not found for ID: ${paymentId}`);
+          console.warn(`Payment record not found for ID: ${paymentId}`);
         }
       } catch (dbError) {
-        console.error('❌ Database error fetching payment:', dbError);
+        console.error('Database error fetching payment:', dbError);
         // Don't fail here - continue with direct payment
-        console.warn('⚠️ Continuing with direct payment due to database error');
+        console.warn('Continuing with direct payment due to database error');
       }
     }
 
     // Create Stripe Payment Intent
     try {
-  const paymentIntentData = {
-    amount: Math.round(numericAmount * 100), // Convert to pence
-    currency: 'gbp',
-    automatic_payment_methods: {
-      enabled: true,
-    },
-    metadata: {
-      paymentId: paymentId || 'direct_payment',
-      playerName: paymentDetails ? `${paymentDetails.first_name} ${paymentDetails.last_name}` : metadata.playerName || 'Customer',
-      clubName: paymentDetails ? paymentDetails.club_name : metadata.clubName || 'ClubHub',
-      environment: process.env.NODE_ENV || 'development',
-      timestamp: new Date().toISOString(),
-      source: 'clubhub_payment_page',
-      ...metadata
-    },
-    description: paymentDetails ? paymentDetails.description : metadata.description || `ClubHub Payment of £${numericAmount}`,
-    statement_descriptor_suffix: 'CLUBHUB', // ✅ FIXED!
-  };
+      const paymentIntentData = {
+        amount: Math.round(numericAmount * 100), // Convert to pence
+        currency: 'gbp',
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        metadata: {
+          paymentId: paymentId || 'direct_payment',
+          playerName: paymentDetails ? `${paymentDetails.first_name} ${paymentDetails.last_name}` : metadata.playerName || 'Customer',
+          clubName: paymentDetails ? paymentDetails.club_name : metadata.clubName || 'ClubHub',
+          environment: process.env.NODE_ENV || 'development',
+          timestamp: new Date().toISOString(),
+          source: 'clubhub_payment_page',
+          ...metadata
+        },
+        description: paymentDetails ? paymentDetails.description : metadata.description || `ClubHub Payment of £${numericAmount}`,
+        statement_descriptor: 'CLUBHUB', // Fixed: removed malformed suffix
+      };
 
       // Add receipt email if available
       const email = paymentDetails?.email || metadata.email;
@@ -333,7 +543,7 @@ router.post('/create-intent', async (req, res) => {
         paymentIntentData.receipt_email = email;
       }
 
-      console.log('💳 Creating Stripe PaymentIntent with data:', {
+      console.log('Creating Stripe PaymentIntent with data:', {
         amount: paymentIntentData.amount,
         currency: paymentIntentData.currency,
         description: paymentIntentData.description
@@ -341,7 +551,7 @@ router.post('/create-intent', async (req, res) => {
 
       const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
 
-      console.log(`✅ Stripe Payment Intent created: ${paymentIntent.id} for £${numericAmount}`);
+      console.log(`Stripe Payment Intent created: ${paymentIntent.id} for £${numericAmount}`);
 
       res.json({
         success: true,
@@ -354,7 +564,7 @@ router.post('/create-intent', async (req, res) => {
       });
 
     } catch (stripeError) {
-      console.error('❌ Stripe API error:', stripeError);
+      console.error('Stripe API error:', stripeError);
       
       let errorMessage = 'Unable to create payment intent. Please try again.';
       let statusCode = 500;
@@ -382,7 +592,7 @@ router.post('/create-intent', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('❌ Create payment intent error:', error);
+    console.error('Create payment intent error:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'An unexpected error occurred. Please try again.',
@@ -391,10 +601,10 @@ router.post('/create-intent', async (req, res) => {
   }
 });
 
-// 🔥 CONFIRM STRIPE PAYMENT - ENHANCED
+// CONFIRM STRIPE PAYMENT - ENHANCED
 router.post('/confirm-payment', async (req, res) => {
   try {
-    console.log('✅ Confirming payment with data:', req.body);
+    console.log('Confirming payment with data:', req.body);
     
     const { paymentIntentId, paymentId } = req.body;
 
@@ -416,9 +626,9 @@ router.post('/confirm-payment', async (req, res) => {
     let paymentIntent;
     try {
       paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-      console.log(`💳 Retrieved PaymentIntent ${paymentIntentId} with status: ${paymentIntent.status}`);
+      console.log(`Retrieved PaymentIntent ${paymentIntentId} with status: ${paymentIntent.status}`);
     } catch (stripeError) {
-      console.error('❌ Failed to retrieve payment intent:', stripeError);
+      console.error('Failed to retrieve payment intent:', stripeError);
       return res.status(400).json({
         error: 'Invalid payment intent',
         message: 'Could not verify payment with Stripe',
@@ -427,7 +637,7 @@ router.post('/confirm-payment', async (req, res) => {
     }
 
     if (paymentIntent.status !== 'succeeded') {
-      console.warn(`⚠️ Payment intent status is ${paymentIntent.status}, not succeeded`);
+      console.warn(`Payment intent status is ${paymentIntent.status}, not succeeded`);
       return res.status(400).json({
         error: 'Payment not completed',
         message: `Payment status: ${paymentIntent.status}`,
@@ -439,7 +649,7 @@ router.post('/confirm-payment', async (req, res) => {
     // If paymentId provided, update our database
     if (paymentId && !paymentId.startsWith('direct_')) {
       try {
-        console.log(`📝 Updating payment record ${paymentId} in database`);
+        console.log(`Updating payment record ${paymentId} in database`);
         
         const result = await query(`
           UPDATE payments SET 
@@ -457,11 +667,11 @@ router.post('/confirm-payment', async (req, res) => {
         ]);
 
         if (result.rows.length === 0) {
-          console.warn(`⚠️ Payment record ${paymentId} not found or already processed`);
+          console.warn(`Payment record ${paymentId} not found or already processed`);
           // Don't fail here - payment succeeded on Stripe side
         } else {
           const payment = result.rows[0];
-          console.log(`✅ Updated payment record: ${payment.id}`);
+          console.log(`Updated payment record: ${payment.id}`);
           
           // Update player payment status if this was a monthly fee
           if (payment.payment_type === 'monthly_fee' && payment.player_id) {
@@ -472,20 +682,20 @@ router.post('/confirm-payment', async (req, res) => {
                   updated_at = NOW()
                 WHERE id = $1
               `, [payment.player_id]);
-              console.log(`✅ Updated player payment status for player: ${payment.player_id}`);
+              console.log(`Updated player payment status for player: ${payment.player_id}`);
             } catch (playerError) {
-              console.error('❌ Failed to update player status:', playerError);
+              console.error('Failed to update player status:', playerError);
               // Don't fail the whole request
             }
           }
         }
       } catch (dbError) {
-        console.error('❌ Database error updating payment:', dbError);
+        console.error('Database error updating payment:', dbError);
         // Don't fail here - payment succeeded on Stripe side
-        console.warn('⚠️ Payment succeeded on Stripe but database update failed');
+        console.warn('Payment succeeded on Stripe but database update failed');
       }
     } else {
-      console.log('📝 Direct payment - no database record to update');
+      console.log('Direct payment - no database record to update');
     }
 
     // Return success response
@@ -502,11 +712,11 @@ router.post('/confirm-payment', async (req, res) => {
       }
     };
 
-    console.log(`✅ Payment confirmation successful: ${paymentIntent.id}`);
+    console.log(`Payment confirmation successful: ${paymentIntent.id}`);
     res.json(response);
 
   } catch (error) {
-    console.error('❌ Confirm payment error:', error);
+    console.error('Confirm payment error:', error);
     res.status(500).json({
       error: 'Failed to confirm payment',
       message: 'An unexpected error occurred',
@@ -515,17 +725,17 @@ router.post('/confirm-payment', async (req, res) => {
   }
 });
 
-// 🔥 PUBLIC PAYMENT DETAILS - ENHANCED (for payment page)
+// PUBLIC PAYMENT DETAILS - ENHANCED (for payment page)
 router.get('/public/:id', async (req, res) => {
   try {
     const { token } = req.query;
     const paymentId = req.params.id;
     
-    console.log(`🔍 Fetching public payment details for ID: ${paymentId}`);
+    console.log(`Fetching public payment details for ID: ${paymentId}`);
 
     // If no token provided, this might be a direct payment
     if (!token) {
-      console.log('⚠️ No token provided - treating as direct payment');
+      console.log('No token provided - treating as direct payment');
       return res.status(400).json({
         error: 'Payment token required',
         message: 'This payment requires a valid token for security'
@@ -546,7 +756,7 @@ router.get('/public/:id', async (req, res) => {
         throw new Error('Token mismatch');
       }
     } catch (tokenError) {
-      console.error('❌ Token verification failed:', tokenError);
+      console.error('Token verification failed:', tokenError);
       return res.status(403).json({
         error: 'Invalid payment token',
         message: 'The payment link is invalid or has been tampered with'
@@ -564,7 +774,7 @@ router.get('/public/:id', async (req, res) => {
       `, [paymentId]);
       
       if (paymentResult.rows.length === 0) {
-        console.warn(`⚠️ Payment not found: ${paymentId}`);
+        console.warn(`Payment not found: ${paymentId}`);
         return res.status(404).json({
           error: 'Payment not found',
           message: 'This payment record does not exist'
@@ -601,11 +811,11 @@ router.get('/public/:id', async (req, res) => {
         }
       };
 
-      console.log(`✅ Public payment details retrieved: ${paymentId}`);
+      console.log(`Public payment details retrieved: ${paymentId}`);
       res.json(response);
 
     } catch (dbError) {
-      console.error('❌ Database error fetching public payment:', dbError);
+      console.error('Database error fetching public payment:', dbError);
       return res.status(500).json({
         error: 'Database error',
         message: 'Unable to fetch payment details'
@@ -613,7 +823,7 @@ router.get('/public/:id', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('❌ Get public payment error:', error);
+    console.error('Get public payment error:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: 'An unexpected error occurred'
@@ -621,7 +831,7 @@ router.get('/public/:id', async (req, res) => {
   }
 });
 
-// 🔥 GENERATE PAYMENT LINK - ENHANCED
+// GENERATE PAYMENT LINK - ENHANCED
 router.get('/:id/payment-link', authenticateToken, requireOrganization, async (req, res) => {
   try {
     const paymentId = req.params.id;
@@ -687,7 +897,7 @@ router.get('/:id/payment-link', authenticateToken, requireOrganization, async (r
   }
 });
 
-// 🔥 BOOK EVENT WITH PAYMENT - ENHANCED
+// BOOK EVENT WITH PAYMENT - ENHANCED
 router.post('/book-event', async (req, res) => {
   try {
     const { eventId, paymentIntentId, playerData } = req.body;
@@ -748,7 +958,7 @@ router.post('/book-event', async (req, res) => {
           });
         }
       } catch (stripeError) {
-        console.error('❌ Stripe verification error:', stripeError);
+        console.error('Stripe verification error:', stripeError);
         return res.status(400).json({
           error: 'Payment verification failed',
           message: 'Could not verify payment with Stripe'
@@ -812,7 +1022,7 @@ router.post('/book-event', async (req, res) => {
       return bookingResult.rows[0];
     });
 
-    console.log(`📅 Event booked: ${event.title} by user ${userId || 'guest'}`);
+    console.log(`Event booked: ${event.title} by user ${userId || 'guest'}`);
 
     res.status(201).json({
       success: true,
@@ -844,73 +1054,6 @@ router.post('/', authenticateToken, requireOrganization, paymentValidation, asyn
         details: errors.array()
       });
     }
-
-    router.get('/plans', authenticateToken, async (req, res) => {
-  try {
-    const result = await query(`SELECT id, name, price, interval, active FROM plans WHERE active = true ORDER BY name ASC`, []);
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Get plans error:', err);
-    res.status(500).json({ error: 'Failed to load plans' });
-  }
-});
-
-// GET /api/payments/plan/current  -> current user’s plan (if any)
-router.get('/plan/current', authenticateToken, async (req, res) => {
-  try {
-    const result = await query(`
-      SELECT pp.id as player_plan_id, p.id as plan_id, p.name, p.price, p.interval, pp.start_date, pp.is_active
-      FROM player_plans pp
-      INNER JOIN plans p ON p.id = pp.plan_id
-      WHERE pp.user_id = $1 AND pp.is_active = true
-      ORDER BY pp.start_date DESC
-      LIMIT 1
-    `, [req.user.id]);
-
-    if (result.rows.length === 0) return res.json(null);
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Get current plan error:', err);
-    res.status(500).json({ error: 'Failed to load current plan' });
-  }
-});
-
-// POST /api/payments/plan/assign  -> assign/update plan for current user
-router.post('/plan/assign', authenticateToken, [
-  body('planId').notEmpty().withMessage('planId is required'),
-  body('startDate').optional().isISO8601().withMessage('Invalid startDate')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ error: 'Validation failed', details: errors.array() });
-
-    const { planId, startDate } = req.body;
-
-    // Verify plan exists and active
-    const planRes = await query(`SELECT id, name, price, interval FROM plans WHERE id = $1 AND active = true`, [planId]);
-    if (planRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Plan not found or inactive' });
-    }
-
-    await withTransaction(async (client) => {
-      // Deactivate existing plans for this user
-      await client.query(`UPDATE player_plans SET is_active = false, updated_at = NOW() WHERE user_id = $1 AND is_active = true`, [req.user.id]);
-
-      // Assign new plan
-      await client.query(`
-        INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
-        VALUES ($1, $2, $3, true, NOW(), NOW())
-      `, [req.user.id, planId, startDate || new Date()]);
-
-      // Optionally: create first upcoming payment row here if you need
-    });
-
-    res.json({ success: true, message: 'Plan assigned/updated' });
-  } catch (err) {
-    console.error('Assign plan error:', err);
-    res.status(500).json({ error: 'Failed to assign plan' });
-  }
-});
 
     const { playerId, amount, paymentType, description, dueDate } = req.body;
 
@@ -948,7 +1091,7 @@ router.post('/plan/assign', authenticateToken, [
 
     const newPayment = result.rows[0];
 
-    console.log(`💰 Payment created: ${description} - £${amount} for player ${playerId}`);
+    console.log(`Payment created: ${description} - £${amount} for player ${playerId}`);
 
     res.status(201).json({
       success: true,
@@ -972,42 +1115,6 @@ router.use((error, req, res, next) => {
     error: 'Internal server error',
     message: 'An unexpected error occurred in payment processing'
   });
-});
-
-router.post('/bulk-assign-plan', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    const { playerIds, planId, startDate } = req.body;
-    
-    if (!playerIds || !Array.isArray(playerIds) || playerIds.length === 0) {
-      return res.status(400).json({ error: 'Player IDs array is required' });
-    }
-    
-    if (!planId) {
-      return res.status(400).json({ error: 'Plan ID is required' });
-    }
-    
-    await withTransaction(async (client) => {
-      for (const playerId of playerIds) {
-        // Deactivate existing plans
-        await client.query(`
-          UPDATE player_plans SET is_active = false, updated_at = NOW()
-          WHERE user_id = (SELECT user_id FROM players WHERE id = $1)
-        `, [playerId]);
-        
-        // Assign new plan
-        await client.query(`
-          INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
-          SELECT p.user_id, $1, $2, true, NOW(), NOW()
-          FROM players p WHERE p.id = $3 AND p.user_id IS NOT NULL
-        `, [planId, startDate || new Date(), playerId]);
-      }
-    });
-    
-    res.json({ success: true, message: `Payment plans assigned to ${playerIds.length} players` });
-  } catch (error) {
-    console.error('Bulk assign plans error:', error);
-    res.status(500).json({ error: 'Failed to assign payment plans' });
-  }
 });
 
 module.exports = router;
