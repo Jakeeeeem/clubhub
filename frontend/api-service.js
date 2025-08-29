@@ -244,6 +244,41 @@ class ApiService {
     return this.makeRequest('/payments/unassign-plan', { method: 'POST' });
   }
 
+  async getPaymentPlans() {
+  // If your backend returns { plans: [...] } change the next line to: (await this.makeRequest('/payments/plans')).plans
+  return await this.listPaymentPlans();
+}
+
+async createPaymentPlan({ name, amount, frequency, description }) {
+  // If your backend expects "interval" not "frequency", keep as interval below:
+  return await this.makeRequest('/payments/plans', {
+    method: 'POST',
+    body: JSON.stringify({
+      name,
+      amount,               // number in pounds (adjust if your API expects pence)
+      interval: frequency,  // 'monthly' | 'quarterly' | 'annually' | 'one-time'
+      description
+    })
+  });
+}
+
+async updatePaymentPlan(planId, { name, amount, frequency, description }) {
+  return await this.makeRequest(`/payments/plans/${planId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      name,
+      amount,
+      interval: frequency,
+      description
+    })
+  });
+}
+
+async deletePaymentPlan(planId) {
+  return await this.makeRequest(`/payments/plans/${planId}`, {
+    method: 'DELETE'
+  });
+}
   // =========================== EMAIL METHODS ===========================
 
   async sendEmail(emailData) {

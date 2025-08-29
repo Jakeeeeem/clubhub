@@ -47,7 +47,10 @@ function setupEventListeners() {
     const addStaffForm = document.getElementById('addStaffForm');
     const addEventForm = document.getElementById('addEventForm');
     const addTeamForm = document.getElementById('addTeamForm');
-    
+    const createPaymentPlanForm = document.getElementById('createPaymentPlanForm');
+    if (createPaymentPlanForm) {
+        createPaymentPlanForm.addEventListener('submit', handleCreatePaymentPlan);
+    }
     if (clubProfileForm) {
         clubProfileForm.addEventListener('submit', handleClubProfileUpdate);
     }
@@ -2004,6 +2007,196 @@ async function refreshPlansAndFinances() {
   window.loadFinances();
 }
 
+  const container = document.getElementById('paymentPlansContainer');
+  if (!container) return;
+
+  try {
+    const raw = await apiService.getPaymentPlans(); // alias -> listPaymentPlans
+    const plans = (Array.isArray(raw) ? raw : (raw?.plans || [])).map(p => ({
+      id: p.id || p.plan_id,
+      name: p.name,
+      price: (typeof p.price === 'number' ? p.price
+            : typeof p.amount === 'number' ? p.amount
+            : typeof p.amount_cents === 'number' ? p.amount_cents / 100
+            : 0),
+      interval: p.interval || p.frequency || 'one-time',
+      description: p.description || ''
+    }));
+
+    AppState.payment_plans = plans;
+
+    if (!plans.length) {
+      container.innerHTML = `
+        <div class="empty-state" style="text-align:center;padding:1rem;">
+          <p>No payment plans yet</p>
+          <small>Create one with “➕ Create Payment Plan”</small>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = plans.map(plan => `
+      <div class="item-list-item">
+        <div>
+          <h4>${escapeHtml(plan.name)}</h4>
+          <p>£${Number(plan.price).toFixed(2)} / ${escapeHtml(plan.interval)}</p>
+          ${plan.description ? `<p style="opacity:.8">${escapeHtml(plan.description)}</p>` : ''}
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
+          <button class="btn btn-small btn-primary" onclick="assignPlanToMany('${plan.id}')">Assign</button>
+          <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Failed to load payment plans:', err);
+    container.innerHTML = `<p style="color:#dc3545">Failed to load payment plans: ${escapeHtml(err.message)}</p>`;
+  }
+
+
+async function handleCreatePaymentPlan(e) {
+  if (e) e.preventDefault();
+  const name = document.getElementById('planName')?.value?.trim();
+  const amount = parseFloat(document.getElementById('planAmount')?.value);
+  const frequency = document.getElementById('planFrequency')?.value;
+  const description = document.getElementById('planDescription')?.value?.trim();
+
+  if (!name || !frequency || isNaN(amount)) {
+    showNotification('Please fill in name, amount, and frequency.', 'error'); 
+    return;
+  }
+
+  try {
+    showLoading(true);
+    await apiService.createPaymentPlan({ name, amount, frequency, description });
+    showNotification('Payment plan created successfully!', 'success');
+    closeModal('createPaymentPlanModal');
+    document.getElementById('createPaymentPlanForm')?.reset();
+    await refreshPlansAndFinances();
+  } catch (err) {
+    console.error(err);
+    showNotification('Failed to create payment plan: ' + err.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function editPaymentPlan(planId) {
+  const plan = (AppState.payment_plans || []).find(p => p.id === planId);
+  if (!plan) { showNotification('Plan not found', 'error'); return; }
+
+  const m = createEditModal('editPlanModal', 'Edit Payment Plan', [
+    { label: 'Plan Name', type: 'text', id: 'editPlanName', value: plan.name },
+    { label: 'Amount (£)', type: 'number', id: 'editPlanAmount', value: plan.price },
+    { label: 'Frequency', type: 'select', id: 'editPlanFrequency', value: plan.interval,
+      options: [
+        { value: 'one-time', text: 'One-time' },
+        { value: 'monthly', text: 'Monthly' },
+        { value: 'quarterly', text: 'Quarterly' },
+        { value: 'annually', text: 'Annually' }
+      ]
+    },
+    { label: 'Description', type: 'textarea', id: 'editPlanDescription', value: plan.description || '' }
+  ]);
+
+  m.querySelector('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await apiService.updatePaymentPlan(planId, {
+        name: document.getElementById('editPlanName').value.trim(),
+        amount: parseFloat(document.getElementById('editPlanAmount').value),
+        frequency: document.getElementById('editPlanFrequency').value,
+        description: document.getElementById('editPlanDescription').value.trim()
+      });
+      closeModal('editPlanModal');
+      showNotification('Plan updated', 'success');
+      await refreshPlansAndFinances();
+    } catch (err) {
+      console.error(err);
+      showNotification('Failed to update plan: ' + err.message, 'error');
+    }
+  });
+}
+
+async function deletePaymentPlan(planId) {
+  if (!confirm('Delete this payment plan?')) return;
+  try {
+    await apiService.deletePaymentPlan(planId);
+    showNotification('Plan deleted', 'success');
+    await refreshPlansAndFinances();
+  } catch (err) {
+    console.error(err);
+    showNotification('Failed to delete plan: ' + err.message, 'error');
+  }
+}
+
+async function assignPlanToMany(planId) {
+  // Minimal selector UI (players without a plan OR everyone)
+  const players = AppState.players || [];
+  const list = players.map(p => `
+    <label style="display:flex;gap:.5rem;align-items:center;margin:.25rem 0;">
+      <input type="checkbox" value="${p.id}" />
+      ${escapeHtml(p.first_name)} ${escapeHtml(p.last_name)} ${p.team_assignments?.length ? `- <small>${p.team_assignments.map(t=>t.team_name).join(', ')}</small>`:''}
+    </label>
+  `).join('');
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'block';
+  modal.id = 'assignPlanManyModal';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:700px;">
+      <div class="modal-header">
+        <h2>Assign Plan to Players</h2>
+        <button class="close" onclick="closeModal('assignPlanManyModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="max-height:50vh;overflow:auto;border:1px solid rgba(220,67,67,.2);padding:1rem;border-radius:8px;">
+          ${list || '<p>No players available.</p>'}
+        </div>
+        <div class="form-group" style="margin-top:1rem;">
+          <label for="bulkPlanStartDate">Start Date</label>
+          <input type="date" id="bulkPlanStartDate" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:1rem;">
+          <button class="btn btn-primary" id="confirmBulkAssignBtn">Assign</button>
+          <button class="btn btn-secondary" onclick="closeModal('assignPlanManyModal')">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  document.getElementById('confirmBulkAssignBtn').onclick = async () => {
+    const checked = Array.from(modal.querySelectorAll('input[type="checkbox"]:checked')).map(i => i.value);
+    if (!checked.length) { showNotification('Select at least one player.', 'error'); return; }
+    const startDate = document.getElementById('bulkPlanStartDate').value;
+    try {
+      await apiService.bulkAssignPaymentPlan(checked, planId, startDate);
+      showNotification('Plan assigned successfully!', 'success');
+      closeModal('assignPlanManyModal');
+      await refreshPlansAndFinances();
+    } catch (err) {
+      console.error(err);
+      showNotification('Failed to assign plan: ' + err.message, 'error');
+    }
+  };
+}
+
+async function refreshPlansAndFinances() {
+  // Pull fresh totals (non-fatal if it fails)
+  try {
+    const dash = await apiService.getAdminDashboardData();
+    AppState.payments = dash.payments || AppState.payments || [];
+    AppState.players  = dash.players  || AppState.players  || [];
+  } catch (_) {}
+  await loadPaymentPlans();
+  loadFinances(); // uses latest AppState
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
 // Export functions for global access
 window.showSection = showSection;
 window.removePlayer = removePlayer;
@@ -2029,5 +2222,10 @@ window.sendStripePaymentLink = sendStripePaymentLink;
 window.processWithStripe = processWithStripe;
 window.addPlayerToTeam = addPlayerToTeam;
 window.removePlayerFromTeam = removePlayerFromTeam;
+window.loadPaymentPlans = loadPaymentPlans;
+window.handleCreatePaymentPlan = handleCreatePaymentPlan;
+window.editPaymentPlan = editPaymentPlan;
+window.deletePaymentPlan = deletePaymentPlan;
+window.assignPlanToMany = assignPlanToMany;
 
 console.log('✅ FULLY FUNCTIONAL Admin Dashboard loaded with complete payment processing!');
