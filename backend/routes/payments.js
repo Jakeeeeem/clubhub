@@ -49,15 +49,10 @@ async function getOrCreateStripeConnectAccount(user) {
     let accountId = dbUser.stripe_account_id;
 
     if (!accountId) {
-      // Create an Express (Connect) account
+      // Create a Standard Connect account instead of Express to avoid platform profile issues
       const account = await stripe.accounts.create({
-        type: 'express',
+        type: 'standard', // Changed from 'express'
         email: dbUser.email,
-        business_type: 'individual',
-        capabilities: {
-          transfers: { requested: true },
-          card_payments: { requested: true },
-        },
         metadata: {
           app_user_id: String(dbUser.id),
         }
@@ -72,6 +67,14 @@ async function getOrCreateStripeConnectAccount(user) {
     return account;
   } catch (err) {
     console.error('Stripe Connect account error:', err);
+    
+    // Handle specific Stripe errors
+    if (err.type === 'StripeInvalidRequestError') {
+      if (err.message.includes('platform profile')) {
+        throw new Error('Stripe Connect not properly configured. Please contact support.');
+      }
+    }
+    
     throw err;
   }
 }
@@ -153,44 +156,80 @@ router.get('/health', (req, res) => {
 // GET /api/payments/plans - Get all active plans
 router.get('/plans', authenticateToken, async (req, res) => {
   try {
-    // First, ensure the plans table exists
-    await query(`
-      CREATE TABLE IF NOT EXISTS plans (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        price DECIMAL(10,2) NOT NULL DEFAULT 0,
-        amount DECIMAL(10,2) NOT NULL DEFAULT 0,
-        interval VARCHAR(50) DEFAULT 'month',
-        active BOOLEAN DEFAULT true,
-        description TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      )
+    // Check if plans table exists, create if not
+    const tableExists = await query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'plans'
+      );
     `);
 
-    // Insert default plans if table is empty
-    const countResult = await query('SELECT COUNT(*) as count FROM plans');
-    if (parseInt(countResult.rows[0].count) === 0) {
+    if (!tableExists.rows[0].exists) {
       await query(`
-        INSERT INTO plans (name, price, amount, interval, active, description) VALUES
-        ('Basic Plan', 29.99, 29.99, 'month', true, 'Basic monthly subscription'),
-        ('Premium Plan', 49.99, 49.99, 'month', true, 'Premium monthly subscription'),
-        ('Annual Plan', 299.99, 299.99, 'year', true, 'Annual subscription with discount')
+        CREATE TABLE plans (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          price DECIMAL(10,2) NOT NULL DEFAULT 0,
+          interval VARCHAR(50) DEFAULT 'month',
+          active BOOLEAN DEFAULT true,
+          description TEXT,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+
+      // Insert default plans
+      await query(`
+        INSERT INTO plans (name, price, interval, active, description) VALUES
+        ('Basic Plan', 29.99, 'month', true, 'Basic monthly subscription'),
+        ('Premium Plan', 49.99, 'month', true, 'Premium monthly subscription'),
+        ('Annual Plan', 299.99, 'year', true, 'Annual subscription with discount')
       `);
     }
 
-    const result = await query(`
-      SELECT id, name, 
-             COALESCE(price, amount, 0) as price,
-             COALESCE(amount, price, 0) as amount,
-             interval, active, description, created_at 
-      FROM plans 
-      WHERE active = true 
-      ORDER BY price ASC
+    // Check what columns exist in the plans table
+    const columnsResult = await query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'plans' AND table_schema = 'public'
     `);
     
+    const columns = columnsResult.rows.map(row => row.column_name);
+    const hasAmount = columns.includes('amount');
+    const hasPrice = columns.includes('price');
+
+    let selectQuery;
+    if (hasPrice && hasAmount) {
+      selectQuery = `
+        SELECT id, name, 
+               COALESCE(price, amount, 0) as price,
+               interval, active, description, created_at 
+        FROM plans WHERE active = true ORDER BY price ASC
+      `;
+    } else if (hasPrice) {
+      selectQuery = `
+        SELECT id, name, price, interval, active, description, created_at 
+        FROM plans WHERE active = true ORDER BY price ASC
+      `;
+    } else if (hasAmount) {
+      selectQuery = `
+        SELECT id, name, amount as price, interval, active, description, created_at 
+        FROM plans WHERE active = true ORDER BY amount ASC
+      `;
+    } else {
+      // Fallback - add price column
+      await query(`ALTER TABLE plans ADD COLUMN price DECIMAL(10,2) DEFAULT 0`);
+      selectQuery = `
+        SELECT id, name, price, interval, active, description, created_at 
+        FROM plans WHERE active = true ORDER BY price ASC
+      `;
+    }
+
+    const result = await query(selectQuery);
     console.log('Plans loaded:', result.rows.length);
     res.json(result.rows);
+    
   } catch (err) {
     console.error('Get plans error:', err);
     res.status(500).json({ 
@@ -204,35 +243,111 @@ router.get('/plans', authenticateToken, async (req, res) => {
 router.get('/plan/current', authenticateToken, async (req, res) => {
   try {
     // Ensure player_plans table exists
-    await query(`
-      CREATE TABLE IF NOT EXISTS player_plans (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        plan_id INTEGER REFERENCES plans(id),
-        start_date TIMESTAMP DEFAULT NOW(),
-        is_active BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      )
+    const tableExists = await query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'player_plans'
+      );
     `);
 
-    const result = await query(`
-      SELECT 
-        pp.id as player_plan_id, 
-        p.id as plan_id, 
-        p.name, 
-        COALESCE(p.price, p.amount, 0) as price,
-        COALESCE(p.amount, p.price, 0) as amount,
-        p.interval, 
-        pp.start_date, 
-        pp.is_active,
-        pp.created_at
-      FROM player_plans pp
-      INNER JOIN plans p ON p.id = pp.plan_id
-      WHERE pp.user_id = $1 AND pp.is_active = true
-      ORDER BY pp.start_date DESC
-      LIMIT 1
-    `, [req.user.id]);
+    if (!tableExists.rows[0].exists) {
+      await query(`
+        CREATE TABLE player_plans (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id),
+          plan_id INTEGER REFERENCES plans(id),
+          start_date TIMESTAMP DEFAULT NOW(),
+          is_active BOOLEAN DEFAULT true,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      // No plans assigned yet - return null
+      return res.json(null);
+    }
+
+    // Check if plans table exists first
+    const plansExists = await query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'plans'
+      );
+    `);
+
+    if (!plansExists.rows[0].exists) {
+      return res.json(null);
+    }
+
+    // Check what columns exist in the plans table
+    const columnsResult = await query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'plans' AND table_schema = 'public'
+    `);
+    
+    const columns = columnsResult.rows.map(row => row.column_name);
+    const hasPrice = columns.includes('price');
+    const hasAmount = columns.includes('amount');
+
+    let selectQuery;
+    if (hasPrice && hasAmount) {
+      selectQuery = `
+        SELECT 
+          pp.id as player_plan_id, 
+          p.id as plan_id, 
+          p.name, 
+          COALESCE(p.price, p.amount, 0) as price,
+          p.interval, 
+          pp.start_date, 
+          pp.is_active,
+          pp.created_at
+        FROM player_plans pp
+        INNER JOIN plans p ON p.id = pp.plan_id
+        WHERE pp.user_id = $1 AND pp.is_active = true
+        ORDER BY pp.start_date DESC
+        LIMIT 1
+      `;
+    } else if (hasPrice) {
+      selectQuery = `
+        SELECT 
+          pp.id as player_plan_id, 
+          p.id as plan_id, 
+          p.name, 
+          p.price,
+          p.interval, 
+          pp.start_date, 
+          pp.is_active,
+          pp.created_at
+        FROM player_plans pp
+        INNER JOIN plans p ON p.id = pp.plan_id
+        WHERE pp.user_id = $1 AND pp.is_active = true
+        ORDER BY pp.start_date DESC
+        LIMIT 1
+      `;
+    } else if (hasAmount) {
+      selectQuery = `
+        SELECT 
+          pp.id as player_plan_id, 
+          p.id as plan_id, 
+          p.name, 
+          p.amount as price,
+          p.interval, 
+          pp.start_date, 
+          pp.is_active,
+          pp.created_at
+        FROM player_plans pp
+        INNER JOIN plans p ON p.id = pp.plan_id
+        WHERE pp.user_id = $1 AND pp.is_active = true
+        ORDER BY pp.start_date DESC
+        LIMIT 1
+      `;
+    } else {
+      return res.json(null);
+    }
+
+    const result = await query(selectQuery, [req.user.id]);
 
     console.log('Current plan for user:', req.user.id, result.rows.length ? 'found' : 'none');
     
@@ -266,15 +381,65 @@ router.post('/plan/assign', authenticateToken, [
 
     const { planId, startDate } = req.body;
 
+    // Check what columns exist in the plans table
+    const columnsResult = await query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'plans' AND table_schema = 'public'
+    `);
+    
+    const columns = columnsResult.rows.map(row => row.column_name);
+    const hasPrice = columns.includes('price');
+    const hasAmount = columns.includes('amount');
+
+    let selectQuery;
+    if (hasPrice && hasAmount) {
+      selectQuery = `
+        SELECT id, name, COALESCE(price, amount, 0) as price, interval 
+        FROM plans WHERE id = $1 AND active = true
+      `;
+    } else if (hasPrice) {
+      selectQuery = `
+        SELECT id, name, price, interval 
+        FROM plans WHERE id = $1 AND active = true
+      `;
+    } else if (hasAmount) {
+      selectQuery = `
+        SELECT id, name, amount as price, interval 
+        FROM plans WHERE id = $1 AND active = true
+      `;
+    } else {
+      return res.status(500).json({ error: 'Plans table structure invalid' });
+    }
+
     // Verify plan exists and active
-    const planRes = await query(`
-      SELECT id, name, COALESCE(price, amount, 0) as price, interval 
-      FROM plans 
-      WHERE id = $1 AND active = true
-    `, [planId]);
+    const planRes = await query(selectQuery, [planId]);
     
     if (planRes.rows.length === 0) {
       return res.status(404).json({ error: 'Plan not found or inactive' });
+    }
+
+    // Ensure player_plans table exists
+    const tableExists = await query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'player_plans'
+      );
+    `);
+
+    if (!tableExists.rows[0].exists) {
+      await query(`
+        CREATE TABLE player_plans (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id),
+          plan_id INTEGER REFERENCES plans(id),
+          start_date TIMESTAMP DEFAULT NOW(),
+          is_active BOOLEAN DEFAULT true,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
     }
 
     await withTransaction(async (client) => {
@@ -1118,3 +1283,4 @@ router.use((error, req, res, next) => {
 });
 
 module.exports = router;
+  
