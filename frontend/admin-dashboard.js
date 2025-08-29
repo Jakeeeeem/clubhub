@@ -1701,6 +1701,309 @@ async function loadTeamsForInvite() {
     }
 }
 
+window.loadPaymentPlans = async function () {
+  console.log('💳 Loading payment plans...');
+  const container = document.getElementById('paymentPlansContainer');
+  if (!container) return;
+
+  try {
+    const plans = await (apiService.getPaymentPlans
+      ? apiService.getPaymentPlans()
+      : apiService.makeRequest('/payments/plans'));
+
+    AppState.payment_plans = plans || [];
+
+    if (!plans || plans.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="text-align:center;padding:1rem;">
+          <p>No payment plans yet</p>
+          <small>Create one with “➕ Create Payment Plan”</small>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = plans.map(plan => `
+      <div class="item-list-item">
+        <div>
+          <h4>${escapeHtml(plan.name)}</h4>
+          <p>£${Number(plan.price).toFixed(2)} / ${escapeHtml(plan.interval || 'one-time')}</p>
+          ${plan.description ? `<p style="opacity:.8">${escapeHtml(plan.description)}</p>` : ''}
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
+          <button class="btn btn-small btn-primary" onclick="assignPlanToMany('${plan.id}')">Assign</button>
+          <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Failed to load payment plans:', err);
+    container.innerHTML = `<p style="color:#dc3545">Failed to load payment plans</p>`;
+  }
+};
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#039;'
+  }[m]));
+}
+
+// =======================
+// CREATE / EDIT / DELETE
+// =======================
+
+// If your inline handler doesn’t actually create the plan,
+// you can use this version instead and wire it to the form submit.
+window.handleCreatePaymentPlan = async function (e) {
+  if (e) e.preventDefault();
+  console.log('💳 Creating payment plan...');
+  const name = document.getElementById('planName')?.value?.trim();
+  const amount = parseFloat(document.getElementById('planAmount')?.value);
+  const frequency = document.getElementById('planFrequency')?.value;
+  const description = document.getElementById('planDescription')?.value?.trim();
+
+  if (!name || !frequency || isNaN(amount)) {
+    showNotification('Please fill in name, amount, and frequency.', 'error');
+    return;
+  }
+
+  try {
+    showLoading(true);
+    await (apiService.createPaymentPlan
+      ? apiService.createPaymentPlan({ name, amount, frequency, description })
+      : apiService.makeRequest('/payments/plans', {
+          method: 'POST',
+          body: { name, amount, frequency, description }
+        })
+    );
+
+    showNotification('Payment plan created successfully!', 'success');
+    closeModal('createPaymentPlanModal');
+    document.getElementById('createPaymentPlanForm')?.reset();
+    await refreshPlansAndFinances();
+
+  } catch (err) {
+    console.error(err);
+    showNotification('Failed to create payment plan: ' + err.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+};
+
+window.editPaymentPlan = async function (planId) {
+  const plan = (AppState.payment_plans || []).find(p => p.id === planId);
+  if (!plan) {
+    showNotification('Plan not found', 'error');
+    return;
+  }
+
+  const m = createEditModal('editPlanModal', 'Edit Payment Plan', [
+    { label: 'Plan Name',    type: 'text',     id: 'editPlanName',        value: plan.name },
+    { label: 'Amount (£)',   type: 'number',   id: 'editPlanAmount',      value: plan.price },
+    { label: 'Frequency',    type: 'select',   id: 'editPlanFrequency',   value: plan.interval,
+      options: [
+        { value: 'one-time',  text: 'One-time' },
+        { value: 'monthly',   text: 'Monthly' },
+        { value: 'quarterly', text: 'Quarterly' },
+        { value: 'annually',  text: 'Annually' }
+      ]
+    },
+    { label: 'Description',  type: 'textarea', id: 'editPlanDescription', value: plan.description || '' }
+  ]);
+
+  m.querySelector('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await (apiService.updatePaymentPlan
+        ? apiService.updatePaymentPlan(planId, {
+            name: document.getElementById('editPlanName').value.trim(),
+            amount: parseFloat(document.getElementById('editPlanAmount').value),
+            frequency: document.getElementById('editPlanFrequency').value,
+            description: document.getElementById('editPlanDescription').value.trim()
+          })
+        : apiService.makeRequest(`/payments/plans/${planId}`, {
+            method: 'PUT',
+            body: {
+              name: document.getElementById('editPlanName').value.trim(),
+              amount: parseFloat(document.getElementById('editPlanAmount').value),
+              frequency: document.getElementById('editPlanFrequency').value,
+              description: document.getElementById('editPlanDescription').value.trim()
+            }
+          })
+      );
+      closeModal('editPlanModal');
+      showNotification('Plan updated', 'success');
+      await refreshPlansAndFinances();
+    } catch (err) {
+      console.error(err);
+      showNotification('Failed to update plan: ' + err.message, 'error');
+    }
+  });
+};
+
+window.deletePaymentPlan = async function (planId) {
+  if (!confirm('Delete this payment plan?')) return;
+  try {
+    await (apiService.deletePaymentPlan
+      ? apiService.deletePaymentPlan(planId)
+      : apiService.makeRequest(`/payments/plans/${planId}`, { method: 'DELETE' })
+    );
+    showNotification('Plan deleted', 'success');
+    await refreshPlansAndFinances();
+  } catch (err) {
+    console.error(err);
+    showNotification('Failed to delete plan', 'error');
+  }
+};
+
+// =======================
+// ASSIGNMENT (BULK & ONE)
+// =======================
+
+window.assignPlanToMany = function (planId) {
+  const players = AppState.players || [];
+  const unassigned = players.filter(p => !p.payment_plan && !p.has_payment_plan);
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'block';
+  modal.id = 'bulkAssignPlanModal';
+
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Assign Plan to Players</h2>
+        <button class="close" onclick="closeModal('bulkAssignPlanModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        ${unassigned.length ? `
+          <div class="form-group">
+            <label for="bulkPlanStart">Start Date</label>
+            <input id="bulkPlanStart" type="date" value="${new Date().toISOString().split('T')[0]}">
+          </div>
+          <div style="max-height:260px;overflow:auto;border:1px solid rgba(220,67,67,0.2);border-radius:6px;padding:.5rem">
+            ${unassigned.map(p => `
+              <label style="display:flex;align-items:center;gap:.5rem;padding:.25rem 0">
+                <input type="checkbox" value="${p.id}"/>
+                ${p.first_name} ${p.last_name} – £${p.monthly_fee || 0}
+              </label>
+            `).join('')}
+          </div>
+          <div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:flex-end">
+            <button class="btn btn-secondary" onclick="closeModal('bulkAssignPlanModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmBulkAssignPlan('${planId}')">Assign</button>
+          </div>
+        ` : '<p>No eligible players without a plan.</p>'}
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+};
+
+window.confirmBulkAssignPlan = async function (planId) {
+  const modal = document.getElementById('bulkAssignPlanModal');
+  const ids = Array.from(modal.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+  const start = document.getElementById('bulkPlanStart').value;
+  if (ids.length === 0) {
+    showNotification('Select at least one player', 'error');
+    return;
+  }
+  try {
+    await (apiService.bulkAssignPaymentPlan
+      ? apiService.bulkAssignPaymentPlan(ids, planId, start)
+      : apiService.makeRequest('/payments/assign', { method: 'POST', body: { playerIds: ids, planId, startDate: start } })
+    );
+    closeModal('bulkAssignPlanModal');
+    showNotification('Plan assigned to selected players', 'success');
+    await refreshPlansAndFinances();
+    window.loadPlayers && window.loadPlayers();
+  } catch (err) {
+    console.error(err);
+    showNotification('Failed to assign plan: ' + err.message, 'error');
+  }
+};
+
+// Single-player assignment (used by player cards). If you already defined this elsewhere, this safely overwrites with a working version.
+window.assignPaymentPlan = async function (playerId) {
+  try {
+    const plans = await (apiService.getPaymentPlans
+      ? apiService.getPaymentPlans()
+      : apiService.makeRequest('/payments/plans'));
+    if (!plans || plans.length === 0) {
+      showNotification('No payment plans available. Create one first.', 'error');
+      return;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.id = 'assignPlanModal';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Assign Payment Plan</h2>
+          <button class="close" onclick="closeModal('assignPlanModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="selectPlan">Choose Payment Plan</label>
+            <select id="selectPlan">
+              ${plans.map(pl => `<option value="${pl.id}">${pl.name} - £${pl.price}/${pl.interval}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="planStartDate">Start Date</label>
+            <input type="date" id="planStartDate" value="${new Date().toISOString().split('T')[0]}">
+          </div>
+          <div style="display:flex;gap:1rem;justify-content:flex-end">
+            <button class="btn btn-secondary" onclick="closeModal('assignPlanModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmPlanAssignment('${playerId}')">Assign</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+  } catch (err) {
+    console.error(err);
+    showNotification('Failed to load payment plans', 'error');
+  }
+};
+
+window.confirmPlanAssignment = async function (playerId) {
+  const planId = document.getElementById('selectPlan')?.value;
+  const startDate = document.getElementById('planStartDate')?.value;
+  if (!planId) {
+    showNotification('Please select a plan', 'error');
+    return;
+  }
+  try {
+    await (apiService.bulkAssignPaymentPlan
+      ? apiService.bulkAssignPaymentPlan([playerId], planId, startDate)
+      : apiService.makeRequest('/payments/assign', { method: 'POST', body: { playerIds: [playerId], planId, startDate } })
+    );
+    closeModal('assignPlanModal');
+    showNotification('Payment plan assigned', 'success');
+    await refreshPlansAndFinances();
+  } catch (err) {
+    console.error(err);
+    showNotification('Failed to assign plan: ' + err.message, 'error');
+  }
+};
+
+// =======================
+// REFRESH HELPERS
+// =======================
+
+async function refreshPlansAndFinances() {
+  // Re-pull minimal data so badges/totals update (safe even if endpoint unchanged)
+  try {
+    const dashboardData = await apiService.getAdminDashboardData();
+    AppState.payments = dashboardData.payments || AppState.payments || [];
+    AppState.players  = dashboardData.players  || AppState.players  || [];
+  } catch (_) { /* non-fatal */ }
+
+  await window.loadPaymentPlans();
+  window.loadFinances();
+}
+
 // Export functions for global access
 window.showSection = showSection;
 window.removePlayer = removePlayer;
