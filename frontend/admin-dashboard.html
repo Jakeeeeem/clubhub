@@ -1580,13 +1580,41 @@
     <script src="api-service.js"></script>          
     <script src="stripe-service.js"></script>       
     <script src="script.js"></script>              
-    <script src="admin-dashboard.js"></script>
     <script src="enhanced-invite-system.js"></script>
     
     <script>
-        // Enhanced Admin Dashboard Functions
+        const AppState = {
+        clubs: [],
+        players: [],
+        staff: [],
+        events: [],
+        teams: [],
+        payments: [],
+        payment_plans: []
+    };
+         function showSection(sectionId) {
+        const sections = document.querySelectorAll('.dashboard-section');
+        sections.forEach(section => section.classList.remove('active'));
         
-        // Initialize dashboard when page loads
+        const navButtons = document.querySelectorAll('.dashboard-nav button');
+        navButtons.forEach(button => button.classList.remove('active'));
+        
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) targetSection.classList.add('active');
+        
+        const clickedButton = document.querySelector(`[onclick*="showSection('${sectionId}')"]`);
+        if (clickedButton) clickedButton.classList.add('active');
+        
+        switch(sectionId) {
+            case 'overview': loadDashboardStats(); break;
+            case 'players': loadPlayers(); break;
+            case 'teams': loadTeams(); break;
+            case 'staff': loadStaff(); break;
+            case 'events': loadEvents(); break;
+            case 'finances': loadFinances(); loadPaymentPlans(); break;
+            case 'club-profile': loadClubData(); break;
+        }
+    }
        document.addEventListener('DOMContentLoaded', function() {
     console.log('Admin Dashboard Loading...');
     initializeAdminDashboard();
@@ -1607,7 +1635,6 @@ async function initializeAdminDashboard() {
         AppState.events = dashboardData.events || [];
         AppState.teams = dashboardData.teams || [];
         AppState.payments = dashboardData.payments || [];
-        
         loadDashboardStats();
         loadPlayers();
         setupEventListeners();
@@ -1671,6 +1698,221 @@ async function handleClubProfileUpdate(e) {
     }
 }
 
+function loadDashboardStats() {
+    document.getElementById('totalPlayers').textContent = AppState.players?.length || '0';
+    document.getElementById('totalStaff').textContent = AppState.staff?.length || '0';  
+    document.getElementById('totalEvents').textContent = AppState.events?.length || '0';
+    document.getElementById('totalRevenue').textContent = '£0';
+}
+
+function loadClubData() {
+    const club = AppState.clubs?.[0];
+    if (!club) return;
+    
+    const fields = ['clubName', 'clubDescription', 'clubLocation', 'clubPhilosophy', 'clubWebsite'];
+    const values = [club.name, club.description, club.location, club.philosophy, club.website];
+    
+    fields.forEach((field, index) => {
+        const element = document.getElementById(field);
+        if (element) element.value = values[index] || '';
+    });
+}
+
+function loadPlayers() {
+    const container = document.getElementById('playersContainer');
+    if (!container) return;
+    
+    const players = AppState.players || [];
+    if (players.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No players found</p></div>';
+        return;
+    }
+    
+    container.innerHTML = players.map(player => `
+        <div class="player-card">
+            <h4>${player.first_name} ${player.last_name}</h4>
+            <p>Email: ${player.email || 'No email'}</p>
+        </div>
+    `).join('');
+}
+
+function loadTeams() { 
+    const container = document.getElementById('teamsContainer');
+    if (container) container.innerHTML = '<div class="empty-state"><p>No teams found</p></div>';
+}
+
+function loadStaff() { 
+    const container = document.getElementById('staffContainer');
+    if (container) container.innerHTML = '<div class="empty-state"><p>No staff found</p></div>';
+}
+
+function loadEvents() { 
+    const container = document.getElementById('eventsContainer');
+    if (container) container.innerHTML = '<div class="empty-state"><p>No events found</p></div>';
+}
+
+function loadFinances() { 
+    document.getElementById('monthlyRevenue').textContent = '£0';
+    document.getElementById('overdueAmount').textContent = '£0';
+    document.getElementById('pendingAmount').textContent = '£0';
+    document.getElementById('totalMembers').textContent = '0';
+}
+
+async function loadPaymentPlans() {
+    const container = document.getElementById('paymentPlansContainer');
+    if (!container) return;
+
+    try {
+        const plans = await apiService.listPaymentPlans();
+        const normalizedPlans = Array.isArray(plans) ? plans : (plans?.plans || []);
+        
+        if (normalizedPlans.length === 0) {
+            container.innerHTML = '<div class="empty-state"><p>No payment plans yet</p></div>';
+            return;
+        }
+
+        container.innerHTML = normalizedPlans.map(plan => `
+            <div class="item-list-item">
+                <div>
+                    <h4>${plan.name}</h4>
+                    <p>£${Number(plan.amount || plan.price || 0).toFixed(2)} / ${plan.interval || plan.frequency || 'one-time'}</p>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (err) {
+        console.error('Failed to load payment plans:', err);
+        container.innerHTML = '<p style="color:#dc3545">Failed to load payment plans</p>';
+    }
+}
+
+function showLoading(show) {
+    document.body.classList.toggle('loading', show);
+}
+
+function loadFallbackData() {
+    console.log('Loading fallback dashboard data...');
+    
+    document.getElementById('totalPlayers').textContent = '0';
+    document.getElementById('totalStaff').textContent = '0';
+    document.getElementById('totalEvents').textContent = '0';
+    document.getElementById('totalRevenue').textContent = '£0';
+    
+    const container = document.getElementById('playersContainer');
+    if (container) {
+        container.innerHTML = '<div class="empty-state"><p>No players found</p></div>';
+    }
+}
+
+function showNotification(message, type = 'info', duration = 4000) {
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545',
+        warning: '#ffc107',
+        info: '#007bff'
+    };
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type] || colors.info};
+        color: white;
+        padding: 16px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        z-index: 10000;
+        max-width: 400px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    `;
+    
+    notification.innerHTML = `<span>${message}</span>`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), duration);
+}
+
+async function handleCreatePaymentPlan(e) {
+    if (e) e.preventDefault();
+    console.log('Creating payment plan...');
+    
+    const name = document.getElementById('planName')?.value?.trim();
+    const amount = parseFloat(document.getElementById('planAmount')?.value);
+    const frequency = document.getElementById('planFrequency')?.value;
+    const description = document.getElementById('planDescription')?.value?.trim();
+
+    if (!name || !frequency || isNaN(amount) || amount < 0) {
+        showNotification('Please fill in all required fields with valid values', 'error');
+        return;
+    }
+
+    try {
+        showLoading(true);
+        
+        await apiService.createPaymentPlan({
+            name: name,
+            amount: amount,
+            frequency: frequency,
+            description: description
+        });
+        
+        showNotification('Payment plan created successfully!', 'success');
+        closeModal('createPaymentPlanModal');
+        document.getElementById('createPaymentPlanForm')?.reset();
+        
+        await loadPaymentPlans();
+        
+    } catch (err) {
+        console.error('Failed to create payment plan:', err);
+        showNotification('Failed to create payment plan: ' + err.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        const form = modal.querySelector('form');
+        if (form) form.reset();
+    }
+}
+
+async function handleAddPlayer(e) {
+    e.preventDefault();
+    console.log('Adding player...');
+    showNotification('Add player functionality not implemented yet', 'warning');
+}
+
+async function handleAddTeam(e) {
+    e.preventDefault();
+    console.log('Adding team...');
+    showNotification('Add team functionality not implemented yet', 'warning');
+}
+
+async function handleAddEvent(e) {
+    e.preventDefault();
+    console.log('Adding event...');
+    showNotification('Add event functionality not implemented yet', 'warning');
+}
+
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
             // Player invite form
@@ -1727,7 +1969,7 @@ async function handleClubProfileUpdate(e) {
     const container = document.getElementById('playersContainer');
     if (!container) return;
     
-    if (!players || players.length === 0) {
+     if (!players || players.length === 0) {
         const filterNames = {
             'all': 'players',
             'on-plan': 'players on payment plans',
@@ -1745,6 +1987,17 @@ async function handleClubProfileUpdate(e) {
         `;
         return;
     }
+}
+
+        displayFilteredPlayers(filteredPlayers, view);
+        
+    } catch (error) {
+        console.error('Failed to filter players:', error);
+        showNotification('Failed to filter players: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
     
     container.innerHTML = players.map(player => {
         const hasPaymentPlan = player.has_payment_plan || player.payment_plan;
