@@ -1032,38 +1032,66 @@
             }
         }
 
-        async function submitForm() {
-            try {
-                // Show loading state
-                document.getElementById('nextBtn').textContent = 'Creating Account...';
-                document.getElementById('nextBtn').disabled = true;
-                
-                console.log('Submitting form data:', formData);
-                
-                // Here you would make the API call to create the account
-                // For now, we'll simulate it
-                await simulateAccountCreation();
-                
-                // Move to success step
-                currentStep = totalSteps;
-                updateStepDisplay();
-                
-            } catch (error) {
-                alert('Error creating account: ' + error.message);
-                document.getElementById('nextBtn').textContent = 'Create Account';
-                document.getElementById('nextBtn').disabled = false;
-            }
-        }
+       async function submitForm() {
+  const nextBtn = document.getElementById('nextBtn');
+  try {
+    nextBtn.textContent = 'Creating Account...';
+    nextBtn.disabled = true;
 
-        async function simulateAccountCreation() {
-            // Simulate API call
-            return new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    // Simulate success
-                    resolve({ success: true });
-                }, 2000);
-            });
+    collectCurrentStepData();
+
+    const payload = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      userType: formData.accountType === 'organization' ? 'organization' : 'player',
+      profile: {
+        location: formData.location || '',
+        sport: formData.primarySport || '',
+        position: formData.position || formData.customPosition || '',
+        experience: formData.experience || '',
+        previousTeams: formData.previousTeams || '',
+        achievements: formData.achievements || '',
+        phone: formData.phone || '',
+        dateOfBirth: formData.dateOfBirth || ''
+      }
+    };
+
+    const res = await apiService.register(payload);
+    if (!res || !res.token) {
+      await apiService.login(formData.email, formData.password);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const rawReturn = params.get('returnUrl');
+    if (rawReturn) {
+      try {
+        const u = new URL(decodeURIComponent(rawReturn), window.location.origin);
+        if (u.origin === window.location.origin) {
+          window.location.href = u.pathname + u.search + u.hash;
+          return;
         }
+      } catch {}
+    }
+
+    const user =
+      (res && res.user) ||
+      (localStorage.getItem('currentUser') && JSON.parse(localStorage.getItem('currentUser'))) ||
+      {};
+    const redirectUrl =
+      user.userType === 'organization' || user.userType === 'admin'
+        ? 'admin-dashboard.html'
+        : 'player-dashboard.html';
+
+    window.location.href = redirectUrl;
+  } catch (err) {
+    alert('Error creating account: ' + (err.message || 'Unknown error'));
+  } finally {
+    nextBtn.textContent = 'Create Account';
+    nextBtn.disabled = false;
+  }
+}
 
         function goToDashboard() {
             // Redirect to appropriate dashboard based on account type
