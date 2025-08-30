@@ -1583,15 +1583,6 @@
     <script src="enhanced-invite-system.js"></script>
     
     <script>
-        const AppState = {
-        clubs: [],
-        players: [],
-        staff: [],
-        events: [],
-        teams: [],
-        payments: [],
-        payment_plans: []
-    };
          function showSection(sectionId) {
         const sections = document.querySelectorAll('.dashboard-section');
         sections.forEach(section => section.classList.remove('active'));
@@ -2830,6 +2821,9 @@ async function confirmPlanAssignment(playerId) {
         window.logout = logout;
         window.loadListings = loadListings;
         window.viewListingApplications = viewListingApplications;
+        window.showSection = showSection;
+       window.showModal = showModal;
+       window.closeModal = closeModal;
 
         // Close modal when clicking outside
         window.addEventListener('click', function(e) {
