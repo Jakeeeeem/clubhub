@@ -1725,12 +1725,6 @@ function escapeHtml(s) {
   }[m]));
 }
 
-// =======================
-// CREATE / EDIT / DELETE
-// =======================
-
-// If your inline handler doesn’t actually create the plan,
-// you can use this version instead and wire it to the form submit.
 window.handleCreatePaymentPlan = async function (e) {
   if (e) e.preventDefault();
   console.log('💳 Creating payment plan...');
