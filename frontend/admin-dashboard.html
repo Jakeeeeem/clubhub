@@ -2034,7 +2034,6 @@ function showModal(modalId) {
             </div>
         `;
     }).join('');
-}
 
 // ADD this new function for individual payment plan assignment
 async function assignPaymentPlan(playerId) {
@@ -2093,31 +2092,23 @@ async function assignPaymentPlan(playerId) {
 async function confirmPlanAssignment(playerId) {
     const planId = document.getElementById('selectPlan').value;
     const startDate = document.getElementById('planStartDate').value;
-    
+
     if (!planId) {
         showNotification('Please select a payment plan', 'error');
         return;
     }
-    
+
     try {
         await apiService.bulkAssignPaymentPlan([playerId], planId, startDate);
         closeModal('assignPlanModal');
         showNotification('Payment plan assigned successfully!', 'success');
-        
+
         // Refresh the current view
         filterPlayersByView();
-        
+
     } catch (error) {
         console.error('Failed to assign payment plan:', error);
         showNotification('Failed to assign payment plan: ' + error.message, 'error');
-    }
-}
-        
-    } catch (error) {
-        console.error('Failed to filter players:', error);
-        showNotification('Failed to filter players: ' + error.message, 'error');
-    } finally {
-        showLoading(false);
     }
 }
         function filterPlayersByTeam() {
