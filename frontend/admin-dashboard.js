@@ -78,51 +78,30 @@ function setupEventListeners() {
 function showSection(sectionId) {
     // Hide all sections
     const sections = document.querySelectorAll('.dashboard-section');
-    sections.forEach(section => {
-        section.classList.remove('active');
-    });
+    sections.forEach(section => section.classList.remove('active'));
     
     // Remove active class from all nav buttons
     const navButtons = document.querySelectorAll('.dashboard-nav button');
-    navButtons.forEach(button => {
-        button.classList.remove('active');
-    });
+    navButtons.forEach(button => button.classList.remove('active'));
     
     // Show selected section
     const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-        targetSection.classList.add('active');
-    }
+    if (targetSection) targetSection.classList.add('active');
     
     // Add active class to clicked button
     const clickedButton = document.querySelector(`[onclick*="showSection('${sectionId}')"]`);
-    if (clickedButton) {
-        clickedButton.classList.add('active');
-    }
+    if (clickedButton) clickedButton.classList.add('active');
     
-    // Update content based on section
+    // Load section-specific data
     switch(sectionId) {
-        case 'overview':
-            loadDashboardStats();
-            break;
         case 'players':
             loadPlayers();
             break;
-        case 'staff':
-            loadStaff();
-            break;
-        case 'teams':
-            loadTeams();
-            break;
-        case 'events':
-            loadEvents();
-            break;
         case 'finances':
             loadFinances();
+            loadPaymentPlans(); // Explicitly load payment plans
             break;
-        case 'club-profile':
-            loadClubData();
-            break;
+        // ... other cases
     }
 }
 
@@ -798,65 +777,60 @@ async function handleAddStaff(e) {
 
 // LOAD PLAYERS WITH IMPROVED CLUB ASSIGNMENT DISPLAY
 function loadPlayers() {
-    console.log('👥 Loading players...');
+    console.log('Loading players...');
     
     const clubPlayers = AppState.players || [];
-    const tableBody = document.getElementById('playersTableBody');
+    const container = document.getElementById('playersContainer');
     
-    if (!tableBody) return;
-    
-    if (clubPlayers.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7">No players registered yet</td></tr>';
+    if (!container) {
+        console.error('Players container not found in DOM');
         return;
     }
     
-    tableBody.innerHTML = clubPlayers.map(player => {
-        // Show club membership - FIXED
+    if (clubPlayers.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="text-align: center; padding: 2rem;">
+                <h4>No players registered yet</h4>
+                <p>Add your first player to get started</p>
+                <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add First Player</button>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = clubPlayers.map(player => {
         const club = AppState.clubs?.find(c => c.id === player.club_id);
-        const clubName = club ? club.name : 'No Club Assigned';
-        const clubStatus = club ? 'Active Member' : 'Not Assigned';
-        
-        // Show team assignments
-        let teamNames = 'Unassigned';
-        let assignedTeamsCount = 0;
-        
-        if (player.team_assignments && Array.isArray(player.team_assignments) && player.team_assignments.length > 0) {
-            const validAssignments = player.team_assignments.filter(assignment => assignment.team_id);
-            if (validAssignments.length > 0) {
-                teamNames = validAssignments.map(assignment => assignment.team_name).join(', ');
-                assignedTeamsCount = validAssignments.length;
-            }
-        }
+        const hasPaymentPlan = player.has_payment_plan || player.payment_plan;
+        const isOverdue = player.overdue_count > 0;
         
         return `
-            <tr>
-                <td>
-                    <div>
-                        <strong>${player.first_name} ${player.last_name}</strong>
-                        <br><small style="color: #28a745; font-weight: bold;">🏢 ${clubName}</small>
-                        <br><small style="color: #666;">Status: ${clubStatus}</small>
-                        ${player.user_id ? '<br><small style="color: #007bff;">🔗 Account Linked</small>' : '<br><small style="color: #dc3545;">⚠️ No Account Link</small>'}
+            <div class="player-card ${isOverdue ? 'overdue' : ''} ${!player.team_name ? 'not-assigned' : ''}">
+                <div class="player-header">
+                    <div class="player-info">
+                        <h4>${player.first_name} ${player.last_name}</h4>
+                        ${hasPaymentPlan ? 
+                            `<span class="payment-plan-badge">On Payment Plan</span>` : 
+                            `<span class="no-plan-badge">No Plan Set</span>`
+                        }
                     </div>
-                </td>
-                <td>${calculateAge(player.date_of_birth)} years</td>
-                <td>${player.email || 'No email'}</td>
-                <td><span class="status-badge status-${player.payment_status || 'pending'}">${player.payment_status || 'pending'}</span></td>
-                <td>
-                    <span style="color: ${assignedTeamsCount > 0 ? '#28a745' : '#dc3545'};">
-                        ${assignedTeamsCount} team${assignedTeamsCount !== 1 ? 's' : ''}
-                    </span>
-                    <br><small>${teamNames}</small>
-                </td>
-                <td>£${player.monthly_fee || 0}</td>
-                <td>
+                    <div class="player-status">
+                        <span class="status-badge status-${player.payment_status || 'pending'}">${player.payment_status || 'Pending'}</span>
+                    </div>
+                </div>
+                <div class="player-meta">
+                    <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
+                    <span><strong>Team:</strong> ${player.team_name || 'Not assigned'}</span>
+                    <span><strong>Email:</strong> ${player.email || 'No email'}</span>
+                    <span><strong>Monthly Fee:</strong> £${player.monthly_fee || 0}</span>
+                </div>
+                <div class="player-actions">
                     <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
-                    ${assignedTeamsCount === 0 ? `
-                        <button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>
-                    ` : ''}
-                    <button class="btn btn-small btn-success" onclick="generatePaymentForPlayer('${player.id}')">💳 Payment</button>
+                    ${!player.team_name ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
+                    ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
+                    <button class="btn btn-small btn-success" onclick="generatePaymentForPlayer('${player.id}')">Payment</button>
                     <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
-                </td>
-            </tr>
+                </div>
+            </div>
         `;
     }).join('');
 }
@@ -1704,46 +1678,46 @@ async function loadTeamsForInvite() {
     }
 }
 
-window.loadPaymentPlans = async function () {
-  console.log('💳 Loading payment plans...');
-  const container = document.getElementById('paymentPlansContainer');
-  if (!container) return;
+async function loadPaymentPlans() {
+    console.log('Loading payment plans...');
+    const container = document.getElementById('paymentPlansContainer');
+    if (!container) return;
 
-  try {
-    const plans = await (apiService.getPaymentPlans
-      ? apiService.getPaymentPlans()
-      : apiService.makeRequest('/payments/plans'));
+    try {
+        const plans = await apiService.listPaymentPlans();
+        const normalizedPlans = Array.isArray(plans) ? plans : (plans?.plans || []);
+        
+        AppState.payment_plans = normalizedPlans;
 
-    AppState.payment_plans = plans || [];
+        if (normalizedPlans.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state" style="text-align:center;padding:1rem;">
+                    <p>No payment plans yet</p>
+                    <small>Create one with "Create Payment Plan"</small>
+                </div>`;
+            return;
+        }
 
-    if (!plans || plans.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state" style="text-align:center;padding:1rem;">
-          <p>No payment plans yet</p>
-          <small>Create one with “➕ Create Payment Plan”</small>
-        </div>`;
-      return;
+        container.innerHTML = normalizedPlans.map(plan => `
+            <div class="item-list-item">
+                <div>
+                    <h4>${plan.name}</h4>
+                    <p>£${Number(plan.amount || plan.price || 0).toFixed(2)} / ${plan.interval || plan.frequency || 'one-time'}</p>
+                    ${plan.description ? `<p style="opacity:.8">${plan.description}</p>` : ''}
+                </div>
+                <div class="item-actions">
+                    <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
+                    <button class="btn btn-small btn-primary" onclick="assignPlanToMany('${plan.id}')">Assign</button>
+                    <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (err) {
+        console.error('Failed to load payment plans:', err);
+        container.innerHTML = `<p style="color:#dc3545">Failed to load payment plans: ${err.message}</p>`;
     }
-
-    container.innerHTML = plans.map(plan => `
-      <div class="item-list-item">
-        <div>
-          <h4>${escapeHtml(plan.name)}</h4>
-          <p>£${Number(plan.price).toFixed(2)} / ${escapeHtml(plan.interval || 'one-time')}</p>
-          ${plan.description ? `<p style="opacity:.8">${escapeHtml(plan.description)}</p>` : ''}
-        </div>
-        <div class="item-actions">
-          <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
-          <button class="btn btn-small btn-primary" onclick="assignPlanToMany('${plan.id}')">Assign</button>
-          <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (err) {
-    console.error('Failed to load payment plans:', err);
-    container.innerHTML = `<p style="color:#dc3545">Failed to load payment plans</p>`;
-  }
-};
+}
 
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, m => ({

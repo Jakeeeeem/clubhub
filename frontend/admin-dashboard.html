@@ -2040,30 +2040,44 @@ async function confirmPlanAssignment(playerId) {
         }
 
         async function handleCreatePaymentPlan(e) {
-            e.preventDefault();
-            console.log('💳 Creating payment plan...');
-            
-            const planData = {
-                name: document.getElementById('planName').value,
-                amount: parseFloat(document.getElementById('planAmount').value),
-                frequency: document.getElementById('planFrequency').value,
-                description: document.getElementById('planDescription').value
-            };
-            
-            try {
-                showNotification('Payment plan created successfully!', 'success');
-                closeModal('createPaymentPlanModal');
-                document.getElementById('createPaymentPlanForm').reset();
-                
-                // Reload payment plans
-                if (typeof loadFinances === 'function') {
-                    loadFinances();
-                }
-            } catch (error) {
-                console.error('❌ Failed to create payment plan:', error);
-                showNotification('Failed to create payment plan', 'error');
-            }
-        }
+    if (e) e.preventDefault();
+    console.log('Creating payment plan...');
+    
+    const name = document.getElementById('planName')?.value?.trim();
+    const amount = parseFloat(document.getElementById('planAmount')?.value);
+    const frequency = document.getElementById('planFrequency')?.value;
+    const description = document.getElementById('planDescription')?.value?.trim();
+
+    if (!name || !frequency || isNaN(amount) || amount < 0) {
+        showNotification('Please fill in all required fields with valid values', 'error');
+        return;
+    }
+
+    try {
+        showLoading(true);
+        
+        // Use your API service's createPaymentPlan method
+        const response = await apiService.createPaymentPlan({
+            name: name,
+            amount: amount,
+            frequency: frequency,
+            description: description
+        });
+        
+        showNotification('Payment plan created successfully!', 'success');
+        closeModal('createPaymentPlanModal');
+        document.getElementById('createPaymentPlanForm')?.reset();
+        
+        // Immediately reload payment plans
+        await loadPaymentPlans();
+        
+    } catch (err) {
+        console.error('Failed to create payment plan:', err);
+        showNotification('Failed to create payment plan: ' + err.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
 
         async function handleCreateListing(e) {
             e.preventDefault();
@@ -2480,78 +2494,6 @@ async function confirmPlanAssignment(playerId) {
             }
         }
 
-        // Enhanced showSection function
-        function showSection(sectionId) {
-            // Hide all sections
-            const sections = document.querySelectorAll('.dashboard-section');
-            sections.forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Remove active class from all nav buttons
-            const navButtons = document.querySelectorAll('.dashboard-nav button');
-            navButtons.forEach(button => {
-                button.classList.remove('active');
-            });
-            
-            // Show selected section
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
-            
-            // Add active class to clicked button
-            const clickedButton = document.querySelector(`[onclick*="showSection('${sectionId}')"]`);
-            if (clickedButton) {
-                clickedButton.classList.add('active');
-            }
-            
-            // Load section-specific data
-            switch(sectionId) {
-                case 'overview':
-                    if (typeof loadDashboardStats === 'function') {
-                        loadDashboardStats();
-                    }
-                    break;
-                case 'players':
-                    if (typeof loadPlayers === 'function') {
-                        loadPlayers();
-                    } else {
-                        loadSamplePlayers();
-                    }
-                    break;
-                case 'teams':
-                    if (typeof loadTeams === 'function') {
-                        loadTeams();
-                    } else {
-                        loadSampleTeams();
-                    }
-                    break;
-                case 'staff':
-                    if (typeof loadStaff === 'function') {
-                        loadStaff();
-                    }
-                    break;
-                case 'events':
-                    if (typeof loadEvents === 'function') {
-                        loadEvents();
-                    }
-                    break;
-                case 'finances':
-                    if (typeof loadFinances === 'function') {
-                        loadFinances();
-                    }
-                    break;
-                case 'listings':
-                    loadListings();
-                    break;
-                case 'club-profile':
-                    if (typeof loadClubData === 'function') {
-                        loadClubData();
-                    }
-                    break;
-            }
-        }
 
         // Make functions globally available
         window.showSection = showSection;
