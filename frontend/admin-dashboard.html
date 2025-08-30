@@ -1587,20 +1587,89 @@
         // Enhanced Admin Dashboard Functions
         
         // Initialize dashboard when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🏢 Enhanced Admin Dashboard Loading...');
-            
-            // Initialize the main dashboard
-            if (typeof initializeAdminDashboard === 'function') {
-                initializeAdminDashboard();
-            } else {
-                console.warn('⚠️ Admin dashboard initialization function not found, loading fallback');
-                loadFallbackData();
-            }
-            
-            // Set up enhanced event listeners
-            setupEnhancedEventListeners();
-        });
+       document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin Dashboard Loading...');
+    initializeAdminDashboard();
+});
+
+// Main initialization function
+async function initializeAdminDashboard() {
+    console.log('Initializing admin dashboard...');
+    
+    try {
+        showLoading(true);
+        
+        const dashboardData = await apiService.getAdminDashboardData();
+        
+        AppState.clubs = dashboardData.clubs || [];
+        AppState.players = dashboardData.players || [];
+        AppState.staff = dashboardData.staff || [];
+        AppState.events = dashboardData.events || [];
+        AppState.teams = dashboardData.teams || [];
+        AppState.payments = dashboardData.payments || [];
+        
+        loadDashboardStats();
+        loadPlayers();
+        setupEventListeners();
+        
+        console.log('Admin dashboard initialized successfully');
+        
+    } catch (error) {
+        console.error('Failed to initialize admin dashboard:', error);
+        showNotification('Failed to load dashboard data', 'error');
+        loadFallbackData();
+    } finally {
+        showLoading(false);
+    }
+}
+
+function setupEventListeners() {
+    const forms = {
+        'clubProfileForm': handleClubProfileUpdate,
+        'addPlayerForm': handleAddPlayer,
+        'addTeamForm': handleAddTeam,
+        'addEventForm': handleAddEvent,
+        'createPaymentPlanForm': handleCreatePaymentPlan
+    };
+    
+    Object.entries(forms).forEach(([formId, handler]) => {
+        const form = document.getElementById(formId);
+        if (form) form.addEventListener('submit', handler);
+    });
+}
+
+// Add the missing handleClubProfileUpdate function
+async function handleClubProfileUpdate(e) {
+    e.preventDefault();
+    try {
+        showLoading(true);
+        const clubData = {
+            name: document.getElementById('clubName')?.value || '',
+            description: document.getElementById('clubDescription')?.value || '',
+            location: document.getElementById('clubLocation')?.value || '',
+            philosophy: document.getElementById('clubPhilosophy')?.value || '',
+            website: document.getElementById('clubWebsite')?.value || '',
+            types: ['club'],
+            sport: 'football'
+        };
+        
+        let response;
+        if (AppState.clubs?.[0]?.id) {
+            response = await apiService.updateClub(AppState.clubs[0].id, clubData);
+            AppState.clubs[0] = response.club;
+        } else {
+            response = await apiService.createClub(clubData);
+            AppState.clubs = [response.club];
+        }
+        
+        showNotification('Club profile updated successfully!', 'success');
+    } catch (error) {
+        console.error('Failed to update club profile:', error);
+        showNotification('Failed to update club profile: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
 
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
