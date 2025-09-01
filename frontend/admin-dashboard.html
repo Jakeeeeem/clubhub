@@ -1692,7 +1692,7 @@ function displayFilteredPlayers(players, filterType) {
     const filterNames = {
       'all': 'players',
       'on-plan': 'players on payment plans',
-      'not-on-plan': 'players not on payment plans', 
+      'not-on-plan': 'players not on payment plans',
       'assigned': 'players assigned to teams',
       'not-assigned': 'players not assigned to teams',
       'overdue': 'players with overdue payments'
@@ -1703,54 +1703,49 @@ function displayFilteredPlayers(players, filterType) {
         <p>Try a different filter or add some players to your club</p>
       </div>
     `;
-    return;}
+    return;
   }
 
-  // ✅ Loop through players here
   container.innerHTML = players.map(player => {
-  const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
-  const hasPaymentPlan = hasPlan(player);
-  const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
+    const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
+    const hasPaymentPlan = hasPlan(player);
+    const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
 
-  const onPlan = hasPaymentPlan;
-  const rawFee = onPlan
-    ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount)
-    : null;
-  const fee = onPlan && rawFee != null ? Number(rawFee) : null;
-  const feeHtml = onPlan && isFinite(fee) ? `£${fee.toFixed(2)}` : '—';
+    const onPlan = hasPaymentPlan;
+    const rawFee = onPlan ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount) : null;
+    const fee = onPlan && rawFee != null ? Number(rawFee) : null;
+    const feeHtml = onPlan && isFinite(fee) ? `£${fee.toFixed(2)}` : '—';
 
-  return `
-    <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
-      <div class="player-header">
-        <div class="player-info">
-          <h4>${player.first_name} ${player.last_name}</h4>
-          ${hasPaymentPlan 
-            ? `<span class="payment-plan-badge">On Payment Plan</span>`
-            : `<span class="no-plan-badge">No Plan Set</span>`
-          }
+    return `
+      <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
+        <div class="player-header">
+          <div class="player-info">
+            <h4>${player.first_name} ${player.last_name}</h4>
+            ${hasPaymentPlan ? `<span class="payment-plan-badge">On Payment Plan</span>` : `<span class="no-plan-badge">No Plan Set</span>`}
+          </div>
+          <div class="player-status">
+            <span class="status-badge status-${player.payment_status || 'pending'}">
+              ${player.payment_status || 'Pending'}
+            </span>
+          </div>
         </div>
-        <div class="player-status">
-          <span class="status-badge status-${player.payment_status || 'pending'}">
-            ${player.payment_status || 'Pending'}
-          </span>
+        <div class="player-meta">
+          <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
+          <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
+          <span><strong>Email:</strong> ${player.email || 'No email'}</span>
+          <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
+          <span><strong>Monthly Fee:</strong> ${feeHtml}</span>
+        </div>
+        <div class="player-actions">
+          <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
+          ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
+          ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
+          <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
         </div>
       </div>
-      <div class="player-meta">
-        <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
-        <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
-        <span><strong>Email:</strong> ${player.email || 'No email'}</span>
-        <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
-        <span><strong>Monthly Fee:</strong> ${feeHtml}</span>
-      </div>
-      <div class="player-actions">
-        <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
-        ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
-        ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
-        <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
-      </div>
-    </div>
-  `;
-}).join('');
+    `;
+  }).join('');
+}
 
 // ADD this new function for individual payment plan assignment
 
@@ -1771,13 +1766,12 @@ function displayFilteredPlayers(players, filterType) {
                 <h2>⚽ ${teamName} Management</h2>
                 <button class="close" onclick="closeModal('teamManagementModal')">&times;</button>
             </div>
-            <div class="modal-body">
-                <div class="team-management-tabs">
-                    <button class="active" onclick="showTeamTab('games', '${teamId}')">🏟️ Games</button>
-                    <button onclick="showTeamTab('trainings', '${teamId}')">🏋️ Trainings</button>
-                    <button onclick="showTeamTab('players', '${teamId}')">👥 Players</button>
-                    <button onclick="showTeamTab('votes', '${teamId}')">📊 Votes</button>
-                </div>
+            <div class="team-management-tabs">
+  <button class="active" onclick="showTeamTab('games', '${teamId}', event)">🏟️ Games</button>
+  <button onclick="showTeamTab('trainings', '${teamId}', event)">🏋️ Trainings</button>
+  <button onclick="showTeamTab('players', '${teamId}', event)">👥 Players</button>
+  <button onclick="showTeamTab('votes', '${teamId}', event)">📊 Votes</button>
+</div>
                 
                 <div id="teamTabContent">
                     <div class="spinner"></div> Loading team data...
@@ -1792,36 +1786,31 @@ function displayFilteredPlayers(players, filterType) {
     showTeamTab('games', teamId);
 }
 
-async function showTeamTab(tabName, teamId) {
-    // Update tab buttons
-    const tabButtons = document.querySelectorAll('.team-management-tabs button');
-    tabButtons.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    const tabContent = document.getElementById('teamTabContent');
-    if (!tabContent) return;
-    
-    tabContent.innerHTML = '<div class="spinner"></div> Loading...';
-    
-    try {
-        switch(tabName) {
-            case 'games':
-                await loadTeamGames(teamId, tabContent);
-                break;
-            case 'trainings':
-                await loadTeamTrainings(teamId, tabContent);
-                break;
-            case 'players':
-                await loadTeamPlayers(teamId, tabContent);
-                break;
-            case 'votes':
-                await loadTeamVotes(teamId, tabContent);
-                break;
-        }
-    } catch (error) {
-        console.error(`Failed to load team ${tabName}:`, error);
-        tabContent.innerHTML = `<p style="color: #dc3545;">Failed to load ${tabName}</p>`;
-    }
+async function showTeamTab(tabName, teamId, ev) {
+  const tabButtons = document.querySelectorAll('.team-management-tabs button');
+  tabButtons.forEach(btn => btn.classList.remove('active'));
+  if (ev && ev.currentTarget) {
+    ev.currentTarget.classList.add('active');
+  } else {
+    // when called programmatically, select the matching button
+    const btn = Array.from(tabButtons).find(b => b.getAttribute('onclick')?.includes(`'${tabName}'`));
+    if (btn) btn.classList.add('active');
+  }
+
+  const tabContent = document.getElementById('teamTabContent');
+  if (!tabContent) return;
+
+  tabContent.innerHTML = '<div class="spinner"></div> Loading...';
+
+  try {
+    if (tabName === 'games') await loadTeamGames(teamId, tabContent);
+    else if (tabName === 'trainings') await loadTeamTrainings(teamId, tabContent);
+    else if (tabName === 'players') await loadTeamPlayers(teamId, tabContent);
+    else if (tabName === 'votes') await loadTeamVotes(teamId, tabContent);
+  } catch (error) {
+    console.error(`Failed to load team ${tabName}:`, error);
+    tabContent.innerHTML = `<p style="color: #dc3545;">Failed to load ${tabName}</p>`;
+  }
 }
 
 async function loadTeamGames(teamId, container) {
@@ -2425,23 +2414,23 @@ async function confirmPlanAssignment(playerId) {
     dateOfBirth: document.getElementById('playerDOB').value,
     position: document.getElementById('playerPosition').value,
     clubId: AppState.clubs[0]?.id,
-    ...(monthlyFee != null ? { monthlyFee } : {}) // ← only include if set
+    ...(monthlyFee != null ? { monthlyFee } : {})
   };
-}
-  
+
   try {
     showLoading(true);
     const response = await apiService.createPlayer(formData);
     showNotification('Player added successfully!', 'success');
     closeModal('addPlayerModal');
     document.getElementById('addPlayerForm').reset();
-    loadPlayers(); // Reload players
+    await loadPlayers();
   } catch (error) {
     console.error('Failed to add player:', error);
     showNotification('Failed to add player: ' + error.message, 'error');
   } finally {
     showLoading(false);
   }
+}
 
 // Handle real team creation
 async function handleAddTeam(e) {
