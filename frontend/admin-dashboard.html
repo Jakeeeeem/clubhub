@@ -1709,14 +1709,7 @@ function displayFilteredPlayers(players, filterType) {
   // ✅ Loop through players here
   container.innerHTML = players.map(player => {
     const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
-    const hasPaymentPlan = Boolean(
-      player.has_payment_plan ||
-      player.payment_plan ||
-      player.plan_id ||
-      player.payment_plan_id ||
-      player.plan ||
-      player.plan_price
-    );
+    const hasPaymentPlan = hasPlan(player);
     const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
 
     return `
@@ -2734,14 +2727,7 @@ function updateDashboardStats(statistics) {
       console.log(`Processing player ${index + 1}:`, player); // Debug log
       
       const age = calculateAge(player.date_of_birth);
-      const hasPaymentPlan = Boolean(
-  player.has_payment_plan ||
-  player.payment_plan ||
-  player.plan_id ||
-  player.payment_plan_id ||
-  player.plan ||
-  player.plan_price
-);
+      const hasPaymentPlan = hasPlan(player);
       const hasTeamAssignment = player.team_assignments && player.team_assignments.length > 0;
       const isOverdue = player.payment_status === 'overdue';
       
@@ -2920,6 +2906,29 @@ function updateDashboardStats(statistics) {
             console.log('👁️ Viewing applications for listing:', listingId);
             showNotification('Viewing applications for: ' + listingId, 'info');
         }
+
+        function hasPlan(player) {
+  const flag = player?.has_payment_plan;
+  const flagTrue =
+    flag === true ||
+    flag === 1 ||
+    flag === '1' ||
+    (typeof flag === 'string' && flag.toLowerCase() === 'true');
+
+  // Any non-empty plan id counts as being on a plan
+  const id =
+    player?.payment_plan_id ??
+    player?.plan_id ??
+    player?.payment_plan?.id ??
+    player?.plan?.id;
+
+  const hasId = id !== undefined && id !== null && String(id).trim() !== '' && String(id) !== '0';
+
+  // Having a plan object also counts
+  const hasObj = !!player?.payment_plan || !!player?.plan;
+
+  return flagTrue || hasId || hasObj;
+}
 
         // Utility Functions
         function showModal(modalId) {
