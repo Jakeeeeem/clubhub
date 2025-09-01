@@ -2099,6 +2099,57 @@ async function loadTeamVotes(teamId, container) {
   }
 }
 
+async function loadFinances() {
+  try {
+    const clubId = AppState.clubs?.[0]?.id;
+    if (!clubId) return;
+    
+    // Load payments for financial overview
+    const payments = await apiService.getPayments({ clubId });
+    
+    // Calculate financial statistics
+    const monthlyRevenue = payments
+      .filter(p => p.payment_status === 'paid')
+      .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    
+    const overdueAmount = payments
+      .filter(p => p.payment_status === 'overdue')
+      .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    
+    const pendingAmount = payments
+      .filter(p => p.payment_status === 'pending')
+      .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    
+    const totalMembers = payments.length;
+    
+    // Update finance overview
+    document.getElementById('monthlyRevenue').textContent = `£${monthlyRevenue.toFixed(2)}`;
+    document.getElementById('overdueAmount').textContent = `£${overdueAmount.toFixed(2)}`;
+    document.getElementById('pendingAmount').textContent = `£${pendingAmount.toFixed(2)}`;
+    document.getElementById('totalMembers').textContent = totalMembers;
+    
+    // Load recent payments table
+    const paymentsTableBody = document.getElementById('paymentsTableBody');
+    if (paymentsTableBody) {
+      paymentsTableBody.innerHTML = payments.slice(0, 10).map(payment => `
+        <tr>
+          <td>${payment.player_first_name} ${payment.player_last_name}</td>
+          <td>£${parseFloat(payment.amount || 0).toFixed(2)}</td>
+          <td><span class="status-badge status-${payment.payment_status}">${payment.payment_status}</span></td>
+          <td>${new Date(payment.due_date).toLocaleDateString()}</td>
+          <td>
+            <button class="btn btn-small btn-secondary" onclick="editPayment('${payment.id}')">Edit</button>
+            <button class="btn btn-small btn-primary" onclick="generatePaymentLink('${payment.id}')">Link</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+    
+  } catch (error) {
+    console.error('Failed to load finances:', error);
+  }
+}
+
 async function bulkAssignPlan(planId) {
   try {
     // Get all players not on plans
@@ -2226,6 +2277,92 @@ function showLoading(show) {
                 closeModal('applicationDetailsModal');
             }
         }
+
+        async function editPayment(paymentId) {
+  console.log('Editing payment:', paymentId);
+  showNotification('Payment editing coming soon!', 'info');
+}
+
+async function generatePaymentLink(paymentId) {
+  try {
+    const response = await apiService.generatePaymentLink(paymentId);
+    
+    navigator.clipboard.writeText(response.paymentLink);
+    showNotification('Payment link copied to clipboard!', 'success');
+    
+  } catch (error) {
+    console.error('Failed to generate payment link:', error);
+    showNotification('Failed to generate payment link: ' + error.message, 'error');
+  }
+}
+
+async function editPlayer(playerId) {
+  console.log('Editing player:', playerId);
+  showNotification('Player editing coming soon!', 'info');
+}
+
+async function removePlayer(playerId) {
+  if (confirm('Are you sure you want to remove this player?')) {
+    try {
+      showLoading(true);
+      await apiService.deletePlayer(playerId);
+      showNotification('Player removed successfully!', 'success');
+      loadPlayers();
+    } catch (error) {
+      console.error('Failed to remove player:', error);
+      showNotification('Failed to remove player: ' + error.message, 'error');
+    } finally {
+      showLoading(false);
+    }
+  }
+}
+
+async function showPlayerTeamAssignment(playerId) {
+  console.log('Assigning team to player:', playerId);
+  showNotification('Team assignment coming soon!', 'info');
+}
+
+async function editTeam(teamId) {
+  console.log('Editing team:', teamId);
+  showNotification('Team editing coming soon!', 'info');
+}
+
+async function deleteTeam(teamId) {
+  if (confirm('Are you sure you want to delete this team?')) {
+    try {
+      showLoading(true);
+      await apiService.deleteTeam(teamId);
+      showNotification('Team deleted successfully!', 'success');
+      loadTeams();
+    } catch (error) {
+      console.error('Failed to delete team:', error);
+      showNotification('Failed to delete team: ' + error.message, 'error');
+    } finally {
+      showLoading(false);
+    }
+  }
+}
+
+async function editPaymentPlan(planId) {
+  console.log('Editing payment plan:', planId);
+  showNotification('Payment plan editing coming soon!', 'info');
+}
+
+async function deletePaymentPlan(planId) {
+  if (confirm('Are you sure you want to delete this payment plan?')) {
+    try {
+      showLoading(true);
+      await apiService.deletePaymentPlan(planId);
+      showNotification('Payment plan deleted successfully!', 'success');
+      loadPaymentPlans();
+    } catch (error) {
+      console.error('Failed to delete payment plan:', error);
+      showNotification('Failed to delete payment plan: ' + error.message, 'error');
+    } finally {
+      showLoading(false);
+    }
+  }
+}
 
         // Enhanced Form Handlers
         async function handleAddPlayer(e) {
@@ -2363,6 +2500,47 @@ async function handleAddEvent(e) {
         console.error('Failed to save club profile:', err);
         showNotification('❌ Failed to save club profile: ' + err.message, 'error');
     }
+}
+
+async function handleCreatePaymentPlan(e) {
+  if (e) e.preventDefault();
+  
+  const name = document.getElementById('planName')?.value?.trim();
+  const amount = parseFloat(document.getElementById('planAmount')?.value);
+  const frequency = document.getElementById('planFrequency')?.value;
+  const description = document.getElementById('planDescription')?.value?.trim();
+
+  if (!name || !frequency || isNaN(amount) || amount < 0.30) {
+    showNotification('Please fill in all required fields. Minimum amount is £0.30', 'error');
+    return;
+  }
+
+  try {
+    showLoading(true);
+    
+    const response = await apiService.createPaymentPlan({
+      name: name,
+      amount: amount,
+      frequency: frequency,
+      description: description
+    });
+    
+    showNotification('Payment plan created successfully!', 'success');
+    closeModal('createPaymentPlanModal');
+    document.getElementById('createPaymentPlanForm')?.reset();
+    
+    // Update the AppState and reload
+    if (!AppState.paymentPlans) AppState.paymentPlans = [];
+    AppState.paymentPlans.push(response.plan || response);
+    
+    await loadPaymentPlans();
+    
+  } catch (err) {
+    console.error('Failed to create payment plan:', err);
+    showNotification('Failed to create payment plan: ' + err.message, 'error');
+  } finally {
+    showLoading(false);
+  }
 }
 
 
