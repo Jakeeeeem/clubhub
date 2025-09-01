@@ -40,26 +40,30 @@ router.get('/admin', authenticateToken, requireOrganization, async (req, res) =>
     
     // Get players with team assignments
     const playersResult = await query(`
-      SELECT 
-        p.*,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'team_id', tp.team_id,
-              'team_name', t.name,
-              'position', tp.position,
-              'jersey_number', tp.jersey_number
-            ) ORDER BY t.name
-          ) FILTER (WHERE tp.team_id IS NOT NULL), 
-          '[]'
-        ) as team_assignments
-      FROM players p
-      LEFT JOIN team_players tp ON p.id = tp.player_id
-      LEFT JOIN teams t ON tp.team_id = t.id
-      WHERE p.club_id = ANY($1)
-      GROUP BY p.id
-      ORDER BY p.created_at DESC
-    `, [clubIds]);
+  SELECT 
+    p.*,
+    CASE WHEN pp.plan_id IS NOT NULL THEN true ELSE false END as has_payment_plan,
+    pl.name as payment_plan_name,
+    COALESCE(
+      json_agg(
+        json_build_object(
+          'team_id', tp.team_id,
+          'team_name', t.name,
+          'position', tp.position,
+          'jersey_number', tp.jersey_number
+        ) ORDER BY t.name
+      ) FILTER (WHERE tp.team_id IS NOT NULL), 
+      '[]'
+    ) as team_assignments
+  FROM players p
+  LEFT JOIN team_players tp ON p.id = tp.player_id
+  LEFT JOIN teams t ON tp.team_id = t.id
+  LEFT JOIN player_plans pp ON pp.user_id = p.user_id AND pp.is_active = true
+  LEFT JOIN plans pl ON pl.id = pp.plan_id
+  WHERE p.club_id = ANY($1)
+  GROUP BY p.id, pp.plan_id, pl.name
+  ORDER BY p.created_at DESC
+`, [clubIds]);
     
     // Get staff
     const staffResult = await query(`

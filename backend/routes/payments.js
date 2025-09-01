@@ -592,6 +592,8 @@ router.post('/bulk-assign-plan', authenticateToken, requireOrganization, async (
   try {
     const { playerIds, planId, startDate } = req.body;
     
+    console.log('Bulk assign request:', { playerIds, planId, startDate }); // Debug log
+    
     if (!playerIds || !Array.isArray(playerIds) || playerIds.length === 0) {
       return res.status(400).json({ error: 'Player IDs array is required' });
     }
@@ -600,27 +602,65 @@ router.post('/bulk-assign-plan', authenticateToken, requireOrganization, async (
       return res.status(400).json({ error: 'Plan ID is required' });
     }
     
+    // Ensure player_plans table exists
+    await query(`
+      CREATE TABLE IF NOT EXISTS player_plans (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        user_id UUID REFERENCES users(id),
+        plan_id UUID REFERENCES plans(id),
+        start_date TIMESTAMP DEFAULT NOW(),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    
     await withTransaction(async (client) => {
       for (const playerId of playerIds) {
-        // Deactivate existing plans
-        await client.query(`
-          UPDATE player_plans SET is_active = false, updated_at = NOW()
-          WHERE user_id = (SELECT user_id FROM players WHERE id = $1)
-        `, [playerId]);
+        console.log(`Processing player: ${playerId}`); // Debug log
         
-        // Assign new plan
-        await client.query(`
-          INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
-          SELECT p.user_id, $1, $2, true, NOW(), NOW()
-          FROM players p WHERE p.id = $3 AND p.user_id IS NOT NULL
-        `, [planId, startDate || new Date(), playerId]);
+        // Get player's user_id
+        const playerResult = await client.query(
+          'SELECT user_id FROM players WHERE id = $1',
+          [playerId]
+        );
+        
+        if (playerResult.rows.length === 0) {
+          console.log(`Player not found: ${playerId}`);
+          continue; // Skip if player not found
+        }
+        
+        const userId = playerResult.rows[0].user_id;
+        console.log(`Player ${playerId} has user_id: ${userId}`);
+        
+        if (userId) {
+          // Deactivate existing plans for this user
+          await client.query(`
+            UPDATE player_plans 
+            SET is_active = false, updated_at = NOW() 
+            WHERE user_id = $1 AND is_active = true
+          `, [userId]);
+          
+          // Assign new plan
+          await client.query(`
+            INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
+            VALUES ($1, $2, $3, true, NOW(), NOW())
+          `, [userId, planId, startDate || new Date()]);
+          
+          console.log(`Plan assigned to user ${userId}`);
+        } else {
+          console.log(`Player ${playerId} has no linked user account`);
+        }
       }
     });
     
     res.json({ success: true, message: `Payment plans assigned to ${playerIds.length} players` });
   } catch (error) {
     console.error('Bulk assign plans error:', error);
-    res.status(500).json({ error: 'Failed to assign payment plans' });
+    res.status(500).json({ 
+      error: 'Failed to assign payment plans',
+      message: error.message 
+    });
   }
 });
 
