@@ -1706,14 +1706,17 @@ function displayFilteredPlayers(players, filterType) {
     return;
   }
 
+  // ✅ Loop through players here
   container.innerHTML = players.map(player => {
+    const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
     const hasPaymentPlan = Boolean(
-  player.has_payment_plan ||
-  player.payment_plan ||
-  player.plan_id ||
-  player.payment_plan_id ||
-  player.plan
-);
+      player.has_payment_plan ||
+      player.payment_plan ||
+      player.plan_id ||
+      player.payment_plan_id ||
+      player.plan ||
+      player.plan_price
+    );
     const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
 
     return `
@@ -1727,7 +1730,9 @@ function displayFilteredPlayers(players, filterType) {
             }
           </div>
           <div class="player-status">
-            <span class="status-badge status-${player.payment_status || 'pending'}">${player.payment_status || 'Pending'}</span>
+            <span class="status-badge status-${player.payment_status || 'pending'}">
+              ${player.payment_status || 'Pending'}
+            </span>
           </div>
         </div>
         <div class="player-meta">
@@ -1736,14 +1741,14 @@ function displayFilteredPlayers(players, filterType) {
           <span><strong>Email:</strong> ${player.email || 'No email'}</span>
           <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
           ${(() => {
-  const fee = Number(
-    player.monthly_fee ??
-    player.plan_price ??
-    (player.payment_plan && (player.payment_plan.price ?? player.payment_plan.amount)) ??
-    0
-  );
-  return `<span><strong>Monthly Fee:</strong> £${fee.toFixed(2)}</span>`;
-})()}
+            const fee = Number(
+              player.plan_price ??
+              player.monthly_fee ??
+              (player.payment_plan && (player.payment_plan.price ?? player.payment_plan.amount)) ??
+              0
+            );
+            return `<span><strong>Monthly Fee:</strong> £${fee.toFixed(2)}</span>`;
+          })()}
         </div>
         <div class="player-actions">
           <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
@@ -2729,7 +2734,14 @@ function updateDashboardStats(statistics) {
       console.log(`Processing player ${index + 1}:`, player); // Debug log
       
       const age = calculateAge(player.date_of_birth);
-      const hasPaymentPlan = player.has_payment_plan || false;
+      const hasPaymentPlan = Boolean(
+  player.has_payment_plan ||
+  player.payment_plan ||
+  player.plan_id ||
+  player.payment_plan_id ||
+  player.plan ||
+  player.plan_price
+);
       const hasTeamAssignment = player.team_assignments && player.team_assignments.length > 0;
       const isOverdue = player.payment_status === 'overdue';
       
