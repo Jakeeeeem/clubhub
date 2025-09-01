@@ -1322,41 +1322,148 @@ async function loadPaymentPlans() {
   }
 }
 
-function showPaymentPlans() {
-  const container = document.getElementById('paymentPlansContainer');
-  if (!container) return;
-  
-  const plans = AppState.paymentPlans || [];
-  
-  if (plans.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state" style="text-align: center; padding: 2rem;">
-        <p>No payment plans created yet</p>
-        <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">
-          Create First Payment Plan
-        </button>
-      </div>
-    `;
-    return;
-  }
-  
-  container.innerHTML = plans.map(plan => `
-    <div class="card" style="margin-bottom: 1rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h4>${plan.name}</h4>
-          <p><strong>Amount:</strong> £${plan.price}/${plan.interval}</p>
-          <p><strong>Description:</strong> ${plan.description || 'No description'}</p>
-          <p><strong>Status:</strong> <span class="status-badge status-${plan.active ? 'active' : 'inactive'}">${plan.active ? 'Active' : 'Inactive'}</span></p>
-        </div>
-        <div class="item-actions">
-          <button class="btn btn-small btn-primary" onclick="assignPlanToPlayers('${plan.id}')">Assign to Players</button>
-          <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
-          <button class="btn btn-small btn-danger" onclick="deletePlan('${plan.id}')">Delete</button>
-        </div>
-      </div>
-    </div>
-  `).join('');
+async function loadPaymentPlans() {
+    const container = document.getElementById('paymentPlansContainer');
+    if (!container) return;
+
+    try {
+        showLoading(true);
+        const response = await apiService.listPaymentPlans();
+        const plans = Array.isArray(response) ? response : (response?.plans || []);
+        
+        if (plans.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                    <p>No payment plans created yet</p>
+                    <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">Create Your First Plan</button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = plans.map(plan => `
+            <div class="payment-plan-item">
+                <div class="payment-plan-header">
+                    <div class="payment-plan-info">
+                        <h4>${plan.name}</h4>
+                        <div class="payment-plan-meta">
+                            <span><strong>Amount:</strong> £${(plan.amount / 100).toFixed(2)}</span>
+                            <span><strong>Frequency:</strong> ${plan.interval || plan.frequency}</span>
+                            <span><strong>Active Players:</strong> ${plan.subscriber_count || 0}</span>
+                            <span><strong>Created:</strong> ${new Date(plan.created_at || plan.created).toLocaleDateString()}</span>
+                        </div>
+                        ${plan.description ? `<p style="margin-top: 0.5rem; opacity: 0.8;">${plan.description}</p>` : ''}
+                    </div>
+                    <div class="payment-plan-actions">
+                        <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
+                        <button class="btn btn-small btn-warning" onclick="assignPlayersToPlean('${plan.id}')">Assign Players</button>
+                        <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (err) {
+        console.error('Failed to load payment plans:', err);
+        container.innerHTML = '<p style="color:#dc3545">Failed to load payment plans. Please try again.</p>';
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function deletePaymentPlan(planId) {
+    if (!confirm('Are you sure you want to delete this payment plan? This will remove all player assignments.')) {
+        return;
+    }
+    
+    try {
+        showLoading(true);
+        await apiService.deletePaymentPlan(planId);
+        showNotification('Payment plan deleted successfully', 'success');
+        await loadPaymentPlans();
+    } catch (error) {
+        console.error('Failed to delete payment plan:', error);
+        showNotification('Failed to delete payment plan: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function assignPlayersToPlean(planId) {
+    try {
+        // Get all players for assignment modal
+        const players = await apiService.getPlayers();
+        const plan = AppState.paymentPlans?.find(p => p.id === planId);
+        
+        if (!plan) {
+            showNotification('Payment plan not found', 'error');
+            return;
+        }
+        
+        // Create assignment modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        modal.id = 'assignPlayersModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Assign Players to ${plan.name}</h2>
+                    <button class="close" onclick="closeModal('assignPlayersModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Select players to assign to this payment plan:</p>
+                    <div style="max-height: 400px; overflow-y: auto; margin: 1rem 0;">
+                        ${players.map(player => `
+                            <label style="display: flex; align-items: center; padding: 0.5rem; margin-bottom: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;">
+                                <input type="checkbox" name="selectedPlayers" value="${player.id}" style="margin-right: 1rem;">
+                                <span>${player.first_name} ${player.last_name} (${player.email || 'No email'})</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div class="form-group">
+                        <label for="assignmentStartDate">Start Date</label>
+                        <input type="date" id="assignmentStartDate" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" onclick="confirmPlayerAssignment('${planId}')">Assign Players</button>
+                        <button class="btn btn-secondary" onclick="closeModal('assignPlayersModal')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+    } catch (error) {
+        console.error('Failed to load players for assignment:', error);
+        showNotification('Failed to load players', 'error');
+    }
+}
+
+async function confirmPlayerAssignment(planId) {
+    const selectedPlayers = Array.from(document.querySelectorAll('input[name="selectedPlayers"]:checked'))
+                                 .map(cb => cb.value);
+    const startDate = document.getElementById('assignmentStartDate').value;
+
+    if (selectedPlayers.length === 0) {
+        showNotification('Please select at least one player', 'error');
+        return;
+    }
+
+    try {
+        showLoading(true);
+        await apiService.bulkAssignPaymentPlan(selectedPlayers, planId, startDate);
+        closeModal('assignPlayersModal');
+        showNotification(`${selectedPlayers.length} players assigned to payment plan successfully`, 'success');
+        await loadPaymentPlans();
+    } catch (error) {
+        console.error('Failed to assign players:', error);
+        showNotification('Failed to assign players: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
 }
 
 // 4. UPDATE THE PAYMENT PLAN FORM HANDLER IN admin-dashboard.js

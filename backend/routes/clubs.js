@@ -525,8 +525,6 @@ router.post('/applications/:applicationId/review', authenticateToken, requireOrg
 
     // If approved, optionally create a player record
     if (decision === 'approved') {
-      // This could be done automatically or require additional steps
-      // For now, just update the status
     }
 
     res.json({

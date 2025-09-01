@@ -1580,329 +1580,27 @@
     <script src="api-service.js"></script>          
     <script src="stripe-service.js"></script>       
     <script src="script.js"></script>              
+    <script src="admin-dashboard.js"></script>
     <script src="enhanced-invite-system.js"></script>
     
     <script>
-         function showSection(sectionId) {
-        const sections = document.querySelectorAll('.dashboard-section');
-        sections.forEach(section => section.classList.remove('active'));
+        // Enhanced Admin Dashboard Functions
         
-        const navButtons = document.querySelectorAll('.dashboard-nav button');
-        navButtons.forEach(button => button.classList.remove('active'));
-        
-        const targetSection = document.getElementById(sectionId);
-        if (targetSection) targetSection.classList.add('active');
-        
-        const clickedButton = document.querySelector(`[onclick*="showSection('${sectionId}')"]`);
-        if (clickedButton) clickedButton.classList.add('active');
-        
-        switch(sectionId) {
-            case 'overview': loadDashboardStats(); break;
-            case 'players': loadPlayers(); break;
-            case 'teams': loadTeams(); break;
-            case 'staff': loadStaff(); break;
-            case 'events': loadEvents(); break;
-            case 'finances': loadFinances(); loadPaymentPlans(); break;
-            case 'club-profile': loadClubData(); break;
-        }
-    }
-       document.addEventListener('DOMContentLoaded', function() {
-    console.log('Admin Dashboard Loading...');
-    initializeAdminDashboard();
-});
-
-// Main initialization function
-async function initializeAdminDashboard() {
-    console.log('Initializing admin dashboard...');
-    
-    try {
-        showLoading(true);
-        
-        const dashboardData = await apiService.getAdminDashboardData();
-        
-        AppState.clubs = dashboardData.clubs || [];
-        AppState.players = dashboardData.players || [];
-        AppState.staff = dashboardData.staff || [];
-        AppState.events = dashboardData.events || [];
-        AppState.teams = dashboardData.teams || [];
-        AppState.payments = dashboardData.payments || [];
-        loadDashboardStats();
-        loadPlayers();
-        setupEventListeners();
-        
-        console.log('Admin dashboard initialized successfully');
-        
-    } catch (error) {
-        console.error('Failed to initialize admin dashboard:', error);
-        showNotification('Failed to load dashboard data', 'error');
-        loadFallbackData();
-    } finally {
-        showLoading(false);
-    }
-}
-
-function setupEventListeners() {
-    const forms = {
-        'clubProfileForm': handleClubProfileUpdate,
-        'addPlayerForm': handleAddPlayer,
-        'addTeamForm': handleAddTeam,
-        'addEventForm': handleAddEvent,
-        'createPaymentPlanForm': handleCreatePaymentPlan
-    };
-    
-    Object.entries(forms).forEach(([formId, handler]) => {
-        const form = document.getElementById(formId);
-        if (form) form.addEventListener('submit', handler);
-    });
-}
-
-// Add the missing handleClubProfileUpdate function
-async function handleClubProfileUpdate(e) {
-    e.preventDefault();
-    try {
-        showLoading(true);
-        const clubData = {
-            name: document.getElementById('clubName')?.value || '',
-            description: document.getElementById('clubDescription')?.value || '',
-            location: document.getElementById('clubLocation')?.value || '',
-            philosophy: document.getElementById('clubPhilosophy')?.value || '',
-            website: document.getElementById('clubWebsite')?.value || '',
-            types: ['club'],
-            sport: 'football'
-        };
-        
-        let response;
-        if (AppState.clubs?.[0]?.id) {
-            response = await apiService.updateClub(AppState.clubs[0].id, clubData);
-            AppState.clubs[0] = response.club;
-        } else {
-            response = await apiService.createClub(clubData);
-            AppState.clubs = [response.club];
-        }
-        
-        showNotification('Club profile updated successfully!', 'success');
-    } catch (error) {
-        console.error('Failed to update club profile:', error);
-        showNotification('Failed to update club profile: ' + error.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-function loadDashboardStats() {
-    document.getElementById('totalPlayers').textContent = AppState.players?.length || '0';
-    document.getElementById('totalStaff').textContent = AppState.staff?.length || '0';  
-    document.getElementById('totalEvents').textContent = AppState.events?.length || '0';
-    document.getElementById('totalRevenue').textContent = '£0';
-}
-
-function loadClubData() {
-    const club = AppState.clubs?.[0];
-    if (!club) return;
-    
-    const fields = ['clubName', 'clubDescription', 'clubLocation', 'clubPhilosophy', 'clubWebsite'];
-    const values = [club.name, club.description, club.location, club.philosophy, club.website];
-    
-    fields.forEach((field, index) => {
-        const element = document.getElementById(field);
-        if (element) element.value = values[index] || '';
-    });
-}
-
-function loadPlayers() {
-    const container = document.getElementById('playersContainer');
-    if (!container) return;
-    
-    const players = AppState.players || [];
-    if (players.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>No players found</p></div>';
-        return;
-    }
-    
-    container.innerHTML = players.map(player => `
-        <div class="player-card">
-            <h4>${player.first_name} ${player.last_name}</h4>
-            <p>Email: ${player.email || 'No email'}</p>
-        </div>
-    `).join('');
-}
-
-function loadTeams() { 
-    const container = document.getElementById('teamsContainer');
-    if (container) container.innerHTML = '<div class="empty-state"><p>No teams found</p></div>';
-}
-
-function loadStaff() { 
-    const container = document.getElementById('staffContainer');
-    if (container) container.innerHTML = '<div class="empty-state"><p>No staff found</p></div>';
-}
-
-function loadEvents() { 
-    const container = document.getElementById('eventsContainer');
-    if (container) container.innerHTML = '<div class="empty-state"><p>No events found</p></div>';
-}
-
-function loadFinances() { 
-    document.getElementById('monthlyRevenue').textContent = '£0';
-    document.getElementById('overdueAmount').textContent = '£0';
-    document.getElementById('pendingAmount').textContent = '£0';
-    document.getElementById('totalMembers').textContent = '0';
-}
-
-async function loadPaymentPlans() {
-    const container = document.getElementById('paymentPlansContainer');
-    if (!container) return;
-
-    try {
-        const plans = await apiService.listPaymentPlans();
-        const normalizedPlans = Array.isArray(plans) ? plans : (plans?.plans || []);
-        
-        if (normalizedPlans.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No payment plans yet</p></div>';
-            return;
-        }
-
-        container.innerHTML = normalizedPlans.map(plan => `
-            <div class="item-list-item">
-                <div>
-                    <h4>${plan.name}</h4>
-                    <p>£${Number(plan.amount || plan.price || 0).toFixed(2)} / ${plan.interval || plan.frequency || 'one-time'}</p>
-                </div>
-            </div>
-        `).join('');
-        
-    } catch (err) {
-        console.error('Failed to load payment plans:', err);
-        container.innerHTML = '<p style="color:#dc3545">Failed to load payment plans</p>';
-    }
-}
-
-function showLoading(show) {
-    document.body.classList.toggle('loading', show);
-}
-
-function loadFallbackData() {
-    console.log('Loading fallback dashboard data...');
-    
-    document.getElementById('totalPlayers').textContent = '0';
-    document.getElementById('totalStaff').textContent = '0';
-    document.getElementById('totalEvents').textContent = '0';
-    document.getElementById('totalRevenue').textContent = '£0';
-    
-    const container = document.getElementById('playersContainer');
-    if (container) {
-        container.innerHTML = '<div class="empty-state"><p>No players found</p></div>';
-    }
-}
-
-function showNotification(message, type = 'info', duration = 4000) {
-    const existingNotifications = document.querySelectorAll('.notification');
-    existingNotifications.forEach(notification => notification.remove());
-    
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    
-    const colors = {
-        success: '#28a745',
-        error: '#dc3545',
-        warning: '#ffc107',
-        info: '#007bff'
-    };
-    
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${colors[type] || colors.info};
-        color: white;
-        padding: 16px 20px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        z-index: 10000;
-        max-width: 400px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    `;
-    
-    notification.innerHTML = `<span>${message}</span>`;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => notification.remove(), duration);
-}
-
-async function handleCreatePaymentPlan(e) {
-    if (e) e.preventDefault();
-    console.log('Creating payment plan...');
-    
-    const name = document.getElementById('planName')?.value?.trim();
-    const amount = parseFloat(document.getElementById('planAmount')?.value);
-    const frequency = document.getElementById('planFrequency')?.value;
-    const description = document.getElementById('planDescription')?.value?.trim();
-
-    if (!name || !frequency || isNaN(amount) || amount < 0) {
-        showNotification('Please fill in all required fields with valid values', 'error');
-        return;
-    }
-
-    try {
-        showLoading(true);
-        
-        await apiService.createPaymentPlan({
-            name: name,
-            amount: amount,
-            frequency: frequency,
-            description: description
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏢 Enhanced Admin Dashboard Loading...');
+            
+            // Initialize the main dashboard
+            if (typeof initializeAdminDashboard === 'function') {
+                initializeAdminDashboard();
+            } else {
+                console.warn('⚠️ Admin dashboard initialization function not found, loading fallback');
+                loadFallbackData();
+            }
+            
+            // Set up enhanced event listeners
+            setupEnhancedEventListeners();
         });
-        
-        showNotification('Payment plan created successfully!', 'success');
-        closeModal('createPaymentPlanModal');
-        document.getElementById('createPaymentPlanForm')?.reset();
-        
-        await loadPaymentPlans();
-        
-    } catch (err) {
-        console.error('Failed to create payment plan:', err);
-        showNotification('Failed to create payment plan: ' + err.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-        const form = modal.querySelector('form');
-        if (form) form.reset();
-    }
-}
-
-async function handleAddPlayer(e) {
-    e.preventDefault();
-    console.log('Adding player...');
-    showNotification('Add player functionality not implemented yet', 'warning');
-}
-
-async function handleAddTeam(e) {
-    e.preventDefault();
-    console.log('Adding team...');
-    showNotification('Add team functionality not implemented yet', 'warning');
-}
-
-async function handleAddEvent(e) {
-    e.preventDefault();
-    console.log('Adding event...');
-    showNotification('Add event functionality not implemented yet', 'warning');
-}
-
-function showModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    }
-}
 
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
@@ -1960,7 +1658,7 @@ function showModal(modalId) {
     const container = document.getElementById('playersContainer');
     if (!container) return;
     
-     if (!players || players.length === 0) {
+    if (!players || players.length === 0) {
         const filterNames = {
             'all': 'players',
             'on-plan': 'players on payment plans',
@@ -1978,17 +1676,6 @@ function showModal(modalId) {
         `;
         return;
     }
-}
-
-        displayFilteredPlayers(filteredPlayers, view);
-        
-    } catch (error) {
-        console.error('Failed to filter players:', error);
-        showNotification('Failed to filter players: ' + error.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
     
     container.innerHTML = players.map(player => {
         const hasPaymentPlan = player.has_payment_plan || player.payment_plan;
@@ -2025,6 +1712,7 @@ function showModal(modalId) {
             </div>
         `;
     }).join('');
+}
 
 // ADD this new function for individual payment plan assignment
 async function assignPaymentPlan(playerId) {
@@ -2083,23 +1771,31 @@ async function assignPaymentPlan(playerId) {
 async function confirmPlanAssignment(playerId) {
     const planId = document.getElementById('selectPlan').value;
     const startDate = document.getElementById('planStartDate').value;
-
+    
     if (!planId) {
         showNotification('Please select a payment plan', 'error');
         return;
     }
-
+    
     try {
         await apiService.bulkAssignPaymentPlan([playerId], planId, startDate);
         closeModal('assignPlanModal');
         showNotification('Payment plan assigned successfully!', 'success');
-
+        
         // Refresh the current view
         filterPlayersByView();
-
+        
     } catch (error) {
         console.error('Failed to assign payment plan:', error);
         showNotification('Failed to assign payment plan: ' + error.message, 'error');
+    }
+}
+        
+    } catch (error) {
+        console.error('Failed to filter players:', error);
+        showNotification('Failed to filter players: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
     }
 }
         function filterPlayersByTeam() {
@@ -2130,81 +1826,194 @@ async function confirmPlanAssignment(playerId) {
         }
 
         // Enhanced Team Management Functions
-        function openTeamManagement(teamId) {
-            console.log('⚽ Opening team management for:', teamId);
-            
-            // Load team data and show modal
-            const modal = document.getElementById('teamManagementModal');
-            const title = document.getElementById('teamManagementTitle');
-            
-            if (title) {
-                title.textContent = `⚽ Team Management - ${teamId}`;
-            }
-            
-            showModal('teamManagementModal');
-            showTeamTab('games'); // Default to games tab
-        }
+        async function openTeamManagement(teamId, teamName) {
+    const modal = document.getElementById('teamManagementModal');
+    if (modal) modal.remove();
 
-        function showTeamTab(tabName) {
-            // Update tab buttons
-            const tabButtons = document.querySelectorAll('#teamManagementModal .btn');
-            tabButtons.forEach(btn => {
-                btn.classList.remove('btn-primary', 'active');
-                btn.classList.add('btn-secondary');
-            });
-            
-            const activeButton = document.querySelector(`[onclick*="showTeamTab('${tabName}')"]`);
-            if (activeButton) {
-                activeButton.classList.remove('btn-secondary');
-                activeButton.classList.add('btn-primary', 'active');
-            }
-            
-            // Load tab content
-            const tabContent = document.getElementById('teamTabContent');
-            if (tabContent) {
-                switch(tabName) {
-                    case 'games':
-                        tabContent.innerHTML = `
-                            <h4>🏟️ Games & Matches</h4>
-                            <p>View and create games for this team. Players can vote on availability.</p>
-                            <button class="btn btn-primary">➕ Create Game</button>
-                            <div id="teamGames" style="margin-top: 1rem;">
-                                <!-- Games will be loaded here -->
-                            </div>
-                        `;
-                        break;
-                    case 'trainings':
-                        tabContent.innerHTML = `
-                            <h4>🏋️ Training Sessions</h4>
-                            <p>Schedule and manage training sessions for this team.</p>
-                            <button class="btn btn-primary">➕ Create Training</button>
-                            <div id="teamTrainings" style="margin-top: 1rem;">
-                                <!-- Trainings will be loaded here -->
-                            </div>
-                        `;
-                        break;
-                    case 'players':
-                        tabContent.innerHTML = `
-                            <h4>👥 Team Players</h4>
-                            <p>Manage players assigned to this team.</p>
-                            <button class="btn btn-primary">➕ Add Player</button>
-                            <div id="teamPlayersManagement" style="margin-top: 1rem;">
-                                <!-- Players management will be loaded here -->
-                            </div>
-                        `;
-                        break;
-                    case 'votes':
-                        tabContent.innerHTML = `
-                            <h4>📊 Availability Votes</h4>
-                            <p>View player availability votes for upcoming events.</p>
-                            <div id="teamVotes" style="margin-top: 1rem;">
-                                <!-- Votes will be loaded here -->
-                            </div>
-                        `;
-                        break;
-                }
-            }
+    const newModal = document.createElement('div');
+    newModal.id = 'teamManagementModal';
+    newModal.className = 'modal';
+    newModal.style.display = 'block';
+    
+    newModal.innerHTML = `
+        <div class="modal-content" style="max-width: 1000px;">
+            <div class="modal-header">
+                <h2>⚽ ${teamName} Management</h2>
+                <button class="close" onclick="closeModal('teamManagementModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="team-management-tabs">
+                    <button class="active" onclick="showTeamTab('games', '${teamId}')">🏟️ Games</button>
+                    <button onclick="showTeamTab('trainings', '${teamId}')">🏋️ Trainings</button>
+                    <button onclick="showTeamTab('players', '${teamId}')">👥 Players</button>
+                    <button onclick="showTeamTab('votes', '${teamId}')">📊 Votes</button>
+                </div>
+                
+                <div id="teamTabContent">
+                    <div class="spinner"></div> Loading team data...
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(newModal);
+    
+    // Load initial tab
+    showTeamTab('games', teamId);
+}
+
+async function showTeamTab(tabName, teamId) {
+    // Update tab buttons
+    const tabButtons = document.querySelectorAll('.team-management-tabs button');
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    const tabContent = document.getElementById('teamTabContent');
+    if (!tabContent) return;
+    
+    tabContent.innerHTML = '<div class="spinner"></div> Loading...';
+    
+    try {
+        switch(tabName) {
+            case 'games':
+                await loadTeamGames(teamId, tabContent);
+                break;
+            case 'trainings':
+                await loadTeamTrainings(teamId, tabContent);
+                break;
+            case 'players':
+                await loadTeamPlayers(teamId, tabContent);
+                break;
+            case 'votes':
+                await loadTeamVotes(teamId, tabContent);
+                break;
         }
+    } catch (error) {
+        console.error(`Failed to load team ${tabName}:`, error);
+        tabContent.innerHTML = `<p style="color: #dc3545;">Failed to load ${tabName}</p>`;
+    }
+}
+
+async function loadTeamGames(teamId, container) {
+    const games = await apiService.getTeamEvents(teamId, 'match');
+    
+    container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h4>🏟️ Team Games & Matches</h4>
+            <button class="btn btn-primary" onclick="createTeamGame('${teamId}')">➕ Create Game</button>
+        </div>
+        
+        <div id="teamGames">
+            ${games.length === 0 ? 
+                '<p style="text-align: center; opacity: 0.8;">No games scheduled yet</p>' :
+                games.map(game => `
+                    <div class="event-item">
+                        <div class="event-info">
+                            <h5>${game.title}</h5>
+                            <p><strong>Date:</strong> ${new Date(game.event_date).toLocaleDateString()}</p>
+                            <p><strong>Opponent:</strong> ${game.opponent || 'TBA'}</p>
+                            <p><strong>Location:</strong> ${game.location || 'TBA'}</p>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn btn-small btn-secondary" onclick="editTeamEvent('${game.id}')">Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteTeamEvent('${game.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('')
+            }
+        </div>
+    `;
+}
+
+async function loadTeamTrainings(teamId, container) {
+    const trainings = await apiService.getTeamEvents(teamId, 'training');
+    
+    container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h4>🏋️ Training Sessions</h4>
+            <button class="btn btn-primary" onclick="createTeamTraining('${teamId}')">➕ Create Training</button>
+        </div>
+        
+        <div id="teamTrainings">
+            ${trainings.length === 0 ? 
+                '<p style="text-align: center; opacity: 0.8;">No training sessions scheduled</p>' :
+                trainings.map(training => `
+                    <div class="event-item">
+                        <div class="event-info">
+                            <h5>${training.title}</h5>
+                            <p><strong>Date:</strong> ${new Date(training.event_date).toLocaleDateString()}</p>
+                            <p><strong>Time:</strong> ${training.event_time || 'TBA'}</p>
+                            <p><strong>Location:</strong> ${training.location || 'TBA'}</p>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn btn-small btn-secondary" onclick="editTeamEvent('${training.id}')">Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteTeamEvent('${training.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('')
+            }
+        </div>
+    `;
+}
+
+async function loadTeamPlayers(teamId, container) {
+    const teamDetails = await apiService.getTeamDetails(teamId);
+    const players = teamDetails.players || [];
+    
+    container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h4>👥 Team Players (${players.length})</h4>
+            <button class="btn btn-primary" onclick="addPlayerToTeam('${teamId}')">➕ Add Player</button>
+        </div>
+        
+        <div id="teamPlayers">
+            ${players.length === 0 ? 
+                '<p style="text-align: center; opacity: 0.8;">No players assigned to this team yet</p>' :
+                players.map(player => `
+                    <div class="event-item">
+                        <div class="event-info">
+                            <h5>${player.first_name} ${player.last_name}</h5>
+                            <p><strong>Position:</strong> ${player.team_position || 'Not set'}</p>
+                            <p><strong>Jersey:</strong> ${player.jersey_number || 'Not assigned'}</p>
+                            <p><strong>Email:</strong> ${player.email || 'No email'}</p>
+                        </div>
+                        <div class="event-actions">
+                            <button class="btn btn-small btn-secondary" onclick="editPlayerTeamInfo('${teamId}', '${player.id}')">Edit</button>
+                            <button class="btn btn-small btn-danger" onclick="removePlayerFromTeam('${teamId}', '${player.id}')">Remove</button>
+                        </div>
+                    </div>
+                `).join('')
+            }
+        </div>
+    `;
+}
+
+async function loadTeamVotes(teamId, container) {
+    const votes = await apiService.getTeamAvailabilityVotes(teamId);
+    
+    container.innerHTML = `
+        <h4>📊 Availability Votes</h4>
+        
+        <div class="votes-summary">
+            <div class="vote-card">
+                <span class="vote-number">${votes.summary?.available || 0}</span>
+                <span class="vote-label">Available</span>
+            </div>
+            <div class="vote-card">
+                <span class="vote-number">${votes.summary?.unavailable || 0}</span>
+                <span class="vote-label">Unavailable</span>
+            </div>
+            <div class="vote-card">
+                <span class="vote-number">${votes.summary?.maybe || 0}</span>
+                <span class="vote-label">Maybe</span>
+            </div>
+        </div>
+        
+        <p style="opacity: 0.8; text-align: center;">
+            Player availability votes will appear here for upcoming team events
+        </p>
+    `;
+}
 
         // Enhanced Staff Invite Functions
         function generateStaffInvite(role) {
@@ -2345,22 +2154,20 @@ async function confirmPlanAssignment(playerId) {
 
         async function handleCreatePaymentPlan(e) {
     if (e) e.preventDefault();
-    console.log('Creating payment plan...');
     
     const name = document.getElementById('planName')?.value?.trim();
     const amount = parseFloat(document.getElementById('planAmount')?.value);
     const frequency = document.getElementById('planFrequency')?.value;
     const description = document.getElementById('planDescription')?.value?.trim();
 
-    if (!name || !frequency || isNaN(amount) || amount < 0) {
-        showNotification('Please fill in all required fields with valid values', 'error');
+    if (!name || !frequency || isNaN(amount) || amount < 0.30) {
+        showNotification('Please fill in all required fields. Minimum amount is £0.30', 'error');
         return;
     }
 
     try {
         showLoading(true);
         
-        // Use your API service's createPaymentPlan method
         const response = await apiService.createPaymentPlan({
             name: name,
             amount: amount,
@@ -2372,7 +2179,10 @@ async function confirmPlanAssignment(playerId) {
         closeModal('createPaymentPlanModal');
         document.getElementById('createPaymentPlanForm')?.reset();
         
-        // Immediately reload payment plans
+        // Update the AppState and reload
+        if (!AppState.paymentPlans) AppState.paymentPlans = [];
+        AppState.paymentPlans.push(response.plan || response);
+        
         await loadPaymentPlans();
         
     } catch (err) {
@@ -2798,6 +2608,39 @@ async function confirmPlanAssignment(playerId) {
             }
         }
 
+        // Enhanced showSection function
+       function showSection(sectionId) {
+    const sections = document.querySelectorAll('.dashboard-section');
+    sections.forEach(section => section.classList.remove('active'));
+    
+    const navButtons = document.querySelectorAll('.dashboard-nav button');
+    navButtons.forEach(button => button.classList.remove('active'));
+    
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) targetSection.classList.add('active');
+    
+    const clickedButton = document.querySelector(`[onclick*="showSection('${sectionId}')"]`);
+    if (clickedButton) clickedButton.classList.add('active');
+    
+    switch(sectionId) {
+        case 'overview': 
+            loadDashboardStats(); 
+            break;
+        case 'players': 
+            loadPlayers(); 
+            break;
+        case 'teams': 
+            loadTeams(); 
+            break;
+        case 'events': 
+            loadEvents(); 
+            break;
+        case 'finances': 
+            loadFinances(); 
+            loadPaymentPlans(); 
+            break;
+    }
+}
 
         // Make functions globally available
         window.showSection = showSection;
@@ -2821,9 +2664,6 @@ async function confirmPlanAssignment(playerId) {
         window.logout = logout;
         window.loadListings = loadListings;
         window.viewListingApplications = viewListingApplications;
-        window.showSection = showSection;
-       window.showModal = showModal;
-       window.closeModal = closeModal;
 
         // Close modal when clicking outside
         window.addEventListener('click', function(e) {

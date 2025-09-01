@@ -230,55 +230,76 @@ class ApiService {
   /* ------------ Payment plans (assignment) ------------ */
 
   async listPaymentPlans() {
-    return this.makeRequest('/payments/plans');
+  try {
+    const response = await this.makeRequest('/payments/plans');
+    return response;
+  } catch (error) {
+    console.error('❌ Failed to fetch payment plans:', error);
+    throw error;
   }
+}
 
-  async assignMeToPlan(planId) {
-    return this.makeRequest('/payments/assign-plan', {
-      method: 'POST',
-      body: JSON.stringify({ planId })
-    });
-  }
-  
   async unassignMeFromPlan() {
     return this.makeRequest('/payments/unassign-plan', { method: 'POST' });
   }
 
   async getPaymentPlans() {
-  // If your backend returns { plans: [...] } change the next line to: (await this.makeRequest('/payments/plans')).plans
-  return await this.listPaymentPlans();
+  return (await this.makeRequest('/payments/plans')).plans
 }
 
-async createPaymentPlan({ name, amount, frequency, description }) {
-  // If your backend expects "interval" not "frequency", keep as interval below:
-  return await this.makeRequest('/payments/plans', {
-    method: 'POST',
-    body: JSON.stringify({
-      name,
-      amount,               // number in pounds (adjust if your API expects pence)
-      interval: frequency,  // 'monthly' | 'quarterly' | 'annually' | 'one-time'
-      description
-    })
-  });
+async createPaymentPlan(planData) {
+  console.log('💳 Creating payment plan:', planData);
+  
+  try {
+    const response = await this.makeRequest('/payments/plans', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: planData.name,
+        amount: Math.round(planData.amount * 100), // Convert to pence for Stripe
+        interval: planData.frequency,
+        description: planData.description,
+        currency: 'gbp'
+      })
+    });
+    console.log('✅ Payment plan created:', response);
+    return response;
+  } catch (error) {
+    console.error('❌ Failed to create payment plan:', error);
+    throw error;
+  }
 }
 
-async updatePaymentPlan(planId, { name, amount, frequency, description }) {
-  return await this.makeRequest(`/payments/plans/${planId}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      name,
-      amount,
-      interval: frequency,
-      description
-    })
-  });
+
+async updatePaymentPlan(planId, planData) {
+  try {
+    const response = await this.makeRequest(`/payments/plans/${planId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        name: planData.name,
+        amount: Math.round(planData.amount * 100),
+        interval: planData.frequency,
+        description: planData.description
+      })
+    });
+    return response;
+  } catch (error) {
+    console.error('❌ Failed to update payment plan:', error);
+    throw error;
+  }
 }
 
 async deletePaymentPlan(planId) {
-  return await this.makeRequest(`/payments/plans/${planId}`, {
-    method: 'DELETE'
-  });
+  try {
+    const response = await this.makeRequest(`/payments/plans/${planId}`, {
+      method: 'DELETE'
+    });
+    return response;
+  } catch (error) {
+    console.error('❌ Failed to delete payment plan:', error);
+    throw error;
+  }
 }
+
   // =========================== EMAIL METHODS ===========================
 
   async sendEmail(emailData) {
@@ -572,6 +593,53 @@ async deletePaymentPlan(planId) {
     });
   }
 
+  async getTeamDetails(teamId) {
+  try {
+    const response = await this.makeRequest(`/teams/${teamId}/details`);
+    return response;
+  } catch (error) {
+    console.error('❌ Failed to fetch team details:', error);
+    throw error;
+  }
+}
+
+async getTeamEvents(teamId, type = null) {
+  try {
+    const endpoint = type ? 
+      `/teams/${teamId}/events?type=${type}` : 
+      `/teams/${teamId}/events`;
+    return await this.makeRequest(endpoint);
+  } catch (error) {
+    console.error('❌ Failed to fetch team events:', error);
+    throw error;
+  }
+}
+
+async getTeamAvailabilityVotes(teamId, eventId = null) {
+  try {
+    const endpoint = eventId ? 
+      `/teams/${teamId}/availability?eventId=${eventId}` : 
+      `/teams/${teamId}/availability`;
+    return await this.makeRequest(endpoint);
+  } catch (error) {
+    console.error('❌ Failed to fetch team availability votes:', error);
+    throw error;
+  }
+}
+
+async createTeamEvent(teamId, eventData) {
+  try {
+    const response = await this.makeRequest(`/teams/${teamId}/events`, {
+      method: 'POST',
+      body: JSON.stringify(eventData)
+    });
+    return response;
+  } catch (error) {
+    console.error('❌ Failed to create team event:', error);
+    throw error;
+  }
+}
+
   // =========================== STAFF METHODS ===========================
 
   async getStaff(clubId = null) {
@@ -689,15 +757,33 @@ async deletePaymentPlan(planId) {
   }
 }
 
-async bulkAssignPaymentPlan(playerIds, planId, startDate) {
-  return await this.makeRequest('/payments/bulk-assign-plan', {
-    method: 'POST',
-    body: JSON.stringify({ 
-      playerIds, 
-      planId, 
-      startDate: startDate || new Date().toISOString().split('T')[0]
-    })
-  });
+async assignPlayerToPaymentPlan(playerId, planId, startDate = null) {
+  try {
+    const response = await this.makeRequest('/payments/assign-player-plan', {
+      method: 'POST',
+      body: JSON.stringify({
+        playerId,
+        planId,
+        startDate: startDate || new Date().toISOString().split('T')[0]
+      })
+    });
+    return response;
+  } catch (error) {
+    console.error('❌ Failed to assign player to payment plan:', error);
+    throw error;
+  }
+}
+
+async getPlayerPayments(playerId, status = null) {
+  try {
+    const endpoint = status ? 
+      `/payments/player/${playerId}?status=${status}` : 
+      `/payments/player/${playerId}`;
+    return await this.makeRequest(endpoint);
+  } catch (error) {
+    console.error('❌ Failed to fetch player payments:', error);
+    throw error;
+  }
 }
   // =========================== DASHBOARD METHODS ===========================
 
