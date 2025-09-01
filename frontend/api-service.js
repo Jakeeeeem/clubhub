@@ -771,18 +771,58 @@ async createTeamEvent(teamId, eventData) {
   }
 }
 
-async assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice) {
-  const payload = {
-    playerId,
+async assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice, clubId) {
+  // Build a payload that covers common API field names
+  const base = {
+    playerId,                      // camelCase
+    player_id: playerId,           // snake_case
     planId,
+    plan_id: planId,
     startDate,
-    ...(customPrice != null && customPrice !== '' ? { amount: Number(customPrice) } : {}) // send as amount if provided
+    start_date: startDate,
+    ...(clubId ? { clubId, club_id: clubId } : {}),
+    ...(customPrice != null && customPrice !== '' ? {
+      amount: Number(customPrice),
+      custom_amount: Number(customPrice),
+      price: Number(customPrice)
+    } : {})
   };
 
-  return this.makeRequest('/payments/assign-player-plan', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
+  // Try a few likely endpoints; if one 404s, try the next.
+  const endpoints = [
+    '/payments/assign-player-plan',
+    '/payments/assign-plan',
+    `/players/${playerId}/payment-plan`,
+    '/players/assign-payment-plan',
+    // fallback to bulk endpoint with a single id:
+    '/payments/bulk-assign-plan'
+  ];
+
+  for (const ep of endpoints) {
+    try {
+      const body = ep === '/payments/bulk-assign-plan'
+        ? JSON.stringify({
+            playerIds: [playerId],       // common bulk shape
+            player_ids: [playerId],
+            planId, plan_id: planId,
+            startDate, start_date: startDate,
+            ...(clubId ? { clubId, club_id: clubId } : {}),
+            ...(customPrice != null && customPrice !== '' ? {
+              amount: Number(customPrice), custom_amount: Number(customPrice), price: Number(customPrice)
+            } : {})
+          })
+        : JSON.stringify(base);
+
+      const res = await this.makeRequest(ep, { method: 'POST', body });
+      return res; // success
+    } catch (err) {
+      // If it's a 404, try the next endpoint; otherwise rethrow
+      if (String(err).includes('HTTP 404')) continue;
+      throw err;
+    }
+  }
+
+  throw new Error('No working assignment endpoint.');
 }
 
 async getPlayerPayments(playerId, status = null) {

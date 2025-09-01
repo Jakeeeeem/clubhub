@@ -2358,11 +2358,13 @@ async function assignPaymentPlan(playerId) {
           <div class="form-group">
             <label for="selectPlan">Choose Payment Plan</label>
             <select id="selectPlan" required>
-              <option value="">Select a plan...</option>
-              ${plans.map(plan => `
-                <option value="${plan.id}">${plan.name} - £${plan.price}/${plan.interval}</option>
-              `).join('')}
-            </select>
+  <option value="">Select a plan...</option>
+  ${plans.map(plan => {
+    const amt = Number(plan.amount ?? plan.price ?? 0).toFixed(2);
+    const intv = (plan.interval ?? plan.frequency ?? '').toString();
+    return `<option value="${plan.id}">${plan.name} - £${amt}/${intv}</option>`;
+  }).join('')}
+</select>
           </div>
           <div class="form-group">
   <label for="planCustomPrice">Custom Price (£) (optional)</label>
@@ -2393,6 +2395,7 @@ async function confirmPlanAssignment(playerId) {
   const startDate = document.getElementById('planStartDate').value || new Date().toISOString().split('T')[0];
   const priceVal = (document.getElementById('planCustomPrice')?.value || '').trim();
   const customPrice = priceVal !== '' ? parseFloat(priceVal) : null;
+  const clubId = AppState.activeClubId || AppState.clubs?.[0]?.id || null;
 
   if (!planId) {
     showNotification('Please select a payment plan', 'error');
@@ -2402,35 +2405,29 @@ async function confirmPlanAssignment(playerId) {
   try {
     showLoading(true);
 
-    // Hit your backend
-    await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice);
+    // Call the (now robust) API function
+    await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice, clubId);
 
-    // ✅ Local optimistic update AFTER success
+    // Optimistic local update so UI flips immediately
     const p = (AppState.players || []).find(x => String(x.id) === String(playerId));
     if (p) {
       p.has_payment_plan = true;
       p.payment_plan_id = planId;
       p.plan_price = (customPrice != null ? customPrice : null);
 
-      // attach the selected plan so fee display can fall back to its default price
       const selectedPlan = (AppState.paymentPlans || []).find(pl => String(pl.id) === String(planId));
       if (selectedPlan) p.payment_plan = selectedPlan;
 
       p.payment_status = p.payment_status || 'active';
-      // optional: clean any stale per-player fee you might have used earlier
       delete p.monthly_fee;
     }
 
     closeModal('assignPlanModal');
     showNotification('Payment plan assigned successfully!', 'success');
 
-    // Re-render current view
-    const currentView = document.getElementById('playerListFilter')?.value || 'all';
-    if (currentView === 'all') {
-      displayFilteredPlayers(AppState.players, 'all');
-    } else {
-      await filterPlayersByView();
-    }
+    // 🔁 Force a fresh fetch so it persists after refresh/new filters
+    await loadPaymentPlans();   // ensure we have latest plans
+    await loadPlayers();        // re-fetch players so server’s saved state is reflected
   } catch (error) {
     console.error('Failed to assign payment plan:', error);
     showNotification('Failed to assign payment plan: ' + error.message, 'error');
