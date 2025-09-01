@@ -1713,8 +1713,9 @@ function displayFilteredPlayers(players, filterType) {
 
     const onPlan = hasPaymentPlan;
     const rawFee = onPlan ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount) : null;
-    const fee = onPlan && rawFee != null ? Number(rawFee) : null;
-    const feeHtml = onPlan && isFinite(fee) ? `£${fee.toFixed(2)}` : '—';
+    const hasRawFee = onPlan && rawFee !== undefined && rawFee !== null && rawFee !== '';
+const fee = hasRawFee ? Number(rawFee) : NaN;
+const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—';
 
     return `
       <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
@@ -2403,23 +2404,28 @@ async function confirmPlanAssignment(playerId) {
         async function handleAddPlayer(e) {
   e.preventDefault();
 
-  const feeRaw = document.getElementById('playerFee').value.trim();
-  const monthlyFee = feeRaw !== '' ? parseFloat(feeRaw) : null;
+  const feeRaw = (document.getElementById('playerFee').value || '').trim();
+  const monthly_fee = feeRaw !== '' ? Number(feeRaw) : null;
+  const payment_plan_id = document.getElementById('playerPaymentPlan').value || null;
+  const club_id = await getActiveClubId();
 
-  const formData = {
-    firstName: document.getElementById('playerFirstName').value,
-    lastName: document.getElementById('playerLastName').value,
-    email: document.getElementById('playerEmail').value,
-    phone: document.getElementById('playerPhone').value,
-    dateOfBirth: document.getElementById('playerDOB').value,
-    position: document.getElementById('playerPosition').value,
-    clubId: AppState.clubs[0]?.id,
-    ...(monthlyFee != null ? { monthlyFee } : {})
+  const payload = {
+    first_name: document.getElementById('playerFirstName').value.trim(),
+    last_name: document.getElementById('playerLastName').value.trim(),
+    email: (document.getElementById('playerEmail').value || '').trim() || null,
+    phone: (document.getElementById('playerPhone').value || '').trim() || null,
+    date_of_birth: document.getElementById('playerDOB').value, // already YYYY-MM-DD
+    position: (document.getElementById('playerPosition').value || '').trim() || null,
+    club_id,
+    ...(payment_plan_id ? { payment_plan_id } : {}),
+    ...(Number.isFinite(monthly_fee) ? { monthly_fee } : {})
+    // If your API wants a custom plan price when a plan is chosen, also send:
+    // ...(payment_plan_id && Number.isFinite(monthly_fee) ? { plan_price: monthly_fee } : {})
   };
 
   try {
     showLoading(true);
-    const response = await apiService.createPlayer(formData);
+    await apiService.createPlayer(payload);
     showNotification('Player added successfully!', 'success');
     closeModal('addPlayerModal');
     document.getElementById('addPlayerForm').reset();
@@ -2724,8 +2730,9 @@ function updateDashboardStats(statistics) {
       const rawFee = onPlan
         ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount)
         : null;
-      const fee = onPlan && rawFee != null ? Number(rawFee) : null;
-      const feeHtml = onPlan && isFinite(fee) ? `£${fee.toFixed(2)}` : '—';
+      const hasRawFee = onPlan && rawFee !== undefined && rawFee !== null && rawFee !== '';
+const fee = hasRawFee ? Number(rawFee) : NaN;
+const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—';
 
       return `
         <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
