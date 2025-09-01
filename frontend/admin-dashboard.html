@@ -1579,7 +1579,6 @@
     <script src="api-service.js"></script>          
     <script src="stripe-service.js"></script>       
     <script src="script.js"></script>              
-    <script src="admin-dashboard.js"></script>
     <script src="enhanced-invite-system.js"></script>
     
     <script>
@@ -1587,19 +1586,19 @@
         
         // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🏢 Enhanced Admin Dashboard Loading...');
-            
-            // Initialize the main dashboard
-            if (typeof initializeAdminDashboard === 'function') {
-                initializeAdminDashboard();
-            } else {
-                console.warn('⚠️ Admin dashboard initialization function not found, loading fallback');
-                loadFallbackData();
-            }
-            
-            // Set up enhanced event listeners
-            setupEnhancedEventListeners();
-        });
+  console.log('🏢 Enhanced Admin Dashboard Loading...');
+
+  // Call the loaders you really have. (Guard each in case it lives in another file.)
+  try { loadDashboardStats?.(); } catch(e) {}
+  try { loadPlayers?.(); } catch(e) {}
+  try { loadTeams?.(); } catch(e) {}
+  try { loadEvents?.(); } catch(e) {}
+  try { loadFinances?.(); } catch(e) {}
+  try { loadPaymentPlans?.(); } catch(e) {}
+  try { loadListings?.(); } catch(e) {}
+
+  setupEnhancedEventListeners();
+});
 
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
@@ -2229,7 +2228,6 @@ async function loadTeamVotes(teamId, container) {
         location: form.querySelector('#clubLocation')?.value?.trim(),
         philosophy: form.querySelector('#clubPhilosophy')?.value?.trim(),
         website: form.querySelector('#clubWebsite')?.value?.trim(),
-        // you could also handle pictures separately here
     };
 
     try {

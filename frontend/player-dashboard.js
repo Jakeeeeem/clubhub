@@ -1240,7 +1240,6 @@ function accessStripeAccount() {
 // Make it globally available
 window.accessStripeAccount = accessStripeAccount;
 
-// 2. ADD THIS ROUTE TO YOUR payments.js FILE (after the existing routes)
 
 // POST /api/payments/plans - Create new payment plan
 router.post('/plans', authenticateToken, requireOrganization, [
@@ -1308,7 +1307,6 @@ router.post('/plans', authenticateToken, requireOrganization, [
   }
 });
 
-// 3. ADD PAYMENT PLAN DISPLAY FUNCTION TO admin-dashboard.js
 
 async function loadPaymentPlans() {
   try {
@@ -1466,8 +1464,6 @@ async function confirmPlayerAssignment(planId) {
     }
 }
 
-// 4. UPDATE THE PAYMENT PLAN FORM HANDLER IN admin-dashboard.js
-
 async function handleCreatePaymentPlan(e) {
     e.preventDefault();
     console.log('Creating payment plan...');
@@ -1513,7 +1509,6 @@ async function handleCreatePaymentPlan(e) {
     }
 }
 
-// 5. ADD PLAN ASSIGNMENT FUNCTION TO admin-dashboard.js
 
 async function assignPlanToPlayers(planId) {
     const plan = AppState.paymentPlans?.find(p => p.id === planId);
