@@ -485,6 +485,7 @@ router.get('/plan/current', authenticateToken, async (req, res) => {
 });
 
 // POST /api/payments/plan/assign - Assign/update plan for current user
+router.post('/assign-player-plan', assignPlayerToPaymentPlanHandler);
 router.post('/plan/assign', authenticateToken, [
   body('planId').notEmpty().withMessage('planId is required'),
   body('startDate').optional().isISO8601().withMessage('Invalid startDate')
@@ -1122,6 +1123,127 @@ router.get('/public/:id', async (req, res) => {
     });
   }
 });
+
+async function assignPlayerToPaymentPlanHandler(req, res, next) {
+  try {
+    const {
+      playerId, player_id,
+      planId, plan_id,
+      startDate, start_date,
+      customPrice, amount, custom_amount, price,
+      clubId, club_id
+    } = req.body || {};
+
+    const pid   = (playerId ?? player_id);
+    const plid  = (planId ?? plan_id);
+    const start = (startDate ?? start_date ?? new Date().toISOString().slice(0, 10));
+    const custom = (customPrice ?? amount ?? custom_amount ?? price);
+    const club  = (clubId ?? club_id ?? null);
+
+    if (!pid || !plid) {
+      return res.status(400).json({ error: 'playerId and planId are required' });
+    }
+
+    const result = await assignPlayersCore({
+      playerIds: [pid],
+      planId: plid,
+      startDate: start,
+      customPrice: (custom === '' || custom == null) ? null : Number(custom),
+      clubId: club
+    });
+
+    return res.status(200).json({ assigned: result.assigned, failures: result.failures });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function bulkAssignPlanHandler(req, res, next) {
+  try {
+    const {
+      playerIds,
+      planId, plan_id,
+      startDate, start_date,
+      customPrice, amount, custom_amount, price,
+      clubId, club_id
+    } = req.body || {};
+
+    const ids   = Array.isArray(playerIds) ? playerIds.filter(Boolean) : [];
+    const plid  = (planId ?? plan_id);
+    const start = (startDate ?? start_date ?? new Date().toISOString().slice(0, 10));
+    const custom = (customPrice ?? amount ?? custom_amount ?? price);
+    const club  = (clubId ?? club_id ?? null);
+
+    if (!ids.length || !plid) {
+      return res.status(400).json({ error: 'playerIds (non-empty) and planId are required' });
+    }
+
+    const result = await assignPlayersCore({
+      playerIds: ids,
+      planId: plid,
+      startDate: start,
+      customPrice: (custom === '' || custom == null) ? null : Number(custom),
+      clubId: club
+    });
+
+    return res.status(200).json({ assigned: result.assigned, failures: result.failures });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Writes the assignment onto players(payment_plan_id, plan_price, plan_start_date).
+ * If customPrice is null/undefined, we use the plan price from `plans`.
+ */
+async function assignPlayersCore({ playerIds, planId, startDate, customPrice, clubId }) {
+  const assigned = [];
+  const failures = [];
+
+  // Get the plan (for default price) – also ensures the plan exists
+  const planRes = await query(
+    'SELECT id, price FROM plans WHERE id = $1 AND (active IS TRUE OR active IS NULL)',
+    [planId]
+  );
+  if (planRes.rowCount === 0) {
+    for (const pid of playerIds) {
+      failures.push({ playerId: pid, error: 'Plan not found or inactive' });
+    }
+    return { assigned, failures };
+  }
+  const planRow = planRes.rows[0];
+  const priceToApply = (customPrice == null ? planRow.price : customPrice);
+
+  // Optional: validate player/club relationship here if needed, using clubId.
+
+  // Update each player
+  for (const pid of playerIds) {
+    try {
+      const updateRes = await query(
+        `
+        UPDATE players
+           SET payment_plan_id = $2,
+               plan_price       = $3,
+               plan_start_date  = $4,
+               updated_at       = NOW()
+         WHERE id = $1
+         RETURNING id
+        `,
+        [pid, planId, priceToApply, startDate]
+      );
+
+      if (updateRes.rowCount === 0) {
+        failures.push({ playerId: pid, error: 'Player not found' });
+      } else {
+        assigned.push(pid);
+      }
+    } catch (e) {
+      failures.push({ playerId: pid, error: e.message });
+    }
+  }
+
+  return { assigned, failures };
+}
 
 // GENERATE PAYMENT LINK - ENHANCED
 router.get('/:id/payment-link', authenticateToken, requireOrganization, async (req, res) => {

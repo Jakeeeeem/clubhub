@@ -771,23 +771,40 @@ async createTeamEvent(teamId, eventData) {
   }
 }
 
-async assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice, clubId) {
-  // Build a payload that covers common API field names
-  const base = {
-    playerId,                      // camelCase
-    player_id: playerId,           // snake_case
+async assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice = null, clubId = null) {
+  const canonical = {
+    playerId,
     planId,
-    plan_id: planId,
     startDate,
-    start_date: startDate,
-    ...(clubId ? { clubId, club_id: clubId } : {}),
-    ...(customPrice != null && customPrice !== '' ? {
-      amount: Number(customPrice),
-      custom_amount: Number(customPrice),
-      price: Number(customPrice)
-    } : {})
+    customPrice, // null = use plan default on the server
+    clubId
   };
 
+  const makeJsonRequest = (url, body) => this.makeRequest(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  try {
+    // Try single-player route first
+    return await makeJsonRequest('/payments/assign-player-plan', canonical);
+  } catch (err) {
+    const msg = String(err?.message || err || '');
+    const is404 = err?.status === 404 || /HTTP 404/i.test(msg) || /does not exist/i.test(msg);
+
+    if (!is404) throw err;
+
+    // Fallback to bulk route with 1 player
+    return await makeJsonRequest('/payments/bulk-assign-plan', {
+      playerIds: [playerId],
+      planId,
+      startDate,
+      customPrice,
+      clubId,
+    });
+  }
+}
   // Try a few likely endpoints; if one 404s, try the next.
   const endpoints = [
     '/payments/assign-player-plan',
