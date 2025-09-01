@@ -2062,13 +2062,15 @@ async function loadTeamVotes(teamId, container) {
   if (!container) return;
 
   try {
+    showLoading(true);
     const plans = await apiService.listPaymentPlans();
     
     if (!plans || plans.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 2rem; opacity: 0.8;">
           <p>No payment plans created yet</p>
-          <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">Create Your First Plan</button>
+          <p style="font-size: 0.9rem; margin-top: 0.5rem;">Create your first payment plan to start managing player subscriptions</p>
+          <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')" style="margin-top: 1rem;">Create Your First Plan</button>
         </div>
       `;
       return;
@@ -2079,10 +2081,11 @@ async function loadTeamVotes(teamId, container) {
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
             <h4>${plan.name}</h4>
-            <p><strong>£${plan.price}</strong> per ${plan.interval}</p>
-            <p>${plan.description || ''}</p>
+            <p><strong>£${parseFloat(plan.price).toFixed(2)}</strong> per ${plan.interval}</p>
+            <p style="opacity: 0.8; font-size: 0.9rem;">${plan.description || 'No description'}</p>
+            <p style="font-size: 0.8rem; opacity: 0.6;">Created: ${new Date(plan.created_at).toLocaleDateString()}</p>
           </div>
-          <div style="display: flex; gap: 0.5rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
             <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
             <button class="btn btn-small btn-warning" onclick="bulkAssignPlan('${plan.id}')">Bulk Assign</button>
             <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
@@ -2095,7 +2098,14 @@ async function loadTeamVotes(teamId, container) {
     
   } catch (error) {
     console.error('Failed to load payment plans:', error);
-    container.innerHTML = '<p style="color:#dc3545">Failed to load payment plans</p>';
+    container.innerHTML = `
+      <div style="text-align: center; padding: 2rem; color: #dc3545;">
+        <p>Failed to load payment plans</p>
+        <button class="btn btn-primary" onclick="loadPaymentPlans()" style="margin-top: 1rem;">Retry</button>
+      </div>
+    `;
+  } finally {
+    showLoading(false);
   }
 }
 

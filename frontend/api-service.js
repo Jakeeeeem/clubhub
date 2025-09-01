@@ -229,16 +229,6 @@ class ApiService {
 
   /* ------------ Payment plans (assignment) ------------ */
 
-  async listPaymentPlans() {
-  try {
-    const response = await this.makeRequest('/payments/plans');
-    return response;
-  } catch (error) {
-    console.error('❌ Failed to fetch payment plans:', error);
-    throw error;
-  }
-}
-
   async unassignMeFromPlan() {
     return this.makeRequest('/payments/unassign-plan', { method: 'POST' });
   }
@@ -255,10 +245,9 @@ async createPaymentPlan(planData) {
       method: 'POST',
       body: JSON.stringify({
         name: planData.name,
-        amount: Math.round(planData.amount * 100), // Convert to pence for Stripe
+        amount: planData.amount, // Keep as decimal, not convert to pence
         interval: planData.frequency,
-        description: planData.description,
-        currency: 'gbp'
+        description: planData.description
       })
     });
     console.log('✅ Payment plan created:', response);
@@ -269,14 +258,13 @@ async createPaymentPlan(planData) {
   }
 }
 
-
 async updatePaymentPlan(planId, planData) {
   try {
     const response = await this.makeRequest(`/payments/plans/${planId}`, {
       method: 'PUT',
       body: JSON.stringify({
         name: planData.name,
-        amount: Math.round(planData.amount * 100),
+        amount: planData.amount,
         interval: planData.frequency,
         description: planData.description
       })
@@ -296,6 +284,16 @@ async deletePaymentPlan(planId) {
     return response;
   } catch (error) {
     console.error('❌ Failed to delete payment plan:', error);
+    throw error;
+  }
+}
+
+async listPaymentPlans() {
+  try {
+    const response = await this.makeRequest('/payments/plans');
+    return response;
+  } catch (error) {
+    console.error('❌ Failed to fetch payment plans:', error);
     throw error;
   }
 }

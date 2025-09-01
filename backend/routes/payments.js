@@ -153,80 +153,27 @@ router.get('/health', (req, res) => {
   });
 });
 
-// GET /api/payments/plans - Get all active plans
-router.get('/plans', authenticateToken, async (req, res) => {
+router.get('/plans', async (req, res) => {
   try {
-    // Check if plans table exists, create if not
-    const tableExists = await query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'plans'
-      );
+    // Ensure plans table exists
+    await query(`
+      CREATE TABLE IF NOT EXISTS plans (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        price DECIMAL(10,2) NOT NULL DEFAULT 0,
+        interval VARCHAR(50) DEFAULT 'month',
+        active BOOLEAN DEFAULT true,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
     `);
 
-    if (!tableExists.rows[0].exists) {
-      await query(`
-        CREATE TABLE plans (
-          id SERIAL PRIMARY KEY,
-          name VARCHAR(255) NOT NULL,
-          price DECIMAL(10,2) NOT NULL DEFAULT 0,
-          interval VARCHAR(50) DEFAULT 'month',
-          active BOOLEAN DEFAULT true,
-          description TEXT,
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-
-      // Insert default plans
-      await query(`
-        INSERT INTO plans (name, price, interval, active, description) VALUES
-        ('Basic Plan', 29.99, 'month', true, 'Basic monthly subscription'),
-        ('Premium Plan', 49.99, 'month', true, 'Premium monthly subscription'),
-        ('Annual Plan', 299.99, 'year', true, 'Annual subscription with discount')
-      `);
-    }
-
-    // Check what columns exist in the plans table
-    const columnsResult = await query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'plans' AND table_schema = 'public'
+    const result = await query(`
+      SELECT id, name, price, interval, active, description, created_at 
+      FROM plans WHERE active = true ORDER BY price ASC
     `);
     
-    const columns = columnsResult.rows.map(row => row.column_name);
-    const hasAmount = columns.includes('amount');
-    const hasPrice = columns.includes('price');
-
-    let selectQuery;
-    if (hasPrice && hasAmount) {
-      selectQuery = `
-        SELECT id, name, 
-               COALESCE(price, amount, 0) as price,
-               interval, active, description, created_at 
-        FROM plans WHERE active = true ORDER BY price ASC
-      `;
-    } else if (hasPrice) {
-      selectQuery = `
-        SELECT id, name, price, interval, active, description, created_at 
-        FROM plans WHERE active = true ORDER BY price ASC
-      `;
-    } else if (hasAmount) {
-      selectQuery = `
-        SELECT id, name, amount as price, interval, active, description, created_at 
-        FROM plans WHERE active = true ORDER BY amount ASC
-      `;
-    } else {
-      // Fallback - add price column
-      await query(`ALTER TABLE plans ADD COLUMN price DECIMAL(10,2) DEFAULT 0`);
-      selectQuery = `
-        SELECT id, name, price, interval, active, description, created_at 
-        FROM plans WHERE active = true ORDER BY price ASC
-      `;
-    }
-
-    const result = await query(selectQuery);
     console.log('Plans loaded:', result.rows.length);
     res.json(result.rows);
     
@@ -235,6 +182,173 @@ router.get('/plans', authenticateToken, async (req, res) => {
     res.status(500).json({ 
       error: 'Failed to load plans',
       message: err.message 
+    });
+  }
+});
+
+
+// GET /api/payments/plans - Get all active plans
+router.get('/plans', async (req, res) => {
+  try {
+    // Ensure plans table exists
+    await query(`
+      CREATE TABLE IF NOT EXISTS plans (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        price DECIMAL(10,2) NOT NULL DEFAULT 0,
+        interval VARCHAR(50) DEFAULT 'month',
+        active BOOLEAN DEFAULT true,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    const result = await query(`
+      SELECT id, name, price, interval, active, description, created_at 
+      FROM plans WHERE active = true ORDER BY price ASC
+    `);
+    
+    console.log('Plans loaded:', result.rows.length);
+    res.json(result.rows);
+    
+  } catch (err) {
+    console.error('Get plans error:', err);
+    res.status(500).json({ 
+      error: 'Failed to load plans',
+      message: err.message 
+    });
+  }
+});
+
+// POST /api/payments/plans - Create payment plan
+router.post('/plans', authenticateToken, requireOrganization, [
+  body('name').trim().isLength({ min: 1 }).withMessage('Plan name is required'),
+  body('amount').isNumeric().withMessage('Amount must be a number'),
+  body('interval').isIn(['month', 'year', 'week']).withMessage('Invalid interval')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+
+    const { name, amount, interval, description } = req.body;
+
+    // Ensure plans table exists
+    await query(`
+      CREATE TABLE IF NOT EXISTS plans (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        price DECIMAL(10,2) NOT NULL DEFAULT 0,
+        interval VARCHAR(50) DEFAULT 'month',
+        active BOOLEAN DEFAULT true,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    const result = await query(`
+      INSERT INTO plans (name, price, interval, description, active, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, true, NOW(), NOW())
+      RETURNING *
+    `, [name, amount, interval, description || null]);
+
+    const newPlan = result.rows[0];
+
+    res.status(201).json({
+      message: 'Payment plan created successfully',
+      plan: newPlan
+    });
+
+  } catch (error) {
+    console.error('Create payment plan error:', error);
+    res.status(500).json({
+      error: 'Failed to create payment plan',
+      message: error.message
+    });
+  }
+});
+
+// PUT /api/payments/plans/:id - Update payment plan
+router.put('/plans/:id', authenticateToken, requireOrganization, [
+  body('name').trim().isLength({ min: 1 }).withMessage('Plan name is required'),
+  body('amount').isNumeric().withMessage('Amount must be a number'),
+  body('interval').isIn(['month', 'year', 'week']).withMessage('Invalid interval')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+
+    const { name, amount, interval, description } = req.body;
+
+    const result = await query(`
+      UPDATE plans SET 
+        name = $1, 
+        price = $2, 
+        interval = $3, 
+        description = $4,
+        updated_at = NOW()
+      WHERE id = $5 AND active = true
+      RETURNING *
+    `, [name, amount, interval, description || null, req.params.id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Payment plan not found'
+      });
+    }
+
+    res.json({
+      message: 'Payment plan updated successfully',
+      plan: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Update payment plan error:', error);
+    res.status(500).json({
+      error: 'Failed to update payment plan',
+      message: error.message
+    });
+  }
+});
+
+// DELETE /api/payments/plans/:id - Delete payment plan
+router.delete('/plans/:id', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    // Soft delete - mark as inactive instead of hard delete
+    const result = await query(`
+      UPDATE plans SET 
+        active = false,
+        updated_at = NOW()
+      WHERE id = $1
+      RETURNING *
+    `, [req.params.id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Payment plan not found'
+      });
+    }
+
+    res.json({
+      message: 'Payment plan deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete payment plan error:', error);
+    res.status(500).json({
+      error: 'Failed to delete payment plan',
+      message: error.message
     });
   }
 });
