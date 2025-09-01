@@ -225,7 +225,7 @@ router.get('/plans', async (req, res) => {
 router.post('/plans', authenticateToken, requireOrganization, [
   body('name').trim().isLength({ min: 1 }).withMessage('Plan name is required'),
   body('amount').isNumeric().withMessage('Amount must be a number'),
-  body('interval').isIn(['month', 'year', 'week']).withMessage('Invalid interval')
+  body('interval').isIn(['month', 'monthly', 'year', 'yearly', 'week', 'weekly']).withMessage('Invalid interval')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -236,7 +236,12 @@ router.post('/plans', authenticateToken, requireOrganization, [
       });
     }
 
-    const { name, amount, interval, description } = req.body;
+    let { name, amount, interval, description } = req.body;
+    
+    // Normalize interval
+    if (interval === 'monthly') interval = 'month';
+    if (interval === 'yearly') interval = 'year';
+    if (interval === 'weekly') interval = 'week';
 
     // Ensure plans table exists
     await query(`
