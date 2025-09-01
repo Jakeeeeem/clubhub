@@ -2752,7 +2752,7 @@ function updateDashboardStats(statistics) {
             <span><strong>Team:</strong> ${hasTeamAssignment ? player.team_assignments[0].team_name : 'Not assigned'}</span>
             <span><strong>Email:</strong> ${player.email || 'No email'}</span>
             <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
-            <span><strong>Monthly Fee:</strong> £${player.monthly_fee || 0}</span>
+            <span><strong>Monthly Fee:</strong> £${Number((player.plan_price ?? player.monthly_fee ?? 0)).toFixed(2)}</span>
           </div>
           <div class="player-actions">
             <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
