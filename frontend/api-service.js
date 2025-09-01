@@ -350,20 +350,40 @@ async listPaymentPlans() {
     return response;
   }
 
-  async register(userData) {
-    const response = await this.makeRequest('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData)
-    });
+ async register(userData) {
+  // Normalize and sanitize what the API expects
+  const urlType = new URLSearchParams(window.location.search).get('type');
 
-    if (response.token) {
-      this.setToken(response.token);
-      localStorage.setItem('currentUser', JSON.stringify(response.user));
-    }
+  const payload = {
+    email: (userData.email || '').trim(),
+    password: userData.password || '',
+    firstName: (userData.firstName || userData.firstname || '').trim(),
+    lastName: (userData.lastName || userData.lastname || '').trim(),
+    // server accepts accountType OR userType; we coalesce from several possibilities
+    accountType: (userData.accountType || userData.userType || urlType || '').toLowerCase(),
+    orgTypes: Array.isArray(userData.orgTypes) ? userData.orgTypes : (userData.orgTypes ? [userData.orgTypes] : []),
+    phone: userData.phone ? String(userData.phone).trim() : undefined,
+    dateOfBirth: userData.dateOfBirth || userData.dob || undefined,
+    profile: userData.profile || {}
+  };
 
-    return response;
+  // Map common aliases (e.g., “parent” → “adult”)
+  if (payload.accountType === 'parent' || payload.accountType === 'player') {
+    payload.accountType = 'adult';
   }
 
+  const response = await this.makeRequest('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+  if (response.token) {
+    this.setToken(response.token);
+    localStorage.setItem('currentUser', JSON.stringify(response.user));
+  }
+
+  return response;
+}
   async logout() {
     try {
       await this.makeRequest('/auth/logout', {
