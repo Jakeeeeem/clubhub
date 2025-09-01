@@ -793,7 +793,6 @@ async assignPlayerToPaymentPlan(playerId, planId, startDate = null) {
     throw error;
   }
 }
-}
 
 async getPlayerPayments(playerId, status = null) {
   try {
