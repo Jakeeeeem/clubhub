@@ -779,10 +779,10 @@ async createTeamEvent(teamId, eventData) {
 
 async assignPlayerToPaymentPlan(playerId, planId, startDate = null) {
   try {
-    const response = await this.makeRequest('/payments/assign-player-plan', {
+    const response = await this.makeRequest('/payments/bulk-assign-plan', {
       method: 'POST',
       body: JSON.stringify({
-        playerId,
+        playerIds: [playerId],                   
         planId,
         startDate: startDate || new Date().toISOString().split('T')[0]
       })
@@ -792,6 +792,7 @@ async assignPlayerToPaymentPlan(playerId, planId, startDate = null) {
     console.error('❌ Failed to assign player to payment plan:', error);
     throw error;
   }
+}
 }
 
 async getPlayerPayments(playerId, status = null) {
