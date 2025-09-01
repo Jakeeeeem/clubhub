@@ -1736,117 +1736,16 @@
         `;
     }).join('');
 }
+} catch (error) {
+    console.error('Failed to filter players:', error);
+    showNotification('Failed to filter players: ' + error.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
 
 // ADD this new function for individual payment plan assignment
-async function assignPaymentPlan(playerId) {
-    try {
-        // Load available payment plans
-        const plans = await apiService.makeRequest('/payments/plans');
-        
-        if (!plans || plans.length === 0) {
-            showNotification('No payment plans available. Create a payment plan first.', 'error');
-            return;
-        }
-        
-        // Create selection modal
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style.display = 'block';
-        modal.id = 'assignPlanModal';
-        
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Assign Payment Plan</h2>
-                    <button class="close" onclick="closeModal('assignPlanModal')">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="selectPlan">Choose Payment Plan</label>
-                        <select id="selectPlan" required>
-                            <option value="">Select a plan...</option>
-                            ${plans.map(plan => `
-                                <option value="${plan.id}">${plan.name} - £${plan.price}/${plan.interval}</option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="planStartDate">Start Date</label>
-                        <input type="date" id="planStartDate" value="${new Date().toISOString().split('T')[0]}">
-                    </div>
-                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                        <button class="btn btn-primary" onclick="confirmPlanAssignment('${playerId}')">Assign Plan</button>
-                        <button class="btn btn-secondary" onclick="closeModal('assignPlanModal')">Cancel</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-    } catch (error) {
-        console.error('Failed to load payment plans:', error);
-        showNotification('Failed to load payment plans', 'error');
-    }
-}
 
-// ADD this function to confirm plan assignment
-async function confirmPlanAssignment(playerId) {
-    const planId = document.getElementById('selectPlan').value;
-    const startDate = document.getElementById('planStartDate').value;
-    
-    if (!planId) {
-        showNotification('Please select a payment plan', 'error');
-        return;
-    }
-    
-    try {
-        await apiService.bulkAssignPaymentPlan([playerId], planId, startDate);
-        closeModal('assignPlanModal');
-        showNotification('Payment plan assigned successfully!', 'success');
-        
-        // Refresh the current view
-        filterPlayersByView();
-        
-    } catch (error) {
-        console.error('Failed to assign payment plan:', error);
-        showNotification('Failed to assign payment plan: ' + error.message, 'error');
-    }
-}
-        
-    } catch (error) {
-        console.error('Failed to filter players:', error);
-        showNotification('Failed to filter players: ' + error.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-        function filterPlayersByTeam() {
-            const teamId = document.getElementById('teamFilter').value;
-            console.log('🔍 Filtering players by team:', teamId);
-            // Implement team filtering logic
-        }
-
-        function filterPlayersByPayment() {
-            const status = document.getElementById('paymentStatusFilter').value;
-            console.log('🔍 Filtering players by payment:', status);
-            // Implement payment status filtering logic
-        }
-
-        function resetPlayerFilters() {
-            document.getElementById('playerListFilter').value = 'all';
-            document.getElementById('teamFilter').value = '';
-            document.getElementById('paymentStatusFilter').value = '';
-            
-            if (typeof loadPlayers === 'function') {
-                loadPlayers();
-            }
-        }
-
-        function exportPlayers() {
-            console.log('📊 Exporting players data...');
-            showNotification('Export functionality coming soon!', 'info');
-        }
 
         // Enhanced Team Management Functions
         async function openTeamManagement(teamId, teamName) {
@@ -2353,6 +2252,8 @@ async function deleteTeam(teamId) {
   }
 }
 
+
+
 async function editPaymentPlan(planId) {
   console.log('Editing payment plan:', planId);
   showNotification('Payment plan editing coming soon!', 'info');
@@ -2373,6 +2274,122 @@ async function deletePaymentPlan(planId) {
     }
   }
 }
+async function assignPaymentPlan(playerId) {
+  try {
+    // Load available payment plans
+    const plans = await apiService.listPaymentPlans();
+    
+    if (!plans || plans.length === 0) {
+      showNotification('No payment plans available. Create a payment plan first.', 'error');
+      return;
+    }
+    
+    // Remove existing modal if it exists
+    const existingModal = document.getElementById('assignPlanModal');
+    if (existingModal) existingModal.remove();
+    
+    // Create selection modal
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    modal.id = 'assignPlanModal';
+    
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Assign Payment Plan</h2>
+          <button class="close" onclick="closeModal('assignPlanModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="selectPlan">Choose Payment Plan</label>
+            <select id="selectPlan" required>
+              <option value="">Select a plan...</option>
+              ${plans.map(plan => `
+                <option value="${plan.id}">${plan.name} - £${plan.price}/${plan.interval}</option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="planStartDate">Start Date</label>
+            <input type="date" id="planStartDate" value="${new Date().toISOString().split('T')[0]}">
+          </div>
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button class="btn btn-primary" onclick="confirmPlanAssignment('${playerId}')">Assign Plan</button>
+            <button class="btn btn-secondary" onclick="closeModal('assignPlanModal')">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+  } catch (error) {
+    console.error('Failed to load payment plans:', error);
+    showNotification('Failed to load payment plans', 'error');
+  }
+}
+
+async function confirmPlanAssignment(playerId) {
+  const planId = document.getElementById('selectPlan').value;
+  const startDate = document.getElementById('planStartDate').value;
+  
+  if (!planId) {
+    showNotification('Please select a payment plan', 'error');
+    return;
+  }
+  
+  try {
+    showLoading(true);
+    
+    await apiService.makeRequest('/payments/bulk-assign-plan', {
+      method: 'POST',
+      body: JSON.stringify({
+        playerIds: [playerId],
+        planId: planId,
+        startDate: startDate
+      })
+    });
+    
+    closeModal('assignPlanModal');
+    showNotification('Payment plan assigned successfully!', 'success');
+    
+    // Refresh the players list
+    await loadPlayers();
+    
+  } catch (error) {
+    console.error('Failed to assign payment plan:', error);
+    showNotification('Failed to assign payment plan: ' + error.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+        function filterPlayersByTeam() {
+            const teamId = document.getElementById('teamFilter').value;
+            console.log('🔍 Filtering players by team:', teamId);
+            // Implement team filtering logic
+        }
+
+        function filterPlayersByPayment() {
+            const status = document.getElementById('paymentStatusFilter').value;
+            console.log('🔍 Filtering players by payment:', status);
+            // Implement payment status filtering logic
+        }
+
+        function resetPlayerFilters() {
+            document.getElementById('playerListFilter').value = 'all';
+            document.getElementById('teamFilter').value = '';
+            document.getElementById('paymentStatusFilter').value = '';
+            
+            if (typeof loadPlayers === 'function') {
+                loadPlayers();
+            }
+        }
+
+        function exportPlayers() {
+            console.log('📊 Exporting players data...');
+            showNotification('Export functionality coming soon!', 'info');
+        }
 
         // Enhanced Form Handlers
         async function handleAddPlayer(e) {
@@ -2661,14 +2678,24 @@ function updateDashboardStats(statistics) {
   }
 }
 
-        async function loadPlayers() {
+       async function loadPlayers() {
   const container = document.getElementById('playersContainer');
   if (!container) return;
 
   try {
     showLoading(true);
     const clubId = AppState.clubs?.[0]?.id;
+    
+    if (!clubId) {
+      container.innerHTML = '<p>No club found. Please create a club first.</p>';
+      return;
+    }
+    
+    console.log('Loading players for club:', clubId); // Debug log
+    
     const players = await apiService.getPlayers(clubId);
+    
+    console.log('Players loaded:', players.length, players); // Debug log
     
     if (players.length === 0) {
       container.innerHTML = `
@@ -2680,10 +2707,12 @@ function updateDashboardStats(statistics) {
       return;
     }
 
-    container.innerHTML = players.map(player => {
+    container.innerHTML = players.map((player, index) => {
+      console.log(`Processing player ${index + 1}:`, player); // Debug log
+      
       const age = calculateAge(player.date_of_birth);
       const hasPaymentPlan = player.has_payment_plan || false;
-      const hasTeamAssignment = player.team_assignments?.length > 0;
+      const hasTeamAssignment = player.team_assignments && player.team_assignments.length > 0;
       const isOverdue = player.payment_status === 'overdue';
       
       return `
@@ -2702,7 +2731,7 @@ function updateDashboardStats(statistics) {
           </div>
           <div class="player-meta">
             <span><strong>Age:</strong> ${age} years</span>
-            <span><strong>Team:</strong> ${player.team_assignments?.[0]?.team_name || 'Not assigned'}</span>
+            <span><strong>Team:</strong> ${hasTeamAssignment ? player.team_assignments[0].team_name : 'Not assigned'}</span>
             <span><strong>Email:</strong> ${player.email || 'No email'}</span>
             <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
             <span><strong>Monthly Fee:</strong> £${player.monthly_fee || 0}</span>
@@ -2718,10 +2747,11 @@ function updateDashboardStats(statistics) {
     }).join('');
     
     AppState.players = players;
+    console.log('Players rendered successfully'); // Debug log
     
   } catch (error) {
     console.error('Failed to load players:', error);
-    container.innerHTML = '<p style="color:#dc3545">Failed to load players</p>';
+    container.innerHTML = '<p style="color:#dc3545">Failed to load players: ' + error.message + '</p>';
   } finally {
     showLoading(false);
   }
