@@ -237,31 +237,19 @@ class ApiService {
   return (await this.makeRequest('/payments/plans')).plans
 }
 
-async createPaymentPlan(planData) {
-  console.log('💳 Creating payment plan:', planData);
+async createPaymentPlan({ name, amount, price, interval, frequency, description, clubId }) {
+  const payload = {
+    name,
+    amount: Number.isFinite(Number(amount)) ? Number(amount) : Number(price), // map price→amount if needed
+    interval: interval || frequency,                                         // map frequency→interval if needed
+    description,
+    clubId
+  };
 
-  // (Optional) include club id if your backend expects it
-  const clubId = (window.AppState?.activeClubId) || (window.AppState?.clubs?.[0]?.id);
-
-  try {
-    const response = await this.makeRequest('/payments/plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        // 👇 match the keys your form sends
-        name: planData.name,
-        price: Number(planData.price),
-        interval: planData.interval,          // 'monthly' | 'quarterly' | 'annually'
-        description: planData.description ?? null,
-        ...(clubId ? { clubId } : {})
-      })
-    });
-    console.log('✅ Payment plan created:', response);
-    return response;
-  } catch (error) {
-    console.error('❌ Failed to create payment plan:', error);
-    throw error;
-  }
+  return this.makeRequest('/payments/plans', {   // ← keep your existing URL if different
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
 }
 
 async updatePaymentPlan(planId, planData) {
@@ -783,21 +771,18 @@ async createTeamEvent(teamId, eventData) {
   }
 }
 
-async assignPlayerToPaymentPlan(playerId, planId, startDate = null) {
-  try {
-    const response = await this.makeRequest('/payments/bulk-assign-plan', {
-      method: 'POST',
-      body: JSON.stringify({
-        playerIds: [playerId],                   
-        planId,
-        startDate: startDate || new Date().toISOString().split('T')[0]
-      })
-    });
-    return response;
-  } catch (error) {
-    console.error('❌ Failed to assign player to payment plan:', error);
-    throw error;
-  }
+async assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice) {
+  const payload = {
+    playerId,
+    planId,
+    startDate,
+    ...(customPrice != null && customPrice !== '' ? { amount: Number(customPrice) } : {}) // send as amount if provided
+  };
+
+  return this.makeRequest('/payments/assign-player-plan', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
 }
 
 async getPlayerPayments(playerId, status = null) {

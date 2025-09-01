@@ -2027,27 +2027,26 @@ async function loadTeamVotes(teamId, container) {
     }
 
     container.innerHTML = plans.map(plan => {
-      const priceNum = Number(plan.price ?? plan.amount ?? 0);
-      const interval = (plan.interval ?? plan.frequency ?? '').toString() || 'month';
-      const createdAt = new Date(plan.created_at || plan.createdAt || Date.now()).toLocaleDateString();
-      return `
-        <div class="card" style="margin-bottom: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <h4>${plan.name}</h4>
-              <p><strong>£${priceNum.toFixed(2)}</strong> per ${interval}</p>
-              <p style="opacity: 0.8; font-size: 0.9rem;">${plan.description || 'No description'}</p>
-              <p style="font-size: 0.8rem; opacity: 0.6;">Created: ${createdAt}</p>
-            </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
-              <button class="btn btn-small btn-warning" onclick="bulkAssignPlan('${plan.id}')">Bulk Assign</button>
-              <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
-            </div>
-          </div>
+  const amountNum = Number(plan.amount ?? plan.price ?? 0);
+  const interval = (plan.interval ?? plan.frequency ?? '').toString();
+  return `
+    <div class="card" style="margin-bottom: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h4>${plan.name}</h4>
+          <p><strong>£${amountNum.toFixed(2)}</strong> per ${interval || '—'}</p>
+          <p style="opacity: 0.8; font-size: 0.9rem;">${plan.description || 'No description'}</p>
+          <p style="font-size: 0.8rem; opacity: 0.6;">Created: ${new Date(plan.created_at || plan.createdAt || Date.now()).toLocaleDateString()}</p>
         </div>
-      `;
-    }).join('');
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
+          <button class="btn btn-small btn-warning" onclick="bulkAssignPlan('${plan.id}')">Bulk Assign</button>
+          <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
+        </div>
+      </div>
+    </div>
+  `;
+}).join('');
 
     AppState.paymentPlans = plans;
   } catch (error) {
@@ -2617,40 +2616,24 @@ async function handleCreatePaymentPlan(e) {
   if (e) e.preventDefault();
 
   const name = document.getElementById('planName')?.value?.trim();
-  const price = Number(document.getElementById('planAmount')?.value);
-  const frequency = document.getElementById('planFrequency')?.value; // 'monthly' | 'quarterly' | 'annually' | 'one-time'
+  const amount = Number(document.getElementById('planAmount')?.value);   // ← use amount
+  const interval = document.getElementById('planFrequency')?.value;      // ← interval stays interval
   const description = document.getElementById('planDescription')?.value?.trim();
+  const clubId = AppState.activeClubId || AppState.clubs?.[0]?.id || null;
 
-  if (!name || !frequency || !Number.isFinite(price)) {
+  if (!name || !interval || !Number.isFinite(amount)) {
     showNotification('Please fill in all required fields.', 'error');
     return;
   }
-  if (price < 0.30) {
+  if (amount < 0.30) {
     showNotification('Minimum amount is £0.30', 'error');
     return;
   }
 
-  // If your backend DOES NOT support one-time plans, keep this guard.
-  const allowed = ['monthly', 'quarterly', 'annually']; // add 'one-time' here if your API supports it
-  if (!allowed.includes(frequency)) {
-    showNotification('Please choose Monthly, Quarterly or Annually.', 'error');
-    return;
-  }
-
-  // Send both sets of names to satisfy different backends:
-  // - Some expect amount/frequency
-  // - Others accept price/interval
-  const payload = {
-    name,
-    amount: price,
-    frequency,      // e.g. 'monthly'
-    price,          // duplicate for alt schema
-    interval: frequency, // duplicate for alt schema
-    description
-  };
-
   try {
     showLoading(true);
+
+    const payload = { name, amount, interval, description, clubId };
     const created = await apiService.createPaymentPlan(payload);
 
     showNotification('Payment plan created successfully!', 'success');
@@ -2661,8 +2644,7 @@ async function handleCreatePaymentPlan(e) {
     AppState.paymentPlans.push(created.plan || created);
 
     await loadPaymentPlans();
-    // Also refresh the Add Player modal’s plan select, if it’s open
-    hydrateAddPlayerPlanSelect?.();
+    hydrateAddPlayerPlanSelect();
   } catch (err) {
     console.error('Failed to create payment plan:', err);
     showNotification('Failed to create payment plan: ' + (err.message || err), 'error');
