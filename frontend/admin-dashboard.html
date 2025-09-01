@@ -1590,14 +1590,14 @@
   const current = sel.value;
   const plans = AppState.paymentPlans || [];
 
-  sel.innerHTML =
-    `<option value="">No payment plan</option>` +
-    plans.map(pl => {
-      const priceNum = Number(pl.price ?? pl.amount ?? 0);
-      const priceText = Number.isFinite(priceNum) ? priceNum.toFixed(2) : '0.00';
-      const interval = pl.interval || '';
-      return `<option value="${pl.id}">${pl.name} - £${priceText}/${interval}</option>`;
-    }).join('');
+  sel.innerHTML = `
+  <option value="">No payment plan</option>
+  ${plans.map(plan => {
+    const priceNum = Number(plan.price ?? plan.amount ?? 0);
+    const interval = (plan.interval ?? plan.frequency ?? '').toString();
+    return `<option value="${plan.id}">${plan.name} - £${priceNum.toFixed(2)}/${interval}</option>`;
+  }).join('')}
+`;
 
   // Keep previous selection if it still exists
   if ([...sel.options].some(o => o.value === current)) {
@@ -2013,7 +2013,7 @@ async function loadTeamVotes(teamId, container) {
   try {
     showLoading(true);
     const plans = await apiService.listPaymentPlans();
-    
+
     if (!plans || plans.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 2rem; opacity: 0.8;">
@@ -2022,29 +2022,34 @@ async function loadTeamVotes(teamId, container) {
           <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')" style="margin-top: 1rem;">Create Your First Plan</button>
         </div>
       `;
+      AppState.paymentPlans = [];
       return;
     }
 
-    container.innerHTML = plans.map(plan => `
-      <div class="card" style="margin-bottom: 1rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <h4>${plan.name}</h4>
-            <p><strong>£${parseFloat(plan.price).toFixed(2)}</strong> per ${plan.interval}</p>
-            <p style="opacity: 0.8; font-size: 0.9rem;">${plan.description || 'No description'}</p>
-            <p style="font-size: 0.8rem; opacity: 0.6;">Created: ${new Date(plan.created_at).toLocaleDateString()}</p>
-          </div>
-          <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
-            <button class="btn btn-small btn-warning" onclick="bulkAssignPlan('${plan.id}')">Bulk Assign</button>
-            <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
+    container.innerHTML = plans.map(plan => {
+      const priceNum = Number(plan.price ?? plan.amount ?? 0);
+      const interval = (plan.interval ?? plan.frequency ?? '').toString() || 'month';
+      const createdAt = new Date(plan.created_at || plan.createdAt || Date.now()).toLocaleDateString();
+      return `
+        <div class="card" style="margin-bottom: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h4>${plan.name}</h4>
+              <p><strong>£${priceNum.toFixed(2)}</strong> per ${interval}</p>
+              <p style="opacity: 0.8; font-size: 0.9rem;">${plan.description || 'No description'}</p>
+              <p style="font-size: 0.8rem; opacity: 0.6;">Created: ${createdAt}</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
+              <button class="btn btn-small btn-warning" onclick="bulkAssignPlan('${plan.id}')">Bulk Assign</button>
+              <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
-    
+      `;
+    }).join('');
+
     AppState.paymentPlans = plans;
-    
   } catch (error) {
     console.error('Failed to load payment plans:', error);
     container.innerHTML = `
@@ -2613,10 +2618,10 @@ async function handleCreatePaymentPlan(e) {
 
   const name = document.getElementById('planName')?.value?.trim();
   const price = Number(document.getElementById('planAmount')?.value);
-  const intervalRaw = document.getElementById('planFrequency')?.value;
+  const frequency = document.getElementById('planFrequency')?.value; // 'monthly' | 'quarterly' | 'annually' | 'one-time'
   const description = document.getElementById('planDescription')?.value?.trim();
 
-  if (!name || !intervalRaw || !Number.isFinite(price)) {
+  if (!name || !frequency || !Number.isFinite(price)) {
     showNotification('Please fill in all required fields.', 'error');
     return;
   }
@@ -2625,31 +2630,39 @@ async function handleCreatePaymentPlan(e) {
     return;
   }
 
-  // Normalize / validate interval values expected by your API.
-  // If your API already accepts 'monthly' | 'quarterly' | 'annually', no mapping needed.
-  // If you allow "one-time" in the UI but the API doesn't support it, block it here.
-  const allowed = ['monthly', 'quarterly', 'annually']; // extend if your API supports more
-  if (!allowed.includes(intervalRaw)) {
+  // If your backend DOES NOT support one-time plans, keep this guard.
+  const allowed = ['monthly', 'quarterly', 'annually']; // add 'one-time' here if your API supports it
+  if (!allowed.includes(frequency)) {
     showNotification('Please choose Monthly, Quarterly or Annually.', 'error');
     return;
   }
-  const interval = intervalRaw;
+
+  // Send both sets of names to satisfy different backends:
+  // - Some expect amount/frequency
+  // - Others accept price/interval
+  const payload = {
+    name,
+    amount: price,
+    frequency,      // e.g. 'monthly'
+    price,          // duplicate for alt schema
+    interval: frequency, // duplicate for alt schema
+    description
+  };
 
   try {
     showLoading(true);
-
-    const payload = { name, price, interval, description };
     const created = await apiService.createPaymentPlan(payload);
 
     showNotification('Payment plan created successfully!', 'success');
     closeModal('createPaymentPlanModal');
     document.getElementById('createPaymentPlanForm')?.reset();
 
-    // keep UI in sync
     if (!AppState.paymentPlans) AppState.paymentPlans = [];
     AppState.paymentPlans.push(created.plan || created);
 
     await loadPaymentPlans();
+    // Also refresh the Add Player modal’s plan select, if it’s open
+    hydrateAddPlayerPlanSelect?.();
   } catch (err) {
     console.error('Failed to create payment plan:', err);
     showNotification('Failed to create payment plan: ' + (err.message || err), 'error');
@@ -2657,6 +2670,7 @@ async function handleCreatePaymentPlan(e) {
     showLoading(false);
   }
 }
+
 
 
         // Stripe Integration

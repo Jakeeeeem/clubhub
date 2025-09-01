@@ -240,43 +240,24 @@ class ApiService {
 async createPaymentPlan(planData) {
   console.log('💳 Creating payment plan:', planData);
 
-  const name = planData.name?.trim();
-  const price = Number(planData.price ?? planData.amount); // accept either
-  const intervalRaw = (planData.interval ?? planData.frequency)?.toLowerCase();
-  const description = planData.description ?? '';
-
-  if (!name || !Number.isFinite(price) || !intervalRaw) {
-    throw new Error('Missing required fields (name/price/interval)');
-  }
-
-  // Offer common variants many backends use
-  const intervalUnitMap = { monthly: 'month', quarterly: 'quarter', annually: 'year', annual: 'year', yearly: 'year' };
-  const intervalUnit = intervalUnitMap[intervalRaw] || intervalRaw;
-  const amount_minor = Math.round(price * 100);
-
-  const payload = {
-    // “generic” keys your UI expects back
-    name,
-    price,                 // decimal £
-    interval: intervalRaw, // monthly | quarterly | annually
-    description,
-
-    // “alt” keys some backends require
-    amount: price,               // some use decimal
-    amount_minor,                // some require minor units (pence)
-    currency: 'GBP',
-    frequency: intervalRaw,      // alias for interval
-    interval_unit: intervalUnit, // month | quarter | year
-  };
+  // (Optional) include club id if your backend expects it
+  const clubId = (window.AppState?.activeClubId) || (window.AppState?.clubs?.[0]?.id);
 
   try {
-    const res = await this.makeRequest('/payments/plans', {
+    const response = await this.makeRequest('/payments/plans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        // 👇 match the keys your form sends
+        name: planData.name,
+        price: Number(planData.price),
+        interval: planData.interval,          // 'monthly' | 'quarterly' | 'annually'
+        description: planData.description ?? null,
+        ...(clubId ? { clubId } : {})
+      })
     });
-    console.log('✅ Payment plan created:', res);
-    return res;
+    console.log('✅ Payment plan created:', response);
+    return response;
   } catch (error) {
     console.error('❌ Failed to create payment plan:', error);
     throw error;
