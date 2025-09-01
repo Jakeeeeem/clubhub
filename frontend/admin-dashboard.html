@@ -1585,53 +1585,78 @@
         // Enhanced Admin Dashboard Functions
         
         // Initialize dashboard when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
   console.log('🏢 Enhanced Admin Dashboard Loading...');
-
-  // Call the loaders you really have. (Guard each in case it lives in another file.)
-  try { loadDashboardStats?.(); } catch(e) {}
-  try { loadPlayers?.(); } catch(e) {}
-  try { loadTeams?.(); } catch(e) {}
-  try { loadEvents?.(); } catch(e) {}
-  try { loadFinances?.(); } catch(e) {}
-  try { loadPaymentPlans?.(); } catch(e) {}
-  try { loadListings?.(); } catch(e) {}
-
+  
+  try {
+    const dashboardData = await apiService.getAdminDashboardData();
+    
+    if (dashboardData) {
+      AppState.clubs = dashboardData.clubs || [];
+      AppState.players = dashboardData.players || [];
+      AppState.staff = dashboardData.staff || [];
+      AppState.events = dashboardData.events || [];
+      AppState.teams = dashboardData.teams || [];
+      AppState.payments = dashboardData.payments || [];
+      
+      // Update statistics
+      updateDashboardStats(dashboardData.statistics);
+    }
+    
+    // Load data for current view
+    loadDashboardStats();
+    loadPlayers();
+    loadTeams();
+    loadEvents();
+    loadFinances();
+    loadPaymentPlans();
+    
+  } catch (error) {
+    console.error('Failed to load dashboard:', error);
+    showNotification('Failed to load dashboard data', 'error');
+  }
+  
   setupEnhancedEventListeners();
 });
 
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
-            // Player invite form
-            const invitePlayerForm = document.getElementById('invitePlayerForm');
-            if (invitePlayerForm) {
-                invitePlayerForm.addEventListener('submit', handlePlayerInvite);
-            }
+  // Player form
+  const addPlayerForm = document.getElementById('addPlayerForm');
+  if (addPlayerForm) {
+    addPlayerForm.addEventListener('submit', handleAddPlayer);
+  }
 
-            // Staff invite form
-            const inviteStaffForm = document.getElementById('inviteStaffForm');
-            if (inviteStaffForm) {
-                inviteStaffForm.addEventListener('submit', handleStaffInvite);
-            }
+  // Team form  
+  const addTeamForm = document.getElementById('addTeamForm');
+  if (addTeamForm) {
+    addTeamForm.addEventListener('submit', handleAddTeam);
+  }
 
-            // Payment plan form
-            const createPaymentPlanForm = document.getElementById('createPaymentPlanForm');
-            if (createPaymentPlanForm) {
-                createPaymentPlanForm.addEventListener('submit', handleCreatePaymentPlan);
-            }
+  // Event form
+  const addEventForm = document.getElementById('addEventForm');
+  if (addEventForm) {
+    addEventForm.addEventListener('submit', handleAddEvent);
+  }
 
-            // Listing form
-            const createListingForm = document.getElementById('createListingForm');
-            if (createListingForm) {
-                createListingForm.addEventListener('submit', handleCreateListing);
-            }
+  // Payment plan form
+  const createPaymentPlanForm = document.getElementById('createPaymentPlanForm');
+  if (createPaymentPlanForm) {
+    createPaymentPlanForm.addEventListener('submit', handleCreatePaymentPlan);
+  }
 
-            // Club profile form
-            const clubProfileForm = document.getElementById('clubProfileForm');
-            if (clubProfileForm) {
-                clubProfileForm.addEventListener('submit', handleClubProfileUpdate);
-            }
-        }
+  // Staff invite form
+  const inviteStaffForm = document.getElementById('inviteStaffForm');
+  if (inviteStaffForm) {
+    inviteStaffForm.addEventListener('submit', handleStaffInvite);
+  }
+
+  // Club profile form
+  const clubProfileForm = document.getElementById('clubProfileForm');
+  if (clubProfileForm) {
+    clubProfileForm.addEventListener('submit', handleClubProfileUpdate);
+  }
+}
 
         // Enhanced Player Filtering Functions
         async function filterPlayersByView() {
@@ -2032,6 +2057,117 @@ async function loadTeamVotes(teamId, container) {
             showModal('inviteStaffModal');
         }
 
+        async function loadPaymentPlans() {
+  const container = document.getElementById('paymentPlansContainer');
+  if (!container) return;
+
+  try {
+    const plans = await apiService.listPaymentPlans();
+    
+    if (!plans || plans.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+          <p>No payment plans created yet</p>
+          <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">Create Your First Plan</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = plans.map(plan => `
+      <div class="card" style="margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h4>${plan.name}</h4>
+            <p><strong>£${plan.price}</strong> per ${plan.interval}</p>
+            <p>${plan.description || ''}</p>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
+            <button class="btn btn-small btn-warning" onclick="bulkAssignPlan('${plan.id}')">Bulk Assign</button>
+            <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    
+    AppState.paymentPlans = plans;
+    
+  } catch (error) {
+    console.error('Failed to load payment plans:', error);
+    container.innerHTML = '<p style="color:#dc3545">Failed to load payment plans</p>';
+  }
+}
+
+async function bulkAssignPlan(planId) {
+  try {
+    // Get all players not on plans
+    const playersWithoutPlans = AppState.players.filter(p => !p.has_payment_plan);
+    
+    if (playersWithoutPlans.length === 0) {
+      showNotification('All players already have payment plans assigned', 'info');
+      return;
+    }
+    
+    const confirmed = confirm(`Assign this payment plan to ${playersWithoutPlans.length} players without plans?`);
+    if (!confirmed) return;
+    
+    showLoading(true);
+    
+    const playerIds = playersWithoutPlans.map(p => p.id);
+    await apiService.makeRequest('/payments/bulk-assign-plan', {
+      method: 'POST',
+      body: JSON.stringify({
+        playerIds,
+        planId,
+        startDate: new Date().toISOString().split('T')[0]
+      })
+    });
+    
+    showNotification(`Payment plan assigned to ${playerIds.length} players!`, 'success');
+    loadPlayers(); // Reload to show updated status
+    
+  } catch (error) {
+    console.error('Failed to bulk assign plans:', error);
+    showNotification('Failed to assign payment plans: ' + error.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+function showLoading(show) {
+  const existingLoader = document.querySelector('.global-loader');
+  
+  if (show) {
+    if (!existingLoader) {
+      const loader = document.createElement('div');
+      loader.className = 'global-loader';
+      loader.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: rgba(0,0,0,0.8);
+          color: white;
+          padding: 2rem;
+          border-radius: 8px;
+          z-index: 10000;
+          text-align: center;
+        ">
+          <div class="spinner"></div>
+          Loading...
+        </div>
+      `;
+      document.body.appendChild(loader);
+    }
+  } else {
+    if (existingLoader) {
+      existingLoader.remove();
+    }
+  }
+}
+
         // Enhanced Listings Functions
         function shortlistApplicant(applicantId) {
             console.log('⭐ Shortlisting applicant:', applicantId);
@@ -2092,105 +2228,92 @@ async function loadTeamVotes(teamId, container) {
         }
 
         // Enhanced Form Handlers
-        async function handlePlayerInvite(e) {
-            e.preventDefault();
-            console.log('📧 Sending player invite...');
-            
-            const inviteData = {
-                email: document.getElementById('inviteEmail').value,
-                firstName: document.getElementById('inviteFirstName').value,
-                lastName: document.getElementById('inviteLastName').value,
-                role: document.getElementById('inviteRole').value,
-                teamId: document.getElementById('inviteTeam').value,
-                message: document.getElementById('inviteMessage').value
-            };
-            
-            try {
-                // Use existing API service if available
-                if (typeof apiService !== 'undefined' && apiService.generateClubInvite) {
-                    const response = await apiService.generateClubInvite(inviteData);
-                    showNotification('Invite sent successfully!', 'success');
-                    closeModal('invitePlayerModal');
-                } else {
-                    // Fallback
-                    showNotification('Player invite sent!', 'success');
-                    closeModal('invitePlayerModal');
-                }
-                
-                document.getElementById('invitePlayerForm').reset();
-            } catch (error) {
-                console.error('❌ Failed to send invite:', error);
-                showNotification('Failed to send invite', 'error');
-            }
-        }
-
-        async function handleStaffInvite(e) {
-            e.preventDefault();
-            console.log('📧 Sending staff invite...');
-            
-            const permissions = Array.from(document.querySelectorAll('input[name="staffPermissions"]:checked'))
-                                      .map(cb => cb.value);
-            
-            const inviteData = {
-                email: document.getElementById('staffInviteEmail').value,
-                firstName: document.getElementById('staffInviteFirstName').value,
-                lastName: document.getElementById('staffInviteLastName').value,
-                role: document.getElementById('staffInviteRole').value,
-                teamId: document.getElementById('staffInviteTeam').value,
-                permissions: permissions
-            };
-            
-            try {
-                showNotification('Staff invite sent successfully!', 'success');
-                closeModal('inviteStaffModal');
-                document.getElementById('inviteStaffForm').reset();
-            } catch (error) {
-                console.error('❌ Failed to send staff invite:', error);
-                showNotification('Failed to send staff invite', 'error');
-            }
-        }
-
-        async function handleCreatePaymentPlan(e) {
-    if (e) e.preventDefault();
-    
-    const name = document.getElementById('planName')?.value?.trim();
-    const amount = parseFloat(document.getElementById('planAmount')?.value);
-    const frequency = document.getElementById('planFrequency')?.value;
-    const description = document.getElementById('planDescription')?.value?.trim();
-
-    if (!name || !frequency || isNaN(amount) || amount < 0.30) {
-        showNotification('Please fill in all required fields. Minimum amount is £0.30', 'error');
-        return;
-    }
-
-    try {
-        showLoading(true);
-        
-        const response = await apiService.createPaymentPlan({
-            name: name,
-            amount: amount,
-            frequency: frequency,
-            description: description
-        });
-        
-        showNotification('Payment plan created successfully!', 'success');
-        closeModal('createPaymentPlanModal');
-        document.getElementById('createPaymentPlanForm')?.reset();
-        
-        // Update the AppState and reload
-        if (!AppState.paymentPlans) AppState.paymentPlans = [];
-        AppState.paymentPlans.push(response.plan || response);
-        
-        await loadPaymentPlans();
-        
-    } catch (err) {
-        console.error('Failed to create payment plan:', err);
-        showNotification('Failed to create payment plan: ' + err.message, 'error');
-    } finally {
-        showLoading(false);
-    }
+        async function handleAddPlayer(e) {
+  e.preventDefault();
+  
+  const formData = {
+    firstName: document.getElementById('playerFirstName').value,
+    lastName: document.getElementById('playerLastName').value,
+    email: document.getElementById('playerEmail').value,
+    phone: document.getElementById('playerPhone').value,
+    dateOfBirth: document.getElementById('playerDOB').value,
+    position: document.getElementById('playerPosition').value,
+    clubId: AppState.clubs[0]?.id,
+    monthlyFee: parseFloat(document.getElementById('playerFee').value) || 0
+  };
+  
+  try {
+    showLoading(true);
+    const response = await apiService.createPlayer(formData);
+    showNotification('Player added successfully!', 'success');
+    closeModal('addPlayerModal');
+    document.getElementById('addPlayerForm').reset();
+    loadPlayers(); // Reload players
+  } catch (error) {
+    console.error('Failed to add player:', error);
+    showNotification('Failed to add player: ' + error.message, 'error');
+  } finally {
+    showLoading(false);
+  }
 }
 
+// Handle real team creation
+async function handleAddTeam(e) {
+  e.preventDefault();
+  
+  const formData = {
+    name: document.getElementById('teamName').value,
+    ageGroup: document.getElementById('teamAgeGroup').value,
+    sport: document.getElementById('teamSport').value,
+    description: document.getElementById('teamDescription').value,
+    clubId: AppState.clubs[0]?.id
+  };
+  
+  try {
+    showLoading(true);
+    const response = await apiService.createTeam(formData);
+    showNotification('Team created successfully!', 'success');
+    closeModal('addTeamModal');
+    document.getElementById('addTeamForm').reset();
+    loadTeams(); // Reload teams
+  } catch (error) {
+    console.error('Failed to create team:', error);
+    showNotification('Failed to create team: ' + error.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+// Handle real event creation with capacity tracking
+async function handleAddEvent(e) {
+  e.preventDefault();
+  
+  const formData = {
+    title: document.getElementById('eventTitle').value,
+    eventType: document.getElementById('eventType').value,
+    eventDate: document.getElementById('eventDate').value,
+    eventTime: document.getElementById('eventTime').value,
+    location: document.getElementById('eventLocation').value,
+    price: parseFloat(document.getElementById('eventPrice').value) || 0,
+    capacity: parseInt(document.getElementById('eventCapacity').value) || null,
+    description: document.getElementById('eventDescription').value,
+    clubId: AppState.clubs[0]?.id
+  };
+  
+  try {
+    showLoading(true);
+    const response = await apiService.createEvent(formData);
+    showNotification('Event created successfully!', 'success');
+    closeModal('addEventModal');
+    document.getElementById('addEventForm').reset();
+    loadEvents(); // Reload events
+  } catch (error) {
+    console.error('Failed to create event:', error);
+    showNotification('Failed to create event: ' + error.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
         async function handleCreateListing(e) {
             e.preventDefault();
             console.log('📋 Creating listing...');
@@ -2325,169 +2448,156 @@ async function loadTeamVotes(teamId, container) {
 }
 
         // Fallback data loading
-        function loadFallbackData() {
-            console.log('📊 Loading fallback dashboard data...');
-            
-            // Load some sample data
-            document.getElementById('totalPlayers').textContent = '47';
-            document.getElementById('totalStaff').textContent = '8';
-            document.getElementById('totalEvents').textContent = '12';
-            document.getElementById('totalRevenue').textContent = '£2,840';
-            
-            // Load sample players
-            loadSamplePlayers();
-        }
+        async function loadDashboardStats() {
+  try {
+    const stats = AppState.clubs?.[0] ? await apiService.getAdminDashboardData() : null;
+    
+    if (stats && stats.statistics) {
+      document.getElementById('totalPlayers').textContent = stats.statistics.total_players || '0';
+      document.getElementById('totalStaff').textContent = stats.statistics.total_staff || '0';
+      document.getElementById('totalEvents').textContent = stats.statistics.total_events || '0';
+      document.getElementById('totalRevenue').textContent = `£${stats.statistics.monthly_revenue || 0}`;
+    }
+  } catch (error) {
+    console.error('Failed to load dashboard stats:', error);
+  }
+}
 
-        function loadSamplePlayers() {
-            const container = document.getElementById('playersContainer');
-            if (!container) return;
-            
-            container.innerHTML = `
-                <div class="player-card">
-                    <div class="player-header">
-                        <div class="player-info">
-                            <h4>James Wilson</h4>
-                            <span class="payment-plan-badge">Monthly Plan - £45</span>
-                        </div>
-                        <div class="player-status">
-                            <span class="status-badge status-paid">Paid</span>
-                        </div>
-                    </div>
-                    <div class="player-meta">
-                        <span><strong>Age:</strong> 16</span>
-                        <span><strong>Team:</strong> U16 Lions</span>
-                        <span><strong>Position:</strong> Midfielder</span>
-                        <span><strong>Email:</strong> james.wilson@email.com</span>
-                        <span><strong>Phone:</strong> +44 7700 900123</span>
-                        <span><strong>Account:</strong> ✅ Linked</span>
-                    </div>
-                    <div class="player-actions">
-                        <button class="btn btn-small btn-secondary">✏️ Edit</button>
-                        <button class="btn btn-small btn-primary">⚽ Team</button>
-                        <button class="btn btn-small btn-success">💳 Payment</button>
-                        <button class="btn btn-small btn-danger">🗑️ Remove</button>
-                    </div>
-                </div>
-                
-                <div class="player-card not-assigned">
-                    <div class="player-header">
-                        <div class="player-info">
-                            <h4>Sarah Johnson</h4>
-                            <span class="no-plan-badge">No Plan Set</span>
-                        </div>
-                        <div class="player-status">
-                            <span class="status-badge status-not-assigned">Not Assigned</span>
-                        </div>
-                    </div>
-                    <div class="player-meta">
-                        <span><strong>Age:</strong> 14</span>
-                        <span><strong>Team:</strong> Not Assigned</span>
-                        <span><strong>Position:</strong> Not Set</span>
-                        <span><strong>Email:</strong> sarah.johnson@email.com</span>
-                        <span><strong>Phone:</strong> +44 7700 900456</span>
-                        <span><strong>Account:</strong> ⚠️ No Link</span>
-                    </div>
-                    <div class="player-actions">
-                        <button class="btn btn-small btn-secondary">✏️ Edit</button>
-                        <button class="btn btn-small btn-warning">⚽ Assign Team</button>
-                        <button class="btn btn-small btn-primary">💰 Set Plan</button>
-                        <button class="btn btn-small btn-danger">🗑️ Remove</button>
-                    </div>
-                </div>
-                
-                <div class="player-card overdue">
-                    <div class="player-header">
-                        <div class="player-info">
-                            <h4>Michael Chen</h4>
-                            <span class="payment-plan-badge">Monthly Plan - £50</span>
-                        </div>
-                        <div class="player-status">
-                            <span class="status-badge status-overdue">Overdue</span>
-                        </div>
-                    </div>
-                    <div class="player-meta">
-                        <span><strong>Age:</strong> 18</span>
-                        <span><strong>Team:</strong> U18 Eagles</span>
-                        <span><strong>Position:</strong> Forward</span>
-                        <span><strong>Email:</strong> michael.chen@email.com</span>
-                        <span><strong>Phone:</strong> +44 7700 900789</span>
-                        <span><strong>Account:</strong> ✅ Linked</span>
-                    </div>
-                    <div class="player-actions">
-                        <button class="btn btn-small btn-secondary">✏️ Edit</button>
-                        <button class="btn btn-small btn-primary">⚽ Team</button>
-                        <button class="btn btn-small btn-danger">📧 Reminder</button>
-                        <button class="btn btn-small btn-success">💳 Payment</button>
-                    </div>
-                </div>
-            `;
-        }
+// Add this function after updateDashboardStats
+function updateDashboardStats(statistics) {
+  if (statistics) {
+    document.getElementById('totalPlayers').textContent = statistics.total_players || '0';
+    document.getElementById('totalStaff').textContent = statistics.total_staff || '0';
+    document.getElementById('totalEvents').textContent = statistics.total_events || '0';
+    document.getElementById('totalRevenue').textContent = `£${statistics.monthly_revenue || 0}`;
+  }
+}
 
-        // Load sample teams
-        function loadSampleTeams() {
-            const container = document.getElementById('teamsContainer');
-            if (!container) return;
-            
-            container.innerHTML = `
-                <div class="team-card" onclick="openTeamManagement('u16-lions')">
-                    <h4>🦁 U16 Lions</h4>
-                    <div class="team-stats">
-                        <div>
-                            <span class="team-stat-number">18</span>
-                            <span class="team-stat-label">Players</span>
-                        </div>
-                        <div>
-                            <span class="team-stat-number">8</span>
-                            <span class="team-stat-label">Wins</span>
-                        </div>
-                        <div>
-                            <span class="team-stat-number">3</span>
-                            <span class="team-stat-label">Training</span>
-                        </div>
-                        <div>
-                            <span class="team-stat-number">5</span>
-                            <span class="team-stat-label">Games</span>
-                        </div>
-                    </div>
-                    <p><strong>Coach:</strong> John Smith</p>
-                    <p><strong>Next Event:</strong> Training - Tomorrow 6PM</p>
-                    <div class="player-actions" onclick="event.stopPropagation()">
-                        <button class="btn btn-small btn-primary">📋 Manage</button>
-                        <button class="btn btn-small btn-secondary">📅 Events</button>
-                        <button class="btn btn-small btn-success">👥 Players</button>
-                    </div>
-                </div>
-                
-                <div class="team-card" onclick="openTeamManagement('u18-eagles')">
-                    <h4>🦅 U18 Eagles</h4>
-                    <div class="team-stats">
-                        <div>
-                            <span class="team-stat-number">22</span>
-                            <span class="team-stat-label">Players</span>
-                        </div>
-                        <div>
-                            <span class="team-stat-number">12</span>
-                            <span class="team-stat-label">Wins</span>
-                        </div>
-                        <div>
-                            <span class="team-stat-number">4</span>
-                            <span class="team-stat-label">Training</span>
-                        </div>
-                        <div>
-                            <span class="team-stat-number">8</span>
-                            <span class="team-stat-label">Games</span>
-                        </div>
-                    </div>
-                    <p><strong>Coach:</strong> Emma Wilson</p>
-                    <p><strong>Next Event:</strong> Match vs City FC - Friday 7PM</p>
-                    <div class="player-actions" onclick="event.stopPropagation()">
-                        <button class="btn btn-small btn-primary">📋 Manage</button>
-                        <button class="btn btn-small btn-secondary">📅 Events</button>
-                        <button class="btn btn-small btn-success">👥 Players</button>
-                    </div>
-                </div>
-            `;
-        }
+        async function loadPlayers() {
+  const container = document.getElementById('playersContainer');
+  if (!container) return;
+
+  try {
+    showLoading(true);
+    const clubId = AppState.clubs?.[0]?.id;
+    const players = await apiService.getPlayers(clubId);
+    
+    if (players.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+          <p>No players found</p>
+          <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add Your First Player</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = players.map(player => {
+      const age = calculateAge(player.date_of_birth);
+      const hasPaymentPlan = player.has_payment_plan || false;
+      const hasTeamAssignment = player.team_assignments?.length > 0;
+      const isOverdue = player.payment_status === 'overdue';
+      
+      return `
+        <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
+          <div class="player-header">
+            <div class="player-info">
+              <h4>${player.first_name} ${player.last_name}</h4>
+              ${hasPaymentPlan ? 
+                '<span class="payment-plan-badge">On Payment Plan</span>' : 
+                '<span class="no-plan-badge">No Plan Set</span>'
+              }
+            </div>
+            <div class="player-status">
+              <span class="status-badge status-${player.payment_status || 'pending'}">${player.payment_status || 'Pending'}</span>
+            </div>
+          </div>
+          <div class="player-meta">
+            <span><strong>Age:</strong> ${age} years</span>
+            <span><strong>Team:</strong> ${player.team_assignments?.[0]?.team_name || 'Not assigned'}</span>
+            <span><strong>Email:</strong> ${player.email || 'No email'}</span>
+            <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
+            <span><strong>Monthly Fee:</strong> £${player.monthly_fee || 0}</span>
+          </div>
+          <div class="player-actions">
+            <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
+            ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
+            ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
+            <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    AppState.players = players;
+    
+  } catch (error) {
+    console.error('Failed to load players:', error);
+    container.innerHTML = '<p style="color:#dc3545">Failed to load players</p>';
+  } finally {
+    showLoading(false);
+  }
+}
+
+        async function loadTeams() {
+  const container = document.getElementById('teamsContainer');
+  if (!container) return;
+
+  try {
+    showLoading(true);
+    const clubId = AppState.clubs?.[0]?.id;
+    const teams = await apiService.getTeams(clubId);
+    
+    if (teams.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+          <p>No teams created yet</p>
+          <button class="btn btn-primary" onclick="showModal('addTeamModal')">Create Your First Team</button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = teams.map(team => `
+      <div class="team-card" onclick="openTeamManagement('${team.id}', '${team.name}')">
+        <h4>${team.name}</h4>
+        <div class="team-stats">
+          <div>
+            <span class="team-stat-number">${team.player_count}</span>
+            <span class="team-stat-label">Players</span>
+          </div>
+          <div>
+            <span class="team-stat-number">${team.wins || 0}</span>
+            <span class="team-stat-label">Wins</span>
+          </div>
+          <div>
+            <span class="team-stat-number">${team.losses || 0}</span>
+            <span class="team-stat-label">Losses</span>
+          </div>
+          <div>
+            <span class="team-stat-number">${team.draws || 0}</span>
+            <span class="team-stat-label">Draws</span>
+          </div>
+        </div>
+        <p><strong>Coach:</strong> ${team.coach_first_name ? `${team.coach_first_name} ${team.coach_last_name}` : 'No coach assigned'}</p>
+        <p><strong>Sport:</strong> ${team.sport}</p>
+        <div class="player-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-small btn-primary" onclick="openTeamManagement('${team.id}', '${team.name}')">Manage</button>
+          <button class="btn btn-small btn-secondary" onclick="editTeam('${team.id}')">Edit</button>
+          <button class="btn btn-small btn-danger" onclick="deleteTeam('${team.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+    
+    AppState.teams = teams;
+    
+  } catch (error) {
+    console.error('Failed to load teams:', error);
+    container.innerHTML = '<p style="color:#dc3545">Failed to load teams</p>';
+  } finally {
+    showLoading(false);
+  }
+}
 
         // Load sample listings
         function loadListings() {
