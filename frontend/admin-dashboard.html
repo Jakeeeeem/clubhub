@@ -1582,6 +1582,58 @@
     <script src="enhanced-invite-system.js"></script>
     
     <script>
+
+        function hydrateAddPlayerPlanSelect() {
+  const sel = document.getElementById('playerPaymentPlan');
+  if (!sel) return;
+
+  const current = sel.value;
+  const plans = AppState.paymentPlans || [];
+
+  sel.innerHTML =
+    `<option value="">No payment plan</option>` +
+    plans.map(pl => {
+      const priceNum = Number(pl.price ?? pl.amount ?? 0);
+      const priceText = Number.isFinite(priceNum) ? priceNum.toFixed(2) : '0.00';
+      const interval = pl.interval || '';
+      return `<option value="${pl.id}">${pl.name} - £${priceText}/${interval}</option>`;
+    }).join('');
+
+  // Keep previous selection if it still exists
+  if ([...sel.options].some(o => o.value === current)) {
+    sel.value = current;
+  } else {
+    sel.value = '';
+  }
+}
+
+function initAddPlayerFeeField() {
+  const planSelect = document.getElementById('playerPaymentPlan');
+  const feeInput = document.getElementById('playerFee');
+  const feeLabel = document.querySelector('label[for="playerFee"]');
+  if (!planSelect || !feeInput) return;
+
+  if (feeLabel) feeLabel.textContent = 'Custom Plan Price (£) (optional)';
+
+  function syncFeeInputState() {
+    const hasPlan = !!planSelect.value;
+    feeInput.disabled = !hasPlan;
+    if (!hasPlan) {
+      feeInput.value = '';
+      feeInput.placeholder = 'Select a plan first';
+    } else {
+      feeInput.placeholder = 'Leave blank to use plan default';
+    }
+  }
+
+  syncFeeInputState();
+  planSelect.addEventListener('change', syncFeeInputState);
+}
+
+function initAddPlayerModalControls() {
+  hydrateAddPlayerPlanSelect();
+  initAddPlayerFeeField();
+}
         // Enhanced Admin Dashboard Functions
         
         // Initialize dashboard when page loads
@@ -1610,7 +1662,8 @@
     loadTeams();
     loadEvents();
     loadFinances();
-    loadPaymentPlans();
+    await loadPaymentPlans();
+    initAddPlayerModalControls();
     
   } catch (error) {
     console.error('Failed to load dashboard:', error);
@@ -1712,8 +1765,8 @@ function displayFilteredPlayers(players, filterType) {
     const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
 
     const onPlan = hasPaymentPlan;
-    const rawFee = onPlan ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount) : null;
-    const hasRawFee = onPlan && rawFee !== undefined && rawFee !== null && rawFee !== '';
+const rawFee = onPlan ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount) : null;
+const hasRawFee = onPlan && rawFee !== undefined && rawFee !== null && rawFee !== '';
 const fee = hasRawFee ? Number(rawFee) : NaN;
 const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—';
 
@@ -2338,34 +2391,43 @@ async function confirmPlanAssignment(playerId) {
   const priceVal = (document.getElementById('planCustomPrice')?.value || '').trim();
   const customPrice = priceVal !== '' ? parseFloat(priceVal) : null;
 
-  if (!planId) { showNotification('Please select a payment plan', 'error'); return; }
+  if (!planId) {
+    showNotification('Please select a payment plan', 'error');
+    return;
+  }
 
   try {
     showLoading(true);
+
+    // Hit your backend
     await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice);
 
-    // Update local flags (but do NOT set a fee here)
-    const player = (AppState.players || []).find(p => String(p.id) === String(playerId));
-    if (player) {
-      player.has_payment_plan = true;
-      player.payment_status = player.payment_status || 'active';
-      // remove any stale fee that could mislead the UI:
-      delete player.monthly_fee;
+    // ✅ Local optimistic update AFTER success
+    const p = (AppState.players || []).find(x => String(x.id) === String(playerId));
+    if (p) {
+      p.has_payment_plan = true;
+      p.payment_plan_id = planId;
+      p.plan_price = (customPrice != null ? customPrice : null);
+
+      // attach the selected plan so fee display can fall back to its default price
+      const selectedPlan = (AppState.paymentPlans || []).find(pl => String(pl.id) === String(planId));
+      if (selectedPlan) p.payment_plan = selectedPlan;
+
+      p.payment_status = p.payment_status || 'active';
+      // optional: clean any stale per-player fee you might have used earlier
+      delete p.monthly_fee;
     }
 
     closeModal('assignPlanModal');
     showNotification('Payment plan assigned successfully!', 'success');
 
-    // Re-render current view immediately
+    // Re-render current view
     const currentView = document.getElementById('playerListFilter')?.value || 'all';
     if (currentView === 'all') {
       displayFilteredPlayers(AppState.players, 'all');
     } else {
       await filterPlayersByView();
     }
-
-    // Optionally reconcile with backend
-    // await loadPlayers();
   } catch (error) {
     console.error('Failed to assign payment plan:', error);
     showNotification('Failed to assign payment plan: ' + error.message, 'error');
@@ -2404,9 +2466,12 @@ async function confirmPlanAssignment(playerId) {
         async function handleAddPlayer(e) {
   e.preventDefault();
 
-  const feeRaw = (document.getElementById('playerFee').value || '').trim();
-  const monthly_fee = feeRaw !== '' ? Number(feeRaw) : null;
   const payment_plan_id = document.getElementById('playerPaymentPlan').value || null;
+  const feeRaw = (document.getElementById('playerFee').value || '').trim();
+  const plan_price = (payment_plan_id && feeRaw !== '' && Number.isFinite(Number(feeRaw)))
+    ? Number(feeRaw)
+    : null;
+
   const club_id = await getActiveClubId();
 
   const payload = {
@@ -2414,13 +2479,11 @@ async function confirmPlanAssignment(playerId) {
     last_name: document.getElementById('playerLastName').value.trim(),
     email: (document.getElementById('playerEmail').value || '').trim() || null,
     phone: (document.getElementById('playerPhone').value || '').trim() || null,
-    date_of_birth: document.getElementById('playerDOB').value, // already YYYY-MM-DD
+    date_of_birth: document.getElementById('playerDOB').value,
     position: (document.getElementById('playerPosition').value || '').trim() || null,
     club_id,
     ...(payment_plan_id ? { payment_plan_id } : {}),
-    ...(Number.isFinite(monthly_fee) ? { monthly_fee } : {})
-    // If your API wants a custom plan price when a plan is chosen, also send:
-    // ...(payment_plan_id && Number.isFinite(monthly_fee) ? { plan_price: monthly_fee } : {})
+    ...(plan_price != null ? { plan_price } : {})
   };
 
   try {
@@ -2917,30 +2980,17 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
     flag === '1' ||
     (typeof flag === 'string' && flag.toLowerCase() === 'true');
 
-  // Any non-empty plan id counts as being on a plan
   const id =
     player?.payment_plan_id ??
     player?.plan_id ??
     player?.payment_plan?.id ??
     player?.plan?.id;
 
-  const hasId =
-    id !== undefined && id !== null && String(id).trim() !== '' && String(id) !== '0';
-
-  // Having a plan object also counts
+  const hasId = id != null && String(id).trim() !== '' && String(id) !== '0';
   const hasObj = !!player?.payment_plan || !!player?.plan;
 
-  // ✅ Price/fee can be 0 — check by existence, not truthiness
-  const hasPrice =
-    ('plan_price' in player && player.plan_price != null) ||
-    ('monthly_fee' in player && player.monthly_fee != null) ||
-    (player?.payment_plan && (
-      player.payment_plan.price != null || player.payment_plan.amount != null
-    ));
-
-  return flagTrue || hasId || hasObj || hasPrice;
+  return flagTrue || hasId || hasObj;
 }
-
 
         // Utility Functions
         function showModal(modalId) {
