@@ -2611,40 +2611,49 @@ async function handleAddEvent(e) {
 
 async function handleCreatePaymentPlan(e) {
   if (e) e.preventDefault();
-  
+
   const name = document.getElementById('planName')?.value?.trim();
-  const amount = parseFloat(document.getElementById('planAmount')?.value);
-  const frequency = document.getElementById('planFrequency')?.value;
+  const price = Number(document.getElementById('planAmount')?.value);
+  const intervalRaw = document.getElementById('planFrequency')?.value;
   const description = document.getElementById('planDescription')?.value?.trim();
 
-  if (!name || !frequency || isNaN(amount) || amount < 0.30) {
-    showNotification('Please fill in all required fields. Minimum amount is £0.30', 'error');
+  if (!name || !intervalRaw || !Number.isFinite(price)) {
+    showNotification('Please fill in all required fields.', 'error');
+    return;
+  }
+  if (price < 0.30) {
+    showNotification('Minimum amount is £0.30', 'error');
     return;
   }
 
+  // Normalize / validate interval values expected by your API.
+  // If your API already accepts 'monthly' | 'quarterly' | 'annually', no mapping needed.
+  // If you allow "one-time" in the UI but the API doesn't support it, block it here.
+  const allowed = ['monthly', 'quarterly', 'annually']; // extend if your API supports more
+  if (!allowed.includes(intervalRaw)) {
+    showNotification('Please choose Monthly, Quarterly or Annually.', 'error');
+    return;
+  }
+  const interval = intervalRaw;
+
   try {
     showLoading(true);
-    
-    const response = await apiService.createPaymentPlan({
-      name: name,
-      amount: amount,
-      frequency: frequency,
-      description: description
-    });
-    
+
+    const payload = { name, price, interval, description };
+    const created = await apiService.createPaymentPlan(payload);
+
     showNotification('Payment plan created successfully!', 'success');
     closeModal('createPaymentPlanModal');
     document.getElementById('createPaymentPlanForm')?.reset();
-    
-    // Update the AppState and reload
+
+    // keep UI in sync
     if (!AppState.paymentPlans) AppState.paymentPlans = [];
-    AppState.paymentPlans.push(response.plan || response);
-    
+    AppState.paymentPlans.push(created.plan || created);
+
     await loadPaymentPlans();
-    
   } catch (err) {
     console.error('Failed to create payment plan:', err);
-    showNotification('Failed to create payment plan: ' + err.message, 'error');
+    showNotification('Failed to create payment plan: ' + (err.message || err), 'error');
   } finally {
     showLoading(false);
   }

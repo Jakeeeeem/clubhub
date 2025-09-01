@@ -239,16 +239,29 @@ class ApiService {
 
 async createPaymentPlan(planData) {
   console.log('💳 Creating payment plan:', planData);
-  
+
+  // Accept both old and new field names defensively
+  const price = planData.price ?? Number(planData.amount);
+  const interval = planData.interval ?? planData.frequency;
+  const payload = {
+    name: planData.name,
+    price,                // <- what your UI reads back as plan.price
+    interval,             // <- what your UI shows as plan.interval
+    description: planData.description
+    // If your backend needs currency, uncomment:
+    // currency: 'GBP'
+  };
+
+  // Basic validation before sending
+  if (!payload.name || !Number.isFinite(price) || !interval) {
+    throw new Error('Missing required fields (name/price/interval)');
+  }
+
   try {
     const response = await this.makeRequest('/payments/plans', {
       method: 'POST',
-      body: JSON.stringify({
-        name: planData.name,
-        amount: planData.amount, // Keep as decimal, not convert to pence
-        interval: planData.frequency,
-        description: planData.description
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
     console.log('✅ Payment plan created:', response);
     return response;
