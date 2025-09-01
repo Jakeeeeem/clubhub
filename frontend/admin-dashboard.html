@@ -1707,8 +1707,13 @@ function displayFilteredPlayers(players, filterType) {
   }
 
   container.innerHTML = players.map(player => {
-    const hasPaymentPlan = player.has_payment_plan || player.payment_plan;
-    const hasTeamAssignment = player.has_team_assignment || player.team_name || (player.team_assignments && player.team_assignments.length);
+    const hasPaymentPlan = Boolean(
+  player.has_payment_plan ||
+  player.payment_plan ||
+  player.plan_id ||
+  player.payment_plan_id ||
+  player.plan
+);
     const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
 
     return `
@@ -1730,7 +1735,15 @@ function displayFilteredPlayers(players, filterType) {
           <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
           <span><strong>Email:</strong> ${player.email || 'No email'}</span>
           <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
-          <span><strong>Monthly Fee:</strong> £${player.monthly_fee || 0}</span>
+          ${(() => {
+  const fee = Number(
+    player.monthly_fee ??
+    player.plan_price ??
+    (player.payment_plan && (player.payment_plan.price ?? player.payment_plan.amount)) ??
+    0
+  );
+  return `<span><strong>Monthly Fee:</strong> £${fee.toFixed(2)}</span>`;
+})()}
         </div>
         <div class="player-actions">
           <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
@@ -2331,31 +2344,37 @@ async function assignPaymentPlan(playerId) {
 
 async function confirmPlanAssignment(playerId) {
   const planId = document.getElementById('selectPlan').value;
-  const startDate = document.getElementById('planStartDate').value;
-  
+  const startDate = document.getElementById('planStartDate').value || new Date().toISOString().split('T')[0];
+
   if (!planId) {
     showNotification('Please select a payment plan', 'error');
     return;
   }
-  
+
   try {
     showLoading(true);
-    
-    await apiService.makeRequest('/payments/bulk-assign-plan', {
-      method: 'POST',
-      body: JSON.stringify({
-        playerIds: [playerId],
-        planId: planId,
-        startDate: startDate
-      })
-    });
-    
+
+    // ✅ use the single-player assign endpoint you already have in apiService
+    await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate);
+
+    // Update local state immediately so the UI reflects the change
+    const plan = (AppState.paymentPlans || []).find(p => String(p.id) === String(planId));
+    const player = (AppState.players || []).find(p => String(p.id) === String(playerId));
+    if (player) {
+      player.has_payment_plan = true;
+      // try common fields from your plan object
+      const planAmount = Number(plan?.price ?? plan?.amount ?? 0);
+      if (!isNaN(planAmount) && planAmount > 0) {
+        player.monthly_fee = planAmount;
+      }
+      player.payment_status = player.payment_status || 'active';
+    }
+
     closeModal('assignPlanModal');
     showNotification('Payment plan assigned successfully!', 'success');
-    
-    // Refresh the players list
+
+    // Re-fetch to stay truthful with the backend (and update other views)
     await loadPlayers();
-    
   } catch (error) {
     console.error('Failed to assign payment plan:', error);
     showNotification('Failed to assign payment plan: ' + error.message, 'error');
