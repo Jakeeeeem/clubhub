@@ -1593,6 +1593,7 @@
     
     if (dashboardData) {
       AppState.clubs = dashboardData.clubs || [];
+      AppState.activeClubId = await getActiveClubId();
       AppState.players = dashboardData.players || [];
       AppState.staff = dashboardData.staff || [];
       AppState.events = dashboardData.events || [];
@@ -1660,88 +1661,86 @@
 
         // Enhanced Player Filtering Functions
         async function filterPlayersByView() {
-    const view = document.getElementById('playerListFilter').value;
-    console.log('Filtering players by view:', view);
-    
-    showLoading(true);
-    try {
-        let filteredPlayers;
-        
-        if (view === 'all') {
-            // Load all players
-            filteredPlayers = await apiService.getPlayers();
-        } else {
-            // Get filtered players
-            const clubId = AppState.clubs?.[0]?.id;
-            filteredPlayers = await apiService.getFilteredPlayers(view, clubId);
-        }
-        
-        // Update the display
-        function displayFilteredPlayers(players, filterType) {
-    const container = document.getElementById('playersContainer');
-    if (!container) return;
-    
-    if (!players || players.length === 0) {
-        const filterNames = {
-            'all': 'players',
-            'on-plan': 'players on payment plans',
-            'not-on-plan': 'players not on payment plans', 
-            'assigned': 'players assigned to teams',
-            'not-assigned': 'players not assigned to teams',
-            'overdue': 'players with overdue payments'
-        };
-        
-        container.innerHTML = `
-            <div class="empty-state" style="text-align: center; padding: 2rem;">
-                <h4>No ${filterNames[filterType] || 'players'} found</h4>
-                <p>Try a different filter or add some players to your club</p>
-            </div>
-        `;
-        return;
+  const view = document.getElementById('playerListFilter').value;
+  console.log('Filtering players by view:', view);
+
+  showLoading(true);
+  try {
+    const clubId = await getActiveClubId(); // must exist; see earlier snippet
+    let filteredPlayers;
+
+    if (view === 'all') {
+      filteredPlayers = await apiService.getPlayers(clubId);
+    } else {
+      filteredPlayers = await apiService.getFilteredPlayers(view, clubId);
     }
-    
-    container.innerHTML = players.map(player => {
-        const hasPaymentPlan = player.has_payment_plan || player.payment_plan;
-        const hasTeamAssignment = player.has_team_assignment || player.team_name;
-        const isOverdue = player.overdue_count > 0;
-        
-        return `
-            <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
-                <div class="player-header">
-                    <div class="player-info">
-                        <h4>${player.first_name} ${player.last_name}</h4>
-                        ${hasPaymentPlan ? 
-                            `<span class="payment-plan-badge">On Payment Plan</span>` : 
-                            `<span class="no-plan-badge">No Plan Set</span>`
-                        }
-                    </div>
-                    <div class="player-status">
-                        <span class="status-badge status-${player.payment_status || 'pending'}">${player.payment_status || 'Pending'}</span>
-                    </div>
-                </div>
-                <div class="player-meta">
-                    <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
-                    <span><strong>Team:</strong> ${player.team_name || 'Not assigned'}</span>
-                    <span><strong>Email:</strong> ${player.email || 'No email'}</span>
-                    <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
-                    <span><strong>Monthly Fee:</strong> £${player.monthly_fee || 0}</span>
-                </div>
-                <div class="player-actions">
-                    <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
-                    ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
-                    ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
-                    <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-} catch (error) {
+
+    displayFilteredPlayers(filteredPlayers, view);
+  } catch (error) {
     console.error('Failed to filter players:', error);
     showNotification('Failed to filter players: ' + error.message, 'error');
   } finally {
     showLoading(false);
   }
+}
+
+function displayFilteredPlayers(players, filterType) {
+  const container = document.getElementById('playersContainer');
+  if (!container) return;
+
+  if (!players || players.length === 0) {
+    const filterNames = {
+      'all': 'players',
+      'on-plan': 'players on payment plans',
+      'not-on-plan': 'players not on payment plans', 
+      'assigned': 'players assigned to teams',
+      'not-assigned': 'players not assigned to teams',
+      'overdue': 'players with overdue payments'
+    };
+    container.innerHTML = `
+      <div class="empty-state" style="text-align: center; padding: 2rem;">
+        <h4>No ${filterNames[filterType] || 'players'} found</h4>
+        <p>Try a different filter or add some players to your club</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = players.map(player => {
+    const hasPaymentPlan = player.has_payment_plan || player.payment_plan;
+    const hasTeamAssignment = player.has_team_assignment || player.team_name || (player.team_assignments && player.team_assignments.length);
+    const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
+
+    return `
+      <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
+        <div class="player-header">
+          <div class="player-info">
+            <h4>${player.first_name} ${player.last_name}</h4>
+            ${hasPaymentPlan ? 
+              `<span class="payment-plan-badge">On Payment Plan</span>` : 
+              `<span class="no-plan-badge">No Plan Set</span>`
+            }
+          </div>
+          <div class="player-status">
+            <span class="status-badge status-${player.payment_status || 'pending'}">${player.payment_status || 'Pending'}</span>
+          </div>
+        </div>
+        <div class="player-meta">
+          <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
+          <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
+          <span><strong>Email:</strong> ${player.email || 'No email'}</span>
+          <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
+          <span><strong>Monthly Fee:</strong> £${player.monthly_fee || 0}</span>
+        </div>
+        <div class="player-actions">
+          <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
+          ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
+          ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
+          <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ADD this new function for individual payment plan assignment
@@ -2684,7 +2683,7 @@ function updateDashboardStats(statistics) {
 
   try {
     showLoading(true);
-    const clubId = AppState.clubs?.[0]?.id;
+    const clubId = await getActiveClubId();
     
     if (!clubId) {
       container.innerHTML = '<p>No club found. Please create a club first.</p>';

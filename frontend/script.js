@@ -520,6 +520,34 @@ function updateNotificationBadge() {
     }
 }
 
+window.AppState = window.AppState || {};
+
+async function getActiveClubId() {
+  if (AppState.activeClubId) return AppState.activeClubId;
+
+  // Authoritative source for org admins
+  try {
+    const resp = await apiService.getUserOrganizations();
+    const orgs = (resp && resp.organizations) || [];
+    const primary = orgs.find(o => o.is_primary) || orgs[0];
+    if (primary?.id) {
+      AppState.activeClubId = primary.id;
+      return AppState.activeClubId;
+    }
+  } catch (_) { /* fall through */ }
+
+  // Fallback to what dashboard loaded
+  if (Array.isArray(AppState.clubs) && AppState.clubs.length) {
+    const primaryFromDashboard = AppState.clubs.find(c => c.is_primary) || AppState.clubs[0];
+    if (primaryFromDashboard?.id) {
+      AppState.activeClubId = primaryFromDashboard.id;
+      return AppState.activeClubId;
+    }
+  }
+
+  return null;
+}
+
 // Navigation Functions
 function updateNavigation() {
     const navButtons = document.getElementById('navButtons');

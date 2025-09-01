@@ -458,7 +458,9 @@ async listPaymentPlans() {
 
   async getPlayers(clubId = null) {
     try {
-      const endpoint = clubId ? `/players?clubId=${clubId}` : '/players';
+      const endpoint = clubId
+  ? `/players?clubId=${clubId}&page=1&limit=1000`
+  : `/players?page=1&limit=1000`;
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn('❌ Failed to fetch players:', error);
