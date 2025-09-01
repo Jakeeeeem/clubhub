@@ -2072,7 +2072,7 @@ async function loadFinances() {
 async function bulkAssignPlan(planId) {
   try {
     // Get all players not on plans
-    const playersWithoutPlans = AppState.players.filter(p => !p.has_payment_plan);
+    const playersWithoutPlans = AppState.players.filter(p => !hasPlan(p));
     
     if (playersWithoutPlans.length === 0) {
       showNotification('All players already have payment plans assigned', 'info');
@@ -2750,7 +2750,12 @@ function updateDashboardStats(statistics) {
             <span><strong>Team:</strong> ${hasTeamAssignment ? player.team_assignments[0].team_name : 'Not assigned'}</span>
             <span><strong>Email:</strong> ${player.email || 'No email'}</span>
             <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
-            <span><strong>Monthly Fee:</strong> £${Number((player.plan_price ?? player.monthly_fee ?? 0)).toFixed(2)}</span>
+            <span><strong>Monthly Fee:</strong> £${Number(
+  player.plan_price ??
+  player.monthly_fee ??
+  (player.payment_plan && (player.payment_plan.price ?? player.payment_plan.amount)) ??
+  0
+).toFixed(2)}</span>
           </div>
           <div class="player-actions">
             <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
@@ -2922,13 +2927,23 @@ function updateDashboardStats(statistics) {
     player?.payment_plan?.id ??
     player?.plan?.id;
 
-  const hasId = id !== undefined && id !== null && String(id).trim() !== '' && String(id) !== '0';
+  const hasId =
+    id !== undefined && id !== null && String(id).trim() !== '' && String(id) !== '0';
 
   // Having a plan object also counts
   const hasObj = !!player?.payment_plan || !!player?.plan;
 
-  return flagTrue || hasId || hasObj;
+  // ✅ Price/fee can be 0 — check by existence, not truthiness
+  const hasPrice =
+    ('plan_price' in player && player.plan_price != null) ||
+    ('monthly_fee' in player && player.monthly_fee != null) ||
+    (player?.payment_plan && (
+      player.payment_plan.price != null || player.payment_plan.amount != null
+    ));
+
+  return flagTrue || hasId || hasObj || hasPrice;
 }
+
 
         // Utility Functions
         function showModal(modalId) {
