@@ -1339,7 +1339,7 @@
                 </div>
                 <div class="form-group">
                     <label for="playerFee">Monthly Fee (£)</label>
-                    <input type="number" id="playerFee" step="0.01" min="0" value="45">
+                    <input type="number" id="playerFee" step="0.01" min="0" placeholder="e.g., 45">
                 </div>
                 <button type="submit" class="btn btn-primary">➕ Add Player</button>
             </form>
@@ -1703,56 +1703,54 @@ function displayFilteredPlayers(players, filterType) {
         <p>Try a different filter or add some players to your club</p>
       </div>
     `;
-    return;
+    return;}
   }
 
   // ✅ Loop through players here
   container.innerHTML = players.map(player => {
-    const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
-    const hasPaymentPlan = hasPlan(player);
-    const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
+  const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
+  const hasPaymentPlan = hasPlan(player);
+  const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
 
-    return `
-      <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
-        <div class="player-header">
-          <div class="player-info">
-            <h4>${player.first_name} ${player.last_name}</h4>
-            ${hasPaymentPlan ? 
-              `<span class="payment-plan-badge">On Payment Plan</span>` : 
-              `<span class="no-plan-badge">No Plan Set</span>`
-            }
-          </div>
-          <div class="player-status">
-            <span class="status-badge status-${player.payment_status || 'pending'}">
-              ${player.payment_status || 'Pending'}
-            </span>
-          </div>
+  const onPlan = hasPaymentPlan;
+  const rawFee = onPlan
+    ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount)
+    : null;
+  const fee = onPlan && rawFee != null ? Number(rawFee) : null;
+  const feeHtml = onPlan && isFinite(fee) ? `£${fee.toFixed(2)}` : '—';
+
+  return `
+    <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
+      <div class="player-header">
+        <div class="player-info">
+          <h4>${player.first_name} ${player.last_name}</h4>
+          ${hasPaymentPlan 
+            ? `<span class="payment-plan-badge">On Payment Plan</span>`
+            : `<span class="no-plan-badge">No Plan Set</span>`
+          }
         </div>
-        <div class="player-meta">
-          <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
-          <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
-          <span><strong>Email:</strong> ${player.email || 'No email'}</span>
-          <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
-          ${(() => {
-            const fee = Number(
-              player.plan_price ??
-              player.monthly_fee ??
-              (player.payment_plan && (player.payment_plan.price ?? player.payment_plan.amount)) ??
-              0
-            );
-            return `<span><strong>Monthly Fee:</strong> £${fee.toFixed(2)}</span>`;
-          })()}
-        </div>
-        <div class="player-actions">
-          <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
-          ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
-          ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
-          <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
+        <div class="player-status">
+          <span class="status-badge status-${player.payment_status || 'pending'}">
+            ${player.payment_status || 'Pending'}
+          </span>
         </div>
       </div>
-    `;
-  }).join('');
-}
+      <div class="player-meta">
+        <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
+        <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
+        <span><strong>Email:</strong> ${player.email || 'No email'}</span>
+        <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
+        <span><strong>Monthly Fee:</strong> ${feeHtml}</span>
+      </div>
+      <div class="player-actions">
+        <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
+        ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
+        ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
+        <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
+      </div>
+    </div>
+  `;
+}).join('');
 
 // ADD this new function for individual payment plan assignment
 
@@ -2321,6 +2319,10 @@ async function assignPaymentPlan(playerId) {
             </select>
           </div>
           <div class="form-group">
+  <label for="planCustomPrice">Custom Price (£) (optional)</label>
+  <input type="number" id="planCustomPrice" step="0.01" min="0" placeholder="Leave blank to use plan default">
+</div>
+          <div class="form-group">
             <label for="planStartDate">Start Date</label>
             <input type="date" id="planStartDate" value="${new Date().toISOString().split('T')[0]}">
           </div>
@@ -2343,36 +2345,37 @@ async function assignPaymentPlan(playerId) {
 async function confirmPlanAssignment(playerId) {
   const planId = document.getElementById('selectPlan').value;
   const startDate = document.getElementById('planStartDate').value || new Date().toISOString().split('T')[0];
+  const priceVal = (document.getElementById('planCustomPrice')?.value || '').trim();
+  const customPrice = priceVal !== '' ? parseFloat(priceVal) : null;
 
-  if (!planId) {
-    showNotification('Please select a payment plan', 'error');
-    return;
-  }
+  if (!planId) { showNotification('Please select a payment plan', 'error'); return; }
 
   try {
     showLoading(true);
+    await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice);
 
-    // ✅ use the single-player assign endpoint you already have in apiService
-    await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate);
-
-    // Update local state immediately so the UI reflects the change
-    const plan = (AppState.paymentPlans || []).find(p => String(p.id) === String(planId));
+    // Update local flags (but do NOT set a fee here)
     const player = (AppState.players || []).find(p => String(p.id) === String(playerId));
     if (player) {
       player.has_payment_plan = true;
-      // try common fields from your plan object
-      const planAmount = Number(plan?.price ?? plan?.amount ?? 0);
-      if (!isNaN(planAmount) && planAmount > 0) {
-        player.monthly_fee = planAmount;
-      }
       player.payment_status = player.payment_status || 'active';
+      // remove any stale fee that could mislead the UI:
+      delete player.monthly_fee;
     }
 
     closeModal('assignPlanModal');
     showNotification('Payment plan assigned successfully!', 'success');
 
-    // Re-fetch to stay truthful with the backend (and update other views)
-    await loadPlayers();
+    // Re-render current view immediately
+    const currentView = document.getElementById('playerListFilter')?.value || 'all';
+    if (currentView === 'all') {
+      displayFilteredPlayers(AppState.players, 'all');
+    } else {
+      await filterPlayersByView();
+    }
+
+    // Optionally reconcile with backend
+    // await loadPlayers();
   } catch (error) {
     console.error('Failed to assign payment plan:', error);
     showNotification('Failed to assign payment plan: ' + error.message, 'error');
@@ -2410,7 +2413,10 @@ async function confirmPlanAssignment(playerId) {
         // Enhanced Form Handlers
         async function handleAddPlayer(e) {
   e.preventDefault();
-  
+
+  const feeRaw = document.getElementById('playerFee').value.trim();
+  const monthlyFee = feeRaw !== '' ? parseFloat(feeRaw) : null;
+
   const formData = {
     firstName: document.getElementById('playerFirstName').value,
     lastName: document.getElementById('playerLastName').value,
@@ -2419,8 +2425,9 @@ async function confirmPlanAssignment(playerId) {
     dateOfBirth: document.getElementById('playerDOB').value,
     position: document.getElementById('playerPosition').value,
     clubId: AppState.clubs[0]?.id,
-    monthlyFee: parseFloat(document.getElementById('playerFee').value) || 0
+    ...(monthlyFee != null ? { monthlyFee } : {}) // ← only include if set
   };
+}
   
   try {
     showLoading(true);
@@ -2435,7 +2442,6 @@ async function confirmPlanAssignment(playerId) {
   } finally {
     showLoading(false);
   }
-}
 
 // Handle real team creation
 async function handleAddTeam(e) {
@@ -2694,26 +2700,22 @@ function updateDashboardStats(statistics) {
   }
 }
 
-       async function loadPlayers() {
+      async function loadPlayers() {
   const container = document.getElementById('playersContainer');
   if (!container) return;
 
   try {
     showLoading(true);
     const clubId = await getActiveClubId();
-    
+
     if (!clubId) {
       container.innerHTML = '<p>No club found. Please create a club first.</p>';
       return;
     }
-    
-    console.log('Loading players for club:', clubId); // Debug log
-    
+
     const players = await apiService.getPlayers(clubId);
-    
-    console.log('Players loaded:', players.length, players); // Debug log
-    
-    if (players.length === 0) {
+
+    if (!players || players.length === 0) {
       container.innerHTML = `
         <div style="text-align: center; padding: 2rem; opacity: 0.8;">
           <p>No players found</p>
@@ -2723,39 +2725,40 @@ function updateDashboardStats(statistics) {
       return;
     }
 
-    container.innerHTML = players.map((player, index) => {
-      console.log(`Processing player ${index + 1}:`, player); // Debug log
-      
-      const age = calculateAge(player.date_of_birth);
+    container.innerHTML = players.map(player => {
+      const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
       const hasPaymentPlan = hasPlan(player);
-      const hasTeamAssignment = player.team_assignments && player.team_assignments.length > 0;
-      const isOverdue = player.payment_status === 'overdue';
-      
+      const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
+
+      // feeHtml logic (no auto-£45)
+      const onPlan = hasPaymentPlan;
+      const rawFee = onPlan
+        ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount)
+        : null;
+      const fee = onPlan && rawFee != null ? Number(rawFee) : null;
+      const feeHtml = onPlan && isFinite(fee) ? `£${fee.toFixed(2)}` : '—';
+
       return `
         <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
           <div class="player-header">
             <div class="player-info">
               <h4>${player.first_name} ${player.last_name}</h4>
-              ${hasPaymentPlan ? 
-                '<span class="payment-plan-badge">On Payment Plan</span>' : 
-                '<span class="no-plan-badge">No Plan Set</span>'
-              }
+              ${hasPaymentPlan
+                ? `<span class="payment-plan-badge">On Payment Plan</span>`
+                : `<span class="no-plan-badge">No Plan Set</span>`}
             </div>
             <div class="player-status">
-              <span class="status-badge status-${player.payment_status || 'pending'}">${player.payment_status || 'Pending'}</span>
+              <span class="status-badge status-${player.payment_status || 'pending'}">
+                ${player.payment_status || 'Pending'}
+              </span>
             </div>
           </div>
           <div class="player-meta">
-            <span><strong>Age:</strong> ${age} years</span>
-            <span><strong>Team:</strong> ${hasTeamAssignment ? player.team_assignments[0].team_name : 'Not assigned'}</span>
+            <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
+            <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
             <span><strong>Email:</strong> ${player.email || 'No email'}</span>
             <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
-            <span><strong>Monthly Fee:</strong> £${Number(
-  player.plan_price ??
-  player.monthly_fee ??
-  (player.payment_plan && (player.payment_plan.price ?? player.payment_plan.amount)) ??
-  0
-).toFixed(2)}</span>
+            <span><strong>Monthly Fee:</strong> ${feeHtml}</span>
           </div>
           <div class="player-actions">
             <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
@@ -2766,13 +2769,11 @@ function updateDashboardStats(statistics) {
         </div>
       `;
     }).join('');
-    
+
     AppState.players = players;
-    console.log('Players rendered successfully'); // Debug log
-    
   } catch (error) {
     console.error('Failed to load players:', error);
-    container.innerHTML = '<p style="color:#dc3545">Failed to load players: ' + error.message + '</p>';
+    container.innerHTML = '<p style="color:#dc3545">Failed to load players: ' + (error?.message || error) + '</p>';
   } finally {
     showLoading(false);
   }
