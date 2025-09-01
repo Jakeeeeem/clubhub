@@ -772,75 +772,44 @@ async createTeamEvent(teamId, eventData) {
 }
 
 async assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice = null, clubId = null) {
-  const canonical = {
+  const body = {
     playerId,
     planId,
     startDate,
-    customPrice, // null = use plan default on the server
+    customPrice,
     clubId
   };
 
-  const makeJsonRequest = (url, body) => this.makeRequest(url, {
+  const makeJsonRequest = (url, data) => this.makeRequest(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify(data),
   });
 
-  try {
-    // Try single-player route first
-    return await makeJsonRequest('/payments/assign-player-plan', canonical);
-  } catch (err) {
-    const msg = String(err?.message || err || '');
-    const is404 = err?.status === 404 || /HTTP 404/i.test(msg) || /does not exist/i.test(msg);
-
-    if (!is404) throw err;
-
-    // Fallback to bulk route with 1 player
-    return await makeJsonRequest('/payments/bulk-assign-plan', {
-      playerIds: [playerId],
-      planId,
-      startDate,
-      customPrice,
-      clubId,
-    });
-  }
-}
-  // Try a few likely endpoints; if one 404s, try the next.
-  const endpoints = [
-    '/payments/assign-player-plan',
-    '/payments/assign-plan',
-    `/players/${playerId}/payment-plan`,
-    '/players/assign-payment-plan',
-    // fallback to bulk endpoint with a single id:
-    '/payments/bulk-assign-plan'
+  // ordered fallbacks; last item calls the bulk endpoint with a single id
+  const attempts = [
+    { url: '/payments/assign-player-plan', data: body },
+    { url: '/payments/assign-plan', data: body },
+    { url: `/players/${playerId}/payment-plan`, data: body },
+    { url: '/players/assign-payment-plan', data: { playerId, planId, startDate, customPrice, clubId } },
+    { url: '/payments/bulk-assign-plan', data: { playerIds: [playerId], planId, startDate, customPrice, clubId } },
   ];
 
-  for (const ep of endpoints) {
+  let lastErr;
+  for (const a of attempts) {
     try {
-      const body = ep === '/payments/bulk-assign-plan'
-        ? JSON.stringify({
-            playerIds: [playerId],       // common bulk shape
-            player_ids: [playerId],
-            planId, plan_id: planId,
-            startDate, start_date: startDate,
-            ...(clubId ? { clubId, club_id: clubId } : {}),
-            ...(customPrice != null && customPrice !== '' ? {
-              amount: Number(customPrice), custom_amount: Number(customPrice), price: Number(customPrice)
-            } : {})
-          })
-        : JSON.stringify(base);
-
-      const res = await this.makeRequest(ep, { method: 'POST', body });
-      return res; // success
+      return await makeJsonRequest(a.url, a.data);
     } catch (err) {
-      // If it's a 404, try the next endpoint; otherwise rethrow
-      if (String(err).includes('HTTP 404')) continue;
-      throw err;
+      const msg = String(err?.message || '');
+      const is404 = err?.status === 404 || /HTTP 404/i.test(msg) || /does not exist/i.test(msg);
+      if (!is404) throw err; // real error; bail out
+      lastErr = err;          // 404; try next
     }
   }
-
-  throw new Error('No working assignment endpoint.');
+  throw lastErr || new Error('No working assignment endpoint.');
 }
+  // Try a few likely endpoints; if one 404s, try the next.
+  
 
 async getPlayerPayments(playerId, status = null) {
   try {
