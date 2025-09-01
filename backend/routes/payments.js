@@ -588,79 +588,47 @@ router.post('/plan/assign', authenticateToken, [
 });
 
 // POST /api/payments/bulk-assign-plan
-router.post('/bulk-assign-plan', authenticateToken, requireOrganization, async (req, res) => {
+router.post('/bulk-assign-plan', authenticateToken, async (req, res) => {
   try {
     const { playerIds, planId, startDate } = req.body;
-    
-    console.log('Bulk assign request:', { playerIds, planId, startDate }); // Debug log
-    
-    if (!playerIds || !Array.isArray(playerIds) || playerIds.length === 0) {
-      return res.status(400).json({ error: 'Player IDs array is required' });
+    if (!Array.isArray(playerIds) || playerIds.length === 0 || !planId) {
+      return res.status(400).json({ error: 'playerIds (array) and planId are required' });
     }
-    
-    if (!planId) {
-      return res.status(400).json({ error: 'Plan ID is required' });
-    }
-    
-    // Ensure player_plans table exists
-    await query(`
-      CREATE TABLE IF NOT EXISTS player_plans (
-        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-        user_id UUID REFERENCES users(id),
-        plan_id UUID REFERENCES plans(id),
-        start_date TIMESTAMP DEFAULT NOW(),
-        is_active BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-    
-    await withTransaction(async (client) => {
+
+    const start = (startDate || new Date().toISOString().slice(0, 10));
+
+    const results = await withTransaction(async (client) => {
+      const out = [];
       for (const playerId of playerIds) {
-        console.log(`Processing player: ${playerId}`); // Debug log
-        
-        // Get player's user_id
-        const playerResult = await client.query(
-          'SELECT user_id FROM players WHERE id = $1',
-          [playerId]
+        // If switching plans, deactivate other active plans for this user
+        await client.query(
+          `UPDATE player_plans
+             SET is_active = false, updated_at = NOW()
+           WHERE user_id = $1 AND is_active = true AND plan_id <> $2`,
+          [playerId, planId]
         );
-        
-        if (playerResult.rows.length === 0) {
-          console.log(`Player not found: ${playerId}`);
-          continue; // Skip if player not found
-        }
-        
-        const userId = playerResult.rows[0].user_id;
-        console.log(`Player ${playerId} has user_id: ${userId}`);
-        
-        if (userId) {
-          // Deactivate existing plans for this user
-          await client.query(`
-            UPDATE player_plans 
-            SET is_active = false, updated_at = NOW() 
-            WHERE user_id = $1 AND is_active = true
-          `, [userId]);
-          
-          // Assign new plan
-          await client.query(`
-            INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
-            VALUES ($1, $2, $3, true, NOW(), NOW())
-          `, [userId, planId, startDate || new Date()]);
-          
-          console.log(`Plan assigned to user ${userId}`);
-        } else {
-          console.log(`Player ${playerId} has no linked user account`);
-        }
+
+        // Idempotent assign: insert or "upsert" same active plan
+        const { rows } = await client.query(
+          `
+          INSERT INTO player_plans (user_id, plan_id, start_date, is_active)
+          VALUES ($1, $2, $3, true)
+          ON CONFLICT (user_id, plan_id, is_active)
+          DO UPDATE SET start_date = EXCLUDED.start_date, is_active = true, updated_at = NOW()
+          RETURNING id, user_id, plan_id, start_date, is_active
+          `,
+          [playerId, planId, start]
+        );
+
+        out.push(rows[0]);
       }
+      return out;
     });
-    
-    res.json({ success: true, message: `Payment plans assigned to ${playerIds.length} players` });
-  } catch (error) {
-    console.error('Bulk assign plans error:', error);
-    res.status(500).json({ 
-      error: 'Failed to assign payment plans',
-      message: error.message 
-    });
+
+    return res.json({ message: 'Plan assigned', assignments: results });
+  } catch (err) {
+    console.error('bulk-assign-plan error:', err);
+    return res.status(500).json({ error: 'Failed to assign plan' });
   }
 });
 
