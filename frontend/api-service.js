@@ -240,31 +240,43 @@ class ApiService {
 async createPaymentPlan(planData) {
   console.log('💳 Creating payment plan:', planData);
 
-  // Accept both old and new field names defensively
-  const price = planData.price ?? Number(planData.amount);
-  const interval = planData.interval ?? planData.frequency;
-  const payload = {
-    name: planData.name,
-    price,                // <- what your UI reads back as plan.price
-    interval,             // <- what your UI shows as plan.interval
-    description: planData.description
-    // If your backend needs currency, uncomment:
-    // currency: 'GBP'
-  };
+  const name = planData.name?.trim();
+  const price = Number(planData.price ?? planData.amount); // accept either
+  const intervalRaw = (planData.interval ?? planData.frequency)?.toLowerCase();
+  const description = planData.description ?? '';
 
-  // Basic validation before sending
-  if (!payload.name || !Number.isFinite(price) || !interval) {
+  if (!name || !Number.isFinite(price) || !intervalRaw) {
     throw new Error('Missing required fields (name/price/interval)');
   }
 
+  // Offer common variants many backends use
+  const intervalUnitMap = { monthly: 'month', quarterly: 'quarter', annually: 'year', annual: 'year', yearly: 'year' };
+  const intervalUnit = intervalUnitMap[intervalRaw] || intervalRaw;
+  const amount_minor = Math.round(price * 100);
+
+  const payload = {
+    // “generic” keys your UI expects back
+    name,
+    price,                 // decimal £
+    interval: intervalRaw, // monthly | quarterly | annually
+    description,
+
+    // “alt” keys some backends require
+    amount: price,               // some use decimal
+    amount_minor,                // some require minor units (pence)
+    currency: 'GBP',
+    frequency: intervalRaw,      // alias for interval
+    interval_unit: intervalUnit, // month | quarter | year
+  };
+
   try {
-    const response = await this.makeRequest('/payments/plans', {
+    const res = await this.makeRequest('/payments/plans', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload),
     });
-    console.log('✅ Payment plan created:', response);
-    return response;
+    console.log('✅ Payment plan created:', res);
+    return res;
   } catch (error) {
     console.error('❌ Failed to create payment plan:', error);
     throw error;

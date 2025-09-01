@@ -1637,12 +1637,12 @@ function initAddPlayerModalControls() {
         // Enhanced Admin Dashboard Functions
         
         // Initialize dashboard when page loads
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', async function () {
   console.log('🏢 Enhanced Admin Dashboard Loading...');
-  
+
   try {
     const dashboardData = await apiService.getAdminDashboardData();
-    
+
     if (dashboardData) {
       AppState.clubs = dashboardData.clubs || [];
       AppState.activeClubId = await getActiveClubId();
@@ -1651,25 +1651,24 @@ function initAddPlayerModalControls() {
       AppState.events = dashboardData.events || [];
       AppState.teams = dashboardData.teams || [];
       AppState.payments = dashboardData.payments || [];
-      
-      // Update statistics
       updateDashboardStats(dashboardData.statistics);
     }
-    
-    // Load data for current view
+
+    // ✅ Load payment plans first so we can enrich players
+    await loadPaymentPlans();
+
+    // then render the rest
     loadDashboardStats();
-    loadPlayers();
+    await loadPlayers();        // ← now after plans
     loadTeams();
     loadEvents();
     loadFinances();
-    await loadPaymentPlans();
     initAddPlayerModalControls();
-    
   } catch (error) {
     console.error('Failed to load dashboard:', error);
     showNotification('Failed to load dashboard data', 'error');
   }
-  
+
   setupEnhancedEventListeners();
 });
 
@@ -2781,6 +2780,22 @@ function updateDashboardStats(statistics) {
     }
 
     const players = await apiService.getPlayers(clubId);
+
+// 👇 attach plan objects & normalize flags so hasPlan() works on reload
+const plansById = Object.fromEntries((AppState.paymentPlans || []).map(pl => [String(pl.id), pl]));
+
+players.forEach(p => {
+  const planId =
+    p.payment_plan_id ??
+    p.plan_id ??
+    p.payment_plan?.id ??
+    p.plan?.id;
+
+  if (planId != null && String(planId).trim() !== '' && String(planId) !== '0') {
+    p.payment_plan = p.payment_plan || p.plan || plansById[String(planId)] || undefined;
+    p.has_payment_plan = true; // normalize truthy flag for hasPlan()
+  }
+});
 
     if (!players || players.length === 0) {
       container.innerHTML = `
