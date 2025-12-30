@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,7 +28,7 @@
             padding: 2rem;
             width: 100%;
             max-width: 600px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
             position: relative;
             overflow: hidden;
         }
@@ -128,6 +129,7 @@
                 opacity: 0;
                 transform: translateX(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -413,31 +415,40 @@
             font-size: 0.8rem;
         }
 
-        .strength-weak { color: #dc3545; }
-        .strength-medium { color: #ffc107; }
-        .strength-strong { color: #28a745; }
+        .strength-weak {
+            color: #dc3545;
+        }
+
+        .strength-medium {
+            color: #ffc107;
+        }
+
+        .strength-strong {
+            color: #28a745;
+        }
 
         @media (max-width: 768px) {
             .account-type-selection {
                 grid-template-columns: 1fr;
             }
-            
+
             .step-indicator {
                 gap: 0.5rem;
             }
-            
+
             .step {
                 width: 30px;
                 height: 30px;
                 font-size: 0.8rem;
             }
-            
+
             .sports-selection {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
 </head>
+
 <body>
     <div class="signup-container">
         <!-- Logo Section -->
@@ -459,7 +470,7 @@
         <!-- Step 1: Account Type Selection -->
         <div class="form-step active" data-step="1">
             <h2 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Choose Your Account Type</h2>
-            
+
             <div class="account-type-selection">
                 <div class="account-type-card" data-type="adult">
                     <div class="icon">⚽</div>
@@ -467,10 +478,11 @@
                     <p>For players, parents, and sports enthusiasts</p>
                     <div class="adult-clarification" style="display: none;">
                         <strong>✅ Adult Account Required</strong><br>
-                        This is an adult account. You can add and manage children's profiles within your account once registered.
+                        This is an adult account. You can add and manage children's profiles within your account once
+                        registered.
                     </div>
                 </div>
-                
+
                 <div class="account-type-card" data-type="organization">
                     <div class="icon">🏢</div>
                     <h3>Organization</h3>
@@ -480,7 +492,8 @@
 
             <div class="child-management-info" style="display: none;" id="childInfo">
                 <strong>👶 Managing Children</strong><br>
-                After creating your adult account, you'll be able to add multiple children to your profile. You'll manage all bookings, payments, and communications for your children through your parent account.
+                After creating your adult account, you'll be able to add multiple children to your profile. You'll
+                manage all bookings, payments, and communications for your children through your parent account.
             </div>
 
             <!-- Organization Type Selection -->
@@ -519,11 +532,13 @@
                         </div>
                         <div class="toggle-option" data-toggle="multiple">
                             <strong>Multiple Organizations</strong>
-                            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #666;">Switch between different organizations</p>
+                            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #666;">Switch between different
+                                organizations</p>
                         </div>
                     </div>
                     <div class="child-management-info" style="margin-top: 1rem;">
-                        <strong>💡 Pro Tip:</strong> You can create separate organizations (e.g., "Pro Elite" and "Pro Elite League") and easily toggle between them in your dashboard.
+                        <strong>💡 Pro Tip:</strong> You can create separate organizations (e.g., "Pro Elite" and "Pro
+                        Elite League") and easily toggle between them in your dashboard.
                     </div>
                 </div>
             </div>
@@ -532,7 +547,7 @@
         <!-- Step 2: Personal Information -->
         <div class="form-step" data-step="2">
             <h2 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Personal Information</h2>
-            
+
             <div class="form-group required">
                 <label for="firstName">First Name</label>
                 <input type="text" id="firstName" name="firstName" required>
@@ -573,7 +588,7 @@
         <!-- Step 3: CV/Profile Information -->
         <div class="form-step" data-step="3">
             <h2 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Build Your Profile</h2>
-            
+
             <div class="form-group">
                 <label for="location">Location (City, Country)</label>
                 <input type="text" id="location" name="location" placeholder="e.g., London, UK">
@@ -631,28 +646,33 @@
 
             <div class="form-group">
                 <label for="previousTeams">Previous Teams/Clubs</label>
-                <textarea id="previousTeams" name="previousTeams" rows="3" placeholder="List your previous teams, clubs, or achievements..."></textarea>
+                <textarea id="previousTeams" name="previousTeams" rows="3"
+                    placeholder="List your previous teams, clubs, or achievements..."></textarea>
             </div>
 
             <div class="form-group">
                 <label for="achievements">Notable Achievements</label>
-                <textarea id="achievements" name="achievements" rows="3" placeholder="Championships, awards, certifications..."></textarea>
+                <textarea id="achievements" name="achievements" rows="3"
+                    placeholder="Championships, awards, certifications..."></textarea>
             </div>
         </div>
 
         <!-- Step 4: Payment Setup -->
         <div class="form-step" data-step="4">
             <h2 style="text-align: center; margin-bottom: 1.5rem; color: #333;">Payment Setup</h2>
-            
+
             <div class="stripe-info">
                 <h3 style="margin-bottom: 1rem; color: #333;">🔒 Secure Payment Processing</h3>
-                <p style="margin-bottom: 1rem;">ClubHub uses Stripe for secure payment processing. Your payment information is encrypted and never stored on our servers.</p>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                <p style="margin-bottom: 1rem;">ClubHub uses Stripe for secure payment processing. Your payment
+                    information is encrypted and never stored on our servers.</p>
+
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
                     <div style="text-align: center;">
                         <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💳</div>
                         <strong>Linked Account</strong>
-                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Connect your bank account for easy payments</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Connect your bank account for easy payments
+                        </p>
                     </div>
                     <div style="text-align: center;">
                         <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔄</div>
@@ -701,7 +721,8 @@
 
             <div class="child-management-info">
                 <strong>💡 Setup Complete Later</strong><br>
-                You can complete your payment setup after registration. We'll guide you through connecting your Stripe account when you're ready to make your first payment.
+                You can complete your payment setup after registration. We'll guide you through connecting your Stripe
+                account when you're ready to make your first payment.
             </div>
         </div>
 
@@ -710,35 +731,46 @@
             <div class="success-message">
                 <div class="success-icon">✓</div>
                 <h2 style="color: #333; margin-bottom: 1rem;">Welcome to ClubHub!</h2>
-                <p style="color: #666; margin-bottom: 2rem;">Your account has been created successfully. Let's get you started on your sports journey.</p>
-                
-                <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: left;">
+                <p style="color: #666; margin-bottom: 2rem;">Your account has been created successfully. Let's get you
+                    started on your sports journey.</p>
+
+                <div
+                    style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; text-align: left;">
                     <h3 style="margin-bottom: 1rem; color: #333;">Next Steps:</h3>
                     <div style="display: grid; gap: 1rem;">
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 40px; height: 40px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">1</div>
+                            <div
+                                style="width: 40px; height: 40px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                1</div>
                             <div>
                                 <strong>Complete your profile</strong>
-                                <p style="margin: 0; color: #666; font-size: 0.9rem;">Add more details to help clubs find you</p>
+                                <p style="margin: 0; color: #666; font-size: 0.9rem;">Add more details to help clubs
+                                    find you</p>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 40px; height: 40px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">2</div>
+                            <div
+                                style="width: 40px; height: 40px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                2</div>
                             <div>
                                 <strong>Find and join clubs</strong>
-                                <p style="margin: 0; color: #666; font-size: 0.9rem;">Browse local clubs and submit applications</p>
+                                <p style="margin: 0; color: #666; font-size: 0.9rem;">Browse local clubs and submit
+                                    applications</p>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 40px; height: 40px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">3</div>
+                            <div
+                                style="width: 40px; height: 40px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                3</div>
                             <div>
                                 <strong>Book your first event</strong>
-                                <p style="margin: 0; color: #666; font-size: 0.9rem;">Start participating in training sessions and matches</p>
+                                <p style="margin: 0; color: #666; font-size: 0.9rem;">Start participating in training
+                                    sessions and matches</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 1rem; justify-content: center;">
                     <button class="btn btn-primary" onclick="goToDashboard()">Go to Dashboard</button>
                     <button class="btn btn-secondary" onclick="completeLater()">Complete Later</button>
@@ -748,7 +780,8 @@
 
         <!-- Navigation -->
         <div class="step-navigation">
-            <button class="btn btn-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">Previous</button>
+            <button class="btn btn-secondary" id="prevBtn" onclick="previousStep()"
+                style="display: none;">Previous</button>
             <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next</button>
         </div>
     </div>
@@ -769,26 +802,40 @@
         };
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             updateStepDisplay();
             setupEventListeners();
+
+            // Handle URL parameters for pre-selected account type
+            const urlParams = new URLSearchParams(window.location.search);
+            const type = urlParams.get('type');
+            if (type) {
+                const card = document.querySelector(`.account-type-card[data-type="${type}"]`);
+                if (card) {
+                    card.click();
+                    // If a type is provided, we can automatically move to step 2 for a smoother flow
+                    setTimeout(() => {
+                        nextStep();
+                    }, 500);
+                }
+            }
         });
 
         function setupEventListeners() {
             // Account type selection
             document.querySelectorAll('.account-type-card').forEach(card => {
-                card.addEventListener('click', function() {
+                card.addEventListener('click', function () {
                     document.querySelectorAll('.account-type-card').forEach(c => c.classList.remove('selected'));
                     this.classList.add('selected');
-                    
+
                     const type = this.dataset.type;
                     formData.accountType = type;
-                    
+
                     // Show/hide organization options
                     const orgOptions = document.getElementById('orgTypeSelection');
                     const childInfo = document.getElementById('childInfo');
                     const adultClarification = this.querySelector('.adult-clarification');
-                    
+
                     if (type === 'organization') {
                         orgOptions.style.display = 'block';
                         childInfo.style.display = 'none';
@@ -803,7 +850,7 @@
 
             // Organization toggle
             document.querySelectorAll('.toggle-option').forEach(option => {
-                option.addEventListener('click', function() {
+                option.addEventListener('click', function () {
                     document.querySelectorAll('.toggle-option').forEach(o => o.classList.remove('selected'));
                     this.classList.add('selected');
                     formData.multipleOrgs = this.dataset.toggle === 'multiple';
@@ -812,13 +859,13 @@
 
             // Sport selection
             document.querySelectorAll('.sport-card').forEach(card => {
-                card.addEventListener('click', function() {
+                card.addEventListener('click', function () {
                     document.querySelectorAll('.sport-card').forEach(c => c.classList.remove('selected'));
                     this.classList.add('selected');
-                    
+
                     const sport = this.dataset.sport;
                     formData.primarySport = sport;
-                    
+
                     // Show positions for selected sport
                     updatePositions(sport);
                 });
@@ -831,17 +878,17 @@
         function updatePositions(sport) {
             const positionContainer = document.getElementById('positionSelection');
             const positions = sportPositions[sport] || [];
-            
+
             if (positions.length > 0) {
-                positionContainer.innerHTML = positions.map(position => 
+                positionContainer.innerHTML = positions.map(position =>
                     `<div class="position-btn" data-position="${position}">${position}</div>`
                 ).join('');
-                
+
                 positionContainer.classList.add('show');
-                
+
                 // Add click handlers to position buttons
                 positionContainer.querySelectorAll('.position-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
+                    btn.addEventListener('click', function () {
                         positionContainer.querySelectorAll('.position-btn').forEach(b => b.classList.remove('selected'));
                         this.classList.add('selected');
                         formData.position = this.dataset.position;
@@ -856,25 +903,25 @@
         function checkPasswordStrength() {
             const password = document.getElementById('password').value;
             const strengthDiv = document.getElementById('passwordStrength');
-            
+
             let strength = 0;
             let feedback = [];
-            
+
             if (password.length >= 8) strength++;
             else feedback.push('At least 8 characters');
-            
+
             if (/[A-Z]/.test(password)) strength++;
             else feedback.push('One uppercase letter');
-            
+
             if (/[a-z]/.test(password)) strength++;
             else feedback.push('One lowercase letter');
-            
+
             if (/[0-9]/.test(password)) strength++;
             else feedback.push('One number');
-            
+
             if (/[^A-Za-z0-9]/.test(password)) strength++;
             else feedback.push('One special character');
-            
+
             if (strength < 3) {
                 strengthDiv.className = 'password-strength strength-weak';
                 strengthDiv.textContent = 'Weak password. Need: ' + feedback.slice(0, 2).join(', ');
@@ -888,19 +935,19 @@
         }
 
         function nextStep() {
-  if (!validateCurrentStep()) return;
-  collectCurrentStepData();
+            if (!validateCurrentStep()) return;
+            collectCurrentStepData();
 
-  if (currentStep === totalSteps - 1) {
-    submitForm();
-    return;
-  }
+            if (currentStep === totalSteps - 1) {
+                submitForm();
+                return;
+            }
 
-  if (currentStep < totalSteps) {
-    currentStep++;
-    updateStepDisplay();
-  }
-}
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateStepDisplay();
+            }
+        }
 
         function previousStep() {
             if (currentStep > 1) {
@@ -914,7 +961,7 @@
             document.querySelectorAll('.step').forEach((step, index) => {
                 const stepNumber = index + 1;
                 step.classList.remove('active', 'completed');
-                
+
                 if (stepNumber < currentStep) {
                     step.classList.add('completed');
                 } else if (stepNumber === currentStep) {
@@ -933,9 +980,9 @@
             // Update navigation buttons
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
-            
+
             prevBtn.style.display = currentStep > 1 ? 'block' : 'none';
-            
+
             if (currentStep === totalSteps) {
                 nextBtn.style.display = 'none';
             } else if (currentStep === totalSteps - 1) {
@@ -962,7 +1009,7 @@
                         formData.orgTypes = selectedOrgTypes;
                     }
                     return true;
-                    
+
                 case 2:
                     const requiredFields = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
                     for (let field of requiredFields) {
@@ -972,30 +1019,30 @@
                             return false;
                         }
                     }
-                    
+
                     const password = document.getElementById('password').value;
                     const confirmPassword = document.getElementById('confirmPassword').value;
-                    
+
                     if (password !== confirmPassword) {
                         alert('Passwords do not match');
                         return false;
                     }
-                    
+
                     if (password.length < 6) {
                         alert('Password must be at least 6 characters');
                         return false;
                     }
-                    
+
                     return true;
-                    
+
                 case 3:
                     // Profile information is optional
                     return true;
-                    
+
                 case 4:
                     // Payment setup is optional for initial registration
                     return true;
-                    
+
                 default:
                     return true;
             }
@@ -1006,7 +1053,7 @@
                 case 1:
                     // Already collected in event listeners
                     break;
-                    
+
                 case 2:
                     formData.firstName = document.getElementById('firstName').value;
                     formData.lastName = document.getElementById('lastName').value;
@@ -1015,7 +1062,7 @@
                     formData.phone = document.getElementById('phone').value;
                     formData.dateOfBirth = document.getElementById('dateOfBirth').value;
                     break;
-                    
+
                 case 3:
                     formData.location = document.getElementById('location').value;
                     formData.position = document.getElementById('customPosition').value;
@@ -1023,7 +1070,7 @@
                     formData.previousTeams = document.getElementById('previousTeams').value;
                     formData.achievements = document.getElementById('achievements').value;
                     break;
-                    
+
                 case 4:
                     formData.autoPayments = document.getElementById('autoPayments').checked;
                     formData.paymentReminders = document.getElementById('paymentReminders').checked;
@@ -1034,66 +1081,66 @@
             }
         }
 
-       async function submitForm() {
-  const nextBtn = document.getElementById('nextBtn');
-  try {
-    nextBtn.textContent = 'Creating Account...';
-    nextBtn.disabled = true;
+        async function submitForm() {
+            const nextBtn = document.getElementById('nextBtn');
+            try {
+                nextBtn.textContent = 'Creating Account...';
+                nextBtn.disabled = true;
 
-    collectCurrentStepData();
+                collectCurrentStepData();
 
-    const payload = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      password: formData.password,
-      userType: formData.accountType === 'organization' ? 'organization' : 'player',
-      profile: {
-        location: formData.location || '',
-        sport: formData.primarySport || '',
-        position: formData.position || formData.customPosition || '',
-        experience: formData.experience || '',
-        previousTeams: formData.previousTeams || '',
-        achievements: formData.achievements || '',
-        phone: formData.phone || '',
-        dateOfBirth: formData.dateOfBirth || ''
-      }
-    };
+                const payload = {
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    email: formData.email,
+                    password: formData.password,
+                    userType: formData.accountType === 'organization' ? 'organization' : 'player',
+                    profile: {
+                        location: formData.location || '',
+                        sport: formData.primarySport || '',
+                        position: formData.position || formData.customPosition || '',
+                        experience: formData.experience || '',
+                        previousTeams: formData.previousTeams || '',
+                        achievements: formData.achievements || '',
+                        phone: formData.phone || '',
+                        dateOfBirth: formData.dateOfBirth || ''
+                    }
+                };
 
-    const res = await apiService.register(payload);
-    if (!res || !res.token) {
-      await apiService.login(formData.email, formData.password);
-    }
+                const res = await apiService.register(payload);
+                if (!res || !res.token) {
+                    await apiService.login(formData.email, formData.password);
+                }
 
-    const params = new URLSearchParams(window.location.search);
-    const rawReturn = params.get('returnUrl');
-    if (rawReturn) {
-      try {
-        const u = new URL(decodeURIComponent(rawReturn), window.location.origin);
-        if (u.origin === window.location.origin) {
-          window.location.href = u.pathname + u.search + u.hash;
-          return;
+                const params = new URLSearchParams(window.location.search);
+                const rawReturn = params.get('returnUrl');
+                if (rawReturn) {
+                    try {
+                        const u = new URL(decodeURIComponent(rawReturn), window.location.origin);
+                        if (u.origin === window.location.origin) {
+                            window.location.href = u.pathname + u.search + u.hash;
+                            return;
+                        }
+                    } catch { }
+                }
+
+                const user =
+                    (res && res.user) ||
+                    (localStorage.getItem('currentUser') && JSON.parse(localStorage.getItem('currentUser'))) ||
+                    {};
+                const redirectUrl =
+                    user.userType === 'organization' || user.userType === 'admin'
+                        ? 'admin-dashboard.html'
+                        : 'player-dashboard.html';
+
+                window.location.href = redirectUrl;
+            } catch (err) {
+                alert('Error creating account: ' + (err.message || 'Unknown error'));
+            } finally {
+                nextBtn.textContent = 'Create Account';
+                nextBtn.disabled = false;
+            }
         }
-      } catch {}
-    }
-
-    const user =
-      (res && res.user) ||
-      (localStorage.getItem('currentUser') && JSON.parse(localStorage.getItem('currentUser'))) ||
-      {};
-    const redirectUrl =
-      user.userType === 'organization' || user.userType === 'admin'
-        ? 'admin-dashboard.html'
-        : 'player-dashboard.html';
-
-    window.location.href = redirectUrl;
-  } catch (err) {
-    alert('Error creating account: ' + (err.message || 'Unknown error'));
-  } finally {
-    nextBtn.textContent = 'Create Account';
-    nextBtn.disabled = false;
-  }
-}
 
         function goToDashboard() {
             // Redirect to appropriate dashboard based on account type
@@ -1138,7 +1185,7 @@
                         smsRecovery: formData.smsRecovery
                     }
                 });
-                
+
                 return response;
             } catch (error) {
                 throw new Error('Registration failed: ' + error.message);
@@ -1151,7 +1198,7 @@
                 // Enable email recovery
                 console.log('Email recovery enabled');
             }
-            
+
             if (formData.smsRecovery && formData.phone) {
                 // Enable SMS recovery
                 console.log('SMS recovery enabled');
@@ -1176,4 +1223,5 @@
         }
     </script>
 </body>
+
 </html>
