@@ -37,6 +37,7 @@ app.use(helmet({
         "https://api.stripe.com", 
         "https://js.stripe.com",
         "https://api.clubhubsports.net",
+        "https://clubhub-dev.onrender.com",
         "http://localhost:3000"
       ],
       scriptSrc: [

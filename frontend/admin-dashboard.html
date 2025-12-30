@@ -5,977 +5,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - ClubHub</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            color: #ffffff;
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .header {
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 1rem 0;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
-            height: 80px;
-        }
-
-        .nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 100%;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            height: 100%;
-        }
-
-        .logo-image {
-            height: 60px;
-            width: 60px;
-            background-image: url('images/logo.png');
-            background-size: cover;
-            background-position: center;
-            border-radius: 50%;
-            box-shadow: 0 4px 15px rgba(220, 67, 67, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .logo-image:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(220, 67, 67, 0.4);
-        }
-
-        .logo-text {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #dc4343;
-            text-shadow: 0 0 20px rgba(220, 67, 67, 0.5);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            color: #ffffff;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #dc4343 0%, #ffd700 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-        }
-
-        /* Enhanced Button Styles */
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            font-size: 0.95rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #dc4343 0%, #b91c1c 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(220, 67, 67, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(220, 67, 67, 0.4);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: #dc4343;
-            border: 2px solid #dc4343;
-        }
-
-        .btn-secondary:hover {
-            background: #dc4343;
-            color: white;
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-            color: white;
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-            color: #1a1a1a;
-            font-weight: bold;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-        }
-
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-        }
-
-        .btn-stripe {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-stripe::before {
-            content: '💳';
-        }
-
-        /* Main Content */
-        .main {
-            margin-top: 80px;
-            min-height: calc(100vh - 80px);
-        }
-
-        /* Dashboard Styles */
-        .dashboard {
-            padding: 2rem 0;
-        }
-
-        .dashboard-header {
-            padding: 2rem 0;
-            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .dashboard-header h1 {
-            color: #dc4343;
-            margin-bottom: 0.5rem;
-        }
-
-        .stripe-access {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .dashboard-nav {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
-            padding-bottom: 1rem;
-        }
-
-        .dashboard-nav button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(220, 67, 67, 0.3);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .dashboard-nav button.active,
-        .dashboard-nav button:hover {
-            background: #dc4343;
-            border-color: #dc4343;
-            transform: translateY(-1px);
-        }
-
-        .dashboard-content {
-            padding: 1rem 0;
-        }
-
-        .dashboard-section {
-            display: none;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .dashboard-section.active {
-            display: block;
-        }
-
-        /* Card Styles */
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(220, 67, 67, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            border-color: rgba(220, 67, 67, 0.4);
-        }
-
-        .card h3 {
-            color: #dc4343;
-            margin-bottom: 1rem;
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(220, 67, 67, 0.2);
-            border-radius: 8px;
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #dc4343;
-            display: block;
-        }
-
-        .stat-label {
-            opacity: 0.8;
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        /* Enhanced Player Management */
-        .player-filters {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            align-items: end;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 1rem;
-            border-radius: 12px;
-            border: 1px solid rgba(220, 67, 67, 0.2);
-        }
-
-        .filter-group {
-            min-width: 200px;
-        }
-
-        .filter-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #dc4343;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .filter-group select,
-        .filter-group input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid rgba(220, 67, 67, 0.3);
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 0.9rem;
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 0.5rem;
-            align-items: end;
-            flex-wrap: wrap;
-        }
-
-        /* Enhanced Player Card */
-        .player-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(220, 67, 67, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .player-card:hover {
-            border-color: rgba(220, 67, 67, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .player-card.overdue {
-            border-color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
-        }
-
-        .player-card.not-assigned {
-            border-color: #ffd700;
-            background: rgba(255, 215, 0, 0.1);
-        }
-
-        .player-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .player-info h4 {
-            color: #dc4343;
-            margin-bottom: 0.5rem;
-            font-size: 1.2rem;
-        }
-
-        .player-meta {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .player-meta span {
-            opacity: 0.8;
-        }
-
-        .player-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .payment-plan-badge {
-            background: linear-gradient(135deg, #ffd700, #ffa500);
-            color: #1a1a1a;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .no-plan-badge {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        /* Status Badge Styles */
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            display: inline-block;
-        }
-
-        .status-paid {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .status-overdue {
-            background: rgba(220, 38, 38, 0.2);
-            color: #dc2626;
-            border: 1px solid rgba(220, 38, 38, 0.3);
-        }
-
-        .status-pending {
-            background: rgba(251, 191, 36, 0.2);
-            color: #fbbf24;
-            border: 1px solid rgba(251, 191, 36, 0.3);
-        }
-
-        .status-active {
-            background: rgba(59, 130, 246, 0.2);
-            color: #3b82f6;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .status-not-assigned {
-            background: rgba(255, 215, 0, 0.2);
-            color: #ffd700;
-            border: 1px solid rgba(255, 215, 0, 0.3);
-        }
-
-        /* Team Management Enhancement */
-        .team-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(220, 67, 67, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .team-card:hover {
-            border-color: rgba(220, 67, 67, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .team-card h4 {
-            color: #dc4343;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.3rem;
-        }
-
-        .team-stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .team-stat-number {
-            display: block;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #dc4343;
-        }
-
-        .team-stat-label {
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        /* Invite System */
-        .invite-section {
-            background: rgba(255, 215, 0, 0.1);
-            border: 2px solid #ffd700;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .invite-section h3 {
-            color: #ffd700;
-            margin-bottom: 1rem;
-        }
-
-        .invite-link {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(220, 67, 67, 0.3);
-            border-radius: 8px;
-            padding: 0.75rem;
-            margin: 1rem 0;
-            font-family: monospace;
-            word-break: break-all;
-            color: #ffd700;
-        }
-
-        /* Financial Management */
-        .finance-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .finance-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(220, 67, 67, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .finance-amount {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #dc4343;
-            display: block;
-        }
-
-        .finance-label {
-            opacity: 0.8;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-        }
-
-        /* Listings Section */
-        .listing-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(220, 67, 67, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .listing-card:hover {
-            border-color: rgba(220, 67, 67, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .application-item {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(220, 67, 67, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .application-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 2000;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            border: 1px solid rgba(220, 67, 67, 0.3);
-            border-radius: 12px;
-            padding: 2rem;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
-        }
-
-        .modal-header h2 {
-            color: #dc4343;
-            margin: 0;
-        }
-
-        .close {
-            background: none;
-            border: none;
-            color: #dc4343;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .close:hover {
-            background: rgba(220, 67, 67, 0.1);
-        }
-
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #dc4343;
-            font-weight: 600;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid rgba(220, 67, 67, 0.3);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .form-group input::placeholder,
-        .form-group textarea::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #dc4343;
-            box-shadow: 0 0 10px rgba(220, 67, 67, 0.3);
-        }
-
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            font-weight: normal;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .checkbox-group label:hover {
-            background: rgba(220, 67, 67, 0.1);
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-            transform: scale(1.2);
-            accent-color: #dc4343;
-        }
-
-        /* Table Styles */
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .table th,
-        .table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(220, 67, 67, 0.2);
-        }
-
-        .table th {
-            background: rgba(220, 67, 67, 0.1);
-            color: #dc4343;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.875rem;
-            letter-spacing: 0.5px;
-        }
-
-        .table tr:hover {
-            background: rgba(220, 67, 67, 0.05);
-        }
-
-        /* Activity and item list styles */
-        .item-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border-bottom: 1px solid rgba(220, 67, 67, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .item-list-item:hover {
-            background: rgba(220, 67, 67, 0.05);
-        }
-
-        .item-list-item:last-child {
-            border-bottom: none;
-        }
-
-        .item-info h4 {
-            color: #dc4343;
-            margin-bottom: 0.25rem;
-        }
-
-        .item-info p {
-            opacity: 0.8;
-            font-size: 0.875rem;
-        }
-
-        .item-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        /* Search and Filter Styles */
-        .search-filters {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            align-items: end;
-        }
-
-        .search-filters .form-group {
-            margin-bottom: 0;
-            min-width: 200px;
-        }
-
-        /* Tactical Board Styles */
-        .tactical-board {
-            background-color: #2e7d32;
-            background-image:
-                linear-gradient(white 2px, transparent 2px),
-                linear-gradient(90deg, white 2px, transparent 2px);
-            background-size: 100% 50%, 50% 100%;
-            border: 4px solid white;
-            border-radius: 8px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.2);
-        }
-
-        .player-position {
-            position: absolute;
-            width: 32px;
-            height: 32px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 800;
-            cursor: move;
-            transform: translate(-50%, -50%);
-            border: 2px solid white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            z-index: 10;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .player-position:hover {
-            transform: translate(-50%, -50%) scale(1.1);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
-        }
-
-        .player-position.selected {
-            background: #ffeb3b;
-            color: #000;
-            border-color: #000;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .dashboard-header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-
-            .dashboard-nav {
-                flex-direction: column;
-            }
-
-            .dashboard-nav button {
-                width: 100%;
-            }
-
-            .player-filters {
-                flex-direction: column;
-            }
-
-            .filter-group {
-                min-width: 100%;
-            }
-
-            .player-meta {
-                grid-template-columns: 1fr;
-            }
-
-            .team-stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .modal-content {
-                width: 95%;
-                padding: 1.5rem;
-            }
-
-            .application-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .application-actions {
-                width: 100%;
-                justify-content: flex-end;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        /* Loading States */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        .spinner {
-            border: 2px solid rgba(220, 67, 67, 0.2);
-            border-left: 2px solid #dc4343;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-right: 0.5rem;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
     <header class="header">
         <nav class="nav container">
             <div class="logo" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text">ClubHub</span>
+                <div class="logo-image"></div>
+                <span class="logo-text neon-text">ClubHub</span>
             </div>
             <div class="user-info">
-                <span>Hello, Admin!</span>
-                <div class="user-avatar">A</div>
-                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                <span id="adminNameDisplay">Hello, Admin!</span>
+                <div class="user-avatar" id="adminAvatar">A</div>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
             </div>
         </nav>
     </header>
 
     <main class="main">
-        <div class="dashboard container">
+        <div class="dashboard container dashboard-container">
             <div class="dashboard-header">
                 <div>
-                    <h1>⚽ Admin Dashboard</h1>
-                    <p>Manage your club with complete control and insights</p>
+                    <h1 class="neon-text">Admin Dashboard</h1>
+                    <p style="color: var(--text-muted);">Manage your club with complete control and insights</p>
                 </div>
                 <div class="stripe-access">
                     <button class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe Dashboard</button>
-                    <button class="btn btn-warning" onclick="generateShareableInviteLink()">🔗 Generate Invite
+                    <button class="btn btn-primary" onclick="generateShareableInviteLink()">🔗 Generate Invite
                         Link</button>
                 </div>
             </div>
 
-            <!-- Enhanced Dashboard Navigation -->
+            <!-- Dashboard Navigation -->
             <div class="dashboard-nav">
-                <button class="active" onclick="showSection('overview')">📊 Overview</button>
-                <button onclick="showSection('club-profile')">🏠 Club Profile</button>
-                <button onclick="showSection('players')">👥 Players</button>
-                <button onclick="showSection('teams')">⚽ Teams</button>
-                <button onclick="showSection('staff')">👨‍💼 Staff</button>
-                <button onclick="showSection('events')">📅 Events</button>
-                <button onclick="showSection('finances')">💰 Finances</button>
-                <button onclick="showSection('listings')">📋 Listings</button>
-                <button onclick="showSection('item-shop')">🛒 Item Shop</button>
-                <button onclick="showSection('marketing-hub')">📢 Marketing Hub</button>
+                <button class="active" onclick="showSection('overview')">Overview</button>
+                <button onclick="showSection('club-profile')">Profile</button>
+                <button onclick="showSection('players')">Players</button>
+                <button onclick="showSection('teams')">Teams</button>
+                <button onclick="showSection('staff')">Staff</button>
+                <button onclick="showSection('events')">Events</button>
+                <button onclick="showSection('finances')">Finances</button>
+                <button onclick="showSection('listings')">Listings</button>
+                <button onclick="showSection('item-shop')">Shop</button>
+                <button onclick="showSection('marketing-hub')">Marketing</button>
+                <button onclick="showSection('tactical')">Tactical</button>
             </div>
 
             <div class="dashboard-content">
@@ -1063,7 +137,8 @@
                             <div class="filter-buttons">
                                 <button class="btn btn-secondary btn-small"
                                     onclick="resetPlayerFilters()">Reset</button>
-                                <button class="btn btn-primary btn-small" onclick="exportPlayers()">📊 Export</button>
+                                <button class="btn btn-primary btn-small" onclick="exportPlayers()">📊
+                                    Export</button>
                             </div>
                         </div>
 
@@ -1080,7 +155,8 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>⚽ Team Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create Team</button>
+                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create
+                                Team</button>
                         </div>
 
                         <div class="card-grid" id="teamsContainer">
@@ -1095,13 +171,15 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>👨‍💼 Staff Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">📧 Invite
+                            <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">📧
+                                Invite
                                 Staff</button>
                         </div>
 
                         <div class="invite-section">
                             <h3>📎 Staff Invite System</h3>
-                            <p>Generate invite links for coaches with specific team assignments. Coaches can only view
+                            <p>Generate invite links for coaches with specific team assignments. Coaches can
+                                only view
                                 their assigned teams:</p>
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
                                 <button class="btn btn-secondary" onclick="generateStaffInvite('coach')">Invite
@@ -1125,7 +203,8 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>📅 Event Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create Event</button>
+                            <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create
+                                Event</button>
                         </div>
 
                         <div class="card-grid" id="eventsContainer">
@@ -1141,7 +220,8 @@
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>💰 Financial Management</h3>
                             <div style="display: flex; gap: 1rem;">
-                                <button class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe</button>
+                                <button class="btn btn-stripe" onclick="accessStripeAccount()">Access
+                                    Stripe</button>
                                 <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">➕ Create
                                     Payment Plan</button>
                             </div>
@@ -1168,7 +248,8 @@
 
                         <div class="card">
                             <h3>💳 Payment Plans</h3>
-                            <p>Players should be assigned to payment plans for easier workflow management:</p>
+                            <p>Players should be assigned to payment plans for easier workflow management:
+                            </p>
                             <div id="paymentPlansContainer">
                             </div>
                         </div>
@@ -1199,7 +280,8 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>📋 Club Listings & Applications</h3>
-                            <button class="btn btn-primary" onclick="showModal('createListingModal')">➕ Create
+                            <button class="btn btn-primary" onclick="showModal('createListingModal')">➕
+                                Create
                                 Listing</button>
                         </div>
 
@@ -1212,7 +294,8 @@
 
                         <div class="card">
                             <h3>📋 Application Management (Indeed-like Interface)</h3>
-                            <p>Once applicants come, manage them with shortlist, reject, and invite options:</p>
+                            <p>Once applicants come, manage them with shortlist, reject, and invite options:
+                            </p>
 
                             <div id="applicationsContainer">
                                 <!-- Applications will be loaded from database -->
@@ -1255,7 +338,8 @@
                                     <input type="file" multiple accept="image/*" style="display: none;"
                                         id="clubPictures" onchange="handlePictureUpload(this)">
                                     <button type="button" class="btn btn-primary"
-                                        onclick="document.getElementById('clubPictures').click()">Choose Files</button>
+                                        onclick="document.getElementById('clubPictures').click()">Choose
+                                        Files</button>
                                 </div>
                                 <div class="uploaded-pictures" id="uploadedPictures">
                                     <!-- Uploaded pictures will appear here -->
@@ -1288,7 +372,8 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                             <h3>📢 Marketing Hub</h3>
-                            <button class="btn btn-primary" onclick="showModal('createCampaignModal')">📣 New
+                            <button class="btn btn-primary" onclick="showModal('createCampaignModal')">📣
+                                New
                                 Campaign</button>
                         </div>
                         <div class="card">
@@ -1389,10 +474,14 @@
                 <div class="form-group">
                     <label>Permissions</label>
                     <div class="checkbox-group">
-                        <label><input type="checkbox" name="staffPermissions" value="finances"> View Finances</label>
-                        <label><input type="checkbox" name="staffPermissions" value="players"> Manage Players</label>
-                        <label><input type="checkbox" name="staffPermissions" value="events"> Manage Events</label>
-                        <label><input type="checkbox" name="staffPermissions" value="listings"> Manage Listings</label>
+                        <label><input type="checkbox" name="staffPermissions" value="finances"> View
+                            Finances</label>
+                        <label><input type="checkbox" name="staffPermissions" value="players"> Manage
+                            Players</label>
+                        <label><input type="checkbox" name="staffPermissions" value="events"> Manage
+                            Events</label>
+                        <label><input type="checkbox" name="staffPermissions" value="listings"> Manage
+                            Listings</label>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary">📧 Send Invite</button>
@@ -1740,11 +829,14 @@
                 <!-- Team management tabs -->
                 <div
                     style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(220, 67, 67, 0.2); padding-bottom: 1rem;">
-                    <button class="btn btn-primary btn-small active" onclick="showTeamTab('games')">🏟️ Games</button>
+                    <button class="btn btn-primary btn-small active" onclick="showTeamTab('games')">🏟️
+                        Games</button>
                     <button class="btn btn-secondary btn-small" onclick="showTeamTab('trainings')">🏋️
                         Trainings</button>
-                    <button class="btn btn-secondary btn-small" onclick="showTeamTab('players')">👥 Players</button>
-                    <button class="btn btn-secondary btn-small" onclick="showTeamTab('votes')">📊 Votes</button>
+                    <button class="btn btn-secondary btn-small" onclick="showTeamTab('players')">👥
+                        Players</button>
+                    <button class="btn btn-secondary btn-small" onclick="showTeamTab('votes')">📊
+                        Votes</button>
                 </div>
 
                 <!-- Tab content will be populated by JavaScript -->
