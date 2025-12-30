@@ -1199,11 +1199,11 @@ body {
 }
 
 .platform-col.org::before {
-    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=1972&auto=format&fit=crop');
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url('images/clubs-hero.jpeg');
 }
 
 .platform-col.player::before {
-    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2186&auto=format&fit=crop');
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url('images/players-hero.jpg');
 }
 
 .platform-col:hover::before {
@@ -1262,7 +1262,7 @@ body {
 /* Benefits Section */
 .benefits-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 2rem;
     margin-top: 3rem;
 }
@@ -1541,6 +1541,10 @@ body {
 
     .card {
         padding: 1.25rem;
+    }
+    
+    .benefits-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .stripe-access {
