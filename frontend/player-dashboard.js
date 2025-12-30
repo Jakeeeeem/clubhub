@@ -74,6 +74,7 @@ async function initializePlayerDashboard() {
     wirePlanButtons();
     wireAccountModal();
     wireFormEventListeners();
+    wireFamilyListeners();
 
     await loadPlayerDataWithFallback();
 
@@ -1172,6 +1173,9 @@ function showPlayerSection(sectionId) {
     case 'my-clubs': 
       loadPlayerClubs(); 
       break;
+    case 'family':
+      loadFamilyMembers();
+      break;
     case 'teams': 
       loadPlayerTeams(); 
       break;
@@ -1472,7 +1476,150 @@ async function deleteUserAccount() {
   }
 }
 
+
+/* Family Management Logic */
+function loadFamilyMembers() {
+  const grid = document.getElementById('familyGrid');
+  if (!grid) return;
+
+  // Add API method if missing
+  if (!apiService.getFamilyMembers) {
+      apiService.getFamilyMembers = async () => {
+          return await apiService.makeRequest('/players/family', { method: 'GET' });
+      };
+  }
+
+  // Show loading state
+  grid.innerHTML = '<div class="stat-card loading-card">Loading family members...</div>';
+
+  apiService.getFamilyMembers().then(family => {
+     PlayerDashboardState.family = family || []; // Cache for editing
+     
+     if(!family || !family.length) {
+         grid.innerHTML = '<div class="stat-card" style="grid-column: 1/-1; text-align: center; padding: 3rem;"><h3>No children added yet</h3><p>Click "+ Add Child" to create a profile for your child.</p></div>';
+         return;
+     }
+     
+     grid.innerHTML = family.map(child => `
+        <div class="card profile-card" style="position: relative;">
+            <div class="profile-header" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div class="avatar" style="width: 50px; height: 50px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem;">${(child.first_name || 'C')[0]}</div>
+                <div>
+                    <h3 style="margin: 0; color: white;">${escapeHTML(child.first_name)} ${escapeHTML(child.last_name)}</h3>
+                    <span style="font-size: 0.9rem; color: #aaa;">${child.position || 'No Position'}</span>
+                </div>
+            </div>
+            <div class="profile-details" style="display: grid; gap: 0.5rem; color: #ddd;">
+                <p><strong>Age:</strong> ${child.age || '?'} (${new Date(child.date_of_birth).getFullYear()})</p>
+                <p><strong>Club:</strong> ${child.club_name || 'Not assigned'}</p>
+                <button class="btn btn-secondary btn-small" style="width: 100%; margin-top: 1rem;" onclick="editChildProfile('${child.id}')">Manage Profile</button>
+            </div>
+        </div>
+     `).join('');
+  }).catch(err => {
+      console.error(err);
+      grid.innerHTML = '<p class="error">Failed to load family members</p>';
+  });
+}
+
+function openAddChildModal() { 
+    if(window.showModal) window.showModal('addChildModal');
+    else {
+        const m = document.getElementById('addChildModal');
+        if(m) m.style.display = 'block';
+    }
+}
+
+function closeAddChildModal() { 
+    if(window.closeModal) window.closeModal('addChildModal');
+    else {
+        const m = document.getElementById('addChildModal');
+        if(m) m.style.display = 'none';
+    }
+    setTimeout(resetChildModal, 300); // Reset after close animation
+}
+
+function resetChildModal() {
+     const form = document.getElementById('addChildForm');
+     if(form) {
+        form.reset();
+        delete form.dataset.mode;
+        delete form.dataset.id;
+        const modal = document.getElementById('addChildModal');
+        if(modal) {
+            modal.querySelector('h2').innerText = 'Add Child Profile';
+            const btn = modal.querySelector('button[type="submit"]');
+            if(btn) btn.innerText = 'Create Profile';
+        }
+     }
+}
+
+function editChildProfile(id) {
+    const child = (PlayerDashboardState.family || []).find(c => c.id === id);
+    if(!child) return;
+    
+    const form = document.getElementById('addChildForm');
+    if(!form) return;
+    
+    form.firstName.value = child.first_name;
+    form.lastName.value = child.last_name;
+    form.dateOfBirth.value = child.date_of_birth.split('T')[0];
+    if(form.position) form.position.value = child.position || '';
+    
+    // Add edit mode
+    form.dataset.mode = 'edit';
+    form.dataset.id = id;
+    
+    const modal = document.getElementById('addChildModal');
+    modal.querySelector('h2').innerText = 'Edit Child Profile';
+    modal.querySelector('button[type="submit"]').innerText = 'Save Changes';
+    
+    openAddChildModal();
+}
+
+function wireFamilyListeners() {
+    const form = document.getElementById('addChildForm');
+    if(form) {
+        // Remove existing listeners to avoid duplicates
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        newForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(newForm);
+            const data = Object.fromEntries(formData.entries());
+            
+            const isEdit = newForm.dataset.mode === 'edit';
+            const endpoint = isEdit ? `/players/child/${newForm.dataset.id}` : '/players/child';
+            const method = isEdit ? 'PUT' : 'POST';
+            
+            try {
+                if(typeof showLoading === 'function') showLoading(true);
+                await apiService.makeRequest(endpoint, {
+                    method: method,
+                    body: JSON.stringify(data)
+                });
+                showNotification(isEdit ? 'Profile updated!' : 'Child profile created!', 'success');
+                closeAddChildModal();
+                if(document.getElementById('player-family').classList.contains('active')) {
+                    loadFamilyMembers();
+                }
+            } catch(err) {
+                console.error(err);
+                showNotification(err.message || 'Operation failed', 'error');
+            } finally {
+                if(typeof showLoading === 'function') showLoading(false);
+            }
+        });
+    }
+}
+
 // Global exports
+window.loadFamilyMembers = loadFamilyMembers;
+window.openAddChildModal = openAddChildModal;
+window.closeAddChildModal = closeAddChildModal;
+window.editChildProfile = editChildProfile;
+
 window.exportUserData = exportUserData;
 window.deleteUserAccount = deleteUserAccount;
 window.toggleNotifications = toggleNotifications;

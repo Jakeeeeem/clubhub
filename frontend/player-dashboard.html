@@ -32,6 +32,7 @@
       <!-- Dashboard Navigation -->
       <div class="dashboard-nav">
         <button class="active" onclick="showPlayerSection('overview')">Overview</button>
+        <button onclick="showPlayerSection('family')">My Family 👨‍👩‍👧‍👦</button>
         <button onclick="showPlayerSection('my-clubs')">My Clubs</button>
         <button onclick="showPlayerSection('teams')">Teams</button>
         <button onclick="showPlayerSection('subscriptions')">Subscriptions</button>
@@ -43,6 +44,22 @@
       </div>
 
       <div class="dashboard-content">
+        <!-- Family Section -->
+        <div id="player-family" class="dashboard-section">
+          <div class="section-header"
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div>
+              <h2>My Family</h2>
+              <p>Manage child profiles linked to your account</p>
+            </div>
+            <button class="btn-primary" onclick="openAddChildModal()">+ Add Child</button>
+          </div>
+          <div id="familyGrid" class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+            <!-- Populated by JS -->
+            <div class="stat-card loading-card">Loading family members...</div>
+          </div>
+        </div>
+
         <!-- Overview -->
         <div id="player-overview" class="dashboard-section active">
           <div class="stats-grid">
@@ -572,6 +589,41 @@
     };
     document.head.appendChild(scriptEl);
   </script>
+
+  <!-- Add Child Modal -->
+  <div id="addChildModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Child Profile</h2>
+        <span class="close" onclick="closeAddChildModal()">&times;</span>
+      </div>
+      <form id="addChildForm">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" name="firstName" required placeholder="e.g. Tom">
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" name="lastName" required placeholder="e.g. Smith">
+        </div>
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <input type="date" name="dateOfBirth" required>
+        </div>
+        <div class="form-group">
+          <label>Position (Optional)</label>
+          <select name="position">
+            <option value="">Select Position</option>
+            <option value="Goalkeeper">Goalkeeper</option>
+            <option value="Defender">Defender</option>
+            <option value="Midfielder">Midfielder</option>
+            <option value="Forward">Forward</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">Create Profile</button>
+      </form>
+    </div>
+  </div>
 
   <!-- Player dashboard -->
   <script src="player-dashboard.js"></script>

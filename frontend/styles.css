@@ -142,7 +142,7 @@ body {
 .btn {
     padding: 0.8rem 1.8rem;
     border: 1px solid transparent;
-    border-radius: 12px;
+    border-radius: 50px;
     cursor: pointer;
     font-weight: 600;
     transition: var(--transition);
@@ -331,7 +331,7 @@ body {
 
 .account-type-card h3 {
     color: #ffffff;
-    font-size: 1.8rem;
+    font-size: 1.2rem;
     margin-bottom: 0.5rem;
     font-family: 'Outfit', sans-serif;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
@@ -763,9 +763,9 @@ body {
 
 .modal-content {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 5%;
+    left: 37%;
+    /* transform: translate(-50%, -50%); */
     background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
     border: 1px solid rgba(220, 38, 38, 0.3);
     border-radius: 12px;
@@ -1235,10 +1235,50 @@ body {
 /* Landing Page Components */
 .hero-platforms {
     height: calc(100vh - 80px);
-    display: flex;
-    margin-top: 80px;
+    display: none;
+    margin-top: 0px;
     overflow: hidden;
     background: #000;
+    position: relative; /* Ensure absolute children are relative to this */
+}
+
+.hero-overlay-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    text-align: center;
+    width: 90%;
+    max-width: 900px;
+    pointer-events: none;
+}
+
+.hero-overlay-text h1 {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    font-weight: 800;
+    width: 100%;
+}
+
+.hero-overlay-text p {
+    font-size: 1.25rem;
+    color: #e2e8f0;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    font-weight: 500;
+    line-height: 1.6;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .hero-overlay-text h1 {
+        font-size: 3rem;
+    }
+    .hero-overlay-text p {
+        font-size: 1rem;
+    }
 }
 
 .platform-col {
@@ -1314,22 +1354,23 @@ body {
 }
 
 .platform-btn {
-    background: white;
-    color: black;
+    background: #ff3333;
+    color: white;
     padding: 1rem 2.5rem;
     border-radius: 50px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: all 0.3s ease;
-    border: 2px solid white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(255, 51, 51, 0.4);
 }
 
 .platform-col:hover .platform-btn {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-    box-shadow: 0 0 20px var(--primary-glow);
+    background: white;
+    color: #ff3333;
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
 }
 
 /* Benefits Section */
@@ -1879,4 +1920,248 @@ body {
     .card-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.85);
+    /* backdrop-filter: blur(5px); Removed to prevent flickering */
+}
+
+.modal input {
+    background: #0a0a0a;
+    border: 1px solid #333;
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    width: 100%;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.modal input:focus {
+    border-color: #ff3333;
+    outline: none;
+    background: #0a0a0a;
+    box-shadow: 0 0 0 1px #ff3333;
+}
+
+.modal label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #ff3333; /* Red Labels */
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.modal-content {
+    background-color: #1a1a1a; /* Darker background */
+    margin: 15vh auto; /* Better centering */
+    padding: 0;
+    border: 1px solid #333;
+    width: 90%;
+    max-width: 450px;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.2s ease-out; /* Simple fade to prevent movement glitch */
+}
+.modal form .form-group {
+    margin-bottom: 0;
+}
+/* Add padding to modal forms */
+.modal form {
+    padding: 0 2rem 2rem 2rem;
+}
+
+.modal-header {
+    padding: 2rem 2rem 1rem; /* More spacious header */
+    border-bottom: none; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #ff3333; /* Red Title */
+    font-weight: 700;
+}
+
+.close {
+    color: var(--text-muted);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    line-height: 1;
+}
+
+.close:hover,
+.close:focus {
+    color: var(--primary);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+main.main.home-main {
+    margin-top: 0;
+}
+/* Welcome Hero Section */
+.welcome-hero {
+    min-height: 100vh;
+    display: flex;
+        margin-top: 80px;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    text-align: center;
+    padding: 100px 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url(images/players-hero.jpg);
+    pointer-events: none;
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.welcome-container {
+    width:100%;
+    max-width: 1400px;
+    position: relative;
+    z-index: 2;
+}
+
+.welcome-title {
+    font-size: 5rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 1.5rem;
+    font-family: 'Outfit', sans-serif;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.welcome-subtitle {
+    font-size: 1.25rem;
+    color: rgba(255,255,255,0.9);
+    max-width: 700px;
+    margin: 0 auto 3rem;
+    line-height: 1.6;
+}
+
+.welcome-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 5rem;
+}
+
+.btn-primary-glow {
+    background: #ff3333; /* Updated per user request */
+    color: white;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(255, 51, 51, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary-glow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 51, 51, 0.5);
+}
+
+.btn-glass {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    color: white;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-glass:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.role-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.role-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.role-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.role-card h3 {
+    color: white;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.role-card p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .welcome-title { font-size: 3rem; }
+    .welcome-hero { padding-top: 120px; }
+    .role-cards-grid { grid-template-columns: 1fr; }
 }

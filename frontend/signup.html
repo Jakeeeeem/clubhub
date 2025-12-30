@@ -4,58 +4,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClubHub - Enhanced Sign-up</title>
+    <title>ClubHub - Sign Up</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Specific overrides for signup page centered layout */
+        /* Dark Theme Specific Overrides for Signup Layout */
         body {
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 2rem;
             min-height: 100vh;
-            background: var(--bg-dark);
         }
 
-        @keyframes slideIn {
+        .signup-container {
+            width: 100%;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        /* Logo Section */
+        .logo-section {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+        }
+
+        /* Checkbox Grid Layout (Matches Image 2 structure) */
+        .org-type-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .checkbox-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkbox-card:hover {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Custom Checkbox Styling */
+        .checkbox-card input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-muted);
+            border-radius: 4px;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .checkbox-card input[type="checkbox"]:checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .checkbox-card input[type="checkbox"]:checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .checkbox-card label {
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        /* Toggle Cards (Single vs Multiple) */
+        .toggle-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .toggle-card {
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .toggle-card:hover {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .toggle-card.selected {
+            border-color: var(--primary);
+            background: rgba(255, 51, 51, 0.1);
+            box-shadow: 0 4px 20px rgba(255, 51, 51, 0.15);
+        }
+
+        .toggle-card strong {
+            display: block;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .toggle-card p {
+            font-size: 0.85rem;
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        /* Pro Tip Box */
+        .pro-tip {
+            margin-top: 2rem;
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.2);
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: #ffe082;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .pro-tip i {
+            font-style: normal;
+            font-size: 1.2rem;
+        }
+
+        /* Account Type Cards - Ensure they look good in dark mode */
+        .account-type-card.selected {
+            background: rgba(255, 51, 51, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.2);
+        }
+
+        /* Button overrides */
+        .btn-prev {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-prev:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+
+        .btn-next {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-next:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 51, 51, 0.3);
+        }
+
+        /* Animations */
+        .form-step {
+            display: none;
+        }
+
+        .form-step.active {
+            display: block;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateX(20px);
+                transform: translateY(10px);
             }
 
             to {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(0);
             }
         }
 
-        .logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary), var(--neon-purple));
-            border-radius: 50%;
-            margin: 0 auto 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2.5rem;
-            font-weight: 800;
-            box-shadow: 0 0 30px var(--primary-glow);
+        @media (max-width: 600px) {
+
+            .org-type-grid,
+            .toggle-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="signup-container slide-in">
+    <div class="signup-container">
         <!-- Logo Section -->
-        <div class="logo-section"
-            style="text-align: center; margin-bottom: 3rem; border-bottom: 1px solid var(--border-color); padding-bottom: 2rem;">
-            <img src="images/logo.png" alt="ClubHub Logo"
-                style="width: 80px; height: 80px; margin: 0 auto 1rem; display: block; filter: drop-shadow(0 0 20px rgba(255, 51, 51, 0.6));">
-            <div class="logo-text neon-text">ClubHub</div>
-            <div class="tagline" style="color: var(--text-muted); margin-top: 0.5rem;">Join the sports management
-                revolution</div>
+        <div class="logo-section">
+            <img src="images/logo.png" alt="ClubHub"
+                style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 1rem;">
+            <h2 class="neon-text" style="font-size: 2rem; margin: 0;">ClubHub</h2>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Join the sports management revolution</p>
         </div>
 
         <!-- Step Indicator -->
@@ -67,757 +248,285 @@
             <div class="step" data-step="5">✓</div>
         </div>
 
-        <!-- Step 1: Account Type Selection -->
+        <!-- Step 1: Account Type -->
         <div class="form-step active" data-step="1">
-            <h2 style="text-align: center; margin-bottom: 2.5rem; color: var(--text-main); font-family: 'Outfit';">
-                Choose Your Account Type</h2>
+            <h2 style="text-align: center; margin-bottom: 2rem; font-family: 'Outfit';">Choose Your Account Type</h2>
 
             <div class="selection-grid">
-                <div class="selection-card account-type-card" data-type="adult">
-                    <div class="icon">⚽</div>
-                    <h3 style="color: var(--text-main); margin-bottom: 0.5rem;">Player Account</h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">For players, parents, and sports enthusiasts
-                    </p>
-                    <div class="info-box success adult-clarification"
-                        style="display: none; margin-top: 1.5rem; text-align: left;">
-                        <strong>✅ Adult Account Required</strong><br>
-                        This is an adult account. You can add and manage children's profiles once registered.
-                    </div>
+                <div class="account-type-card" data-type="adult">
+                    <span class="icon" style="font-size: 3.5rem; display: block; margin-bottom: 1rem;">⚽</span>
+                    <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Player Account</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">For players, parents, and enthusiasts</p>
                 </div>
 
-                <div class="selection-card account-type-card" data-type="organization">
-                    <div class="icon">🏢</div>
-                    <h3 style="color: var(--text-main); margin-bottom: 0.5rem;">Organization</h3>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">For clubs, academies, and sports
-                        organizations</p>
+                <div class="account-type-card" data-type="organization">
+                    <span class="icon" style="font-size: 3.5rem; display: block; margin-bottom: 1rem;">🏢</span>
+                    <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Organization</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted);">For clubs, academies, and leagues</p>
                 </div>
             </div>
 
-            <div class="info-box warning child-management-info" style="display: none;" id="childInfo">
-                <strong>👶 Managing Children</strong><br>
-                After creating your adult account, you'll be able to add multiple children to your profile.
-            </div>
+            <!-- Organization Options (Hidden by default, shows when Org is selected) -->
+            <div id="orgOptions"
+                style="display: none; border-top: 1px solid var(--border-color); padding-top: 2rem; margin-top: 2rem;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem; font-family: 'Outfit';">Organization Type</h3>
 
-            <!-- Organization Type Selection -->
-            <div id="orgTypeSelection"
-                style="display: none; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
-                <h3 style="margin-bottom: 1.5rem; color: var(--text-main);">Organization Type</h3>
-                <div class="checkbox-group"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                    <div class="selection-card checkbox-item" style="padding: 1rem;">
-                        <input type="checkbox" id="club" value="club" style="margin-bottom: 0.5rem;">
-                        <label for="club" style="display: block; cursor: pointer; color: var(--text-main);">Sports
-                            Club</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="academy" value="academy">
-                        <label for="academy">Sports Academy</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="event" value="event">
-                        <label for="event">Event Organizer</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="tournament" value="tournament">
-                        <label for="tournament">Tournament Organizer</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="league" value="league">
-                        <label for="league">League Management</label>
-                    </div>
+                <div class="org-type-grid">
+                    <label class="checkbox-card">
+                        <input type="checkbox" value="club">
+                        <span>Sports Club</span>
+                    </label>
+                    <label class="checkbox-card">
+                        <input type="checkbox" value="academy">
+                        <span>Sports Academy</span>
+                    </label>
+                    <label class="checkbox-card">
+                        <input type="checkbox" value="event">
+                        <span>Event Organizer</span>
+                    </label>
+                    <label class="checkbox-card">
+                        <input type="checkbox" value="tournament">
+                        <span>Tournament Organizer</span>
+                    </label>
+                    <label class="checkbox-card">
+                        <input type="checkbox" value="league">
+                        <span>League Management</span>
+                    </label>
                 </div>
 
-                <!-- Organization Toggle Feature -->
-                <div style="margin-top: 2rem;">
-                    <h4 style="margin-bottom: 1rem;">Multiple Organizations</h4>
-                    <div class="org-toggle">
-                        <div class="toggle-option selected" data-toggle="single">
+                <div style="margin-top: 2.5rem;">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.25rem; font-family: 'Outfit';">Multiple Organizations
+                    </h3>
+                    <div class="toggle-grid">
+                        <div class="toggle-card selected" data-toggle="single">
                             <strong>Single Organization</strong>
-                            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #666;">Manage one
-                                organization</p>
+                            <p>Manage one organization</p>
                         </div>
-                        <div class="toggle-option" data-toggle="multiple">
+                        <div class="toggle-card" data-toggle="multiple">
                             <strong>Multiple Organizations</strong>
-                            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #666;">Switch between
-                                different
-                                organizations</p>
+                            <p>Switch between different organizations</p>
                         </div>
                     </div>
-                    <div class="child-management-info" style="margin-top: 1rem;">
-                        <strong>💡 Pro Tip:</strong> You can create separate organizations (e.g., "Pro Elite"
-                        and "Pro
+                </div>
+
+                <div class="pro-tip">
+                    <i>💡</i>
+                    <div>
+                        <strong>Pro Tip:</strong> You can create separate organizations (e.g., "Pro Elite" and "Pro
                         Elite League") and easily toggle between them in your dashboard.
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Step 2: Personal Information -->
-        <div class="form-step" data-step="2">
-            <h2 style="text-align: center; margin-bottom: 2.5rem; color: var(--text-main); font-family: 'Outfit';">
-                Personal Information</h2>
+            <!-- Adult account info (Hidden by default) -->
+            <div id="adultInfo" style="display: none; margin-top: 2rem;">
 
-            <div class="form-group required">
-                <label for="firstName">First Name</label>
-                <input type="text" id="firstName" name="firstName" required placeholder="Enter your first name">
-            </div>
-
-            <div class="form-group required">
-                <label for="lastName">Last Name</label>
-                <input type="text" id="lastName" name="lastName" required placeholder="Enter your last name">
-            </div>
-
-            <div class="form-group required">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required placeholder="you@example.com">
-            </div>
-
-            <div class="form-group required">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Create a strong password">
-                <div class="password-strength" id="passwordStrength" style="margin-top: 0.5rem; font-size: 0.85rem;">
-                </div>
-            </div>
-
-            <div class="form-group required">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" required
-                    placeholder="Repeat your password">
-            </div>
-
-            <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="tel" id="phone" name="phone" placeholder="+44 123 456 7890">
-            </div>
-
-            <div class="form-group">
-                <label for="dateOfBirth">Date of Birth</label>
-                <input type="date" id="dateOfBirth" name="dateOfBirth">
-            </div>
-        </div>
-
-        <!-- Step 3: CV/Profile Information -->
-        <div class="form-step" data-step="3">
-            <h2 style="text-align: center; margin-bottom: 2.5rem; color: var(--text-main); font-family: 'Outfit';">Build
-                Your Profile</h2>
-
-            <div class="form-group">
-                <label for="location">Location (City, Country)</label>
-                <input type="text" id="location" name="location" placeholder="e.g., London, UK">
-            </div>
-
-            <div class="form-group">
-                <label>Primary Sport</label>
-                <div class="selection-grid" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="selection-card sport-card" data-sport="football" style="padding: 1.5rem;">
-                        <div class="icon">⚽</div>
-                        <div style="color: var(--text-main); font-weight: 600;">Football</div>
-                    </div>
-                    <div class="selection-card sport-card" data-sport="basketball" style="padding: 1.5rem;">
-                        <div class="icon">🏀</div>
-                        <div style="color: var(--text-main); font-weight: 600;">Basketball</div>
-                    </div>
-                    <div class="selection-card sport-card" data-sport="tennis" style="padding: 1.5rem;">
-                        <div class="icon">🎾</div>
-                        <div style="color: var(--text-main); font-weight: 600;">Tennis</div>
-                    </div>
-                    <div class="selection-card sport-card" data-sport="rugby" style="padding: 1.5rem;">
-                        <div class="icon">🏉</div>
-                        <div style="color: var(--text-main); font-weight: 600;">Rugby</div>
-                    </div>
-                    <div class="selection-card sport-card" data-sport="cricket" style="padding: 1.5rem;">
-                        <div class="icon">🏏</div>
-                        <div style="color: var(--text-main); font-weight: 600;">Cricket</div>
-                    </div>
-                    <div class="selection-card sport-card" data-sport="other" style="padding: 1.5rem;">
-                        <div class="icon">🏃</div>
-                        <div style="color: var(--text-main); font-weight: 600;">Other</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Position Selection (appears when sport is selected) -->
-            <div class="form-group">
-                <label>Position/Role</label>
-                <div class="position-selection" id="positionSelection"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
-                    <!-- Positions will be populated based on sport selection -->
-                </div>
-                <input type="text" id="customPosition" placeholder="Or enter your custom position/role">
-            </div>
-
-            <div class="form-group">
-                <label for="experience">Experience Level</label>
-                <select id="experience" name="experience">
-                    <option value="">Select experience level</option>
-                    <option value="beginner">Beginner (0-1 years)</option>
-                    <option value="intermediate">Intermediate (2-5 years)</option>
-                    <option value="advanced">Advanced (5-10 years)</option>
-                    <option value="professional">Professional (10+ years)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="previousTeams">Previous Teams/Clubs</label>
-                <textarea id="previousTeams" name="previousTeams" rows="3"
-                    placeholder="List your previous teams, clubs, or achievements..."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="achievements">Notable Achievements</label>
-                <textarea id="achievements" name="achievements" rows="3"
-                    placeholder="Championships, awards, certifications..."></textarea>
-            </div>
-        </div>
-
-        <!-- Step 4: Payment Setup -->
-        <div class="form-step" data-step="4">
-            <h2 style="text-align: center; margin-bottom: 2.5rem; color: var(--text-main); font-family: 'Outfit';">
-                Payment Setup</h2>
-
-            <div class="info-box"
-                style="background: rgba(124, 58, 237, 0.1); border-color: rgba(124, 58, 237, 0.2); color: #c084fc;">
-                <h3 style="margin-bottom: 1rem; color: #fff;">🔒 Secure Payment Processing</h3>
-                <p style="margin-bottom: 1rem; color: #d8b4fe;">ClubHub uses Stripe for secure payment processing. Your
-                    payment information is encrypted and never stored on our servers.</p>
-
+                <!-- Green Box: Adult Account Required -->
                 <div
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                    style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem;">
                     <div
-                        style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 16px;">
-                        <div style="font-size: 2rem; margin-bottom: 0.75rem;">💳</div>
-                        <strong style="color: #fff;">Linked Account</strong>
-                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #a78bfa;">Connect your bank account</p>
+                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem; color: #10b981; font-weight: 700; font-size: 1.1rem;">
+                        <span
+                            style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #10b981; color: white; border-radius: 4px; font-size: 14px;">✓</span>
+                        Adult Account Required
                     </div>
-                    <div
-                        style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 16px;">
-                        <div style="font-size: 2rem; margin-bottom: 0.75rem;">🔄</div>
-                        <strong style="color: #fff;">Auto-Payments</strong>
-                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #a78bfa;">Set up memberships</p>
-                    </div>
-                    <div
-                        style="text-align: center; padding: 1.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 16px;">
-                        <div style="font-size: 2rem; margin-bottom: 0.75rem;">📱</div>
-                        <strong style="color: #fff;">Mobile Ready</strong>
-                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #a78bfa;">Pay from any device</p>
-                    </div>
+                    <p style="color: #6ee7b7; font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                        This is an adult account. You can add and manage children's profiles within your account once
+                        registered.
+                    </p>
                 </div>
-            </div>
 
-            <div class="form-group" style="margin-top: 2.5rem;">
-                <label>Payment Preferences</label>
-                <div class="selection-grid" style="grid-template-columns: 1fr; gap: 1rem;">
-                    <div class="selection-card"
-                        style="padding: 1.25rem; display: flex; align-items: center; gap: 1.5rem; text-align: left;">
-                        <input type="checkbox" id="autoPayments" checked
-                            style="width: 20px; height: 20px; accent-color: var(--primary);">
-                        <label for="autoPayments"
-                            style="margin: 0; cursor: pointer; color: var(--text-main); font-weight: 500;">Enable
-                            automatic payments for memberships</label>
+                <!-- Yellow Box: Managing Children -->
+                <div
+                    style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 12px; padding: 1.5rem; text-align: left;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                        <span style="font-size: 1.5rem;">👶</span>
+                        <strong style="color: #fbbf24; font-size: 1.1rem;">Managing Children</strong>
                     </div>
-                    <div class="selection-card"
-                        style="padding: 1.25rem; display: flex; align-items: center; gap: 1.5rem; text-align: left;">
-                        <input type="checkbox" id="paymentReminders" checked
-                            style="width: 20px; height: 20px; accent-color: var(--primary);">
-                        <label for="paymentReminders"
-                            style="margin: 0; cursor: pointer; color: var(--text-main); font-weight: 500;">Receive
-                            payment reminders via email</label>
-                    </div>
+                    <p style="color: #fcd34d; font-size: 0.95rem; line-height: 1.6; margin: 0;">
+                        After creating your adult account, you'll be able to add multiple children to your profile.
+                        You'll manage all bookings, payments, and communications for your children through your parent
+                        account.
+                    </p>
                 </div>
-            </div>
 
-            <div class="info-box warning" style="margin-top: 2rem;">
-                <strong>💡 Note:</strong> You can complete your full Stripe connection after registration.
             </div>
         </div>
 
-        <!-- Step 5: Success -->
-        <div class="form-step" data-step="5">
-            <div class="success-screen">
-                <div class="success-circle">✓</div>
-                <h2 class="neon-text" style="margin-bottom: 1.5rem; font-family: 'Outfit';">Welcome to ClubHub!</h2>
-                <p style="color: var(--text-muted); margin-bottom: 3rem; font-size: 1.1rem;">Your account has been
-                    created successfully. Let's get you started on your sports journey.</p>
+        <!-- Step 2: Personal Info -->
+        <div class="form-step" data-step="2">
+            <h2 style="text-align: center; margin-bottom: 2rem; font-family: 'Outfit';">Personal Information</h2>
 
-                <div class="info-box"
-                    style="text-align: left; background: rgba(255, 255, 255, 0.02); border-color: var(--border-color); padding: 2rem;">
-                    <h3 style="margin-bottom: 1.5rem; color: var(--text-main);">Next Steps:</h3>
-                    <div style="display: grid; gap: 1.5rem;">
-                        <div style="display: flex; align-items: center; gap: 1.5rem;">
-                            <div
-                                style="width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 0.9rem;">
-                                1</div>
-                            <div>
-                                <strong style="color: var(--text-main);">Complete your profile</strong>
-                                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Add more details to
-                                    help clubs find you</p>
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 1.5rem;">
-                            <div
-                                style="width: 32px; height: 32px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 0.9rem;">
-                                2</div>
-                            <div>
-                                <strong style="color: var(--text-main);">Find and join clubs</strong>
-                                <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Browse local clubs
-                                    and submit applications</p>
-                            </div>
-                        </div>
-                    </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="firstName" placeholder="Enter first name">
                 </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="lastName" placeholder="Enter last name">
+                </div>
+            </div>
 
-                <div style="display: flex; gap: 1.5rem; justify-content: center; margin-top: 3rem;">
-                    <button class="btn btn-danger" onclick="goToDashboard()"
-                        style="padding: 1.25rem 3rem; font-size: 1.1rem;">Go to Dashboard</button>
-                    <button class="btn btn-secondary" onclick="completeLater()" style="padding: 1.25rem 2rem;">Maybe
-                        Later</button>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" placeholder="you@example.com">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Create a strong password">
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm your password">
+            </div>
+        </div>
+
+        <!-- Success Step -->
+        <div class="form-step" data-step="3">
+            <div style="text-align: center; padding: 3rem 0;">
+                <div
+                    style="width: 90px; height: 90px; background: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; margin: 0 auto 2rem; border: 2px solid #10b981;">
+                    ✓</div>
+                <h2 style="margin-bottom: 1rem; font-family: 'Outfit'; font-size: 2rem;">Welcome to ClubHub!</h2>
+                <p style="color: var(--text-muted); font-size: 1.1rem;">Your account has been successfully created.</p>
+
+                <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 3rem;">
+                    <button class="btn btn-primary" onclick="window.location.href='index.html'"
+                        style="padding: 1rem 3rem;">Go to Dashboard</button>
                 </div>
             </div>
         </div>
 
-        <!-- Navigation -->
-        <div class="step-navigation"
-            style="margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2.5rem; display: flex; justify-content: space-between;">
-            <button class="btn btn-secondary" id="prevBtn" onclick="previousStep()"
-                style="display: none; padding: 1rem 2rem;">Previous</button>
-            <button class="btn btn-danger" id="nextBtn" onclick="nextStep()" style="padding: 1rem 3rem;">Next
-                Step</button>
+        <!-- Navigation Buttons -->
+        <div class="step-navigation" id="navButtons"
+            style="display: flex; justify-content: space-between; margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+            <button class="btn-prev" id="prevBtn" onclick="prevStep()" style="visibility: hidden;">Previous</button>
+            <button class="btn-next" id="nextBtn" onclick="nextStep()" style="max-width: 200px;">Next</button>
         </div>
     </div>
+
+
+
     <script src="api-service.js"></script>
     <script>
         let currentStep = 1;
-        let formData = {};
-        const totalSteps = 5;
-
-        // Sport positions mapping
-        const sportPositions = {
-            football: ['Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Striker', 'Winger'],
-            basketball: ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center'],
-            tennis: ['Singles Player', 'Doubles Player'],
-            rugby: ['Prop', 'Hooker', 'Lock', 'Flanker', 'Number 8', 'Scrum-half', 'Fly-half', 'Centre', 'Wing', 'Fullback'],
-            cricket: ['Batsman', 'Bowler', 'All-rounder', 'Wicket-keeper', 'Captain'],
-            other: []
+        const totalSteps = 3;
+        let formData = {
+            accountType: null,
+            orgType: [],
+            isMultiple: false
         };
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function () {
-            updateStepDisplay();
             setupEventListeners();
 
-            // Handle URL parameters for pre-selected account type
+            // Allow clicking checkboxes directly
+            document.querySelectorAll('.checkbox-card input').forEach(input => {
+                input.addEventListener('change', function () {
+                    if (this.checked) {
+                        this.parentElement.style.borderColor = 'var(--primary)';
+                        this.parentElement.style.background = 'rgba(255, 51, 51, 0.05)';
+                    } else {
+                        this.parentElement.style.borderColor = 'var(--border-color)';
+                        this.parentElement.style.background = 'rgba(255, 255, 255, 0.03)';
+                    }
+                });
+            });
+
+            // Check URL params
             const urlParams = new URLSearchParams(window.location.search);
             const type = urlParams.get('type');
             if (type) {
                 const card = document.querySelector(`.account-type-card[data-type="${type}"]`);
-                if (card) {
-                    card.click();
-                    // If a type is provided, we can automatically move to step 2 for a smoother flow
-                    setTimeout(() => {
-                        nextStep();
-                    }, 500);
-                }
+                if (card) card.click();
             }
         });
 
         function setupEventListeners() {
-            // Account type selection
+            // Account Type Selection
             document.querySelectorAll('.account-type-card').forEach(card => {
                 card.addEventListener('click', function () {
+                    // Update UI
                     document.querySelectorAll('.account-type-card').forEach(c => c.classList.remove('selected'));
                     this.classList.add('selected');
 
+                    // Update Data
                     const type = this.dataset.type;
                     formData.accountType = type;
 
-                    // Show/hide organization options
-                    const orgOptions = document.getElementById('orgTypeSelection');
-                    const childInfo = document.getElementById('childInfo');
-                    const adultClarification = this.querySelector('.adult-clarification');
+                    // Show/Hide Options
+                    const orgOptions = document.getElementById('orgOptions');
+                    const adultInfo = document.getElementById('adultInfo');
 
                     if (type === 'organization') {
                         orgOptions.style.display = 'block';
-                        childInfo.style.display = 'none';
-                        document.querySelectorAll('.adult-clarification').forEach(el => el.style.display = 'none');
+                        adultInfo.style.display = 'none';
                     } else {
                         orgOptions.style.display = 'none';
-                        childInfo.style.display = 'block';
-                        adultClarification.style.display = 'block';
+                        adultInfo.style.display = 'block';
                     }
                 });
             });
 
-            // Organization toggle
-            document.querySelectorAll('.toggle-option').forEach(option => {
-                option.addEventListener('click', function () {
-                    document.querySelectorAll('.toggle-option').forEach(o => o.classList.remove('selected'));
-                    this.classList.add('selected');
-                    formData.multipleOrgs = this.dataset.toggle === 'multiple';
-                });
-            });
-
-            // Sport selection
-            document.querySelectorAll('.sport-card').forEach(card => {
+            // Toggle Options (Single/Multiple)
+            document.querySelectorAll('.toggle-card').forEach(card => {
                 card.addEventListener('click', function () {
-                    document.querySelectorAll('.sport-card').forEach(c => c.classList.remove('selected'));
+                    document.querySelectorAll('.toggle-card').forEach(c => c.classList.remove('selected'));
                     this.classList.add('selected');
-
-                    const sport = this.dataset.sport;
-                    formData.primarySport = sport;
-
-                    // Show positions for selected sport
-                    updatePositions(sport);
+                    formData.isMultiple = this.dataset.toggle === 'multiple';
                 });
             });
-
-            // Password strength checker
-            document.getElementById('password').addEventListener('input', checkPasswordStrength);
-        }
-
-        function updatePositions(sport) {
-            const positionContainer = document.getElementById('positionSelection');
-            const positions = sportPositions[sport] || [];
-
-            if (positions.length > 0) {
-                positionContainer.innerHTML = positions.map(position =>
-                    `<div class="position-btn" data-position="${position}">${position}</div>`
-                ).join('');
-
-                positionContainer.classList.add('show');
-
-                // Add click handlers to position buttons
-                positionContainer.querySelectorAll('.position-btn').forEach(btn => {
-                    btn.addEventListener('click', function () {
-                        positionContainer.querySelectorAll('.position-btn').forEach(b => b.classList.remove('selected'));
-                        this.classList.add('selected');
-                        formData.position = this.dataset.position;
-                        document.getElementById('customPosition').value = this.dataset.position;
-                    });
-                });
-            } else {
-                positionContainer.classList.remove('show');
-            }
-        }
-
-        function checkPasswordStrength() {
-            const password = document.getElementById('password').value;
-            const strengthDiv = document.getElementById('passwordStrength');
-
-            let strength = 0;
-            let feedback = [];
-
-            if (password.length >= 8) strength++;
-            else feedback.push('At least 8 characters');
-
-            if (/[A-Z]/.test(password)) strength++;
-            else feedback.push('One uppercase letter');
-
-            if (/[a-z]/.test(password)) strength++;
-            else feedback.push('One lowercase letter');
-
-            if (/[0-9]/.test(password)) strength++;
-            else feedback.push('One number');
-
-            if (/[^A-Za-z0-9]/.test(password)) strength++;
-            else feedback.push('One special character');
-
-            if (strength < 3) {
-                strengthDiv.className = 'password-strength strength-weak';
-                strengthDiv.textContent = 'Weak password. Need: ' + feedback.slice(0, 2).join(', ');
-            } else if (strength < 5) {
-                strengthDiv.className = 'password-strength strength-medium';
-                strengthDiv.textContent = 'Medium strength. Consider: ' + feedback.slice(0, 1).join('');
-            } else {
-                strengthDiv.className = 'password-strength strength-strong';
-                strengthDiv.textContent = 'Strong password ✓';
-            }
         }
 
         function nextStep() {
-            if (!validateCurrentStep()) return;
-            collectCurrentStepData();
-
-            if (currentStep === totalSteps - 1) {
-                submitForm();
-                return;
-            }
-
             if (currentStep < totalSteps) {
+                if (currentStep === 1 && !formData.accountType) {
+                    alert('Please select an account type first.');
+                    return;
+                }
+
                 currentStep++;
-                updateStepDisplay();
+                updateUI();
             }
         }
 
-        function previousStep() {
+        function prevStep() {
             if (currentStep > 1) {
                 currentStep--;
-                updateStepDisplay();
+                updateUI();
             }
         }
 
-        function updateStepDisplay() {
-            // Update step indicators
-            document.querySelectorAll('.step').forEach((step, index) => {
-                const stepNumber = index + 1;
-                step.classList.remove('active', 'completed');
-
-                if (stepNumber < currentStep) {
-                    step.classList.add('completed');
-                } else if (stepNumber === currentStep) {
-                    step.classList.add('active');
-                }
+        function updateUI() {
+            // Update Step Indicators
+            document.querySelectorAll('.step').forEach((step, idx) => {
+                step.className = 'step';
+                if (idx + 1 < currentStep) step.classList.add('completed');
+                if (idx + 1 === currentStep) step.classList.add('active');
             });
 
-            // Update form steps
-            document.querySelectorAll('.form-step').forEach((step, index) => {
-                step.classList.remove('active');
-                if (index + 1 === currentStep) {
-                    step.classList.add('active');
-                }
+            // Show/Hide Form Parts
+            document.querySelectorAll('.form-step').forEach((form, idx) => {
+                form.classList.remove('active');
+                if (idx + 1 === currentStep) form.classList.add('active');
             });
 
-            // Update navigation buttons
+            // Update Buttons
             const prevBtn = document.getElementById('prevBtn');
             const nextBtn = document.getElementById('nextBtn');
+            const navContainer = document.getElementById('navButtons');
 
-            prevBtn.style.display = currentStep > 1 ? 'block' : 'none';
+            prevBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
 
             if (currentStep === totalSteps) {
-                nextBtn.style.display = 'none';
-            } else if (currentStep === totalSteps - 1) {
-                nextBtn.textContent = 'Create Account';
+                navContainer.style.display = 'none';
             } else {
-                nextBtn.textContent = 'Next';
-                nextBtn.style.display = 'block';
-            }
-        }
-
-        function validateCurrentStep() {
-            switch (currentStep) {
-                case 1:
-                    if (!formData.accountType) {
-                        alert('Please select an account type');
-                        return false;
-                    }
-                    if (formData.accountType === 'organization') {
-                        const selectedOrgTypes = Array.from(document.querySelectorAll('#orgTypeSelection input[type="checkbox"]:checked')).map(cb => cb.value);
-                        if (selectedOrgTypes.length === 0) {
-                            alert('Please select at least one organization type');
-                            return false;
-                        }
-                        formData.orgTypes = selectedOrgTypes;
-                    }
-                    return true;
-
-                case 2:
-                    const requiredFields = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
-                    for (let field of requiredFields) {
-                        const value = document.getElementById(field).value;
-                        if (!value) {
-                            alert(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
-                            return false;
-                        }
-                    }
-
-                    const password = document.getElementById('password').value;
-                    const confirmPassword = document.getElementById('confirmPassword').value;
-
-                    if (password !== confirmPassword) {
-                        alert('Passwords do not match');
-                        return false;
-                    }
-
-                    if (password.length < 6) {
-                        alert('Password must be at least 6 characters');
-                        return false;
-                    }
-
-                    return true;
-
-                case 3:
-                    // Profile information is optional
-                    return true;
-
-                case 4:
-                    // Payment setup is optional for initial registration
-                    return true;
-
-                default:
-                    return true;
-            }
-        }
-
-        function collectCurrentStepData() {
-            switch (currentStep) {
-                case 1:
-                    // Already collected in event listeners
-                    break;
-
-                case 2:
-                    formData.firstName = document.getElementById('firstName').value;
-                    formData.lastName = document.getElementById('lastName').value;
-                    formData.email = document.getElementById('email').value;
-                    formData.password = document.getElementById('password').value;
-                    formData.phone = document.getElementById('phone').value;
-                    formData.dateOfBirth = document.getElementById('dateOfBirth').value;
-                    break;
-
-                case 3:
-                    formData.location = document.getElementById('location').value;
-                    formData.position = document.getElementById('customPosition').value;
-                    formData.experience = document.getElementById('experience').value;
-                    formData.previousTeams = document.getElementById('previousTeams').value;
-                    formData.achievements = document.getElementById('achievements').value;
-                    break;
-
-                case 4:
-                    formData.autoPayments = document.getElementById('autoPayments').checked;
-                    formData.paymentReminders = document.getElementById('paymentReminders').checked;
-                    formData.receiptEmails = document.getElementById('receiptEmails').checked;
-                    formData.emailRecovery = document.getElementById('emailRecovery').checked;
-                    formData.smsRecovery = document.getElementById('smsRecovery').checked;
-                    break;
-            }
-        }
-
-        async function submitForm() {
-            const nextBtn = document.getElementById('nextBtn');
-            try {
-                nextBtn.textContent = 'Creating Account...';
-                nextBtn.disabled = true;
-
-                collectCurrentStepData();
-
-                const payload = {
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    email: formData.email,
-                    password: formData.password,
-                    userType: formData.accountType === 'organization' ? 'organization' : 'player',
-                    profile: {
-                        location: formData.location || '',
-                        sport: formData.primarySport || '',
-                        position: formData.position || formData.customPosition || '',
-                        experience: formData.experience || '',
-                        previousTeams: formData.previousTeams || '',
-                        achievements: formData.achievements || '',
-                        phone: formData.phone || '',
-                        dateOfBirth: formData.dateOfBirth || ''
-                    }
-                };
-
-                const res = await apiService.register(payload);
-                if (!res || !res.token) {
-                    await apiService.login(formData.email, formData.password);
-                }
-
-                const params = new URLSearchParams(window.location.search);
-                const rawReturn = params.get('returnUrl');
-                if (rawReturn) {
-                    try {
-                        const u = new URL(decodeURIComponent(rawReturn), window.location.origin);
-                        if (u.origin === window.location.origin) {
-                            window.location.href = u.pathname + u.search + u.hash;
-                            return;
-                        }
-                    } catch { }
-                }
-
-                const user =
-                    (res && res.user) ||
-                    (localStorage.getItem('currentUser') && JSON.parse(localStorage.getItem('currentUser'))) ||
-                    {};
-                const redirectUrl =
-                    user.userType === 'organization' || user.userType === 'admin'
-                        ? 'admin-dashboard.html'
-                        : 'player-dashboard.html';
-
-                window.location.href = redirectUrl;
-            } catch (err) {
-                alert('Error creating account: ' + (err.message || 'Unknown error'));
-            } finally {
-                nextBtn.textContent = 'Create Account';
-                nextBtn.disabled = false;
-            }
-        }
-
-        function goToDashboard() {
-            // Redirect to appropriate dashboard based on account type
-            if (formData.accountType === 'organization') {
-                window.location.href = 'admin-dashboard.html';
-            } else {
-                window.location.href = 'player-dashboard.html';
-            }
-        }
-
-        function completeLater() {
-            // Redirect to basic dashboard
-            goToDashboard();
-        }
-
-        // Integration functions for your existing system
-        async function integrateWithExistingAPI() {
-            // This function would integrate with your existing API service
-            try {
-                const response = await apiService.register({
-                    email: formData.email,
-                    password: formData.password,
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    accountType: formData.accountType,
-                    orgTypes: formData.orgTypes || [],
-                    profile: {
-                        location: formData.location,
-                        sport: formData.primarySport,
-                        position: formData.position,
-                        experience: formData.experience,
-                        previousTeams: formData.previousTeams,
-                        achievements: formData.achievements,
-                        phone: formData.phone,
-                        dateOfBirth: formData.dateOfBirth
-                    },
-                    preferences: {
-                        autoPayments: formData.autoPayments,
-                        paymentReminders: formData.paymentReminders,
-                        receiptEmails: formData.receiptEmails,
-                        emailRecovery: formData.emailRecovery,
-                        smsRecovery: formData.smsRecovery
-                    }
-                });
-
-                return response;
-            } catch (error) {
-                throw new Error('Registration failed: ' + error.message);
-            }
-        }
-
-        // Password recovery functions
-        function setupPasswordRecovery() {
-            if (formData.emailRecovery) {
-                // Enable email recovery
-                console.log('Email recovery enabled');
-            }
-
-            if (formData.smsRecovery && formData.phone) {
-                // Enable SMS recovery
-                console.log('SMS recovery enabled');
-            }
-        }
-
-        // Child account management preparation
-        function prepareChildAccountFeatures() {
-            if (formData.accountType === 'adult') {
-                // Set up parent account features
-                console.log('Preparing parent account features');
-                // This would enable child management features in the dashboard
-            }
-        }
-
-        // Organization toggle preparation
-        function prepareOrganizationToggle() {
-            if (formData.accountType === 'organization' && formData.multipleOrgs) {
-                // Set up multiple organization management
-                console.log('Preparing multiple organization management');
+                navContainer.style.display = 'flex';
+                nextBtn.textContent = currentStep === totalSteps - 1 ? 'Create Account' : 'Next';
             }
         }
     </script>

@@ -17,6 +17,26 @@ const playerValidation = [
   body('monthlyFee').optional().isNumeric().withMessage('Monthly fee must be a number')
 ];
 
+// GET /api/players/family - Get family members for logged-in user
+router.get('/family', authenticateToken, async (req, res) => {
+  try {
+    const result = await query(
+      'SELECT * FROM players WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.user.id]
+    );
+
+    const playersWithAge = result.rows.map(player => ({
+      ...player,
+      age: calculateAge(player.date_of_birth)
+    }));
+
+    res.json(playersWithAge);
+  } catch (error) {
+    console.error('Get family error:', error);
+    res.status(500).json({ error: 'Failed to fetch family members' });
+  }
+});
+
 // Get all players (with optional club filter)
 router.get('/', authenticateToken, async (req, res) => {
   try {
@@ -618,6 +638,78 @@ router.patch('/:id/payment-status', authenticateToken, requireOrganization, [
     });
   }
 });
+
+// Add a child profile (Parent context)
+router.post('/child', authenticateToken, [
+    body('firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
+    body('lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
+    body('dateOfBirth').isISO8601().withMessage('Valid date of birth required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+    }
+
+    const { firstName, lastName, dateOfBirth, gender, position, medicalConditions } = req.body;
+
+    // Create player linked to user, club_id NULL initially
+    const result = await query(`
+      INSERT INTO players (
+        first_name, last_name, date_of_birth, position, user_id, 
+        created_at, updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+      RETURNING *
+    `, [firstName, lastName, dateOfBirth, position, req.user.id]);
+
+    const newChild = result.rows[0];
+    newChild.age = calculateAge(newChild.date_of_birth);
+
+    res.status(201).json({
+        message: 'Child profile added successfully',
+        player: newChild
+    });
+
+  } catch (error) {
+    console.error('Add child error:', error);
+    res.status(500).json({ error: 'Failed to add child profile' });
+  }
+});
+
+// Update child profile (Parent context)
+router.put('/child/:id', authenticateToken, [
+    body('firstName').trim().isLength({ min: 1 }),
+    body('lastName').trim().isLength({ min: 1 }),
+    body('dateOfBirth').isISO8601()
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ error: 'Validation failed', details: errors.array() });
+
+    const { firstName, lastName, dateOfBirth, position } = req.body;
+
+    // Verify ownership
+    const check = await query('SELECT id FROM players WHERE id=$1 AND user_id=$2', [req.params.id, req.user.id]);
+    if (check.rows.length === 0) {
+        return res.status(404).json({ error: 'Child profile not found or access denied' });
+    }
+
+    const result = await query(`
+        UPDATE players SET
+            first_name = $1, last_name = $2, date_of_birth = $3, position = $4, updated_at = NOW()
+        WHERE id = $5
+        RETURNING *
+    `, [firstName, lastName, dateOfBirth, position, req.params.id]);
+
+    res.json({ message: 'Profile updated', player: result.rows[0] });
+
+  } catch (error) {
+    console.error('Update child error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
 
 // Helper function to calculate age
 function calculateAge(dateOfBirth) {
