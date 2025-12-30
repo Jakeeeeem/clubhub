@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talent ID Registration | ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="api-service.js"></script>
+</head>
+
+<body class="auth-page">
+    <div class="auth-container" style="max-width: 600px;">
+        <div class="auth-header">
+            <h2>Talent ID Registration</h2>
+            <p>Enter your details to register for the upcoming talent identification event.</p>
+        </div>
+
+        <form id="talentRegForm" onsubmit="handleRegistration(event)">
+            <input type="hidden" id="eventId">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="lastName" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" id="dob" required>
+                </div>
+                <div class="form-group">
+                    <label>Height (cm/ft)</label>
+                    <input type="text" id="height" placeholder="e.g. 175cm" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" required>
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="phone" required>
+            </div>
+
+            <div class="form-group">
+                <label>Preferred Position</label>
+                <select id="position" required>
+                    <option value="">Select Position</option>
+                    <option value="Goalkeeper">Goalkeeper</option>
+                    <option value="Defender">Defender</option>
+                    <option value="Midfielder">Midfielder</option>
+                    <option value="Forward">Forward</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Register Now</button>
+        </form>
+
+        <div id="successMessage" style="display:none; text-align:center; margin-top:2rem;">
+            <h3>Registration Complete!</h3>
+            <p>You have successfully registered. Please arrive 30 minutes before the start time.</p>
+            <p>Check your email for further details.</p>
+        </div>
+
+        <div class="auth-footer">
+            <p>Already have an account? <a href="index.html">Login here</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Check for event ID in URL
+        const params = new URLSearchParams(window.location.search);
+        const eventId = params.get('eventId');
+        if (eventId) {
+            document.getElementById('eventId').value = eventId;
+        } else {
+            alert('Invalid Event Link. Please use the link provided by the club.');
+        }
+
+        async function handleRegistration(e) {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Registering...';
+
+            const data = {
+                eventId: document.getElementById('eventId').value,
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                dateOfBirth: document.getElementById('dob').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                position: document.getElementById('position').value,
+                height: document.getElementById('height').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:3000/api/talent-id/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    document.getElementById('talentRegForm').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'block';
+                } else {
+                    const err = await response.json();
+                    alert('Registration failed: ' + (err.error || err.message));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('An error occurred. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Register Now';
+            }
+        }
+    </script>
+</body>
+
+</html>

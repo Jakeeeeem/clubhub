@@ -469,8 +469,84 @@
                     </div>
                 </div>
 
+                <!-- Talent ID Manager Tab -->
+                <div id="talent-id" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Talent ID Manager</h2>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="exportTalentCSV()">Export CSV</button>
+                            <button class="btn btn-primary" onclick="showGenerateBibsModal()">+ Generate Bibs</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3>Active Event Dashboard</h3>
+                        <div class="form-group">
+                            <label>Select Event</label>
+                            <select id="talentEventSelect" onchange="loadTalentDashboard(this.value)">
+                                <option value="">Select an event...</option>
+                                <!-- Populated via JS -->
+                            </select>
+                        </div>
+
+                        <div class="stats-grid" id="talentStats">
+                            <div class="stat-card">
+                                <h3>Registrants</h3>
+                                <p class="stat-number" id="totalRegistrants">0</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Bibs Available</h3>
+                                <p class="stat-number" id="bibsAvailable">0</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Groups</h3>
+                                <p class="stat-number" id="totalGroups">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <!-- Left Col: Schedule & Bibs -->
+                        <div>
+                            <div class="card">
+                                <h3>Day Schedule</h3>
+                                <div id="scheduleList" class="item-list">
+                                    <p class="empty-state">No schedule items yet.</p>
+                                </div>
+                                <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
+                                    onclick="showAddScheduleModal()">+ Add Activity</button>
+                            </div>
+
+                            <div class="card" style="margin-top: 2rem;">
+                                <h3>Bib Inventory</h3>
+                                <div id="bibsList" class="item-list">
+                                    <!-- Bib ranges -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Col: Groups & Auto Assign -->
+                        <div>
+                            <div class="card">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h3>Groups</h3>
+                                    <button class="btn btn-primary btn-small" onclick="autoAssignBibs()">✨ Auto-Assign
+                                        Bibs</button>
+                                </div>
+                                <p style="font-size:0.9rem; opacity:0.7; margin-bottom:1rem;">Automatically assign bibs
+                                    to unassigned players.</p>
+
+                                <div id="groupsList">
+                                    <!-- Groups rendered here -->
+                                </div>
+
+                                <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
+                                    onclick="showCreateGroupModal()">+ Create Group</button>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- End dashboard-content -->
             </div>
-        </div>
     </main>
 
     <!-- Enhanced Modals -->

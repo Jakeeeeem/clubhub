@@ -20,6 +20,8 @@ const { startBillingScheduler } = require('./services/billing-service');
 const productRoutes = require('./routes/products');
 const campaignRoutes = require('./routes/campaigns');
 const listingsRoutes = require('./routes/listings');
+const gdprRoutes = require('./routes/gdpr');
+const talentIdRoutes = require('./routes/talent-id');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
