@@ -617,10 +617,136 @@
             <option value="Goalkeeper">Goalkeeper</option>
             <option value="Defender">Defender</option>
             <option value="Midfielder">Midfielder</option>
-            <option value="Forward">Forward</option>
+            <<<<<<< SEARCH <option value="Forward">Forward</option>
           </select>
         </div>
-        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">Create Profile</button>
+        =======
+        <option value="Forward">Forward</option>
+        </select>
+    </div>
+    <div class="form-group">
+      <label>Sport</label>
+      <select name="sport" required>
+        <option value="Football">Football</option>
+        <option value="Basketball">Basketball</option>
+        <option value="Tennis">Tennis</option>
+        <option value="Rugby">Rugby</option>
+        <option value="Cricket">Cricket</option>
+        <option value="Athletics">Athletics</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Gender</label>
+      <select name="gender">
+        <option value="">Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Location (City/Area)</label>
+      <input type="text" name="location" placeholder="e.g. London">
+    </div>
+    <div class="form-group">
+      <label>Bio / Summary</label>
+      <textarea name="bio" placeholder="Brief player summary..." rows="3"
+        style="width: 100%; border-radius: 8px; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;"></textarea>
+    </div>
+    >>>>>>> REPLACE
+    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">Create Profile</button>
+    </form>
+  </div>
+  </div>
+
+  <!-- Child Detail View (Hidden by default) -->
+  <div id="child-detail-view" class="dashboard-section" style="display: none;">
+    <button class="btn btn-secondary" onclick="closeChildDetails()" style="margin-bottom: 1rem;">← Back to
+      Family</button>
+
+    <div class="card profile-header-card" style="display: flex; align-items: flex-start; gap: 2rem; flex-wrap: wrap;">
+      <div class="profile-avatar-large" id="cv-avatar"
+        style="width: 100px; height: 100px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; color: white;">
+        C</div>
+      <div style="flex: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <h1 id="cv-name" style="margin: 0;">Child Name</h1>
+          <button class="btn btn-primary" onclick="editCurrentChild()">Edit Profile</button>
+        </div>
+        <p id="cv-subtitle" style="color: var(--text-muted); margin-top: 0.5rem;">Position • Club</p>
+
+        <div class="cv-grid"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+          <div class="stat-item">
+            <label style="color: #888; font-size: 0.8rem;">Age</label>
+            <div id="cv-age" style="font-weight: 600;">-</div>
+          </div>
+          <div class="stat-item">
+            <label style="color: #888; font-size: 0.8rem;">Gender</label>
+            <div id="cv-gender" style="font-weight: 600;">-</div>
+          </div>
+          <div class="stat-item">
+            <label style="color: #888; font-size: 0.8rem;">Location</label>
+            <div id="cv-location" style="font-weight: 600;">-</div>
+          </div>
+          <div class="stat-item">
+            <label style="color: #888; font-size: 0.8rem;">Sport</label>
+            <div id="cv-sport" style="font-weight: 600;">-</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <label style="color: #888; font-size: 0.8rem;">Bio</label>
+          <p id="cv-bio" style="color: #ddd; line-height: 1.5;">No bio added.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cv-tabs" style="margin-top: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+      <h3 style="margin: 0;">Player History</h3>
+    </div>
+
+    <div id="cv-history-list" style="margin-top: 1.5rem; display: grid; gap: 1rem;">
+      <!-- History items will be injected here -->
+    </div>
+
+    <button class="btn btn-secondary" onclick="openAddHistoryModal()"
+      style="width: 100%; margin-top: 1rem; border-style: dashed;">+ Add History Entry</button>
+  </div>
+
+  <!-- Add History Modal -->
+  <div id="addHistoryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add History</h2>
+        <span class="close" onclick="closeAddHistoryModal()">&times;</span>
+      </div>
+      <form id="addHistoryForm">
+        <div class="form-group">
+          <label>Club Name</label>
+          <input type="text" name="club_name" required>
+        </div>
+        <div class="form-group">
+          <label>Team Name</label>
+          <input type="text" name="team_name" required>
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label>Start Date</label>
+            <input type="date" name="start_date">
+          </div>
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" name="end_date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Achievements / Notes</label>
+          <textarea name="achievements" rows="3"
+            style="width: 100%; border-radius: 8px; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;"></textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%;">Add Entry</button>
       </form>
     </div>
   </div>

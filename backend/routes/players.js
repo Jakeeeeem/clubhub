@@ -651,17 +651,18 @@ router.post('/child', authenticateToken, [
       return res.status(400).json({ error: 'Validation failed', details: errors.array() });
     }
 
-    const { firstName, lastName, dateOfBirth, gender, position, medicalConditions } = req.body;
+    const { firstName, lastName, dateOfBirth, gender, position, location, sport, bio, medicalConditions } = req.body;
 
     // Create player linked to user, club_id NULL initially
     const result = await query(`
       INSERT INTO players (
         first_name, last_name, date_of_birth, position, user_id, 
+        location, sport, gender, bio,
         created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
       RETURNING *
-    `, [firstName, lastName, dateOfBirth, position, req.user.id]);
+    `, [firstName, lastName, dateOfBirth, position, req.user.id, location, sport, gender, bio]);
 
     const newChild = result.rows[0];
     newChild.age = calculateAge(newChild.date_of_birth);
@@ -687,7 +688,7 @@ router.put('/child/:id', authenticateToken, [
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ error: 'Validation failed', details: errors.array() });
 
-    const { firstName, lastName, dateOfBirth, position } = req.body;
+    const { firstName, lastName, dateOfBirth, position, location, sport, gender, bio } = req.body;
 
     // Verify ownership
     const check = await query('SELECT id FROM players WHERE id=$1 AND user_id=$2', [req.params.id, req.user.id]);
@@ -697,10 +698,12 @@ router.put('/child/:id', authenticateToken, [
 
     const result = await query(`
         UPDATE players SET
-            first_name = $1, last_name = $2, date_of_birth = $3, position = $4, updated_at = NOW()
-        WHERE id = $5
+            first_name = $1, last_name = $2, date_of_birth = $3, position = $4,
+            location = $5, sport = $6, gender = $7, bio = $8,
+            updated_at = NOW()
+        WHERE id = $9
         RETURNING *
-    `, [firstName, lastName, dateOfBirth, position, req.params.id]);
+    `, [firstName, lastName, dateOfBirth, position, location, sport, gender, bio, req.params.id]);
 
     res.json({ message: 'Profile updated', player: result.rows[0] });
 
@@ -708,6 +711,74 @@ router.put('/child/:id', authenticateToken, [
     console.error('Update child error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
   }
+});
+
+// Player History Routes
+
+// GET /history/:playerId - Get history for a player
+router.get('/:id/history', authenticateToken, async (req, res) => {
+    try {
+        const playerId = req.params.id;
+        
+        // Verify ownership (or club access - for now just parent ownership)
+        const check = await query('SELECT id FROM players WHERE id=$1 AND user_id=$2', [playerId, req.user.id]);
+        if (check.rows.length === 0) {
+             // Try club access logic if needed, but primarily parent based
+             return res.status(404).json({ error: 'Player not found or access denied' });
+        }
+
+        const result = await query(
+            'SELECT * FROM player_history WHERE player_id = $1 ORDER BY end_date DESC NULLS FIRST',
+            [playerId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Get history error', err);
+        res.status(500).json({ error: 'Failed to get history' });
+    }
+});
+
+// POST /history/:playerId - Add history item
+router.post('/:id/history', authenticateToken, async (req, res) => {
+    try {
+        const playerId = req.params.id;
+        const { club_name, team_name, start_date, end_date, achievements } = req.body;
+
+        const check = await query('SELECT id FROM players WHERE id=$1 AND user_id=$2', [playerId, req.user.id]);
+        if (check.rows.length === 0) return res.status(404).json({ error: 'Player not found' });
+
+        const result = await query(`
+            INSERT INTO player_history (player_id, club_name, team_name, start_date, end_date, achievements)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        `, [playerId, club_name, team_name, start_date, end_date, achievements]);
+
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('Add history error', err);
+        res.status(500).json({ error: 'Failed' });
+    }
+});
+
+// DELETE /history/:historyId
+router.delete('/history/:historyId', authenticateToken, async (req, res) => {
+    try {
+        // Verify ownership via join
+        const check = await query(`
+            SELECT ph.id 
+            FROM player_history ph
+            JOIN players p ON ph.player_id = p.id
+            WHERE ph.id = $1 AND p.user_id = $2
+        `, [req.params.historyId, req.user.id]);
+
+        if (check.rows.length === 0) return res.status(404).json({ error: 'Item not found' });
+
+        await query('DELETE FROM player_history WHERE id = $1', [req.params.historyId]);
+        res.json({ message: 'Deleted' });
+    } catch (err) {
+        console.error('Delete history error', err);
+        res.status(500).json({ error: 'Failed' });
+    }
 });
 
 

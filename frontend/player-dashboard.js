@@ -1512,7 +1512,8 @@ function loadFamilyMembers() {
             <div class="profile-details" style="display: grid; gap: 0.5rem; color: #ddd;">
                 <p><strong>Age:</strong> ${child.age || '?'} (${new Date(child.date_of_birth).getFullYear()})</p>
                 <p><strong>Club:</strong> ${child.club_name || 'Not assigned'}</p>
-                <button class="btn btn-secondary btn-small" style="width: 100%; margin-top: 1rem;" onclick="editChildProfile('${child.id}')">Manage Profile</button>
+                <button class="btn btn-secondary btn-small" style="width: 100%; margin-top: 1rem;" onclick="viewChildDetails('${child.id}')">View Full Profile</button>
+                <button class="btn btn-outline btn-small" style="width: 100%; margin-top: 0.5rem;" onclick="editChildProfile('${child.id}')">Quick Edit</button>
             </div>
         </div>
      `).join('');
@@ -1601,8 +1602,11 @@ function wireFamilyListeners() {
                 });
                 showNotification(isEdit ? 'Profile updated!' : 'Child profile created!', 'success');
                 closeAddChildModal();
-                if(document.getElementById('player-family').classList.contains('active')) {
-                    loadFamilyMembers();
+                loadFamilyMembers(); // Always reload list
+                
+                // If detail view is open for this child, refresh it
+                if(isEdit && PlayerDashboardState.activeChildId === newForm.dataset.id) {
+                    viewChildDetails(newForm.dataset.id);
                 }
             } catch(err) {
                 console.error(err);
@@ -1613,6 +1617,147 @@ function wireFamilyListeners() {
         });
     }
 }
+
+// Global exports
+window.loadFamilyMembers = loadFamilyMembers;
+window.openAddChildModal = openAddChildModal;
+window.closeAddChildModal = closeAddChildModal;
+window.editChildProfile = editChildProfile;
+
+/* Child Detail & History Logic */
+function viewChildDetails(id) {
+    const child = (PlayerDashboardState.family || []).find(c => c.id === id);
+    if(!child) return;
+
+    PlayerDashboardState.activeChildId = id;
+    
+    // Switch views
+    document.getElementById('player-family').style.display = 'none';
+    const detailView = document.getElementById('child-detail-view');
+    detailView.style.display = 'block';
+    
+    // Populate Header
+    document.getElementById('cv-name').textContent = `${child.first_name} ${child.last_name}`;
+    document.getElementById('cv-avatar').textContent = (child.first_name || 'C')[0];
+    document.getElementById('cv-subtitle').textContent = child.position || 'No Position';
+    
+    // Populate CV Grid
+    document.getElementById('cv-age').textContent = child.age || '-';
+    document.getElementById('cv-gender').textContent = child.gender || '-';
+    document.getElementById('cv-location').textContent = child.location || '-';
+    document.getElementById('cv-sport').textContent = child.sport || '-';
+    document.getElementById('cv-bio').textContent = child.bio || 'No bio added.';
+    
+    // Load History
+    loadChildHistory(id);
+}
+
+function closeChildDetails() {
+    document.getElementById('child-detail-view').style.display = 'none';
+    document.getElementById('player-family').style.display = 'grid'; // Grid or Block depending on CSS? Assuming Grid for now as original was stats-grid
+    // Actually #player-family might be block, but familyGrid inside is grid.
+    // The tabs hide/show logic usually sets .dashboard-section to block. 
+    document.getElementById('player-family').style.display = 'block'; 
+    PlayerDashboardState.activeChildId = null;
+}
+
+function editCurrentChild() {
+    if(PlayerDashboardState.activeChildId) {
+        editChildProfile(PlayerDashboardState.activeChildId);
+    }
+}
+
+async function loadChildHistory(playerId) {
+    const list = document.getElementById('cv-history-list');
+    list.innerHTML = '<p>Loading history...</p>';
+    
+    try {
+        const history = await apiService.makeRequest(`/players/${playerId}/history`);
+        if(!history || !history.length) {
+            list.innerHTML = '<p class="text-muted">No history recorded.</p>';
+            return;
+        }
+        
+        list.innerHTML = history.map(item => `
+            <div class="card" style="padding: 1rem; border-left: 4px solid var(--primary);">
+                <div style="display: flex; justify-content: space-between;">
+                    <h4 style="margin: 0;">${escapeHTML(item.club_name)} - ${escapeHTML(item.team_name)}</h4>
+                    <button class="btn-text" onclick="deleteHistory('${item.id}')" style="color: #ff4444;">&times;</button>
+                </div>
+                <p style="font-size: 0.9rem; color: #888; margin: 0.5rem 0;">
+                    ${item.start_date ? new Date(item.start_date).getFullYear() : '?'} - 
+                    ${item.end_date ? new Date(item.end_date).getFullYear() : 'Present'}
+                </p>
+                <p style="margin: 0; color: #ddd;">${escapeHTML(item.achievements || '')}</p>
+            </div>
+        `).join('');
+    } catch(err) {
+        console.error(err);
+        list.innerHTML = '<p class="error">Failed to load history</p>';
+    }
+}
+
+function openAddHistoryModal() {
+    if(window.showModal) window.showModal('addHistoryModal');
+    else document.getElementById('addHistoryModal').style.display = 'block';
+}
+
+function closeAddHistoryModal() {
+    if(window.closeModal) window.closeModal('addHistoryModal');
+    else document.getElementById('addHistoryModal').style.display = 'none';
+    document.getElementById('addHistoryForm').reset();
+}
+
+async function deleteHistory(historyId) {
+    if(!confirm('Delete this history entry?')) return;
+    try {
+        await apiService.makeRequest(`/players/history/${historyId}`, { method: 'DELETE' });
+        loadChildHistory(PlayerDashboardState.activeChildId);
+    } catch(err) {
+        showNotification('Failed to delete history', 'error');
+    }
+}
+
+function wireHistoryListeners() {
+    const form = document.getElementById('addHistoryForm');
+    if(form) {
+         const newForm = form.cloneNode(true);
+         form.parentNode.replaceChild(newForm, form);
+         
+         newForm.addEventListener('submit', async (e) => {
+             e.preventDefault();
+             if(!PlayerDashboardState.activeChildId) return;
+             
+             const formData = new FormData(newForm);
+             const data = Object.fromEntries(formData.entries());
+             
+             try {
+                 await apiService.makeRequest(`/players/${PlayerDashboardState.activeChildId}/history`, {
+                     method: 'POST',
+                     body: JSON.stringify(data)
+                 });
+                 showNotification('History entry added', 'success');
+                 closeAddHistoryModal();
+                 loadChildHistory(PlayerDashboardState.activeChildId);
+             } catch(err) {
+                 showNotification('Failed to add history', 'error');
+             }
+         });
+    }
+}
+
+// Additional exports
+window.viewChildDetails = viewChildDetails;
+window.closeChildDetails = closeChildDetails;
+window.editCurrentChild = editCurrentChild;
+window.openAddHistoryModal = openAddHistoryModal;
+window.closeAddHistoryModal = closeAddHistoryModal;
+window.deleteHistory = deleteHistory;
+
+// Initialize extra listeners
+document.addEventListener('DOMContentLoaded', wireHistoryListeners);
+
+/* End Child Detail Logic */
 
 // Global exports
 window.loadFamilyMembers = loadFamilyMembers;
