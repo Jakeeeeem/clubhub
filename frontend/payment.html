@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +13,7 @@
             margin: 2rem auto;
             padding: 2rem;
         }
-        
+
         .payment-header {
             text-align: center;
             margin-bottom: 3rem;
@@ -21,17 +22,17 @@
             padding: 2rem;
             border-radius: 12px;
         }
-        
+
         .payment-header h1 {
             margin: 0 0 0.5rem 0;
             font-size: 2.5rem;
         }
-        
+
         .payment-header p {
             margin: 0;
             opacity: 0.9;
         }
-        
+
         .payment-details {
             background: #f8f9fa;
             padding: 2rem;
@@ -39,51 +40,51 @@
             margin-bottom: 2rem;
             border-left: 4px solid #007bff;
         }
-        
+
         .amount-display {
             font-size: 3rem;
             font-weight: bold;
             color: #007bff;
             text-align: center;
             margin: 1.5rem 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         .payment-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
             margin: 1.5rem 0;
         }
-        
+
         .payment-info div {
             background: white;
             padding: 1rem;
             border-radius: 8px;
             border: 1px solid #e9ecef;
         }
-        
+
         .payment-info strong {
             color: #495057;
             display: block;
             margin-bottom: 0.5rem;
         }
-        
+
         .payment-form {
             background: white;
             padding: 2.5rem;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             border: 1px solid #e9ecef;
         }
-        
+
         .payment-methods {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
             margin: 2rem 0;
         }
-        
+
         .payment-method {
             padding: 1.5rem;
             border: 2px solid #e9ecef;
@@ -93,37 +94,37 @@
             text-align: center;
             background: #fafafa;
         }
-        
+
         .payment-method:hover {
             border-color: #007bff;
             background: #f8f9fa;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
         }
-        
+
         .payment-method.selected {
             border-color: #007bff;
             background: #e3f2fd;
-            box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
         }
-        
+
         .payment-method h4 {
             margin: 0 0 0.5rem 0;
             color: #333;
             font-size: 1.2rem;
         }
-        
+
         .payment-method p {
             margin: 0;
             font-size: 0.9rem;
             color: #666;
         }
-        
+
         .payment-method .icon {
             font-size: 2rem;
             margin-bottom: 0.5rem;
         }
-        
+
         #card-element {
             padding: 1.2rem;
             border: 2px solid #e9ecef;
@@ -132,18 +133,18 @@
             background: white;
             transition: border-color 0.3s ease;
         }
-        
+
         #card-element:focus {
             border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
         }
-        
+
         .loading {
             display: none;
             text-align: center;
             padding: 2rem;
         }
-        
+
         .spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #007bff;
@@ -153,12 +154,17 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 1rem auto;
         }
-        
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
-        
+
         .success-message {
             display: none;
             background: linear-gradient(135deg, #28a745, #20c997);
@@ -168,12 +174,12 @@
             text-align: center;
             margin: 2rem 0;
         }
-        
+
         .success-message h3 {
             margin: 0 0 1rem 0;
             font-size: 1.8rem;
         }
-        
+
         .error-message {
             display: none;
             background: linear-gradient(135deg, #dc3545, #e74c3c);
@@ -182,7 +188,7 @@
             border-radius: 8px;
             margin: 1rem 0;
         }
-        
+
         .btn {
             padding: 1rem 2rem;
             border: none;
@@ -195,44 +201,44 @@
             display: inline-block;
             text-align: center;
         }
-        
+
         .btn-primary {
             background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
         }
-        
+
         .btn-primary:hover:not(:disabled) {
             background: linear-gradient(135deg, #0056b3, #004085);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
         }
-        
+
         .btn-primary:disabled {
             background: #6c757d;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
-        
+
         .btn-success {
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
         }
-        
+
         .btn-success:hover:not(:disabled) {
             background: linear-gradient(135deg, #20c997, #17a2b8);
             transform: translateY(-2px);
         }
-        
+
         .btn-secondary {
             background: #6c757d;
             color: white;
         }
-        
+
         .btn-secondary:hover {
             background: #545b62;
         }
-        
+
         .security-badges {
             display: flex;
             justify-content: center;
@@ -240,7 +246,7 @@
             margin: 2rem 0;
             flex-wrap: wrap;
         }
-        
+
         .security-badge {
             background: #f8f9fa;
             padding: 0.5rem 1rem;
@@ -249,7 +255,7 @@
             color: #495057;
             border: 1px solid #e9ecef;
         }
-        
+
         .demo-notice {
             background: linear-gradient(135deg, #ffc107, #fd7e14);
             color: #212529;
@@ -258,36 +264,37 @@
             margin: 1.5rem 0;
             border-left: 4px solid #fd7e14;
         }
-        
+
         .demo-notice strong {
             display: block;
             margin-bottom: 0.5rem;
         }
-        
+
         @media (max-width: 768px) {
             .payment-container {
                 margin: 1rem;
                 padding: 1rem;
             }
-            
+
             .payment-methods {
                 grid-template-columns: 1fr;
             }
-            
+
             .payment-info {
                 grid-template-columns: 1fr;
             }
-            
+
             .amount-display {
                 font-size: 2.5rem;
             }
-            
+
             .payment-header h1 {
                 font-size: 2rem;
             }
         }
     </style>
 </head>
+
 <body>
     <header class="header">
         <nav class="nav container">
@@ -316,7 +323,7 @@
 
                 <div class="payment-details">
                     <div class="amount-display" id="paymentAmount">£0.00</div>
-                    
+
                     <div class="payment-info">
                         <div>
                             <strong>Description:</strong>
@@ -339,7 +346,7 @@
 
                 <div class="payment-form">
                     <h3>Choose Payment Method</h3>
-                    
+
                     <div class="payment-methods">
                         <div class="payment-method selected" data-method="card" onclick="selectPaymentMethod('card')">
                             <div class="icon">💳</div>
@@ -360,16 +367,17 @@
                                 <!-- Stripe card element will be inserted here -->
                             </div>
                             <div id="card-errors" role="alert" class="error-message"></div>
-                            
+
                             <div class="security-badges">
                                 <div class="security-badge">🔒 SSL Encrypted</div>
                                 <div class="security-badge">🛡️ Stripe Secure</div>
                                 <div class="security-badge">💳 PCI Compliant</div>
                             </div>
-                            
+
                             <button type="submit" id="submit-payment" class="btn btn-primary" style="width: 100%;">
                                 <span id="button-text">Complete Payment</span>
-                                <div id="button-spinner" class="spinner" style="display: none; width: 20px; height: 20px; margin: 0 auto;"></div>
+                                <div id="button-spinner" class="spinner"
+                                    style="display: none; width: 20px; height: 20px; margin: 0 auto;"></div>
                             </button>
                         </form>
                     </div>
@@ -391,7 +399,8 @@
                         <h3>✅ Payment Successful!</h3>
                         <p>Thank you for your payment. You will receive a confirmation email shortly.</p>
                         <p><strong>Redirecting to ClubHub in <span id="countdown">5</span> seconds...</strong></p>
-                        <button class="btn btn-secondary" onclick="window.location.href='index.html'" style="margin-top: 1rem;">
+                        <button class="btn btn-secondary" onclick="window.location.href='index.html'"
+                            style="margin-top: 1rem;">
                             Return to ClubHub Now
                         </button>
                     </div>
@@ -427,60 +436,60 @@
         let cardElement = null;
         let paymentData = null;
         let selectedMethod = 'card';
-        
-         const STRIPE_PUBLIC_KEY = 'pk_live_51RZtoWRthpGbefAaiw5yuuXStTeNqyKMJplgHQVxxBpPqDTGp4xsu1tfUrQLlWqsGDyfhaROF9J9gjmDB8OhDCnz00HMu7iQ0o';
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('💳 Payment page loading...');
-    
-    try {
-        stripe = Stripe(STRIPE_PUBLIC_KEY);
-        console.log('✅ Stripe initialized successfully');
-    } catch (error) {
-        console.error('❌ Failed to initialize Stripe:', error);
-        showError('Failed to initialize payment system. Please refresh the page.');
-        return;
-    }
-    
-    loadPaymentDetails();
-});
+        const STRIPE_PUBLIC_KEY = 'pk_live_51RZtoWRthpGbefAaiw5yuuXStTeNqyKMJplgHQVxxBpPqDTGp4xsu1tfUrQLlWqsGDyfhaROF9J9gjmDB8OhDCnz00HMu7iQ0o';
+
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('💳 Payment page loading...');
+
+            try {
+                stripe = Stripe(STRIPE_PUBLIC_KEY);
+                console.log('✅ Stripe initialized successfully');
+            } catch (error) {
+                console.error('❌ Failed to initialize Stripe:', error);
+                showError('Failed to initialize payment system. Please refresh the page.');
+                return;
+            }
+
+            loadPaymentDetails();
+        });
 
         // Load payment details from URL parameters
         async function loadPaymentDetails() {
-    try {
-        const params = new URLSearchParams(window.location.search);
-        const paymentId = params.get('id');
-        const token = params.get('token');
-        const amount = params.get('amount');
-        const description = params.get('description');
-        const eventId = params.get('eventId');
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const paymentId = params.get('id');
+                const token = params.get('token');
+                const amount = params.get('amount');
+                const description = params.get('description');
+                const eventId = params.get('eventId');
 
-        // Check if we have URL parameters for direct payment (like from events)
-        if (amount && description && !paymentId) {
-            // Get current user info if available
-            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            
-            // Direct payment from URL parameters
-            paymentData = {
-                id: `direct_${Date.now()}`,
-                amount: parseFloat(amount),
-                description: decodeURIComponent(description),
-                player: { 
-                    name: currentUser.first_name && currentUser.last_name 
-                        ? `${currentUser.first_name} ${currentUser.last_name}` 
-                        : 'Guest User' 
-                },
-                club: { name: 'ClubHub' },
-                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-                paymentType: eventId ? 'event_booking' : 'general',
-                isOverdue: false
-            };
-            
-            console.log('✅ Direct payment details loaded:', paymentData);
-            displayPaymentDetails();
-            setupStripePaymentForm();
-            return;
-        }
+                // Check if we have URL parameters for direct payment (like from events)
+                if (amount && description && !paymentId) {
+                    // Get current user info if available
+                    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+
+                    // Direct payment from URL parameters
+                    paymentData = {
+                        id: `direct_${Date.now()}`,
+                        amount: parseFloat(amount),
+                        description: decodeURIComponent(description),
+                        player: {
+                            name: currentUser.first_name && currentUser.last_name
+                                ? `${currentUser.first_name} ${currentUser.last_name}`
+                                : 'Guest User'
+                        },
+                        club: { name: 'ClubHub' },
+                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+                        paymentType: eventId ? 'event_booking' : 'general',
+                        isOverdue: false
+                    };
+
+                    console.log('✅ Direct payment details loaded:', paymentData);
+                    displayPaymentDetails();
+                    setupStripePaymentForm();
+                    return;
+                }
 
 
                 // Check if we have payment ID and token for database lookup
@@ -504,7 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log('✅ Payment details loaded from API:', paymentData);
                     } catch (apiError) {
                         console.warn('⚠️ Could not fetch from API, using URL parameters:', apiError);
-                        
+
                         // Fallback to URL parameters
                         if (amount && description) {
                             paymentData = {
@@ -589,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 elements = stripe.elements();
-                
+
                 cardElement = elements.create('card', {
                     style: {
                         base: {
@@ -610,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 cardElement.mount('#card-element');
 
-                cardElement.on('change', function(event) {
+                cardElement.on('change', function (event) {
                     const displayError = document.getElementById('card-errors');
                     if (event.error) {
                         displayError.textContent = event.error.message;
@@ -634,7 +643,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Select payment method
         function selectPaymentMethod(method) {
             selectedMethod = method;
-            
+
             document.querySelectorAll('.payment-method').forEach(el => {
                 el.classList.remove('selected');
             });
@@ -668,7 +677,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 console.log('💳 Creating payment intent...');
-                
+
                 // Use API service if available, otherwise make direct request
                 let intentData;
                 if (window.apiService) {
@@ -754,7 +763,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             try {
                 console.log('🎮 Processing demo payment...');
-                
+
                 // Simulate payment processing delay
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -810,8 +819,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Get base URL for API calls
         function getBaseURL() {
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
                 return 'http://localhost:3000';
+            }
+            if (hostname === 'clubhubsports-dev.onrender.com' || hostname === 'clubhub-dev.onrender.com') {
+                return 'https://clubhub-dev.onrender.com';
             }
             return 'https://api.clubhubsports.net';
         }
@@ -820,10 +833,10 @@ document.addEventListener('DOMContentLoaded', function() {
         function setLoadingState(loading, buttonId = 'submit-payment') {
             const button = document.getElementById(buttonId);
             if (!button) return;
-            
+
             const buttonText = button.querySelector('#button-text') || button.querySelector('span') || button;
             const buttonSpinner = button.querySelector('#button-spinner') || document.getElementById('button-spinner');
-            
+
             if (loading) {
                 button.disabled = true;
                 if (buttonSpinner && buttonText) {
@@ -856,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('cardPaymentForm').style.display = 'none';
             document.getElementById('demoPaymentForm').style.display = 'none';
             document.querySelector('.payment-methods').style.display = 'none';
-            
+
             // Countdown timer
             let countdown = 5;
             const countdownElement = document.getElementById('countdown');
@@ -876,14 +889,14 @@ document.addEventListener('DOMContentLoaded', function() {
         function showError(message) {
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
-            
+
             if (errorText) {
                 errorText.textContent = message || 'An unexpected error occurred.';
             }
             if (errorMessage) {
                 errorMessage.style.display = 'block';
             }
-            
+
             // Auto-hide error after 10 seconds
             setTimeout(() => {
                 hideError();
@@ -928,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Setup demo payment button event listener
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             setTimeout(() => {
                 const demoButton = document.getElementById('demo-payment');
                 if (demoButton) {
@@ -944,151 +957,173 @@ document.addEventListener('DOMContentLoaded', function() {
 
         console.log('✅ Complete payment page loaded successfully!');
 
-        
+
     </script>
 
     <script>
-// Embedded API Service for Payment Page
-class ApiService {
-  constructor() {
-    this.baseURL = 'https://api.clubhubsports.net/api';
-    this.token = localStorage.getItem('authToken');
-    console.log('🌐 API Service initialized with baseURL:', this.baseURL);
-  }
+        // Embedded API Service for Payment Page
+        class ApiService {
+            constructor() {
+                this.baseURL = this.getBaseURL();
+                this.token = localStorage.getItem('authToken');
+                console.log('🌐 API Service initialized with baseURL:', this.baseURL);
+            }
 
-  async makeRequest(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...options.headers
-    };
+            getBaseURL() {
+                const hostname = window.location.hostname;
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
+                // Production environment
+                if (hostname === 'clubhubsports.net' || hostname === 'www.clubhubsports.net') {
+                    return 'https://api.clubhubsports.net/api';
+                }
 
-    const config = {
-      ...options,
-      headers,
-      mode: 'cors',
-      credentials: 'include'
-    };
+                // Development environment (Render)
+                if (hostname === 'clubhubsports-dev.onrender.com' || hostname === 'clubhub-dev.onrender.com') {
+                    return 'https://clubhub-dev.onrender.com/api';
+                }
 
-    try {
-      console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
-      
-      const response = await fetch(url, config);
-      
-      const contentType = response.headers.get('content-type');
-      let data;
-      
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        const text = await response.text();
-        try {
-          data = JSON.parse(text);
-        } catch {
-          data = { message: text };
+                // Local development
+                if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                    return 'http://localhost:3000/api';
+                }
+
+                // Fallback
+                return 'https://api.clubhubsports.net/api';
+            }
+
+            async makeRequest(endpoint, options = {}) {
+                const url = `${this.baseURL}${endpoint}`;
+
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    ...options.headers
+                };
+
+                if (this.token) {
+                    headers['Authorization'] = `Bearer ${this.token}`;
+                }
+
+                const config = {
+                    ...options,
+                    headers,
+                    mode: 'cors',
+                    credentials: 'include'
+                };
+
+                try {
+                    console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+
+                    const response = await fetch(url, config);
+
+                    const contentType = response.headers.get('content-type');
+                    let data;
+
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        const text = await response.text();
+                        try {
+                            data = JSON.parse(text);
+                        } catch {
+                            data = { message: text };
+                        }
+                    }
+
+                    if (!response.ok) {
+                        console.error(`❌ API Error ${response.status}:`, data);
+                        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    console.log(`✅ API Response: ${response.status}`);
+                    return data;
+
+                } catch (error) {
+                    console.error(`❌ API Error: ${endpoint}`, error);
+                    throw error;
+                }
+            }
+
+            async createPaymentIntent(paymentData) {
+                console.log('💳 Creating payment intent:', paymentData);
+
+                try {
+                    const response = await this.makeRequest('/payments/create-intent', {
+                        method: 'POST',
+                        body: JSON.stringify(paymentData)
+                    });
+
+                    console.log('✅ Payment intent created:', response);
+                    return response;
+                } catch (error) {
+                    console.error('❌ Failed to create payment intent:', error);
+                    throw error;
+                }
+            }
+
+            async confirmPayment(paymentIntentId, paymentId = null) {
+                console.log('✅ Confirming payment:', { paymentIntentId, paymentId });
+
+                try {
+                    const response = await this.makeRequest('/payments/confirm-payment', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            paymentIntentId,
+                            paymentId
+                        })
+                    });
+
+                    console.log('✅ Payment confirmed:', response);
+                    return response;
+                } catch (error) {
+                    console.error('❌ Failed to confirm payment:', error);
+                    throw error;
+                }
+            }
+
+            async getPublicPayment(paymentId, token) {
+                console.log('🔍 Fetching public payment:', { paymentId, token });
+
+                try {
+                    const response = await this.makeRequest(`/payments/public/${paymentId}?token=${encodeURIComponent(token)}`);
+                    console.log('✅ Public payment fetched:', response);
+                    return response;
+                } catch (error) {
+                    console.error('❌ Failed to fetch public payment:', error);
+                    throw error;
+                }
+            }
+
+            async healthCheck() {
+                try {
+                    return await this.makeRequest('/health');
+                } catch (error) {
+                    console.warn('Health check failed:', error);
+                    return { status: 'unhealthy' };
+                }
+            }
+
+            async testConnection() {
+                try {
+                    console.log('🔍 Testing API connection...');
+                    const health = await this.healthCheck();
+                    console.log('✅ API Connection successful:', health);
+                    return true;
+                } catch (error) {
+                    console.error('❌ API Connection failed:', error);
+                    return false;
+                }
+            }
         }
-      }
 
-      if (!response.ok) {
-        console.error(`❌ API Error ${response.status}:`, data);
-        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
-      }
+        // Create and export global instance
+        window.apiService = new ApiService();
 
-      console.log(`✅ API Response: ${response.status}`);
-      return data;
-      
-    } catch (error) {
-      console.error(`❌ API Error: ${endpoint}`, error);
-      throw error;
-    }
-  }
+        // Test connection
+        window.apiService.testConnection();
 
-  async createPaymentIntent(paymentData) {
-    console.log('💳 Creating payment intent:', paymentData);
-    
-    try {
-      const response = await this.makeRequest('/payments/create-intent', {
-        method: 'POST',
-        body: JSON.stringify(paymentData)
-      });
-      
-      console.log('✅ Payment intent created:', response);
-      return response;
-    } catch (error) {
-      console.error('❌ Failed to create payment intent:', error);
-      throw error;
-    }
-  }
-
-  async confirmPayment(paymentIntentId, paymentId = null) {
-    console.log('✅ Confirming payment:', { paymentIntentId, paymentId });
-    
-    try {
-      const response = await this.makeRequest('/payments/confirm-payment', {
-        method: 'POST',
-        body: JSON.stringify({
-          paymentIntentId,
-          paymentId
-        })
-      });
-      
-      console.log('✅ Payment confirmed:', response);
-      return response;
-    } catch (error) {
-      console.error('❌ Failed to confirm payment:', error);
-      throw error;
-    }
-  }
-
-  async getPublicPayment(paymentId, token) {
-    console.log('🔍 Fetching public payment:', { paymentId, token });
-    
-    try {
-      const response = await this.makeRequest(`/payments/public/${paymentId}?token=${encodeURIComponent(token)}`);
-      console.log('✅ Public payment fetched:', response);
-      return response;
-    } catch (error) {
-      console.error('❌ Failed to fetch public payment:', error);
-      throw error;
-    }
-  }
-
-  async healthCheck() {
-    try {
-      return await this.makeRequest('/health');
-    } catch (error) {
-      console.warn('Health check failed:', error);
-      return { status: 'unhealthy' };
-    }
-  }
-
-  async testConnection() {
-    try {
-      console.log('🔍 Testing API connection...');
-      const health = await this.healthCheck();
-      console.log('✅ API Connection successful:', health);
-      return true;
-    } catch (error) {
-      console.error('❌ API Connection failed:', error);
-      return false;
-    }
-  }
-}
-
-// Create and export global instance
-window.apiService = new ApiService();
-
-// Test connection
-window.apiService.testConnection();
-
-console.log('✅ Embedded API Service loaded successfully!');
-</script>
+        console.log('✅ Embedded API Service loaded successfully!');
+    </script>
 </body>
+
 </html>
-        

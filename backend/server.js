@@ -40,7 +40,8 @@ app.use(helmet({
         "https://js.stripe.com",
         "https://api.clubhubsports.net",
         "https://clubhub-dev.onrender.com",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        
       ],
       scriptSrc: [
         "'self'", 
@@ -63,7 +64,8 @@ app.use(cors({
     'http://127.0.0.1:5000',
     'https://clubhubsports.net',           
     'https://www.clubhubsports.net',
-    'https://clubhub-dev.onrender.com',    // Dev environment
+ 
+     'https://clubhubsports-dev.onrender.com',    // Dev environment
     process.env.FRONTEND_URL || 'http://localhost:8000'
   ],
   credentials: true,
