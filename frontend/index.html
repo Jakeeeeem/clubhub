@@ -256,65 +256,117 @@
             </div>
         </section>
 
-        <!-- Choosing Account Types (Keep legacy for now but styled) -->
+        <!-- Account Types -->
         <section class="account-types" id="account-types" style="background: #000; padding: 10rem 0;">
             <div class="container">
+                <h2 style="text-align: center; font-size: 3.5rem; margin-bottom: 2rem; font-family: 'Outfit';">Choose
+                    Your Account Type</h2>
                 <div class="account-types-grid">
+                    <!-- Organization Card -->
                     <div class="account-type-card organization">
                         <div class="account-icon">🏢</div>
-                        <h3>Organization</h3>
-                        <p class="subtitle"
-                            style="color: #94a3b8; text-align: center; margin-bottom: 2rem; font-size: 1.1rem;">Clubs,
-                            Academies & Leagues</p>
-                        <ul class="features-list" style="color: #94a3b8;">
-                            <li>Complete management dashboard</li>
-                            <li>Team organization & Spond-like management</li>
-                            <li>Stripe fixed-date billing (1st of month)</li>
-                            <li>Indeed-style hiring board</li>
+                        <h3>Organization Account</h3>
+                        <p class="subtitle" style="color: #64748b; text-align: center; margin-bottom: 1rem;">Perfect for
+                            clubs, academies, and sports organizations</p>
+                        <ul class="features-list">
+                            <li>Complete club management dashboard</li>
+                            <li>Player registration and tracking</li>
+                            <li>Staff management with role permissions</li>
+                            <li>Event creation and management</li>
+                            <li>Team organization and coaching tools</li>
+                            <li>Financial management and payments</li>
+                            <li>Automated payment collection</li>
+                            <li>Club listing and discovery</li>
+                            <li>Document management system</li>
+                            <li>Advanced reporting and analytics</li>
                         </ul>
-                        <button class="btn btn-primary" onclick="goToSignup('organization')"
-                            style="width: 100%; padding: 1rem; font-size: 1.1rem;">Get Started</button>
+                        <button class="btn btn-danger" onclick="goToSignup('organization')"
+                            style="width: 100%; padding: 1.2rem; font-weight: 700;">Start Managing Your Club</button>
                     </div>
 
+                    <!-- Player Card -->
                     <div class="account-type-card player">
                         <div class="account-icon">⚽</div>
-                        <h3>Player / Parent</h3>
-                        <p class="subtitle"
-                            style="color: #94a3b8; text-align: center; margin-bottom: 2rem; font-size: 1.1rem;">Players
-                            & Child Management</p>
-                        <ul class="features-list" style="color: #94a3b8;">
-                            <li>Build a professional Player CV</li>
-                            <li>Apply to clubs globally</li>
-                            <li>Manage multiple child accounts</li>
-                            <li>Automated payments & event booking</li>
+                        <h3>Player Account</h3>
+                        <p class="subtitle" style="color: #64748b; text-align: center; margin-bottom: 1rem;">Perfect for
+                            players and sports enthusiasts</p>
+                        <ul class="features-list">
+                            <li>Join multiple clubs and teams</li>
+                            <li>Browse and book events</li>
+                            <li>Secure payment processing</li>
+                            <li>Track your progress and stats</li>
+                            <li>Team schedule and availability</li>
+                            <li>Club and event discovery</li>
+                            <li>Direct coach communication</li>
+                            <li>Payment history and receipts</li>
+                            <li>Training resources and downloads</li>
+                            <li>Multi-child family dashboard</li>
                         </ul>
-                        <button class="btn btn-primary" onclick="goToSignup('adult')"
-                            style="width: 100%; padding: 1rem; font-size: 1.1rem;">Join Platform</button>
+                        <button class="btn btn-danger" onclick="goToSignup('adult')"
+                            style="width: 100%; padding: 1.2rem; font-weight: 700;">Join as a Player</button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="benefits" style="background: #0a0a0c;">
+        <!-- Why Choose ClubHub -->
+        <section class="benefits" style="background: #0a0a0c; padding: 10rem 0;">
             <div class="container">
-                <h2 style="text-align: center; font-size: 3.5rem; margin-bottom: 5rem; font-family: 'Outfit';">The Elite
-                    Choice</h2>
+                <h2 style="text-align: center; font-size: 3.5rem; margin-bottom: 5rem; font-family: 'Outfit';">Why
+                    Choose ClubHub?</h2>
                 <div class="benefits-grid">
                     <div class="benefit-card">
+                        <span class="benefit-icon">🔒</span>
+                        <h3>Secure & Reliable</h3>
+                        <p>Banking-level security with SSL encryption and secure payment processing. Your data is always
+                            protected.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">📱</span>
+                        <h3>Mobile Optimized</h3>
+                        <p>Access all features on any device. Our responsive design ensures a perfect experience on
+                            phones, tablets, and desktops.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">⚡</span>
+                        <h3>Real-time Updates</h3>
+                        <p>Instant notifications, live scheduling updates, and real-time communication keep everyone
+                            connected and informed.</p>
+                    </div>
+                    <div class="benefit-card">
                         <span class="benefit-icon">💳</span>
-                        <h3>Stripe Powered</h3>
-                        <p>Automated fixed-date billing on the 1st of every month. No more chasing payments.</p>
+                        <h3>Easy Payments</h3>
+                        <p>Streamlined payment collection with automatic reminders, payment plans, and comprehensive
+                            financial tracking.</p>
                     </div>
                     <div class="benefit-card">
-                        <span class="benefit-icon">🤝</span>
-                        <h3>Recruitment</h3>
-                        <p>Indeed-inspired hiring dashboard for clubs to recruit and manage trialists.</p>
+                        <span class="benefit-icon">🎯</span>
+                        <h3>All-in-One Platform</h3>
+                        <p>Everything you need in one place - no more juggling multiple apps or systems. Simply your
+                            club management today.</p>
                     </div>
                     <div class="benefit-card">
-                        <span class="benefit-icon">📊</span>
-                        <h3>Team Management</h3>
-                        <p>Comprehensive availability voting, match reports, and squad planning.</p>
+                        <span class="benefit-icon">🏆</span>
+                        <h3>Professional Tools</h3>
+                        <p>Advanced features like tactical boards, performance tracking, and custom analytics to take
+                            your club to the next level.</p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="container">
+                <h2>Ready to Transform Your Club?</h2>
+                <p style="font-size: 1.25rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 3rem;">Join
+                    thousands of clubs and players already using ClubHub to streamline their sports management. Get
+                    started today!</p>
+                <div class="cta-buttons">
+                    <button class="btn btn-primary" onclick="showSignupOptions()"
+                        style="padding: 1.2rem 3rem; font-size: 1.1rem;">Start Now</button>
+                    <button class="btn btn-secondary" onclick="showModal('loginModal')"
+                        style="padding: 1.2rem 3rem; font-size: 1.1rem;">I Already Have an Account</button>
                 </div>
             </div>
         </section>
