@@ -94,46 +94,55 @@ router.get('/filtered/:filter', authenticateToken, async (req, res) => {
         const { filter } = req.params;
         const { clubId } = req.query;
         
-        let queryText = 'SELECT * FROM players WHERE 1=1';
+        let queryText = 'SELECT p.* FROM players p WHERE 1=1';
         const queryParams = [];
         let paramCount = 0;
 
         if (clubId) {
             paramCount++;
-            queryText += ` AND club_id = $${paramCount}`;
+            queryText += ` AND p.club_id = $${paramCount}`;
             queryParams.push(clubId);
         }
 
         switch (filter) {
             case 'on-plan':
-                queryText += ` AND (has_payment_plan = true OR payment_plan_id IS NOT NULL)`;
+                // Players with an active payment plan (requires linked user account)
+                queryText += ` AND p.user_id IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM player_plans pp 
+                    WHERE pp.user_id = p.user_id AND pp.is_active = true
+                )`;
                 break;
             case 'not-on-plan':
-                queryText += ` AND (has_payment_plan = false OR has_payment_plan IS NULL) AND payment_plan_id IS NULL`;
+                // Players without an active payment plan
+                queryText += ` AND (p.user_id IS NULL OR NOT EXISTS (
+                    SELECT 1 FROM player_plans pp 
+                    WHERE pp.user_id = p.user_id AND pp.is_active = true
+                ))`;
                 break;
             case 'assigned':
-                // Check team_assignments junction table or team_name
-                // Simplified: assuming team_name or team_id exists on player or we join
-                // In this schema, we seem to have local columns?
-                // Step 1975 Line 97: p.position... p.club_id
-                // Let's assume we check team_assignments separately or use subquery
-                // Or checking team_name if it persists
-                // Reverting to basic: players with team_name IS NOT NULL
-                queryText += ` AND team_name IS NOT NULL AND team_name != ''`;
+                // Players assigned to at least one team
+                queryText += ` AND EXISTS (
+                    SELECT 1 FROM team_players tp 
+                    WHERE tp.player_id = p.id
+                )`;
                 break;
             case 'not-assigned':
-                queryText += ` AND (team_name IS NULL OR team_name = '')`;
+                // Players not assigned to any team
+                queryText += ` AND NOT EXISTS (
+                    SELECT 1 FROM team_players tp 
+                    WHERE tp.player_id = p.id
+                )`;
                 break;
             case 'overdue':
-                // Check payment status OVERDUE
-                queryText += ` AND payment_status = 'overdue'`;
+                // Players with overdue payment status
+                queryText += ` AND p.payment_status = 'overdue'`;
                 break;
             default:
                 // No extra filter
                 break;
         }
 
-        queryText += ' ORDER BY created_at DESC';
+        queryText += ' ORDER BY p.created_at DESC';
 
         const result = await query(queryText, queryParams);
         
