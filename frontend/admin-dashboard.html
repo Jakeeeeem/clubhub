@@ -545,6 +545,48 @@
                             </div>
                         </div>
                     </div>
+                </div> <!-- End talent-id -->
+
+                <!-- Tournament Manager Tab -->
+                <div id="tournaments" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Tournament Manager</h2>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="exportTournamentCSV()">Export CSV</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3>Tournament Overview</h3>
+                        <div class="form-group">
+                            <label>Select Tournament</label>
+                            <select id="tournamentSelect" onchange="loadTournamentDashboard(this.value)">
+                                <option value="">Select a tournament...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-container" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
+                        <!-- Teams Column -->
+                        <div class="card">
+                            <h3>Registered Teams</h3>
+                            <div id="tournamentTeamsList" class="item-list"></div>
+                        </div>
+
+                        <!-- Fixtures Column -->
+                        <div class="card">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h3>Fixtures / Bracket</h3>
+                                <div>
+                                    <button class="btn btn-small btn-secondary"
+                                        onclick="generateFixtures('regular')">League</button>
+                                    <button class="btn btn-small btn-primary"
+                                        onclick="generateFixtures('knockout')">Knockout</button>
+                                </div>
+                            </div>
+                            <div id="tournamentMatchesList" class="item-list"></div>
+                        </div>
+                    </div>
                 </div> <!-- End dashboard-content -->
             </div>
     </main>
@@ -4416,6 +4458,84 @@
     </form>
     </div>
     </div>
+    <script>
+        // Tournament Logic
+        async function loadTournamentDashboard(eventId) {
+            if (!eventId) return;
+            try {
+                const data = await apiService.makeRequest(`/tournaments/${eventId}/dashboard`);
+                const teamsList = document.getElementById('tournamentTeamsList');
+                const matchesList = document.getElementById('tournamentMatchesList');
+
+                // Render Teams
+                teamsList.innerHTML = data.teams.map(t => `
+                <div class="item-list-item">
+                    <div class="item-info">
+                        <h4>${t.team_name}</h4>
+                        <p>${t.contact_email}</p>
+                    </div>
+                    <button class="btn btn-small ${t.status === 'checked_in' ? 'btn-primary' : 'btn-secondary'}" 
+                            onclick="toggleTeamCheckIn('${t.id}', '${t.status}')">
+                        ${t.status === 'checked_in' ? 'Checked In' : 'Check In'}
+                    </button>
+                </div>
+            `).join('');
+
+                // Render Matches
+                matchesList.innerHTML = data.matches.map(m => {
+                    const homeName = data.teams.find(t => t.id === m.home_team_id)?.team_name || 'TBD';
+                    const awayName = data.teams.find(t => t.id === m.away_team_id)?.team_name || 'TBD';
+                    return `
+                <div class="item-list-item" style="border-left: 4px solid ${m.status === 'completed' ? '#4caf50' : '#ffa000'};">
+                    <div class="item-info">
+                        <h4>${homeName} vs ${awayName}</h4>
+                        <p>${m.stage_id ? 'Stage Match' : 'Match'}</p>
+                    </div>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <input type="number" style="width:50px; padding:4px;" value="${m.home_score}" id="score_home_${m.id}">
+                        <span>-</span>
+                        <input type="number" style="width:50px; padding:4px;" value="${m.away_score}" id="score_away_${m.id}">
+                        <button class="btn btn-small btn-primary" onclick="updateMatchResult('${m.id}')">Save</button>
+                    </div>
+                </div>
+            `}).join('');
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function toggleTeamCheckIn(teamId, currentStatus) {
+            const newStatus = currentStatus === 'checked_in' ? 'approved' : 'checked_in';
+            await apiService.makeRequest(`/tournaments/teams/${teamId}/status`, {
+                method: 'POST',
+                body: JSON.stringify({ status: newStatus })
+            });
+            loadTournamentDashboard(document.getElementById('tournamentSelect').value);
+        }
+
+        async function generateFixtures(type) {
+            const eventId = document.getElementById('tournamentSelect').value;
+            if (!eventId) return;
+            if (!confirm(`Generate ${type} fixtures? This cannot be undone.`)) return;
+
+            await apiService.makeRequest(`/tournaments/${eventId}/generate-fixtures`, {
+                method: 'POST',
+                body: JSON.stringify({ type })
+            });
+            loadTournamentDashboard(eventId);
+        }
+
+        async function updateMatchResult(matchId) {
+            const home = document.getElementById(`score_home_${matchId}`).value;
+            const away = document.getElementById(`score_away_${matchId}`).value;
+            await apiService.makeRequest(`/tournaments/matches/${matchId}/result`, {
+                method: 'POST',
+                body: JSON.stringify({ homeScore: home, awayScore: away })
+            });
+            loadTournamentDashboard(document.getElementById('tournamentSelect').value);
+        }
+    </script>
 </body>
 
 </html>
