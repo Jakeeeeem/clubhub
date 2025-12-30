@@ -20,7 +20,6 @@ const { startBillingScheduler } = require('./services/billing-service');
 const productRoutes = require('./routes/products');
 const campaignRoutes = require('./routes/campaigns');
 const listingsRoutes = require('./routes/listings');
-const gdprRoutes = require('./routes/gdpr');
 const talentIdRoutes = require('./routes/talent-id');
 
 const app = express();
@@ -180,6 +179,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/listings', listingsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/talent-id', talentIdRoutes);
 
 
 // Handle 404 for API routes specifically
