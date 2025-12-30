@@ -179,6 +179,16 @@ const queries = {
     INSERT INTO club_applications (club_id, user_id, message, preferred_position, experience_level, availability)
     VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *
+  `,
+
+  // Notification queries
+  findNotificationsByUser: 'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC',
+  markNotificationAsRead: 'UPDATE notifications SET is_read = true WHERE id = $1 AND user_id = $2 RETURNING *',
+  markAllNotificationsAsRead: 'UPDATE notifications SET is_read = true WHERE user_id = $1 RETURNING *',
+  createNotification: `
+    INSERT INTO notifications (user_id, title, message, notification_type, action_url)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *
   `
 };
 

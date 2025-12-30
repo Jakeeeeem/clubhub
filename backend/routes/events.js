@@ -2,6 +2,7 @@ const express = require('express');
 const { query, queries, withTransaction } = require('../config/database');
 const { authenticateToken, requireOrganization, optionalAuth } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
+const emailService = require('../services/email-service');
 
 const router = express.Router();
 
@@ -908,8 +909,150 @@ router.get('/:id/availability', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Get event availability error:', error);
     res.status(500).json({
-      error: 'Failed to fetch availability responses'
+    error: 'Failed to fetch availability responses'
     });
+  }
+});
+
+/**
+ * @route POST /api/events/:id/notify
+ * @desc Send notifications/emails for an event to relevant members
+ */
+router.post('/:id/notify', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const eventId = req.params.id;
+
+    // 1. Fetch event and club/team info
+    const eventResult = await query(`
+      SELECT e.*, c.name as club_name, c.owner_id as club_owner_id, t.name as team_name
+      FROM events e
+      JOIN clubs c ON e.club_id = c.id
+      LEFT JOIN teams t ON e.team_id = t.id
+      WHERE e.id = $1
+    `, [eventId]);
+
+    if (eventResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    const event = eventResult.rows[0];
+
+    // Check permissions
+    if (event.created_by !== req.user.id && event.club_owner_id !== req.user.id) {
+       return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // 2. Identify recipients
+    let recipientsResult;
+    if (event.team_id) {
+      // Team members
+      recipientsResult = await query(`
+        SELECT DISTINCT u.id as user_id, u.email, u.first_name, u.last_name
+        FROM players p
+        JOIN team_players tp ON p.id = tp.player_id
+        JOIN users u ON p.user_id = u.id
+        WHERE tp.team_id = $1 AND u.email IS NOT NULL
+      `, [event.team_id]);
+    } else {
+      // Club members (players and staff)
+      recipientsResult = await query(`
+        SELECT DISTINCT u.id as user_id, u.email, u.first_name, u.last_name
+        FROM (
+          SELECT user_id FROM players WHERE club_id = $1 AND user_id IS NOT NULL
+          UNION
+          SELECT user_id FROM staff WHERE club_id = $1 AND user_id IS NOT NULL
+        ) members
+        JOIN users u ON members.user_id = u.id
+        WHERE u.email IS NOT NULL
+      `, [event.club_id]);
+    }
+
+    const recipients = recipientsResult.rows;
+    if (recipients.length === 0) {
+      return res.json({ message: 'No registered users found to notify for this event', count: 0 });
+    }
+
+    // 3. Send notifications and emails
+    const notificationTitle = `New Event: ${event.title}`;
+    const notificationMessage = `You have a new ${event.event_type} scheduled for ${new Date(event.event_date).toLocaleDateString()} at ${event.event_time || 'TBA'}. Location: ${event.location || 'TBA'}`;
+    const actionUrl = `/events/${event.id}`;
+
+    const notificationPromises = recipients.map(async (r) => {
+      // In-app notification
+      try {
+        await query(queries.createNotification, [
+          r.user_id,
+          notificationTitle,
+          notificationMessage,
+          'event',
+          actionUrl
+        ]);
+      } catch (err) {
+        console.error(`Failed to create notification for user ${r.user_id}:`, err.message);
+      }
+
+      // Email notification
+      // (Optional: Implement batching for large clubs)
+      try {
+        await emailService.sendEmail({
+          to: r.email,
+          subject: notificationTitle,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+              <h2 style="color: #007bff;">${notificationTitle}</h2>
+              <p style="font-size: 16px; line-height: 1.5;">${notificationMessage}</p>
+              <div style="margin-top: 25px;">
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:8000'}${actionUrl}" 
+                   style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                   View Event Details
+                </a>
+              </div>
+              <p style="margin-top: 30px; font-size: 12px; color: #888;">
+                You received this because you are a member of the club organizing this event.
+              </p>
+            </div>
+          `
+        });
+      } catch (err) {
+        console.error(`Failed to send email to ${r.email}:`, err.message);
+      }
+    });
+
+    await Promise.all(notificationPromises);
+
+    res.json({ message: `Notifications sent to ${recipients.length} members`, count: recipients.length });
+  } catch (error) {
+    console.error('Event notification error:', error);
+    res.status(500).json({ error: 'Failed to send event notifications' });
+  }
+});
+
+// DELETE /api/events/:id - Delete an event
+router.delete('/:id', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if event exists and if user owns the club
+    const eventResult = await query(`
+      SELECT e.*, c.owner_id 
+      FROM events e
+      JOIN clubs c ON e.club_id = c.id
+      WHERE e.id = $1
+    `, [id]);
+
+    if (eventResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    if (eventResult.rows[0].owner_id !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await query('DELETE FROM events WHERE id = $1', [id]);
+    res.json({ message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Delete event error:', error);
+    res.status(500).json({ error: 'Failed to delete event' });
   }
 });
 

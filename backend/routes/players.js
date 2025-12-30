@@ -68,6 +68,51 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/players/scout - Fetch players for the scouting dashboard
+router.get('/scout', async (req, res) => {
+  try {
+    const { position, minAge, maxAge, sport } = req.query;
+    
+    let queryText = `
+      SELECT p.id, p.first_name, p.last_name, p.position, p.attendance_rate, p.date_of_birth,
+             c.name as club_name, c.sport
+      FROM players p
+      LEFT JOIN clubs c ON p.club_id = c.id
+      WHERE p.scouting_opt_in = true
+    `;
+    const queryParams = [];
+    let paramCount = 0;
+
+    if (position) {
+      paramCount++;
+      queryText += ` AND p.position ILIKE $${paramCount}`;
+      queryParams.push(`%${position}%`);
+    }
+
+    if (sport) {
+      paramCount++;
+      queryText += ` AND c.sport ILIKE $${paramCount}`;
+      queryParams.push(`%${sport}%`);
+    }
+
+    const result = await query(queryText, queryParams);
+    
+    const scouts = result.rows.map(player => {
+      const age = calculateAge(player.date_of_birth);
+      return { ...player, age };
+    }).filter(player => {
+      if (minAge && player.age < parseInt(minAge)) return false;
+      if (maxAge && player.age > parseInt(maxAge)) return false;
+      return true;
+    });
+
+    res.json(scouts);
+  } catch (error) {
+    console.error('Scouting error:', error);
+    res.status(500).json({ error: 'Failed to fetch scouting data' });
+  }
+});
+
 // Get specific player
 router.get('/:id', authenticateToken, async (req, res) => {
   try {

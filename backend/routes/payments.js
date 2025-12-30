@@ -361,232 +361,53 @@ router.delete('/plans/:id', authenticateToken, requireOrganization, async (req, 
 // GET /api/payments/plan/current - Get current user's plan
 router.get('/plan/current', authenticateToken, async (req, res) => {
   try {
-    // Ensure player_plans table exists
-    const tableExists = await query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'player_plans'
-      );
-    `);
+    const result = await query(`
+      SELECT pp.*, p.name as plan_name, p.price, p.interval
+      FROM player_plans pp
+      JOIN plans p ON pp.plan_id = p.id
+      WHERE pp.user_id = $1 AND pp.is_active = true
+      ORDER BY pp.created_at DESC
+      LIMIT 1
+    `, [req.user.id]);
 
-    if (!tableExists.rows[0].exists) {
-      await query(`
-        CREATE TABLE player_plans (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER REFERENCES users(id),
-          plan_id INTEGER REFERENCES plans(id),
-          start_date TIMESTAMP DEFAULT NOW(),
-          is_active BOOLEAN DEFAULT true,
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-      // No plans assigned yet - return null
-      return res.json(null);
-    }
-
-    // Check if plans table exists first
-    const plansExists = await query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'plans'
-      );
-    `);
-
-    if (!plansExists.rows[0].exists) {
-      return res.json(null);
-    }
-
-    // Check what columns exist in the plans table
-    const columnsResult = await query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'plans' AND table_schema = 'public'
-    `);
-    
-    const columns = columnsResult.rows.map(row => row.column_name);
-    const hasPrice = columns.includes('price');
-    const hasAmount = columns.includes('amount');
-
-    let selectQuery;
-    if (hasPrice && hasAmount) {
-      selectQuery = `
-        SELECT 
-          pp.id as player_plan_id, 
-          p.id as plan_id, 
-          p.name, 
-          COALESCE(p.price, p.amount, 0) as price,
-          p.interval, 
-          pp.start_date, 
-          pp.is_active,
-          pp.created_at
-        FROM player_plans pp
-        INNER JOIN plans p ON p.id = pp.plan_id
-        WHERE pp.user_id = $1 AND pp.is_active = true
-        ORDER BY pp.start_date DESC
-        LIMIT 1
-      `;
-    } else if (hasPrice) {
-      selectQuery = `
-        SELECT 
-          pp.id as player_plan_id, 
-          p.id as plan_id, 
-          p.name, 
-          p.price,
-          p.interval, 
-          pp.start_date, 
-          pp.is_active,
-          pp.created_at
-        FROM player_plans pp
-        INNER JOIN plans p ON p.id = pp.plan_id
-        WHERE pp.user_id = $1 AND pp.is_active = true
-        ORDER BY pp.start_date DESC
-        LIMIT 1
-      `;
-    } else if (hasAmount) {
-      selectQuery = `
-        SELECT 
-          pp.id as player_plan_id, 
-          p.id as plan_id, 
-          p.name, 
-          p.amount as price,
-          p.interval, 
-          pp.start_date, 
-          pp.is_active,
-          pp.created_at
-        FROM player_plans pp
-        INNER JOIN plans p ON p.id = pp.plan_id
-        WHERE pp.user_id = $1 AND pp.is_active = true
-        ORDER BY pp.start_date DESC
-        LIMIT 1
-      `;
-    } else {
-      return res.json(null);
-    }
-
-    const result = await query(selectQuery, [req.user.id]);
-
-    console.log('Current plan for user:', req.user.id, result.rows.length ? 'found' : 'none');
-    
-    if (result.rows.length === 0) {
-      return res.json(null);
-    }
-    
-    res.json(result.rows[0]);
+    res.json(result.rows[0] || null);
   } catch (err) {
     console.error('Get current plan error:', err);
-    res.status(500).json({ 
-      error: 'Failed to load current plan',
-      message: err.message 
-    });
+    res.status(500).json({ error: 'Failed to fetch current plan' });
   }
 });
 
 // POST /api/payments/plan/assign - Assign/update plan for current user
-router.post('/assign-player-plan', assignPlayerToPaymentPlanHandler);
-router.post('/plan/assign', authenticateToken, [
-  body('planId').notEmpty().withMessage('planId is required'),
-  body('startDate').optional().isISO8601().withMessage('Invalid startDate')
-], async (req, res) => {
+router.post('/plan/assign', authenticateToken, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: errors.array() 
-      });
-    }
-
     const { planId, startDate } = req.body;
+    if (!planId) return res.status(400).json({ error: 'planId is required' });
 
-    // Check what columns exist in the plans table
-    const columnsResult = await query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'plans' AND table_schema = 'public'
-    `);
-    
-    const columns = columnsResult.rows.map(row => row.column_name);
-    const hasPrice = columns.includes('price');
-    const hasAmount = columns.includes('amount');
+    const planResult = await query('SELECT * FROM plans WHERE id = $1', [planId]);
+    if (planResult.rows.length === 0) return res.status(404).json({ error: 'Plan not found' });
+    const plan = planResult.rows[0];
 
-    let selectQuery;
-    if (hasPrice && hasAmount) {
-      selectQuery = `
-        SELECT id, name, COALESCE(price, amount, 0) as price, interval 
-        FROM plans WHERE id = $1 AND active = true
-      `;
-    } else if (hasPrice) {
-      selectQuery = `
-        SELECT id, name, price, interval 
-        FROM plans WHERE id = $1 AND active = true
-      `;
-    } else if (hasAmount) {
-      selectQuery = `
-        SELECT id, name, amount as price, interval 
-        FROM plans WHERE id = $1 AND active = true
-      `;
-    } else {
-      return res.status(500).json({ error: 'Plans table structure invalid' });
-    }
-
-    // Verify plan exists and active
-    const planRes = await query(selectQuery, [planId]);
-    
-    if (planRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Plan not found or inactive' });
-    }
-
-    // Ensure player_plans table exists
-    const tableExists = await query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'player_plans'
-      );
-    `);
-
-    if (!tableExists.rows[0].exists) {
-      await query(`
-        CREATE TABLE player_plans (
-          id SERIAL PRIMARY KEY,
-          user_id INTEGER REFERENCES users(id),
-          plan_id INTEGER REFERENCES plans(id),
-          start_date TIMESTAMP DEFAULT NOW(),
-          is_active BOOLEAN DEFAULT true,
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-    }
+    const start = (startDate || new Date().toISOString().slice(0, 10));
+    const nextBilling = new Date(start);
+    if (plan.interval === 'month') nextBilling.setMonth(nextBilling.getMonth() + 1);
+    else if (plan.interval === 'week') nextBilling.setDate(nextBilling.getDate() + 7);
+    else if (plan.interval === 'year') nextBilling.setFullYear(nextBilling.getFullYear() + 1);
 
     await withTransaction(async (client) => {
-      // Deactivate existing plans for this user
+      await client.query('UPDATE player_plans SET is_active = false WHERE user_id = $1', [req.user.id]);
       await client.query(`
-        UPDATE player_plans 
-        SET is_active = false, updated_at = NOW() 
-        WHERE user_id = $1 AND is_active = true
-      `, [req.user.id]);
-
-      // Assign new plan
-      await client.query(`
-        INSERT INTO player_plans (user_id, plan_id, start_date, is_active, created_at, updated_at)
-        VALUES ($1, $2, $3, true, NOW(), NOW())
-      `, [req.user.id, planId, startDate || new Date()]);
+        INSERT INTO player_plans (user_id, plan_id, start_date, next_billing_date, is_active)
+        VALUES ($1, $2, $3, $4, true)
+      `, [req.user.id, planId, start, nextBilling.toISOString().slice(0, 10)]);
     });
 
-    console.log('Plan assigned:', planId, 'to user:', req.user.id);
-    res.json({ success: true, message: 'Plan assigned/updated' });
+    res.json({ success: true, message: 'Plan assigned' });
   } catch (err) {
     console.error('Assign plan error:', err);
-    res.status(500).json({ 
-      error: 'Failed to assign plan',
-      message: err.message 
-    });
+    res.status(500).json({ error: 'Failed to assign plan' });
   }
 });
+
 
 // POST /api/payments/bulk-assign-plan
 router.post('/bulk-assign-plan', authenticateToken, async (req, res) => {
@@ -596,29 +417,51 @@ router.post('/bulk-assign-plan', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'playerIds (array) and planId are required' });
     }
 
+    // Get plan details to calculate next billing date
+    const planResult = await query('SELECT * FROM plans WHERE id = $1', [planId]);
+    if (planResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Plan not found' });
+    }
+    const plan = planResult.rows[0];
+
     const start = (startDate || new Date().toISOString().slice(0, 10));
+    
+    // Calculate next billing date
+    const nextBilling = new Date(start);
+    if (plan.interval === 'month') nextBilling.setMonth(nextBilling.getMonth() + 1);
+    else if (plan.interval === 'week') nextBilling.setDate(nextBilling.getDate() + 7);
+    else if (plan.interval === 'year') nextBilling.setFullYear(nextBilling.getFullYear() + 1);
 
     const results = await withTransaction(async (client) => {
       const out = [];
-      for (const playerId of playerIds) {
-        // If switching plans, deactivate other active plans for this user
+      const resolvedUserIds = [];
+
+      // Resolve playerIds to userIds if they aren't already userIds
+      for (const id of playerIds) {
+        const playerRes = await client.query('SELECT user_id FROM players WHERE id = $1', [id]);
+        if (playerRes.rows.length > 0 && playerRes.rows[0].user_id) {
+          resolvedUserIds.push(playerRes.rows[0].user_id);
+        } else {
+          // Fallback: maybe it IS a user_id
+          resolvedUserIds.push(id);
+        }
+      }
+
+      for (const userId of resolvedUserIds) {
+        // Deactivate other plans
         await client.query(
-          `UPDATE player_plans
-             SET is_active = false, updated_at = NOW()
-           WHERE user_id = $1 AND is_active = true AND plan_id <> $2`,
-          [playerId, planId]
+          `UPDATE player_plans SET is_active = false, updated_at = NOW() WHERE user_id = $1 AND is_active = true`,
+          [userId]
         );
 
-        // Idempotent assign: insert or "upsert" same active plan
+        // Assign new plan
         const { rows } = await client.query(
           `
-          INSERT INTO player_plans (user_id, plan_id, start_date, is_active)
-          VALUES ($1, $2, $3, true)
-          ON CONFLICT (user_id, plan_id, is_active)
-          DO UPDATE SET start_date = EXCLUDED.start_date, is_active = true, updated_at = NOW()
-          RETURNING id, user_id, plan_id, start_date, is_active
+          INSERT INTO player_plans (user_id, plan_id, start_date, next_billing_date, is_active)
+          VALUES ($1, $2, $3, $4, true)
+          RETURNING *
           `,
-          [playerId, planId, start]
+          [userId, planId, start, nextBilling.toISOString().slice(0, 10)]
         );
 
         out.push(rows[0]);
@@ -626,7 +469,7 @@ router.post('/bulk-assign-plan', authenticateToken, async (req, res) => {
       return out;
     });
 
-    return res.json({ message: 'Plan assigned', assignments: results });
+    return res.json({ message: `Successfully assigned plan to ${results.length} users`, results });
   } catch (err) {
     console.error('bulk-assign-plan error:', err);
     return res.status(500).json({ error: 'Failed to assign plan' });

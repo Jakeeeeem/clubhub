@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -794,6 +795,51 @@
             min-width: 200px;
         }
 
+        /* Tactical Board Styles */
+        .tactical-board {
+            background-color: #2e7d32;
+            background-image:
+                linear-gradient(white 2px, transparent 2px),
+                linear-gradient(90deg, white 2px, transparent 2px);
+            background-size: 100% 50%, 50% 100%;
+            border: 4px solid white;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.2);
+        }
+
+        .player-position {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            cursor: move;
+            transform: translate(-50%, -50%);
+            border: 2px solid white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .player-position:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .player-position.selected {
+            background: #ffeb3b;
+            color: #000;
+            border-color: #000;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .dashboard-header {
@@ -801,31 +847,31 @@
                 gap: 1rem;
                 text-align: center;
             }
-            
+
             .dashboard-nav {
                 flex-direction: column;
             }
-            
+
             .dashboard-nav button {
                 width: 100%;
             }
-            
+
             .player-filters {
                 flex-direction: column;
             }
-            
+
             .filter-group {
                 min-width: 100%;
             }
-            
+
             .player-meta {
                 grid-template-columns: 1fr;
             }
-            
+
             .team-stats {
                 grid-template-columns: repeat(2, 1fr);
             }
-            
+
             .modal-content {
                 width: 95%;
                 padding: 1.5rem;
@@ -845,13 +891,14 @@
 
         /* Animations */
         @keyframes fadeIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(20px); 
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
-            to { 
-                opacity: 1; 
-                transform: translateY(0); 
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
@@ -877,16 +924,22 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body>
     <header class="header">
         <nav class="nav container">
             <div class="logo" onclick="window.location.href='index.html'">
-                <div class="logo-image"></div>
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
                 <span class="logo-text">ClubHub</span>
             </div>
             <div class="user-info">
@@ -906,7 +959,8 @@
                 </div>
                 <div class="stripe-access">
                     <button class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe Dashboard</button>
-                    <button class="btn btn-warning" onclick="generateShareableInviteLink()">🔗 Generate Invite Link</button>
+                    <button class="btn btn-warning" onclick="generateShareableInviteLink()">🔗 Generate Invite
+                        Link</button>
                 </div>
             </div>
 
@@ -920,6 +974,8 @@
                 <button onclick="showSection('events')">📅 Events</button>
                 <button onclick="showSection('finances')">💰 Finances</button>
                 <button onclick="showSection('listings')">📋 Listings</button>
+                <button onclick="showSection('item-shop')">🛒 Item Shop</button>
+                <button onclick="showSection('marketing-hub')">📢 Marketing Hub</button>
             </div>
 
             <div class="dashboard-content">
@@ -964,11 +1020,14 @@
                 <!-- Enhanced Players Section -->
                 <div id="players" class="dashboard-section">
                     <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
                             <h3>👥 Player Management</h3>
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <button class="btn btn-success" onclick="enhancedInvitePlayer()">📧 Invite Player</button>
-                                <button class="btn btn-primary" onclick="showModal('addPlayerModal')">➕ Add Player</button>
+                                <button class="btn btn-success" onclick="enhancedInvitePlayer()">📧 Invite
+                                    Player</button>
+                                <button class="btn btn-primary" onclick="showModal('addPlayerModal')">➕ Add
+                                    Player</button>
                             </div>
                         </div>
 
@@ -1002,7 +1061,8 @@
                                 </select>
                             </div>
                             <div class="filter-buttons">
-                                <button class="btn btn-secondary btn-small" onclick="resetPlayerFilters()">Reset</button>
+                                <button class="btn btn-secondary btn-small"
+                                    onclick="resetPlayerFilters()">Reset</button>
                                 <button class="btn btn-primary btn-small" onclick="exportPlayers()">📊 Export</button>
                             </div>
                         </div>
@@ -1017,7 +1077,8 @@
                 <!-- Enhanced Teams Section with Clickable Names -->
                 <div id="teams" class="dashboard-section">
                     <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>⚽ Team Management</h3>
                             <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create Team</button>
                         </div>
@@ -1031,18 +1092,24 @@
                 <!-- Enhanced Staff Section with Invite Links -->
                 <div id="staff" class="dashboard-section">
                     <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>👨‍💼 Staff Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">📧 Invite Staff</button>
+                            <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">📧 Invite
+                                Staff</button>
                         </div>
 
                         <div class="invite-section">
                             <h3>📎 Staff Invite System</h3>
-                            <p>Generate invite links for coaches with specific team assignments. Coaches can only view their assigned teams:</p>
+                            <p>Generate invite links for coaches with specific team assignments. Coaches can only view
+                                their assigned teams:</p>
                             <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
-                                <button class="btn btn-secondary" onclick="generateStaffInvite('coach')">Invite Coach</button>
-                                <button class="btn btn-warning" onclick="generateStaffInvite('assistant')">Invite Assistant</button>
-                                <button class="btn btn-primary" onclick="generateStaffInvite('admin')">Invite Administrator</button>
+                                <button class="btn btn-secondary" onclick="generateStaffInvite('coach')">Invite
+                                    Coach</button>
+                                <button class="btn btn-warning" onclick="generateStaffInvite('assistant')">Invite
+                                    Assistant</button>
+                                <button class="btn btn-primary" onclick="generateStaffInvite('admin')">Invite
+                                    Administrator</button>
                             </div>
                         </div>
 
@@ -1055,7 +1122,8 @@
                 <!-- Enhanced Events Section -->
                 <div id="events" class="dashboard-section">
                     <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>📅 Event Management</h3>
                             <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create Event</button>
                         </div>
@@ -1069,11 +1137,13 @@
                 <!-- Enhanced Finances Section with Payment Plans -->
                 <div id="finances" class="dashboard-section">
                     <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>💰 Financial Management</h3>
                             <div style="display: flex; gap: 1rem;">
                                 <button class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe</button>
-                                <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">➕ Create Payment Plan</button>
+                                <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">➕ Create
+                                    Payment Plan</button>
                             </div>
                         </div>
 
@@ -1126,9 +1196,11 @@
                 <!-- Enhanced Listings Section with Indeed-like Interface -->
                 <div id="listings" class="dashboard-section">
                     <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>📋 Club Listings & Applications</h3>
-                            <button class="btn btn-primary" onclick="showModal('createListingModal')">➕ Create Listing</button>
+                            <button class="btn btn-primary" onclick="showModal('createListingModal')">➕ Create
+                                Listing</button>
                         </div>
 
                         <div class="card">
@@ -1141,7 +1213,7 @@
                         <div class="card">
                             <h3>📋 Application Management (Indeed-like Interface)</h3>
                             <p>Once applicants come, manage them with shortlist, reject, and invite options:</p>
-                            
+
                             <div id="applicationsContainer">
                                 <!-- Applications will be loaded from database -->
                             </div>
@@ -1174,13 +1246,16 @@
                                 <label for="clubWebsite">Website</label>
                                 <input type="url" id="clubWebsite">
                             </div>
-                            
+
                             <div class="card" style="margin-top: 2rem;">
                                 <h3>📸 Club Pictures (Max 3-5)</h3>
-                                <div class="picture-upload-area" style="border: 2px dashed rgba(220, 67, 67, 0.3); border-radius: 8px; padding: 2rem; text-align: center; margin: 1rem 0;">
+                                <div class="picture-upload-area"
+                                    style="border: 2px dashed rgba(220, 67, 67, 0.3); border-radius: 8px; padding: 2rem; text-align: center; margin: 1rem 0;">
                                     <p>📸 Drag and drop images here or click to upload</p>
-                                    <input type="file" multiple accept="image/*" style="display: none;" id="clubPictures" onchange="handlePictureUpload(this)">
-                                    <button type="button" class="btn btn-primary" onclick="document.getElementById('clubPictures').click()">Choose Files</button>
+                                    <input type="file" multiple accept="image/*" style="display: none;"
+                                        id="clubPictures" onchange="handlePictureUpload(this)">
+                                    <button type="button" class="btn btn-primary"
+                                        onclick="document.getElementById('clubPictures').click()">Choose Files</button>
                                 </div>
                                 <div class="uploaded-pictures" id="uploadedPictures">
                                     <!-- Uploaded pictures will appear here -->
@@ -1191,12 +1266,45 @@
                         </form>
                     </div>
                 </div>
+
+                <!-- Item Shop Section -->
+                <div id="item-shop" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3>🛒 Item Shop Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addProductModal')">➕ Add
+                                Product</button>
+                        </div>
+                        <div id="productsContainer" class="card-grid">
+                            <!-- Products will be loaded from database -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Marketing Hub Section -->
+                <div id="marketing-hub" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3>📢 Marketing Hub</h3>
+                            <button class="btn btn-primary" onclick="showModal('createCampaignModal')">📣 New
+                                Campaign</button>
+                        </div>
+                        <div class="card">
+                            <h3>✉️ Active Campaigns</h3>
+                            <div id="campaignsContainer">
+                                <!-- Campaigns will be loaded from database -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
     <!-- Enhanced Modals -->
-    
+
     <!-- Invite Player Modal -->
     <div id="invitePlayerModal" class="modal">
         <div class="modal-content">
@@ -1233,7 +1341,8 @@
                 </div>
                 <div class="form-group">
                     <label for="inviteMessage">Personal Message</label>
-                    <textarea id="inviteMessage" rows="3" placeholder="Welcome to our club! We're excited to have you join our team..."></textarea>
+                    <textarea id="inviteMessage" rows="3"
+                        placeholder="Welcome to our club! We're excited to have you join our team..."></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">📧 Send Invite</button>
             </form>
@@ -1445,6 +1554,10 @@
                     <label for="eventDescription">Description</label>
                     <textarea id="eventDescription" rows="3" placeholder="Event details and information..."></textarea>
                 </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="notifyPlayers" checked> 📨 Notify all players via
+                        email/app</label>
+                </div>
                 <button type="submit" class="btn btn-primary">📅 Create Event</button>
             </form>
         </div>
@@ -1470,17 +1583,51 @@
                     <label for="planFrequency">Frequency</label>
                     <select id="planFrequency" required>
                         <option value="">Select Frequency</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="quarterly">Quarterly</option>
-                        <option value="annually">Annually</option>
-                        <option value="one-time">One-time</option>
+                        <option value="month">Monthly</option>
+                        <option value="week">Weekly</option>
+                        <option value="year">Annually</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="planDescription">Description</label>
-                    <textarea id="planDescription" rows="3" placeholder="Plan details and what's included..."></textarea>
+                    <textarea id="planDescription" rows="3"
+                        placeholder="Plan details and what's included..."></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">💳 Create Plan</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Payment Plan Modal -->
+    <div id="editPaymentPlanModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit Payment Plan</h2>
+                <button class="close" onclick="closeModal('editPaymentPlanModal')">&times;</button>
+            </div>
+            <form id="editPaymentPlanForm">
+                <input type="hidden" id="editPlanId">
+                <div class="form-group">
+                    <label for="editPlanName">Plan Name</label>
+                    <input type="text" id="editPlanName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPlanAmount">Amount (£)</label>
+                    <input type="number" id="editPlanAmount" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPlanFrequency">Frequency</label>
+                    <select id="editPlanFrequency" required>
+                        <option value="month">Monthly</option>
+                        <option value="week">Weekly</option>
+                        <option value="year">Annually</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editPlanDescription">Description</label>
+                    <textarea id="editPlanDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Save Changes</button>
             </form>
         </div>
     </div>
@@ -1525,14 +1672,59 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="listingDescription">Description</label>
-                    <textarea id="listingDescription" rows="4" required placeholder="Describe what you're looking for or promoting..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="listingRequirements">Requirements/Experience Level</label>
-                    <textarea id="listingRequirements" rows="3" placeholder="What experience or skills are needed?"></textarea>
+                    <label for="listingDescription">Requirements & Details</label>
+                    <textarea id="listingDescription" rows="3"
+                        placeholder="Tell applicants what you're looking for..."></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">📋 Create Listing</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Listing Modal -->
+    <div id="editListingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit Club Listing</h2>
+                <button class="close" onclick="closeModal('editListingModal')">&times;</button>
+            </div>
+            <form id="editListingForm">
+                <input type="hidden" id="editListingId">
+                <div class="form-group">
+                    <label for="editListingTitle">Listing Title</label>
+                    <input type="text" id="editListingTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="editListingType">Listing Type</label>
+                    <select id="editListingType" required>
+                        <option value="player-wanted">Player Wanted</option>
+                        <option value="trial-announcement">Trial Announcement</option>
+                        <option value="camp-promotion">Camp Promotion</option>
+                        <option value="club-promotion">Club Promotion</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editListingPosition">Position (if applicable)</label>
+                    <input type="text" id="editListingPosition">
+                </div>
+                <div class="form-group">
+                    <label for="editListingAgeGroup">Age Group</label>
+                    <select id="editListingAgeGroup">
+                        <option value="">Any Age</option>
+                        <option value="U8">Under 8</option>
+                        <option value="U10">Under 10</option>
+                        <option value="U12">Under 12</option>
+                        <option value="U14">Under 14</option>
+                        <option value="U16">Under 16</option>
+                        <option value="U18">Under 18</option>
+                        <option value="Senior">Senior</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editListingDescription">Requirements & Details</label>
+                    <textarea id="editListingDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Save Changes</button>
             </form>
         </div>
     </div>
@@ -1546,13 +1738,15 @@
             </div>
             <div class="modal-body">
                 <!-- Team management tabs -->
-                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(220, 67, 67, 0.2); padding-bottom: 1rem;">
+                <div
+                    style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(220, 67, 67, 0.2); padding-bottom: 1rem;">
                     <button class="btn btn-primary btn-small active" onclick="showTeamTab('games')">🏟️ Games</button>
-                    <button class="btn btn-secondary btn-small" onclick="showTeamTab('trainings')">🏋️ Trainings</button>
+                    <button class="btn btn-secondary btn-small" onclick="showTeamTab('trainings')">🏋️
+                        Trainings</button>
                     <button class="btn btn-secondary btn-small" onclick="showTeamTab('players')">👥 Players</button>
                     <button class="btn btn-secondary btn-small" onclick="showTeamTab('votes')">📊 Votes</button>
                 </div>
-                
+
                 <!-- Tab content will be populated by JavaScript -->
                 <div id="teamTabContent">
                     <!-- Content based on selected tab -->
@@ -1574,202 +1768,577 @@
         </div>
     </div>
 
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📦 Add New Product</h2>
+                <button class="close" onclick="closeModal('addProductModal')">&times;</button>
+            </div>
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label for="productName">Product Name *</label>
+                    <input type="text" id="productName" required placeholder="e.g., Club Hoodie">
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">Price (£) *</label>
+                    <input type="number" id="productPrice" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="productStock">Stock Quantity</label>
+                    <input type="number" id="productStock" placeholder="Leave empty for unlimited">
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Description</label>
+                    <textarea id="productDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">➕ Add Product</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div id="editProductModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit Product</h2>
+                <button class="close" onclick="closeModal('editProductModal')">&times;</button>
+            </div>
+            <form id="editProductForm">
+                <input type="hidden" id="editProductId">
+                <div class="form-group">
+                    <label for="editProductName">Product Name *</label>
+                    <input type="text" id="editProductName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductPrice">Price (£) *</label>
+                    <input type="number" id="editProductPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editProductStock">Stock Quantity</label>
+                    <input type="number" id="editProductStock">
+                </div>
+                <div class="form-group">
+                    <label for="editProductDescription">Description</label>
+                    <textarea id="editProductDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Campaign Modal -->
+    <div id="createCampaignModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📣 Create Marketing Campaign</h2>
+                <button class="close" onclick="closeModal('createCampaignModal')">&times;</button>
+            </div>
+            <form id="createCampaignForm">
+                <div class="form-group">
+                    <label for="campaignTitle">Campaign Title *</label>
+                    <input type="text" id="campaignTitle" required placeholder="e.g., Summer Trial Recruitment">
+                </div>
+                <div class="form-group">
+                    <label for="campaignSubject">Email Subject *</label>
+                    <input type="text" id="campaignSubject" required placeholder="Don't miss out!">
+                </div>
+                <div class="form-group">
+                    <label for="campaignTarget">Target Audience</label>
+                    <select id="campaignTarget">
+                        <option value="all">All Members</option>
+                        <option value="players">Current Players</option>
+                        <option value="applicants">Club Applicants</option>
+                        <option value="staff">Staff Members</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="campaignMessage">Message Content (HTML Supported)</label>
+                    <textarea id="campaignMessage" rows="8" required
+                        placeholder="Write your message here..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">📨 Create & Send Campaign</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Record Match Result Modal -->
+    <div id="recordResultModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚽ Record Match Result</h2>
+                <button class="close" onclick="closeModal('recordResultModal')">&times;</button>
+            </div>
+            <form id="recordResultForm">
+                <input type="hidden" id="resultGameId">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="homeScore">Our Score</label>
+                        <input type="number" id="homeScore" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="awayScore">Opponent Score</label>
+                        <input type="number" id="awayScore" min="0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="matchSummary">Match Summary</label>
+                    <textarea id="matchSummary" rows="3" placeholder="Notes about the performance..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">💾 Save Result</button>
+            </form>
+        </div>
+    </div>
+
     <!-- JavaScript Integration -->
     <script src="https://js.stripe.com/v3/"></script>
-    <script src="api-service.js"></script>          
-    <script src="stripe-service.js"></script>       
-    <script src="script.js"></script>              
+    <script src="api-service.js"></script>
+    <script src="stripe-service.js"></script>
+    <script src="script.js"></script>
     <script src="enhanced-invite-system.js"></script>
-    
+
     <script>
 
         function hydrateAddPlayerPlanSelect() {
-  const sel = document.getElementById('playerPaymentPlan');
-  if (!sel) return;
+            const sel = document.getElementById('playerPaymentPlan');
+            if (!sel) return;
 
-  const current = sel.value;
-  const plans = AppState.paymentPlans || [];
+            const current = sel.value;
+            const plans = AppState.paymentPlans || [];
 
-  sel.innerHTML = `
-  <option value="">No payment plan</option>
-  ${plans.map(plan => {
-    const priceNum = Number(plan.price ?? plan.amount ?? 0);
-    const interval = (plan.interval ?? plan.frequency ?? '').toString();
-    return `<option value="${plan.id}">${plan.name} - £${priceNum.toFixed(2)}/${interval}</option>`;
-  }).join('')}
-`;
+            sel.innerHTML = `
+                <option value="">No payment plan</option>
+                ${plans.map(plan => {
+                const priceNum = Number(plan.price ?? plan.amount ?? 0);
+                const interval = (plan.interval ?? plan.frequency ?? '').toString();
+                return `<option value="${plan.id}">${plan.name} - £${priceNum.toFixed(2)}/${interval}</option>`;
+            }).join('')}
+            `;
 
-  // Keep previous selection if it still exists
-  if ([...sel.options].some(o => o.value === current)) {
-    sel.value = current;
-  } else {
-    sel.value = '';
-  }
-}
+            // Keep previous selection if it still exists
+            if ([...sel.options].some(o => o.value === current)) {
+                sel.value = current;
+            } else {
+                sel.value = '';
+            }
+        }
 
-function initAddPlayerFeeField() {
-  const planSelect = document.getElementById('playerPaymentPlan');
-  const feeInput = document.getElementById('playerFee');
-  const feeLabel = document.querySelector('label[for="playerFee"]');
-  if (!planSelect || !feeInput) return;
+        function initAddPlayerFeeField() {
+            const planSelect = document.getElementById('playerPaymentPlan');
+            const feeInput = document.getElementById('playerFee');
+            const feeLabel = document.querySelector('label[for="playerFee"]');
+            if (!planSelect || !feeInput) return;
 
-  if (feeLabel) feeLabel.textContent = 'Custom Plan Price (£) (optional)';
+            if (feeLabel) feeLabel.textContent = 'Custom Plan Price (£) (optional)';
 
-  function syncFeeInputState() {
-    const hasPlan = !!planSelect.value;
-    feeInput.disabled = !hasPlan;
-    if (!hasPlan) {
-      feeInput.value = '';
-      feeInput.placeholder = 'Select a plan first';
-    } else {
-      feeInput.placeholder = 'Leave blank to use plan default';
-    }
-  }
+            function syncFeeInputState() {
+                const hasPlan = !!planSelect.value;
+                feeInput.disabled = !hasPlan;
+                if (!hasPlan) {
+                    feeInput.value = '';
+                    feeInput.placeholder = 'Select a plan first';
+                } else {
+                    feeInput.placeholder = 'Leave blank to use plan default';
+                }
+            }
 
-  syncFeeInputState();
-  planSelect.addEventListener('change', syncFeeInputState);
-}
+            syncFeeInputState();
+            planSelect.addEventListener('change', syncFeeInputState);
+        }
 
-function initAddPlayerModalControls() {
-  hydrateAddPlayerPlanSelect();
-  initAddPlayerFeeField();
-}
-        // Enhanced Admin Dashboard Functions
-        
+        function initAddPlayerModalControls() {
+            hydrateAddPlayerPlanSelect();
+            initAddPlayerFeeField();
+        }
+        async function loadProducts() {
+            const container = document.getElementById('productsContainer');
+            if (!container) return;
+
+            try {
+                showLoading(true);
+                const clubId = AppState.activeClubId || (AppState.clubs?.[0]?.id);
+                const products = await apiService.getProducts(clubId);
+
+                if (!products || products.length === 0) {
+                    container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; opacity: 0.8; grid-column: 1/-1;">
+                    <p>No products added to the shop yet</p>
+                    <button class="btn btn-primary" style="margin-top: 1rem;" onclick="showModal('addProductModal')">Add Your First Product</button>
+                </div>
+            `;
+                    return;
+                }
+
+                AppState.products = products;
+
+                container.innerHTML = products.map(product => `
+            <div class="card product-card">
+                <div style="height: 150px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 3rem;">📦</span>
+                </div>
+                <h4>${product.name}</h4>
+                <p style="color: #dc4343; font-weight: bold; font-size: 1.2rem; margin: 0.5rem 0;">£${parseFloat(product.price).toFixed(2)}</p>
+                <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">${product.description || 'No description available'}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.8rem; opacity: 0.6;">Stock: ${product.stock_quantity !== null ? product.stock_quantity : 'Unlimited'}</span>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-small btn-secondary" onclick="editProduct('${product.id}')">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteProduct('${product.id}')">Delete</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+            } catch (error) {
+                console.error('Failed to load products:', error);
+                container.innerHTML = '<p style="color:#dc3545">Failed to load products</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleAddProduct(e) {
+            if (e) e.preventDefault();
+
+            const payload = {
+                name: document.getElementById('productName').value.trim(),
+                price: parseFloat(document.getElementById('productPrice').value),
+                stock_quantity: document.getElementById('productStock').value ? parseInt(document.getElementById('productStock').value) : null,
+                description: document.getElementById('productDescription').value.trim(),
+                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+            };
+
+            try {
+                showLoading(true);
+                await apiService.createProduct(payload);
+                showNotification('Product added successfully!', 'success');
+                closeModal('addProductModal');
+                document.getElementById('addProductForm').reset();
+                await loadProducts();
+            } catch (error) {
+                console.error('Failed to add product:', error);
+                showNotification('Failed to add product: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function editProduct(id) {
+            const product = AppState.products?.find(p => p.id === id);
+            if (!product) return;
+
+            document.getElementById('editProductId').value = product.id;
+            document.getElementById('editProductName').value = product.name;
+            document.getElementById('editProductPrice').value = product.price;
+            document.getElementById('editProductStock').value = product.stock_quantity;
+            document.getElementById('editProductDescription').value = product.description || '';
+
+            showModal('editProductModal');
+        }
+
+        async function handleUpdateProduct(e) {
+            if (e) e.preventDefault();
+
+            const productId = document.getElementById('editProductId').value;
+            const payload = {
+                name: document.getElementById('editProductName').value.trim(),
+                price: parseFloat(document.getElementById('editProductPrice').value),
+                stock_quantity: document.getElementById('editProductStock').value ? parseInt(document.getElementById('editProductStock').value) : null,
+                description: document.getElementById('editProductDescription').value.trim()
+            };
+
+            try {
+                showLoading(true);
+                await apiService.updateProduct(productId, payload);
+                showNotification('Product updated successfully!', 'success');
+                closeModal('editProductModal');
+                await loadProducts();
+            } catch (error) {
+                console.error('Failed to update product:', error);
+                showNotification('Failed to update product: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('Are you sure you want to delete this product?')) return;
+
+            try {
+                showLoading(true);
+                await apiService.deleteProduct(id);
+                showNotification('Product deleted successfully!', 'success');
+                await loadProducts();
+            } catch (error) {
+                console.error('Failed to delete product:', error);
+                showNotification('Failed to delete product: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadCampaigns() {
+            const container = document.getElementById('campaignsContainer');
+            if (!container) return;
+
+            try {
+                showLoading(true);
+                const clubId = AppState.activeClubId || (AppState.clubs?.[0]?.id);
+                const campaigns = await apiService.getCampaigns(clubId);
+
+                if (!campaigns || campaigns.length === 0) {
+                    container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                    <p>No marketing campaigns created yet</p>
+                </div>
+            `;
+                    return;
+                }
+
+                container.innerHTML = campaigns.map(campaign => `
+            <div class="card campaign-card" style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h4>${campaign.name}</h4>
+                        <p style="font-size: 0.9rem; opacity: 0.7;">Subject: ${campaign.subject}</p>
+                        <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.5rem;">Target: ${campaign.target_group} | Created: ${new Date(campaign.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                        <span class="status-badge status-${campaign.status || 'draft'}">${campaign.status || 'Draft'}</span>
+                        <button class="btn btn-small btn-primary" onclick="sendCampaign('${campaign.id}')" ${campaign.status === 'sent' ? 'disabled' : ''}>Send Now</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+            } catch (error) {
+                console.error('Failed to load campaigns:', error);
+                container.innerHTML = '<p style="color:#dc3545">Failed to load campaigns</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleCreateCampaign(e) {
+            if (e) e.preventDefault();
+
+            const payload = {
+                name: document.getElementById('campaignTitle').value.trim(),
+                subject: document.getElementById('campaignSubject').value.trim(),
+                target_group: document.getElementById('campaignTarget').value,
+                content: document.getElementById('campaignMessage').value.trim(),
+                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+            };
+
+            try {
+                showLoading(true);
+                const created = await apiService.createCampaign(payload);
+                showNotification('Campaign created and queued for sending!', 'success');
+                closeModal('createCampaignModal');
+                document.getElementById('createCampaignForm').reset();
+                await loadCampaigns();
+            } catch (error) {
+                console.error('Failed to create campaign:', error);
+                showNotification('Failed to create campaign: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function sendCampaign(campaignId) {
+            if (!confirm('Are you sure you want to send this campaign email to all targeted members?')) return;
+
+            try {
+                showLoading(true);
+                await apiService.sendCampaignEmail(campaignId);
+                showNotification('Campaign sent successfully!', 'success');
+                await loadCampaigns();
+            } catch (error) {
+                console.error('Failed to send campaign:', error);
+                showNotification('Failed to send campaign: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function editProduct(productId) {
+            showNotification('Product editing coming soon!', 'info');
+        }
+
+
+
         // Initialize dashboard when page loads
         document.addEventListener('DOMContentLoaded', async function () {
-  console.log('🏢 Enhanced Admin Dashboard Loading...');
+            console.log('🏢 Enhanced Admin Dashboard Loading...');
 
-  try {
-    const dashboardData = await apiService.getAdminDashboardData();
+            try {
+                const dashboardData = await apiService.getAdminDashboardData();
 
-    if (dashboardData) {
-      AppState.clubs = dashboardData.clubs || [];
-      AppState.activeClubId = await getActiveClubId();
-      AppState.players = dashboardData.players || [];
-      AppState.staff = dashboardData.staff || [];
-      AppState.events = dashboardData.events || [];
-      AppState.teams = dashboardData.teams || [];
-      AppState.payments = dashboardData.payments || [];
-      updateDashboardStats(dashboardData.statistics);
-    }
+                if (dashboardData) {
+                    AppState.clubs = dashboardData.clubs || [];
+                    AppState.activeClubId = await getActiveClubId();
+                    AppState.players = dashboardData.players || [];
+                    AppState.staff = dashboardData.staff || [];
+                    AppState.events = dashboardData.events || [];
+                    AppState.teams = dashboardData.teams || [];
+                    AppState.payments = dashboardData.payments || [];
+                    updateDashboardStats(dashboardData.statistics);
+                }
 
-    // ✅ Load payment plans first so we can enrich players
-    await loadPaymentPlans();
+                // ✅ Load payment plans first so we can enrich players
+                await loadPaymentPlans();
 
-    // then render the rest
-    loadDashboardStats();
-    await loadPlayers();        // ← now after plans
-    loadTeams();
-    loadEvents();
-    loadFinances();
-    initAddPlayerModalControls();
-  } catch (error) {
-    console.error('Failed to load dashboard:', error);
-    showNotification('Failed to load dashboard data', 'error');
-  }
+                // then render the rest
+                loadDashboardStats();
+                await loadPlayers();        // ← now after plans
+                loadTeams();
+                loadEvents();
+                loadFinances();
+                initAddPlayerModalControls();
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+                showNotification('Failed to load dashboard data', 'error');
+            }
 
-  setupEnhancedEventListeners();
-});
+            setupEnhancedEventListeners();
+        });
 
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
-  // Player form
-  const addPlayerForm = document.getElementById('addPlayerForm');
-  if (addPlayerForm) {
-    addPlayerForm.addEventListener('submit', handleAddPlayer);
-  }
+            // Player form
+            const addPlayerForm = document.getElementById('addPlayerForm');
+            if (addPlayerForm) {
+                addPlayerForm.addEventListener('submit', handleAddPlayer);
+            }
 
-  // Team form  
-  const addTeamForm = document.getElementById('addTeamForm');
-  if (addTeamForm) {
-    addTeamForm.addEventListener('submit', handleAddTeam);
-  }
+            // Team form  
+            const addTeamForm = document.getElementById('addTeamForm');
+            if (addTeamForm) {
+                addTeamForm.addEventListener('submit', handleAddTeam);
+            }
 
-  // Event form
-  const addEventForm = document.getElementById('addEventForm');
-  if (addEventForm) {
-    addEventForm.addEventListener('submit', handleAddEvent);
-  }
+            // Event form
+            const addEventForm = document.getElementById('addEventForm');
+            if (addEventForm) {
+                addEventForm.addEventListener('submit', handleAddEvent);
+            }
 
-  // Payment plan form
-  const createPaymentPlanForm = document.getElementById('createPaymentPlanForm');
-  if (createPaymentPlanForm) {
-    createPaymentPlanForm.addEventListener('submit', handleCreatePaymentPlan);
-  }
+            // Payment plan form
+            const createPaymentPlanForm = document.getElementById('createPaymentPlanForm');
+            if (createPaymentPlanForm) {
+                createPaymentPlanForm.addEventListener('submit', handleCreatePaymentPlan);
+            }
 
-  // Staff invite form
-  const inviteStaffForm = document.getElementById('inviteStaffForm');
-  if (inviteStaffForm) {
-    inviteStaffForm.addEventListener('submit', handleStaffInvite);
-  }
+            const editPaymentPlanForm = document.getElementById('editPaymentPlanForm');
+            if (editPaymentPlanForm) {
+                editPaymentPlanForm.addEventListener('submit', handleUpdatePaymentPlan);
+            }
 
-  // Club profile form
-  const clubProfileForm = document.getElementById('clubProfileForm');
-  if (clubProfileForm) {
-    clubProfileForm.addEventListener('submit', handleClubProfileUpdate);
-  }
-}
+            // Staff invite form
+            const inviteStaffForm = document.getElementById('inviteStaffForm');
+            if (inviteStaffForm) {
+                inviteStaffForm.addEventListener('submit', handleStaffInvite);
+            }
+
+            // Club profile form
+            const clubProfileForm = document.getElementById('clubProfileForm');
+            if (clubProfileForm) {
+                clubProfileForm.addEventListener('submit', handleClubProfileUpdate);
+            }
+
+            // Item Shop form
+            const addProductForm = document.getElementById('addProductForm');
+            if (addProductForm) {
+                addProductForm.addEventListener('submit', handleAddProduct);
+            }
+
+            const editProductForm = document.getElementById('editProductForm');
+            if (editProductForm) {
+                editProductForm.addEventListener('submit', handleUpdateProduct);
+            }
+
+            // Marketing Hub form
+            const createCampaignForm = document.getElementById('createCampaignForm');
+            if (createCampaignForm) {
+                createCampaignForm.addEventListener('submit', handleCreateCampaign);
+            }
+
+            const createListingForm = document.getElementById('createListingForm');
+            if (createListingForm) {
+                createListingForm.addEventListener('submit', handleCreateListing);
+            }
+
+            const editListingForm = document.getElementById('editListingForm');
+            if (editListingForm) {
+                editListingForm.addEventListener('submit', handleUpdateListing);
+            }
+
+            // Results form
+            const recordResultForm = document.getElementById('recordResultForm');
+            if (recordResultForm) {
+                recordResultForm.addEventListener('submit', handleRecordResult);
+            }
+        }
 
         // Enhanced Player Filtering Functions
         async function filterPlayersByView() {
-  const view = document.getElementById('playerListFilter').value;
-  console.log('Filtering players by view:', view);
+            const view = document.getElementById('playerListFilter').value;
+            console.log('Filtering players by view:', view);
 
-  showLoading(true);
-  try {
-    const clubId = await getActiveClubId(); // must exist; see earlier snippet
-    let filteredPlayers;
+            showLoading(true);
+            try {
+                const clubId = await getActiveClubId(); // must exist; see earlier snippet
+                let filteredPlayers;
 
-    if (view === 'all') {
-      filteredPlayers = await apiService.getPlayers(clubId);
-    } else {
-      filteredPlayers = await apiService.getFilteredPlayers(view, clubId);
-    }
+                if (view === 'all') {
+                    filteredPlayers = await apiService.getPlayers(clubId);
+                } else {
+                    filteredPlayers = await apiService.getFilteredPlayers(view, clubId);
+                }
 
-    displayFilteredPlayers(filteredPlayers, view);
-  } catch (error) {
-    console.error('Failed to filter players:', error);
-    showNotification('Failed to filter players: ' + error.message, 'error');
-  } finally {
-    showLoading(false);
-  }
-}
+                displayFilteredPlayers(filteredPlayers, view);
+            } catch (error) {
+                console.error('Failed to filter players:', error);
+                showNotification('Failed to filter players: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
 
-function displayFilteredPlayers(players, filterType) {
-  const container = document.getElementById('playersContainer');
-  if (!container) return;
+        function displayFilteredPlayers(players, filterType) {
+            const container = document.getElementById('playersContainer');
+            if (!container) return;
 
-  if (!players || players.length === 0) {
-    const filterNames = {
-      'all': 'players',
-      'on-plan': 'players on payment plans',
-      'not-on-plan': 'players not on payment plans',
-      'assigned': 'players assigned to teams',
-      'not-assigned': 'players not assigned to teams',
-      'overdue': 'players with overdue payments'
-    };
-    container.innerHTML = `
+            if (!players || players.length === 0) {
+                const filterNames = {
+                    'all': 'players',
+                    'on-plan': 'players on payment plans',
+                    'not-on-plan': 'players not on payment plans',
+                    'assigned': 'players assigned to teams',
+                    'not-assigned': 'players not assigned to teams',
+                    'overdue': 'players with overdue payments'
+                };
+                container.innerHTML = `
       <div class="empty-state" style="text-align: center; padding: 2rem;">
         <h4>No ${filterNames[filterType] || 'players'} found</h4>
         <p>Try a different filter or add some players to your club</p>
       </div>
     `;
-    return;
-  }
+                return;
+            }
 
-  container.innerHTML = players.map(player => {
-    const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
-    const hasPaymentPlan = hasPlan(player);
-    const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
+            container.innerHTML = players.map(player => {
+                const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
+                const hasPaymentPlan = hasPlan(player);
+                const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
 
-    const onPlan = hasPaymentPlan;
-const rawFee = onPlan ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount) : null;
-const hasRawFee = onPlan && rawFee !== undefined && rawFee !== null && rawFee !== '';
-const fee = hasRawFee ? Number(rawFee) : NaN;
-const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—';
+                const onPlan = hasPaymentPlan;
+                const rawFee = onPlan ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount) : null;
+                const hasRawFee = onPlan && rawFee !== undefined && rawFee !== null && rawFee !== '';
+                const fee = hasRawFee ? Number(rawFee) : NaN;
+                const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—';
 
-    return `
+                return `
       <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
         <div class="player-header">
           <div class="player-info">
@@ -1797,34 +2366,35 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
         </div>
       </div>
     `;
-  }).join('');
-}
+            }).join('');
+        }
 
-// ADD this new function for individual payment plan assignment
+        // ADD this new function for individual payment plan assignment
 
 
         // Enhanced Team Management Functions
         async function openTeamManagement(teamId, teamName) {
-    const modal = document.getElementById('teamManagementModal');
-    if (modal) modal.remove();
+            const modal = document.getElementById('teamManagementModal');
+            if (modal) modal.remove();
 
-    const newModal = document.createElement('div');
-    newModal.id = 'teamManagementModal';
-    newModal.className = 'modal';
-    newModal.style.display = 'block';
-    
-    newModal.innerHTML = `
+            const newModal = document.createElement('div');
+            newModal.id = 'teamManagementModal';
+            newModal.className = 'modal';
+            newModal.style.display = 'block';
+
+            newModal.innerHTML = `
         <div class="modal-content" style="max-width: 1000px;">
             <div class="modal-header">
                 <h2>⚽ ${teamName} Management</h2>
                 <button class="close" onclick="closeModal('teamManagementModal')">&times;</button>
             </div>
             <div class="team-management-tabs">
-  <button class="active" onclick="showTeamTab('games', '${teamId}', event)">🏟️ Games</button>
-  <button onclick="showTeamTab('trainings', '${teamId}', event)">🏋️ Trainings</button>
-  <button onclick="showTeamTab('players', '${teamId}', event)">👥 Players</button>
-  <button onclick="showTeamTab('votes', '${teamId}', event)">📊 Votes</button>
-</div>
+                <button class="active" onclick="showTeamTab('games', '${teamId}', event)">🏟️ Games</button>
+                <button onclick="showTeamTab('trainings', '${teamId}', event)">🏋️ Trainings</button>
+                <button onclick="showTeamTab('players', '${teamId}', event)">👥 Players</button>
+                <button onclick="showTeamTab('votes', '${teamId}', event)">📊 Votes</button>
+                <button onclick="showTeamTab('tactical', '${teamId}', event)">📋 Tactical Board</button>
+            </div>
                 
                 <div id="teamTabContent">
                     <div class="spinner"></div> Loading team data...
@@ -1832,53 +2402,54 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
             </div>
         </div>
     `;
-    
-    document.body.appendChild(newModal);
-    
-    // Load initial tab
-    showTeamTab('games', teamId);
-}
 
-async function showTeamTab(tabName, teamId, ev) {
-  const tabButtons = document.querySelectorAll('.team-management-tabs button');
-  tabButtons.forEach(btn => btn.classList.remove('active'));
-  if (ev && ev.currentTarget) {
-    ev.currentTarget.classList.add('active');
-  } else {
-    // when called programmatically, select the matching button
-    const btn = Array.from(tabButtons).find(b => b.getAttribute('onclick')?.includes(`'${tabName}'`));
-    if (btn) btn.classList.add('active');
-  }
+            document.body.appendChild(newModal);
 
-  const tabContent = document.getElementById('teamTabContent');
-  if (!tabContent) return;
+            // Load initial tab
+            showTeamTab('games', teamId);
+        }
 
-  tabContent.innerHTML = '<div class="spinner"></div> Loading...';
+        async function showTeamTab(tabName, teamId, ev) {
+            const tabButtons = document.querySelectorAll('.team-management-tabs button');
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            if (ev && ev.currentTarget) {
+                ev.currentTarget.classList.add('active');
+            } else {
+                // when called programmatically, select the matching button
+                const btn = Array.from(tabButtons).find(b => b.getAttribute('onclick')?.includes(`'${tabName}'`));
+                if (btn) btn.classList.add('active');
+            }
 
-  try {
-    if (tabName === 'games') await loadTeamGames(teamId, tabContent);
-    else if (tabName === 'trainings') await loadTeamTrainings(teamId, tabContent);
-    else if (tabName === 'players') await loadTeamPlayers(teamId, tabContent);
-    else if (tabName === 'votes') await loadTeamVotes(teamId, tabContent);
-  } catch (error) {
-    console.error(`Failed to load team ${tabName}:`, error);
-    tabContent.innerHTML = `<p style="color: #dc3545;">Failed to load ${tabName}</p>`;
-  }
-}
+            const tabContent = document.getElementById('teamTabContent');
+            if (!tabContent) return;
 
-async function loadTeamGames(teamId, container) {
-    const games = await apiService.getTeamEvents(teamId, 'match');
-    
-    container.innerHTML = `
+            tabContent.innerHTML = '<div class="spinner"></div> Loading...';
+
+            try {
+                if (tabName === 'games') await loadTeamGames(teamId, tabContent);
+                else if (tabName === 'trainings') await loadTeamTrainings(teamId, tabContent);
+                else if (tabName === 'players') await loadTeamPlayers(teamId, tabContent);
+                else if (tabName === 'votes') await loadTeamVotes(teamId, tabContent);
+                else if (tabName === 'tactical') await loadTeamTacticalBoard(teamId, tabContent);
+            } catch (error) {
+                console.error(`Failed to load team ${tabName}:`, error);
+                tabContent.innerHTML = `<p style="color: #dc3545;">Failed to load ${tabName}</p>`;
+            }
+        }
+
+        async function loadTeamGames(teamId, container) {
+            const games = await apiService.getTeamEvents(teamId, 'match');
+
+            container.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h4>🏟️ Team Games & Matches</h4>
             <button class="btn btn-primary" onclick="createTeamGame('${teamId}')">➕ Create Game</button>
         </div>
         
         <div id="teamGames">
-            ${games.length === 0 ? 
-                '<p style="text-align: center; opacity: 0.8;">No games scheduled yet</p>' :
-                games.map(game => `
+            ${games.length === 0 ?
+                    '<p style="text-align: center; opacity: 0.8;">No games scheduled yet</p>' :
+                    games.map(game => `
                     <div class="event-item">
                         <div class="event-info">
                             <h5>${game.title}</h5>
@@ -1887,29 +2458,60 @@ async function loadTeamGames(teamId, container) {
                             <p><strong>Location:</strong> ${game.location || 'TBA'}</p>
                         </div>
                         <div class="event-actions">
+                            <button class="btn btn-small btn-success" onclick="openRecordResult('${game.id}')">🏆 Result</button>
                             <button class="btn btn-small btn-secondary" onclick="editTeamEvent('${game.id}')">Edit</button>
                             <button class="btn btn-small btn-danger" onclick="deleteTeamEvent('${game.id}')">Delete</button>
                         </div>
                     </div>
                 `).join('')
-            }
+                }
         </div>
     `;
-}
+        }
 
-async function loadTeamTrainings(teamId, container) {
-    const trainings = await apiService.getTeamEvents(teamId, 'training');
-    
-    container.innerHTML = `
+        function openRecordResult(gameId) {
+            const hiddenInput = document.getElementById('resultGameId');
+            if (hiddenInput) hiddenInput.value = gameId;
+            showModal('recordResultModal');
+        }
+
+        async function handleRecordResult(e) {
+            if (e) e.preventDefault();
+            const gameId = document.getElementById('resultGameId').value;
+            const payload = {
+                score: {
+                    home: parseInt(document.getElementById('homeScore').value),
+                    away: parseInt(document.getElementById('awayScore').value)
+                },
+                summary: document.getElementById('matchSummary').value
+            };
+
+            try {
+                showLoading(true);
+                await apiService.submitGameResult(gameId, payload);
+                showNotification('Match result recorded!', 'success');
+                closeModal('recordResultModal');
+                // Could refresh games tab if we store teamId somewhere
+            } catch (error) {
+                showNotification('Failed to save result: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadTeamTrainings(teamId, container) {
+            const trainings = await apiService.getTeamEvents(teamId, 'training');
+
+            container.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h4>🏋️ Training Sessions</h4>
             <button class="btn btn-primary" onclick="createTeamTraining('${teamId}')">➕ Create Training</button>
         </div>
         
         <div id="teamTrainings">
-            ${trainings.length === 0 ? 
-                '<p style="text-align: center; opacity: 0.8;">No training sessions scheduled</p>' :
-                trainings.map(training => `
+            ${trainings.length === 0 ?
+                    '<p style="text-align: center; opacity: 0.8;">No training sessions scheduled</p>' :
+                    trainings.map(training => `
                     <div class="event-item">
                         <div class="event-info">
                             <h5>${training.title}</h5>
@@ -1923,25 +2525,25 @@ async function loadTeamTrainings(teamId, container) {
                         </div>
                     </div>
                 `).join('')
-            }
+                }
         </div>
     `;
-}
+        }
 
-async function loadTeamPlayers(teamId, container) {
-    const teamDetails = await apiService.getTeamDetails(teamId);
-    const players = teamDetails.players || [];
-    
-    container.innerHTML = `
+        async function loadTeamPlayers(teamId, container) {
+            const teamDetails = await apiService.getTeamDetails(teamId);
+            const players = teamDetails.players || [];
+
+            container.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h4>👥 Team Players (${players.length})</h4>
             <button class="btn btn-primary" onclick="addPlayerToTeam('${teamId}')">➕ Add Player</button>
         </div>
         
         <div id="teamPlayers">
-            ${players.length === 0 ? 
-                '<p style="text-align: center; opacity: 0.8;">No players assigned to this team yet</p>' :
-                players.map(player => `
+            ${players.length === 0 ?
+                    '<p style="text-align: center; opacity: 0.8;">No players assigned to this team yet</p>' :
+                    players.map(player => `
                     <div class="event-item">
                         <div class="event-info">
                             <h5>${player.first_name} ${player.last_name}</h5>
@@ -1955,42 +2557,162 @@ async function loadTeamPlayers(teamId, container) {
                         </div>
                     </div>
                 `).join('')
-            }
+                }
         </div>
     `;
-}
+        }
 
-async function loadTeamVotes(teamId, container) {
-    const votes = await apiService.getTeamAvailabilityVotes(teamId);
-    
-    container.innerHTML = `
-        <h4>📊 Availability Votes</h4>
-        
-        <div class="votes-summary">
-            <div class="vote-card">
-                <span class="vote-number">${votes.summary?.available || 0}</span>
-                <span class="vote-label">Available</span>
-            </div>
-            <div class="vote-card">
-                <span class="vote-number">${votes.summary?.unavailable || 0}</span>
-                <span class="vote-label">Unavailable</span>
-            </div>
-            <div class="vote-card">
-                <span class="vote-number">${votes.summary?.maybe || 0}</span>
-                <span class="vote-label">Maybe</span>
-            </div>
-        </div>
-        
-        <p style="opacity: 0.8; text-align: center;">
-            Player availability votes will appear here for upcoming team events
-        </p>
-    `;
-}
+        async function loadTeamVotes(teamId, container) {
+            try {
+                const votes = await apiService.getTeamVotes(teamId);
+                container.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h4>📊 Team Availability Votes</h4>
+                    </div>
+                    <div id="teamVotes">
+                        ${votes.length === 0 ?
+                        '<p style="text-align: center; opacity: 0.8;">No availability votes yet.</p>' :
+                        votes.map(v => `
+                                <div class="event-item">
+                                    <div class="event-info">
+                                        <h5>${v.player_name || 'Player'}</h5>
+                                        <p><strong>Status:</strong> ${v.available ? '✅ Available' : '❌ Unavailable'}</p>
+                                        <p><strong>Event:</strong> ${v.event_title || 'Upcoming Event'}</p>
+                                    </div>
+                                </div>
+                            `).join('')
+                    }
+                    </div>
+                `;
+            } catch (err) {
+                container.innerHTML = '<p style="color:red">Failed to load votes.</p>';
+            }
+        }
+
+        async function loadTeamTacticalBoard(teamId, container) {
+            container.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h4>📋 Team Tactical Board</h4>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <select id="adminFormationSelect" class="btn btn-small btn-secondary" style="width: auto; padding: 0.3rem 1rem;" onchange="setAdminFormation()">
+                            <option value="4-4-2">4-4-2</option>
+                            <option value="4-3-3">4-3-3</option>
+                            <option value="3-5-2">3-5-2</option>
+                            <option value="4-2-3-1">4-2-3-1</option>
+                        </select>
+                        <button class="btn btn-small btn-secondary" onclick="clearAdminBoard()">🧹 Clear</button>
+                    </div>
+                </div>
+                
+                <div id="adminTacticalBoard" class="tactical-board" style="height: 500px; position: relative; margin-bottom: 2rem;">
+                    <div style="position: absolute; top: 0; left: 25%; width: 50%; height: 15%; border: 2px solid white; border-top: none;"></div>
+                    <div style="position: absolute; bottom: 0; left: 25%; width: 50%; height: 15%; border: 2px solid white; border-bottom: none;"></div>
+                    <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 0; border-top: 2px solid white;"></div>
+                    <div style="position: absolute; top: 50%; left: 50%; width: 100px; height: 100px; border: 2px solid white; border-radius: 50%; transform: translate(-50%, -50%);"></div>
+                </div>
+
+                <div class="card">
+                    <h5>👥 Players to Assign</h5>
+                    <div id="adminAvailablePlayers" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">
+                    </div>
+                </div>
+            `;
+
+            window.selectedAdminPosition = undefined;
+            setTimeout(() => {
+                setAdminFormation();
+                loadAdminAvailablePlayers(teamId);
+            }, 50);
+        }
+
+        function setAdminFormation() {
+            const formation = document.getElementById('adminFormationSelect')?.value || '4-4-2';
+            const board = document.getElementById('adminTacticalBoard');
+            if (!board) return;
+
+            const markers = board.querySelectorAll('.player-position');
+            markers.forEach(m => m.remove());
+
+            const formations = {
+                '4-4-2': [
+                    { x: 50, y: 85 }, { x: 20, y: 65 }, { x: 40, y: 65 }, { x: 60, y: 65 }, { x: 80, y: 65 },
+                    { x: 25, y: 45 }, { x: 45, y: 45 }, { x: 55, y: 45 }, { x: 75, y: 45 }, { x: 40, y: 25 }, { x: 60, y: 25 }
+                ],
+                '4-3-3': [
+                    { x: 50, y: 85 }, { x: 20, y: 65 }, { x: 40, y: 65 }, { x: 60, y: 65 }, { x: 80, y: 65 },
+                    { x: 30, y: 45 }, { x: 50, y: 45 }, { x: 70, y: 45 }, { x: 25, y: 25 }, { x: 50, y: 25 }, { x: 75, y: 25 }
+                ]
+            };
+
+            const positions = formations[formation] || formations['4-4-2'];
+            positions.forEach((pos, i) => {
+                const el = document.createElement('div');
+                el.className = 'player-position';
+                el.style.left = `${pos.x}%`;
+                el.style.top = `${pos.y}%`;
+                el.textContent = i + 1;
+                el.onclick = () => {
+                    document.querySelectorAll('.player-position').forEach(p => p.classList.remove('selected'));
+                    el.classList.add('selected');
+                    window.selectedAdminPosition = i;
+                };
+                board.appendChild(el);
+            });
+        }
+
+        async function loadAdminAvailablePlayers(teamId) {
+            const container = document.getElementById('adminAvailablePlayers');
+            if (!container) return;
+
+            try {
+                const team = await apiService.getTeamDetails(teamId);
+                const players = team.players || [];
+
+                if (players.length === 0) {
+                    container.innerHTML = '<p style="opacity:0.6; font-size:0.9rem;">No players assigned to this team yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = players.map(p => `
+                    <div class="available-player" onclick="assignPlayerToBoard('${p.id}', '${p.first_name[0]}${p.last_name[0]}')" 
+                        style="padding: 0.5rem 1rem; background: rgba(0,0,0,0.05); border-radius: 20px; cursor: pointer; border: 1px solid rgba(220,67,67,0.2); font-size: 0.85rem;">
+                        ${p.first_name} ${p.last_name}
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Failed to load players for tactical board:', err);
+            }
+        }
+
+        function assignPlayerToBoard(playerId, initials) {
+            if (window.selectedAdminPosition === undefined) {
+                return showNotification('Select a position on the board first!', 'warning');
+            }
+
+            const markers = document.querySelectorAll('.player-position');
+            const target = markers[window.selectedAdminPosition];
+            if (target) {
+                target.textContent = initials;
+                target.classList.add('assigned');
+                target.classList.remove('selected');
+                window.selectedAdminPosition = undefined;
+                showNotification('Player assigned to position!', 'success');
+            }
+        }
+
+        function clearAdminBoard() {
+            setAdminFormation();
+            showNotification('Board cleared', 'info');
+        }
+
+        function saveAdminFormation() {
+            showNotification('Tactical layout saved!', 'success');
+        }
 
         // Enhanced Staff Invite Functions
         function generateStaffInvite(role) {
             console.log('📧 Generating staff invite for role:', role);
-            
+
             // Pre-fill the invite form based on role
             const roleSelect = document.getElementById('staffInviteRole');
             if (roleSelect) {
@@ -2002,354 +2724,590 @@ async function loadTeamVotes(teamId, container) {
                     roleSelect.value = 'administrator';
                 }
             }
-            
+
             showModal('inviteStaffModal');
         }
 
         async function loadPaymentPlans() {
-  const container = document.getElementById('paymentPlansContainer');
-  if (!container) return;
+            const container = document.getElementById('paymentPlansContainer');
+            if (!container) return;
 
-  try {
-    showLoading(true);
-    const plans = await apiService.listPaymentPlans();
+            try {
+                showLoading(true);
+                const plans = await apiService.listPaymentPlans();
 
-    if (!plans || plans.length === 0) {
-      container.innerHTML = `
-        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-          <p>No payment plans created yet</p>
-          <p style="font-size: 0.9rem; margin-top: 0.5rem;">Create your first payment plan to start managing player subscriptions</p>
-          <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')" style="margin-top: 1rem;">Create Your First Plan</button>
-        </div>
-      `;
-      AppState.paymentPlans = [];
-      return;
-    }
+                if (!plans || plans.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                            <p>No payment plans created yet</p>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Create your first payment plan to start managing player subscriptions</p>
+                            <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')" style="margin-top: 1rem;">Create Your First Plan</button>
+                        </div>
+                    `;
+                    AppState.paymentPlans = [];
+                    return;
+                }
 
-    container.innerHTML = plans.map(plan => {
-  const amountNum = Number(plan.amount ?? plan.price ?? 0);
-  const interval = (plan.interval ?? plan.frequency ?? '').toString();
-  return `
-    <div class="card" style="margin-bottom: 1rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h4>${plan.name}</h4>
-          <p><strong>£${amountNum.toFixed(2)}</strong> per ${interval || '—'}</p>
-          <p style="opacity: 0.8; font-size: 0.9rem;">${plan.description || 'No description'}</p>
-          <p style="font-size: 0.8rem; opacity: 0.6;">Created: ${new Date(plan.created_at || plan.createdAt || Date.now()).toLocaleDateString()}</p>
-        </div>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
-          <button class="btn btn-small btn-warning" onclick="bulkAssignPlan('${plan.id}')">Bulk Assign</button>
-          <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
-        </div>
-      </div>
-    </div>
-  `;
-}).join('');
+                container.innerHTML = plans.map(plan => {
+                    const amountNum = Number(plan.amount ?? plan.price ?? 0);
+                    const interval = (plan.interval ?? plan.frequency ?? '').toString();
+                    return `
+                        <div class="card" style="margin-bottom: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h4>${plan.name}</h4>
+                                    <p><strong>£${amountNum.toFixed(2)}</strong> per ${interval || '—'}</p>
+                                    <p style="opacity: 0.8; font-size: 0.9rem;">${plan.description || 'No description'}</p>
+                                    <p style="font-size: 0.8rem; opacity: 0.6;">Created: ${new Date(plan.created_at || plan.createdAt || Date.now()).toLocaleDateString()}</p>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
+                                    <button class="btn btn-small btn-warning" onclick="bulkAssignPlan('${plan.id}')">Bulk Assign</button>
+                                    <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
 
-    AppState.paymentPlans = plans;
-  } catch (error) {
-    console.error('Failed to load payment plans:', error);
-    container.innerHTML = `
-      <div style="text-align: center; padding: 2rem; color: #dc3545;">
-        <p>Failed to load payment plans</p>
-        <button class="btn btn-primary" onclick="loadPaymentPlans()" style="margin-top: 1rem;">Retry</button>
-      </div>
-    `;
-  } finally {
-    showLoading(false);
-  }
-}
+                AppState.paymentPlans = plans;
+            } catch (error) {
+                console.error('Failed to load payment plans:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #dc3545;">
+                        <p>Failed to load payment plans</p>
+                        <button class="btn btn-primary" onclick="loadPaymentPlans()" style="margin-top: 1rem;">Retry</button>
+                    </div>
+                `;
+            } finally {
+                showLoading(false);
+            }
+        }
 
-async function loadFinances() {
-  try {
-    const clubId = AppState.clubs?.[0]?.id;
-    if (!clubId) return;
-    
-    // Load payments for financial overview
-    const payments = await apiService.getPayments({ clubId });
-    
-    // Calculate financial statistics
-    const monthlyRevenue = payments
-      .filter(p => p.payment_status === 'paid')
-      .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    
-    const overdueAmount = payments
-      .filter(p => p.payment_status === 'overdue')
-      .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    
-    const pendingAmount = payments
-      .filter(p => p.payment_status === 'pending')
-      .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-    
-    const totalMembers = payments.length;
-    
-    // Update finance overview
-    document.getElementById('monthlyRevenue').textContent = `£${monthlyRevenue.toFixed(2)}`;
-    document.getElementById('overdueAmount').textContent = `£${overdueAmount.toFixed(2)}`;
-    document.getElementById('pendingAmount').textContent = `£${pendingAmount.toFixed(2)}`;
-    document.getElementById('totalMembers').textContent = totalMembers;
-    
-    // Load recent payments table
-    const paymentsTableBody = document.getElementById('paymentsTableBody');
-    if (paymentsTableBody) {
-      paymentsTableBody.innerHTML = payments.slice(0, 10).map(payment => `
-        <tr>
-          <td>${payment.player_first_name} ${payment.player_last_name}</td>
-          <td>£${parseFloat(payment.amount || 0).toFixed(2)}</td>
-          <td><span class="status-badge status-${payment.payment_status}">${payment.payment_status}</span></td>
-          <td>${new Date(payment.due_date).toLocaleDateString()}</td>
-          <td>
-            <button class="btn btn-small btn-secondary" onclick="editPayment('${payment.id}')">Edit</button>
-            <button class="btn btn-small btn-primary" onclick="generatePaymentLink('${payment.id}')">Link</button>
-          </td>
-        </tr>
-      `).join('');
-    }
-    
-  } catch (error) {
-    console.error('Failed to load finances:', error);
-  }
-}
+        async function loadFinances() {
+            try {
+                const clubId = AppState.clubs?.[0]?.id;
+                if (!clubId) return;
 
-async function bulkAssignPlan(planId) {
-  try {
-    // Get all players not on plans
-    const playersWithoutPlans = AppState.players.filter(p => !hasPlan(p));
-    
-    if (playersWithoutPlans.length === 0) {
-      showNotification('All players already have payment plans assigned', 'info');
-      return;
-    }
-    
-    const confirmed = confirm(`Assign this payment plan to ${playersWithoutPlans.length} players without plans?`);
-    if (!confirmed) return;
-    
-    showLoading(true);
-    
-    const playerIds = playersWithoutPlans.map(p => p.id);
-    await apiService.makeRequest('/payments/bulk-assign-plan', {
-      method: 'POST',
-      body: JSON.stringify({
-        playerIds,
-        planId,
-        startDate: new Date().toISOString().split('T')[0]
-      })
-    });
-    
-    showNotification(`Payment plan assigned to ${playerIds.length} players!`, 'success');
-    loadPlayers(); // Reload to show updated status
-    
-  } catch (error) {
-    console.error('Failed to bulk assign plans:', error);
-    showNotification('Failed to assign payment plans: ' + error.message, 'error');
-  } finally {
-    showLoading(false);
-  }
-}
+                // Load payments for financial overview
+                const payments = await apiService.getPayments({ clubId });
 
-function showLoading(show) {
-  const existingLoader = document.querySelector('.global-loader');
-  
-  if (show) {
-    if (!existingLoader) {
-      const loader = document.createElement('div');
-      loader.className = 'global-loader';
-      loader.innerHTML = `
-        <div style="
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: rgba(0,0,0,0.8);
-          color: white;
-          padding: 2rem;
-          border-radius: 8px;
-          z-index: 10000;
-          text-align: center;
-        ">
-          <div class="spinner"></div>
-          Loading...
-        </div>
-      `;
-      document.body.appendChild(loader);
-    }
-  } else {
-    if (existingLoader) {
-      existingLoader.remove();
-    }
-  }
-}
+                // Calculate financial statistics
+                const monthlyRevenue = payments
+                    .filter(p => p.payment_status === 'paid')
+                    .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+                const overdueAmount = payments
+                    .filter(p => p.payment_status === 'overdue')
+                    .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+                const pendingAmount = payments
+                    .filter(p => p.payment_status === 'pending')
+                    .reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+                const totalMembers = payments.length;
+
+                // Update finance overview
+                document.getElementById('monthlyRevenue').textContent = `£${monthlyRevenue.toFixed(2)} `;
+                document.getElementById('overdueAmount').textContent = `£${overdueAmount.toFixed(2)} `;
+                document.getElementById('pendingAmount').textContent = `£${pendingAmount.toFixed(2)} `;
+                document.getElementById('totalMembers').textContent = totalMembers;
+
+                // Load recent payments table
+                const paymentsTableBody = document.getElementById('paymentsTableBody');
+                if (paymentsTableBody) {
+                    paymentsTableBody.innerHTML = payments.slice(0, 10).map(payment => `
+                        <tr>
+                            <td>${payment.player_first_name} ${payment.player_last_name}</td>
+                            <td>£${parseFloat(payment.amount || 0).toFixed(2)}</td>
+                            <td><span class="status-badge status-${payment.payment_status}">${payment.payment_status}</span></td>
+                            <td>${new Date(payment.due_date).toLocaleDateString()}</td>
+                            <td>
+                                <button class="btn btn-small btn-secondary" onclick="editPayment('${payment.id}')">Edit</button>
+                                <button class="btn btn-small btn-primary" onclick="generatePaymentLink('${payment.id}')">Link</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+
+            } catch (error) {
+                console.error('Failed to load finances:', error);
+            }
+        }
+
+        async function bulkAssignPlan(planId) {
+            try {
+                // Get all players not on plans
+                const playersWithoutPlans = AppState.players.filter(p => !hasPlan(p));
+
+                if (playersWithoutPlans.length === 0) {
+                    showNotification('All players already have payment plans assigned', 'info');
+                    return;
+                }
+
+                const confirmed = confirm(`Assign this payment plan to ${playersWithoutPlans.length} players without plans ? `);
+                if (!confirmed) return;
+
+                showLoading(true);
+
+                const playerIds = playersWithoutPlans.map(p => p.id);
+                await apiService.makeRequest('/payments/bulk-assign-plan', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        playerIds,
+                        planId,
+                        startDate: new Date().toISOString().split('T')[0]
+                    })
+                });
+
+                showNotification(`Payment plan assigned to ${playerIds.length} players!`, 'success');
+                loadPlayers(); // Reload to show updated status
+
+            } catch (error) {
+                console.error('Failed to bulk assign plans:', error);
+                showNotification('Failed to assign payment plans: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show) {
+            const existingLoader = document.querySelector('.global-loader');
+
+            if (show) {
+                if (!existingLoader) {
+                    const loader = document.createElement('div');
+                    loader.className = 'global-loader';
+                    loader.innerHTML = `
+                        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 2rem; border-radius: 8px; z-index: 10000; text-align: center;">
+                            <div class="spinner"></div>
+                            Loading...
+                        </div>
+                    `;
+                    document.body.appendChild(loader);
+                }
+            } else {
+                if (existingLoader) {
+                    existingLoader.remove();
+                }
+            }
+        }
 
         // Enhanced Listings Functions
+        async function loadListings() {
+            const container = document.getElementById('activeListingsContainer');
+            if (!container) return;
+
+            try {
+                showLoading(true);
+                const clubId = await getActiveClubId();
+                const listings = await apiService.getListings(clubId);
+
+                AppState.listings = listings;
+
+                if (!listings || listings.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 2rem; opacity: 0.8;"><p>No active listings. Create one to reach more players!</p></div>';
+                    return;
+                }
+
+                container.innerHTML = listings.map(listing => `
+                    <div class="card listing-card fade-in" style="border-left: 4px solid var(--accent-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div>
+                                <h4 style="margin: 0; color: var(--text-main);">${listing.title}</h4>
+                                <span class="status-badge" style="font-size: 0.7rem; margin-top: 0.2rem; display: inline-block;">${listing.listing_type}</span>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-small btn-secondary" onclick="editListing('${listing.id}')" title="Edit Listing">✏️</button>
+                                <button class="btn btn-small btn-danger" onclick="deleteListing('${listing.id}')" title="Delete Listing">🗑️</button>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">
+                            <p style="margin: 0.2rem 0;"><strong>Position:</strong> ${listing.position || 'N/A'}</p>
+                            <p style="margin: 0.2rem 0;"><strong>Applicants:</strong> ${listing.application_count || 0}</p>
+                        </div>
+                        <button class="btn btn-primary btn-small btn-block" onclick="viewListingApplications('${listing.id}')">View Applications</button>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load listings:', error);
+                container.innerHTML = '<p style="color:#dc3545">Failed to load listings</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function viewListingApplications(listingId) {
+            const container = document.getElementById('applicationsContainer');
+            if (!container) return;
+
+            try {
+                showLoading(true);
+                const applications = await apiService.getApplications(listingId);
+
+                if (!applications || applications.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 2rem; opacity: 0.8;"><p>No applications received for this listing yet.</p></div>';
+                    return;
+                }
+
+                container.innerHTML = applications.map(app => `
+                    <div class="application-item fade-in" data-status="${app.status}">
+                        <div>
+                            <h4>${app.first_name || 'Applicant'} ${app.last_name || ''}</h4>
+                            <p><strong>Applied for:</strong> ${app.listing_title || 'This position'}</p>
+                            <p><strong>Age:</strong> ${app.dob ? calculateAge(app.dob) : 'N/A'}</p>
+                            <div class="contact-details" id="contact-${app.id}" style="${app.status === 'accepted' ? 'display: block; margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.05); border-radius: 4px;' : 'display: none;'}">
+                                <p><strong>Email:</strong> ${app.email}</p>
+                                <p><strong>Phone:</strong> ${app.phone || 'N/A'}</p>
+                                <p><strong>Experience:</strong> ${app.experience || 'Not provided'}</p>
+                            </div>
+                        </div>
+                        <div class="application-actions">
+                            ${app.status !== 'accepted' ? `<button class="btn btn-small btn-success" onclick="acceptApplicant('${app.id}')" title="Accept & Unlock Contact">⭐ Accept & Invite</button>` : ''}
+                            ${app.status !== 'rejected' && app.status !== 'accepted' ? `<button class="btn btn-small btn-danger" onclick="rejectApplicant('${app.id}')" title="Reject with message">❌ Reject</button>` : ''}
+                            <button class="btn btn-small btn-primary" onclick="viewApplicantDetails('${app.id}')">👁️ Details</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load applications:', error);
+                container.innerHTML = '<p style="color:#dc3545">Failed to load applications</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function acceptApplicant(applicationId) {
+            if (!confirm('Accepting this applicant will reveal their contact details and send an invitation. Proceed?')) return;
+            try {
+                showLoading(true);
+                await apiService.acceptApplicant(applicationId);
+                showNotification('Applicant accepted! Contact details unlocked.', 'success');
+                // Refresh applications view or state
+                const appItem = document.querySelector(`.application-item:has(button[onclick*="${applicationId}"])`);
+                if (appItem) {
+                    const contact = appItem.querySelector('.contact-details');
+                    if (contact) contact.style.display = 'block';
+                    appItem.setAttribute('data-status', 'accepted');
+                    const btn = appItem.querySelector('.btn-success');
+                    if (btn) btn.remove();
+                }
+            } catch (error) {
+                showNotification('Action failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function rejectApplicant(applicationId) {
+            const reason = prompt('Please provide a reason for rejection (this will be emailed to the candidate):');
+            if (reason === null) return;
+
+            try {
+                showLoading(true);
+                await apiService.rejectApplicant(applicationId, reason);
+                showNotification('Applicant rejected and notified.', 'info');
+                // Refresh view or state
+                const appItem = document.querySelector(`.application-item:has(button[onclick*="${applicationId}"])`);
+                if (appItem) {
+                    appItem.setAttribute('data-status', 'rejected');
+                    const actions = appItem.querySelector('.application-actions');
+                    if (actions) {
+                        actions.querySelectorAll('.btn-success, .btn-danger').forEach(b => b.remove());
+                    }
+                }
+            } catch (error) {
+                showNotification('Action failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleCreateListing(e) {
+            if (e) e.preventDefault();
+            const clubId = await getActiveClubId();
+            if (!clubId) return showNotification('No club context found', 'error');
+
+            const payload = {
+                title: document.getElementById('listingTitle').value,
+                listing_type: document.getElementById('listingType').value,
+                position: document.getElementById('listingPosition').value,
+                age_group: document.getElementById('listingAgeGroup').value,
+                description: document.getElementById('listingDescription').value,
+                requirements: document.getElementById('listingRequirements').value,
+                clubId: clubId
+            };
+
+            try {
+                showLoading(true);
+                await apiService.createListing(payload);
+                showNotification('Listing created successfully!', 'success');
+                closeModal('createListingModal');
+                loadListings();
+            } catch (error) {
+                showNotification('Failed to create listing: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function getActiveClubId() {
+            if (AppState.activeClubId) return AppState.activeClubId;
+            if (AppState.clubs && AppState.clubs.length > 0) return AppState.clubs[0].id;
+            return null;
+        }
+
+        async function viewApplicantDetails(applicationId) {
+            const content = document.getElementById('applicationDetailsContent');
+            if (!content) return;
+
+            showModal('applicationDetailsModal');
+            content.innerHTML = `
+                < div class="application-detail" >
+                    <h4>👤 Applicant Details</h4>
+                    <p><strong>Application ID:</strong> ${applicationId}</p>
+                    <p>Status: Under Review</p>
+                    <hr style="margin: 1rem 0; opacity: 0.1;">
+                    <p>Detailed profile information and contact details are automatically revealed once the applicant is accepted.</p>
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-secondary" onclick="closeModal('applicationDetailsModal')">Close</button>
+                    </div>
+                </div>
+            `;
+        }
+
         function shortlistApplicant(applicantId) {
-            console.log('⭐ Shortlisting applicant:', applicantId);
             showNotification('Applicant shortlisted!', 'success');
         }
 
-        function viewApplicantDetails(applicantId) {
-            console.log('👁️ Viewing applicant details:', applicantId);
-            
-            // Show application details modal
-            const modal = document.getElementById('applicationDetailsModal');
-            const title = document.getElementById('applicationDetailsTitle');
-            const content = document.getElementById('applicationDetailsContent');
-            
-            if (title) title.textContent = `👤 Application Details - ${applicantId}`;
-            
-            if (content) {
-                content.innerHTML = `
-                    <div class="application-detail">
-                        <h4>Personal Information</h4>
-                        <p><strong>Name:</strong> ${applicantId}</p>
-                        <p><strong>Email:</strong> applicant@email.com</p>
-                        <p><strong>Phone:</strong> +44 7700 900000</p>
-                        <p><strong>Age:</strong> 16</p>
-                        
-                        <h4>Application Details</h4>
-                        <p><strong>Position Applied For:</strong> Midfielder</p>
-                        <p><strong>Experience:</strong> 3 years club football</p>
-                        <p><strong>Previous Teams:</strong> Local Youth FC</p>
-                        
-                        <h4>Application Message</h4>
-                        <p>I'm passionate about football and would love to join your club...</p>
-                        
-                        <div style="margin-top: 2rem;">
-                            <button class="btn btn-success" onclick="shortlistApplicant('${applicantId}')">⭐ Shortlist</button>
-                            <button class="btn btn-warning" onclick="inviteToSession('${applicantId}')">📧 Invite to Training</button>
-                            <button class="btn btn-danger" onclick="rejectApplicant('${applicantId}')">❌ Reject</button>
-                        </div>
-                    </div>
-                `;
+        async function handleCreateListing(e) {
+            if (e) e.preventDefault();
+
+            const payload = {
+                title: document.getElementById('listingTitle').value.trim(),
+                listing_type: document.getElementById('listingType').value,
+                position: document.getElementById('listingPosition').value.trim(),
+                description: document.getElementById('listingDescription').value.trim(),
+                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+            };
+
+            try {
+                showLoading(true);
+                await apiService.createListing(payload);
+                showNotification('Listing created successfully!', 'success');
+                closeModal('createListingModal');
+                document.getElementById('createListingForm').reset();
+                await loadListings();
+            } catch (error) {
+                console.error('Failed to create listing:', error);
+                showNotification('Failed to create listing: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
             }
-            
-            showModal('applicationDetailsModal');
         }
 
-        function inviteToSession(applicantId) {
-            console.log('📧 Inviting applicant to session:', applicantId);
-            showNotification('Training invitation sent!', 'success');
-            closeModal('applicationDetailsModal');
+        async function editListing(listingId) {
+            const listing = AppState.listings?.find(l => l.id === listingId);
+            if (!listing) return;
+
+            document.getElementById('editListingId').value = listing.id;
+            document.getElementById('editListingTitle').value = listing.title;
+            document.getElementById('editListingType').value = listing.listing_type;
+            document.getElementById('editListingPosition').value = listing.position || '';
+            document.getElementById('editListingDescription').value = listing.description || '';
+
+            showModal('editListingModal');
         }
 
-        function rejectApplicant(applicantId) {
-            if (confirm('Send automatic rejection email to this applicant?')) {
-                console.log('❌ Rejecting applicant:', applicantId);
-                showNotification('Rejection email sent automatically', 'info');
-                closeModal('applicationDetailsModal');
+        async function handleUpdateListing(e) {
+            if (e) e.preventDefault();
+
+            const listingId = document.getElementById('editListingId').value;
+            const payload = {
+                title: document.getElementById('editListingTitle').value.trim(),
+                listing_type: document.getElementById('editListingType').value,
+                position: document.getElementById('editListingPosition').value.trim(),
+                description: document.getElementById('editListingDescription').value.trim()
+            };
+
+            try {
+                showLoading(true);
+                await apiService.updateListing(listingId, payload);
+                showNotification('Listing updated successfully!', 'success');
+                closeModal('editListingModal');
+                await loadListings();
+            } catch (error) {
+                console.error('Failed to update listing:', error);
+                showNotification('Failed to update listing: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteListing(listingId) {
+            if (!confirm('Are you sure you want to delete this listing?')) return;
+
+            try {
+                showLoading(true);
+                await apiService.deleteListing(listingId);
+                showNotification('Listing deleted successfully!', 'success');
+                await loadListings();
+            } catch (error) {
+                console.error('Failed to delete listing:', error);
+                showNotification('Failed to delete listing: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
             }
         }
 
         async function editPayment(paymentId) {
-  console.log('Editing payment:', paymentId);
-  showNotification('Payment editing coming soon!', 'info');
-}
+            console.log('Editing payment:', paymentId);
+            showNotification('Payment editing coming soon!', 'info');
+        }
 
-async function generatePaymentLink(paymentId) {
-  try {
-    const response = await apiService.generatePaymentLink(paymentId);
-    
-    navigator.clipboard.writeText(response.paymentLink);
-    showNotification('Payment link copied to clipboard!', 'success');
-    
-  } catch (error) {
-    console.error('Failed to generate payment link:', error);
-    showNotification('Failed to generate payment link: ' + error.message, 'error');
-  }
-}
+        async function generatePaymentLink(paymentId) {
+            try {
+                const response = await apiService.generatePaymentLink(paymentId);
 
-async function editPlayer(playerId) {
-  console.log('Editing player:', playerId);
-  showNotification('Player editing coming soon!', 'info');
-}
+                navigator.clipboard.writeText(response.paymentLink);
+                showNotification('Payment link copied to clipboard!', 'success');
 
-async function removePlayer(playerId) {
-  if (confirm('Are you sure you want to remove this player?')) {
-    try {
-      showLoading(true);
-      await apiService.deletePlayer(playerId);
-      showNotification('Player removed successfully!', 'success');
-      loadPlayers();
-    } catch (error) {
-      console.error('Failed to remove player:', error);
-      showNotification('Failed to remove player: ' + error.message, 'error');
-    } finally {
-      showLoading(false);
-    }
-  }
-}
+            } catch (error) {
+                console.error('Failed to generate payment link:', error);
+                showNotification('Failed to generate payment link: ' + error.message, 'error');
+            }
+        }
 
-async function showPlayerTeamAssignment(playerId) {
-  console.log('Assigning team to player:', playerId);
-  showNotification('Team assignment coming soon!', 'info');
-}
+        async function editPlayer(playerId) {
+            console.log('Editing player:', playerId);
+            showNotification('Player editing coming soon!', 'info');
+        }
 
-async function editTeam(teamId) {
-  console.log('Editing team:', teamId);
-  showNotification('Team editing coming soon!', 'info');
-}
+        async function removePlayer(playerId) {
+            if (confirm('Are you sure you want to remove this player?')) {
+                try {
+                    showLoading(true);
+                    await apiService.deletePlayer(playerId);
+                    showNotification('Player removed successfully!', 'success');
+                    loadPlayers();
+                } catch (error) {
+                    console.error('Failed to remove player:', error);
+                    showNotification('Failed to remove player: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
 
-async function deleteTeam(teamId) {
-  if (confirm('Are you sure you want to delete this team?')) {
-    try {
-      showLoading(true);
-      await apiService.deleteTeam(teamId);
-      showNotification('Team deleted successfully!', 'success');
-      loadTeams();
-    } catch (error) {
-      console.error('Failed to delete team:', error);
-      showNotification('Failed to delete team: ' + error.message, 'error');
-    } finally {
-      showLoading(false);
-    }
-  }
-}
+        async function showPlayerTeamAssignment(playerId) {
+            console.log('Assigning team to player:', playerId);
+            showNotification('Team assignment coming soon!', 'info');
+        }
+
+        async function editTeam(teamId) {
+            console.log('Editing team:', teamId);
+            showNotification('Team editing coming soon!', 'info');
+        }
+
+        async function deleteTeam(teamId) {
+            if (confirm('Are you sure you want to delete this team?')) {
+                try {
+                    showLoading(true);
+                    await apiService.deleteTeam(teamId);
+                    showNotification('Team deleted successfully!', 'success');
+                    loadTeams();
+                } catch (error) {
+                    console.error('Failed to delete team:', error);
+                    showNotification('Failed to delete team: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
 
 
 
-async function editPaymentPlan(planId) {
-  console.log('Editing payment plan:', planId);
-  showNotification('Payment plan editing coming soon!', 'info');
-}
+        async function editPaymentPlan(planId) {
+            const plan = AppState.paymentPlans?.find(p => p.id === planId);
+            if (!plan) return;
 
-async function deletePaymentPlan(planId) {
-  if (confirm('Are you sure you want to delete this payment plan?')) {
-    try {
-      showLoading(true);
-      await apiService.deletePaymentPlan(planId);
-      showNotification('Payment plan deleted successfully!', 'success');
-      loadPaymentPlans();
-    } catch (error) {
-      console.error('Failed to delete payment plan:', error);
-      showNotification('Failed to delete payment plan: ' + error.message, 'error');
-    } finally {
-      showLoading(false);
-    }
-  }
-}
-async function assignPaymentPlan(playerId) {
-  try {
-    // Load available payment plans
-    const plans = await apiService.listPaymentPlans();
-    
-    if (!plans || plans.length === 0) {
-      showNotification('No payment plans available. Create a payment plan first.', 'error');
-      return;
-    }
-    
-    // Remove existing modal if it exists
-    const existingModal = document.getElementById('assignPlanModal');
-    if (existingModal) existingModal.remove();
-    
-    // Create selection modal
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.id = 'assignPlanModal';
-    
-    modal.innerHTML = `
-      <div class="modal-content">
+            document.getElementById('editPlanId').value = plan.id;
+            document.getElementById('editPlanName').value = plan.name;
+            document.getElementById('editPlanAmount').value = Number(plan.amount ?? plan.price ?? 0);
+            document.getElementById('editPlanFrequency').value = plan.interval ?? plan.frequency ?? 'month';
+            document.getElementById('editPlanDescription').value = plan.description || '';
+
+            showModal('editPaymentPlanModal');
+        }
+
+        async function handleUpdatePaymentPlan(e) {
+            if (e) e.preventDefault();
+
+            const planId = document.getElementById('editPlanId').value;
+            const name = document.getElementById('editPlanName').value.trim();
+            const amount = parseFloat(document.getElementById('editPlanAmount').value);
+            const interval = document.getElementById('editPlanFrequency').value;
+            const description = document.getElementById('editPlanDescription').value.trim();
+
+            if (!name || isNaN(amount)) {
+                showNotification('Name and amount are required', 'error');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                await apiService.updatePaymentPlan(planId, { name, amount, frequency: interval, description });
+                showNotification('Payment plan updated successfully!', 'success');
+                closeModal('editPaymentPlanModal');
+                await loadPaymentPlans();
+                hydrateAddPlayerPlanSelect();
+            } catch (error) {
+                console.error('Failed to update payment plan:', error);
+                showNotification('Failed to update plan: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deletePaymentPlan(planId) {
+            if (confirm('Are you sure you want to delete this payment plan?')) {
+                try {
+                    showLoading(true);
+                    await apiService.deletePaymentPlan(planId);
+                    showNotification('Payment plan deleted successfully!', 'success');
+                    loadPaymentPlans();
+                } catch (error) {
+                    console.error('Failed to delete payment plan:', error);
+                    showNotification('Failed to delete payment plan: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+        async function assignPaymentPlan(playerId) {
+            try {
+                // Load available payment plans
+                const plans = await apiService.listPaymentPlans();
+
+                if (!plans || plans.length === 0) {
+                    showNotification('No payment plans available. Create a payment plan first.', 'error');
+                    return;
+                }
+
+                // Remove existing modal if it exists
+                const existingModal = document.getElementById('assignPlanModal');
+                if (existingModal) existingModal.remove();
+
+                // Create selection modal
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.style.display = 'block';
+                modal.id = 'assignPlanModal';
+
+                modal.innerHTML = `
+                < div class="modal-content" >
         <div class="modal-header">
           <h2>Assign Payment Plan</h2>
           <button class="close" onclick="closeModal('assignPlanModal')">&times;</button>
@@ -2360,10 +3318,10 @@ async function assignPaymentPlan(playerId) {
             <select id="selectPlan" required>
   <option value="">Select a plan...</option>
   ${plans.map(plan => {
-    const amt = Number(plan.amount ?? plan.price ?? 0).toFixed(2);
-    const intv = (plan.interval ?? plan.frequency ?? '').toString();
-    return `<option value="${plan.id}">${plan.name} - £${amt}/${intv}</option>`;
-  }).join('')}
+                    const amt = Number(plan.amount ?? plan.price ?? 0).toFixed(2);
+                    const intv = (plan.interval ?? plan.frequency ?? '').toString();
+                    return `<option value="${plan.id}">${plan.name} - £${amt}/${intv}</option>`;
+                }).join('')}
 </select>
           </div>
           <div class="form-group">
@@ -2379,62 +3337,62 @@ async function assignPaymentPlan(playerId) {
             <button class="btn btn-secondary" onclick="closeModal('assignPlanModal')">Cancel</button>
           </div>
         </div>
-      </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-  } catch (error) {
-    console.error('Failed to load payment plans:', error);
-    showNotification('Failed to load payment plans', 'error');
-  }
-}
+      </div >
+                `;
 
-async function confirmPlanAssignment(playerId) {
-  const planId = document.getElementById('selectPlan').value;
-  const startDate = document.getElementById('planStartDate').value || new Date().toISOString().split('T')[0];
-  const priceVal = (document.getElementById('planCustomPrice')?.value || '').trim();
-  const customPrice = priceVal !== '' ? parseFloat(priceVal) : null;
-  const clubId = AppState.activeClubId || AppState.clubs?.[0]?.id || null;
+                document.body.appendChild(modal);
 
-  if (!planId) {
-    showNotification('Please select a payment plan', 'error');
-    return;
-  }
+            } catch (error) {
+                console.error('Failed to load payment plans:', error);
+                showNotification('Failed to load payment plans', 'error');
+            }
+        }
 
-  try {
-    showLoading(true);
+        async function confirmPlanAssignment(playerId) {
+            const planId = document.getElementById('selectPlan').value;
+            const startDate = document.getElementById('planStartDate').value || new Date().toISOString().split('T')[0];
+            const priceVal = (document.getElementById('planCustomPrice')?.value || '').trim();
+            const customPrice = priceVal !== '' ? parseFloat(priceVal) : null;
+            const clubId = AppState.activeClubId || AppState.clubs?.[0]?.id || null;
 
-    // Call the (now robust) API function
-    await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice, clubId);
+            if (!planId) {
+                showNotification('Please select a payment plan', 'error');
+                return;
+            }
 
-    // Optimistic local update so UI flips immediately
-    const p = (AppState.players || []).find(x => String(x.id) === String(playerId));
-    if (p) {
-      p.has_payment_plan = true;
-      p.payment_plan_id = planId;
-      p.plan_price = (customPrice != null ? customPrice : null);
+            try {
+                showLoading(true);
 
-      const selectedPlan = (AppState.paymentPlans || []).find(pl => String(pl.id) === String(planId));
-      if (selectedPlan) p.payment_plan = selectedPlan;
+                // Call the (now robust) API function
+                await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice, clubId);
 
-      p.payment_status = p.payment_status || 'active';
-      delete p.monthly_fee;
-    }
+                // Optimistic local update so UI flips immediately
+                const p = (AppState.players || []).find(x => String(x.id) === String(playerId));
+                if (p) {
+                    p.has_payment_plan = true;
+                    p.payment_plan_id = planId;
+                    p.plan_price = (customPrice != null ? customPrice : null);
 
-    closeModal('assignPlanModal');
-    showNotification('Payment plan assigned successfully!', 'success');
+                    const selectedPlan = (AppState.paymentPlans || []).find(pl => String(pl.id) === String(planId));
+                    if (selectedPlan) p.payment_plan = selectedPlan;
 
-    // 🔁 Force a fresh fetch so it persists after refresh/new filters
-    await loadPaymentPlans();   // ensure we have latest plans
-    await loadPlayers();        // re-fetch players so server’s saved state is reflected
-  } catch (error) {
-    console.error('Failed to assign payment plan:', error);
-    showNotification('Failed to assign payment plan: ' + error.message, 'error');
-  } finally {
-    showLoading(false);
-  }
-}
+                    p.payment_status = p.payment_status || 'active';
+                    delete p.monthly_fee;
+                }
+
+                closeModal('assignPlanModal');
+                showNotification('Payment plan assigned successfully!', 'success');
+
+                // 🔁 Force a fresh fetch so it persists after refresh/new filters
+                await loadPaymentPlans();   // ensure we have latest plans
+                await loadPlayers();        // re-fetch players so server’s saved state is reflected
+            } catch (error) {
+                console.error('Failed to assign payment plan:', error);
+                showNotification('Failed to assign payment plan: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
         function filterPlayersByTeam() {
             const teamId = document.getElementById('teamFilter').value;
             console.log('🔍 Filtering players by team:', teamId);
@@ -2451,7 +3409,7 @@ async function confirmPlanAssignment(playerId) {
             document.getElementById('playerListFilter').value = 'all';
             document.getElementById('teamFilter').value = '';
             document.getElementById('paymentStatusFilter').value = '';
-            
+
             if (typeof loadPlayers === 'function') {
                 loadPlayers();
             }
@@ -2464,191 +3422,179 @@ async function confirmPlanAssignment(playerId) {
 
         // Enhanced Form Handlers
         async function handleAddPlayer(e) {
-  e.preventDefault();
-
-  const payment_plan_id = document.getElementById('playerPaymentPlan').value || null;
-  const feeRaw = (document.getElementById('playerFee').value || '').trim();
-  const plan_price = (payment_plan_id && feeRaw !== '' && Number.isFinite(Number(feeRaw)))
-    ? Number(feeRaw)
-    : null;
-
-  const club_id = await getActiveClubId();
-
-  const payload = {
-    first_name: document.getElementById('playerFirstName').value.trim(),
-    last_name: document.getElementById('playerLastName').value.trim(),
-    email: (document.getElementById('playerEmail').value || '').trim() || null,
-    phone: (document.getElementById('playerPhone').value || '').trim() || null,
-    date_of_birth: document.getElementById('playerDOB').value,
-    position: (document.getElementById('playerPosition').value || '').trim() || null,
-    club_id,
-    ...(payment_plan_id ? { payment_plan_id } : {}),
-    ...(plan_price != null ? { plan_price } : {})
-  };
-
-  try {
-    showLoading(true);
-    await apiService.createPlayer(payload);
-    showNotification('Player added successfully!', 'success');
-    closeModal('addPlayerModal');
-    document.getElementById('addPlayerForm').reset();
-    await loadPlayers();
-  } catch (error) {
-    console.error('Failed to add player:', error);
-    showNotification('Failed to add player: ' + error.message, 'error');
-  } finally {
-    showLoading(false);
-  }
-}
-
-// Handle real team creation
-async function handleAddTeam(e) {
-  e.preventDefault();
-  
-  const formData = {
-    name: document.getElementById('teamName').value,
-    ageGroup: document.getElementById('teamAgeGroup').value,
-    sport: document.getElementById('teamSport').value,
-    description: document.getElementById('teamDescription').value,
-    clubId: AppState.clubs[0]?.id
-  };
-  
-  try {
-    showLoading(true);
-    const response = await apiService.createTeam(formData);
-    showNotification('Team created successfully!', 'success');
-    closeModal('addTeamModal');
-    document.getElementById('addTeamForm').reset();
-    loadTeams(); // Reload teams
-  } catch (error) {
-    console.error('Failed to create team:', error);
-    showNotification('Failed to create team: ' + error.message, 'error');
-  } finally {
-    showLoading(false);
-  }
-}
-
-// Handle real event creation with capacity tracking
-async function handleAddEvent(e) {
-  e.preventDefault();
-  
-  const formData = {
-    title: document.getElementById('eventTitle').value,
-    eventType: document.getElementById('eventType').value,
-    eventDate: document.getElementById('eventDate').value,
-    eventTime: document.getElementById('eventTime').value,
-    location: document.getElementById('eventLocation').value,
-    price: parseFloat(document.getElementById('eventPrice').value) || 0,
-    capacity: parseInt(document.getElementById('eventCapacity').value) || null,
-    description: document.getElementById('eventDescription').value,
-    clubId: AppState.clubs[0]?.id
-  };
-  
-  try {
-    showLoading(true);
-    const response = await apiService.createEvent(formData);
-    showNotification('Event created successfully!', 'success');
-    closeModal('addEventModal');
-    document.getElementById('addEventForm').reset();
-    loadEvents(); // Reload events
-  } catch (error) {
-    console.error('Failed to create event:', error);
-    showNotification('Failed to create event: ' + error.message, 'error');
-  } finally {
-    showLoading(false);
-  }
-}
-        async function handleCreateListing(e) {
             e.preventDefault();
-            console.log('📋 Creating listing...');
-            
-            const listingData = {
-                title: document.getElementById('listingTitle').value,
-                type: document.getElementById('listingType').value,
-                position: document.getElementById('listingPosition').value,
-                ageGroup: document.getElementById('listingAgeGroup').value,
-                description: document.getElementById('listingDescription').value,
-                requirements: document.getElementById('listingRequirements').value
+
+            const payment_plan_id = document.getElementById('playerPaymentPlan').value || null;
+            const feeRaw = (document.getElementById('playerFee').value || '').trim();
+            const plan_price = (payment_plan_id && feeRaw !== '' && Number.isFinite(Number(feeRaw)))
+                ? Number(feeRaw)
+                : null;
+
+            const club_id = await getActiveClubId();
+
+            const payload = {
+                first_name: document.getElementById('playerFirstName').value.trim(),
+                last_name: document.getElementById('playerLastName').value.trim(),
+                email: (document.getElementById('playerEmail').value || '').trim() || null,
+                phone: (document.getElementById('playerPhone').value || '').trim() || null,
+                date_of_birth: document.getElementById('playerDOB').value,
+                position: (document.getElementById('playerPosition').value || '').trim() || null,
+                club_id,
+                ...(payment_plan_id ? { payment_plan_id } : {}),
+                ...(plan_price != null ? { plan_price } : {})
             };
-            
+
             try {
-                showNotification('Listing created successfully!', 'success');
-                closeModal('createListingModal');
-                document.getElementById('createListingForm').reset();
-                
-                // Reload listings
-                loadListings();
+                showLoading(true);
+                await apiService.createPlayer(payload);
+                showNotification('Player added successfully!', 'success');
+                closeModal('addPlayerModal');
+                document.getElementById('addPlayerForm').reset();
+                await loadPlayers();
             } catch (error) {
-                console.error('❌ Failed to create listing:', error);
-                showNotification('Failed to create listing', 'error');
+                console.error('Failed to add player:', error);
+                showNotification('Failed to add player: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Handle real team creation
+        async function handleAddTeam(e) {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('teamName').value,
+                ageGroup: document.getElementById('teamAgeGroup').value,
+                sport: document.getElementById('teamSport').value,
+                description: document.getElementById('teamDescription').value,
+                clubId: AppState.clubs[0]?.id
+            };
+
+            try {
+                showLoading(true);
+                const response = await apiService.createTeam(formData);
+                showNotification('Team created successfully!', 'success');
+                closeModal('addTeamModal');
+                document.getElementById('addTeamForm').reset();
+                loadTeams(); // Reload teams
+            } catch (error) {
+                console.error('Failed to create team:', error);
+                showNotification('Failed to create team: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Handle real event creation with capacity tracking
+        async function handleAddEvent(e) {
+            e.preventDefault();
+
+            const formData = {
+                title: document.getElementById('eventTitle').value,
+                eventType: document.getElementById('eventType').value,
+                eventDate: document.getElementById('eventDate').value,
+                eventTime: document.getElementById('eventTime').value,
+                location: document.getElementById('eventLocation').value,
+                price: parseFloat(document.getElementById('eventPrice').value) || 0,
+                capacity: parseInt(document.getElementById('eventCapacity').value) || null,
+                description: document.getElementById('eventDescription').value,
+                clubId: AppState.clubs[0]?.id
+            };
+
+            try {
+                showLoading(true);
+                const eventResult = await apiService.createEvent(formData);
+                showNotification('Event created successfully!', 'success');
+
+                // Automated notifications logic
+                const shouldNotify = document.getElementById('notifyPlayers')?.checked;
+                if (shouldNotify && eventResult && eventResult.id) {
+                    try {
+                        await apiService.sendEventNotification(eventResult.id);
+                        showNotification('Notification emails sent to all players!', 'success');
+                    } catch (notifyErr) {
+                        console.error('Failed to send automated notification:', notifyErr);
+                        showNotification('Event created, but notifications failed to send.', 'warning');
+                    }
+                }
+
+                closeModal('addEventModal');
+                document.getElementById('addEventForm').reset();
+                loadEvents(); // Reload events
+            } catch (error) {
+                console.error('Failed to create event:', error);
+                showNotification('Failed to create event: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
             }
         }
 
         async function handleClubProfileUpdate(e) {
-    e.preventDefault();
+            e.preventDefault();
 
-    const form = e.currentTarget;
+            const form = e.currentTarget;
 
-    const profileData = {
-        name: form.querySelector('#clubName')?.value?.trim(),
-        description: form.querySelector('#clubDescription')?.value?.trim(),
-        location: form.querySelector('#clubLocation')?.value?.trim(),
-        philosophy: form.querySelector('#clubPhilosophy')?.value?.trim(),
-        website: form.querySelector('#clubWebsite')?.value?.trim(),
-    };
+            const profileData = {
+                name: form.querySelector('#clubName')?.value?.trim(),
+                description: form.querySelector('#clubDescription')?.value?.trim(),
+                location: form.querySelector('#clubLocation')?.value?.trim(),
+                philosophy: form.querySelector('#clubPhilosophy')?.value?.trim(),
+                website: form.querySelector('#clubWebsite')?.value?.trim(),
+            };
 
-    try {
-        if (typeof apiService !== 'undefined' && apiService.updateClubProfile) {
-            await apiService.updateClubProfile(profileData);
+            try {
+                if (typeof apiService !== 'undefined' && apiService.updateClubProfile) {
+                    await apiService.updateClubProfile(profileData);
+                }
+
+                showNotification('✅ Club profile saved successfully!', 'success');
+            } catch (err) {
+                console.error('Failed to save club profile:', err);
+                showNotification('❌ Failed to save club profile: ' + err.message, 'error');
+            }
         }
 
-        showNotification('✅ Club profile saved successfully!', 'success');
-    } catch (err) {
-        console.error('Failed to save club profile:', err);
-        showNotification('❌ Failed to save club profile: ' + err.message, 'error');
-    }
-}
+        async function handleCreatePaymentPlan(e) {
+            if (e) e.preventDefault();
 
-async function handleCreatePaymentPlan(e) {
-  if (e) e.preventDefault();
+            const name = document.getElementById('planName')?.value?.trim();
+            const amount = Number(document.getElementById('planAmount')?.value);   // ← use amount
+            const interval = document.getElementById('planFrequency')?.value;      // ← interval stays interval
+            const description = document.getElementById('planDescription')?.value?.trim();
+            const clubId = AppState.activeClubId || AppState.clubs?.[0]?.id || null;
 
-  const name = document.getElementById('planName')?.value?.trim();
-  const amount = Number(document.getElementById('planAmount')?.value);   // ← use amount
-  const interval = document.getElementById('planFrequency')?.value;      // ← interval stays interval
-  const description = document.getElementById('planDescription')?.value?.trim();
-  const clubId = AppState.activeClubId || AppState.clubs?.[0]?.id || null;
+            if (!name || !interval || !Number.isFinite(amount)) {
+                showNotification('Please fill in all required fields.', 'error');
+                return;
+            }
+            if (amount < 0.30) {
+                showNotification('Minimum amount is £0.30', 'error');
+                return;
+            }
 
-  if (!name || !interval || !Number.isFinite(amount)) {
-    showNotification('Please fill in all required fields.', 'error');
-    return;
-  }
-  if (amount < 0.30) {
-    showNotification('Minimum amount is £0.30', 'error');
-    return;
-  }
+            try {
+                showLoading(true);
 
-  try {
-    showLoading(true);
+                const payload = { name, amount, interval, description, clubId };
+                const created = await apiService.createPaymentPlan(payload);
 
-    const payload = { name, amount, interval, description, clubId };
-    const created = await apiService.createPaymentPlan(payload);
+                showNotification('Payment plan created successfully!', 'success');
+                closeModal('createPaymentPlanModal');
+                document.getElementById('createPaymentPlanForm')?.reset();
 
-    showNotification('Payment plan created successfully!', 'success');
-    closeModal('createPaymentPlanModal');
-    document.getElementById('createPaymentPlanForm')?.reset();
+                if (!AppState.paymentPlans) AppState.paymentPlans = [];
+                AppState.paymentPlans.push(created.plan || created);
 
-    if (!AppState.paymentPlans) AppState.paymentPlans = [];
-    AppState.paymentPlans.push(created.plan || created);
-
-    await loadPaymentPlans();
-    hydrateAddPlayerPlanSelect();
-  } catch (err) {
-    console.error('Failed to create payment plan:', err);
-    showNotification('Failed to create payment plan: ' + (err.message || err), 'error');
-  } finally {
-    showLoading(false);
-  }
-}
+                await loadPaymentPlans();
+                hydrateAddPlayerPlanSelect();
+            } catch (err) {
+                console.error('Failed to create payment plan:', err);
+                showNotification('Failed to create payment plan: ' + (err.message || err), 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
 
 
 
@@ -2659,25 +3605,25 @@ async function handleCreatePaymentPlan(e) {
             window.open(stripeUrl, '_blank');
         }
 
-        
+
 
         // Picture Upload Handler
         function handlePictureUpload(input) {
             const files = input.files;
             const uploadedPictures = document.getElementById('uploadedPictures');
-            
+
             if (files.length > 5) {
                 showNotification('Maximum 5 pictures allowed', 'error');
                 return;
             }
-            
+
             uploadedPictures.innerHTML = '';
-            
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const reader = new FileReader();
-                
-                reader.onload = function(e) {
+
+                reader.onload = function (e) {
                     const imgDiv = document.createElement('div');
                     imgDiv.style.cssText = 'display: inline-block; margin: 0.5rem; position: relative;';
                     imgDiv.innerHTML = `
@@ -2686,328 +3632,293 @@ async function handleCreatePaymentPlan(e) {
                     `;
                     uploadedPictures.appendChild(imgDiv);
                 };
-                
+
                 reader.readAsDataURL(file);
             }
         }
 
         async function loadEvents() {
-    const container = document.getElementById('eventsContainer');
-    if (!container) return;
+            const container = document.getElementById('eventsContainer');
+            if (!container) return;
 
-    try {
-        showLoading(true);
-        const clubId = AppState.clubs?.[0]?.id;
-        const events = await apiService.getEvents(clubId);
-        
-        if (events.length === 0) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-                    <p>No events created yet</p>
-                    <button class="btn btn-primary" onclick="showModal('addEventModal')">Create Your First Event</button>
-                </div>
-            `;
-            return;
+            try {
+                showLoading(true);
+                const clubId = AppState.clubs?.[0]?.id;
+                const events = await apiService.getEvents(clubId);
+
+                if (events.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                            <p>No events created yet</p>
+                            <button class="btn btn-primary" onclick="showModal('addEventModal')">Create Your First Event</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = events.map(event => `
+                        <div class="card event-card">
+                            <div class="card-body">
+                                <h4>${event.title}</h4>
+                                <p><strong>Type:</strong> ${event.event_type}</p>
+                                <p><strong>Date:</strong> ${new Date(event.event_date).toLocaleDateString()}</p>
+                                <p><strong>Location:</strong> ${event.location || 'TBA'}</p>
+                                <div class="event-actions" style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button class="btn btn-small btn-primary" onclick="notifyEventMembers('${event.id}')">Notify Members</button>
+                                    <button class="btn btn-small btn-secondary" onclick="editEvent('${event.id}')">Edit</button>
+                                    <button class="btn btn-small btn-danger" onclick="deleteEvent('${event.id}')">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        `).join('');
+
+                AppState.events = events;
+
+            } catch (error) {
+                console.error('Failed to load events:', error);
+                container.innerHTML = '<p style="color:#dc3545">Failed to load events</p>';
+            } finally {
+                showLoading(false);
+            }
         }
 
-        container.innerHTML = events.map(event => `
-            <div class="card">
-                <h4>${event.title}</h4>
-                <p><strong>Type:</strong> ${event.event_type}</p>
-                <p><strong>Date:</strong> ${new Date(event.event_date).toLocaleDateString()}</p>
-                <p><strong>Location:</strong> ${event.location || 'TBA'}</p>
-                <div class="event-actions">
-                    <button class="btn btn-small btn-secondary" onclick="editEvent('${event.id}')">Edit</button>
-                    <button class="btn btn-small btn-danger" onclick="deleteEvent('${event.id}')">Delete</button>
-                </div>
-            </div>
-        `).join('');
-        
-        AppState.events = events;
-        
-    } catch (error) {
-        console.error('Failed to load events:', error);
-        container.innerHTML = '<p style="color:#dc3545">Failed to load events</p>';
-    } finally {
-        showLoading(false);
-    }
-}
+        async function notifyEventMembers(eventId) {
+            if (!confirm('Send a notification to all members associated with this event?')) return;
+
+            try {
+                showLoading(true);
+                const response = await apiService.sendEventNotification(eventId);
+                showNotification(response.message || 'Notifications sent successfully!', 'success');
+            } catch (error) {
+                console.error('Failed to send event notifications:', error);
+                showNotification('Failed to send notifications: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteEvent(eventId) {
+            if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) return;
+
+            try {
+                showLoading(true);
+                await apiService.deleteEvent(eventId);
+                showNotification('Event deleted successfully!', 'success');
+                await loadEvents();
+            } catch (error) {
+                console.error('Failed to delete event:', error);
+                showNotification('Failed to delete event: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function editEvent(eventId) {
+            showNotification('Event editing feature coming soon!', 'info');
+        }
 
         // Fallback data loading
         async function loadDashboardStats() {
-  try {
-    const stats = AppState.clubs?.[0] ? await apiService.getAdminDashboardData() : null;
-    
-    if (stats && stats.statistics) {
-      document.getElementById('totalPlayers').textContent = stats.statistics.total_players || '0';
-      document.getElementById('totalStaff').textContent = stats.statistics.total_staff || '0';
-      document.getElementById('totalEvents').textContent = stats.statistics.total_events || '0';
-      document.getElementById('totalRevenue').textContent = `£${stats.statistics.monthly_revenue || 0}`;
-    }
-  } catch (error) {
-    console.error('Failed to load dashboard stats:', error);
-  }
-}
+            try {
+                const stats = AppState.clubs?.[0] ? await apiService.getAdminDashboardData() : null;
 
-// Add this function after updateDashboardStats
-function updateDashboardStats(statistics) {
-  if (statistics) {
-    document.getElementById('totalPlayers').textContent = statistics.total_players || '0';
-    document.getElementById('totalStaff').textContent = statistics.total_staff || '0';
-    document.getElementById('totalEvents').textContent = statistics.total_events || '0';
-    document.getElementById('totalRevenue').textContent = `£${statistics.monthly_revenue || 0}`;
-  }
-}
+                if (stats && stats.statistics) {
+                    document.getElementById('totalPlayers').textContent = stats.statistics.total_players || '0';
+                    document.getElementById('totalStaff').textContent = stats.statistics.total_staff || '0';
+                    document.getElementById('totalEvents').textContent = stats.statistics.total_events || '0';
+                    document.getElementById('totalRevenue').textContent = `£${stats.statistics.monthly_revenue || 0} `;
+                }
+            } catch (error) {
+                console.error('Failed to load dashboard stats:', error);
+            }
+        }
 
-      async function loadPlayers() {
-  const container = document.getElementById('playersContainer');
-  if (!container) return;
+        // Add this function after updateDashboardStats
+        function updateDashboardStats(statistics) {
+            if (statistics) {
+                document.getElementById('totalPlayers').textContent = statistics.total_players || '0';
+                document.getElementById('totalStaff').textContent = statistics.total_staff || '0';
+                document.getElementById('totalEvents').textContent = statistics.total_events || '0';
+                document.getElementById('totalRevenue').textContent = `£${statistics.monthly_revenue || 0} `;
+            }
+        }
 
-  try {
-    showLoading(true);
-    const clubId = await getActiveClubId();
+        async function loadPlayers() {
+            const container = document.getElementById('playersContainer');
+            if (!container) return;
 
-    if (!clubId) {
-      container.innerHTML = '<p>No club found. Please create a club first.</p>';
-      return;
-    }
+            try {
+                showLoading(true);
+                const clubId = await getActiveClubId();
 
-    const players = await apiService.getPlayers(clubId);
+                if (!clubId) {
+                    container.innerHTML = '<p>No club found. Please create a club first.</p>';
+                    return;
+                }
 
-// 👇 attach plan objects & normalize flags so hasPlan() works on reload
-const plansById = Object.fromEntries((AppState.paymentPlans || []).map(pl => [String(pl.id), pl]));
+                const players = await apiService.getPlayers(clubId);
 
-players.forEach(p => {
-  const planId =
-    p.payment_plan_id ??
-    p.plan_id ??
-    p.payment_plan?.id ??
-    p.plan?.id;
+                // 👇 attach plan objects & normalize flags so hasPlan() works on reload
+                const plansById = Object.fromEntries((AppState.paymentPlans || []).map(pl => [String(pl.id), pl]));
 
-  if (planId != null && String(planId).trim() !== '' && String(planId) !== '0') {
-    p.payment_plan = p.payment_plan || p.plan || plansById[String(planId)] || undefined;
-    p.has_payment_plan = true; // normalize truthy flag for hasPlan()
-  }
-});
+                players.forEach(p => {
+                    const planId =
+                        p.payment_plan_id ??
+                        p.plan_id ??
+                        p.payment_plan?.id ??
+                        p.plan?.id;
 
-    if (!players || players.length === 0) {
-      container.innerHTML = `
-        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-          <p>No players found</p>
-          <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add Your First Player</button>
-        </div>
-      `;
-      return;
-    }
+                    if (planId != null && String(planId).trim() !== '' && String(planId) !== '0') {
+                        p.payment_plan = p.payment_plan || p.plan || plansById[String(planId)] || undefined;
+                        p.has_payment_plan = true; // normalize truthy flag for hasPlan()
+                    }
+                });
 
-    container.innerHTML = players.map(player => {
-      const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
-      const hasPaymentPlan = hasPlan(player);
-      const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
+                if (!players || players.length === 0) {
+                    container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                        <p>No players found</p>
+                        <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add Your First Player</button>
+                    </div>
+                `;
+                    return;
+                }
 
-      // feeHtml logic (no auto-£45)
-      const onPlan = hasPaymentPlan;
-      const rawFee = onPlan
-        ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount)
-        : null;
-      const hasRawFee = onPlan && rawFee !== undefined && rawFee !== null && rawFee !== '';
-const fee = hasRawFee ? Number(rawFee) : NaN;
-const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—';
+                container.innerHTML = players.map(player => {
+                    const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
+                    const hasPaymentPlan = hasPlan(player);
+                    const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
 
-      return `
-        <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
-          <div class="player-header">
-            <div class="player-info">
-              <h4>${player.first_name} ${player.last_name}</h4>
-              ${hasPaymentPlan
-                ? `<span class="payment-plan-badge">On Payment Plan</span>`
-                : `<span class="no-plan-badge">No Plan Set</span>`}
-            </div>
-            <div class="player-status">
-              <span class="status-badge status-${player.payment_status || 'pending'}">
-                ${player.payment_status || 'Pending'}
-              </span>
-            </div>
-          </div>
-          <div class="player-meta">
-            <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
-            <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
-            <span><strong>Email:</strong> ${player.email || 'No email'}</span>
-            <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
-            <span><strong>Monthly Fee:</strong> ${feeHtml}</span>
-          </div>
-          <div class="player-actions">
-            <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
-            ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
-            ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
-            <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
-          </div>
-        </div>
-      `;
-    }).join('');
+                    // feeHtml logic (no auto-£45)
+                    const onPlan = hasPaymentPlan;
+                    const rawFee = onPlan
+                        ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount)
+                        : null;
+                    const hasRawFee = onPlan && rawFee !== undefined && rawFee !== null && rawFee !== '';
+                    const fee = hasRawFee ? Number(rawFee) : NaN;
+                    const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)} ` : '—';
 
-    AppState.players = players;
-  } catch (error) {
-    console.error('Failed to load players:', error);
-    container.innerHTML = '<p style="color:#dc3545">Failed to load players: ' + (error?.message || error) + '</p>';
-  } finally {
-    showLoading(false);
-  }
-}
+                    return `
+                        <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
+                            <div class="player-header">
+                                <div class="player-info">
+                                    <h4>${player.first_name} ${player.last_name}</h4>
+                                    ${hasPaymentPlan
+                            ? `<span class="payment-plan-badge">On Payment Plan</span>`
+                            : `<span class="no-plan-badge">No Plan Set</span>`}
+                                </div>
+                                <div class="player-status">
+                                    <span class="status-badge status-${player.payment_status || 'pending'}">
+                                        ${player.payment_status || 'Pending'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="player-meta">
+                                <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
+                                <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
+                                <span><strong>Email:</strong> ${player.email || 'No email'}</span>
+                                <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
+                                <span><strong>Monthly Fee:</strong> ${feeHtml}</span>
+                            </div>
+                            <div class="player-actions">
+                                <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
+                                ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
+                                ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
+                                <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
+                            </div>
+                        </div>
+                        `;
+                }).join('');
+
+                AppState.players = players;
+            } catch (error) {
+                console.error('Failed to load players:', error);
+                container.innerHTML = '<p style="color:#dc3545">Failed to load players: ' + (error?.message || error) + '</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
 
         async function loadTeams() {
-  const container = document.getElementById('teamsContainer');
-  if (!container) return;
+            const container = document.getElementById('teamsContainer');
+            if (!container) return;
 
-  try {
-    showLoading(true);
-    const clubId = AppState.clubs?.[0]?.id;
-    const teams = await apiService.getTeams(clubId);
-    
-    if (teams.length === 0) {
-      container.innerHTML = `
-        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-          <p>No teams created yet</p>
-          <button class="btn btn-primary" onclick="showModal('addTeamModal')">Create Your First Team</button>
-        </div>
-      `;
-      return;
-    }
+            try {
+                showLoading(true);
+                const clubId = AppState.clubs?.[0]?.id;
+                const teams = await apiService.getTeams(clubId);
 
-    container.innerHTML = teams.map(team => `
-      <div class="team-card" onclick="openTeamManagement('${team.id}', '${team.name}')">
-        <h4>${team.name}</h4>
-        <div class="team-stats">
-          <div>
-            <span class="team-stat-number">${team.player_count}</span>
-            <span class="team-stat-label">Players</span>
-          </div>
-          <div>
-            <span class="team-stat-number">${team.wins || 0}</span>
-            <span class="team-stat-label">Wins</span>
-          </div>
-          <div>
-            <span class="team-stat-number">${team.losses || 0}</span>
-            <span class="team-stat-label">Losses</span>
-          </div>
-          <div>
-            <span class="team-stat-number">${team.draws || 0}</span>
-            <span class="team-stat-label">Draws</span>
-          </div>
-        </div>
-        <p><strong>Coach:</strong> ${team.coach_first_name ? `${team.coach_first_name} ${team.coach_last_name}` : 'No coach assigned'}</p>
-        <p><strong>Sport:</strong> ${team.sport}</p>
-        <div class="player-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-small btn-primary" onclick="openTeamManagement('${team.id}', '${team.name}')">Manage</button>
-          <button class="btn btn-small btn-secondary" onclick="editTeam('${team.id}')">Edit</button>
-          <button class="btn btn-small btn-danger" onclick="deleteTeam('${team.id}')">Delete</button>
-        </div>
-      </div>
-    `).join('');
-    
-    AppState.teams = teams;
-    
-  } catch (error) {
-    console.error('Failed to load teams:', error);
-    container.innerHTML = '<p style="color:#dc3545">Failed to load teams</p>';
-  } finally {
-    showLoading(false);
-  }
-}
+                if (teams.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                            <p>No teams created yet</p>
+                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">Create Your First Team</button>
+                        </div>
+                    `;
+                    return;
+                }
 
-        // Load sample listings
-        function loadListings() {
-            console.log('📋 Loading listings...');
-            
-            const activeContainer = document.getElementById('activeListingsContainer');
-            if (activeContainer) {
-                activeContainer.innerHTML = `
-                    <div class="listing-card">
-                        <h4>📋 U16 Midfielder Wanted</h4>
-                        <p><strong>Position:</strong> Central Midfielder</p>
-                        <p><strong>Posted:</strong> 3 days ago</p>
-                        <p><strong>Applications:</strong> 7 received</p>
-                        <div class="player-actions">
-                            <button class="btn btn-small btn-primary" onclick="viewListingApplications('u16-midfielder')">👁️ View Applications</button>
-                            <button class="btn btn-small btn-secondary">✏️ Edit</button>
-                            <button class="btn btn-small btn-danger">🗑️ Delete</button>
+                container.innerHTML = teams.map(team => `
+                        <div class="team-card" onclick="openTeamManagement('${team.id}', '${team.name}')">
+                            <h4>${team.name}</h4>
+                            <div class="team-stats">
+                                <div>
+                                    <span class="team-stat-number">${team.player_count}</span>
+                                    <span class="team-stat-label">Players</span>
+                                </div>
+                                <div>
+                                    <span class="team-stat-number">${team.wins || 0}</span>
+                                    <span class="team-stat-label">Wins</span>
+                                </div>
+                                <div>
+                                    <span class="team-stat-number">${team.losses || 0}</span>
+                                    <span class="team-stat-label">Losses</span>
+                                </div>
+                                <div>
+                                    <span class="team-stat-number">${team.draws || 0}</span>
+                                    <span class="team-stat-label">Draws</span>
+                                </div>
+                            </div>
+                            <p><strong>Coach:</strong> ${team.coach_first_name ? `${team.coach_first_name} ${team.coach_last_name}` : 'No coach assigned'}</p>
+                            <p><strong>Sport:</strong> ${team.sport}</p>
+                            <div class="player-actions" onclick="event.stopPropagation()">
+                                <button class="btn btn-small btn-primary" onclick="openTeamManagement('${team.id}', '${team.name}')">Manage</button>
+                                <button class="btn btn-small btn-secondary" onclick="editTeam('${team.id}')">Edit</button>
+                                <button class="btn btn-small btn-danger" onclick="deleteTeam('${team.id}')">Delete</button>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="listing-card">
-                        <h4>📋 Senior Team Goalkeeper</h4>
-                        <p><strong>Position:</strong> Goalkeeper</p>
-                        <p><strong>Posted:</strong> 1 week ago</p>
-                        <p><strong>Applications:</strong> 3 received</p>
-                        <div class="player-actions">
-                            <button class="btn btn-small btn-primary" onclick="viewListingApplications('senior-gk')">👁️ View Applications</button>
-                            <button class="btn btn-small btn-secondary">✏️ Edit</button>
-                            <button class="btn btn-small btn-danger">🗑️ Delete</button>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            const applicationsContainer = document.getElementById('applicationsContainer');
-            if (applicationsContainer) {
-                applicationsContainer.innerHTML = `
-                    <div class="application-item">
-                        <div>
-                            <h4>Alex Thompson</h4>
-                            <p><strong>Applied for:</strong> U16 Midfielder</p>
-                            <p><strong>Experience:</strong> 2 years club football</p>
-                            <p><strong>Age:</strong> 15</p>
-                        </div>
-                        <div class="application-actions">
-                            <button class="btn btn-small btn-success" onclick="shortlistApplicant('alex-thompson')" title="Shortlist">⭐ Shortlist</button>
-                            <button class="btn btn-small btn-primary" onclick="viewApplicantDetails('alex-thompson')" title="View Details">👁️ Details</button>
-                            <button class="btn btn-small btn-warning" onclick="inviteToSession('alex-thompson')" title="Invite to Training">📧 Invite</button>
-                            <button class="btn btn-small btn-danger" onclick="rejectApplicant('alex-thompson')" title="Reject">❌ Reject</button>
-                        </div>
-                    </div>
-                    
-                    <div class="application-item">
-                        <div>
-                            <h4>Sophie Martinez</h4>
-                            <p><strong>Applied for:</strong> Senior Team Goalkeeper</p>
-                            <p><strong>Experience:</strong> 5 years competitive football</p>
-                            <p><strong>Age:</strong> 19</p>
-                        </div>
-                        <div class="application-actions">
-                            <button class="btn btn-small btn-success" onclick="shortlistApplicant('sophie-martinez')" title="Shortlist">⭐ Shortlist</button>
-                            <button class="btn btn-small btn-primary" onclick="viewApplicantDetails('sophie-martinez')" title="View Details">👁️ Details</button>
-                            <button class="btn btn-small btn-warning" onclick="inviteToSession('sophie-martinez')" title="Invite to Training">📧 Invite</button>
-                            <button class="btn btn-small btn-danger" onclick="rejectApplicant('sophie-martinez')" title="Reject">❌ Reject</button>
-                        </div>
-                    </div>
-                `;
+                        `).join('');
+
+                AppState.teams = teams;
+
+            } catch (error) {
+                console.error('Failed to load teams:', error);
+                container.innerHTML = '<p style="color:#dc3545">Failed to load teams</p>';
+            } finally {
+                showLoading(false);
             }
         }
 
-        function viewListingApplications(listingId) {
-            console.log('👁️ Viewing applications for listing:', listingId);
-            showNotification('Viewing applications for: ' + listingId, 'info');
-        }
 
         function hasPlan(player) {
-  const flag = player?.has_payment_plan;
-  const flagTrue =
-    flag === true ||
-    flag === 1 ||
-    flag === '1' ||
-    (typeof flag === 'string' && flag.toLowerCase() === 'true');
+            const flag = player?.has_payment_plan;
+            const flagTrue =
+                flag === true ||
+                flag === 1 ||
+                flag === '1' ||
+                (typeof flag === 'string' && flag.toLowerCase() === 'true');
 
-  const id =
-    player?.payment_plan_id ??
-    player?.plan_id ??
-    player?.payment_plan?.id ??
-    player?.plan?.id;
+            const id =
+                player?.payment_plan_id ??
+                player?.plan_id ??
+                player?.payment_plan?.id ??
+                player?.plan?.id;
 
-  const hasId = id != null && String(id).trim() !== '' && String(id) !== '0';
-  const hasObj = !!player?.payment_plan || !!player?.plan;
+            const hasId = id != null && String(id).trim() !== '' && String(id) !== '0';
+            const hasObj = !!player?.payment_plan || !!player?.plan;
 
-  return flagTrue || hasId || hasObj;
-}
+            return flagTrue || hasId || hasObj;
+        }
 
         // Utility Functions
         function showModal(modalId) {
@@ -3015,7 +3926,7 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
             if (modal) {
                 modal.style.display = 'block';
                 document.body.style.overflow = 'hidden';
-                
+
                 // Focus first input
                 const firstInput = modal.querySelector('input[type="email"], input[type="text"]');
                 if (firstInput) {
@@ -3029,7 +3940,7 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
             if (modal) {
                 modal.style.display = 'none';
                 document.body.style.overflow = 'auto';
-                
+
                 // Clear form if it exists
                 const form = modal.querySelector('form');
                 if (form) {
@@ -3042,48 +3953,48 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
             // Remove existing notifications
             const existingNotifications = document.querySelectorAll('.notification');
             existingNotifications.forEach(notification => notification.remove());
-            
+
             const notification = document.createElement('div');
             notification.className = `notification notification-${type}`;
-            
+
             const colors = {
                 success: '#28a745',
                 error: '#dc3545',
                 warning: '#ffc107',
                 info: '#007bff'
             };
-            
+
             const icons = {
                 success: '✅',
                 error: '❌',
                 warning: '⚠️',
                 info: 'ℹ️'
             };
-            
+
             notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${colors[type] || colors.info};
-                color: white;
-                padding: 16px 20px;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 14px;
-                z-index: 10000;
-                max-width: 400px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            `;
-            
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: ${colors[type] || colors.info};
+                        color: white;
+                        padding: 16px 20px;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        z-index: 10000;
+                        max-width: 400px;
+                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                        transform: translateX(100%);
+                        transition: transform 0.3s ease;
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        `;
+
             notification.innerHTML = `
-                <span>${icons[type] || icons.info}</span>
-                <span>${message}</span>
-                <button onclick="this.parentElement.remove()" style="
+                        <span>${icons[type] || icons.info}</span>
+                        <span>${message}</span>
+                        <button onclick="this.parentElement.remove()" style="
                     background: none;
                     border: none;
                     color: white;
@@ -3093,15 +4004,15 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
                     padding: 0;
                     opacity: 0.8;
                 ">×</button>
-            `;
-            
+                        `;
+
             document.body.appendChild(notification);
-            
+
             // Animate in
             setTimeout(() => {
                 notification.style.transform = 'translateX(0)';
             }, 10);
-            
+
             // Auto remove
             setTimeout(() => {
                 if (notification.parentElement) {
@@ -3116,45 +4027,51 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
                 // Clear any stored data
                 localStorage.clear();
                 sessionStorage.clear();
-                
+
                 // Redirect to login page
                 window.location.href = 'index.html';
             }
         }
 
         // Enhanced showSection function
-       function showSection(sectionId) {
-    const sections = document.querySelectorAll('.dashboard-section');
-    sections.forEach(section => section.classList.remove('active'));
-    
-    const navButtons = document.querySelectorAll('.dashboard-nav button');
-    navButtons.forEach(button => button.classList.remove('active'));
-    
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) targetSection.classList.add('active');
-    
-    const clickedButton = document.querySelector(`[onclick*="showSection('${sectionId}')"]`);
-    if (clickedButton) clickedButton.classList.add('active');
-    
-    switch(sectionId) {
-        case 'overview': 
-            loadDashboardStats(); 
-            break;
-        case 'players': 
-            loadPlayers(); 
-            break;
-        case 'teams': 
-            loadTeams(); 
-            break;
-        case 'events': 
-            loadEvents(); 
-            break;
-        case 'finances': 
-            loadFinances(); 
-            loadPaymentPlans(); 
-            break;
-    }
-}
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.dashboard-section');
+            sections.forEach(section => section.classList.remove('active'));
+
+            const navButtons = document.querySelectorAll('.dashboard-nav button');
+            navButtons.forEach(button => button.classList.remove('active'));
+
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) targetSection.classList.add('active');
+
+            const clickedButton = document.querySelector(`[onclick *= "showSection('${sectionId}')"]`);
+            if (clickedButton) clickedButton.classList.add('active');
+
+            switch (sectionId) {
+                case 'overview':
+                    loadDashboardStats();
+                    break;
+                case 'players':
+                    loadPlayers();
+                    break;
+                case 'teams':
+                    loadTeams();
+                    break;
+                case 'events':
+                    loadEvents();
+                    break;
+                case 'finances':
+                    loadFinances();
+                    loadPaymentPlans();
+                    break;
+                case 'item-shop':
+                    loadProducts();
+                    break;
+                case 'marketing-hub':
+                    loadCampaigns();
+                    break;
+            }
+        }
 
         // Make functions globally available
         window.showSection = showSection;
@@ -3178,9 +4095,31 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
         window.logout = logout;
         window.loadListings = loadListings;
         window.viewListingApplications = viewListingApplications;
+        window.removePlayer = removePlayer;
+        window.editPlayer = editPlayer;
+        window.assignPaymentPlan = assignPaymentPlan;
+        window.showPlayerTeamAssignment = showPlayerTeamAssignment;
+        window.editTeam = editTeam;
+        window.deleteTeam = deleteTeam;
+        window.loadProducts = loadProducts;
+        window.loadCampaigns = loadCampaigns;
+        window.sendCampaign = sendCampaign;
+        window.editProduct = editProduct;
+        window.removePlayerFromTeam = removePlayerFromTeam;
+        window.loadPlayers = loadPlayers;
+        window.loadTeams = loadTeams;
+        window.loadEvents = loadEvents;
+        window.loadFinances = loadFinances;
+        window.loadPaymentPlans = loadPaymentPlans;
+        window.openRecordResult = openRecordResult;
+        window.handleRecordResult = handleRecordResult;
+        window.setAdminFormation = setAdminFormation;
+        window.clearAdminBoard = clearAdminBoard;
+        window.saveAdminFormation = saveAdminFormation;
+        window.assignPlayerToBoard = assignPlayerToBoard;
 
         // Close modal when clicking outside
-        window.addEventListener('click', function(e) {
+        window.addEventListener('click', function (e) {
             if (e.target.classList.contains('modal')) {
                 e.target.style.display = 'none';
                 document.body.style.overflow = 'auto';
@@ -3190,4 +4129,5 @@ const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)}` : '—'
         console.log('✅ Admin Dashboard Ready!');
     </script>
 </body>
+
 </html>

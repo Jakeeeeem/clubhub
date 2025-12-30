@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coach Dashboard - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <header class="header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
+            <div class="logo" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text">ClubHub</span>
+            </div>
             <div class="nav-buttons" id="loggedInNav">
                 <!-- Populated by JavaScript -->
             </div>
@@ -31,6 +36,7 @@
                 <button onclick="showCoachSection('events')">Events</button>
                 <button onclick="showCoachSection('tactical-board')">Tactical Board</button>
                 <button onclick="showCoachSection('event-finder')">Event Finder</button>
+                <button onclick="showCoachSection('item-shop')">🛒 Item Shop</button>
             </div>
 
             <div class="dashboard-content">
@@ -75,7 +81,8 @@
                 <!-- Teams Section -->
                 <div id="coach-teams" class="dashboard-section">
                     <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>My Teams</h3>
                             <button class="btn btn-primary" onclick="showModal('createTeamModal')">Create Team</button>
                         </div>
@@ -90,7 +97,7 @@
                 <div id="coach-players" class="dashboard-section">
                     <div class="card">
                         <h3>Team Players</h3>
-                        
+
                         <div class="search-filters">
                             <div class="form-group">
                                 <label for="teamFilter">Filter by Team</label>
@@ -101,7 +108,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="playerSearchCoach">Search Players</label>
-                                <input type="text" id="playerSearchCoach" placeholder="Search by name..." onkeyup="filterCoachPlayers()">
+                                <input type="text" id="playerSearchCoach" placeholder="Search by name..."
+                                    onkeyup="filterCoachPlayers()">
                             </div>
                         </div>
 
@@ -126,7 +134,8 @@
                 <!-- Events Section -->
                 <div id="coach-events" class="dashboard-section">
                     <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>Team Events</h3>
                             <button class="btn btn-primary" onclick="showModal('addTeamEventModal')">Add Event</button>
                         </div>
@@ -153,11 +162,11 @@
                                 <button class="btn btn-secondary btn-small" onclick="clearBoard()">Clear</button>
                                 <button class="btn btn-primary btn-small" onclick="saveFormation()">Save</button>
                             </div>
-                            
+
                             <div class="tactical-board" id="tacticalBoard">
                                 <!-- Football pitch will be drawn here -->
                             </div>
-                            
+
                             <div class="player-list">
                                 <h4>Available Players</h4>
                                 <div id="availablePlayers">
@@ -172,7 +181,7 @@
                 <div id="coach-event-finder" class="dashboard-section">
                     <div class="card">
                         <h3>Event Finder</h3>
-                        
+
                         <div class="search-filters">
                             <div class="form-group">
                                 <label for="eventTypeFilter">Event Type</label>
@@ -190,7 +199,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="eventLocationFilter">Location</label>
-                                <input type="text" id="eventLocationFilter" placeholder="Search by location..." onkeyup="filterEvents()">
+                                <input type="text" id="eventLocationFilter" placeholder="Search by location..."
+                                    onkeyup="filterEvents()">
                             </div>
                         </div>
 
@@ -199,12 +209,30 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Item Shop Section -->
+                <div id="coach-item-shop" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3>🛒 Club Merchandise</h3>
+                            <div id="shopFilters">
+                                <select id="shopClubFilter" onchange="loadCoachProducts()">
+                                    <option value="">All My Clubs</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="shopProducts" class="card-grid">
+                            <!-- Products will be loaded by JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
     <!-- Modals -->
-    
+
     <!-- Create Team Modal -->
     <div id="createTeamModal" class="modal">
         <div class="modal-content">
@@ -346,7 +374,7 @@
 
     <script src="script.js"></script>
     <script src="coach-dashboard.js"></script>
-    
+
     <style>
         /* Tactical Board Styles */
         .tactical-board-container {
@@ -386,7 +414,7 @@
             border-radius: 8px;
             position: relative;
             margin: 2rem auto;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 50% 0%, white 1px, transparent 1px),
                 radial-gradient(circle at 50% 100%, white 1px, transparent 1px),
                 linear-gradient(90deg, transparent 49%, white 49%, white 51%, transparent 51%),
@@ -590,20 +618,21 @@
             .tactical-board {
                 height: 300px;
             }
-            
+
             .formation-selector {
                 flex-direction: column;
                 align-items: flex-start;
             }
-            
+
             .team-stats {
                 grid-template-columns: repeat(2, 1fr);
             }
-            
+
             .event-actions {
                 flex-direction: column;
             }
         }
     </style>
 </body>
+
 </html>

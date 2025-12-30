@@ -757,4 +757,55 @@ router.get('/profile', authenticateToken, async (req, res) => {
   }
 });
 
+// GDPR: Export all user data
+router.get('/gdpr/export', authenticateToken, async (req, res) => {
+  try {
+    const userData = {};
+
+    // 1. User records
+    const userRes = await query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+    userData.user = userRes.rows[0];
+
+    // 2. Profile
+    const profileRes = await query('SELECT * FROM user_profiles WHERE user_id = $1', [req.user.id]);
+    userData.profile = profileRes.rows[0];
+
+    // 3. Players associated
+    const playersRes = await query('SELECT * FROM players WHERE user_id = $1', [req.user.id]);
+    userData.players = playersRes.rows;
+
+    // 4. Payments
+    const playerIds = userData.players.map(p => p.id);
+    if (playerIds.length > 0) {
+      const paymentsRes = await query('SELECT * FROM payments WHERE player_id = ANY($1)', [playerIds]);
+      userData.payments = paymentsRes.rows;
+    }
+
+    // 5. Notifications
+    const notificationsRes = await query('SELECT * FROM notifications WHERE user_id = $1', [req.user.id]);
+    userData.notifications = notificationsRes.rows;
+
+    res.setHeader('Content-disposition', 'attachment; filename=clubhub-data-export.json');
+    res.setHeader('Content-type', 'application/json');
+    res.send(JSON.stringify(userData, null, 2));
+  } catch (error) {
+    console.error('GDPR Export error:', error);
+    res.status(500).json({ error: 'Failed to export data' });
+  }
+});
+
+// GDPR: Delete account
+router.delete('/gdpr/delete', authenticateToken, async (req, res) => {
+  try {
+    await withTransaction(async (client) => {
+      // Cascading deletes should handle most, but let's be thorough if needed
+      await client.query('DELETE FROM users WHERE id = $1', [req.user.id]);
+    });
+    res.json({ message: 'Account and all associated data deleted successfully' });
+  } catch (error) {
+    console.error('GDPR Delete error:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
 module.exports = router;

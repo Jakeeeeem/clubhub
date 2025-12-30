@@ -1,31 +1,31 @@
--- ClubHub PostgreSQL Database Schema
+-- ClubHub PostgreSQL Database Schema Baseline
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users table (main authentication)
-CREATE TABLE users (
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     account_type VARCHAR(20) CHECK (account_type IN ('adult', 'organization')) NOT NULL,
-    org_types TEXT[], -- Array for organization types like ['club', 'event', 'tournament']
+    org_types TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_active BOOLEAN DEFAULT true
 );
 
 -- Clubs table
-CREATE TABLE clubs (
+CREATE TABLE IF NOT EXISTS clubs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     description TEXT,
     location VARCHAR(255),
     philosophy TEXT,
     website VARCHAR(255),
-    types TEXT[] NOT NULL, -- ['club', 'event', 'tournament']
+    types TEXT[] NOT NULL,
     sport VARCHAR(100),
     owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     member_count INTEGER DEFAULT 0,
@@ -35,7 +35,7 @@ CREATE TABLE clubs (
 );
 
 -- Players table
-CREATE TABLE players (
+CREATE TABLE IF NOT EXISTS players (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     first_name VARCHAR(100) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE players (
 );
 
 -- Staff table
-CREATE TABLE staff (
+CREATE TABLE IF NOT EXISTS staff (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     first_name VARCHAR(100) NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE staff (
     email VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     role VARCHAR(50) CHECK (role IN ('coach', 'assistant-coach', 'treasurer', 'coaching-supervisor', 'referee', 'administrator')) NOT NULL,
-    permissions TEXT[], -- Array like ['finances', 'players', 'events', 'listings']
+    permissions TEXT[],
     club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
     join_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -72,7 +72,7 @@ CREATE TABLE staff (
 );
 
 -- Teams table
-CREATE TABLE teams (
+CREATE TABLE IF NOT EXISTS teams (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     age_group VARCHAR(20),
@@ -87,8 +87,8 @@ CREATE TABLE teams (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Team players junction table (many-to-many relationship)
-CREATE TABLE team_players (
+-- Team players table
+CREATE TABLE IF NOT EXISTS team_players (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
@@ -100,7 +100,7 @@ CREATE TABLE team_players (
 );
 
 -- Events table
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -113,14 +113,14 @@ CREATE TABLE events (
     spots_available INTEGER,
     club_id UUID REFERENCES clubs(id) ON DELETE CASCADE,
     team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
-    opponent VARCHAR(255), -- For matches
+    opponent VARCHAR(255),
     created_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Event bookings table
-CREATE TABLE event_bookings (
+CREATE TABLE IF NOT EXISTS event_bookings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -135,7 +135,7 @@ CREATE TABLE event_bookings (
 );
 
 -- Match results table
-CREATE TABLE match_results (
+CREATE TABLE IF NOT EXISTS match_results (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     home_score INTEGER NOT NULL,
@@ -146,8 +146,8 @@ CREATE TABLE match_results (
     recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Player ratings table (for match performance)
-CREATE TABLE player_ratings (
+-- Player ratings table
+CREATE TABLE IF NOT EXISTS player_ratings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     match_result_id UUID NOT NULL REFERENCES match_results(id) ON DELETE CASCADE,
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
@@ -158,14 +158,14 @@ CREATE TABLE player_ratings (
 );
 
 -- Club applications table
-CREATE TABLE club_applications (
+CREATE TABLE IF NOT EXISTS club_applications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     message TEXT NOT NULL,
     preferred_position VARCHAR(50),
     experience_level VARCHAR(20) CHECK (experience_level IN ('beginner', 'intermediate', 'advanced', 'professional')),
-    availability TEXT[], -- Array like ['weekdays', 'weekends', 'evenings', 'mornings']
+    availability TEXT[],
     application_status VARCHAR(20) CHECK (application_status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
     reviewed_by UUID REFERENCES users(id),
     reviewed_at TIMESTAMP WITH TIME ZONE,
@@ -174,8 +174,8 @@ CREATE TABLE club_applications (
     UNIQUE(club_id, user_id)
 );
 
--- Availability responses table (for team events)
-CREATE TABLE availability_responses (
+-- Availability responses table
+CREATE TABLE IF NOT EXISTS availability_responses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
@@ -187,7 +187,7 @@ CREATE TABLE availability_responses (
 );
 
 -- Payments table
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
     club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
@@ -204,12 +204,12 @@ CREATE TABLE payments (
 );
 
 -- Documents table
-CREATE TABLE documents (
+CREATE TABLE IF NOT EXISTS documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     document_type VARCHAR(50) CHECK (document_type IN ('policy', 'schedule', 'form', 'guide', 'other')) NOT NULL,
-    file_url VARCHAR(500), -- URL to stored file (S3, etc.)
-    file_size INTEGER, -- Size in bytes
+    file_url VARCHAR(500),
+    file_size INTEGER,
     mime_type VARCHAR(100),
     club_id UUID REFERENCES clubs(id) ON DELETE CASCADE,
     access_level VARCHAR(20) CHECK (access_level IN ('public', 'members', 'staff', 'admin')) DEFAULT 'members',
@@ -218,33 +218,33 @@ CREATE TABLE documents (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tactical formations table (for coaches)
-CREATE TABLE tactical_formations (
+-- Tactical formations table
+CREATE TABLE IF NOT EXISTS tactical_formations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
-    formation_type VARCHAR(20) NOT NULL, -- e.g., '4-4-2', '4-3-3'
+    formation_type VARCHAR(20) NOT NULL,
     team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
     coach_id UUID NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
-    formation_data JSONB NOT NULL, -- Store player positions as JSON
+    formation_data JSONB NOT NULL,
     is_default BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Notifications table
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
     notification_type VARCHAR(50) CHECK (notification_type IN ('payment', 'event', 'application', 'general')) NOT NULL,
     is_read BOOLEAN DEFAULT false,
-    action_url VARCHAR(500), -- Optional URL for action button
+    action_url VARCHAR(500),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Payment Plans table
-CREATE TABLE plans (
+-- Plans table
+CREATE TABLE IF NOT EXISTS plans (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     price DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -256,8 +256,8 @@ CREATE TABLE plans (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Player/User Plans junction table for subscriptions
-CREATE TABLE player_plans (
+-- Player plans table
+CREATE TABLE IF NOT EXISTS player_plans (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
@@ -270,8 +270,8 @@ CREATE TABLE player_plans (
     UNIQUE(user_id, plan_id, is_active)
 );
 
--- Products (Merchandise) table
-CREATE TABLE products (
+-- Products table
+CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -279,58 +279,59 @@ CREATE TABLE products (
     price DECIMAL(10,2) NOT NULL,
     stock_quantity INTEGER DEFAULT 0,
     image_url VARCHAR(500),
-    category VARCHAR(50), -- e.g. 'equipment', 'apparel', 'accessory'
+    category VARCHAR(50),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Product Orders table
-CREATE TABLE product_orders (
+-- Product orders table
+CREATE TABLE IF NOT EXISTS product_orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     quantity INTEGER NOT NULL DEFAULT 1,
     total_amount DECIMAL(10,2) NOT NULL,
-    status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'paid', 'shipped', 'completed', 'cancelled'
+    status VARCHAR(50) DEFAULT 'pending',
     stripe_payment_intent_id VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Marketing Campaigns table
-CREATE TABLE campaigns (
+-- Campaigns table
+CREATE TABLE IF NOT EXISTS campaigns (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     subject VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    target_group VARCHAR(100), -- 'all', 'players', 'staff', 'specific_team'
+    target_group VARCHAR(100),
     target_team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
-    status VARCHAR(50) DEFAULT 'draft', -- 'draft', 'scheduled', 'sent', 'failed'
+    status VARCHAR(50) DEFAULT 'draft',
     scheduled_at TIMESTAMP WITH TIME ZONE,
     sent_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_players_user_id ON players(user_id);
-CREATE INDEX idx_staff_club_id ON staff(club_id);
-CREATE INDEX idx_teams_club_id ON teams(club_id);
-CREATE INDEX idx_teams_coach_id ON teams(coach_id);
-CREATE INDEX idx_events_club_id ON events(club_id);
-CREATE INDEX idx_events_team_id ON events(team_id);
-CREATE INDEX idx_events_date ON events(event_date);
-CREATE INDEX idx_event_bookings_event_id ON event_bookings(event_id);
-CREATE INDEX idx_event_bookings_user_id ON event_bookings(user_id);
-CREATE INDEX idx_payments_player_id ON payments(player_id);
-CREATE INDEX idx_payments_status ON payments(payment_status);
-CREATE INDEX idx_club_applications_club_id ON club_applications(club_id);
-CREATE INDEX idx_club_applications_user_id ON club_applications(user_id);
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_unread ON notifications(user_id, is_read);
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_players_user_id ON players(user_id);
+CREATE INDEX IF NOT EXISTS idx_staff_club_id ON staff(club_id);
+CREATE INDEX IF NOT EXISTS idx_teams_club_id ON teams(club_id);
+CREATE INDEX IF NOT EXISTS idx_teams_coach_id ON teams(coach_id);
+CREATE INDEX IF NOT EXISTS idx_events_club_id ON events(club_id);
+CREATE INDEX IF NOT EXISTS idx_events_team_id ON events(team_id);
+CREATE INDEX IF NOT EXISTS idx_events_date ON events(event_date);
+CREATE INDEX IF NOT EXISTS idx_event_bookings_event_id ON event_bookings(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_bookings_user_id ON event_bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_player_id ON payments(player_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(payment_status);
+CREATE INDEX IF NOT EXISTS idx_club_applications_club_id ON club_applications(club_id);
+CREATE INDEX IF NOT EXISTS idx_club_applications_user_id ON club_applications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read);
 
--- Create updated_at trigger function
+-- Updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -339,18 +340,49 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Add updated_at triggers to all tables that have updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_clubs_updated_at BEFORE UPDATE ON clubs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_players_updated_at BEFORE UPDATE ON players FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_staff_updated_at BEFORE UPDATE ON staff FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_teams_updated_at BEFORE UPDATE ON teams FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON events FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_event_bookings_updated_at BEFORE UPDATE ON event_bookings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_club_applications_updated_at BEFORE UPDATE ON club_applications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_availability_responses_updated_at BEFORE UPDATE ON availability_responses FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_documents_updated_at BEFORE UPDATE ON documents FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_tactical_formations_updated_at BEFORE UPDATE ON tactical_formations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_product_orders_updated_at BEFORE UPDATE ON product_orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_campaigns_updated_at BEFORE UPDATE ON campaigns FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Triggers (using DO block to check if they exist before creating)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_users_updated_at') THEN
+        CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_clubs_updated_at') THEN
+        CREATE TRIGGER update_clubs_updated_at BEFORE UPDATE ON clubs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_players_updated_at') THEN
+        CREATE TRIGGER update_players_updated_at BEFORE UPDATE ON players FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_staff_updated_at') THEN
+        CREATE TRIGGER update_staff_updated_at BEFORE UPDATE ON staff FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_teams_updated_at') THEN
+        CREATE TRIGGER update_teams_updated_at BEFORE UPDATE ON teams FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_events_updated_at') THEN
+        CREATE TRIGGER update_events_updated_at BEFORE UPDATE ON events FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_event_bookings_updated_at') THEN
+        CREATE TRIGGER update_event_bookings_updated_at BEFORE UPDATE ON event_bookings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_club_applications_updated_at') THEN
+        CREATE TRIGGER update_club_applications_updated_at BEFORE UPDATE ON club_applications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_availability_responses_updated_at') THEN
+        CREATE TRIGGER update_availability_responses_updated_at BEFORE UPDATE ON availability_responses FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_payments_updated_at') THEN
+        CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_documents_updated_at') THEN
+        CREATE TRIGGER update_documents_updated_at BEFORE UPDATE ON documents FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_tactical_formations_updated_at') THEN
+        CREATE TRIGGER update_tactical_formations_updated_at BEFORE UPDATE ON tactical_formations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_product_orders_updated_at') THEN
+        CREATE TRIGGER update_product_orders_updated_at BEFORE UPDATE ON product_orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_campaigns_updated_at') THEN
+        CREATE TRIGGER update_campaigns_updated_at BEFORE UPDATE ON campaigns FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;

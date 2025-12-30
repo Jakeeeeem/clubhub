@@ -11,6 +11,7 @@ let PlayerDashboardState = {
   players: [],          
   plans: [],            
   currentPlan: null,    
+  notifications: [],
   stripe: {
     linked: false,
     payouts_enabled: false,
@@ -26,15 +27,35 @@ function setupNavButtons() {
 
   if (AppState.currentUser) {
     const firstName = AppState.currentUser.first_name || AppState.currentUser.firstName || "User";
-    const firstLetter = firstName.charAt(0).toUpperCase();
+    const unreadCount = PlayerDashboardState.notifications.filter(n => !n.is_read).length;
     
-    navContainer.innerHTML = 
-      '<div class="user-info" style="display: flex; align-items: center; gap: 10px;">' +
-        '<div class="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: #007bff; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">' + firstLetter + '</div>' +
-        '<span>Welcome, ' + firstName + '</span>' +
-        '<button class="btn btn-small btn-primary" onclick="showModal(\'accountModal\')">Account</button>' +
-      '</div>' +
-      '<button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>';
+    navContainer.innerHTML = `
+      <div class="nav-controls">
+        <div class="notification-wrapper">
+          <button class="notification-bell ${unreadCount > 0 ? 'has-unread' : ''}" onclick="toggleNotifications()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : ''}
+          </button>
+          <div id="notificationDropdown" class="notification-dropdown">
+            <div class="dropdown-header">
+              <h3>Notifications</h3>
+              <button onclick="markAllNotificationsRead()" class="btn-text">Mark all read</button>
+            </div>
+            <div id="notificationList" class="notification-list">
+              <p class="empty-state">No notifications</p>
+            </div>
+          </div>
+        </div>
+        <div class="user-profile-nav" onclick="showModal('accountModal')">
+          <div class="user-avatar">${firstName.charAt(0).toUpperCase()}</div>
+          <span class="user-name">${firstName}</span>
+        </div>
+        <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+      </div>
+    `;
   } else {
     navContainer.innerHTML = '<button class="btn btn-primary" onclick="window.location.href=\'index.html\'">Login</button>';
   }
@@ -63,6 +84,7 @@ async function initializePlayerDashboard() {
     loadClubFinder();
     loadEventFinder();
     loadPlayerDocuments();
+    loadNotifications();
 
     const additionalPromises = [
       loadPlayersList().catch(e => console.warn('Failed to load players list:', e)),
@@ -424,7 +446,7 @@ async function payNow(paymentId, amount, description) {
         console.error('Payment failed:', e);
         showNotification('Payment failed: ' + e.message, 'error');
       };
-      createPaymentModal(amount, description, onSuccess, onError);
+      createPaymentModal(amount, description, onSuccess, onError, paymentId);
     } else {
       const url = 'payment.html?paymentId=' + paymentId + '&amount=' + amount + '&description=' + encodeURIComponent(description);
       window.open(url, '_blank');
@@ -654,7 +676,7 @@ function wireStripeButtons() {
 
 async function onboardStripe() {
   try {
-    const res = await apiService.makeRequest('/payments/stripe/connect/onboard', { method: 'POST' });
+    const res = await apiService.getStripeOnboardLink();
     if (res?.url) {
       window.location.href = res.url;
     } else {
@@ -668,7 +690,7 @@ async function onboardStripe() {
 
 async function manageStripe() {
   try {
-    const res = await apiService.makeRequest('/payments/stripe/connect/manage', { method: 'GET' });
+    const res = await apiService.getStripeManageLink();
     if (res?.url) {
       window.open(res.url, '_blank');
     } else {
@@ -682,7 +704,7 @@ async function manageStripe() {
 
 async function refreshStripeStatus() {
   try {
-    const res = await apiService.makeRequest('/payments/stripe/connect/status', { method: 'GET' });
+    const res = await apiService.getStripeConnectStatus();
     PlayerDashboardState.stripe = {
       linked: !!res?.linked,
       payouts_enabled: !!res?.payouts_enabled,
@@ -929,7 +951,7 @@ async function handleClubApplication(e) {
   try {
     const clubId = byId('applyClubId').value;
     const message = byId('applicationMessage').value;
-    const position = byId('playerPosition').value;
+    const position = byId('appPlayerPosition').value;
     const experience = byId('playerExperience').value;
     const availability = Array.from(document.querySelectorAll('input[name="availability"]:checked')).map(cb => cb.value);
 
@@ -1169,10 +1191,94 @@ function showPlayerSection(sectionId) {
     case 'documents': 
       loadPlayerDocuments(); 
       break;
+    case 'item-shop':
+      loadPlayerProducts();
+      break;
     default:
       loadPlayerOverview();
       break;
   }
+}
+
+async function loadPlayerProducts() {
+  const container = byId('shopProducts');
+  if (!container) return;
+
+  const clubFilter = byId('shopClubFilter');
+  if (clubFilter && clubFilter.options.length <= 1) {
+    // Fill filter with user's clubs
+    PlayerDashboardState.clubs.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      clubFilter.appendChild(opt);
+    });
+  }
+
+  showLoading(true);
+  try {
+    const selectedClubId = clubFilter?.value || null;
+    let products = [];
+    
+    if (selectedClubId) {
+      products = await apiService.getProducts(selectedClubId);
+    } else {
+      // Fetch products for all clubs if none selected
+      const productPromises = PlayerDashboardState.clubs.map(c => apiService.getProducts(c.id));
+      const results = await Promise.all(productPromises);
+      products = results.flat();
+    }
+
+    if (!products || products.length === 0) {
+      container.innerHTML = '<div class="empty-state"><h4>No products available</h4><p>Check back later for club merchandise</p></div>';
+      return;
+    }
+
+    container.innerHTML = products.map(product => `
+      <div class="card product-card">
+        <div style="height: 150px; background: rgba(0,0,0,0.05); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 3rem;">📦</span>
+        </div>
+        <h4>${escapeHTML(product.name)}</h4>
+        <p style="color: var(--primary); font-weight: bold; font-size: 1.2rem; margin: 0.5rem 0;">£${parseFloat(product.price).toFixed(2)}</p>
+        <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem; height: 3em; overflow: hidden;">${escapeHTML(product.description || 'No description')}</p>
+        <button class="btn btn-primary btn-block" onclick="buyProduct('${product.id}', ${product.price}, '${escapeHTML(product.name)}')">Buy Now</button>
+      </div>
+    `).join('');
+
+  } catch (error) {
+    console.error('Failed to load shop products:', error);
+    container.innerHTML = '<p style="color:#dc3545">Failed to load shop products</p>';
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function buyProduct(productId, price, name) {
+  const onSuccess = async (paymentResult) => {
+    try {
+      showLoading(true);
+      await apiService.purchaseProduct(productId, {
+        quantity: 1,
+        paymentIntentId: paymentResult.id
+      });
+      
+      showNotification(`Successfully purchased ${name}!`, 'success');
+      await loadPlayerProducts(); // Refresh stock
+    } catch (error) {
+      console.error('Purchase confirmation failed:', error);
+      showNotification('Purchase confirmation failed: ' + error.message, 'error');
+    } finally {
+      showLoading(false);
+    }
+  };
+
+  const onError = (error) => {
+    console.error('Payment failed:', error);
+    showNotification('Payment failed: ' + error.message, 'error');
+  };
+
+  createPaymentModal(Number(price), name, onSuccess, onError);
 }
 
 function byId(id) { return document.getElementById(id); }
@@ -1241,354 +1347,137 @@ function accessStripeAccount() {
 window.accessStripeAccount = accessStripeAccount;
 
 
-// POST /api/payments/plans - Create new payment plan
-router.post('/plans', authenticateToken, requireOrganization, [
-  body('name').notEmpty().withMessage('Plan name is required'),
-  body('price').isNumeric().withMessage('Price must be a number'),
-  body('interval').isIn(['month', 'year', 'week', 'one-time']).withMessage('Invalid interval')
-], async (req, res) => {
+
+
+
+async function loadNotifications() {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: errors.array() 
-      });
+    const notifications = await apiService.getNotifications();
+    PlayerDashboardState.notifications = notifications;
+    
+    // Update the bell icon and unread count
+    setupNavButtons();
+    
+    const listEl = document.getElementById('notificationList');
+    if (!listEl) return;
+    
+    if (notifications.length === 0) {
+      listEl.innerHTML = '<p class="empty-state">No notifications</p>';
+      return;
     }
+    
+    listEl.innerHTML = notifications.map(n => `
+      <div class="notification-item ${!n.is_read ? 'unread' : ''}" onclick="handleNotificationClick('${n.id}', '${n.action_url}')">
+        <h4>${escapeHTML(n.title)}</h4>
+        <p>${escapeHTML(n.message)}</p>
+        <span class="notification-time">${formatDate(n.created_at)}</span>
+      </div>
+    `).join('');
+  } catch (error) {
+    console.warn('Failed to load notifications:', error);
+  }
+}
 
-    const { name, price, interval, description } = req.body;
+function toggleNotifications() {
+  const dropdown = document.getElementById('notificationDropdown');
+  if (dropdown) {
+    dropdown.classList.toggle('active');
+  }
+}
 
-    // Ensure plans table exists
-    const tableExists = await query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'plans'
-      );
-    `);
+async function markAllNotificationsRead() {
+  try {
+    await apiService.markAllNotificationsAsRead();
+    await loadNotifications();
+  } catch (error) {
+    showNotification('Failed to mark notifications as read', 'error');
+  }
+}
 
-    if (!tableExists.rows[0].exists) {
-      await query(`
-        CREATE TABLE plans (
-          id SERIAL PRIMARY KEY,
-          name VARCHAR(255) NOT NULL,
-          price DECIMAL(10,2) NOT NULL DEFAULT 0,
-          interval VARCHAR(50) DEFAULT 'month',
-          active BOOLEAN DEFAULT true,
-          description TEXT,
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
+async function handleNotificationClick(id, actionUrl) {
+  try {
+    await apiService.markNotificationAsRead(id);
+    if (actionUrl && actionUrl !== 'null' && actionUrl) {
+      window.location.href = actionUrl;
+    } else {
+      await loadNotifications();
     }
+  } catch (error) {
+    console.warn('Failed to mark notification as read:', error);
+  }
+}
 
-    // Insert new plan
-    const result = await query(`
-      INSERT INTO plans (name, price, interval, active, description, created_at, updated_at)
-      VALUES ($1, $2, $3, true, $4, NOW(), NOW())
-      RETURNING *
-    `, [name, price, interval, description]);
-
-    const newPlan = result.rows[0];
-
-    console.log('Payment plan created:', newPlan.name);
-    res.status(201).json({ 
-      success: true, 
-      message: 'Payment plan created successfully',
-      plan: newPlan
-    });
-
-  } catch (err) {
-    console.error('Create payment plan error:', err);
-    res.status(500).json({ 
-      error: 'Failed to create payment plan',
-      message: err.message 
-    });
+// Close dropdown when clicking outside
+window.addEventListener('click', (e) => {
+  const wrapper = document.querySelector('.notification-wrapper');
+  const dropdown = document.getElementById('notificationDropdown');
+  if (wrapper && !wrapper.contains(e.target) && dropdown && dropdown.classList.contains('active')) {
+    dropdown.classList.remove('active');
   }
 });
 
-
-async function loadPaymentPlans() {
+async function exportUserData() {
   try {
-    const plans = await apiService.makeRequest('/payments/plans');
-    AppState.paymentPlans = plans || [];
-    showPaymentPlans();
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${apiService.baseUrl}/auth/gdpr/export`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) throw new Error('Failed to export data');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'clubhub-data-export.json';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    showNotification('Data export started', 'success');
   } catch (error) {
-    console.warn('Failed to load payment plans:', error);
-    AppState.paymentPlans = [];
-    showPaymentPlans();
+    showNotification('Failed to export data', 'error');
   }
 }
 
-async function loadPaymentPlans() {
-    const container = document.getElementById('paymentPlansContainer');
-    if (!container) return;
-
-    try {
-        showLoading(true);
-        const response = await apiService.listPaymentPlans();
-        const plans = Array.isArray(response) ? response : (response?.plans || []);
-        
-        if (plans.length === 0) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-                    <p>No payment plans created yet</p>
-                    <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">Create Your First Plan</button>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = plans.map(plan => `
-            <div class="payment-plan-item">
-                <div class="payment-plan-header">
-                    <div class="payment-plan-info">
-                        <h4>${plan.name}</h4>
-                        <div class="payment-plan-meta">
-                            <span><strong>Amount:</strong> £${(plan.amount / 100).toFixed(2)}</span>
-                            <span><strong>Frequency:</strong> ${plan.interval || plan.frequency}</span>
-                            <span><strong>Active Players:</strong> ${plan.subscriber_count || 0}</span>
-                            <span><strong>Created:</strong> ${new Date(plan.created_at || plan.created).toLocaleDateString()}</span>
-                        </div>
-                        ${plan.description ? `<p style="margin-top: 0.5rem; opacity: 0.8;">${plan.description}</p>` : ''}
-                    </div>
-                    <div class="payment-plan-actions">
-                        <button class="btn btn-small btn-secondary" onclick="editPaymentPlan('${plan.id}')">Edit</button>
-                        <button class="btn btn-small btn-warning" onclick="assignPlayersToPlean('${plan.id}')">Assign Players</button>
-                        <button class="btn btn-small btn-danger" onclick="deletePaymentPlan('${plan.id}')">Delete</button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        
-    } catch (err) {
-        console.error('Failed to load payment plans:', err);
-        container.innerHTML = '<p style="color:#dc3545">Failed to load payment plans. Please try again.</p>';
-    } finally {
-        showLoading(false);
-    }
-}
-
-async function deletePaymentPlan(planId) {
-    if (!confirm('Are you sure you want to delete this payment plan? This will remove all player assignments.')) {
-        return;
-    }
+async function deleteUserAccount() {
+  if (!confirm('CRITICAL: This will permanently delete your account and ALL associated data. This action CANNOT be undone. Are you absolutely sure?')) {
+    return;
+  }
+  
+  const finalConfirm = prompt('Please type "DELETE" to confirm account erasure:');
+  if (finalConfirm !== 'DELETE') {
+    showNotification('Account deletion cancelled', 'info');
+    return;
+  }
+  
+  try {
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${apiService.baseUrl}/auth/gdpr/delete`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     
-    try {
-        showLoading(true);
-        await apiService.deletePaymentPlan(planId);
-        showNotification('Payment plan deleted successfully', 'success');
-        await loadPaymentPlans();
-    } catch (error) {
-        console.error('Failed to delete payment plan:', error);
-        showNotification('Failed to delete payment plan: ' + error.message, 'error');
-    } finally {
-        showLoading(false);
+    if (response.ok) {
+      showNotification('Account deleted successfully. Goodbye.', 'success');
+      setTimeout(() => logout(), 2000);
+    } else {
+      throw new Error('Deletion failed');
     }
-}
-
-async function assignPlayersToPlean(planId) {
-    try {
-        // Get all players for assignment modal
-        const players = await apiService.getPlayers();
-        const plan = AppState.paymentPlans?.find(p => p.id === planId);
-        
-        if (!plan) {
-            showNotification('Payment plan not found', 'error');
-            return;
-        }
-        
-        // Create assignment modal
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style.display = 'block';
-        modal.id = 'assignPlayersModal';
-        
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Assign Players to ${plan.name}</h2>
-                    <button class="close" onclick="closeModal('assignPlayersModal')">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>Select players to assign to this payment plan:</p>
-                    <div style="max-height: 400px; overflow-y: auto; margin: 1rem 0;">
-                        ${players.map(player => `
-                            <label style="display: flex; align-items: center; padding: 0.5rem; margin-bottom: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;">
-                                <input type="checkbox" name="selectedPlayers" value="${player.id}" style="margin-right: 1rem;">
-                                <span>${player.first_name} ${player.last_name} (${player.email || 'No email'})</span>
-                            </label>
-                        `).join('')}
-                    </div>
-                    <div class="form-group">
-                        <label for="assignmentStartDate">Start Date</label>
-                        <input type="date" id="assignmentStartDate" value="${new Date().toISOString().split('T')[0]}">
-                    </div>
-                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                        <button class="btn btn-primary" onclick="confirmPlayerAssignment('${planId}')">Assign Players</button>
-                        <button class="btn btn-secondary" onclick="closeModal('assignPlayersModal')">Cancel</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-    } catch (error) {
-        console.error('Failed to load players for assignment:', error);
-        showNotification('Failed to load players', 'error');
-    }
-}
-
-async function confirmPlayerAssignment(planId) {
-    const selectedPlayers = Array.from(document.querySelectorAll('input[name="selectedPlayers"]:checked'))
-                                 .map(cb => cb.value);
-    const startDate = document.getElementById('assignmentStartDate').value;
-
-    if (selectedPlayers.length === 0) {
-        showNotification('Please select at least one player', 'error');
-        return;
-    }
-
-    try {
-        showLoading(true);
-        await apiService.bulkAssignPaymentPlan(selectedPlayers, planId, startDate);
-        closeModal('assignPlayersModal');
-        showNotification(`${selectedPlayers.length} players assigned to payment plan successfully`, 'success');
-        await loadPaymentPlans();
-    } catch (error) {
-        console.error('Failed to assign players:', error);
-        showNotification('Failed to assign players: ' + error.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-async function handleCreatePaymentPlan(e) {
-    e.preventDefault();
-    console.log('Creating payment plan...');
-    
-    try {
-        showLoading(true);
-        
-        const planData = {
-            name: document.getElementById('planName').value,
-            price: parseFloat(document.getElementById('planAmount').value),
-            interval: document.getElementById('planFrequency').value,
-            description: document.getElementById('planDescription').value
-        };
-        
-        if (!planData.name || !planData.price || !planData.interval) {
-            showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-        
-        // Create the plan via API
-        const response = await apiService.makeRequest('/payments/plans', {
-            method: 'POST',
-            body: JSON.stringify(planData)
-        });
-        
-        // Update local state
-        if (!AppState.paymentPlans) AppState.paymentPlans = [];
-        AppState.paymentPlans.push(response.plan);
-        
-        closeModal('createPaymentPlanModal');
-        document.getElementById('createPaymentPlanForm').reset();
-        
-        // Reload the payment plans section
-        showPaymentPlans();
-        
-        showNotification('Payment plan created successfully!', 'success');
-        
-    } catch (error) {
-        console.error('Failed to create payment plan:', error);
-        showNotification('Failed to create payment plan: ' + error.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-
-async function assignPlanToPlayers(planId) {
-    const plan = AppState.paymentPlans?.find(p => p.id === planId);
-    if (!plan) return;
-    
-    const availablePlayers = AppState.players?.filter(p => !p.has_payment_plan) || [];
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.id = 'assignPlanModal';
-    
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>Assign "${plan.name}" to Players</h2>
-                <button class="close" onclick="closeModal('assignPlanModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Select Players:</label>
-                    <div class="checkbox-group" style="max-height: 300px; overflow-y: auto;">
-                        ${availablePlayers.length > 0 ? availablePlayers.map(player => `
-                            <label>
-                                <input type="checkbox" name="selectedPlayers" value="${player.id}">
-                                ${player.first_name} ${player.last_name} (Age: ${calculateAge(player.date_of_birth)})
-                            </label>
-                        `).join('') : '<p>No players available for assignment</p>'}
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="planStartDate">Start Date</label>
-                    <input type="date" id="planStartDate" value="${new Date().toISOString().split('T')[0]}">
-                </div>
-                <div style="margin-top: 1.5rem;">
-                    <button class="btn btn-primary" onclick="confirmBulkPlanAssignment('${planId}')">Assign Plan</button>
-                    <button class="btn btn-secondary" onclick="closeModal('assignPlanModal')">Cancel</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-}
-
-async function confirmBulkPlanAssignment(planId) {
-    const selectedPlayers = Array.from(document.querySelectorAll('input[name="selectedPlayers"]:checked'))
-                                 .map(cb => cb.value);
-    const startDate = document.getElementById('planStartDate').value;
-    
-    if (selectedPlayers.length === 0) {
-        showNotification('Please select at least one player', 'error');
-        return;
-    }
-    
-    try {
-        await apiService.makeRequest('/payments/bulk-assign-plan', {
-            method: 'POST',
-            body: JSON.stringify({
-                playerIds: selectedPlayers,
-                planId: planId,
-                startDate: startDate
-            })
-        });
-        
-        closeModal('assignPlanModal');
-        showNotification(`Payment plan assigned to ${selectedPlayers.length} players!`, 'success');
-        
-        // Refresh data
-        const dashboardData = await apiService.getAdminDashboardData();
-        AppState.players = dashboardData.players || [];
-        loadPlayers();
-        
-    } catch (error) {
-        console.error('Failed to assign payment plan:', error);
-        showNotification('Failed to assign payment plan: ' + error.message, 'error');
-    }
+  } catch (error) {
+    showNotification('Failed to delete account', 'error');
+  }
 }
 
 // Global exports
+window.exportUserData = exportUserData;
+window.deleteUserAccount = deleteUserAccount;
+window.toggleNotifications = toggleNotifications;
+window.markAllNotificationsRead = markAllNotificationsRead;
+window.handleNotificationClick = handleNotificationClick;
 window.showPlayerSection = showPlayerSection;
 window.bookEvent = bookEvent;
 window.payNow = payNow;
@@ -1610,9 +1499,5 @@ window.refreshClubData = refreshClubData;
 window.initializePlayerDashboard = initializePlayerDashboard;
 window.accessStripeAccount = accessStripeAccount;
 window.loadPaymentPlans = loadPaymentPlans;
-window.showPaymentPlans = showPaymentPlans;
-window.handleCreatePaymentPlan = handleCreatePaymentPlan;
-window.assignPlanToPlayers = assignPlanToPlayers;
-window.confirmBulkPlanAssignment = confirmBulkPlanAssignment;
 
 console.log('Player Dashboard script loaded successfully');

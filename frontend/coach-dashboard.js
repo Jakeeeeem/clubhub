@@ -69,6 +69,78 @@ function showCoachSection(sectionId) {
         case 'event-finder':
             loadEventFinder();
             break;
+        case 'item-shop':
+            loadCoachProducts();
+            break;
+    }
+}
+
+async function loadCoachProducts() {
+    const container = document.getElementById('shopProducts');
+    if (!container) return;
+
+    const clubFilter = document.getElementById('shopClubFilter');
+    
+    // Get clubs coach is part of
+    const coachClubs = AppState.clubs || [];
+    
+    if (clubFilter && clubFilter.options.length <= 1) {
+        coachClubs.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.name;
+            clubFilter.appendChild(opt);
+        });
+    }
+
+    try {
+        const selectedClubId = clubFilter?.value || null;
+        let products = [];
+        
+        if (selectedClubId) {
+            products = await apiService.getProducts(selectedClubId);
+        } else {
+            // Fetch products for all clubs
+            const productPromises = coachClubs.map(c => apiService.getProducts(c.id));
+            const results = await Promise.all(productPromises);
+            products = results.flat();
+        }
+
+        if (!products || products.length === 0) {
+            container.innerHTML = '<div class="card"><p>No products available in the shop</p></div>';
+            return;
+        }
+
+        container.innerHTML = products.map(product => `
+            <div class="card product-card">
+                <div style="height: 120px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 2.5rem;">📦</span>
+                </div>
+                <h4>${product.name}</h4>
+                <p style="color: #dc2626; font-weight: bold; font-size: 1.1rem; margin: 0.5rem 0;">£${parseFloat(product.price).toFixed(2)}</p>
+                <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1rem; height: 3em; overflow: hidden;">${product.description || 'No description'}</p>
+                <button class="btn btn-primary btn-small" style="width: 100%" onclick="buyCoachProduct('${product.id}', ${product.price}, '${product.name}')">Buy Now</button>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Failed to load shop products:', error);
+        container.innerHTML = '<p style="color:#ef4444">Failed to load shop products</p>';
+    }
+}
+
+async function buyCoachProduct(productId, price, name) {
+    if (!confirm(`Do you want to purchase ${name} for £${parseFloat(price).toFixed(2)}?`)) return;
+
+    try {
+        await apiService.purchaseProduct(productId, {
+            quantity: 1,
+            coachId: AppState.currentUser?.id
+        });
+        showNotification(`Successfully purchased ${name}!`, 'success');
+    } catch (error) {
+        console.error('Purchase failed:', error);
+        showNotification('Purchase failed: ' + error.message, 'error');
     }
 }
 
@@ -506,4 +578,37 @@ function clearBoard() {
     });
     
     selectedPosition = null;
-    showNotification }
+    showNotification('Board cleared', 'success');
+}
+
+function saveFormation() {
+    showNotification('Formation saved successfully!', 'success');
+}
+
+function generateId() {
+    return Math.random().toString(36).substr(2, 9);
+}
+
+function formatDate(date) {
+    return new Date(date).toLocaleDateString();
+}
+
+// Make functions globally available
+window.showCoachSection = showCoachSection;
+window.manageTeam = manageTeam;
+window.viewTeamStats = viewTeamStats;
+window.assignPlayers = assignPlayers;
+window.viewPlayerStats = viewPlayerStats;
+window.editPlayerPosition = editPlayerPosition;
+window.recordMatchResult = recordMatchResult;
+window.manageEventPlayers = manageEventPlayers;
+window.editEvent = editEvent;
+window.setFormation = setFormation;
+window.clearBoard = clearBoard;
+window.saveFormation = saveFormation;
+window.loadCoachProducts = loadCoachProducts;
+window.buyCoachProduct = buyCoachProduct;
+window.filterCoachPlayers = filterCoachPlayers;
+window.filterEvents = filterEvents;
+window.handleMatchResult = handleMatchResult;
+window.initializeCoachDashboard = initializeCoachDashboard;

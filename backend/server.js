@@ -16,6 +16,10 @@ const dashboardRoutes = require('./routes/dashboard');
 const notificationRoutes = require('./routes/notifications');
 const { errorHandler } = require('./middleware/errorHandler');
 const invitesRoutes = require('./routes/invites');
+const { startBillingScheduler } = require('./services/billing-service');
+const productRoutes = require('./routes/products');
+const campaignRoutes = require('./routes/campaigns');
+const listingsRoutes = require('./routes/listings');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -157,6 +161,9 @@ app.use('/api/events', eventRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/invites', invitesRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/campaigns', campaignRoutes);
+app.use('/api/listings', listingsRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 
@@ -202,6 +209,10 @@ async function startServer() {
       console.log(`💾 Database: ${process.env.DB_NAME}@${process.env.DB_HOST}:${process.env.DB_PORT}`);
       console.log(`📋 Health check: http://localhost:${PORT}/health`);
       console.log(`📋 API Health check: http://localhost:${PORT}/api/health`);
+      
+      // Start recurring billing scheduler
+      startBillingScheduler();
+      console.log('⏰ Recurring billing scheduler started');
       
       // 🔥 TEST STRIPE CONNECTION
       if (process.env.STRIPE_SECRET_KEY) {
@@ -276,5 +287,10 @@ app._router.stack.forEach(function(r){
   }
 });
 
-// Start the server
-startServer();
+// Export app for testing
+module.exports = app;
+
+// Start the server if run directly
+if (require.main === module) {
+  startServer();
+}

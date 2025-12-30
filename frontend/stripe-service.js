@@ -68,8 +68,8 @@ class StripePaymentService {
     }
     
     // REAL payment function - processes actual payments
-    async processPayment(amount, description, metadata = {}) {
-        console.log('💳 Processing REAL payment:', { amount, description });
+    async processPayment(amount, description, metadata = {}, paymentId = null) {
+        console.log('💳 Processing REAL payment:', { amount, description, paymentId });
         
         if (!this.stripe || !this.card) {
             throw new Error('Payment form not initialized');
@@ -80,6 +80,7 @@ class StripePaymentService {
             const intentResponse = await apiService.createPaymentIntent({
                 amount: amount,
                 description: description,
+                paymentId: paymentId,
                 metadata: metadata
             });
             
@@ -390,7 +391,7 @@ class StripePaymentService {
 }
 
 // Enhanced payment modal creation function
-function createPaymentModal(amount, description, onSuccess, onError = null) {
+function createPaymentModal(amount, description, onSuccess, onError = null, paymentId = null) {
     // Remove existing modal if present
     const existingModal = document.getElementById('stripePaymentModal');
     if (existingModal) {
@@ -534,8 +535,9 @@ function createPaymentModal(amount, description, onSuccess, onError = null) {
             // Process payment
             const result = await window.stripeService.processPayment(amount, description, {
                 customerName: AppState.currentUser?.first_name + ' ' + AppState.currentUser?.last_name || 'Customer',
-                customerEmail: AppState.currentUser?.email || ''
-            });
+                customerEmail: AppState.currentUser?.email || '',
+                paymentRecordId: paymentId // Include in metadata too
+            }, paymentId);
             
             // Payment successful
             modal.remove();
@@ -576,7 +578,7 @@ function createPaymentRecordModal(payment, onSuccess, onError = null) {
         payment.description,
         async (result) => {
             try {
-                // Confirm the specific payment record
+                // The confirmation is now more robust as paymentId was associated with the intent
                 await apiService.confirmPayment(result.id, payment.id);
                 if (onSuccess) {
                     onSuccess({ ...result, paymentId: payment.id });
@@ -587,7 +589,8 @@ function createPaymentRecordModal(payment, onSuccess, onError = null) {
                 }
             }
         },
-        onError
+        onError,
+        payment.id
     );
 }
 

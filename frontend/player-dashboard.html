@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Player Dashboard - ClubHub</title>
-  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://js.stripe.com/v3/"></script>
 </head>
+
 <body>
   <header class="header">
     <nav class="nav container">
-      <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
+      <div class="logo" onclick="window.location.href='index.html'">
+        <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+        <span class="logo-text">ClubHub</span>
+      </div>
       <div class="nav-buttons" id="loggedInNav">
         <!-- Populated by JS -->
       </div>
@@ -31,6 +36,7 @@
         <button onclick="showPlayerSection('teams')">Teams</button>
         <button onclick="showPlayerSection('subscriptions')">Subscriptions</button>
         <button onclick="showPlayerSection('payments')">Payments</button>
+        <button onclick="showPlayerSection('item-shop')">🛒 Item Shop</button>
         <button onclick="showPlayerSection('club-finder')">Find Clubs</button>
         <button onclick="showPlayerSection('event-finder')">Find Events</button>
         <button onclick="showPlayerSection('documents')">Documents</button>
@@ -104,7 +110,12 @@
             <h3>Club Staff</h3>
             <table class="table">
               <thead>
-              <tr><th>Name</th><th>Role</th><th>Contact</th><th>Club</th></tr>
+                <tr>
+                  <th>Name</th>
+                  <th>Role</th>
+                  <th>Contact</th>
+                  <th>Club</th>
+                </tr>
               </thead>
               <tbody id="clubStaffTableBody"></tbody>
             </table>
@@ -129,7 +140,7 @@
           <div class="card">
             <h3>My Subscription</h3>
             <div id="currentPlanInfo" style="margin-bottom: 2rem;"></div>
-            
+
             <div class="subscription-benefits"></div>
           </div>
 
@@ -142,7 +153,7 @@
               </div>
               <div class="form-group">
                 <label for="planStartDate">Start Date</label>
-                <input type="date" id="planStartDate"/>
+                <input type="date" id="planStartDate" />
               </div>
               <button class="btn btn-primary" id="assignPlanBtn">Update Subscription</button>
             </div>
@@ -188,7 +199,13 @@
             <h3>Payment History</h3>
             <table class="table">
               <thead>
-              <tr><th>Date</th><th>Description</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
               </thead>
               <tbody id="paymentHistoryTableBody"></tbody>
             </table>
@@ -207,7 +224,8 @@
             <div class="search-filters">
               <div class="form-group">
                 <label for="clubSearchInput">Search Clubs</label>
-                <input type="text" id="clubSearchInput" placeholder="Search by name or location..." onkeyup="filterClubs()">
+                <input type="text" id="clubSearchInput" placeholder="Search by name or location..."
+                  onkeyup="filterClubs()">
               </div>
               <div class="form-group">
                 <label for="clubTypeFilter">Club Type</label>
@@ -269,10 +287,33 @@
             <h3>My Documents</h3>
             <table class="table">
               <thead>
-              <tr><th>Document Name</th><th>Type</th><th>Club</th><th>Last Updated</th><th>Actions</th></tr>
+                <tr>
+                  <th>Document Name</th>
+                  <th>Type</th>
+                  <th>Club</th>
+                  <th>Last Updated</th>
+                  <th>Actions</th>
+                </tr>
               </thead>
               <tbody id="playerDocumentsTableBody"></tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Item Shop -->
+        <div id="player-item-shop" class="dashboard-section">
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+              <h3>🛒 Club Merchandise</h3>
+              <div id="shopFilters">
+                <select id="shopClubFilter" onchange="loadPlayerProducts()">
+                  <option value="">All My Clubs</option>
+                </select>
+              </div>
+            </div>
+            <div id="shopProducts" class="card-grid">
+              <!-- Products will be loaded by JS -->
+            </div>
           </div>
         </div>
       </div>
@@ -290,11 +331,12 @@
         <input type="hidden" id="applyClubId">
         <div class="form-group">
           <label for="applicationMessage">Application Message</label>
-          <textarea id="applicationMessage" rows="4" placeholder="Tell the club why you'd like to join..." required></textarea>
+          <textarea id="applicationMessage" rows="4" placeholder="Tell the club why you'd like to join..."
+            required></textarea>
         </div>
         <div class="form-group">
           <label for="playerPosition">Preferred Position</label>
-          <input type="text" id="playerPosition" placeholder="e.g., Midfielder, Forward, Defender">
+          <input type="text" id="appPlayerPosition" placeholder="e.g., Midfielder, Forward, Defender">
         </div>
 
         <div class="form-group">
@@ -394,28 +436,53 @@
           <button type="submit" class="btn btn-primary">Save changes</button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('accountModal')">Cancel</button>
         </div>
+
+        <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+          <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-main);">Data & Privacy (GDPR)</h3>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--text-main);">Data Portability</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Download all your personal data in
+                  JSON format.</p>
+              </div>
+              <button type="button" class="btn btn-secondary btn-small" onclick="exportUserData()">Export Data</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+              <div>
+                <h4 style="font-size: 0.9rem; margin-bottom: 4px; color: var(--primary);">Delete Account</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Permanently delete your account and
+                  all associated data.</p>
+              </div>
+              <button type="button" class="btn btn-danger btn-small" onclick="deleteUserAccount()"
+                style="background: rgba(220, 38, 38, 0.1); color: var(--primary); border: 1px solid var(--primary);">Delete
+                Permanently</button>
+            </div>
+          </div>
+        </div>
       </form>
     </div>
   </div>
 
   <!-- Core services -->
   <script src="api-service.js"></script>
-  
+
   <script>
     // Initialize AppState safely
     window.AppState = window.AppState || {};
     try {
       AppState.currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
-    } catch (_) { 
-      AppState.currentUser = null; 
+    } catch (_) {
+      AppState.currentUser = null;
     }
 
     // Fallback functions for missing script.js functions
-    window.showLoading = window.showLoading || function(show) { 
-      console.log('Loading:', show); 
+    window.showLoading = window.showLoading || function (show) {
+      console.log('Loading:', show);
     };
-    
-    window.showNotification = window.showNotification || function(msg, type = 'info') { 
+
+    window.showNotification = window.showNotification || function (msg, type = 'info') {
       console.log(`${type.toUpperCase()}: ${msg}`);
       // Create a simple notification
       const notification = document.createElement('div');
@@ -428,19 +495,19 @@
       document.body.appendChild(notification);
       setTimeout(() => notification.remove(), 5000);
     };
-    
-    window.showModal = window.showModal || function(id) { 
+
+    window.showModal = window.showModal || function (id) {
       const modal = document.getElementById(id);
       if (modal) modal.style.display = 'block';
     };
-    
-    window.closeModal = window.closeModal || function(id) { 
+
+    window.closeModal = window.closeModal || function (id) {
       const modal = document.getElementById(id);
       if (modal) modal.style.display = 'none';
     };
 
     // Safe logout function
-    window.logout = function() {
+    window.logout = function () {
       try {
         if (typeof apiService !== 'undefined' && apiService.logout) {
           apiService.logout().catch(console.warn);
@@ -448,13 +515,13 @@
       } catch (e) {
         console.warn('API logout failed:', e);
       }
-      
+
       // Clear everything
       AppState.currentUser = null;
       localStorage.removeItem('currentUser');
       localStorage.removeItem('authToken');
       localStorage.removeItem('userType');
-      
+
       window.location.href = 'index.html';
     };
   </script>
@@ -466,7 +533,7 @@
   <script>
     const scriptEl = document.createElement('script');
     scriptEl.src = 'script.js';
-    scriptEl.onerror = function() {
+    scriptEl.onerror = function () {
       console.warn('script.js failed to load - using fallback functions');
     };
     document.head.appendChild(scriptEl);
@@ -486,4 +553,5 @@
     });
   </script>
 </body>
+
 </html>

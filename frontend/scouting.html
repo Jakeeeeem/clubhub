@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scouting Dashboard - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="bg-dark">
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="window.location.href='index.html'">Back to Home</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main container" style="margin-top: 100px;">
+        <div class="dashboard-header">
+            <h1>Scouting Dashboard</h1>
+            <p>Discover talent across all registered clubs and organizations.</p>
+        </div>
+
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="search-filters">
+                <div class="form-group">
+                    <label>Position</label>
+                    <input type="text" id="scoutPosition" placeholder="e.g. Forward" onkeyup="loadScouts()">
+                </div>
+                <div class="form-group">
+                    <label>Sport</label>
+                    <select id="scoutSport" onchange="loadScouts()">
+                        <option value="">All Sports</option>
+                        <option value="football">Football</option>
+                        <option value="basketball">Basketball</option>
+                        <option value="tennis">Tennis</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Min Age</label>
+                    <input type="number" id="scoutMinAge" placeholder="10" onchange="loadScouts()">
+                </div>
+                <div class="form-group">
+                    <label>Max Age</label>
+                    <input type="number" id="scoutMaxAge" placeholder="25" onchange="loadScouts()">
+                </div>
+            </div>
+        </div>
+
+        <div class="card-grid" id="scoutsContainer">
+            <!-- Populated by JS -->
+        </div>
+    </main>
+
+    <script src="api-service.js"></script>
+    <script>
+        async function loadScouts() {
+            const pos = document.getElementById('scoutPosition').value;
+            const sport = document.getElementById('scoutSport').value;
+            const minAge = document.getElementById('scoutMinAge').value;
+            const maxAge = document.getElementById('scoutMaxAge').value;
+
+            const container = document.getElementById('scoutsContainer');
+            container.innerHTML = '<p class="text-center">Searching for talent...</p>';
+
+            try {
+                let url = `${apiService.baseUrl}/players/scout?`;
+                if (pos) url += `position=${pos}&`;
+                if (sport) url += `sport=${sport}&`;
+                if (minAge) url += `minAge=${minAge}&`;
+                if (maxAge) url += `maxAge=${maxAge}&`;
+
+                const response = await fetch(url);
+                const scouts = await response.json();
+
+                if (scouts.length === 0) {
+                    container.innerHTML = '<p class="text-center">No players found matching these criteria.</p>';
+                    return;
+                }
+
+                container.innerHTML = scouts.map(player => `
+                    <div class="card">
+                        <div class="user-avatar" style="width: 48px; height: 48px; font-size: 1.25rem; margin-bottom: 1rem;">
+                            ${player.first_name.charAt(0)}${player.last_name.charAt(0)}
+                        </div>
+                        <h3>${player.first_name} ${player.last_name}</h3>
+                        <p><strong>Position:</strong> ${player.position || 'N/A'}</p>
+                        <p><strong>Club:</strong> ${player.club_name || 'Free Agent'}</p>
+                        <p><strong>Age:</strong> ${player.age}</p>
+                        <div class="item-actions" style="margin-top: 1.5rem;">
+                            <button class="btn btn-primary btn-small" onclick="alert('Inquiry feature coming soon!')">Contact Club</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load scouts:', error);
+                container.innerHTML = '<p class="text-danger">Failed to load scouting data.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadScouts);
+    </script>
+</body>
+
+</html>
