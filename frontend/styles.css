@@ -223,7 +223,7 @@ body {
 
 /* Main Content */
 .main {
-    margin-top: 80px;
+    margin-top: 0;
     min-height: calc(100vh - 80px);
 }
 
@@ -2025,20 +2025,21 @@ body {
 }
 
 main.main.home-main {
-    margin-top: 0;
+    margin-top: -80px;
 }
 /* Welcome Hero Section */
 .welcome-hero {
     min-height: 100vh;
+    padding-top: 80px;
     display: flex;
-        margin-top: 80px;
+    margin-top: 80px;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     background-attachment: fixed;
     background-size: cover;
     text-align: center;
-    padding: 100px 2rem 4rem;
+    padding: 180px 2rem 4rem;
     position: relative;
     overflow: hidden;
 }
@@ -2050,7 +2051,7 @@ main.main.home-main {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url(images/players-hero.jpg);
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgb(0 0 0 / 88%)), url(images/players-hero.jpg);
     pointer-events: none;
     background-size: cover;
     background-attachment: fixed;
