@@ -1596,6 +1596,16 @@ body {
     }
 }
 
+@media (max-width: 480px) {
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .benefit-icon {
+        font-size: 3rem;
+    }
+}
+
 /* ============================================
    DASHBOARD STYLES
    ============================================ */
