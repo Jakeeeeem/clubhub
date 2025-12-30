@@ -93,9 +93,23 @@ body {
 }
 
 .logo-image {
-    height: 45px;
-    width: auto;
-    filter: drop-shadow(0 0 10px var(--primary-glow));
+    height: 50px;
+    width: 50px;
+    object-fit: contain;
+    transition: var(--transition);
+}
+
+.logo-image:hover {
+    transform: scale(1.05);
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ff3333 0%, #ff6b6b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .nav-buttons {
@@ -614,6 +628,65 @@ body {
     width: 100%;
     max-width: 1400px; /* Adjusted to match container */
     margin: 0 auto;
+}
+
+/* Signup Form Steps */
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+    animation: fadeIn 0.3s ease-in;
+}
+
+/* Selection Cards */
+.selection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.selection-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.selection-card:hover {
+    border-color: var(--primary);
+    background: rgba(255, 51, 51, 0.05);
+    transform: translateY(-2px);
+}
+
+.selection-card.selected {
+    border-color: var(--primary);
+    background: rgba(255, 51, 51, 0.1);
+    box-shadow: 0 0 20px rgba(255, 51, 51, 0.3);
+}
+
+/* Account Type Cards & Icons */
+.account-type-card .icon,
+.selection-card .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+/* Half-width cards for organization types */
+.selection-grid.half-width {
+    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 768px) {
+    .selection-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .step-indicator {
@@ -1663,12 +1736,12 @@ body {
 
 /* Dashboard Section Visibility */
 .dashboard-section {
-    display: none;
+    display: none !important;
     animation: fadeIn 0.3s ease-in;
 }
 
 .dashboard-section.active {
-    display: block;
+    display: block !important;
 }
 
 @keyframes fadeIn {

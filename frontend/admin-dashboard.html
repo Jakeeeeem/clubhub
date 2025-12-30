@@ -3243,6 +3243,35 @@
         window.saveAdminFormation = saveAdminFormation;
         window.assignPlayerToBoard = assignPlayerToBoard;
 
+        // Dashboard section switching
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.dashboard-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.dashboard-nav button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected section
+            const selectedSection = document.getElementById(sectionId);
+            if (selectedSection) {
+                selectedSection.classList.add('active');
+            }
+
+            // Add active class to clicked button
+            const clickedButton = event?.target;
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+
+            console.log('📍 Switched to section:', sectionId);
+        }
+
+        window.showSection = showSection;
+
         // Close modal when clicking outside
         window.addEventListener('click', function (e) {
             if (e.target.classList.contains('modal')) {
