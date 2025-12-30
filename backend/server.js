@@ -60,7 +60,8 @@ app.use(cors({
     'http://localhost:5000',      // Added another common port
     'http://127.0.0.1:5000',
     'https://clubhubsports.net',           
-    'https://www.clubhubsports.net',       
+    'https://www.clubhubsports.net',
+    'https://clubhub-dev.onrender.com',    // Dev environment
     process.env.FRONTEND_URL || 'http://localhost:8000'
   ],
   credentials: true,

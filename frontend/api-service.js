@@ -24,6 +24,12 @@ class ApiService {
       return 'https://api.clubhubsports.net/api';
     }
     
+    // Development environment (Render)
+    if (hostname === 'clubhub-dev.onrender.com') {
+      console.log('🚧 Development environment (Render) detected');
+      return 'https://clubhub-dev.onrender.com/api';
+    }
+    
     // Local development
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       console.log('🏠 Local development environment detected');

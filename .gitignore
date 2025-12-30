@@ -24,3 +24,4 @@ playground/
 # IDE files
 .vscode/
 .idea/
+backend/clubhub-dev.env
