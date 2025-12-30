@@ -1055,9 +1055,10 @@ async getPlayerPayments(playerId, status = null) {
     });
   }
 
-  async getPlayerDashboardData() {
+  async getPlayerDashboardData(playerId = null) {
     try {
-      return await this.makeRequest('/dashboard/player');
+      const endpoint = playerId ? `/dashboard/player?playerId=${playerId}` : '/dashboard/player';
+      return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn('❌ Failed to fetch player dashboard data:', error);
       

@@ -37,47 +37,66 @@ router.get('/family', authenticateToken, async (req, res) => {
   }
 });
 
-// Get all players (with optional club filter)
+// Get all players (with optional filters)
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const { clubId, search, position } = req.query;
+    const { clubId, search, position, sport, location, minAge, maxAge } = req.query;
     
-    let queryText = 'SELECT * FROM players WHERE 1=1';
+    let queryText = `
+        SELECT p.*, 
+        EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) as age 
+        FROM players p 
+        WHERE 1=1
+    `;
     const queryParams = [];
     let paramCount = 0;
 
-    // Filter by club if provided
     if (clubId) {
       paramCount++;
-      queryText += ` AND club_id = $${paramCount}`;
+      queryText += ` AND p.club_id = $${paramCount}`;
       queryParams.push(clubId);
     }
 
-    // Search by name if provided
     if (search) {
       paramCount++;
-      queryText += ` AND (first_name ILIKE $${paramCount} OR last_name ILIKE $${paramCount})`;
+      queryText += ` AND (p.first_name ILIKE $${paramCount} OR p.last_name ILIKE $${paramCount})`;
       queryParams.push(`%${search}%`);
     }
 
-    // Filter by position if provided
     if (position) {
       paramCount++;
-      queryText += ` AND position ILIKE $${paramCount}`;
+      queryText += ` AND p.position ILIKE $${paramCount}`;
       queryParams.push(`%${position}%`);
     }
 
-    queryText += ' ORDER BY created_at DESC';
+    if (sport) {
+        paramCount++;
+        queryText += ` AND p.sport ILIKE $${paramCount}`;
+        queryParams.push(`%${sport}%`);
+    }
+
+    if (location) {
+        paramCount++;
+        queryText += ` AND p.location ILIKE $${paramCount}`;
+        queryParams.push(`%${location}%`);
+    }
+
+    if (minAge) {
+        paramCount++;
+        queryText += ` AND EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) >= $${paramCount}`;
+        queryParams.push(parseInt(minAge));
+    }
+
+    if (maxAge) {
+        paramCount++;
+        queryText += ` AND EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) <= $${paramCount}`;
+        queryParams.push(parseInt(maxAge));
+    }
+
+    queryText += ' ORDER BY p.created_at DESC';
 
     const result = await query(queryText, queryParams);
-    
-    // Calculate ages for each player
-    const playersWithAge = result.rows.map(player => ({
-      ...player,
-      age: calculateAge(player.date_of_birth)
-    }));
-
-    res.json(playersWithAge);
+    res.json(result.rows);
 
   } catch (error) {
     console.error('Get players error:', error);

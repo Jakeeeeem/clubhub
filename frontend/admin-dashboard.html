@@ -105,40 +105,51 @@
                             </div>
                         </div>
 
-                        <!-- Enhanced Player Filters as requested -->
-                        <div class="player-filters">
+                        <!-- Enhanced Player Filters -->
+                        <div class="player-filters"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
                             <div class="filter-group">
-                                <label for="playerListFilter">Player List View</label>
-                                <select id="playerListFilter" onchange="filterPlayersByView()">
-                                    <option value="all">Full Player List</option>
-                                    <option value="on-plan">On Payment Plan</option>
-                                    <option value="not-on-plan">Not on Plan</option>
-                                    <option value="not-assigned">Not Assigned to Team</option>
-                                    <option value="overdue">Overdue Payments</option>
-                                    <option value="assigned">Assigned to Team</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="teamFilter">Filter by Team</label>
-                                <select id="teamFilter" onchange="filterPlayersByTeam()">
-                                    <option value="">All Teams</option>
-                                    <!-- Populated from database -->
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="paymentStatusFilter">Payment Status</label>
-                                <select id="paymentStatusFilter" onchange="filterPlayersByPayment()">
-                                    <option value="">All Statuses</option>
-                                    <option value="paid">Paid</option>
-                                    <option value="pending">Pending</option>
+                                <label>View Type</label>
+                                <select id="playerListFilter" onchange="loadPlayers()">
+                                    <option value="all">Full List</option>
+                                    <option value="on-plan">On Plan</option>
+                                    <option value="not-on-plan">No Plan</option>
                                     <option value="overdue">Overdue</option>
                                 </select>
                             </div>
-                            <div class="filter-buttons">
+                            <div class="filter-group">
+                                <label>Team</label>
+                                <select id="teamFilter" onchange="loadPlayers()">
+                                    <option value="">All Teams</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Sport</label>
+                                <select id="sportFilter" onchange="loadPlayers()">
+                                    <option value="">All Sports</option>
+                                    <option value="Football">Football</option>
+                                    <option value="Basketball">Basketball</option>
+                                    <option value="Tennis">Tennis</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Location</label>
+                                <input type="text" id="locationFilter" placeholder="London..." onkeyup="loadPlayers()">
+                            </div>
+                            <div class="filter-group" style="display: flex; gap: 0.5rem; flex-direction: column;">
+                                <label>Age Range</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <input type="number" id="minAgeFilter" placeholder="Min" style="width: 60px;"
+                                        onchange="loadPlayers()">
+                                    <input type="number" id="maxAgeFilter" placeholder="Max" style="width: 60px;"
+                                        onchange="loadPlayers()">
+                                </div>
+                            </div>
+                            <div class="filter-buttons" style="display: flex; align-items: flex-end; gap: 0.5rem;">
                                 <button class="btn btn-secondary btn-small"
                                     onclick="resetPlayerFilters()">Reset</button>
-                                <button class="btn btn-primary btn-small" onclick="exportPlayers()">📊
-                                    Export</button>
+                                <button class="btn btn-primary btn-small" onclick="exportPlayers()">📊 Export</button>
                             </div>
                         </div>
 
@@ -735,8 +746,29 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="playerPosition">Position</label>
-                    <input type="text" id="playerPosition" placeholder="e.g., Midfielder, Forward">
+                    <label for="playerGender">Gender</label>
+                    <select id="playerGender">
+                        <option value="">Select Gender...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                </div>
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="playerPosition">Position</label>
+                        <input type="text" id="playerPosition" placeholder="e.g., Midfielder, Forward">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerLocation">Location</label>
+                        <input type="text" id="playerLocation" placeholder="e.g., London, UK">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="playerBio">Bio / Achievements</label>
+                    <textarea id="playerBio" rows="3"
+                        placeholder="Tell us about the player's history and highlights..."></textarea>
                 </div>
                 <div class="form-group">
                     <label for="playerTeam">Assign to Team</label>
@@ -2815,7 +2847,10 @@
         function resetPlayerFilters() {
             document.getElementById('playerListFilter').value = 'all';
             document.getElementById('teamFilter').value = '';
-            document.getElementById('paymentStatusFilter').value = '';
+            if (document.getElementById('sportFilter')) document.getElementById('sportFilter').value = '';
+            if (document.getElementById('locationFilter')) document.getElementById('locationFilter').value = '';
+            if (document.getElementById('minAgeFilter')) document.getElementById('minAgeFilter').value = '';
+            if (document.getElementById('maxAgeFilter')) document.getElementById('maxAgeFilter').value = '';
 
             if (typeof loadPlayers === 'function') {
                 loadPlayers();
@@ -2845,7 +2880,11 @@
                 email: (document.getElementById('playerEmail').value || '').trim() || null,
                 phone: (document.getElementById('playerPhone').value || '').trim() || null,
                 date_of_birth: document.getElementById('playerDOB').value,
+                sport: document.getElementById('playerSport').value || null,
+                gender: document.getElementById('playerGender').value || null,
                 position: (document.getElementById('playerPosition').value || '').trim() || null,
+                location: (document.getElementById('playerLocation').value || '').trim() || null,
+                bio: (document.getElementById('playerBio').value || '').trim() || null,
                 club_id,
                 ...(payment_plan_id ? { payment_plan_id } : {}),
                 ...(plan_price != null ? { plan_price } : {})
@@ -3163,7 +3202,18 @@
                     return;
                 }
 
-                const players = await apiService.getPlayers(clubId);
+                // Collect advanced filters
+                const filters = {
+                    clubId,
+                    viewType: document.getElementById('playerListFilter')?.value || 'all',
+                    teamId: document.getElementById('teamFilter')?.value || null,
+                    sport: document.getElementById('sportFilter')?.value || null,
+                    location: document.getElementById('locationFilter')?.value || null,
+                    minAge: document.getElementById('minAgeFilter')?.value || null,
+                    maxAge: document.getElementById('maxAgeFilter')?.value || null
+                };
+
+                const players = await apiService.getPlayers(filters);
 
                 // 👇 attach plan objects & normalize flags so hasPlan() works on reload
                 const plansById = Object.fromEntries((AppState.paymentPlans || []).map(pl => [String(pl.id), pl]));
@@ -3375,7 +3425,10 @@
                 const clubs = await apiService.getAdminDashboardData(); // or simpler endpoint?
                 // Actually dashboard data has clubs.
                 // Or verify current club
-                const club = AppState.clubs.find(c => c.id == clubId);
+                // Use the latest clubs data from dashboard
+                const activeClubId = await getActiveClubId();
+                const dashboardData = await apiService.getAdminDashboardData();
+                const club = dashboardData.clubs?.find(c => c.id == activeClubId);
                 if (club && club.images) {
                     displayClubImages(club.images);
                 }
@@ -3548,6 +3601,9 @@
                     break;
                 case 'events':
                     loadEvents();
+                    break;
+                case 'club-profile':
+                    loadClubProfileImages();
                     break;
                 case 'finances':
                     loadFinances();

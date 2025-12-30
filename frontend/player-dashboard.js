@@ -1,4 +1,5 @@
 let PlayerDashboardState = {
+  activePlayerId: null,
   player: null,
   attendance: null,
   clubs: [],
@@ -29,8 +30,22 @@ function setupNavButtons() {
     const firstName = AppState.currentUser.first_name || AppState.currentUser.firstName || "User";
     const unreadCount = PlayerDashboardState.notifications.filter(n => !n.is_read).length;
     
+    const profileSwitcher = PlayerDashboardState.family.length > 0 ? `
+      <div class="profile-switcher">
+        <select onchange="switchProfile(this.value)" class="profile-select">
+          <option value="" ${!PlayerDashboardState.activePlayerId ? 'selected' : ''}>Main Profil (${firstName})</option>
+          ${PlayerDashboardState.family.map(child => `
+            <option value="${child.id}" ${PlayerDashboardState.activePlayerId == child.id ? 'selected' : ''}>
+              ${child.first_name} ${child.last_name}
+            </option>
+          `).join('')}
+        </select>
+      </div>
+    ` : '';
+
     navContainer.innerHTML = `
       <div class="nav-controls">
+        ${profileSwitcher}
         <div class="notification-wrapper">
           <button class="notification-bell ${unreadCount > 0 ? 'has-unread' : ''}" onclick="toggleNotifications()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -60,6 +75,26 @@ function setupNavButtons() {
     navContainer.innerHTML = '<button class="btn btn-primary" onclick="window.location.href=\'index.html\'">Login</button>';
   }
 }
+
+async function switchProfile(id) {
+  console.log('🔄 Switching profile to:', id);
+  PlayerDashboardState.activePlayerId = id || null;
+  
+  try {
+    showLoading(true);
+    await loadPlayerDataWithFallback();
+    showPlayerSection(PlayerDashboardState.activeSection);
+    setupNavButtons(); // Refresh dropdown
+    showNotification('Profile switched successfully', 'success');
+  } catch (err) {
+    console.error('Failed to switch profile:', err);
+    showNotification('Failed to switch profile: ' + err.message, 'error');
+  } finally {
+    showLoading(false);
+  }
+}
+
+window.switchProfile = switchProfile;
 
 async function initializePlayerDashboard() {
   console.log('Initializing player dashboard...');
@@ -125,7 +160,7 @@ async function loadPlayerDataWithFallback() {
     }
 
     try {
-      const dashboardData = await apiService.getPlayerDashboardData();
+      const dashboardData = await apiService.getPlayerDashboardData(PlayerDashboardState.activePlayerId);
       console.log('Loaded unified dashboard data:', dashboardData);
 
       PlayerDashboardState.player = dashboardData.player || null;
