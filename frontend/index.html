@@ -29,17 +29,30 @@
         <!-- New Welcome Hero Section -->
         <section class="welcome-hero">
             <div class="container welcome-container">
-                <h1 class="welcome-title">Welcome to ClubHub</h1>
-                <p class="welcome-subtitle">The complete sports club management platform that connects clubs, coaches,
-                    and players in one powerful ecosystem</p>
+                <div class="welcome-container" style="position: relative; z-index: 2;">
+                    <!-- Client Feedback: Audience List -->
+                    <p class="audience-tagline"
+                        style="font-size: 1.1rem; color: #cbd5e1; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.5rem; font-weight: 600;">
+                        Leagues • Clubs • Venues • Tournament Providers • Coaches
+                    </p>
 
-                <div class="welcome-buttons">
-                    <button class="btn btn-primary-glow"
-                        onclick="document.querySelector('.hero-platforms').scrollIntoView({behavior: 'smooth'})">Start
-                        Your Journey</button>
-                    <button class="btn btn-glass"
-                        onclick="document.querySelector('#benefits').scrollIntoView({behavior: 'smooth'})">Learn
-                        More</button>
+                    <h1 class="welcome-title">Welcome to <span class="highlight-red">ClubHub</span></h1>
+                    <p class="welcome-subtitle">The Complete Ecosystem for Grassroots Sports</p>
+
+                    <!-- Client Feedback: Free Platform Emphasis -->
+                    <div class="free-badge"
+                        style="display: inline-block; background: rgba(255, 51, 51, 0.15); border: 1px solid rgba(255, 51, 51, 0.4); padding: 0.5rem 1.5rem; border-radius: 50px; margin-bottom: 2rem; color: var(--primary-color);">
+                        <span style="font-weight: 700;">✨ 100% Free Platform</span> &mdash; Free to Create an Account
+                    </div>
+
+                    <div class="cta-group">
+                        <button class="btn btn-primary-glow"
+                            onclick="document.getElementById('account-types').scrollIntoView({behavior: 'smooth'})">Get
+                            Started For Free</button>
+                        <button class="btn btn-glass"
+                            onclick="document.querySelector('#benefits').scrollIntoView({behavior: 'smooth'})">Learn
+                            More</button>
+                    </div>
                 </div>
 
                 <div class="role-cards-grid">
