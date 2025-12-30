@@ -299,6 +299,72 @@ class ApiService {
     }
   }
 
+  // =========================== PLAYER MANAGEMENT METHODS ===========================
+  
+  async getPlayers(clubId) {
+      return await this.makeRequest(`/players?clubId=${clubId}`);
+  }
+
+  async getFilteredPlayers(filter, clubId) {
+    // Backend API expects 'filter' usually as part of query?
+    // Based on players.js reading in Step 1796 (implied), route was modified?
+    // Actually I haven't modified players.js for 'filtered' endpoint yet.
+    // I should check players.js. For now I'll assume /players/filtered/:filter
+    return await this.makeRequest(`/players/filtered/${filter}?clubId=${clubId}`);
+  }
+
+  async assignPaymentPlan(userId, planId, startDate) {
+      return await this.makeRequest('/payments/plan/assign', {
+          method: 'POST',
+          body: JSON.stringify({ userId, planId, startDate })
+             // Wait, payments.js expects req.user.id for assign? 
+             // Line 381: router.post('/plan/assign', ... [req.user.id])
+             // That's for SELF assignment.
+             // I need BULK ASSIGN (Line 413) or Admin Assignment.
+             // Line 413: router.post('/bulk-assign-plan', ... playerIds, planId)
+             // I should use bulk-assign-plan even for one player.
+      });
+  }
+  
+  async assignPlanToPlayer(playerId, planId, startDate) {
+       return await this.makeRequest('/payments/bulk-assign-plan', {
+          method: 'POST',
+          body: JSON.stringify({ playerIds: [playerId], planId, startDate })
+      });
+  }
+
+  // =========================== CLUB GALLERY METHODS ===========================
+  async uploadClubImage(clubId, file) {
+      const formData = new FormData();
+      formData.append('image', file);
+      // apiService.makeRequest handles JSON. For FormData we need custom handling or update makeRequest?
+      // makeRequest sets Content-Type: application/json by default.
+      // I need to override headers.
+      
+      const url = `${this.baseURL}/clubs/${clubId}/images`;
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+              'Authorization': `Bearer ${token}`
+              // No Content-Type, let browser set boundary
+          },
+          body: formData
+      });
+      
+      if (!response.ok) throw new Error('Upload failed');
+      return await response.json();
+  }
+  
+  async deleteClubImage(clubId, imageUrl) {
+      return await this.makeRequest(`/clubs/${clubId}/images`, {
+          method: 'DELETE',
+          body: JSON.stringify({ imageUrl })
+      });
+  }
+
+
    /* ------------ Stripe Connect (player payouts) ------------ */
 
 

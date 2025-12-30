@@ -518,6 +518,20 @@
                     <input type="date" id="playerDOB" required>
                 </div>
                 <div class="form-group">
+                    <label for="playerSport">Sport</label>
+                    <select id="playerSport" onchange="updatePositionPlaceholder()">
+                        <option value="">Select Sport...</option>
+                        <option value="Football">Football</option>
+                        <option value="Basketball">Basketball</option>
+                        <option value="Tennis">Tennis</option>
+                        <option value="Rugby">Rugby</option>
+                        <option value="Cricket">Cricket</option>
+                        <option value="Hockey">Hockey</option>
+                        <option value="Volleyball">Volleyball</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="playerPosition">Position</label>
                     <input type="text" id="playerPosition" placeholder="e.g., Midfielder, Forward">
                 </div>
@@ -1308,6 +1322,12 @@
                     AppState.teams = dashboardData.teams || [];
                     AppState.payments = dashboardData.payments || [];
                     updateDashboardStats(dashboardData.statistics);
+
+                    // Initial Gallery Load
+                    const activeClub = AppState.clubs.find(c => c.id == AppState.activeClubId);
+                    if (activeClub && activeClub.images) {
+                        displayClubImages(activeClub.images);
+                    }
                 }
 
                 // ✅ Load payment plans first so we can enrich players
@@ -1327,6 +1347,7 @@
 
             setupEnhancedEventListeners();
         });
+
 
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
@@ -1402,6 +1423,12 @@
             const recordResultForm = document.getElementById('recordResultForm');
             if (recordResultForm) {
                 recordResultForm.addEventListener('submit', handleRecordResult);
+            }
+
+            // Assign Plan Form
+            const assignPlanForm = document.getElementById('assignPlanForm');
+            if (assignPlanForm) {
+                assignPlanForm.addEventListener('submit', handleAssignPlanSubmit);
             }
         }
 
@@ -1494,9 +1521,61 @@
             }).join('');
         }
 
-        // ADD this new function for individual payment plan assignment
+        async function assignPaymentPlan(userId) {
+            console.log('Assigning plan to user:', userId);
 
+            // Populate hidden userId
+            document.getElementById('assignPlanUserId').value = userId;
 
+            // Load plans into select
+            const select = document.getElementById('assignPlanSelect');
+            select.innerHTML = '<option value="">Select a plan...</option>';
+
+            try {
+                // Use cached plans or fetch
+                let plans = AppState.paymentPlans;
+                if (!plans) {
+                    plans = await apiService.getPaymentPlans(await getActiveClubId());
+                    AppState.paymentPlans = plans;
+                }
+
+                plans.forEach(plan => {
+                    const price = plan.price || plan.amount || 0;
+                    select.innerHTML += `<option value="${plan.id}">${plan.name} (£${Number(price).toFixed(2)})</option>`;
+                });
+
+                showModal('assignPlanModal');
+
+            } catch (error) {
+                console.error('Failed to load plans for assignment:', error);
+                showNotification('Failed to load payment plans', 'error');
+            }
+        }
+
+        async function handleAssignPlanSubmit(e) {
+            e.preventDefault();
+
+            const userId = document.getElementById('assignPlanUserId').value;
+            const planId = document.getElementById('assignPlanSelect').value;
+            const startDate = document.getElementById('assignPlanStartDate').value;
+
+            if (!userId || !planId) return;
+
+            try {
+                showLoading(true);
+                // Use bulk-assign (which handles single user too via our wrapper)
+                await apiService.assignPlanToPlayer(userId, planId, startDate);
+
+                showNotification('Payment plan assigned successfully!', 'success');
+                closeModal('assignPlanModal');
+                await loadPlayers(); // Refresh list to show badge
+            } catch (error) {
+                console.error('Failed to assign plan:', error);
+                showNotification('Failed to assign plan: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
         // Enhanced Team Management Functions
         async function openTeamManagement(teamId, teamName) {
             const modal = document.getElementById('teamManagementModal');
@@ -3024,6 +3103,88 @@
             }
         }
 
+        // Club Gallery Functions
+        async function handlePictureUpload(input) {
+            if (!input.files || input.files.length === 0) return;
+
+            const file = input.files[0];
+            const clubId = await getActiveClubId();
+
+            try {
+                showLoading(true);
+                // Upload
+                const result = await apiService.uploadClubImage(clubId, file);
+
+                showNotification('Image uploaded successfully!', 'success');
+                // Refresh gallery
+                if (result.images) {
+                    displayClubImages(result.images);
+                } else {
+                    // Fallback reload
+                    await loadClubProfileImages();
+                }
+
+            } catch (error) {
+                console.error('Upload failed:', error);
+                showNotification('Upload failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+                input.value = ''; // Reset input
+            }
+        }
+
+        function displayClubImages(images) {
+            const container = document.getElementById('uploadedPictures');
+            if (!container) return;
+
+            if (!images || images.length === 0) {
+                container.innerHTML = '<p style="opacity:0.6; font-style:italic;">No images uploaded yet.</p>';
+                return;
+            }
+
+            container.innerHTML = images.map(imgUrl => `
+                <div class="gallery-item" style="position: relative; display: inline-block; margin: 10px;">
+                    <img src="${imgUrl}" style="height: 100px; width: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #444;">
+                    <button onclick="deleteClubImage('${imgUrl}')" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;">×</button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteClubImage(imgUrl) {
+            if (!confirm('Delete this image?')) return;
+
+            const clubId = await getActiveClubId();
+            try {
+                showLoading(true);
+                const result = await apiService.deleteClubImage(clubId, imgUrl);
+                showNotification('Image deleted', 'success');
+                displayClubImages(result.images);
+            } catch (e) {
+                showNotification('Failed to delete: ' + e.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadClubProfileImages() {
+            const clubId = await getActiveClubId();
+            try {
+                const clubs = await apiService.getAdminDashboardData(); // or simpler endpoint?
+                // Actually dashboard data has clubs.
+                // Or verify current club
+                const club = AppState.clubs.find(c => c.id == clubId);
+                if (club && club.images) {
+                    displayClubImages(club.images);
+                }
+            } catch (e) {
+                console.warn('Failed to load images', e);
+            }
+        }
+
+        // Expose new functions
+        window.deleteClubImage = deleteClubImage;
+
+
 
         function hasPlan(player) {
             const flag = player?.has_payment_plan;
@@ -3281,7 +3442,67 @@
         });
 
         console.log('✅ Admin Dashboard Ready!');
+
+        // Dynamic Sport Fields Logic
+        function initAddPlayerModalControls() {
+            const sportSelect = document.getElementById('playerSport');
+            if (sportSelect) {
+                sportSelect.addEventListener('change', updatePositionPlaceholder);
+            }
+        }
+
+        function updatePositionPlaceholder() {
+            const sport = document.getElementById('playerSport').value;
+            const posInput = document.getElementById('playerPosition');
+            if (!posInput) return;
+
+            const placeholders = {
+                'Football': 'e.g., Striker, Goalkeeper, Midfielder',
+                'Basketball': 'e.g., Point Guard, Center',
+                'Rugby': 'e.g., Fly Half, Prop',
+                'Cricket': 'e.g., Bowler, Wicket Keeper',
+                'Tennis': 'e.g., Right-Handed',
+                'Hockey': 'e.g., Forward, Goalie',
+                'Volleyball': 'e.g., Setter, Libero'
+            };
+
+            posInput.placeholder = placeholders[sport] || 'e.g., Position';
+        }
+
+        // Initialize controls once script runs (or add to DOMContentLoaded if needed, but this works if elements exist)
+        // Ideally should be in DOMContentLoaded, but we can just call it here as well if script is at end of body
+        setTimeout(initAddPlayerModalControls, 1000);
+
     </script>
+    <!-- Assign Payment Plan Modal -->
+    <div id="assignPlanModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💳 Assign Payment Plan</h2>
+                <button class="close" onclick="closeModal('assignPlanModal')">&times;</button>
+            </div>
+            <form id="assignPlanForm">
+                <input type="hidden" id="assignPlanUserId">
+                <div class="form-group">
+                    <label for="assignPlanSelect">Select Plan</label>
+                    <select id="assignPlanSelect" required class="form-control">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="assignPlanStartDate">Start Date</label>
+                    <input type="date" id="assignPlanStartDate" class="form-control"
+                        value="${new Date().toISOString().split('T')[0]}" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('assignPlanModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </body>
 
 </html>

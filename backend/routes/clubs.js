@@ -604,4 +604,104 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
   }
 });
 
+// Configure Multer for Club Gallery
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure directory exists
+const uploadDir = 'uploads/club-images';
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir)
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, 'club-' + uniqueSuffix + path.extname(file.originalname))
+  }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only images are allowed'));
+        }
+    }
+});
+
+// POST /api/clubs/:id/images - Upload Image
+router.post('/:id/images', authenticateToken, requireOrganization, upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image uploaded' });
+        }
+
+        // Verify ownership
+        const clubResult = await query(queries.findClubById, [req.params.id]);
+        if (clubResult.rows.length === 0) return res.status(404).json({ error: 'Club not found' });
+        if (clubResult.rows[0].owner_id !== req.user.id) return res.status(403).json({ error: 'Access denied' });
+
+        const imageUrl = `/uploads/club-images/${req.file.filename}`;
+
+        // Append to images array
+        const result = await query(`
+            UPDATE clubs 
+            SET images = array_append(COALESCE(images, '{}'), $1), updated_at = NOW()
+            WHERE id = $2
+            RETURNING images
+        `, [imageUrl, req.params.id]);
+
+        res.json({ message: 'Image uploaded', images: result.rows[0].images });
+
+    } catch (err) {
+        console.error('Upload image error:', err);
+        res.status(500).json({ error: 'Failed to upload image' });
+    }
+});
+
+// DELETE /api/clubs/:id/images - Delete Image (by URL)
+router.delete('/:id/images', authenticateToken, requireOrganization, async (req, res) => {
+    try {
+        const { imageUrl } = req.body;
+        if (!imageUrl) return res.status(400).json({ error: 'Image URL required' });
+
+        // Verify ownership
+        const clubResult = await query(queries.findClubById, [req.params.id]);
+        if (clubResult.rows.length === 0) return res.status(404).json({ error: 'Club not found' });
+        if (clubResult.rows[0].owner_id !== req.user.id) return res.status(403).json({ error: 'Access denied' });
+
+        // Remove from array
+        const result = await query(`
+            UPDATE clubs 
+            SET images = array_remove(images, $1), updated_at = NOW()
+            WHERE id = $2
+            RETURNING images
+        `, [imageUrl, req.params.id]);
+
+        // Optional: Delete file from disk
+        try {
+            const filePath = path.join(__dirname, '..', imageUrl); // imageUrl starts with /uploads
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        } catch (e) {
+            console.warn('Failed to delete file from disk:', e);
+        }
+
+        res.json({ message: 'Image removed', images: result.rows[0].images });
+
+    } catch (err) {
+        console.error('Delete image error:', err);
+        res.status(500).json({ error: 'Failed to delete image' });
+    }
+});
+
 module.exports = router;

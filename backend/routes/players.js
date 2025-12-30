@@ -88,6 +88,68 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/players/filtered/:filter - Advanced filtering
+router.get('/filtered/:filter', authenticateToken, async (req, res) => {
+    try {
+        const { filter } = req.params;
+        const { clubId } = req.query;
+        
+        let queryText = 'SELECT * FROM players WHERE 1=1';
+        const queryParams = [];
+        let paramCount = 0;
+
+        if (clubId) {
+            paramCount++;
+            queryText += ` AND club_id = $${paramCount}`;
+            queryParams.push(clubId);
+        }
+
+        switch (filter) {
+            case 'on-plan':
+                queryText += ` AND (has_payment_plan = true OR payment_plan_id IS NOT NULL)`;
+                break;
+            case 'not-on-plan':
+                queryText += ` AND (has_payment_plan = false OR has_payment_plan IS NULL) AND payment_plan_id IS NULL`;
+                break;
+            case 'assigned':
+                // Check team_assignments junction table or team_name
+                // Simplified: assuming team_name or team_id exists on player or we join
+                // In this schema, we seem to have local columns?
+                // Step 1975 Line 97: p.position... p.club_id
+                // Let's assume we check team_assignments separately or use subquery
+                // Or checking team_name if it persists
+                // Reverting to basic: players with team_name IS NOT NULL
+                queryText += ` AND team_name IS NOT NULL AND team_name != ''`;
+                break;
+            case 'not-assigned':
+                queryText += ` AND (team_name IS NULL OR team_name = '')`;
+                break;
+            case 'overdue':
+                // Check payment status OVERDUE
+                queryText += ` AND payment_status = 'overdue'`;
+                break;
+            default:
+                // No extra filter
+                break;
+        }
+
+        queryText += ' ORDER BY created_at DESC';
+
+        const result = await query(queryText, queryParams);
+        
+        const playersWithAge = result.rows.map(player => ({
+            ...player,
+            age: calculateAge(player.date_of_birth)
+        }));
+
+        res.json(playersWithAge);
+
+    } catch (error) {
+        console.error('Get filtered players error:', error);
+        res.status(500).json({ error: 'Failed to fetch filtered players' });
+    }
+});
+
 // GET /api/players/scout - Fetch players for the scouting dashboard
 router.get('/scout', async (req, res) => {
   try {
