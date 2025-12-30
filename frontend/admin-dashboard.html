@@ -384,6 +384,91 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Team Detail Section -->
+                <div id="team-details" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <button class="btn btn-secondary btn-small" onclick="showSection('teams')">← Back to
+                                    Teams</button>
+                                <h3 style="margin: 0;" id="teamDetailName">Team Name</h3>
+                            </div>
+                            <div class="team-meta-badges" id="teamDetailStats">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Team Tabs -->
+                        <div class="tabs">
+                            <button class="tab-btn active" onclick="switchTeamTab('roster')">👥 Roster</button>
+                            <button class="tab-btn" onclick="switchTeamTab('events')">📅 Events</button>
+                            <button class="tab-btn" onclick="switchTeamTab('availability')">✅ Availability</button>
+                        </div>
+
+                        <!-- Roster Tab -->
+                        <div id="team-tab-roster" class="team-tab-content active">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                                <h4>Players</h4>
+                                <button class="btn btn-primary btn-small" onclick="openAddTeamPlayerModal()">➕ Add
+                                    Player</button>
+                            </div>
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Player</th>
+                                            <th>Position</th>
+                                            <th>Age</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="teamRosterBody">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Events Tab -->
+                        <div id="team-tab-events" class="team-tab-content" style="display: none;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                                <h4>Team Events</h4>
+                                <button class="btn btn-primary btn-small" onclick="showModal('addEventModal')">➕ Plan
+                                    Event</button>
+                            </div>
+                            <div id="teamEventsContainer" class="card-grid">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Availability Tab (Spond-like) -->
+                        <div id="team-tab-availability" class="team-tab-content" style="display: none;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                                <h4>Availability Tracker</h4>
+                                <div class="legend" style="display: flex; gap: 1rem; font-size: 0.9rem;">
+                                    <span style="color: var(--success-color);">✅ Going</span>
+                                    <span style="color: var(--danger-color);">❌ No</span>
+                                    <span style="color: var(--warning-color);">❓ Maybe</span>
+                                    <span style="opacity: 0.5;">⚪ No Response</span>
+                                </div>
+                            </div>
+                            <div class="availability-grid" id="availabilityGrid"
+                                style="overflow-x: auto; background: var(--bg-secondary); border-radius: 8px; padding: 1rem;">
+                                <!-- Spond-like grid -->
+                                <p style="text-align: center; opacity: 0.7;">Select an upcoming event to view
+                                    availability.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
@@ -3391,13 +3476,242 @@
         window.loadCampaigns = loadCampaigns;
         window.sendCampaign = sendCampaign;
         window.editProduct = editProduct;
-        window.removePlayerFromTeam = removePlayerFromTeam;
-        window.loadPlayers = loadPlayers;
-        window.loadTeams = loadTeams;
-        window.loadEvents = loadEvents;
-        window.loadFinances = loadFinances;
-        window.loadPaymentPlans = loadPaymentPlans;
-        window.openRecordResult = openRecordResult;
+
+        // Team Management Functions
+        let currentTeamId = null;
+
+        async function openTeamManagement(teamId, teamName) {
+            currentTeamId = teamId;
+            document.getElementById('teamDetailName').textContent = teamName;
+
+            showSection('team-details');
+            await loadTeamDetails(teamId);
+        }
+
+        async function loadTeamDetails(teamId) {
+            try {
+                showLoading(true);
+                // We reuse getTeams but maybe we need a specific getTeamDetails endpoint?
+                // For now, let's assume we fetch the full team object or find it in AppState
+                // But typically we want fresh data including roster.
+                // Using existing /api/teams/:id endpoint (lines 139 in backend)
+
+                const team = await apiService.makeRequest(`/teams/${teamId}`);
+                console.log('Team Details Loaded:', team);
+
+                // Populate Stats
+                const statsContainer = document.getElementById('teamDetailStats');
+                if (statsContainer) {
+                    statsContainer.innerHTML = `
+                        <span class="status-badge" style="background:#4caf50; color:white;">${team.wins || 0} Wins</span>
+                        <span class="status-badge" style="background:#f44336; color:white;">${team.losses || 0} Losses</span>
+                        <span class="status-badge" style="background:#ff9800; color:white;">${team.draws || 0} Draws</span>
+                    `;
+                }
+
+                // Populate Roster
+                renderRoster(team.players || []);
+
+                // Populate Events (if returned, or fetch separately)
+                // Backend returns upcoming_events
+                renderTeamEvents(team.upcoming_events || []);
+
+                // Initialize Availability (Placeholder for now)
+
+            } catch (error) {
+                console.error('Failed to load team details:', error);
+                showNotification('Failed to load team details', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderRoster(players) {
+            const tbody = document.getElementById('teamRosterBody');
+            if (!tbody) return;
+
+            if (players.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">No players in this team yet.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = players.map(p => `
+                <tr>
+                    <td>
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:bold;">${p.first_name} ${p.last_name}</span>
+                            <span style="font-size:0.8rem; opacity:0.7;">#${p.jersey_number || '-'}</span>
+                        </div>
+                    </td>
+                    <td>${p.team_position || p.position || '-'}</td>
+                    <td>${calculateAge(p.date_of_birth)}</td>
+                    <td>
+                        <span class="status-badge status-${p.payment_status || 'pending'}">
+                            ${p.payment_status || 'Active'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-small btn-danger" onclick="removePlayerFromTeam('${p.id}', '${currentTeamId}')">
+                            ❌ Remove
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderTeamEvents(events) {
+            const container = document.getElementById('teamEventsContainer');
+            if (!container) return;
+
+            if (events.length === 0) {
+                container.innerHTML = '<p style="padding:1rem;">No upcoming events scheduled.</p>';
+                return;
+            }
+
+            container.innerHTML = events.map(e => `
+                <div class="card event-card" style="border-left: 4px solid var(--accent-color);">
+                    <h4>${e.title}</h4>
+                    <p>📅 ${new Date(e.event_date).toLocaleDateString()} at ${e.event_time}</p>
+                    <p>📍 ${e.location || 'TBA'}</p>
+                    <button class="btn btn-small btn-secondary_outline" onclick="viewEventAvailability('${e.id}')">View Availability</button>
+                </div>
+            `).join('');
+        }
+
+        // Feature: Switch Tabs
+        window.switchTeamTab = function (tabName) {
+            document.querySelectorAll('.team-tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(`team-tab-${tabName}`).style.display = 'block';
+
+            // Find the button (hacky way or add IDs to buttons)
+            const buttons = document.querySelectorAll('.tab-btn');
+            // assuming text content matches or order matches... 
+            // Better: update the onclicks to pass 'this'
+            if (tabName === 'roster') buttons[0].classList.add('active');
+            if (tabName === 'events') buttons[1].classList.add('active');
+            if (tabName === 'availability') buttons[2].classList.add('active');
+        };
+
+        // Feature: Remove Player from Team (Fixing the reported broken X)
+        async function removePlayerFromTeam(playerId, teamId) {
+            if (!confirm('Are you sure you want to remove this player from the team roster?')) return;
+
+            try {
+                showLoading(true);
+                // Call the new backend endpoint we verified
+                await apiService.makeRequest(`/teams/${teamId}/players/${playerId}`, {
+                    method: 'DELETE'
+                });
+
+                showNotification('Player removed from team', 'success');
+                // Refresh data
+                await loadTeamDetails(teamId);
+            } catch (error) {
+                console.error('Failed to remove player from team:', error);
+                showNotification('Failed to remove player: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+
+        async function loadTeamAvailability(teamId) {
+            try {
+                const data = await apiService.makeRequest(`/teams/${teamId}/availability`);
+                renderAvailabilityGrid(data);
+            } catch (error) {
+                console.error('Failed to load availability:', error);
+                document.getElementById('availabilityGrid').innerHTML = '<p style="color:red">Failed to load availability data</p>';
+            }
+        }
+
+        function renderAvailabilityGrid(data) {
+            const container = document.getElementById('availabilityGrid');
+            if (!container) return;
+
+            const { events, players, responses } = data;
+
+            if (events.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem; opacity: 0.7;">No upcoming events found.</p>';
+                return;
+            }
+
+            // Create Grid Table
+            let html = `
+                <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #444; position: sticky; left: 0; background: var(--bg-secondary); z-index: 2;">Player</th>
+                            ${events.map(e => `
+                                <th style="padding: 10px; text-align: center; border-bottom: 2px solid #444; min-width: 80px;">
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">${new Date(e.event_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
+                                    <div style="font-size: 0.7rem; opacity: 0.6;">${e.event_time ? e.event_time.slice(0, 5) : ''}</div>
+                                    <div style="font-size: 1.2rem;" title="${e.title}">
+                                        ${e.event_type === 'match' ? '⚽' : e.event_type === 'training' ? '🏋️' : '📅'}
+                                    </div>
+                                </th>
+                            `).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            players.forEach(player => {
+                html += `
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #444; position: sticky; left: 0; background: var(--bg-secondary); z-index: 1;">
+                            <div style="font-weight: 500;">${player.first_name} ${player.last_name}</div>
+                            <div style="font-size: 0.7rem; opacity: 0.6;">#${player.jersey_number || '-'}</div>
+                        </td>
+                        ${events.map(event => {
+                    const response = responses.find(r => r.event_id === event.id && r.player_id === player.id);
+                    const status = response ? response.availability : 'none';
+                    const icon = {
+                        'yes': '✅',
+                        'no': '❌',
+                        'maybe': '❓',
+                        'none': '⚪'
+                    }[status];
+
+                    return `
+                                <td style="padding: 10px; text-align: center; border-bottom: 1px solid #444; cursor: pointer; border-left: 1px solid #444;" 
+                                    onclick="toggleAvailability('${event.id}', '${player.id}', '${status}')"
+                                    title="${response?.notes || status}">
+                                    <span style="font-size: 1.2rem;">${icon}</span>
+                                </td>
+                            `;
+                }).join('')}
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        async function toggleAvailability(eventId, playerId, currentStatus) {
+            // Admin override logic (simple cycle: yes -> no -> maybe -> none)
+            // Ideally should be a modal, but cycling is faster for admin
+            const newStatus = {
+                'yes': 'no',
+                'no': 'maybe',
+                'maybe': 'yes', // Skip 'none' for override, keep people accounted for? Or maybe -> yes
+                'none': 'yes'
+            }[currentStatus] || 'yes';
+
+            // For now, we only have player-facing endpoint. 
+            // We probably need an Admin Override endpoint in Backend.
+            // Using placeholder logic since we didn't add the POST override endpoint yet.
+            console.log(`Toggling availability for P:${playerId} E:${eventId} to ${newStatus}`);
+            showNotification('Admin override coming soon', 'info');
+        }
+
+        async function viewEventAvailability(eventId) {
+            switchTeamTab('availability');
+        }
+
         window.handleRecordResult = handleRecordResult;
         window.setAdminFormation = setAdminFormation;
         window.clearAdminBoard = clearAdminBoard;
@@ -3473,6 +3787,113 @@
         // Ideally should be in DOMContentLoaded, but we can just call it here as well if script is at end of body
         setTimeout(initAddPlayerModalControls, 1000);
 
+        // Team Player Management
+        async function openAddTeamPlayerModal() {
+            showModal('addTeamPlayerModal');
+            document.getElementById('teamPlayerSearchResults').innerHTML = '';
+            document.getElementById('teamPlayerSearch').value = '';
+            // Load available players immediately
+            searchTeamPlayers();
+        }
+
+        async function searchTeamPlayers() {
+            const query = document.getElementById('teamPlayerSearch').value.toLowerCase();
+            const container = document.getElementById('teamPlayerSearchResults');
+            container.innerHTML = '<p>Searching...</p>';
+
+            try {
+                // Fetch all club players (filtered)
+                const players = await apiService.getClubPlayers(AppState.activeClubId || (AppState.clubs && AppState.clubs[0] ? AppState.clubs[0].id : null));
+
+                // Fetch current team roster to filter out
+                // Using global currentTeamId set in openTeamManagement
+                if (!currentTeamId) {
+                    console.error('No current team ID');
+                    return;
+                }
+
+                // Ideally we should cache team data or fetch just the roster IDs to be efficient
+                // For now, let's just make a quick request or rely on what we might have in memory if we stored it in loadTeamDetails
+                const teamData = await apiService.makeRequest(`/teams/${currentTeamId}`);
+                const teamPlayerIds = new Set((teamData.players || []).map(p => p.id));
+
+                const available = players.filter(p => !teamPlayerIds.has(p.id) &&
+                    (p.first_name.toLowerCase().includes(query) || p.last_name.toLowerCase().includes(query) || p.email.toLowerCase().includes(query))
+                );
+
+                if (available.length === 0) {
+                    container.innerHTML = '<p style="opacity:0.7;">No matching players found available.</p>';
+                    return;
+                }
+
+                container.innerHTML = available.map(p => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #444;">
+                        <div>
+                            <div style="font-weight: bold;">${p.first_name} ${p.last_name}</div>
+                            <div style="font-size: 0.8rem; opacity: 0.7;">${p.email}</div>
+                        </div>
+                        <button class="btn btn-small btn-primary" onclick="addExistingPlayerToTeam('${p.id}')">Add</button>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Search failed:', error);
+                container.innerHTML = '<p style="color: red;">Search failed</p>';
+            }
+        }
+
+        async function addExistingPlayerToTeam(playerId) {
+            const position = prompt("Enter Position (optional):") || "";
+            const number = prompt("Enter Jersey Number (optional):") || "";
+
+            try {
+                showLoading(true);
+                await apiService.makeRequest(`/teams/${currentTeamId}/players`, {
+                    method: 'POST',
+                    body: JSON.stringify({ playerId, position, jerseyNumber: number ? parseInt(number) : null })
+                });
+                showNotification('Player added to team!', 'success');
+                closeModal('addTeamPlayerModal');
+                loadTeamDetails(currentTeamId); // Refresh
+            } catch (error) {
+                showNotification('Failed to add player: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Handle Quick Add Form
+        const addTeamPlayerForm = document.getElementById('addTeamPlayerForm');
+        if (addTeamPlayerForm) {
+            addTeamPlayerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!currentTeamId) return;
+
+                const email = document.getElementById('newTeamPlayerEmail').value;
+                const position = document.getElementById('newTeamPlayerPosition').value;
+                const number = document.getElementById('newTeamPlayerNumber').value;
+
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/teams/${currentTeamId}/players`, {
+                        method: 'POST',
+                        body: JSON.stringify({ playerEmail: email, position, jerseyNumber: number ? parseInt(number) : null })
+                    });
+                    showNotification('Player added/invited to team!', 'success');
+                    closeModal('addTeamPlayerModal');
+                    loadTeamDetails(currentTeamId); // Refresh
+                } catch (error) {
+                    showNotification('Failed to add player: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            });
+        }
+
+        window.openAddTeamPlayerModal = openAddTeamPlayerModal;
+        window.searchTeamPlayers = searchTeamPlayers;
+        window.addExistingPlayerToTeam = addExistingPlayerToTeam;
+
     </script>
     <!-- Assign Payment Plan Modal -->
     <div id="assignPlanModal" class="modal">
@@ -3503,6 +3924,53 @@
         </div>
     </div>
 
+    <!-- Add Team Player Modal -->
+    <div id="addTeamPlayerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Add Player to Team</h2>
+                <button class="close" onclick="closeModal('addTeamPlayerModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Option 1: Existing Player -->
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3>Find Existing Player</h3>
+                    <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">Search for a player in your club
+                        who isn't in this team yet.</p>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="text" id="teamPlayerSearch" placeholder="Search by name or email..."
+                            style="flex:1;">
+                        <button class="btn btn-primary" onclick="searchTeamPlayers()">Search</button>
+                    </div>
+                    <div id="teamPlayerSearchResults" style="margin-top: 1rem; max-height: 200px; overflow-y: auto;">
+                        <!-- Results -->
+                    </div>
+                </div>
+
+                <!-- Option 2: Quick Invite -->
+                <div class="card">
+                    <h3>Or Quick Add New Player</h3>
+                    <form id="addTeamPlayerForm">
+                        <div class="form-group">
+                            <label for="newTeamPlayerEmail">Email Address</label>
+                            <input type="email" id="newTeamPlayerEmail" placeholder="Player's email" required>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="newTeamPlayerPosition">Position</label>
+                                <input type="text" id="newTeamPlayerPosition" placeholder="e.g. Striker">
+                            </div>
+                            <div class="form-group">
+                                <label for="newTeamPlayerNumber">Jersey Number</label>
+                                <input type="number" id="newTeamPlayerNumber" min="0" max="99">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Add to Roster</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

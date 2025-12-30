@@ -564,6 +564,66 @@ function renderPlayersList(filterKey = 'all') {
   container.innerHTML = playersHTML;
 }
 
+function loadPlayerTeams() {
+  const container = byId('playerTeamsContainer');
+  const eventsContainer = byId('teamEventsContainer');
+  
+  if (!container || !eventsContainer) return;
+
+  const teams = PlayerDashboardState.teams || [];
+  
+  if (teams.length === 0) {
+    container.innerHTML = '<div class="empty-state"><h4>No teams assigned</h4><p>You haven\'t been added to any teams yet.</p></div>';
+    eventsContainer.innerHTML = '<div class="empty-state"><p>No team events available.</p></div>';
+    return;
+  }
+
+  // Render Teams
+  container.innerHTML = teams.map(team => `
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h4>${escapeHTML(team.name)}</h4>
+        <span class="status-badge status-active">${escapeHTML(team.sport || 'Sport')}</span>
+      </div>
+      <p><strong>Club:</strong> ${escapeHTML(team.club_name || 'Club')}</p>
+      <p><strong>Coach:</strong> ${escapeHTML(team.coach ? team.coach.name : 'Not assigned')}</p>
+      <div style="margin-top: 1rem;">
+        <button class="btn btn-secondary btn-small" onclick="viewTeamDetails('${team.id}')">View Details</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Render Team Events
+  const teamIds = new Set(teams.map(t => t.id));
+  const teamEvents = (PlayerDashboardState.events || []).filter(e => e.team_id && teamIds.has(e.team_id));
+
+  if (teamEvents.length === 0) {
+    eventsContainer.innerHTML = '<p class="text-muted">No upcoming team events scheduled.</p>';
+  } else {
+    // Sort by date
+    teamEvents.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+
+    eventsContainer.innerHTML = teamEvents.map(event => {
+       // We don't have user_response in the simple event object yet, showing "Set Availability" by default
+       // A future enhancement would be to check PlayerDashboardState.availability_responses if loaded
+       const isUpcoming = new Date(event.event_date) >= new Date();
+       if (!isUpcoming) return ''; 
+
+       return `
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-left: 4px solid var(--accent-color); margin-bottom: 0.5rem;">
+            <div>
+                <h4 style="margin:0;">${escapeHTML(event.title)} <span style="font-size:0.8rem; opacity:0.7;">(${escapeHTML(event.event_type || 'Event')})</span></h4>
+                <p style="margin:0.2rem 0;">📅 ${formatDate(event.event_date)} at ${event.event_time ? event.event_time.slice(0,5) : 'TBA'} | 📍 ${escapeHTML(event.location || 'TBA')}</p>
+            </div>
+            <div>
+                <button class="btn btn-primary btn-small" onclick="submitAvailability('${event.id}')">Set Availability</button>
+            </div>
+        </div>
+       `;
+    }).join('');
+  }
+}
+
 function loadClubFinder() {
   const container = byId('availableClubsContainer');
   if (!container) return;

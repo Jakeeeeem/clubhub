@@ -698,4 +698,62 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
   }
 });
 
+
+// Get team availability grid
+router.get('/:id/availability', authenticateToken, async (req, res) => {
+  try {
+    const teamId = req.params.id;
+    const limit = req.query.limit || 5;
+
+    // 1. Get upcoming team events
+    const eventsResult = await query(`
+      SELECT id, title, event_date, event_time, event_type
+      FROM events
+      WHERE team_id = $1 AND event_date >= CURRENT_DATE
+      ORDER BY event_date ASC, event_time ASC
+      LIMIT $2
+    `, [teamId, limit]);
+    
+    const events = eventsResult.rows;
+
+    // 2. Get team players
+    const playersResult = await query(`
+      SELECT p.id, p.first_name, p.last_name, tp.jersey_number
+      FROM players p
+      JOIN team_players tp ON p.id = tp.player_id
+      WHERE tp.team_id = $1
+      ORDER BY p.last_name ASC, p.first_name ASC
+    `, [teamId]);
+    
+    const players = playersResult.rows;
+
+    // 3. Get availability responses
+    let responses = [];
+    if (events.length > 0) {
+        const eventIds = events.map(e => e.id);
+        const placeholders = eventIds.map((_, i) => `$${i + 1}`).join(',');
+        
+        const responsesResult = await query(`
+            SELECT event_id, player_id, availability, notes
+            FROM availability_responses
+            WHERE event_id IN (${placeholders})
+        `, eventIds);
+        
+        responses = responsesResult.rows;
+    }
+
+    res.json({
+        events,
+        players,
+        responses
+    });
+
+  } catch (error) {
+    console.error('Get team availability error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch team availability'
+    });
+  }
+});
+
 module.exports = router;

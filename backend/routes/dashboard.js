@@ -215,15 +215,51 @@ router.get('/player', authenticateToken, async (req, res) => {
       teams = teamsResult.rows;
     }
     
-    // Get all available events (public events)
-    const eventsResult = await query(`
+    // Get player's team IDs
+    const teamIds = teams.map(t => t.id);
+    
+    // Get relevant events (Team events + Club events)
+    let eventsQuery = `
       SELECT e.*, c.name as club_name
       FROM events e
       LEFT JOIN clubs c ON e.club_id = c.id
       WHERE e.event_date >= CURRENT_DATE
-      ORDER BY e.event_date ASC
-      LIMIT 50
-    `);
+    `;
+    
+    const queryParams = [];
+    let paramCount = 0;
+    
+    // If player has a club or teams, filter by them
+    if (clubIds.length > 0 || teamIds.length > 0) {
+        eventsQuery += ` AND (`;
+        
+        const conditions = [];
+        
+        if (clubIds.length > 0) {
+            paramCount++;
+            conditions.push(`e.club_id = ANY($${paramCount})`);
+            queryParams.push(clubIds);
+        }
+        
+        if (teamIds.length > 0) {
+            paramCount++;
+            conditions.push(`e.team_id = ANY($${paramCount})`);
+            queryParams.push(teamIds);
+        }
+        
+        eventsQuery += conditions.join(' OR ');
+        eventsQuery += `)`;
+    } else {
+        // Fallback for unassigned players: show public events or nothing? 
+        // Showing nothing is safer/cleaner for "My Dashboard"
+        eventsQuery += ` AND 1=0`; 
+        // actually, maybe they want to see "Open" events? 
+        // For now, let's just show nothing if they have no club/team.
+    }
+    
+    eventsQuery += ` ORDER BY e.event_date ASC LIMIT 50`;
+    
+    const eventsResult = await query(eventsQuery, queryParams);
     
     // Get player's payments (only if player exists)
     let payments = [];
