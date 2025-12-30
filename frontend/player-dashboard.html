@@ -32,7 +32,10 @@
       <!-- Dashboard Navigation -->
       <div class="dashboard-nav">
         <button class="active" onclick="showPlayerSection('overview')">Overview</button>
-        <button onclick="showPlayerSection('family')">My Family 👨‍👩‍👧‍👦</button>
+        <button onclick="showSection('my-availability')">Voting/Availability</button>
+        <button onclick="showSection('family')">My Family</button>
+        <button onclick="showPlayerSection('shop')">Club Shop</button>
+        <button onclick="showSection('payments')">Payments</button>
         <button onclick="showPlayerSection('my-clubs')">My Clubs</button>
         <button onclick="showPlayerSection('teams')">Teams</button>
         <button onclick="showPlayerSection('subscriptions')">Subscriptions</button>
@@ -44,6 +47,17 @@
       </div>
 
       <div class="dashboard-content">
+        <!-- Shop Section -->
+        <div id="shop" class="dashboard-section">
+          <div class="card">
+            <h3>🛒 Club Shop</h3>
+            <p>Purchase club kit and equipment directly.</p>
+            <div id="shopProductsContainer" class="card-grid">
+              <!-- Products loaded via JS -->
+            </div>
+          </div>
+        </div>
+
         <!-- Family Section -->
         <div id="player-family" class="dashboard-section">
           <div class="section-header"

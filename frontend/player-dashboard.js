@@ -518,6 +518,147 @@ function renderPlayersList(filterKey = 'all') {
 
   const isAssigned = (p) => !!(p.team_id || (Array.isArray(p.teams) && p.teams.length));
   const isOnPlan = (p) => !!(p.plan_id || p.on_plan === true || p.payment_plan === true);
+// =========================== SHOP METHODS ===========================
+
+async function loadShop() {
+    const container = document.getElementById('shopProductsContainer');
+    if (!container) return; // Not in shop view or elements missing
+
+    try {
+        container.innerHTML = '<div class="loading-spinner">Loading shop items...</div>';
+        
+        // Get active club ID (simplified logic)
+        // Ideally should be user's primary club or selectable
+        const clubId = AppState.currentUser?.clubId || (AppState.clubs?.[0]?.id); 
+        
+        if (!clubId) {
+             container.innerHTML = '<p>Please join a club to access the shop.</p>';
+             return;
+        }
+
+        const products = await apiService.makeRequest(`/products?clubId=${clubId}`);
+
+        if (!products || products.length === 0) {
+            container.innerHTML = '<p>No items available in the shop currently.</p>';
+            return;
+        }
+
+        container.innerHTML = products.map(product => {
+            const customFields = product.custom_fields || [];
+            let customFieldsHtml = '';
+            
+            if (customFields.length > 0) {
+                customFieldsHtml = `<div class="product-custom-fields" style="margin: 1rem 0; padding: 0.5rem; background: rgba(255,255,255,0.05); border-radius: 4px;">`;
+                customFieldsHtml += customFields.map((field, idx) => {
+                    const fieldId = `field_${product.id}_${idx}`;
+                    let inputHtml = '';
+                    if (field.type === 'select' && field.options) {
+                        inputHtml = `<select id="${fieldId}" class="shop-input" required>
+                                        <option value="">Select ${field.label}</option>
+                                        ${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                                     </select>`;
+                    } else {
+                        inputHtml = `<input type="${field.type === 'number' ? 'number' : 'text'}" id="${fieldId}" class="shop-input" placeholder="${field.label}" required>`;
+                    }
+                    return `
+                        <div class="shop-field-group" style="margin-bottom: 0.5rem;">
+                            <label style="display:block; font-size: 0.8rem; margin-bottom: 0.2rem;">${field.label}</label>
+                            ${inputHtml}
+                        </div>
+                    `;
+                }).join('');
+                customFieldsHtml += `</div>`;
+            }
+
+            return `
+                <div class="card product-card" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="height: 150px; background: #333; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        ${product.image_url ? `<img src="${product.image_url}" style="width:100%; height:100%; object-fit: cover;">` : '<span style="font-size: 2rem;">🛍️</span>'}
+                    </div>
+                    <h4>${product.name}</h4>
+                    <p style="font-size: 0.9rem; opacity: 0.8;">${product.description || ''}</p>
+                    <div style="margin-top: auto;">
+                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-weight: bold; font-size: 1.1rem;">£${product.price}</span>
+                            <span style="font-size: 0.8rem; color: ${product.stock_quantity > 0 ? '#4caf50' : '#f44336'};">
+                                ${product.stock_quantity > 0 ? `${product.stock_quantity} in stock` : 'Out of Stock'}
+                            </span>
+                         </div>
+                         ${customFieldsHtml}
+                         <button class="btn btn-primary" style="width: 100%;" 
+                                 onclick="handleShopPurchase('${product.id}')" 
+                                 ${product.stock_quantity <= 0 ? 'disabled' : ''}>
+                             ${product.stock_quantity > 0 ? 'Buy Now' : 'Sold Out'}
+                         </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Store products in AppState for reference in purchase handler
+        AppState.shopProducts = products;
+
+    } catch (error) {
+        console.error('Failed to load shop:', error);
+        container.innerHTML = '<p style="color: #f44336;">Failed to load shop items. Please try again later.</p>';
+    }
+}
+
+async function handleShopPurchase(productId) {
+    try {
+        const product = AppState.shopProducts?.find(p => p.id === productId);
+        if (!product) return;
+
+        // Collect Custom Fields Data
+        const customizationDetails = {};
+        const customFields = product.custom_fields || [];
+        
+        for (let idx = 0; idx < customFields.length; idx++) {
+            const field = customFields[idx];
+            const element = document.getElementById(`field_${productId}_${idx}`);
+            if (element) {
+                if (!element.value) {
+                    showNotification(`Please provide a value for ${field.label}`, 'error');
+                    element.focus();
+                    return;
+                }
+                customizationDetails[field.label] = element.value;
+            }
+        }
+
+        if (!confirm(`Confirm purchase of ${product.name} for £${product.price}?`)) return;
+
+        showLoading(true);
+
+        // Simple purchase flow (expand to Stripe later)
+        // Using existing /purchase endpoint which expects paymentIntentId but we might be skipping payment for demo or using cash/later
+        // Or we trigger Stripe Intent here. For now, assuming direct order creation.
+        
+        await apiService.makeRequest('/products/purchase', {
+            method: 'POST',
+            body: JSON.stringify({
+                productId,
+                quantity: 1,
+                customization_details: customizationDetails,
+                // paymentIntentId: 'manual_or_later' // Backend accepts null
+            })
+        });
+
+        showNotification('Order placed successfully!', 'success');
+        loadShop(); // Refresh stock
+
+    } catch (error) {
+        console.error('Purchase failed:', error);
+        showNotification('Purchase failed: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Expose to window
+window.loadShop = loadShop;
+window.handleShopPurchase = handleShopPurchase;
+
   const isOverdue = (p) => {
     if (p.overdue === true || p.has_overdue === true) return true;
     const you = safeGetCurrentUser();
@@ -1255,12 +1396,11 @@ function showPlayerSection(sectionId) {
     case 'documents': 
       loadPlayerDocuments(); 
       break;
-    case 'item-shop':
-      loadPlayerProducts();
+    case 'shop':
+      loadShop();
       break;
     default:
-      loadPlayerOverview();
-      break;
+      console.warn('Unknown section:', sectionId);
   }
 }
 

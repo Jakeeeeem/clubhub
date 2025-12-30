@@ -42,12 +42,12 @@ router.post('/', authenticateToken, requireOrganization, [
   }
 
   try {
-    const { name, description, price, stock_quantity, image_url, category, clubId } = req.body;
+    const { name, description, price, stock_quantity, image_url, category, clubId, custom_fields } = req.body;
 
     const result = await query(
-      `INSERT INTO products (name, description, price, stock_quantity, image_url, category, club_id) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [name, description, price, stock_quantity || 0, image_url, category, clubId]
+      `INSERT INTO products (name, description, price, stock_quantity, image_url, category, club_id, custom_fields) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [name, description, price, stock_quantity || 0, image_url, category, clubId, JSON.stringify(custom_fields || [])]
     );
 
     res.status(201).json(result.rows[0]);
@@ -62,7 +62,7 @@ router.post('/', authenticateToken, requireOrganization, [
  * @desc Purchase a product
  */
 router.post('/purchase', authenticateToken, async (req, res) => {
-  const { productId, quantity, paymentIntentId } = req.body;
+  const { productId, quantity, paymentIntentId, customization_details } = req.body;
   const actualQuantity = quantity || 1;
 
   try {
@@ -81,9 +81,9 @@ router.post('/purchase', authenticateToken, async (req, res) => {
       // 2. Create order
       const totalAmount = product.price * actualQuantity;
       const orderResult = await client.query(
-        `INSERT INTO product_orders (product_id, user_id, quantity, total_amount, status, stripe_payment_intent_id) 
-         VALUES ($1, $2, $3, $4, 'paid', $5) RETURNING *`,
-        [productId, req.user.id, actualQuantity, totalAmount, paymentIntentId || null]
+        `INSERT INTO product_orders (product_id, user_id, quantity, total_amount, status, stripe_payment_intent_id, customization_details) 
+         VALUES ($1, $2, $3, $4, 'paid', $5, $6) RETURNING *`,
+        [productId, req.user.id, actualQuantity, totalAmount, paymentIntentId || null, JSON.stringify(customization_details || {})]
       );
 
       // 3. Update stock
