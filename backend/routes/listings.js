@@ -10,13 +10,14 @@ const { body, validationResult } = require('express-validator');
  */
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const { clubId, type, position } = req.query;
+    const { clubId, type, position, teamId } = req.query;
     
     let queryText = `
-      SELECT l.*, c.name as club_name,
+      SELECT l.*, c.name as club_name, t.name as team_name,
              (SELECT COUNT(*) FROM listing_applications WHERE listing_id = l.id) as application_count
       FROM listings l
       JOIN clubs c ON l.club_id = c.id
+      LEFT JOIN teams t ON l.team_id = t.id
       WHERE l.is_active = true
     `;
     const queryParams = [];
@@ -38,6 +39,14 @@ router.get('/', authenticateToken, async (req, res) => {
       paramCount++;
       queryText += ` AND l.position ILIKE $${paramCount}`;
       queryParams.push(`%${position}%`);
+    }
+
+    // Role-based filtering for coaches (if implemented on frontend/calling side)
+    // Or just generic filter if passed
+    if (teamId) {
+      paramCount++;
+      queryText += ` AND l.team_id = $${paramCount}`;
+      queryParams.push(teamId);
     }
 
     queryText += ' ORDER BY l.created_at DESC';
@@ -64,12 +73,12 @@ router.post('/', authenticateToken, requireOrganization, [
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   try {
-    const { title, description, listing_type, position, requirements, clubId } = req.body;
+    const { title, description, listing_type, position, requirements, clubId, teamId } = req.body;
 
     const result = await query(
-      `INSERT INTO listings (title, description, listing_type, position, requirements, club_id)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [title, description, listing_type, position, requirements, clubId]
+      `INSERT INTO listings (title, description, listing_type, position, requirements, club_id, team_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [title, description, listing_type, position, requirements, clubId, teamId || null]
     );
 
     res.status(201).json(result.rows[0]);
@@ -86,21 +95,107 @@ router.post('/', authenticateToken, requireOrganization, [
 router.get('/:id/applications', authenticateToken, requireOrganization, async (req, res) => {
   try {
     const { id } = req.params;
+    const { status } = req.query;
 
-    const result = await query(
-      `SELECT la.*, u.first_name, u.last_name, u.email, u.phone, up.date_of_birth as dob, up.experience_level as experience
-       FROM listing_applications la
-       JOIN users u ON la.user_id = u.id
-       LEFT JOIN user_profiles up ON u.id = up.user_id
-       WHERE la.listing_id = $1
-       ORDER BY la.created_at DESC`,
-      [id]
-    );
+    let queryText = `
+      SELECT la.*, u.first_name, u.last_name, u.email, u.phone, 
+             up.date_of_birth as dob, up.experience_level as experience
+      FROM listing_applications la
+      JOIN users u ON la.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      WHERE la.listing_id = $1
+    `;
+    const queryParams = [id];
+
+    if (status) {
+      queryText += ` AND la.status = $2`;
+      queryParams.push(status);
+    }
+
+    queryText += ` ORDER BY la.created_at DESC`;
+
+    const result = await query(queryText, queryParams);
 
     res.json(result.rows);
   } catch (error) {
     console.error('Get applications error:', error);
     res.status(500).json({ error: 'Failed to fetch applications' });
+  }
+});
+
+/**
+ * @route PUT /api/listings/applications/:id/status
+ * @desc Update application status (shortlist, reject, accept, invited)
+ */
+router.put('/applications/:id/status', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // pending, shortlisted, rejected, accepted, invited
+
+    if (!['pending', 'shortlisted', 'rejected', 'accepted', 'invited'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const result = await query(
+      `UPDATE listing_applications SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [status, id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Application not found' });
+
+    const application = result.rows[0];
+
+    // If Rejected, send email
+    if (status === 'rejected') {
+       // Retrieve user email
+       const userRes = await query('SELECT email FROM users WHERE id = $1', [application.user_id]);
+       if (userRes.rows.length > 0) {
+         console.log(`📧 Sending REJECTION email to ${userRes.rows[0].email} for application ${id}`);
+         // TODO: integrate actual email service here
+         // emailService.sendRejection(userRes.rows[0].email, ...);
+       }
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Update application status error:', error);
+    res.status(500).json({ error: 'Failed to update application status' });
+  }
+});
+
+/**
+ * @route POST /api/listings/applications/:id/invite
+ * @desc Invite an accepted applicant to the team
+ */
+router.post('/applications/:id/invite', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { teamId } = req.body;
+
+    // 1. Update status to 'invited'
+    const result = await query(
+      `UPDATE listing_applications SET status = 'invited', updated_at = NOW() WHERE id = $1 RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Application not found' });
+    
+    // 2. Fetch user details for email
+    const app = result.rows[0];
+    const userRes = await query('SELECT email, first_name FROM users WHERE id = $1', [app.user_id]);
+    
+    if (userRes.rows.length > 0) {
+         const { email, first_name } = userRes.rows[0];
+         console.log(`📧 Sending TEAM INVITE email to ${email} for application ${id}`);
+         // TODO: integrate actual email service
+         // emailService.sendTeamInvite(email, teamId, ...);
+    }
+
+    res.json({ message: 'Invitation sent', application: result.rows[0] });
+
+  } catch (error) {
+    console.error('Invite applicant error:', error);
+    res.status(500).json({ error: 'Failed to send invitation' });
   }
 });
 

@@ -3894,6 +3894,84 @@
         window.searchTeamPlayers = searchTeamPlayers;
         window.addExistingPlayerToTeam = addExistingPlayerToTeam;
 
+        // Payment Plans & Stripe Logic
+        async function accessStripeAccount() {
+            try {
+                showLoading(true);
+                const result = await apiService.getStripeManageLink();
+                if (result && result.url) {
+                    window.open(result.url, '_blank');
+                } else {
+                    showNotification('Could not generate Stripe Dashboard link', 'error');
+                }
+            } catch (error) {
+                console.error('Access Stripe error:', error);
+                showNotification('Failed to access Stripe: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleCreatePaymentPlan(e) {
+            e.preventDefault();
+            const name = document.getElementById('planName').value;
+            const amount = document.getElementById('planAmount').value;
+            const interval = document.getElementById('planInterval').value;
+            const description = document.getElementById('planDescription').value;
+
+            try {
+                showLoading(true);
+                await apiService.createPaymentPlan({
+                    name,
+                    amount,
+                    interval,
+                    description,
+                    clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+                });
+                showNotification('Payment Plan created successfully!', 'success');
+                closeModal('createPaymentPlanModal');
+                document.getElementById('createPaymentPlanForm').reset();
+                loadPaymentPlans(); // Refresh list
+            } catch (error) {
+                console.error('Create Plan Error:', error);
+                showNotification('Failed to create plan: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function editPaymentPlan(planId) {
+            console.log('Editing plan:', planId);
+            // Implement edit modal later if needed
+            showNotification('Plan editing coming soon', 'info');
+        }
+
+        async function deletePaymentPlan(planId) {
+            if (!confirm('Are you sure you want to delete this payment plan?')) return;
+            try {
+                showLoading(true);
+                await apiService.deletePaymentPlan(planId);
+                showNotification('Payment plan deleted', 'success');
+                loadPaymentPlans();
+            } catch (error) {
+                showNotification('Failed to delete plan: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Wire up listener
+        const createPlanForm = document.getElementById('createPaymentPlanForm');
+        if (createPlanForm) {
+            createPlanForm.addEventListener('submit', handleCreatePaymentPlan);
+        }
+
+        window.accessStripeAccount = accessStripeAccount;
+        window.handleCreatePaymentPlan = handleCreatePaymentPlan;
+        window.editPaymentPlan = editPaymentPlan;
+        window.deletePaymentPlan = deletePaymentPlan;
+
+
     </script>
     <!-- Assign Payment Plan Modal -->
     <div id="assignPlanModal" class="modal">
@@ -3969,6 +4047,41 @@
                     </form>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- Create Payment Plan Modal -->
+    <div id="createPaymentPlanModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Create Payment Plan</h2>
+                <button class="close" onclick="closeModal('createPaymentPlanModal')">&times;</button>
+            </div>
+            <form id="createPaymentPlanForm">
+                <div class="form-group">
+                    <label for="planName">Plan Name *</label>
+                    <input type="text" id="planName" required placeholder="e.g. Annual Membership 2025">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="planAmount">Amount (£) *</label>
+                        <input type="number" id="planAmount" step="0.01" min="0" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="planInterval">Billing Frequency *</label>
+                        <select id="planInterval" required>
+                            <option value="month">Monthly</option>
+                            <option value="year">Yearly</option>
+                            <option value="week">Weekly</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="planDescription">Description</label>
+                    <textarea id="planDescription" rows="3" placeholder="What does this plan cover?"></textarea>
+                </div>
+                <!-- Future: Plan benefits / duration -->
+                <button type="submit" class="btn btn-primary">💾 Create Plan</button>
+            </form>
         </div>
     </div>
 </body>
