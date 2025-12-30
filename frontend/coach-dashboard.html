@@ -372,9 +372,47 @@
         </div>
     </div>
 
+    <script src="api-service.js"></script>
     <script src="script.js"></script>
     <script src="coach-dashboard.js"></script>
+
+    <script>
+        // 🔒 AUTHENTICATION GUARD - Prevent unauthorized access
+        (function () {
+            const token = localStorage.getItem('authToken');
+            const currentUser = localStorage.getItem('currentUser');
+
+            if (!token || !currentUser) {
+                console.warn('🚫 No authentication found, redirecting to login...');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const user = JSON.parse(currentUser);
+                if (user.account_type !== 'coach') {
+                    console.warn('🚫 User is not a coach, redirecting to appropriate dashboard...');
+                    // Redirect to correct dashboard based on account type
+                    if (user.account_type === 'admin') {
+                        window.location.href = 'admin-dashboard.html';
+                    } else if (user.account_type === 'player' || user.account_type === 'parent') {
+                        window.location.href = 'player-dashboard.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                    return;
+                }
+                console.log('✅ Coach authentication verified');
+            } catch (error) {
+                console.error('❌ Failed to parse user data:', error);
+                localStorage.clear();
+                window.location.href = 'index.html';
+                return;
+            }
+        })();
+    </script>
 
 </body>
 
 </html>
+```
