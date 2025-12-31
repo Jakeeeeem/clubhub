@@ -526,7 +526,7 @@ body {
 
 /* Testimonials Styles */
 .testimonials-section {
-    padding: 8rem 0;
+    padding: 0rem 0 6rem;
     overflow: hidden;
 }
 
