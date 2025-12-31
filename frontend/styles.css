@@ -119,9 +119,11 @@ body {
     pointer-events: none;
     z-index: 1;
 }
-
+section#benefits {
+    padding-top: 8rem;
+}
 .account-types {
-    padding: 10rem 0;
+    padding:0rem 0  9rem;
 }
 
 .logo-image {
