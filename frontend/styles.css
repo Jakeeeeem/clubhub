@@ -68,8 +68,21 @@ body {
 }
 
 .header.scrolled {
-    background: rgba(10, 10, 12, 0.95);
+    background: rgba(10, 10, 12, 0.98);
     height: 70px;
+}
+
+/* Hero & Unified Section Styling */
+.welcome-hero,
+.hero-platforms,
+.account-types,
+.benefits,
+.testimonials-section,
+.cta-section {
+    background-color: var(--bg-dark);
+    position: relative;
+    border: none;
+    margin: 0;
 }
 
 .nav {
@@ -90,6 +103,25 @@ body {
     align-items: center;
     gap: 0.75rem;
     font-family: 'Outfit', sans-serif;
+}
+
+/* Subtle glow overlays to blend sections */
+.account-types::before,
+.benefits::before,
+.testimonials-section::before {
+    content: '';
+    position: absolute;
+    width: 60%;
+    height: 100%;
+    top: 0;
+    left: 20%;
+    background: radial-gradient(circle at center, rgba(255, 51, 51, 0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.account-types {
+    padding: 10rem 0;
 }
 
 .logo-image {
@@ -377,6 +409,205 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 4rem;
     padding: 4rem 0;
+}
+
+/* Benefits Section & Toggle */
+/* Benefits Section & Toggle */
+.role-toggle-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 4rem;
+    flex-wrap: wrap;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.75rem;
+    border-radius: 100px;
+    border: 1px solid var(--border-color);
+    width: fit-content;
+    margin-inline: auto;
+}
+
+.role-tab {
+    padding: 1rem 2rem;
+    border-radius: 100px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.role-tab:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.role-tab.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 20px var(--primary-glow);
+}
+
+.features-display {
+    min-height: 400px;
+    position: relative;
+}
+
+.role-features {
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    animation: fadeInSlide 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.role-features.active {
+    display: grid;
+}
+
+.feature-check-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 2rem;
+    border-radius: 20px;
+    display: flex;
+    gap: 1.25rem;
+    transition: var(--transition);
+    height: 100%;
+}
+
+.feature-check-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.feature-check-card i {
+    color: #4ade80;
+    font-size: 1.25rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
+}
+
+.feature-check-card h4 {
+    color: var(--text-main);
+    font-size: 1rem;
+    line-height: 1.5;
+    margin: 0;
+    font-weight: 500;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .role-toggle-container {
+        border-radius: 20px;
+        flex-direction: column;
+        width: 100%;
+        padding: 1rem;
+    }
+    .role-tab {
+        width: 100%;
+        padding: 0.8rem;
+    }
+}
+
+/* Testimonials Styles */
+.testimonials-section {
+    padding: 8rem 0;
+    overflow: hidden;
+}
+
+.testimonials-slider {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem 0;
+}
+
+.testimonial-track {
+    display: flex;
+    gap: 2rem;
+    animation: scrollLeft 40s linear infinite;
+    width: fit-content;
+}
+
+.testimonial-track:hover {
+    animation-play-state: paused;
+}
+
+.testimonial-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 2.5rem;
+    border-radius: 20px;
+    min-width: 400px;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    transition: var(--transition);
+}
+
+.testimonial-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-5px);
+}
+
+.stars {
+    color: #fbbf24;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+}
+
+.testimonial-text {
+    color: var(--text-main);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+.testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: auto;
+}
+
+.author-info h4 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 1rem;
+}
+
+.author-info span {
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+@keyframes scrollLeft {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(-50% - 1rem)); } /* Half of the doubled content */
+}
+
+@media (max-width: 768px) {
+    .testimonial-card {
+        min-width: 300px;
+        padding: 1.5rem;
+    }
 }
 
 .benefit-card {
@@ -1821,7 +2052,9 @@ body {
     box-shadow: 0 8px 24px rgba(220, 67, 67, 0.15);
     border-color: var(--primary);
 }
-
+.cta-group .btn-primary-glow {
+    margin-right: 30px;
+}
 .stat-number {
     font-size: 2.5rem;
     font-weight: 700;
@@ -2026,21 +2259,19 @@ body {
 }
 
 main.main.home-main {
-    margin-top: -80px;
+    margin-top: 0;
 }
+
 /* Welcome Hero Section */
 .welcome-hero {
     min-height: 100vh;
-    padding-top: 80px;
     display: flex;
-    margin-top: 80px;
     align-items: center;
     justify-content: center;
- 
     background-attachment: fixed;
     background-size: cover;
     text-align: center;
-    padding: 180px 2rem 4rem;
+    padding: 120px 2rem 4rem; /* Adjusted for fixed header */
     position: relative;
     overflow: hidden;
 }

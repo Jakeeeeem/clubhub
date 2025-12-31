@@ -48,7 +48,7 @@
                     <div class="cta-group">
                         <button class="btn btn-primary-glow"
                             onclick="document.getElementById('account-types').scrollIntoView({behavior: 'smooth'})">Get
-                            Started For Free</button>
+                            Started</button>
                         <button class="btn btn-glass"
                             onclick="document.querySelector('#benefits').scrollIntoView({behavior: 'smooth'})">Learn
                             More</button>
@@ -92,7 +92,7 @@
         </section>
 
         <!-- Account Types -->
-        <section class="account-types" id="account-types" style="background: #000; padding: 10rem 0;">
+        <section class="account-types" id="account-types">
             <div class="container">
                 <h2 class="neon-text"
                     style="text-align: center; font-size: 3.5rem; margin-bottom: 2rem; font-family: 'Outfit';">Choose
@@ -138,47 +138,266 @@
         </section>
 
         <!-- Why Choose ClubHub -->
-        <section class="benefits" style="background: #0a0a0c; padding: 0;">
-            <div class="container">
+        <section class="benefits" id="benefits">
+            <div class="container" style="position: relative; z-index: 5;">
                 <h2 class="neon-text-red"
-                    style="text-align: center; font-size: 3.5rem; margin-bottom: 5rem; font-family: 'Outfit';">Why
+                    style="text-align: center; font-size: 3.5rem; margin-bottom: 2rem; font-family: 'Outfit';">Why
                     Choose ClubHub?</h2>
-                <div class="benefits-grid">
-                    <div class="benefit-card">
-                        <span class="benefit-icon">🔒</span>
-                        <h3>Secure & Reliable</h3>
-                        <p>Banking-level security with SSL encryption and secure payment processing. Your data is always
-                            protected.</p>
+                <p style="text-align: center; color: var(--text-muted); margin-bottom: 4rem; font-size: 1.2rem;">Choose
+                    your role to see how we can transform your experience</p>
+
+                <!-- Role Toggle Tabs -->
+                <div class="role-toggle-container">
+                    <button class="role-tab active" onclick="switchRoleFeatures('player')">Player</button>
+                    <button class="role-tab" onclick="switchRoleFeatures('club')">Club</button>
+                    <button class="role-tab" onclick="switchRoleFeatures('coach')">Team / Coach</button>
+                    <button class="role-tab" onclick="switchRoleFeatures('tournament')">Tournament / League</button>
+                    <button class="role-tab" onclick="switchRoleFeatures('event')">Event Provider</button>
+                </div>
+
+                <!-- Features Showcase -->
+                <!-- Features Showcase -->
+                <div class="features-display">
+                    <!-- Player Features -->
+                    <div id="player-features" class="role-features active">
+                        <div class="feature-check-card"><i>🔍</i>
+                            <h4>Find new clubs recruiting and apply directly</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📅</i>
+                            <h4>Book tournaments with your team, or football events individually</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🤝</i>
+                            <h4>Find private coaches and book directly</h4>
+                        </div>
+                        <div class="feature-check-card"><i>✅</i>
+                            <h4>Confirm availability to training and see your schedule</h4>
+                        </div>
+                        <div class="feature-check-card"><i>💬</i>
+                            <h4>Receive matchday feedback from coaches</h4>
+                        </div>
+                        <div class="feature-check-card"><i>💳</i>
+                            <h4>Manage club resources and automated payments</h4>
+                        </div>
                     </div>
-                    <div class="benefit-card">
-                        <span class="benefit-icon">📱</span>
-                        <h3>Mobile Optimized</h3>
-                        <p>Access all features on any device. Our responsive design ensures a perfect experience on
-                            phones, tablets, and desktops.</p>
+
+                    <!-- Club Features -->
+                    <div id="club-features" class="role-features">
+                        <div class="feature-check-card"><i>📊</i>
+                            <h4>Manage recruitment, subscriptions and training in one place</h4>
+                        </div>
+                        <div class="feature-check-card"><i>👥</i>
+                            <h4>Assign specific staff roles</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📧</i>
+                            <h4>Receive player applications directly and invite to training</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📈</i>
+                            <h4>See all player payment status and financial analysis</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🆚</i>
+                            <h4>Update team schedules and book tournaments</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🏟️</i>
+                            <h4>Manage and receive bookings for camps or venues</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📂</i>
+                            <h4>Add all club documents (medical, consent, conduct)</h4>
+                        </div>
                     </div>
-                    <div class="benefit-card">
-                        <span class="benefit-icon">⚡</span>
-                        <h3>Real-time Updates</h3>
-                        <p>Instant notifications, live scheduling updates, and real-time communication keep everyone
-                            connected and informed.</p>
+
+                    <!-- Coach Features -->
+                    <div id="coach-features" class="role-features">
+                        <div class="feature-check-card"><i>⏱️</i>
+                            <h4>Update team schedules and track player availability</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🧤</i>
+                            <h4>Offer private coaching or 1-1 sessions in the player calendar</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📝</i>
+                            <h4>Attach professional feedback to players after games</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📋</i>
+                            <h4>Full lineup planning tools</h4>
+                        </div>
+                        <div class="feature-check-card"><i>⭐</i>
+                            <h4>Track team and player performance stats</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🎖️</i>
+                            <h4>Create a public coach profile showing experience</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🤝</i>
+                            <h4>Accept player applications to join your team</h4>
+                        </div>
                     </div>
-                    <div class="benefit-card">
-                        <span class="benefit-icon">💳</span>
-                        <h3>Easy Payments</h3>
-                        <p>Streamlined payment collection with automatic reminders, payment plans, and comprehensive
-                            financial tracking.</p>
+
+                    <!-- Tournament Features -->
+                    <div id="tournament-features" class="role-features">
+                        <div class="feature-check-card"><i>🤖</i>
+                            <h4>AI generated schedules (save hours of admin)</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🎟️</i>
+                            <h4>Receive bookings on app with automated slot management</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📁</i>
+                            <h4>Tournament templates for quick formatting</h4>
+                        </div>
+                        <div class="feature-check-card"><i>⚽</i>
+                            <h4>Live scores and bracket updates from referees</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🔔</i>
+                            <h4>Instant notifications to teams of game times and updates</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🏆</i>
+                            <h4>Scorer tracking for top goalscorer awards</h4>
+                        </div>
                     </div>
-                    <div class="benefit-card">
-                        <span class="benefit-icon">🎯</span>
-                        <h3>All-in-One Platform</h3>
-                        <p>Everything you need in one place - no more juggling multiple apps or systems. Simply your
-                            club management today.</p>
+
+                    <!-- Event Provider Features -->
+                    <div id="event-features" class="role-features">
+                        <div class="feature-check-card"><i>🔢</i>
+                            <h4>Auto-number / Bib generator for groups</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📦</i>
+                            <h4>Real-time number stock management</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📍</i>
+                            <h4>Attendee availability tracking and admin alerts</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📐</i>
+                            <h4>Pitch formatting and group area assignment</h4>
+                        </div>
+                        <div class="feature-check-card"><i>🧑‍🏫</i>
+                            <h4>Coaches assigned to groups with session planning</h4>
+                        </div>
+                        <div class="feature-check-card"><i>📱</i>
+                            <h4>QR code signing and manual check-in tools</h4>
+                        </div>
                     </div>
-                    <div class="benefit-card">
-                        <span class="benefit-icon">🏆</span>
-                        <h3>Professional Tools</h3>
-                        <p>Advanced features like tactical boards, performance tracking, and custom analytics to take
-                            your club to the next level.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Testimonials Section -->
+        <section class="testimonials-section" id="testimonials">
+            <div class="container" style="position: relative; z-index: 5;">
+                <h2 class="neon-text-red"
+                    style="text-align: center; font-size: 3.5rem; margin-bottom: 2rem; font-family: 'Outfit';">What Our
+                    Community Says</h2>
+                <div class="testimonials-slider">
+                    <div class="testimonial-track">
+                        <!-- Duplicated set of cards for infinite loop -->
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"Managed our entire recruitment and onboarding process in half
+                                the time. The transition was seamless."</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>James Wilson</h4>
+                                    <span>Club Admin</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"Found a great private coach for my son instantly. The booking
+                                and payment were so easy to handle."</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>Sarah Thompson</h4>
+                                    <span>Parent</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"The AI scheduler for our summer tournament saved me a whole
+                                weekend of manual formatting. Highly recommend!"</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>Marcus Chen</h4>
+                                    <span>League Organizer</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"Payments are finally automated. No more chasing subs on a
+                                Saturday morning. Financial tracking is crisp."</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>David Roberts</h4>
+                                    <span>Club Treasurer</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"The tactical board and match feedback tools have changed how I
+                                communicate with my squad."</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>Coach Elena</h4>
+                                    <span>Team Coach</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Duplicate set starts here -->
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"Managed our entire recruitment and onboarding process in half
+                                the time. The transition was seamless."</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>James Wilson</h4>
+                                    <span>Club Admin</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"Found a great private coach for my son instantly. The booking
+                                and payment were so easy to handle."</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>Sarah Thompson</h4>
+                                    <span>Parent</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"The AI scheduler for our summer tournament saved me a whole
+                                weekend of manual formatting. Highly recommend!"</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>Marcus Chen</h4>
+                                    <span>League Organizer</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"Payments are finally automated. No more chasing subs on a
+                                Saturday morning. Financial tracking is crisp."</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>David Roberts</h4>
+                                    <span>Club Treasurer</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="testimonial-card">
+                            <div class="stars">★★★★★</div>
+                            <p class="testimonial-text">"The tactical board and match feedback tools have changed how I
+                                communicate with my squad."</p>
+                            <div class="testimonial-author">
+                                <div class="author-info">
+                                    <h4>Coach Elena</h4>
+                                    <span>Team Coach</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -281,6 +500,26 @@
 
         function goToSignup(type) {
             window.location.href = `signup.html?type=${type}`;
+        }
+
+        function switchRoleFeatures(role) {
+            // Update tabs
+            const tabs = document.querySelectorAll('.role-tab');
+            tabs.forEach(tab => {
+                const isMatch = tab.getAttribute('onclick').includes(`'${role}'`);
+                tab.classList.toggle('active', isMatch);
+            });
+
+            // Update feature lists
+            const lists = document.querySelectorAll('.role-features');
+            lists.forEach(list => {
+                list.classList.remove('active');
+            });
+
+            const activeList = document.getElementById(`${role}-features`);
+            if (activeList) {
+                activeList.classList.add('active');
+            }
         }
 
         // Simple compatibility layer
