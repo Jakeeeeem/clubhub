@@ -53,6 +53,14 @@ async function getOrCreateStripeConnectAccount(user) {
       const account = await stripe.accounts.create({
         type: 'standard', // Changed from 'express'
         email: dbUser.email,
+        settings: {
+          payouts: {
+            schedule: {
+              interval: 'monthly',
+              monthly_anchor: 1
+            }
+          }
+        },
         metadata: {
           app_user_id: String(dbUser.id),
         }
@@ -63,7 +71,24 @@ async function getOrCreateStripeConnectAccount(user) {
     }
 
     // Always fetch latest status
-    const account = await stripe.accounts.retrieve(accountId);
+    let account = await stripe.accounts.retrieve(accountId);
+
+    // If account exists but doesn't have the payout schedule set to monthly on the 1st, update it
+    if (account.settings?.payouts?.schedule?.interval !== 'monthly' || 
+        account.settings?.payouts?.schedule?.monthly_anchor !== 1) {
+      console.log(`Updating payout schedule for account ${accountId} to monthly on the 1st...`);
+      account = await stripe.accounts.update(accountId, {
+        settings: {
+          payouts: {
+            schedule: {
+              interval: 'monthly',
+              monthly_anchor: 1
+            }
+          }
+        }
+      });
+    }
+
     return account;
   } catch (err) {
     console.error('Stripe Connect account error:', err);
