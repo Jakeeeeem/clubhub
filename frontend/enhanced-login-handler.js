@@ -503,8 +503,49 @@ function closeModal(modalId) {
     }
 }
 
+/**
+ * Quick Demo Login Bypass
+ * @param {string} type - admin, coach, player
+ */
+window.quickLogin = async function(type) {
+    const demos = {
+        admin: { email: 'admin@clubhub.com', pass: 'password123' },
+        coach: { email: 'coach@clubhub.com', pass: 'password123' },
+        player: { email: 'player@clubhub.com', pass: 'password123' }
+    };
+
+    const credentials = demos[type];
+    if (!credentials) return;
+
+    // Prefill form (optional, for visual feedback)
+    const emailInput = document.getElementById('loginEmail');
+    const passInput = document.getElementById('loginPassword');
+    
+    if (emailInput && passInput) {
+        emailInput.value = credentials.email;
+        passInput.value = credentials.pass;
+    }
+
+    showNotification(`Logging in as Demo ${type.charAt(0).toUpperCase() + type.slice(1)}...`, 'info');
+
+    try {
+        const response = await apiService.login(credentials.email, credentials.pass);
+        
+        if (response.token) {
+            showNotification('Demo login successful! Redirecting...', 'success');
+            setTimeout(() => {
+                window.location.href = determineUserRedirect(response.user);
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('Demo login failed:', error);
+        showNotification('Demo login failed. Please ensure the seed script was run.', 'error');
+    }
+};
+
 // Enhanced notification system
 function showNotification(message, type = 'info', duration = 4000) {
+
     // Remove existing notifications
     const existingNotifications = document.querySelectorAll('.notification');
     existingNotifications.forEach(notification => notification.remove());

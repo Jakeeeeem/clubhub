@@ -216,6 +216,10 @@ async function startServer() {
     await connectDB();
     console.log('✅ Database connected successfully');
     
+    // Run pending migrations
+    const { runMigrations } = require('./services/migration-service');
+    await runMigrations();
+    
     // Start server
     const server = app.listen(PORT, () => {
       console.log(`🚀 ClubHub API server running on port ${PORT}`);

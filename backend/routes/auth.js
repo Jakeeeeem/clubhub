@@ -431,6 +431,33 @@ router.post(
 
       const { email, password } = req.body;
 
+      // ⚡ DEMO BYPASS: Allow dummy demo logins without DB check
+      const demoUsers = {
+          'admin@clubhub.com': { id: 'demo-admin-id', first_name: 'Demo', last_name: 'Admin', account_type: 'organization' },
+          'coach@clubhub.com': { id: 'demo-coach-id', first_name: 'Michael', last_name: 'Coach', account_type: 'adult' },
+          'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'adult' }
+      };
+
+      if (demoUsers[email] && password === 'password123') {
+          const user = demoUsers[email];
+          const token = jwt.sign(
+              { id: user.id, email: email, accountType: user.account_type }, 
+              process.env.JWT_SECRET || 'fallback-secret', 
+              { expiresIn: '1h' }
+          );
+          return res.json({
+              message: 'Demo login successful (Bypass Mode)',
+              token,
+              user: {
+                  id: user.id,
+                  email: email,
+                  firstName: user.first_name,
+                  lastName: user.last_name,
+                  userType: user.account_type,
+              },
+          });
+      }
+
       const userResult = await query(queries.findUserByEmail, [email]);
       if (userResult.rows.length === 0) {
         return res.status(401).json({ error: 'Invalid email or password' });
