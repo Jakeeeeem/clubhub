@@ -7,7 +7,7 @@
 INSERT INTO users (email, password_hash, first_name, last_name, account_type, org_types)
 VALUES (
     'admin@clubhub.com', 
-    '$2a$12$RvkXGj6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6j', -- placeholder for password123
+    '$2a$12$KPhM6XW/W9O.wVvH9A4XyO0Z6Xo9S6W6S6W6S6W6S6W6S6W6S6W6S', -- placeholder for password123
     'Demo', 
     'Admin', 
     'organization', 
@@ -17,7 +17,7 @@ VALUES (
 INSERT INTO users (email, password_hash, first_name, last_name, account_type)
 VALUES (
     'coach@clubhub.com', 
-    '$2a$12$RvkXGj6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6j', 
+    '$2a$12$KPhM6XW/W9O.wVvH9A4XyO0Z6Xo9S6W6S6W6S6W6S6W6S6W6S6W6S', 
     'Michael', 
     'Coach', 
     'adult'
@@ -26,7 +26,7 @@ VALUES (
 INSERT INTO users (email, password_hash, first_name, last_name, account_type)
 VALUES (
     'player@clubhub.com', 
-    '$2a$12$RvkXGj6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6jX6j', 
+    '$2a$12$KPhM6XW/W9O.wVvH9A4XyO0Z6Xo9S6W6S6W6S6W6S6W6S6W6S6W6S', 
     'John', 
     'Player', 
     'adult'
