@@ -30,15 +30,15 @@ class ApiService {
       return 'https://clubhub-dev.onrender.com/api';
     }
     
-    // Local development
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      console.log('🏠 Local development environment detected');
-      return 'http://localhost:3000/api';
+    // Local development (Localhost, IPs, or any other local name)
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.endsWith('.local')) {
+      console.log('🏠 Local/Internal development environment detected');
+      return `http://${hostname}:3000/api`;
     }
     
-    // Fallback for unknown environments
-    console.log('❓ Unknown environment, using production API');
-    return 'https://api.clubhubsports.net/api';
+    // Fallback: Default to localhost for testing unless explicitly on production
+    console.log('❓ Unknown environment, defaulting to local API (localhost:3000)');
+    return 'http://localhost:3000/api';
   }
 
   async makeRequest(endpoint, options = {}) {

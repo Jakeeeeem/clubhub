@@ -424,38 +424,44 @@ router.post(
   [body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'), body('password').exists().withMessage('Password is required')],
   async (req, res) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ error: 'Validation failed', details: errors.array() });
-      }
-
       const { email, password } = req.body;
+      const normalizedEmail = email ? email.toLowerCase().trim() : '';
+
+      console.log(`🔑 Login Attempt: ${normalizedEmail}`);
 
       // ⚡ DEMO BYPASS: Allow dummy demo logins without DB check
       const demoUsers = {
-          'admin@clubhub.com': { id: 'demo-admin-id', first_name: 'Demo', last_name: 'Admin', account_type: 'organization' },
-          'coach@clubhub.com': { id: 'demo-coach-id', first_name: 'Michael', last_name: 'Coach', account_type: 'adult' },
-          'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'adult' }
+          'admin@clubhub.com': { id: 'demo-admin-id', first_name: 'Demo', last_name: 'Admin', account_type: 'organization', role: 'admin' },
+          'coach@clubhub.com': { id: 'demo-coach-id', first_name: 'Michael', last_name: 'Coach', account_type: 'adult', role: 'coach' },
+          'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'adult', role: 'player' }
       };
 
-      if (demoUsers[email] && password === 'password123') {
-          const user = demoUsers[email];
+      if (demoUsers[normalizedEmail] && password === 'password123') {
+          console.log(`✅ Demo Bypass Triggered for: ${normalizedEmail}`);
+          const user = demoUsers[normalizedEmail];
           const token = jwt.sign(
-              { id: user.id, email: email, accountType: user.account_type }, 
+              { id: user.id, email: normalizedEmail, accountType: user.account_type, role: user.role }, 
               process.env.JWT_SECRET || 'fallback-secret', 
-              { expiresIn: '1h' }
+              { expiresIn: '24h' }
           );
           return res.json({
               message: 'Demo login successful (Bypass Mode)',
               token,
               user: {
                   id: user.id,
-                  email: email,
+                  email: normalizedEmail,
                   firstName: user.first_name,
                   lastName: user.last_name,
                   userType: user.account_type,
+                  role: user.role
               },
           });
+      }
+
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        console.log(`❌ Validation Failed for: ${normalizedEmail}`, errors.array());
+        return res.status(400).json({ error: 'Validation failed', details: errors.array() });
       }
 
       const userResult = await query(queries.findUserByEmail, [email]);

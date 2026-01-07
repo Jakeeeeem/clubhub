@@ -140,12 +140,19 @@ async function handleRegister(e) {
 
 // Determine where to redirect user based on their type and data
 function determineUserRedirect(user) {
-    // Check if user has any clubs (admin/organization)
-    if (user.userType === 'organization' || user.userType === 'admin') {
+    const userEmail = (user.email || '').toLowerCase();
+    
+    // Check for demo coach or staff role
+    if (userEmail === 'coach@clubhub.com' || user.role === 'coach' || user.role === 'staff') {
+        return 'coach-dashboard.html';
+    }
+
+    // Check if user is admin/organization
+    if (user.userType === 'organization' || user.userType === 'admin' || user.account_type === 'organization') {
         return 'admin-dashboard.html';
     }
     
-    // Default to player dashboard for players and others
+    // Default to player dashboard
     return 'player-dashboard.html';
 }
 
@@ -240,10 +247,16 @@ function updateNavigation(isLoggedIn, user = null) {
                     <span>Hello, ${user.firstName || user.first_name || 'User'}!</span>
                 </div>
                 <div class="nav-buttons">
-                    ${user.userType === 'organization' || user.userType === 'admin' ? 
-                        '<button class="btn btn-primary" onclick="window.location.href=\'admin-dashboard.html\'">Dashboard</button>' :
-                        '<button class="btn btn-primary" onclick="window.location.href=\'player-dashboard.html\'">Dashboard</button>'
-                    }
+                    ${(() => {
+                        const email = (user.email || '').toLowerCase();
+                        if (email === 'coach@clubhub.com' || user.role === 'coach') {
+                            return '<button class="btn btn-primary" onclick="window.location.href=\'coach-dashboard.html\'">Dashboard</button>';
+                        }
+                        if (user.userType === 'organization' || user.userType === 'admin' || user.account_type === 'organization') {
+                            return '<button class="btn btn-primary" onclick="window.location.href=\'admin-dashboard.html\'">Dashboard</button>';
+                        }
+                        return '<button class="btn btn-primary" onclick="window.location.href=\'player-dashboard.html\'">Dashboard</button>';
+                    })()}
                     <button class="btn btn-secondary" onclick="handleLogout()">Logout</button>
                 </div>
             `;
@@ -539,7 +552,11 @@ window.quickLogin = async function(type) {
         }
     } catch (error) {
         console.error('Demo login failed:', error);
-        showNotification('Demo login failed. Please ensure the seed script was run.', 'error');
+        if (error.message.includes('fetch') || error.message.includes('connect')) {
+            showNotification('Could not connect to the backend server. Please make sure it is running on port 3000.', 'error');
+        } else {
+            showNotification('Demo login failed: ' + error.message, 'error');
+        }
     }
 };
 
