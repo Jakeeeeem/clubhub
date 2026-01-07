@@ -88,12 +88,13 @@ class ApiService {
       if (!response.ok) {
         console.error(`❌ API Error ${response.status}:`, data);
         
-        if (response.status === 401) {
+        // Don't trigger global auth error for login/register attempts
+        if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
           this.handleAuthError();
           throw new Error('Authentication required');
         }
         
-        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(data.message || data.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       this.retryCount[requestId] = 0;
@@ -490,10 +491,10 @@ async deletePaymentPlan(planId) {
 
   // =========================== AUTHENTICATION METHODS ===========================
 
-  async login(email, password) {
+  async login(email, password, demoBypass = false) {
     const response = await this.makeRequest('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, demoBypass })
     });
 
     if (response.token) {

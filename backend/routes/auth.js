@@ -424,10 +424,10 @@ router.post(
   [body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'), body('password').exists().withMessage('Password is required')],
   async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, demoBypass } = req.body;
       const normalizedEmail = email ? email.toLowerCase().trim() : '';
 
-      console.log(`🔑 Login Attempt: ${normalizedEmail}`);
+      console.log(`🔑 Login Attempt: ${normalizedEmail} (Bypass: ${demoBypass})`);
 
       // ⚡ DEMO BYPASS: Allow dummy demo logins without DB check
       const demoUsers = {
@@ -436,7 +436,7 @@ router.post(
           'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'adult', role: 'player' }
       };
 
-      if (demoUsers[normalizedEmail] && password === 'password123') {
+      if ((demoUsers[normalizedEmail] && password === 'password123') || (demoBypass && demoUsers[normalizedEmail])) {
           console.log(`✅ Demo Bypass Triggered for: ${normalizedEmail}`);
           const user = demoUsers[normalizedEmail];
           const token = jwt.sign(

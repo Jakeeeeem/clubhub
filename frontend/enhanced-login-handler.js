@@ -542,7 +542,8 @@ window.quickLogin = async function(type) {
     showNotification(`Logging in as Demo ${type.charAt(0).toUpperCase() + type.slice(1)}...`, 'info');
 
     try {
-        const response = await apiService.login(credentials.email, credentials.pass);
+        // Send a bypass flag for demo accounts to ensure they work even if DB is down
+        const response = await apiService.login(credentials.email, credentials.pass, true);
         
         if (response.token) {
             showNotification('Demo login successful! Redirecting...', 'success');
