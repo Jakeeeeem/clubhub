@@ -431,9 +431,9 @@ router.post(
 
       // ⚡ DEMO BYPASS: Allow dummy demo logins without DB check
       const demoUsers = {
-          'admin@clubhub.com': { id: 'demo-admin-id', first_name: 'Demo', last_name: 'Admin', account_type: 'organization', role: 'admin' },
-          'coach@clubhub.com': { id: 'demo-coach-id', first_name: 'Michael', last_name: 'Coach', account_type: 'adult', role: 'coach' },
-          'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'adult', role: 'player' }
+          'admin@clubhub.com': { id: 'demo-admin-id', first_name: 'Demo', last_name: 'Admin', account_type: 'admin', role: 'admin' },
+          'coach@clubhub.com': { id: 'demo-coach-id', first_name: 'Michael', last_name: 'Coach', account_type: 'coach', role: 'coach' },
+          'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'player', role: 'player' }
       };
 
       if ((demoUsers[normalizedEmail] && password === 'password123') || (demoBypass && demoUsers[normalizedEmail])) {

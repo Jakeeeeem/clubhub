@@ -513,10 +513,10 @@
 
       try {
         const user = JSON.parse(currentUser);
-        if (user.account_type !== 'player' && user.account_type !== 'parent') {
-          console.warn('🚫 User is not a player/parent, redirecting to appropriate dashboard...');
+        if (user.account_type !== 'player' && user.account_type !== 'parent' && user.account_type !== 'adult') {
+          console.warn('🚫 User is not a player/parent/adult, redirecting to appropriate dashboard...');
           // Redirect to correct dashboard based on account type
-          if (user.account_type === 'admin') {
+          if (user.account_type === 'admin' || user.account_type === 'organization') {
             window.location.href = 'admin-dashboard.html';
           } else if (user.account_type === 'coach') {
             window.location.href = 'coach-dashboard.html';
@@ -631,47 +631,42 @@
             <option value="Goalkeeper">Goalkeeper</option>
             <option value="Defender">Defender</option>
             <option value="Midfielder">Midfielder</option>
-            <<<<<<< SEARCH <option value="Forward">Forward</option>
+            <option value="Forward">Forward</option>
           </select>
         </div>
-        =======
-        <option value="Forward">Forward</option>
-        </select>
+        <div class="form-group">
+          <label>Sport</label>
+          <select name="sport" required>
+            <option value="Football">Football</option>
+            <option value="Basketball">Basketball</option>
+            <option value="Tennis">Tennis</option>
+            <option value="Rugby">Rugby</option>
+            <option value="Cricket">Cricket</option>
+            <option value="Athletics">Athletics</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <select name="gender">
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Location (City/Area)</label>
+          <input type="text" name="location" placeholder="e.g. London">
+        </div>
+        <div class="form-group">
+          <label>Bio / Summary</label>
+          <textarea name="bio" placeholder="Brief player summary..." rows="3"
+            style="width: 100%; border-radius: 8px; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;"></textarea>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">Create Profile</button>
+      </form>
     </div>
-    <div class="form-group">
-      <label>Sport</label>
-      <select name="sport" required>
-        <option value="Football">Football</option>
-        <option value="Basketball">Basketball</option>
-        <option value="Tennis">Tennis</option>
-        <option value="Rugby">Rugby</option>
-        <option value="Cricket">Cricket</option>
-        <option value="Athletics">Athletics</option>
-        <option value="Other">Other</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Gender</label>
-      <select name="gender">
-        <option value="">Select Gender</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Other">Other</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Location (City/Area)</label>
-      <input type="text" name="location" placeholder="e.g. London">
-    </div>
-    <div class="form-group">
-      <label>Bio / Summary</label>
-      <textarea name="bio" placeholder="Brief player summary..." rows="3"
-        style="width: 100%; border-radius: 8px; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;"></textarea>
-    </div>
-    >>>>>>> REPLACE
-    <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">Create Profile</button>
-    </form>
-  </div>
   </div>
 
   <!-- Child Detail View (Hidden by default) -->

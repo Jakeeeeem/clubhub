@@ -59,9 +59,13 @@
 
     <script>
         async function initCoachDashboard() {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) window.location.href = 'index.html';
-            document.getElementById('coachName').textContent = `${user.first_name} ${user.last_name}`;
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) {
+                console.warn('No user found, redirecting...');
+                window.location.href = 'index.html';
+                return;
+            }
+            document.getElementById('coachName').textContent = `${user.firstName || user.first_name || 'Coach'}`;
 
             try {
                 // Fetch groups assigned to this coach (Mock logic for now, assumes we fetch all then filter or specific endpoint)

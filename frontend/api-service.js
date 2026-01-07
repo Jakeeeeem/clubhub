@@ -497,9 +497,9 @@ async deletePaymentPlan(planId) {
     // 🚀 PURE FRONTEND BYPASS: Ensures demos work even if the backend is down or not updated
     const normalizedEmail = (email || '').toLowerCase().trim();
     const demoUsers = {
-      'admin@clubhub.com': { id: 'demo-admin-id', first_name: 'Demo', last_name: 'Admin', account_type: 'organization', userType: 'organization', role: 'admin' },
-      'coach@clubhub.com': { id: 'demo-coach-id', first_name: 'Michael', last_name: 'Coach', account_type: 'adult', userType: 'adult', role: 'coach' },
-      'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'adult', userType: 'adult', role: 'player' }
+      'admin@clubhub.com': { id: 'demo-admin-id', first_name: 'Demo', last_name: 'Admin', account_type: 'admin', userType: 'admin', role: 'admin' },
+      'coach@clubhub.com': { id: 'demo-coach-id', first_name: 'Michael', last_name: 'Coach', account_type: 'coach', userType: 'coach', role: 'coach' },
+      'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'player', userType: 'player', role: 'player' }
     };
 
     if (demoBypass && demoUsers[normalizedEmail]) {
@@ -513,6 +513,7 @@ async deletePaymentPlan(planId) {
           email: normalizedEmail,
           firstName: mockUser.first_name,
           lastName: mockUser.last_name,
+          account_type: mockUser.account_type,
           userType: mockUser.userType,
           role: mockUser.role
         }

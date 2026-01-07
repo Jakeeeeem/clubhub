@@ -1252,10 +1252,10 @@
 
             try {
                 const user = JSON.parse(currentUser);
-                if (user.account_type !== 'admin') {
+                if (user.account_type !== 'admin' && user.account_type !== 'organization') {
                     console.warn('🚫 User is not an admin, redirecting to appropriate dashboard...');
                     // Redirect to correct dashboard based on account type
-                    if (user.account_type === 'player' || user.account_type === 'parent') {
+                    if (user.account_type === 'player' || user.account_type === 'parent' || user.account_type === 'adult') {
                         window.location.href = 'player-dashboard.html';
                     } else if (user.account_type === 'coach') {
                         window.location.href = 'coach-dashboard.html';
