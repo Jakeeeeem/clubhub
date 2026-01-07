@@ -1,5 +1,17 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+const fs = require('fs');
+
+// Try loading various .env files
+const envFiles = ['.env', 'clubhub-dev.env', '.env.local'];
+for (const file of envFiles) {
+    const envPath = path.join(__dirname, file);
+    if (fs.existsSync(envPath)) {
+        require('dotenv').config({ path: envPath });
+        console.log(`📝 Loaded environment from ${file}`);
+        break;
+    }
+}
+
 const bcrypt = require('bcryptjs');
 const { pool, withTransaction } = require('./config/database');
 

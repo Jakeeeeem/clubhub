@@ -530,6 +530,9 @@ window.quickLogin = async function(type) {
     const credentials = demos[type];
     if (!credentials) return;
 
+    // Clear any existing session to ensure a clean demo state
+    localStorage.clear();
+
     // Prefill form (optional, for visual feedback)
     const emailInput = document.getElementById('loginEmail');
     const passInput = document.getElementById('loginPassword');

@@ -13,31 +13,33 @@ class ApiService {
   }
 
   getBaseURL() {
+    const urlParams = new URLSearchParams(window.location.search);
     const hostname = window.location.hostname;
-    const port = window.location.port;
     
-    console.log('🔍 Detecting environment:', { hostname, port });
+    // Explicit override via URL: ?api=local
+    if (urlParams.get('api') === 'local') {
+      console.log('🔌 Manual API Override: Localhost');
+      return 'http://localhost:3000/api';
+    }
+    
+    console.log('🔍 Detecting environment:', { hostname });
     
     // Production environment
     if (hostname === 'clubhubsports.net' || hostname === 'www.clubhubsports.net') {
-      console.log('🌍 Production environment detected');
       return 'https://api.clubhubsports.net/api';
     }
     
-    // Development environment (Render)
+    // If we are on Render Dev but want to test local bypass, we prioritize localhost if it's available
+    // Otherwise, use the standard dev API
     if (hostname === 'clubhubsports-dev.onrender.com' || hostname === 'clubhub-dev.onrender.com') {
-      console.log('🚧 Development environment (Render) detected');
+      // Check if we are running locally and just hitting the dev URL
+      if (window.location.protocol === 'http:' && (hostname === 'localhost' || hostname === '127.0.0.1')) {
+         return 'http://localhost:3000/api';
+      }
       return 'https://clubhub-dev.onrender.com/api';
     }
     
-    // Local development (Localhost, IPs, or any other local name)
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.endsWith('.local')) {
-      console.log('🏠 Local/Internal development environment detected');
-      return `http://${hostname}:3000/api`;
-    }
-    
-    // Fallback: Default to localhost for testing unless explicitly on production
-    console.log('❓ Unknown environment, defaulting to local API (localhost:3000)');
+    // Local development fallback
     return 'http://localhost:3000/api';
   }
 
@@ -492,17 +494,41 @@ async deletePaymentPlan(planId) {
   // =========================== AUTHENTICATION METHODS ===========================
 
   async login(email, password, demoBypass = false) {
+    // 🚀 PURE FRONTEND BYPASS: Ensures demos work even if the backend is down or not updated
+    const normalizedEmail = (email || '').toLowerCase().trim();
+    const demoUsers = {
+      'admin@clubhub.com': { id: 'demo-admin-id', first_name: 'Demo', last_name: 'Admin', account_type: 'organization', userType: 'organization', role: 'admin' },
+      'coach@clubhub.com': { id: 'demo-coach-id', first_name: 'Michael', last_name: 'Coach', account_type: 'adult', userType: 'adult', role: 'coach' },
+      'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'adult', userType: 'adult', role: 'player' }
+    };
+
+    if (demoBypass && demoUsers[normalizedEmail]) {
+      console.log('✨ Pure Frontend Bypass Triggered for:', normalizedEmail);
+      const mockUser = demoUsers[normalizedEmail];
+      const mockResponse = {
+        message: 'Demo login successful (Frontend Bypass)',
+        token: 'demo-token-' + Date.now(),
+        user: {
+          id: mockUser.id,
+          email: normalizedEmail,
+          firstName: mockUser.first_name,
+          lastName: mockUser.last_name,
+          userType: mockUser.userType,
+          role: mockUser.role
+        }
+      };
+
+      // Store locally so the rest of the app thinks we are logged in
+      this.setToken(mockResponse.token);
+      localStorage.setItem('currentUser', JSON.stringify(mockResponse.user));
+      
+      return mockResponse;
+    }
+
     const response = await this.makeRequest('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password, demoBypass })
     });
-
-    if (response.token) {
-      this.setToken(response.token);
-      localStorage.setItem('currentUser', JSON.stringify(response.user));
-    }
-
-    return response;
   }
 
  async register(userData) {
