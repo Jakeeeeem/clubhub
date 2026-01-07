@@ -4356,7 +4356,7 @@
         </div>
     </div>
 
-    <!--Add Team Player Modal-- >
+    <!-- Add Team Player Modal -->
     <div id="addTeamPlayerModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -4365,211 +4365,211 @@
             </div>
             <div class="modal-body">
                 <!-- Option 1: Existing Player -->
-    <div class="card" style="margin-bottom: 2rem;">
-        <h3>Find Existing Player</h3>
-        <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">Search for a player in your club
-            who isn't in this team yet.</p>
-        <div style="display: flex; gap: 1rem;">
-            <input type="text" id="teamPlayerSearch" placeholder="Search by name or email..." style="flex:1;">
-            <button class="btn btn-primary" onclick="searchTeamPlayers()">Search</button>
-        </div>
-        <div id="teamPlayerSearchResults" style="margin-top: 1rem; max-height: 200px; overflow-y: auto;">
-            <!-- Results -->
-        </div>
-    </div>
-
-    <!-- Option 2: Quick Invite -->
-    <div class="card">
-        <h3>Or Quick Add New Player</h3>
-        <form id="addTeamPlayerForm">
-            <div class="form-group">
-                <label for="newTeamPlayerEmail">Email Address</label>
-                <input type="email" id="newTeamPlayerEmail" placeholder="Player's email" required>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="form-group">
-                    <label for="newTeamPlayerPosition">Position</label>
-                    <input type="text" id="newTeamPlayerPosition" placeholder="e.g. Striker">
-                </div>
-                <div class="form-group">
-                    <label for="newTeamPlayerNumber">Jersey Number</label>
-                    <input type="number" id="newTeamPlayerNumber" min="0" max="99">
-                </div>
-            </div>
-            <button type="submit" class="btn btn-secondary">Add to Roster</button>
-        </form>
-    </div>
-    </div>
-    </div>
-    </div>
-    <!--Create Payment Plan Modal-- >
-    <div id="createPaymentPlanModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>➕ Create Payment Plan</h2>
-                <button class="close" onclick="closeModal('createPaymentPlanModal')">&times;</button>
-            </div>
-            <form id="createPaymentPlanForm">
-                <div class="form-group">
-                    <label for="planName">Plan Name *</label>
-                    <input type="text" id="planName" required placeholder="e.g. Annual Membership 2025">
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label for="planAmount">Amount (£) *</label>
-                        <input type="number" id="planAmount" step="0.01" min="0" required placeholder="0.00">
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3>Find Existing Player</h3>
+                    <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">Search for a player in your club
+                        who isn't in this team yet.</p>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="text" id="teamPlayerSearch" placeholder="Search by name or email..."
+                            style="flex:1;">
+                        <button class="btn btn-primary" onclick="searchTeamPlayers()">Search</button>
                     </div>
-                    <div class="form-group">
-                        <label for="planInterval">Billing Frequency *</label>
-                        <select id="planInterval" required>
-                            <option value="month">Monthly</option>
-                            <option value="year">Yearly</option>
-                            <option value="week">Weekly</option>
-                        </select>
+                    <div id="teamPlayerSearchResults" style="margin-top: 1rem; max-height: 200px; overflow-y: auto;">
+                        <!-- Results -->
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="planDescription">Description</label>
-                    <textarea id="planDescription" rows="3" placeholder="What does this plan cover?"></textarea>
-                </div>
-                <!-- Future: Plan benefits / duration -->
-    <button type="submit" class="btn btn-primary">💾 Create Plan</button>
-    </form>
-    </div>
-    </div>
-    <!--Add Product Modal with Custom Fields-- >
-    <div id="addProductModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>➕ Add Shop Product</h2>
-                <button class="close" onclick="closeModal('addProductModal')">&times;</button>
-            </div>
-            <form id="addProductForm">
-                <div class="form-group">
-                    <label for="productName">Product Name</label>
-                    <input type="text" id="productName" required placeholder="e.g. Club Training Kit">
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label for="productPrice">Price (£)</label>
-                        <input type="number" id="productPrice" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="productStock">Stock Quantity</label>
-                        <input type="number" id="productStock" value="0">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="productCategory">Category</label>
-                    <select id="productCategory">
-                        <option value="apparel">Apparel</option>
-                        <option value="equipment">Equipment</option>
-                        <option value="accessory">Accessory</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="productDescription">Description</label>
-                    <textarea id="productDescription" rows="2"></textarea>
-                </div>
 
-                <!-- Custom Fields Builder -->
-    <div class="form-group" style="border: 1px solid #333; padding: 1rem; border-radius: 8px;">
-        <label style="margin-bottom: 0.5rem; display: block;">Customization Fields (e.g. Size,
-            Initials)</label>
-        <div id="productCustomFieldsList">
-            <!-- Dynamic fields will be added here -->
-        </div>
-        <button type="button" class="btn btn-secondary btn-small" onclick="addCustomFieldInput()"
-            style="margin-top: 0.5rem;">+ Add Field</button>
-        <p style="font-size: 0.8rem; color: #aaa; margin-top: 0.5rem;">These are questions players must
-            answer when buying.</p>
-    </div>
-
-    <div class="form-group">
-        <label>Product Image</label>
-        <input type="file" id="productImageFile" accept="image/*">
-    </div>
-
-    <button type="submit" class="btn btn-primary">💾 Save Product</button>
-    </form>
-    </div>
-    </div>
-
-    <!--Create Event Modal with Dynamic Type Logic-- >
-            <div id="addEventModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>📅 Create New Event</h2>
-                        <button class="close" onclick="closeModal('addEventModal')">&times;</button>
-                    </div>
-                    <form id="createEventForm">
+                <!-- Option 2: Quick Invite -->
+                <div class="card">
+                    <h3>Or Quick Add New Player</h3>
+                    <form id="addTeamPlayerForm">
                         <div class="form-group">
-                            <label for="eventTitle">Event Title</label>
-                            <input type="text" id="eventTitle" required placeholder="e.g. Weekly Training">
+                            <label for="newTeamPlayerEmail">Email Address</label>
+                            <input type="email" id="newTeamPlayerEmail" placeholder="Player's email" required>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="newTeamPlayerPosition">Position</label>
+                                <input type="text" id="newTeamPlayerPosition" placeholder="e.g. Striker">
+                            </div>
+                            <div class="form-group">
+                                <label for="newTeamPlayerNumber">Jersey Number</label>
+                                <input type="number" id="newTeamPlayerNumber" min="0" max="99">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-secondary">Add to Roster</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Create Payment Plan Modal -->
+        <div id="createPaymentPlanModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>➕ Create Payment Plan</h2>
+                    <button class="close" onclick="closeModal('createPaymentPlanModal')">&times;</button>
+                </div>
+                <form id="createPaymentPlanForm">
+                    <div class="form-group">
+                        <label for="planName">Plan Name *</label>
+                        <input type="text" id="planName" required placeholder="e.g. Annual Membership 2025">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="planAmount">Amount (£) *</label>
+                            <input type="number" id="planAmount" step="0.01" min="0" required placeholder="0.00">
                         </div>
                         <div class="form-group">
-                            <label for="eventType">Event Type</label>
-                            <select id="eventType" required onchange="handleEventTypeChange()">
-                                <option value="training">Training Session</option>
-                                <option value="match">Match / Game</option>
-                                <option value="tournament">Tournament</option>
-                                <option value="camp">Camp</option>
-                                <option value="social">Social Event</option>
-                                <option value="talent-id">Talent ID / Trial</option>
+                            <label for="planInterval">Billing Frequency *</label>
+                            <select id="planInterval" required>
+                                <option value="month">Monthly</option>
+                                <option value="year">Yearly</option>
+                                <option value="week">Weekly</option>
                             </select>
                         </div>
-
-                        <!-- Dynamic Field: Opponent (Match only) -->
-    <div class="form-group" id="eventOpponentGroup" style="display: none;">
-        <label for="eventOpponent">Opponent Name</label>
-        <input type="text" id="eventOpponent" placeholder="e.g. Manchester City U15">
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-        <div class="form-group">
-            <label for="eventDate">Date</label>
-            <input type="date" id="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="planDescription">Description</label>
+                        <textarea id="planDescription" rows="3" placeholder="What does this plan cover?"></textarea>
+                    </div>
+                    <!-- Future: Plan benefits / duration -->
+                    <button type="submit" class="btn btn-primary">💾 Create Plan</button>
+                </form>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="eventTime">Time</label>
-            <input type="time" id="eventTime" required>
+        <!-- Add Product Modal with Custom Fields -->
+        <div id="addProductModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>➕ Add Shop Product</h2>
+                    <button class="close" onclick="closeModal('addProductModal')">&times;</button>
+                </div>
+                <form id="addProductForm">
+                    <div class="form-group">
+                        <label for="productName">Product Name</label>
+                        <input type="text" id="productName" required placeholder="e.g. Club Training Kit">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="productPrice">Price (£)</label>
+                            <input type="number" id="productPrice" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productStock">Stock Quantity</label>
+                            <input type="number" id="productStock" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="productCategory">Category</label>
+                        <select id="productCategory">
+                            <option value="apparel">Apparel</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="accessory">Accessory</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="productDescription">Description</label>
+                        <textarea id="productDescription" rows="2"></textarea>
+                    </div>
+
+                    <!-- Custom Fields Builder -->
+                    <div class="form-group" style="border: 1px solid #333; padding: 1rem; border-radius: 8px;">
+                        <label style="margin-bottom: 0.5rem; display: block;">Customization Fields (e.g. Size,
+                            Initials)</label>
+                        <div id="productCustomFieldsList">
+                            <!-- Dynamic fields will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="addCustomFieldInput()"
+                            style="margin-top: 0.5rem;">+ Add Field</button>
+                        <p style="font-size: 0.8rem; color: #aaa; margin-top: 0.5rem;">These are questions players must
+                            answer when buying.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Product Image</label>
+                        <input type="file" id="productImageFile" accept="image/*">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">💾 Save Product</button>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <div class="form-group">
-        <label for="eventLocation">Location</label>
-        <input type="text" id="eventLocation" required placeholder="e.g. Training Ground Pitch 1">
-    </div>
+        <!-- Create Event Modal with Dynamic Type Logic -->
+        <div id="addEventModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📅 Create New Event</h2>
+                    <button class="close" onclick="closeModal('addEventModal')">&times;</button>
+                </div>
+                <form id="createEventForm">
+                    <div class="form-group">
+                        <label for="eventTitle">Event Title</label>
+                        <input type="text" id="eventTitle" required placeholder="e.g. Weekly Training">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventType">Event Type</label>
+                        <select id="eventType" required onchange="handleEventTypeChange()">
+                            <option value="training">Training Session</option>
+                            <option value="match">Match / Game</option>
+                            <option value="tournament">Tournament</option>
+                            <option value="camp">Camp</option>
+                            <option value="social">Social Event</option>
+                            <option value="talent-id">Talent ID / Trial</option>
+                        </select>
+                    </div>
 
-    <!-- Dynamic Field: Team Selection -->
-    <div class="form-group">
-        <label for="eventTeam">Assign to Team</label>
-        <select id="eventTeam">
-            <option value="">All Club (No Specific Team)</option>
-            <!-- Populated via JS -->
-        </select>
-    </div>
+                    <!-- Dynamic Field: Opponent (Match only) -->
+                    <div class="form-group" id="eventOpponentGroup" style="display: none;">
+                        <label for="eventOpponent">Opponent Name</label>
+                        <input type="text" id="eventOpponent" placeholder="e.g. Manchester City U15">
+                    </div>
 
-    <div class="form-group">
-        <label for="eventDescription">Description / Notes</label>
-        <textarea id="eventDescription" rows="3"></textarea>
-    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="eventDate">Date</label>
+                            <input type="date" id="eventDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="eventTime">Time</label>
+                            <input type="time" id="eventTime" required>
+                        </div>
+                    </div>
 
-    <button type="submit" class="btn btn-primary">📅 Create Event</button>
-    </form>
-    </div>
-    </div>
-    <script>
-        // Tournament Logic
-        async function loadTournamentDashboard(eventId) {
-            if (!eventId) return;
-            try {
-                const data = await apiService.makeRequest(`/tournaments/${eventId}/dashboard`);
-                const teamsList = document.getElementById('tournamentTeamsList');
-                const matchesList = document.getElementById('tournamentMatchesList');
+                    <div class="form-group">
+                        <label for="eventLocation">Location</label>
+                        <input type="text" id="eventLocation" required placeholder="e.g. Training Ground Pitch 1">
+                    </div>
 
-                // Render Teams
-                teamsList.innerHTML = data.teams.map(t => `
+                    <!-- Dynamic Field: Team Selection -->
+                    <div class="form-group">
+                        <label for="eventTeam">Assign to Team</label>
+                        <select id="eventTeam">
+                            <option value="">All Club (No Specific Team)</option>
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventDescription">Description / Notes</label>
+                        <textarea id="eventDescription" rows="3"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">📅 Create Event</button>
+                </form>
+            </div>
+        </div>
+        <script>
+            // Tournament Logic
+            async function loadTournamentDashboard(eventId) {
+                if (!eventId) return;
+                try {
+                    const data = await apiService.makeRequest(`/tournaments/${eventId}/dashboard`);
+                    const teamsList = document.getElementById('tournamentTeamsList');
+                    const matchesList = document.getElementById('tournamentMatchesList');
+
+                    // Render Teams
+                    teamsList.innerHTML = data.teams.map(t => `
                 <div class="item-list-item">
                     <div class="item-info">
                         <h4>${t.team_name}</h4>
@@ -4582,11 +4582,11 @@
                 </div>
             `).join('');
 
-                // Render Matches
-                matchesList.innerHTML = data.matches.map(m => {
-                    const homeName = data.teams.find(t => t.id === m.home_team_id)?.team_name || 'TBD';
-                    const awayName = data.teams.find(t => t.id === m.away_team_id)?.team_name || 'TBD';
-                    return `
+                    // Render Matches
+                    matchesList.innerHTML = data.matches.map(m => {
+                        const homeName = data.teams.find(t => t.id === m.home_team_id)?.team_name || 'TBD';
+                        const awayName = data.teams.find(t => t.id === m.away_team_id)?.team_name || 'TBD';
+                        return `
                 <div class="item-list-item" style="border-left: 4px solid ${m.status === 'completed' ? '#4caf50' : '#ffa000'};">
                     <div class="item-info">
                         <h4>${homeName} vs ${awayName}</h4>
@@ -4601,42 +4601,42 @@
                 </div>
             `}).join('');
 
-            } catch (err) {
-                console.error(err);
+                } catch (err) {
+                    console.error(err);
+                }
             }
-        }
 
-        async function toggleTeamCheckIn(teamId, currentStatus) {
-            const newStatus = currentStatus === 'checked_in' ? 'approved' : 'checked_in';
-            await apiService.makeRequest(`/tournaments/teams/${teamId}/status`, {
-                method: 'POST',
-                body: JSON.stringify({ status: newStatus })
-            });
-            loadTournamentDashboard(document.getElementById('tournamentSelect').value);
-        }
+            async function toggleTeamCheckIn(teamId, currentStatus) {
+                const newStatus = currentStatus === 'checked_in' ? 'approved' : 'checked_in';
+                await apiService.makeRequest(`/tournaments/teams/${teamId}/status`, {
+                    method: 'POST',
+                    body: JSON.stringify({ status: newStatus })
+                });
+                loadTournamentDashboard(document.getElementById('tournamentSelect').value);
+            }
 
-        async function generateFixtures(type) {
-            const eventId = document.getElementById('tournamentSelect').value;
-            if (!eventId) return;
-            if (!confirm(`Generate ${type} fixtures? This cannot be undone.`)) return;
+            async function generateFixtures(type) {
+                const eventId = document.getElementById('tournamentSelect').value;
+                if (!eventId) return;
+                if (!confirm(`Generate ${type} fixtures? This cannot be undone.`)) return;
 
-            await apiService.makeRequest(`/tournaments/${eventId}/generate-fixtures`, {
-                method: 'POST',
-                body: JSON.stringify({ type })
-            });
-            loadTournamentDashboard(eventId);
-        }
+                await apiService.makeRequest(`/tournaments/${eventId}/generate-fixtures`, {
+                    method: 'POST',
+                    body: JSON.stringify({ type })
+                });
+                loadTournamentDashboard(eventId);
+            }
 
-        async function updateMatchResult(matchId) {
-            const home = document.getElementById(`score_home_${matchId}`).value;
-            const away = document.getElementById(`score_away_${matchId}`).value;
-            await apiService.makeRequest(`/tournaments/matches/${matchId}/result`, {
-                method: 'POST',
-                body: JSON.stringify({ homeScore: home, awayScore: away })
-            });
-            loadTournamentDashboard(document.getElementById('tournamentSelect').value);
-        }
-    </script>
+            async function updateMatchResult(matchId) {
+                const home = document.getElementById(`score_home_${matchId}`).value;
+                const away = document.getElementById(`score_away_${matchId}`).value;
+                await apiService.makeRequest(`/tournaments/matches/${matchId}/result`, {
+                    method: 'POST',
+                    body: JSON.stringify({ homeScore: home, awayScore: away })
+                });
+                loadTournamentDashboard(document.getElementById('tournamentSelect').value);
+            }
+        </script>
 </body>
 
 </html>

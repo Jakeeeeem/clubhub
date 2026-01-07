@@ -682,29 +682,6 @@ section#benefits {
     width: fit-content;
 }
 
-.dashboard-nav button {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: var(--transition);
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.dashboard-nav button.active {
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 4px 15px var(--primary-glow);
-}
-
-.dashboard-nav button:not(.active):hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
-}
-
 /* Card Styles */
 .card {
     background: var(--bg-card);

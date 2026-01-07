@@ -123,6 +123,10 @@ class ApiService {
   // =========================== ITEM SHOP METHODS ===========================
 
   async getProducts(clubId = null) {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    if (isDemo && !this.baseURL.includes('localhost')) {
+      return this.getAdminDashboardFallback().products;
+    }
     const endpoint = clubId ? `/products?clubId=${clubId}` : '/products';
     return await this.makeRequest(endpoint);
   }
@@ -646,6 +650,10 @@ async deletePaymentPlan(planId) {
   // =========================== PLAYER METHODS ===========================
 
   async getPlayers(clubId = null) {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    if (isDemo && !this.baseURL.includes('localhost')) {
+      return this.getAdminDashboardFallback().players;
+    }
     try {
       const endpoint = clubId
   ? `/players?clubId=${clubId}&page=1&limit=1000`
@@ -684,6 +692,10 @@ async deletePaymentPlan(planId) {
   // =========================== EVENT METHODS ===========================
 
   async getEvents(clubId = null) {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    if (isDemo && !this.baseURL.includes('localhost')) {
+      return this.getAdminDashboardFallback().events;
+    }
     try {
       const endpoint = clubId ? `/events?clubId=${clubId}&upcoming=true` : '/events?upcoming=true';
       const events = await this.makeRequest(endpoint);
@@ -756,6 +768,10 @@ async deletePaymentPlan(planId) {
   // =========================== TEAM METHODS ===========================
 
   async getTeams(clubId = null) {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    if (isDemo && !this.baseURL.includes('localhost')) {
+      return this.getAdminDashboardFallback().teams;
+    }
     try {
       const endpoint = clubId ? `/teams?clubId=${clubId}` : '/teams';
       return await this.makeRequest(endpoint);
@@ -852,6 +868,10 @@ async createTeamEvent(teamId, eventData) {
   // =========================== STAFF METHODS ===========================
 
   async getStaff(clubId = null) {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    if (isDemo && !this.baseURL.includes('localhost')) {
+      return this.getAdminDashboardFallback().staff;
+    }
     try {
       const endpoint = clubId ? `/staff?clubId=${clubId}` : '/staff';
       return await this.makeRequest(endpoint);
@@ -884,6 +904,10 @@ async createTeamEvent(teamId, eventData) {
   // =========================== PAYMENT METHODS ===========================
 
   async getPayments(filters = {}) {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    if (isDemo && !this.baseURL.includes('localhost')) {
+      return this.getAdminDashboardFallback().payments;
+    }
     try {
       const queryParams = new URLSearchParams(filters).toString();
       const endpoint = queryParams ? `/payments?${queryParams}` : '/payments';
@@ -1147,7 +1171,7 @@ async getPlayerPayments(playerId, status = null) {
     console.log(isDemo ? '✨ Using Rich Demo Admin Dashboard Data' : '📚 Using admin dashboard fallback data');
     
     if (!isDemo) return {
-      clubs: [], players: [], staff: [], events: [], teams: [], payments: [],
+      clubs: [], players: [], staff: [], events: [], teams: [], payments: [], products: [], campaigns: [], listings: [],
       statistics: { total_clubs: 0, total_players: 0, total_staff: 0, total_events: 0, total_teams: 0, monthly_revenue: 0 }
     };
 
@@ -1173,6 +1197,16 @@ async getPlayerPayments(playerId, status = null) {
       payments: [
         { id: 'pay1', amount: 50, status: 'paid', description: 'Monthly Subscription', date: new Date().toISOString() },
         { id: 'pay2', amount: 120, status: 'pending', description: 'Tournament Fee', date: new Date().toISOString() }
+      ],
+      products: [
+        { id: 'prod1', name: 'Official Club Jersey', price: 45.00, stock_quantity: 50, description: 'High-quality replica home jersey.' },
+        { id: 'prod2', name: 'Training Tracksuit', price: 65.00, stock_quantity: 20, description: 'Comfortable tracksuit for training.' }
+      ],
+      campaigns: [
+        { id: 'camp1', name: 'Summer Camp Early Bird', subject: 'Register now and save!', target_group: 'all', status: 'sent', created_at: new Date().toISOString() }
+      ],
+      listings: [
+        { id: 'list1', title: 'Under 14s Striker Needed', listing_type: 'recruitment', position: 'Forward', description: 'Looking for a clinical finisher.' }
       ],
       statistics: { total_clubs: 1, total_players: 124, total_staff: 8, total_events: 5, total_teams: 4, monthly_revenue: 4250 }
     };
