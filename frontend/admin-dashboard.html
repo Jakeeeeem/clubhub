@@ -12,7 +12,7 @@
     <header class="header">
         <nav class="nav container">
             <div class="logo" onclick="window.location.href='index.html'">
-                <div class="logo-image"></div>
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
                 <span class="logo-text neon-text">ClubHub</span>
             </div>
             <div class="user-info">
@@ -2521,6 +2521,49 @@
             showNotification('Applicant shortlisted!', 'success');
         }
 
+        async function inviteToSession(applicantId) {
+            showNotification('Invitation to trial session sent!', 'success');
+        }
+
+        async function handleStaffInvite(e) {
+            if (e) e.preventDefault();
+
+            const payload = {
+                email: document.getElementById('staffInviteEmail').value.trim(),
+                firstName: document.getElementById('staffInviteFirstName').value.trim(),
+                lastName: document.getElementById('staffInviteLastName').value.trim(),
+                role: document.getElementById('staffInviteRole').value,
+                teamId: document.getElementById('staffInviteTeam').value || null,
+                permissions: Array.from(document.querySelectorAll('input[name="staffPermissions"]:checked')).map(cb => cb.value)
+            };
+
+            try {
+                showLoading(true);
+                // In demo session, just simulate success
+                if (localStorage.getItem('isDemoSession') === 'true') {
+                    await new Promise(r => setTimeout(r, 800));
+                    showNotification(`Demo: Staff invite sent to ${payload.email}`, 'success');
+                } else {
+                    await apiService.generateClubInvite({
+                        email: payload.email,
+                        firstName: payload.firstName,
+                        lastName: payload.lastName,
+                        clubRole: payload.role,
+                        message: `You have been invited to join our staff as a ${payload.role}.`,
+                        sendEmail: true
+                    });
+                    showNotification('Staff invitation sent successfully!', 'success');
+                }
+                closeModal('inviteStaffModal');
+                document.getElementById('inviteStaffForm').reset();
+            } catch (error) {
+                console.error('Failed to invite staff:', error);
+                showNotification('Failed to send invitation: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
         async function handleCreateListing(e) {
             if (e) e.preventDefault();
 
@@ -4299,8 +4342,10 @@
                 </div>
                 <div class="form-group">
                     <label for="assignPlanStartDate">Start Date</label>
-                    <input type="date" id="assignPlanStartDate" class="form-control"
-                        value="${new Date().toISOString().split('T')[0]}" required>
+                    <input type="date" id="assignPlanStartDate" class="form-control" required>
+                    <script>
+                        document.getElementById('assignPlanStartDate').value = new Date().toISOString().split('T')[0];
+                    </script>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary"

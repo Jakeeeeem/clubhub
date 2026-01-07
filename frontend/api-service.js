@@ -494,6 +494,7 @@ async deletePaymentPlan(planId) {
   // =========================== AUTHENTICATION METHODS ===========================
 
   async login(email, password, demoBypass = false) {
+    localStorage.removeItem('isDemoSession');
     // 🚀 PURE FRONTEND BYPASS: Ensures demos work even if the backend is down or not updated
     const normalizedEmail = (email || '').toLowerCase().trim();
     const demoUsers = {
@@ -504,6 +505,7 @@ async deletePaymentPlan(planId) {
 
     if (demoBypass && demoUsers[normalizedEmail]) {
       console.log('✨ Pure Frontend Bypass Triggered for:', normalizedEmail);
+      localStorage.setItem('isDemoSession', 'true');
       const mockUser = demoUsers[normalizedEmail];
       const mockResponse = {
         message: 'Demo login successful (Frontend Bypass)',
@@ -567,6 +569,7 @@ async deletePaymentPlan(planId) {
   return response;
 }
   async logout() {
+    localStorage.removeItem('isDemoSession');
     try {
       await this.makeRequest('/auth/logout', {
         method: 'POST'
@@ -577,6 +580,10 @@ async deletePaymentPlan(planId) {
   }
 
   async getCurrentUser() {
+    if (localStorage.getItem('isDemoSession') === 'true') {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) return JSON.parse(storedUser);
+    }
     return await this.makeRequest('/auth/me');
   }
 
@@ -1013,11 +1020,18 @@ async getPlayerPayments(playerId, status = null) {
   // =========================== DASHBOARD METHODS ===========================
 
   async getAdminDashboardData() {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
     try {
+      if (isDemo && !this.baseURL.includes('localhost')) {
+        console.log('✨ Demo session detected, using rich fallback data');
+        return this.getAdminDashboardFallback();
+      }
       return await this.makeRequest('/dashboard/admin');
     } catch (error) {
       console.warn('❌ Failed to fetch admin dashboard data:', error);
       
+      if (isDemo) return this.getAdminDashboardFallback();
+
       try {
         console.log('🔄 Attempting to load dashboard data from individual endpoints...');
         
@@ -1084,12 +1098,19 @@ async getPlayerPayments(playerId, status = null) {
   }
 
   async getPlayerDashboardData(playerId = null) {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
     try {
+      if (isDemo && !this.baseURL.includes('localhost')) {
+        console.log('✨ Demo session (Player) detected, using rich fallback data');
+        return this.getPlayerDashboardFallback();
+      }
       const endpoint = playerId ? `/dashboard/player?playerId=${playerId}` : '/dashboard/player';
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn('❌ Failed to fetch player dashboard data:', error);
       
+      if (isDemo) return this.getPlayerDashboardFallback();
+
       try {
         console.log('🔄 Attempting to load player dashboard data from individual endpoints...');
         
@@ -1122,34 +1143,62 @@ async getPlayerPayments(playerId, status = null) {
   // =========================== FALLBACK METHODS ===========================
 
   getAdminDashboardFallback() {
-    console.log('📚 Using admin dashboard fallback data');
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    console.log(isDemo ? '✨ Using Rich Demo Admin Dashboard Data' : '📚 Using admin dashboard fallback data');
+    
+    if (!isDemo) return {
+      clubs: [], players: [], staff: [], events: [], teams: [], payments: [],
+      statistics: { total_clubs: 0, total_players: 0, total_staff: 0, total_events: 0, total_teams: 0, monthly_revenue: 0 }
+    };
+
     return {
-      clubs: [],
-      players: [],
-      staff: [],
-      events: [],
-      teams: [],
-      payments: [],
-      statistics: {
-        total_clubs: 0,
-        total_players: 0,
-        total_staff: 0,
-        total_events: 0,
-        total_teams: 0,
-        monthly_revenue: 0
-      }
+      clubs: [{ id: 'demo-club-1', name: 'Elite Performance Academy', location: 'London, UK', sport: 'Football', member_count: 124, is_primary: true }],
+      players: [
+        { id: 'p1', first_name: 'Harry', last_name: 'Kane', email: 'harry@example.com', position: 'Forward', payment_status: 'paid', attendance_rate: 95 },
+        { id: 'p2', first_name: 'Marcus', last_name: 'Rashford', email: 'marcus@example.com', position: 'Forward', payment_status: 'pending', attendance_rate: 88 },
+        { id: 'p3', first_name: 'Bukayo', last_name: 'Saka', email: 'saka@example.com', position: 'Winger', payment_status: 'overdue', attendance_rate: 92 }
+      ],
+      staff: [
+        { id: 's1', first_name: 'Jürgen', last_name: 'Klopp', role: 'Head Coach', email: 'klopp@example.com' },
+        { id: 's2', first_name: 'Pep', last_name: 'Guardiola', role: 'Technical Director', email: 'pep@example.com' }
+      ],
+      events: [
+        { id: 'e1', title: 'Summer Talent ID Camp', date: new Date(Date.now() + 86400000 * 7).toISOString(), location: 'Main Stadium', type: 'camp' },
+        { id: 'e2', title: 'Elite Training Session', date: new Date(Date.now() + 86400000 * 2).toISOString(), location: 'Field A', type: 'training' }
+      ],
+      teams: [
+        { id: 't1', name: 'Under 18s Elite', members: 22, coach: 'Jürgen Klopp' },
+        { id: 't2', name: 'Under 16s Development', members: 18, coach: 'Pep Guardiola' }
+      ],
+      payments: [
+        { id: 'pay1', amount: 50, status: 'paid', description: 'Monthly Subscription', date: new Date().toISOString() },
+        { id: 'pay2', amount: 120, status: 'pending', description: 'Tournament Fee', date: new Date().toISOString() }
+      ],
+      statistics: { total_clubs: 1, total_players: 124, total_staff: 8, total_events: 5, total_teams: 4, monthly_revenue: 4250 }
     };
   }
 
   getPlayerDashboardFallback() {
-    console.log('📚 Using player dashboard fallback data');
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    console.log(isDemo ? '✨ Using Rich Demo Player Dashboard Data' : '📚 Using player dashboard fallback data');
+
+    if (!isDemo) return {
+      player: null, clubs: [], teams: [], events: [], payments: [], bookings: [], applications: []
+    };
+
     return {
-      player: null,
-      clubs: [],
-      teams: [],
-      events: [],
-      payments: [],
-      bookings: [],
+      player: { first_name: 'John', last_name: 'Player', position: 'Midfielder', attendance_rate: 94 },
+      clubs: [{ id: 'demo-club-1', name: 'Elite Performance Academy', sport: 'Football' }],
+      teams: [{ id: 't1', name: 'Under 18s Elite', coach: 'Jürgen Klopp' }],
+      events: [
+        { id: 'e1', title: 'Summer Talent ID Camp', date: new Date(Date.now() + 86400000 * 7).toISOString(), location: 'Main Stadium' }
+      ],
+      payments: [
+        { id: 'pay1', amount: 50, status: 'paid', description: 'Monthly Subscription', date: new Date().toISOString() }
+      ],
+      bookings: [
+        { id: 'b1', event_title: 'Elite Training Session', date: new Date().toISOString(), status: 'confirmed' }
+      ],
       applications: []
     };
   }

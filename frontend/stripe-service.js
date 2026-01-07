@@ -728,4 +728,4 @@ window.checkPaymentStatus = checkPaymentStatus;
 
 console.log('✅ Complete Stripe service loaded with REAL payment processing using your test keys');
 
-export default stripeService;
+// End of stripe-service.js

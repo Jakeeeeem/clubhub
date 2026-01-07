@@ -40,14 +40,21 @@
 </head>
 
 <body>
-    <div class="dashboard-container">
-        <header class="dashboard-header">
-            <div class="logo">ClubHub Coach</div>
-            <div class="user-profile">
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text neon-text">ClubHub</span>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar" id="coachAvatar">C</div>
                 <span id="coachName">Coach</span>
                 <button onclick="logout()" class="btn btn-secondary btn-small">Logout</button>
             </div>
-        </header>
+        </nav>
+    </header>
+
+    <div class="dashboard-container" style="padding-top: 100px;">
 
         <main class="dashboard-content" style="max-width: 800px; margin: 0 auto;">
             <h1>My Training Groups</h1>
