@@ -178,6 +178,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/stripe-payouts', require('./routes/stripe-payouts'));
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/invites', invitesRoutes);
 app.use('/api/products', productRoutes);
