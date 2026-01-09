@@ -3485,6 +3485,18 @@
 
 
 
+        function calculateAge(dob) {
+            if (!dob) return 'N/A';
+            const birth = new Date(dob);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
         function hasPlan(player) {
             const flag = player?.has_payment_plan;
             const flagTrue =

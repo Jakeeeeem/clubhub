@@ -1094,6 +1094,13 @@ async getPlayerPayments(playerId, status = null) {
   // =========================== NOTIFICATION METHODS ===========================
 
   async getNotifications() {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    if (isDemo && !this.baseURL.includes('localhost')) {
+      return [
+        { id: 'n1', title: 'Welcome to ClubHub', message: 'Explore your new premium dashboard!', type: 'info', created_at: new Date().toISOString() },
+        { id: 'n2', title: 'Registration Update', message: 'Harry Kane has just completed their renewal.', type: 'success', created_at: new Date(Date.now() - 3600000).toISOString() }
+      ];
+    }
     try {
       return await this.makeRequest('/notifications');
     } catch (error) {
@@ -1178,9 +1185,9 @@ async getPlayerPayments(playerId, status = null) {
     return {
       clubs: [{ id: 'demo-club-1', name: 'Elite Performance Academy', location: 'London, UK', sport: 'Football', member_count: 124, is_primary: true }],
       players: [
-        { id: 'p1', first_name: 'Harry', last_name: 'Kane', email: 'harry@example.com', position: 'Forward', payment_status: 'paid', attendance_rate: 95 },
-        { id: 'p2', first_name: 'Marcus', last_name: 'Rashford', email: 'marcus@example.com', position: 'Forward', payment_status: 'pending', attendance_rate: 88 },
-        { id: 'p3', first_name: 'Bukayo', last_name: 'Saka', email: 'saka@example.com', position: 'Winger', payment_status: 'overdue', attendance_rate: 92 }
+        { id: 'p1', first_name: 'Harry', last_name: 'Kane', email: 'harry@example.com', position: 'Forward', payment_status: 'paid', attendance_rate: 95, date_of_birth: '1993-07-28' },
+        { id: 'p2', first_name: 'Marcus', last_name: 'Rashford', email: 'marcus@example.com', position: 'Forward', payment_status: 'pending', attendance_rate: 88, date_of_birth: '1997-10-31' },
+        { id: 'p3', first_name: 'Bukayo', last_name: 'Saka', email: 'saka@example.com', position: 'Winger', payment_status: 'overdue', attendance_rate: 92, date_of_birth: '2001-09-05' }
       ],
       staff: [
         { id: 's1', first_name: 'Jürgen', last_name: 'Klopp', role: 'Head Coach', email: 'klopp@example.com' },
