@@ -1545,6 +1545,17 @@
         document.addEventListener('DOMContentLoaded', async function () {
             console.log('🏢 Enhanced Admin Dashboard Loading...');
 
+            // Hide any loading indicators
+            const hideAllLoading = () => {
+                const loadingElements = document.querySelectorAll('.loading, [data-loading="true"]');
+                loadingElements.forEach(el => {
+                    el.style.display = 'none';
+                    el.remove();
+                });
+                document.body.classList.remove('loading');
+                AppState.isLoading = false;
+            };
+
             try {
                 const dashboardData = await apiService.getAdminDashboardData();
 
@@ -1575,9 +1586,14 @@
                 loadEvents();
                 loadFinances();
                 initAddPlayerModalControls();
+
+                console.log('✅ Admin Dashboard loaded successfully');
             } catch (error) {
-                console.error('Failed to load dashboard:', error);
-                showNotification('Failed to load dashboard data', 'error');
+                console.error('❌ Failed to load dashboard:', error);
+                showNotification('Failed to load dashboard data: ' + (error.message || 'Unknown error'), 'error');
+            } finally {
+                // Always hide loading, even if there's an error
+                hideAllLoading();
             }
 
             setupEnhancedEventListeners();
