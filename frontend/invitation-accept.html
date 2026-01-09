@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accept Invitation - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .invite-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .invite-card {
+            max-width: 500px;
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .invite-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary), #ff6b6b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .invite-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .invite-logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .invite-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .invite-subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .invite-details {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .invite-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+        }
+
+        .invite-detail-row:not(:last-child) {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .invite-detail-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .invite-detail-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .invite-role-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(220, 67, 67, 0.1);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .invite-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .invite-actions button {
+            flex: 1;
+        }
+
+        .invite-message {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .invite-message-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .invite-message-text {
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .invite-error {
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            color: #ff6b6b;
+            margin-bottom: 1.5rem;
+        }
+
+        .invite-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="invite-container">
+        <div class="invite-card">
+            <div id="invite-content">
+                <div class="invite-loading">
+                    <div class="spinner"></div>
+                    <p style="color: var(--text-muted);">Loading invitation...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script>
+        let invitationData = null;
+        const token = new URLSearchParams(window.location.search).get('token') ||
+            window.location.pathname.split('/').pop();
+
+        async function loadInvitation() {
+            try {
+                const response = await apiService.makeRequest(`/invitations/${token}`);
+
+                if (response.success) {
+                    invitationData = response.invitation;
+                    renderInvitation();
+                } else {
+                    showError(response.error || 'Invalid invitation');
+                }
+            } catch (error) {
+                console.error('Failed to load invitation:', error);
+                showError(error.message || 'Failed to load invitation');
+            }
+        }
+
+        function renderInvitation() {
+            const content = document.getElementById('invite-content');
+            const inv = invitationData;
+
+            content.innerHTML = `
+                <div class="invite-logo">
+                    ${inv.organization_logo
+                    ? `<img src="${inv.organization_logo}" alt="${inv.organization_name}">`
+                    : `<span class="invite-logo-text">${inv.organization_name.charAt(0)}</span>`
+                }
+                </div>
+
+                <h1 class="invite-title">You're Invited!</h1>
+                <p class="invite-subtitle">
+                    ${inv.invited_by_first_name} ${inv.invited_by_last_name} invited you to join
+                </p>
+
+                <div class="invite-details">
+                    <div class="invite-detail-row">
+                        <span class="invite-detail-label">Organization</span>
+                        <span class="invite-detail-value">${inv.organization_name}</span>
+                    </div>
+                    <div class="invite-detail-row">
+                        <span class="invite-detail-label">Role</span>
+                        <span class="invite-role-badge">${formatRole(inv.role)}</span>
+                    </div>
+                    <div class="invite-detail-row">
+                        <span class="invite-detail-label">Email</span>
+                        <span class="invite-detail-value">${inv.email}</span>
+                    </div>
+                </div>
+
+                ${inv.message ? `
+                    <div class="invite-message">
+                        <div class="invite-message-label">Personal Message</div>
+                        <div class="invite-message-text">${inv.message}</div>
+                    </div>
+                ` : ''}
+
+                <div class="invite-actions">
+                    <button class="btn btn-secondary" onclick="declineInvitation()">
+                        Decline
+                    </button>
+                    <button class="btn btn-primary" onclick="acceptInvitation()">
+                        Accept Invitation
+                    </button>
+                </div>
+
+                <p style="margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+                    Don't have an account? You'll be able to create one after accepting.
+                </p>
+            `;
+        }
+
+        function formatRole(role) {
+            const roleMap = {
+                'owner': 'Owner',
+                'admin': 'Admin',
+                'coach': 'Coach',
+                'assistant_coach': 'Assistant Coach',
+                'player': 'Player',
+                'parent': 'Parent',
+                'staff': 'Staff',
+                'viewer': 'Viewer'
+            };
+            return roleMap[role] || role;
+        }
+
+        async function acceptInvitation() {
+            const authToken = localStorage.getItem('authToken');
+
+            if (!authToken) {
+                // Not logged in - redirect to signup with invitation token
+                localStorage.setItem('pendingInvitation', token);
+                window.location.href = `/signup.html?invite=${token}`;
+                return;
+            }
+
+            try {
+                const content = document.getElementById('invite-content');
+                content.innerHTML = `
+                    <div class="invite-loading">
+                        <div class="spinner"></div>
+                        <p style="color: var(--text-muted);">Accepting invitation...</p>
+                    </div>
+                `;
+
+                const response = await apiService.makeRequest(`/invitations/${token}/accept`, {
+                    method: 'POST'
+                });
+
+                if (response.success) {
+                    content.innerHTML = `
+                        <div style="text-align: center;">
+                            <div style="width: 64px; height: 64px; margin: 0 auto 1.5rem; background: rgba(34, 197, 94, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                                    <path d="M8 16L14 22L24 10" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <h2 style="color: var(--text-main); margin-bottom: 0.5rem;">Welcome aboard!</h2>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                                You've successfully joined ${invitationData.organization_name}
+                            </p>
+                            <button class="btn btn-primary" onclick="window.location.href='/dashboard'">
+                                Go to Dashboard
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    showError(response.error || 'Failed to accept invitation');
+                }
+            } catch (error) {
+                console.error('Failed to accept invitation:', error);
+                showError(error.message || 'Failed to accept invitation');
+            }
+        }
+
+        async function declineInvitation() {
+            if (!confirm('Are you sure you want to decline this invitation?')) {
+                return;
+            }
+
+            try {
+                const content = document.getElementById('invite-content');
+                content.innerHTML = `
+                    <div class="invite-loading">
+                        <div class="spinner"></div>
+                        <p style="color: var(--text-muted);">Declining invitation...</p>
+                    </div>
+                `;
+
+                const response = await apiService.makeRequest(`/invitations/${token}/decline`, {
+                    method: 'POST'
+                });
+
+                if (response.success) {
+                    content.innerHTML = `
+                        <div style="text-align: center;">
+                            <h2 style="color: var(--text-main); margin-bottom: 0.5rem;">Invitation Declined</h2>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                                You've declined the invitation to join ${invitationData.organization_name}
+                            </p>
+                            <button class="btn btn-secondary" onclick="window.location.href='/'">
+                                Return Home
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to decline invitation:', error);
+                showError(error.message || 'Failed to decline invitation');
+            }
+        }
+
+        function showError(message) {
+            const content = document.getElementById('invite-content');
+            content.innerHTML = `
+                <div class="invite-error">
+                    <strong>Error:</strong> ${message}
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    This invitation may have expired or is no longer valid.
+                </p>
+                <button class="btn btn-secondary" onclick="window.location.href='/'">
+                    Return Home
+                </button>
+            `;
+        }
+
+        // Load invitation on page load
+        document.addEventListener('DOMContentLoaded', loadInvitation);
+    </script>
+</body>
+
+</html>
