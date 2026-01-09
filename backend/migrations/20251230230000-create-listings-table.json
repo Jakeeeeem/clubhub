@@ -1,0 +1,4 @@
+{
+    "up": "sqls/20251230230000-create-listings-table-up.sql",
+    "down": "sqls/20251230230000-create-listings-table-down.sql"
+}
