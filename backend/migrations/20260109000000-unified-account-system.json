@@ -1,0 +1,4 @@
+{
+    "up": "sqls/20260109000000-unified-account-system-up.sql",
+    "down": "sqls/20260109000000-unified-account-system-down.sql"
+}

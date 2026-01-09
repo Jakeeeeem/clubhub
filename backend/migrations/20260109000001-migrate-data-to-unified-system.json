@@ -1,0 +1,4 @@
+{
+    "up": "sqls/20260109000001-migrate-data-to-unified-system-up.sql",
+    "down": "sqls/20260109000001-migrate-data-to-unified-system-down.sql"
+}
