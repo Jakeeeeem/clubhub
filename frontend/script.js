@@ -383,6 +383,7 @@ async function loadInitialData() {
         
         // Load data based on user type
         switch (AppState.userType) {
+            case 'admin':
             case 'organization':
                 await loadAdminData();
                 break;
