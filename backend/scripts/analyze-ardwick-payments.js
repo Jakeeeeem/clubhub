@@ -213,11 +213,11 @@ async function analyzeArdwickFCPayments() {
 
     const totalPlayers = members.filter(m => m.role === 'player').length;
     const playersWithPlans = members.filter(m => m.role === 'player' && m.plan_id).length;
-    const playersWithPayments = members.filter(m => m.role === 'player' && m.latest_payment_date).length;
+    const playersWithPaymentHistory = members.filter(m => m.role === 'player' && m.latest_payment_date).length;
 
     console.log(`   Total Players: ${totalPlayers}`);
     console.log(`   Players with Payment Plans: ${playersWithPlans} (${Math.round(playersWithPlans/totalPlayers*100)}%)`);
-    console.log(`   Players with Payment History: ${playersWithPayments} (${Math.round(playersWithPayments/totalPlayers*100)}%)`);
+    console.log(`   Players with Payment History: ${playersWithPaymentHistory} (${Math.round(playersWithPaymentHistory/totalPlayers*100)}%)`);
     console.log(`   Players without Plans: ${totalPlayers - playersWithPlans}`);
     console.log('');
 
