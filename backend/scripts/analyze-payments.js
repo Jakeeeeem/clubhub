@@ -4,14 +4,25 @@
  * Stripe-Based Payment Analysis
  * Analyzes payment dates directly from Stripe API
  * Can run locally - no database needed!
+ * 
+ * Usage:
+ *   node scripts/analyze-stripe-subscriptions.js              (all subscriptions)
+ *   node scripts/analyze-stripe-subscriptions.js ardwick      (Ardwick FC only)
+ *   node scripts/analyze-stripe-subscriptions.js "elite fc"   (Elite FC only)
  */
 
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+// Get account name from command line
+const ACCOUNT_FILTER = process.argv[2]?.toLowerCase();
+
 async function analyzeStripePayments() {
   console.log('💳 Stripe Payment Analysis');
   console.log('=' .repeat(80));
+  if (ACCOUNT_FILTER) {
+    console.log(`🔍 Filtering for: "${ACCOUNT_FILTER}"`);
+  }
   console.log('');
 
   try {
@@ -53,10 +64,22 @@ async function analyzeStripePayments() {
     console.log('=' .repeat(80));
     console.log('');
 
-    const subscriptions = await stripe.subscriptions.list({ 
-      limit: 100,
-      status: 'active'
-    });
+    // Get subscriptions - filter by account if specified
+    let subscriptions;
+    if (ACCOUNT_FILTER && ardwickAccount) {
+      console.log(`📊 Fetching subscriptions for ${ardwickAccount.business_profile?.name || ardwickAccount.email}...`);
+      subscriptions = await stripe.subscriptions.list({ 
+        limit: 100,
+        status: 'active'
+        // Note: Stripe doesn't directly filter by connected account in subscriptions
+        // We'll filter manually below
+      });
+    } else {
+      subscriptions = await stripe.subscriptions.list({ 
+        limit: 100,
+        status: 'active'
+      });
+    }
 
     console.log(`📊 Total Active Subscriptions: ${subscriptions.data.length}`);
     console.log('');
