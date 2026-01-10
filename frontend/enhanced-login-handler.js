@@ -142,6 +142,12 @@ async function handleRegister(e) {
 async function determineUserRedirect(user) {
     const userEmail = (user.email || '').toLowerCase();
     
+    // FIRST: Check if user is platform admin
+    if (user.is_platform_admin || user.isPlatformAdmin) {
+        console.log('Platform admin detected, redirecting to super admin dashboard');
+        return 'super-admin-dashboard.html';
+    }
+    
     // Check for demo coach or staff role
     if (userEmail === 'demo-coach@clubhub.com' || user.role === 'coach' || user.role === 'staff') {
         return 'coach-dashboard.html';

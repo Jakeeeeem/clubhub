@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Admin - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .platform-admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .platform-header {
+            background: linear-gradient(135deg, #dc4343, #ff6b6b);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .platform-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2rem;
+        }
+
+        .platform-header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .stat-card .change {
+            font-size: 0.875rem;
+            color: #22c55e;
+            margin-top: 0.5rem;
+        }
+
+        .section-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-owner {
+            background: rgba(220, 67, 67, 0.2);
+            color: #ff6b6b;
+        }
+
+        .badge-admin {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .badge-coach {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .badge-player {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+        }
+
+        .search-bar select {
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .activity-icon.org {
+            background: rgba(220, 67, 67, 0.2);
+        }
+
+        .activity-icon.user {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .activity-icon.invite {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-meta {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .pagination button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .pagination button.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text neon-text">ClubHub</span>
+            </div>
+            <div class="user-info">
+                <span id="adminName">Platform Admin</span>
+                <div class="user-avatar">PA</div>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="platform-admin-container">
+            <!-- Platform Header -->
+            <div class="platform-header">
+                <h1>🚀 Platform Administration</h1>
+                <p>System-wide overview and management</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <h3>Total Users</h3>
+                    <div class="value" id="totalUsers">-</div>
+                    <div class="change" id="userChange">Loading...</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Organizations</h3>
+                    <div class="value" id="totalOrgs">-</div>
+                    <div class="change" id="orgChange">Loading...</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Active Plans</h3>
+                    <div class="value" id="activePlans">-</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Pending Invites</h3>
+                    <div class="value" id="pendingInvites">-</div>
+                </div>
+            </div>
+
+            <!-- Organizations Section -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Organizations</h2>
+                    <button class="btn btn-primary btn-small" onclick="refreshOrganizations()">Refresh</button>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" id="orgSearch" placeholder="Search organizations..."
+                        onkeyup="searchOrganizations()">
+                </div>
+
+                <div id="organizationsTable">
+                    <div class="loading">Loading organizations...</div>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Users</h2>
+                    <button class="btn btn-primary btn-small" onclick="refreshUsers()">Refresh</button>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()">
+                    <select id="accountTypeFilter" onchange="filterUsers()">
+                        <option value="">All Account Types</option>
+                        <option value="adult">Player/Adult</option>
+                        <option value="organization">Organization</option>
+                    </select>
+                </div>
+
+                <div id="usersTable">
+                    <div class="loading">Loading users...</div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="section-card">
+                <div class="section-header">
+                    <h2>Recent Activity</h2>
+                    <button class="btn btn-primary btn-small" onclick="refreshActivity()">Refresh</button>
+                </div>
+
+                <div id="activityFeed">
+                    <div class="loading">Loading activity...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="api-service.js"></script>
+    <script>
+        let currentOrgPage = 1;
+        let currentUserPage = 1;
+
+        // Check if user is platform admin
+        async function checkPlatformAdmin() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) {
+                window.location.href = 'index.html';
+                return false;
+            }
+
+            // Update admin name
+            document.getElementById('adminName').textContent =
+                `${user.firstName || user.first_name} ${user.lastName || user.last_name}`;
+
+            return true;
+        }
+
+        // Load platform stats
+        async function loadStats() {
+            try {
+                const stats = await apiService.makeRequest('/platform-admin/stats');
+
+                document.getElementById('totalUsers').textContent = stats.stats.total_users;
+                document.getElementById('totalOrgs').textContent = stats.stats.total_organizations;
+                document.getElementById('activePlans').textContent = stats.stats.active_plans;
+                document.getElementById('pendingInvites').textContent = stats.stats.pending_invitations;
+
+                document.getElementById('userChange').textContent =
+                    `+${stats.recentSignups} in last 30 days`;
+
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                if (error.message.includes('Forbidden')) {
+                    alert('You do not have platform admin access');
+                    window.location.href = 'index.html';
+                }
+            }
+        }
+
+        // Load organizations
+        async function loadOrganizations(page = 1, search = '') {
+            try {
+                const data = await apiService.makeRequest(
+                    `/platform-admin/organizations?page=${page}&limit=10&search=${search}`
+                );
+
+                const table = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Sport</th>
+                                <th>Owner</th>
+                                <th>Members</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.organizations.map(org => `
+                                <tr>
+                                    <td><strong>${org.name}</strong></td>
+                                    <td>${org.sport || '-'}</td>
+                                    <td>${org.owner_email || '-'}</td>
+                                    <td>${org.member_count}</td>
+                                    <td>${new Date(org.created_at).toLocaleDateString()}</td>
+                                    <td>
+                                        <button class="btn btn-small btn-secondary" 
+                                                onclick="viewOrganization('${org.id}')">
+                                            View
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    ${renderPagination(data.page, Math.ceil(data.total / 10), 'org')}
+                `;
+
+                document.getElementById('organizationsTable').innerHTML = table;
+                currentOrgPage = page;
+
+            } catch (error) {
+                console.error('Error loading organizations:', error);
+                document.getElementById('organizationsTable').innerHTML =
+                    '<div class="loading">Error loading organizations</div>';
+            }
+        }
+
+        // Load users
+        async function loadUsers(page = 1, search = '', accountType = '') {
+            try {
+                const data = await apiService.makeRequest(
+                    `/platform-admin/users?page=${page}&limit=10&search=${search}&accountType=${accountType}`
+                );
+
+                const table = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Account Type</th>
+                                <th>Organizations</th>
+                                <th>Created</th>
+                                <th>Admin</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.users.map(user => `
+                                <tr>
+                                    <td><strong>${user.first_name} ${user.last_name}</strong></td>
+                                    <td>${user.email}</td>
+                                    <td>${user.account_type}</td>
+                                    <td>${user.org_count}</td>
+                                    <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                                    <td>
+                                        ${user.is_platform_admin ?
+                        '<span class="badge badge-owner">Platform Admin</span>' :
+                        '-'
+                    }
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    ${renderPagination(data.page, Math.ceil(data.total / 10), 'user')}
+                `;
+
+                document.getElementById('usersTable').innerHTML = table;
+                currentUserPage = page;
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersTable').innerHTML =
+                    '<div class="loading">Error loading users</div>';
+            }
+        }
+
+        // Load activity
+        async function loadActivity() {
+            try {
+                const data = await apiService.makeRequest('/platform-admin/activity?limit=20');
+
+                const activityHTML = data.activity.map(item => {
+                    const iconClass = item.type.includes('organization') ? 'org' :
+                        item.type.includes('user') ? 'user' : 'invite';
+                    const icon = item.type.includes('organization') ? '🏢' :
+                        item.type.includes('user') ? '👤' : '✉️';
+
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-icon ${iconClass}">${icon}</div>
+                            <div class="activity-content">
+                                <div class="activity-title">${item.title}</div>
+                                <div class="activity-meta">
+                                    ${item.user_email} • ${new Date(item.timestamp).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('activityFeed').innerHTML = activityHTML;
+
+            } catch (error) {
+                console.error('Error loading activity:', error);
+                document.getElementById('activityFeed').innerHTML =
+                    '<div class="loading">Error loading activity</div>';
+            }
+        }
+
+        // Render pagination
+        function renderPagination(currentPage, totalPages, type) {
+            if (totalPages <= 1) return '';
+
+            let buttons = '';
+            for (let i = 1; i <= totalPages; i++) {
+                buttons += `
+                    <button class="${i === currentPage ? 'active' : ''}" 
+                            onclick="changePage${type === 'org' ? 'Org' : 'User'}(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            return `<div class="pagination">${buttons}</div>`;
+        }
+
+        // Page navigation
+        function changePageOrg(page) {
+            const search = document.getElementById('orgSearch').value;
+            loadOrganizations(page, search);
+        }
+
+        function changePageUser(page) {
+            const search = document.getElementById('userSearch').value;
+            const accountType = document.getElementById('accountTypeFilter').value;
+            loadUsers(page, search, accountType);
+        }
+
+        // Search functions
+        let orgSearchTimeout;
+        function searchOrganizations() {
+            clearTimeout(orgSearchTimeout);
+            orgSearchTimeout = setTimeout(() => {
+                const search = document.getElementById('orgSearch').value;
+                loadOrganizations(1, search);
+            }, 500);
+        }
+
+        let userSearchTimeout;
+        function searchUsers() {
+            clearTimeout(userSearchTimeout);
+            userSearchTimeout = setTimeout(() => {
+                const search = document.getElementById('userSearch').value;
+                const accountType = document.getElementById('accountTypeFilter').value;
+                loadUsers(1, search, accountType);
+            }, 500);
+        }
+
+        function filterUsers() {
+            const search = document.getElementById('userSearch').value;
+            const accountType = document.getElementById('accountTypeFilter').value;
+            loadUsers(1, search, accountType);
+        }
+
+        // Refresh functions
+        function refreshOrganizations() {
+            loadOrganizations(currentOrgPage);
+        }
+
+        function refreshUsers() {
+            loadUsers(currentUserPage);
+        }
+
+        function refreshActivity() {
+            loadActivity();
+        }
+
+        // View organization details
+        function viewOrganization(id) {
+            // TODO: Implement organization detail view
+            alert(`View organization: ${id}`);
+        }
+
+        // Logout
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            const isAdmin = await checkPlatformAdmin();
+            if (isAdmin) {
+                loadStats();
+                loadOrganizations();
+                loadUsers();
+                loadActivity();
+            }
+        });
+    </script>
+</body>
+
+</html>

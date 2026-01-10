@@ -1,0 +1,4 @@
+{
+    "sql-up": "./sqls/20260110000000-add-platform-admin-up.sql",
+    "sql-down": "./sqls/20260110000000-add-platform-admin-down.sql"
+}
