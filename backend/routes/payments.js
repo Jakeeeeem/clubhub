@@ -268,35 +268,114 @@ router.post('/plans', authenticateToken, requireOrganization, [
     if (interval === 'yearly') interval = 'year';
     if (interval === 'weekly') interval = 'week';
 
+    // Get current organization's Stripe account
+    const orgResult = await query(`
+      SELECT stripe_account_id, name as org_name 
+      FROM organizations 
+      WHERE id = $1
+    `, [req.user.currentOrganizationId]);
+
+    if (orgResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Organization not found'
+      });
+    }
+
+    const organization = orgResult.rows[0];
+
+    if (!organization.stripe_account_id) {
+      return res.status(400).json({
+        error: 'Stripe not connected',
+        message: 'Please connect your Stripe account first to create payment plans'
+      });
+    }
+
+    // Create Stripe Product on the connected account
+    const stripeProduct = await stripe.products.create({
+      name: name,
+      description: description || `${name} - ${organization.org_name}`,
+      metadata: {
+        organization_id: req.user.currentOrganizationId,
+        created_by: req.user.userId
+      }
+    }, {
+      stripeAccount: organization.stripe_account_id  // Create on connected account
+    });
+
+    // Create Stripe Price on the connected account
+    const stripePrice = await stripe.prices.create({
+      product: stripeProduct.id,
+      unit_amount: Math.round(parseFloat(amount) * 100), // Convert to pence
+      currency: 'gbp',
+      recurring: {
+        interval: interval,
+        interval_count: 1
+      },
+      metadata: {
+        organization_id: req.user.currentOrganizationId
+      }
+    }, {
+      stripeAccount: organization.stripe_account_id  // Create on connected account
+    });
+
     // Ensure plans table exists
     await query(`
       CREATE TABLE IF NOT EXISTS plans (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        organization_id UUID REFERENCES organizations(id),
         name VARCHAR(255) NOT NULL,
         price DECIMAL(10,2) NOT NULL DEFAULT 0,
         interval VARCHAR(50) DEFAULT 'month',
         active BOOLEAN DEFAULT true,
         description TEXT,
+        stripe_product_id VARCHAR(255),
+        stripe_price_id VARCHAR(255),
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
 
+    // Save to database with Stripe IDs
     const result = await query(`
-      INSERT INTO plans (name, price, interval, description, active, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, true, NOW(), NOW())
+      INSERT INTO plans (
+        organization_id, name, price, interval, description, 
+        stripe_product_id, stripe_price_id, active, created_at, updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW(), NOW())
       RETURNING *
-    `, [name, amount, interval, description || null]);
+    `, [
+      req.user.currentOrganizationId,
+      name, 
+      amount, 
+      interval, 
+      description || null,
+      stripeProduct.id,
+      stripePrice.id
+    ]);
 
     const newPlan = result.rows[0];
 
     res.status(201).json({
-      message: 'Payment plan created successfully',
-      plan: newPlan
+      message: 'Payment plan created successfully on Stripe',
+      plan: newPlan,
+      stripe: {
+        productId: stripeProduct.id,
+        priceId: stripePrice.id,
+        account: organization.stripe_account_id
+      }
     });
 
   } catch (error) {
     console.error('Create payment plan error:', error);
+    
+    // Handle Stripe errors
+    if (error.type === 'StripeInvalidRequestError') {
+      return res.status(400).json({
+        error: 'Stripe error',
+        message: error.message
+      });
+    }
+    
     res.status(500).json({
       error: 'Failed to create payment plan',
       message: error.message

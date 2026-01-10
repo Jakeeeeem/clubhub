@@ -53,90 +53,105 @@ async function analyzeStripePayments() {
     console.log(`   Account ID: ${ardwickAccount.id}`);
     console.log('');
 
-    // Get all customers
-    console.log('👥 Fetching customers...');
-    const customers = await stripe.customers.list({ limit: 100 });
+    // Get customers from the connected account
+    console.log('👥 Fetching customers from connected account...');
+    const customers = await stripe.customers.list({ 
+      limit: 100 
+    }, {
+      stripeAccount: ardwickAccount.id  // Query the connected account
+    });
     console.log(`   Found ${customers.data.length} customers`);
     console.log('');
 
-    // Analyze subscriptions
-    console.log('💰 SUBSCRIPTION ANALYSIS');
+    // Analyze actual payments (not subscriptions)
+    console.log('💰 PAYMENT ANALYSIS');
     console.log('=' .repeat(80));
     console.log('');
 
-    // Get subscriptions - filter by account if specified
-    let subscriptions;
-    if (ACCOUNT_FILTER && ardwickAccount) {
-      console.log(`📊 Fetching subscriptions for ${ardwickAccount.business_profile?.name || ardwickAccount.email}...`);
-      subscriptions = await stripe.subscriptions.list({ 
-        limit: 100,
-        status: 'active'
-        // Note: Stripe doesn't directly filter by connected account in subscriptions
-        // We'll filter manually below
-      });
-    } else {
-      subscriptions = await stripe.subscriptions.list({ 
-        limit: 100,
-        status: 'active'
-      });
-    }
+    // Get payment intents from last 90 days from the connected account
+    const ninetyDaysAgo = Math.floor(Date.now() / 1000) - (90 * 24 * 60 * 60);
+    
+    console.log('📊 Fetching payments from last 90 days from connected account...');
+    const paymentIntents = await stripe.paymentIntents.list({ 
+      limit: 100,
+      created: { gte: ninetyDaysAgo }
+    }, {
+      stripeAccount: ardwickAccount.id  // Query the connected account
+    });
 
-    console.log(`📊 Total Active Subscriptions: ${subscriptions.data.length}`);
+    const successfulPayments = paymentIntents.data.filter(pi => pi.status === 'succeeded');
+    
+    console.log(`   Total Payments: ${paymentIntents.data.length}`);
+    console.log(`   Successful: ${successfulPayments.length}`);
     console.log('');
 
-    if (subscriptions.data.length === 0) {
-      console.log('⚠️  No active subscriptions found');
+    if (successfulPayments.length === 0) {
+      console.log('⚠️  No successful payments found in last 90 days');
+      console.log('');
+      console.log('💡 Tip: Payments might be older than 90 days.');
+      console.log('   Or they might be using a different payment method.');
       return;
     }
 
-    // Group by billing day
-    const billingDays = {};
-    const subscriptionDetails = [];
+    // Group by day of month
+    const paymentDays = {};
+    const paymentDetails = [];
 
-    for (const sub of subscriptions.data) {
-      const customer = await stripe.customers.retrieve(sub.customer);
-      const billingDate = new Date(sub.current_period_end * 1000);
-      const dayOfMonth = billingDate.getDate();
+    for (const payment of successfulPayments) {
+      const paymentDate = new Date(payment.created * 1000);
+      const dayOfMonth = paymentDate.getDate();
+      
+      // Get customer info
+      let customerEmail = 'Unknown';
+      if (payment.customer) {
+        try {
+          const customer = await stripe.customers.retrieve(payment.customer, {
+            stripeAccount: ardwickAccount.id  // Query from connected account
+          });
+          customerEmail = customer.email || customer.name || payment.customer;
+        } catch (e) {
+          customerEmail = payment.customer;
+        }
+      }
 
-      if (!billingDays[dayOfMonth]) {
-        billingDays[dayOfMonth] = [];
+      if (!paymentDays[dayOfMonth]) {
+        paymentDays[dayOfMonth] = [];
       }
 
       const detail = {
-        customer: customer.email || customer.name || customer.id,
-        subscriptionId: sub.id,
-        amount: sub.items.data[0]?.price?.unit_amount / 100,
-        currency: sub.items.data[0]?.price?.currency?.toUpperCase() || 'GBP',
-        interval: sub.items.data[0]?.price?.recurring?.interval,
-        billingDay: dayOfMonth,
-        nextBilling: billingDate.toLocaleDateString('en-GB'),
-        status: sub.status
+        customer: customerEmail,
+        amount: payment.amount / 100,
+        currency: payment.currency.toUpperCase(),
+        date: paymentDate.toLocaleDateString('en-GB'),
+        dayOfMonth: dayOfMonth,
+        paymentId: payment.id,
+        description: payment.description || 'Payment'
       };
 
-      billingDays[dayOfMonth].push(detail);
-      subscriptionDetails.push(detail);
+      paymentDays[dayOfMonth].push(detail);
+      paymentDetails.push(detail);
     }
 
     // Show distribution
-    console.log('📅 Billing Distribution by Day of Month:');
+    console.log('📅 Payment Distribution by Day of Month (Last 90 Days):');
     console.log('');
 
-    Object.keys(billingDays)
+    Object.keys(paymentDays)
       .sort((a, b) => parseInt(a) - parseInt(b))
       .forEach(day => {
-        const count = billingDays[day].length;
+        const count = paymentDays[day].length;
         const bar = '█'.repeat(Math.ceil(count / 2));
-        console.log(`   Day ${day.padStart(2, ' ')}: ${bar} (${count} subscriptions)`);
+        console.log(`   Day ${day.padStart(2, ' ')}: ${bar} (${count} payments)`);
       });
 
     console.log('');
 
     // Most common day
-    const mostCommonDay = Object.keys(billingDays).reduce((a, b) => 
-      billingDays[a].length > billingDays[b].length ? a : b
+    const mostCommonDay = Object.keys(paymentDays).reduce((a, b) => 
+      paymentDays[a].length > paymentDays[b].length ? a : b
     );
 
-    console.log(`🎯 Most Common Billing Day: ${mostCommonDay}${getOrdinalSuffix(mostCommonDay)} (${billingDays[mostCommonDay].length} subscriptions)`);
+    console.log(`🎯 Most Common Payment Day: ${mostCommonDay}${getOrdinalSuffix(mostCommonDay)} (${paymentDays[mostCommonDay].length} payments)`);
     console.log('');
 
     // Recommendation
@@ -145,43 +160,53 @@ async function analyzeStripePayments() {
     console.log('');
     console.log(`   Target Day: 1st of the month (industry standard)`);
     console.log(`   Current Most Common: ${mostCommonDay}${getOrdinalSuffix(mostCommonDay)}`);
-    console.log(`   Subscriptions to migrate: ${subscriptions.data.length - (billingDays['1']?.length || 0)}`);
+    console.log(`   Payments NOT on 1st: ${successfulPayments.length - (paymentDays['1']?.length || 0)}`);
+    console.log('');
+    console.log('💡 Note: These are one-time payments, not subscriptions.');
+    console.log('   To align recurring payments, you need to set up Stripe Subscriptions.');
     console.log('');
 
     // Detailed list
     console.log('');
-    console.log('📋 DETAILED SUBSCRIPTION LIST');
+    console.log('📋 DETAILED PAYMENT LIST (Last 90 Days)');
     console.log('=' .repeat(80));
     console.log('');
 
-    subscriptionDetails
-      .sort((a, b) => a.billingDay - b.billingDay)
-      .forEach((sub, index) => {
-        console.log(`${(index + 1).toString().padStart(3, ' ')}. ${sub.customer}`);
-        console.log(`     Amount: ${sub.currency} ${sub.amount.toFixed(2)}/${sub.interval}`);
-        console.log(`     Billing Day: ${sub.billingDay}${getOrdinalSuffix(sub.billingDay)} of each month`);
-        console.log(`     Next Billing: ${sub.nextBilling}`);
-        console.log(`     Status: ${sub.status}`);
-        console.log(`     Subscription ID: ${sub.subscriptionId}`);
+    paymentDetails
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 50) // Show max 50
+      .forEach((payment, index) => {
+        console.log(`${(index + 1).toString().padStart(3, ' ')}. ${payment.customer}`);
+        console.log(`     Amount: ${payment.currency} ${payment.amount.toFixed(2)}`);
+        console.log(`     Date: ${payment.date} (Day ${payment.dayOfMonth}${getOrdinalSuffix(payment.dayOfMonth)})`);
+        console.log(`     Description: ${payment.description}`);
+        console.log(`     Payment ID: ${payment.paymentId}`);
         console.log('');
       });
 
+    if (paymentDetails.length > 50) {
+      console.log(`   ... and ${paymentDetails.length - 50} more payments`);
+      console.log('');
+    }
+
     // Summary
     console.log('');
-    console.log('📊 SUMMARY');
+    console.log('📊 SUMMARY (Last 90 Days)');
     console.log('=' .repeat(80));
     console.log('');
 
-    const totalRevenue = subscriptionDetails.reduce((sum, sub) => sum + sub.amount, 0);
-    const avgBillingDay = Math.round(
-      subscriptionDetails.reduce((sum, sub) => sum + sub.billingDay, 0) / subscriptionDetails.length
+    const totalRevenue = paymentDetails.reduce((sum, p) => sum + p.amount, 0);
+    const avgPaymentDay = Math.round(
+      paymentDetails.reduce((sum, p) => sum + p.dayOfMonth, 0) / paymentDetails.length
     );
+    const uniqueCustomers = new Set(paymentDetails.map(p => p.customer)).size;
 
-    console.log(`   Total Active Subscriptions: ${subscriptionDetails.length}`);
-    console.log(`   Monthly Recurring Revenue: £${totalRevenue.toFixed(2)}`);
-    console.log(`   Average Billing Day: ${avgBillingDay}${getOrdinalSuffix(avgBillingDay)}`);
-    console.log(`   Subscriptions on 1st: ${billingDays['1']?.length || 0}`);
-    console.log(`   Subscriptions NOT on 1st: ${subscriptionDetails.length - (billingDays['1']?.length || 0)}`);
+    console.log(`   Total Payments: ${paymentDetails.length}`);
+    console.log(`   Unique Customers: ${uniqueCustomers}`);
+    console.log(`   Total Revenue: £${totalRevenue.toFixed(2)}`);
+    console.log(`   Average Payment Day: ${avgPaymentDay}${getOrdinalSuffix(avgPaymentDay)}`);
+    console.log(`   Payments on 1st: ${paymentDays['1']?.length || 0}`);
+    console.log(`   Payments NOT on 1st: ${paymentDetails.length - (paymentDays['1']?.length || 0)}`);
     console.log('');
 
     // Next steps
@@ -189,16 +214,21 @@ async function analyzeStripePayments() {
     console.log('🎯 NEXT STEPS');
     console.log('=' .repeat(80));
     console.log('');
-    console.log('To align all subscriptions to the 1st of the month:');
+    console.log('Current Setup: One-time payments (not recurring subscriptions)');
     console.log('');
-    console.log('1. Review the distribution above');
-    console.log('2. Run alignment script (dry run first):');
-    console.log('   node scripts/align-billing-dates.js 1 --dry-run');
+    console.log('To align payment dates, you have two options:');
     console.log('');
-    console.log('3. If happy with changes, run live:');
-    console.log('   node scripts/align-billing-dates.js 1 --live');
+    console.log('Option 1: Set up Stripe Subscriptions');
+    console.log('   - Convert one-time payments to recurring subscriptions');
+    console.log('   - Set billing_cycle_anchor to 1st of month');
+    console.log('   - Automatic monthly billing');
     console.log('');
-    console.log('4. Notify affected customers');
+    console.log('Option 2: Manual coordination');
+    console.log('   - Ask all players to pay on the 1st');
+    console.log('   - Send payment reminders on the 1st');
+    console.log('   - Less automated but simpler');
+    console.log('');
+    console.log('Recommended: Option 1 (Stripe Subscriptions) for automated billing');
     console.log('');
 
   } catch (error) {
