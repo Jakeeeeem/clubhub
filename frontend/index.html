@@ -450,17 +450,21 @@
                 <p
                     style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem; text-align: center; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
                     ⚡ Quick Demo Access</p>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                    <button class="btn btn-glass" onclick="quickLogin('admin')"
-                        style="padding: 0.8rem 0.5rem; font-size: 0.8rem; border-color: rgba(255, 51, 51, 0.3);">🏢
-                        Admin</button>
-                    <button class="btn btn-glass" onclick="quickLogin('coach')"
-                        style="padding: 0.8rem 0.5rem; font-size: 0.8rem; border-color: rgba(52, 152, 219, 0.3);">⚽
-                        Coach</button>
-                    <button class="btn btn-glass" onclick="quickLogin('player')"
-                        style="padding: 0.8rem 0.5rem; font-size: 0.8rem; border-color: rgba(46, 204, 113, 0.3);">👤
-                        Player</button>
+                <div style="display: flex; gap: 10px; align-items: stretch;">
+                    <select id="demoUserType"
+                        style="flex: 1; padding: 0.8rem 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: #fff; font-size: 0.9rem; cursor: pointer;">
+                        <option value="admin">🏢 Demo Admin (Owner)</option>
+                        <option value="coach">⚽ Demo Coach</option>
+                        <option value="player">👤 Demo Player</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="quickLoginFromDropdown()"
+                        style="padding: 0.8rem 1.5rem; font-size: 0.9rem; white-space: nowrap;">
+                        Try Demo
+                    </button>
                 </div>
+                <p style="color: #64748b; font-size: 0.75rem; margin-top: 0.75rem; text-align: center; opacity: 0.8;">
+                    No signup required • Explore full features
+                </p>
             </div>
             <form id="loginForm">
                 <div class="form-group">

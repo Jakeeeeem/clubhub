@@ -564,6 +564,18 @@ window.quickLogin = async function(type) {
     }
 };
 
+/**
+ * Quick Login from Dropdown
+ * Reads the selected demo user type from dropdown and logs in
+ */
+window.quickLoginFromDropdown = function() {
+    const dropdown = document.getElementById('demoUserType');
+    if (dropdown) {
+        const selectedType = dropdown.value;
+        quickLogin(selectedType);
+    }
+};
+
 // Enhanced notification system
 function showNotification(message, type = 'info', duration = 4000) {
 
