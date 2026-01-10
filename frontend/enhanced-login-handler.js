@@ -40,7 +40,7 @@ async function handleLogin(e) {
             }, 1000);
         } else {
             // Determine where to redirect based on user type
-            const redirectUrl = determineUserRedirect(response.user);
+            const redirectUrl = await determineUserRedirect(response.user);
             console.log('🏠 Redirecting to:', redirectUrl);
             showNotification('Login successful!', 'success');
             setTimeout(() => {
@@ -122,7 +122,7 @@ async function handleRegister(e) {
             }, 1500);
         } else {
             // Show welcome message and redirect
-            const redirectUrl = determineUserRedirect(response.user);
+            const redirectUrl = await determineUserRedirect(response.user);
             console.log('🏠 Redirecting new user to:', redirectUrl);
             showNotification('Welcome to ClubHub! Setting up your account...', 'success');
             setTimeout(() => {
@@ -139,17 +139,33 @@ async function handleRegister(e) {
 }
 
 // Determine where to redirect user based on their type and data
-function determineUserRedirect(user) {
+async function determineUserRedirect(user) {
     const userEmail = (user.email || '').toLowerCase();
     
     // Check for demo coach or staff role
-    if (userEmail === 'coach@clubhub.com' || user.role === 'coach' || user.role === 'staff') {
+    if (userEmail === 'demo-coach@clubhub.com' || user.role === 'coach' || user.role === 'staff') {
         return 'coach-dashboard.html';
     }
 
     // Check if user is admin/organization
     if (user.userType === 'organization' || user.userType === 'admin' || user.account_type === 'organization') {
-        return 'admin-dashboard.html';
+        // NEW: Check if they have any organizations
+        try {
+            const context = await apiService.makeRequest('/auth/context');
+            
+            if (context.organizations && context.organizations.length > 0) {
+                // Has organizations - go to admin dashboard
+                return 'admin-dashboard.html';
+            } else {
+                // No organizations yet - redirect to create one
+                console.log('Organization user has no organizations, redirecting to create page');
+                return 'create-organization.html';
+            }
+        } catch (error) {
+            console.error('Error checking organizations:', error);
+            // Fallback to create organization page if error
+            return 'create-organization.html';
+        }
     }
     
     // Default to player dashboard
@@ -550,8 +566,9 @@ window.quickLogin = async function(type) {
         
         if (response.token) {
             showNotification('Demo login successful! Redirecting...', 'success');
+            const redirectUrl = await determineUserRedirect(response.user);
             setTimeout(() => {
-                window.location.href = determineUserRedirect(response.user);
+                window.location.href = redirectUrl;
             }, 1000);
         }
     } catch (error) {
