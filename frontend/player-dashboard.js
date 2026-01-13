@@ -1997,7 +1997,289 @@ document.addEventListener('DOMContentLoaded', wireHistoryListeners);
 // Global exports
 window.loadFamilyMembers = loadFamilyMembers;
 window.openAddChildModal = openAddChildModal;
-window.closeAddChildModal = closeAddChildModal;
+// ========================================
+// PARENT/CHILD ACCOUNT MANAGEMENT ✅
+// ========================================
+
+// Add family to state
+PlayerDashboardState.family = [];
+
+async function wireFamilyListeners() {
+    await loadFamilyMembers();
+}
+
+async function loadFamilyMembers() {
+    try {
+        const family = await apiService.makeRequest('/players/family');
+        PlayerDashboardState.family = family || [];
+        renderFamilyGrid();
+        setupNavButtons(); // Refresh profile switcher
+    } catch (error) {
+        console.error('Load family error:', error);
+        PlayerDashboardState.family = [];
+        renderFamilyGrid();
+    }
+}
+
+function renderFamilyGrid() {
+    const grid = document.getElementById('familyGrid');
+    if (!grid) return;
+    
+    if (PlayerDashboardState.family.length === 0) {
+        grid.innerHTML = `
+            <div class="stat-card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                <h4>No child profiles yet</h4>
+                <p style="color: var(--text-muted); margin: 1rem 0;">Add your children to manage their sports activities</p>
+                <button class="btn btn-primary" onclick="openAddChildModal()">+ Add First Child</button>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = PlayerDashboardState.family.map(child => {
+        const age = child.age || calculateAge(child.date_of_birth);
+        return `
+            <div class="stat-card" style="position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <div>
+                        <h4 style="margin: 0;">${escapeHTML(child.first_name)} ${escapeHTML(child.last_name)}</h4>
+                        <p style="color: var(--text-muted); margin: 0.25rem 0;">Age ${age}</p>
+                    </div>
+                    <button class="btn btn-small btn-secondary" onclick="switchProfile('${child.id}')">
+                        View
+                    </button>
+                </div>
+                <div style="font-size: 0.875rem; color: var(--text-muted);">
+                    <p style="margin: 0.25rem 0;">📍 ${escapeHTML(child.location || 'No location')}</p>
+                    <p style="margin: 0.25rem 0;">⚽ ${escapeHTML(child.sport || 'No sport')}</p>
+                    <p style="margin: 0.25rem 0;">🎯 ${escapeHTML(child.position || 'No position')}</p>
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn btn-small btn-secondary" onclick="editChildProfile('${child.id}')" style="flex: 1;">Edit</button>
+                    <button class="btn btn-small btn-danger" onclick="deleteChildProfile('${child.id}')" style="flex: 1;">Delete</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function openAddChildModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'addChildModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Add Child Profile</h3>
+                <button class="modal-close" onclick="closeAddChildModal()">&times;</button>
+            </div>
+            <form id="addChildForm" onsubmit="handleAddChild(event)">
+                <div class="form-group">
+                    <label>First Name *</label>
+                    <input type="text" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name *</label>
+                    <input type="text" name="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth *</label>
+                    <input type="date" name="dateOfBirth" required>
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select name="gender">
+                        <option value="">Select...</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sport</label>
+                    <input type="text" name="sport" placeholder="e.g., Football">
+                </div>
+                <div class="form-group">
+                    <label>Position</label>
+                    <input type="text" name="position" placeholder="e.g., Forward">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" name="location" placeholder="e.g., London">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddChildModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Child</button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeAddChildModal() {
+    const modal = document.getElementById('addChildModal');
+    if (modal) modal.remove();
+}
+
+async function handleAddChild(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    try {
+        showLoading(true);
+        
+        await apiService.makeRequest('/players/child', {
+            method: 'POST',
+            body: JSON.stringify({
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                dateOfBirth: formData.get('dateOfBirth'),
+                gender: formData.get('gender'),
+                sport: formData.get('sport'),
+                position: formData.get('position'),
+                location: formData.get('location')
+            })
+        });
+        
+        showNotification('Child profile added successfully!', 'success');
+        closeAddChildModal();
+        await loadFamilyMembers();
+        
+    } catch (error) {
+        console.error('Add child error:', error);
+        showNotification(error.message || 'Failed to add child profile', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function editChildProfile(childId) {
+    const child = PlayerDashboardState.family.find(c => c.id === childId);
+    if (!child) return;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'editChildModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>Edit Child Profile</h3>
+                <button class="modal-close" onclick="closeEditChildModal()">&times;</button>
+            </div>
+            <form id="editChildForm" onsubmit="handleEditChild(event, '${childId}')">
+                <div class="form-group">
+                    <label>First Name *</label>
+                    <input type="text" name="firstName" value="${escapeHTML(child.first_name)}" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name *</label>
+                    <input type="text" name="lastName" value="${escapeHTML(child.last_name)}" required>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth *</label>
+                    <input type="date" name="dateOfBirth" value="${child.date_of_birth}" required>
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select name="gender">
+                        <option value="">Select...</option>
+                        <option value="male" ${child.gender === 'male' ? 'selected' : ''}>Male</option>
+                        <option value="female" ${child.gender === 'female' ? 'selected' : ''}>Female</option>
+                        <option value="other" ${child.gender === 'other' ? 'selected' : ''}>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sport</label>
+                    <input type="text" name="sport" value="${escapeHTML(child.sport || '')}">
+                </div>
+                <div class="form-group">
+                    <label>Position</label>
+                    <input type="text" name="position" value="${escapeHTML(child.position || '')}">
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" name="location" value="${escapeHTML(child.location || '')}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditChildModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeEditChildModal() {
+    const modal = document.getElementById('editChildModal');
+    if (modal) modal.remove();
+}
+
+async function handleEditChild(event, childId) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    try {
+        showLoading(true);
+        
+        await apiService.makeRequest(`/players/child/${childId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                dateOfBirth: formData.get('dateOfBirth'),
+                gender: formData.get('gender'),
+                sport: formData.get('sport'),
+                position: formData.get('position'),
+                location: formData.get('location')
+            })
+        });
+        
+        showNotification('Child profile updated successfully!', 'success');
+        closeEditChildModal();
+        await loadFamilyMembers();
+        
+    } catch (error) {
+        console.error('Edit child error:', error);
+        showNotification(error.message || 'Failed to update child profile', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function deleteChildProfile(childId) {
+    const child = PlayerDashboardState.family.find(c => c.id === childId);
+    if (!child) return;
+    
+    if (!confirm(`Are you sure you want to delete ${child.first_name}'s profile? This cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        showLoading(true);
+        
+        await apiService.makeRequest(`/players/child/${childId}`, {
+            method: 'DELETE'
+        });
+        
+        showNotification('Child profile deleted successfully', 'success');
+        await loadFamilyMembers();
+        
+    } catch (error) {
+        console.error('Delete child error:', error);
+        showNotification(error.message || 'Failed to delete child profile', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Expose functions
+window.wireFamilyListeners = wireFamilyListeners;
+window.loadFamilyMembers = loadFamilyMembers;
+window.openAddChildModal = openAddChildModal;
 window.editChildProfile = editChildProfile;
 
 window.exportUserData = exportUserData;
