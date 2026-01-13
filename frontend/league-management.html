@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League Management - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .league-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .fixtures-table,
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .fixtures-table th,
+        .fixtures-table td,
+        .standings-table th,
+        .standings-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .standings-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .score-input {
+            width: 50px;
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .position-badge {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text">ClubHub</span>
+            </div>
+            <button class="btn btn-secondary" onclick="history.back()">← Back</button>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="container" style="max-width: 1400px; padding: 2rem 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1>League Management</h1>
+                <button class="btn btn-primary" onclick="openCreateLeagueModal()">+ Create League</button>
+            </div>
+
+            <!-- Leagues List -->
+            <div id="leaguesGrid" class="league-grid">
+                <!-- Leagues will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Create League Modal -->
+    <div id="createLeagueModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCreateLeagueModal()">&times;</span>
+            <h2>Create New League</h2>
+            <form id="createLeagueForm" onsubmit="createLeague(event)">
+                <div class="form-group">
+                    <label>League Name *</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Season</label>
+                    <input type="text" name="season" placeholder="e.g., 2024/25">
+                </div>
+                <div class="form-group">
+                    <label>Sport</label>
+                    <select name="sport">
+                        <option value="football">Football</option>
+                        <option value="basketball">Basketball</option>
+                        <option value="rugby">Rugby</option>
+                        <option value="hockey">Hockey</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" name="startDate">
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" name="endDate">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Create League</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- League Details Modal -->
+    <div id="leagueDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 1200px;">
+            <span class="close" onclick="closeLeagueDetailsModal()">&times;</span>
+            <h2 id="leagueName">League Name</h2>
+
+            <!-- Tabs -->
+            <div class="tabs" style="margin: 2rem 0;">
+                <button class="tab active" onclick="showLeagueTab('standings')">Standings</button>
+                <button class="tab" onclick="showLeagueTab('fixtures')">Fixtures</button>
+                <button class="tab" onclick="showLeagueTab('teams')">Teams</button>
+            </div>
+
+            <!-- Standings Tab -->
+            <div id="standings-tab" class="tab-content active">
+                <table class="standings-table">
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th>Team</th>
+                            <th>P</th>
+                            <th>W</th>
+                            <th>D</th>
+                            <th>L</th>
+                            <th>GF</th>
+                            <th>GA</th>
+                            <th>GD</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="standingsBody">
+                        <!-- Standings will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Fixtures Tab -->
+            <div id="fixtures-tab" class="tab-content" style="display: none;">
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn btn-primary" onclick="generateFixtures()">Auto-Generate Fixtures</button>
+                </div>
+                <table class="fixtures-table">
+                    <thead>
+                        <tr>
+                            <th>Week</th>
+                            <th>Date</th>
+                            <th>Home Team</th>
+                            <th>Score</th>
+                            <th>Away Team</th>
+                            <th>Referee</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fixturesBody">
+                        <!-- Fixtures will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Teams Tab -->
+            <div id="teams-tab" class="tab-content" style="display: none;">
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn btn-primary" onclick="openAddTeamModal()">+ Add Team</button>
+                </div>
+                <div id="teamsListContainer">
+                    <!-- Teams will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Team Modal -->
+    <div id="addTeamModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddTeamModal()">&times;</span>
+            <h2>Add Team to League</h2>
+            <form id="addTeamForm" onsubmit="addTeamToLeague(event)">
+                <div class="form-group">
+                    <label>Select Team *</label>
+                    <select name="teamId" id="teamSelect" required>
+                        <option value="">-- Select Team --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Team</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Score Update Modal -->
+    <div id="scoreModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeScoreModal()">&times;</span>
+            <h2>Update Match Score</h2>
+            <div id="scoreMatchDetails" style="margin: 2rem 0;">
+                <!-- Match details -->
+            </div>
+            <form id="scoreForm" onsubmit="updateScore(event)">
+                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center;">
+                    <div>
+                        <label id="homeTeamLabel">Home Team</label>
+                        <input type="number" name="homeScore" min="0" class="score-input" style="width: 100%;" required>
+                    </div>
+                    <div style="font-size: 2rem; font-weight: bold;">-</div>
+                    <div>
+                        <label id="awayTeamLabel">Away Team</label>
+                        <input type="number" name="awayScore" min="0" class="score-input" style="width: 100%;" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 2rem; width: 100%;">Update
+                    Score</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script>
+        let leagues = [];
+        let currentLeague = null;
+        let currentFixture = null;
+        let availableTeams = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLeagues();
+            loadAvailableTeams();
+        });
+
+        async function loadLeagues() {
+            try {
+                const orgId = localStorage.getItem('currentOrganizationId');
+                const data = await apiService.makeRequest(`/leagues?organizationId=${orgId}`);
+                leagues = data;
+                displayLeagues(data);
+            } catch (error) {
+                console.error('Load leagues error:', error);
+            }
+        }
+
+        function displayLeagues(leagueList) {
+            const grid = document.getElementById('leaguesGrid');
+
+            if (leagueList.length === 0) {
+                grid.innerHTML = '<p>No leagues yet. Create your first league!</p>';
+                return;
+            }
+
+            grid.innerHTML = leagueList.map(league => `
+                <div class="card" onclick="openLeagueDetails('${league.id}')">
+                    <h3>${league.name}</h3>
+                    <p><strong>Season:</strong> ${league.season || 'N/A'}</p>
+                    <p><strong>Sport:</strong> ${league.sport || 'N/A'}</p>
+                    <p><strong>Teams:</strong> ${league.team_count || 0}</p>
+                    <p><strong>Fixtures:</strong> ${league.fixture_count || 0}</p>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;">View Details</button>
+                </div>
+            `).join('');
+        }
+
+        function openCreateLeagueModal() {
+            document.getElementById('createLeagueModal').style.display = 'block';
+        }
+
+        function closeCreateLeagueModal() {
+            document.getElementById('createLeagueModal').style.display = 'none';
+            document.getElementById('createLeagueForm').reset();
+        }
+
+        async function createLeague(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const orgId = localStorage.getItem('currentOrganizationId');
+
+            try {
+                await apiService.makeRequest('/leagues', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: formData.get('name'),
+                        season: formData.get('season'),
+                        sport: formData.get('sport'),
+                        description: formData.get('description'),
+                        startDate: formData.get('startDate'),
+                        endDate: formData.get('endDate'),
+                        organizationId: orgId
+                    })
+                });
+
+                alert('League created successfully!');
+                closeCreateLeagueModal();
+                loadLeagues();
+            } catch (error) {
+                alert('Failed to create league: ' + error.message);
+            }
+        }
+
+        async function openLeagueDetails(leagueId) {
+            currentLeague = leagues.find(l => l.id === leagueId);
+            if (!currentLeague) return;
+
+            document.getElementById('leagueName').textContent = currentLeague.name;
+            document.getElementById('leagueDetailsModal').style.display = 'block';
+
+            loadStandings(leagueId);
+            loadFixtures(leagueId);
+            loadLeagueTeams(leagueId);
+        }
+
+        function closeLeagueDetailsModal() {
+            document.getElementById('leagueDetailsModal').style.display = 'none';
+        }
+
+        async function loadStandings(leagueId) {
+            try {
+                const data = await apiService.makeRequest(`/leagues/${leagueId}/standings`);
+                displayStandings(data);
+            } catch (error) {
+                console.error('Load standings error:', error);
+            }
+        }
+
+        function displayStandings(standings) {
+            const tbody = document.getElementById('standingsBody');
+
+            if (standings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10">No standings yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = standings.map((team, index) => `
+                <tr>
+                    <td><span class="position-badge">${index + 1}</span></td>
+                    <td><strong>${team.team_name}</strong></td>
+                    <td>${team.wins + team.draws + team.losses}</td>
+                    <td>${team.wins}</td>
+                    <td>${team.draws}</td>
+                    <td>${team.losses}</td>
+                    <td>${team.goals_for}</td>
+                    <td>${team.goals_against}</td>
+                    <td>${team.goal_difference}</td>
+                    <td><strong>${team.points}</strong></td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadFixtures(leagueId) {
+            try {
+                const data = await apiService.makeRequest(`/leagues/${leagueId}/fixtures`);
+                displayFixtures(data);
+            } catch (error) {
+                console.error('Load fixtures error:', error);
+            }
+        }
+
+        function displayFixtures(fixtures) {
+            const tbody = document.getElementById('fixturesBody');
+
+            if (fixtures.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No fixtures yet. Generate fixtures to get started!</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = fixtures.map(fixture => `
+                <tr>
+                    <td>${fixture.match_week || '-'}</td>
+                    <td>${fixture.scheduled_time ? new Date(fixture.scheduled_time).toLocaleDateString() : 'TBD'}</td>
+                    <td>${fixture.home_team_name}</td>
+                    <td>
+                        ${fixture.status === 'completed'
+                    ? `${fixture.home_score} - ${fixture.away_score}`
+                    : '<button class="btn btn-sm" onclick="openScoreModal(\'' + fixture.id + '\')">Enter Score</button>'
+                }
+                    </td>
+                    <td>${fixture.away_team_name}</td>
+                    <td>${fixture.referee_name || 'TBD'}</td>
+                    <td>
+                        ${fixture.status === 'scheduled'
+                    ? '<span class="badge">Scheduled</span>'
+                    : '<span class="badge" style="background: #22c55e;">Completed</span>'
+                }
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function generateFixtures() {
+            if (!currentLeague) return;
+
+            if (!confirm('Generate fixtures for all teams in this league?')) return;
+
+            try {
+                await apiService.makeRequest(`/leagues/${currentLeague.id}/fixtures/generate`, {
+                    method: 'POST',
+                    body: JSON.stringify({})
+                });
+
+                alert('Fixtures generated successfully!');
+                loadFixtures(currentLeague.id);
+            } catch (error) {
+                alert('Failed to generate fixtures: ' + error.message);
+            }
+        }
+
+        async function loadLeagueTeams(leagueId) {
+            try {
+                const data = await apiService.makeRequest(`/leagues/${leagueId}/standings`);
+                displayLeagueTeams(data);
+            } catch (error) {
+                console.error('Load teams error:', error);
+            }
+        }
+
+        function displayLeagueTeams(teams) {
+            const container = document.getElementById('teamsListContainer');
+
+            if (teams.length === 0) {
+                container.innerHTML = '<p>No teams in this league yet</p>';
+                return;
+            }
+
+            container.innerHTML = teams.map(team => `
+                <div class="card" style="margin-bottom: 1rem;">
+                    <h3>${team.team_name}</h3>
+                    <p>Points: ${team.points} | W: ${team.wins} | D: ${team.draws} | L: ${team.losses}</p>
+                </div>
+            `).join('');
+        }
+
+        async function loadAvailableTeams() {
+            try {
+                const orgId = localStorage.getItem('currentOrganizationId');
+                const data = await apiService.makeRequest(`/teams?organizationId=${orgId}`);
+                availableTeams = data;
+
+                const select = document.getElementById('teamSelect');
+                select.innerHTML = '<option value="">-- Select Team --</option>' +
+                    data.map(team => `<option value="${team.id}">${team.name}</option>`).join('');
+            } catch (error) {
+                console.error('Load teams error:', error);
+            }
+        }
+
+        function openAddTeamModal() {
+            document.getElementById('addTeamModal').style.display = 'block';
+        }
+
+        function closeAddTeamModal() {
+            document.getElementById('addTeamModal').style.display = 'none';
+        }
+
+        async function addTeamToLeague(event) {
+            event.preventDefault();
+            if (!currentLeague) return;
+
+            const formData = new FormData(event.target);
+            const teamId = formData.get('teamId');
+
+            try {
+                await apiService.makeRequest(`/leagues/${currentLeague.id}/teams`, {
+                    method: 'POST',
+                    body: JSON.stringify({ teamId })
+                });
+
+                alert('Team added successfully!');
+                closeAddTeamModal();
+                loadLeagueTeams(currentLeague.id);
+                loadStandings(currentLeague.id);
+            } catch (error) {
+                alert('Failed to add team: ' + error.message);
+            }
+        }
+
+        function openScoreModal(fixtureId) {
+            // Find fixture
+            // For now, just open modal
+            document.getElementById('scoreModal').style.display = 'block';
+            currentFixture = fixtureId;
+        }
+
+        function closeScoreModal() {
+            document.getElementById('scoreModal').style.display = 'none';
+            currentFixture = null;
+        }
+
+        async function updateScore(event) {
+            event.preventDefault();
+            if (!currentFixture) return;
+
+            const formData = new FormData(event.target);
+
+            try {
+                await apiService.makeRequest(`/leagues/fixtures/${currentFixture}/score`, {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        homeScore: parseInt(formData.get('homeScore')),
+                        awayScore: parseInt(formData.get('awayScore'))
+                    })
+                });
+
+                alert('Score updated! Standings recalculated.');
+                closeScoreModal();
+                loadFixtures(currentLeague.id);
+                loadStandings(currentLeague.id);
+            } catch (error) {
+                alert('Failed to update score: ' + error.message);
+            }
+        }
+
+        function showLeagueTab(tabName) {
+            document.querySelectorAll('#leagueDetailsModal .tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#leagueDetailsModal .tab-content').forEach(t => t.style.display = 'none');
+
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function (event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
