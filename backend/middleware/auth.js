@@ -1,4 +1,13 @@
+
+
 const jwt = require('jsonwebtoken');
+
+// Ensure JWT_SECRET is available
+const JWT_SECRET = process.env.JWT_SECRET || 'clubhub-secret-2024-dev';
+
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️ JWT_SECRET not set in environment, using fallback (NOT SECURE FOR PRODUCTION)');
+}
 
 // Middleware to authenticate JWT tokens
 function authenticateToken(req, res, next) {
@@ -6,15 +15,20 @@ function authenticateToken(req, res, next) {
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
+    console.log('❌ No token provided');
     return res.status(401).json({
       error: 'Access denied',
       message: 'No token provided'
     });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
-      console.error('Token verification failed:', err.message);
+      console.error('❌ Token verification failed:', {
+        error: err.message,
+        name: err.name,
+        token: token.substring(0, 20) + '...'
+      });
       
       if (err.name === 'TokenExpiredError') {
         return res.status(401).json({
@@ -26,7 +40,7 @@ function authenticateToken(req, res, next) {
       if (err.name === 'JsonWebTokenError') {
         return res.status(403).json({
           error: 'Invalid token',
-          message: 'Token is malformed'
+          message: 'Token is malformed or invalid'
         });
       }
       
@@ -36,6 +50,7 @@ function authenticateToken(req, res, next) {
       });
     }
 
+    console.log('✅ Token verified for user:', decoded.email || decoded.id);
     req.user = decoded;
     next();
   });

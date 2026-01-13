@@ -48,6 +48,9 @@ const childProfileValidation = [
 
 /* ------------------------------- Helpers -------------------------------- */
 
+// Ensure JWT_SECRET is available
+const JWT_SECRET = process.env.JWT_SECRET || 'clubhub-secret-2024-dev';
+
 function generateToken(user) {
   return jwt.sign(
     {
@@ -55,7 +58,7 @@ function generateToken(user) {
       email: user.email,
       accountType: user.account_type,
     },
-    process.env.JWT_SECRET,
+    JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 }
@@ -465,7 +468,7 @@ router.post(
         if (isMatch) {
           const token = jwt.sign(
             { id: user.id, email: user.email, accountType: user.account_type },
-            process.env.JWT_SECRET,
+            JWT_SECRET,
             { expiresIn: '7d' }
           );
 
@@ -501,7 +504,7 @@ router.post(
       const isMatch = await bcrypt.compare(password, user.password_hash);
       if (!isMatch) return res.status(401).json({ error: 'Invalid email or password' });
 
-      const token = jwt.sign({ id: user.id, email: user.email, accountType: user.account_type }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign({ id: user.id, email: user.email, accountType: user.account_type }, JWT_SECRET, { expiresIn: '7d' });
 
       return res.json({
         message: 'Login successful',
