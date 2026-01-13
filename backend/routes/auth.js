@@ -427,35 +427,63 @@ router.post(
       const { email, password, demoBypass } = req.body;
       const normalizedEmail = email ? email.toLowerCase().trim() : '';
 
-      console.log(`🔑 Login Attempt: ${normalizedEmail} (Bypass: ${demoBypass})`);
+      console.log(`🔑 Login Attempt: ${normalizedEmail}`);
 
-      // ⚡ DEMO BYPASS: Allow dummy demo logins without DB check
-      const demoUsers = {
-          'admin@clubhub.com': { id: 'demo-admin-id', first_name: 'Demo', last_name: 'Admin', account_type: 'admin', role: 'admin' },
-          'coach@clubhub.com': { id: 'demo-coach-id', first_name: 'Michael', last_name: 'Coach', account_type: 'coach', role: 'coach' },
-          'player@clubhub.com': { id: 'demo-player-id', first_name: 'John', last_name: 'Player', account_type: 'player', role: 'player' }
+      // Auto-create demo users if they don't exist
+      const demoCredentials = {
+        'superadmin@clubhub.com': { pass: 'Super@123', firstName: 'Super', lastName: 'Admin', type: 'organization', isPlatformAdmin: true },
+        'admin@proclubdemo.com': { pass: 'Admin@123', firstName: 'John', lastName: 'Smith', type: 'organization', isPlatformAdmin: false },
+        'coach@proclubdemo.com': { pass: 'Coach@123', firstName: 'Michael', lastName: 'Thompson', type: 'organization', isPlatformAdmin: false },
+        'player@proclubdemo.com': { pass: 'Player@123', firstName: 'David', lastName: 'Williams', type: 'adult', isPlatformAdmin: false }
       };
 
-      if ((demoUsers[normalizedEmail] && password === 'password123') || (demoBypass && demoUsers[normalizedEmail])) {
-          console.log(`✅ Demo Bypass Triggered for: ${normalizedEmail}`);
-          const user = demoUsers[normalizedEmail];
-          const token = jwt.sign(
-              { id: user.id, email: normalizedEmail, accountType: user.account_type, role: user.role }, 
-              process.env.JWT_SECRET || 'fallback-secret', 
-              { expiresIn: '24h' }
+      // Check if this is a demo login attempt
+      if (demoCredentials[normalizedEmail]) {
+        const demo = demoCredentials[normalizedEmail];
+        
+        // Try to find existing user
+        let userResult = await query(queries.findUserByEmail, [normalizedEmail]);
+        
+        // If user doesn't exist, create them
+        if (userResult.rows.length === 0) {
+          console.log(`🌱 Auto-creating demo user: ${normalizedEmail}`);
+          const hashedPassword = await bcrypt.hash(demo.pass, 10);
+          
+          userResult = await query(
+            `INSERT INTO users (email, password_hash, first_name, last_name, account_type, is_platform_admin, email_verified)
+             VALUES ($1, $2, $3, $4, $5, $6, true)
+             RETURNING id, email, first_name, last_name, account_type, is_platform_admin`,
+            [normalizedEmail, hashedPassword, demo.firstName, demo.lastName, demo.type, demo.isPlatformAdmin]
           );
+          console.log(`✅ Demo user created: ${normalizedEmail}`);
+        }
+        
+        // Now verify password
+        const user = userResult.rows[0];
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        
+        if (isMatch) {
+          const token = jwt.sign(
+            { id: user.id, email: user.email, accountType: user.account_type },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+          );
+
+          console.log(`✅ Demo login successful: ${normalizedEmail}`);
+          
           return res.json({
-              message: 'Demo login successful (Bypass Mode)',
-              token,
-              user: {
-                  id: user.id,
-                  email: normalizedEmail,
-                  firstName: user.first_name,
-                  lastName: user.last_name,
-                  userType: user.account_type,
-                  role: user.role
-              },
+            message: 'Login successful',
+            token,
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.first_name,
+              lastName: user.last_name,
+              userType: user.account_type,
+              isPlatformAdmin: user.is_platform_admin || false
+            }
           });
+        }
       }
 
       const errors = validationResult(req);
