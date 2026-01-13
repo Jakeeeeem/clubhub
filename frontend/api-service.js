@@ -536,6 +536,8 @@ async deletePaymentPlan(planId) {
       method: 'POST',
       body: JSON.stringify({ email, password, demoBypass })
     });
+    
+    return response;
   }
 
  async register(userData) {
