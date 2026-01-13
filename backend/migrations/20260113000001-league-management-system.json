@@ -1,0 +1,4 @@
+{
+    "sql-up": "./sqls/20260113000001-league-management-system-up.sql",
+    "sql-down": "./sqls/20260113000001-league-management-system-down.sql"
+}

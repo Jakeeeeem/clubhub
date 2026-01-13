@@ -1,0 +1,4 @@
+{
+    "sql-up": "./sqls/20260113000000-venue-booking-system-up.sql",
+    "sql-down": "./sqls/20260113000000-venue-booking-system-down.sql"
+}

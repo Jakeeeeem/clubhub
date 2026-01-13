@@ -190,6 +190,9 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/listings', listingsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/talent-id', talentIdRoutes);
+app.use('/api/venues', require('./routes/venues'));  // Venue booking system
+app.use('/api/leagues', require('./routes/leagues'));  // League management system
+
 
 
 // Handle 404 for API routes specifically
