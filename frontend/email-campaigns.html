@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Campaigns - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text">ClubHub</span>
+            </div>
+            <button class="btn btn-secondary" onclick="history.back()">← Back</button>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="container" style="max-width: 1000px; padding: 2rem 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1>Email Campaigns</h1>
+                <button class="btn btn-primary" onclick="openCreateCampaign()">+ New Campaign</button>
+            </div>
+
+            <!-- Campaigns List -->
+            <div id="campaignsList">
+                <p>Loading campaigns...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Campaign Modal -->
+    <div id="createCampaignModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeCreateCampaign()">&times;</span>
+            <h2>Create Email Campaign</h2>
+            <form id="campaignForm" onsubmit="sendCampaign(event)">
+                <div class="form-group">
+                    <label>Campaign Name *</label>
+                    <input type="text" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Send To *</label>
+                    <select name="segment" required>
+                        <option value="all_players">All Players</option>
+                        <option value="on_payment_plan">Players on Payment Plan</option>
+                        <option value="no_payment_plan">Players without Payment Plan</option>
+                        <option value="active_players">Active Players</option>
+                        <option value="all_parents">All Parents</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Subject Line *</label>
+                    <input type="text" name="subject" required placeholder="e.g., Important Update from ClubHub">
+                </div>
+
+                <div class="form-group">
+                    <label>Email Message *</label>
+                    <textarea name="message" rows="10" required
+                        placeholder="Write your email message here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="sendTest">
+                        Send test email to myself first
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Send Campaign</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCampaigns();
+        });
+
+        async function loadCampaigns() {
+            const container = document.getElementById('campaignsList');
+            container.innerHTML = `
+                <div class="card">
+                    <p style="text-align: center; color: var(--text-muted);">
+                        No campaigns yet. Create your first email campaign to communicate with your players and parents!
+                    </p>
+                </div>
+            `;
+        }
+
+        function openCreateCampaign() {
+            document.getElementById('createCampaignModal').style.display = 'block';
+        }
+
+        function closeCreateCampaign() {
+            document.getElementById('createCampaignModal').style.display = 'none';
+            document.getElementById('campaignForm').reset();
+        }
+
+        async function sendCampaign(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const sendTest = formData.get('sendTest') === 'on';
+
+            if (!sendTest && !confirm('Send this campaign to all selected recipients?')) {
+                return;
+            }
+
+            try {
+                // For now, use the existing notification system
+                await apiService.makeRequest('/notifications', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title: formData.get('subject'),
+                        message: formData.get('message'),
+                        type: 'email_campaign',
+                        segment: formData.get('segment')
+                    })
+                });
+
+                alert(sendTest ? 'Test email sent!' : 'Campaign sent successfully!');
+                closeCreateCampaign();
+                loadCampaigns();
+            } catch (error) {
+                alert('Failed to send campaign: ' + error.message);
+            }
+        }
+
+        window.onclick = function (event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

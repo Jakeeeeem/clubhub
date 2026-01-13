@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament Manager - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .bracket {
+            display: flex;
+            gap: 3rem;
+            overflow-x: auto;
+            padding: 2rem;
+            min-height: 400px;
+        }
+
+        .bracket-round {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            min-width: 200px;
+        }
+
+        .bracket-match {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .bracket-team {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bracket-team.winner {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 3px solid #22c55e;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text">ClubHub</span>
+            </div>
+            <button class="btn btn-secondary" onclick="history.back()">← Back</button>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="container" style="max-width: 1600px; padding: 2rem 0;">
+            <h1>Tournament Manager</h1>
+
+            <!-- Event Selector -->
+            <div class="card" style="margin: 2rem 0;">
+                <label><strong>Select Tournament:</strong></label>
+                <select id="tournamentSelect" onchange="loadTournament()"
+                    style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
+                    <option value="">-- Select Tournament --</option>
+                </select>
+            </div>
+
+            <div id="tournamentContent" style="display: none;">
+                <!-- Tabs -->
+                <div class="tabs" style="margin: 2rem 0;">
+                    <button class="tab active" onclick="showTab('teams')">Teams</button>
+                    <button class="tab" onclick="showTab('bracket')">Bracket</button>
+                    <button class="tab" onclick="showTab('matches')">Matches</button>
+                </div>
+
+                <!-- Teams Tab -->
+                <div id="teams-tab" class="tab-content active">
+                    <div style="margin-bottom: 1rem;">
+                        <button class="btn btn-primary" onclick="generateFixtures('knockout')">Generate Knockout
+                            Bracket</button>
+                        <button class="btn btn-secondary" onclick="generateFixtures('league')">Generate League
+                            Format</button>
+                    </div>
+                    <div id="teamsGrid" class="team-grid">
+                        <!-- Teams will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Bracket Tab -->
+                <div id="bracket-tab" class="tab-content" style="display: none;">
+                    <div id="bracketContainer" class="bracket">
+                        <!-- Bracket will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Matches Tab -->
+                <div id="matches-tab" class="tab-content" style="display: none;">
+                    <table class="fixtures-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Round</th>
+                                <th>Match #</th>
+                                <th>Home Team</th>
+                                <th>Score</th>
+                                <th>Away Team</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matchesBody">
+                            <!-- Matches will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Score Modal -->
+    <div id="scoreModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeScoreModal()">&times;</span>
+            <h2>Enter Match Result</h2>
+            <div id="matchDetails" style="margin: 2rem 0;"></div>
+            <form id="scoreForm" onsubmit="submitScore(event)">
+                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center;">
+                    <div>
+                        <label id="homeLabel">Home</label>
+                        <input type="number" name="homeScore" min="0" required
+                            style="width: 100%; padding: 1rem; font-size: 1.5rem; text-align: center;">
+                    </div>
+                    <div style="font-size: 2rem;">-</div>
+                    <div>
+                        <label id="awayLabel">Away</label>
+                        <input type="number" name="awayScore" min="0" required
+                            style="width: 100%; padding: 1rem; font-size: 1.5rem; text-align: center;">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">Submit
+                    Result</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script>
+        let currentTournamentId = null;
+        let tournamentData = null;
+        let currentMatch = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTournaments();
+        });
+
+        async function loadTournaments() {
+            try {
+                const orgId = localStorage.getItem('currentOrganizationId');
+                const data = await apiService.makeRequest(`/events?organizationId=${orgId}&eventType=tournament`);
+
+                const select = document.getElementById('tournamentSelect');
+                select.innerHTML = '<option value="">-- Select Tournament --</option>' +
+                    data.map(event => `<option value="${event.id}">${event.title} - ${new Date(event.event_date).toLocaleDateString()}</option>`).join('');
+            } catch (error) {
+                console.error('Load tournaments error:', error);
+            }
+        }
+
+        async function loadTournament() {
+            const tournamentId = document.getElementById('tournamentSelect').value;
+            if (!tournamentId) {
+                document.getElementById('tournamentContent').style.display = 'none';
+                return;
+            }
+
+            currentTournamentId = tournamentId;
+
+            try {
+                const data = await apiService.makeRequest(`/tournaments/${tournamentId}/dashboard`);
+                tournamentData = data;
+
+                displayTeams(data.teams);
+                displayMatches(data.matches);
+                renderBracket(data.matches, data.teams);
+
+                document.getElementById('tournamentContent').style.display = 'block';
+            } catch (error) {
+                console.error('Load tournament error:', error);
+                alert('Failed to load tournament');
+            }
+        }
+
+        function displayTeams(teams) {
+            const grid = document.getElementById('teamsGrid');
+
+            if (teams.length === 0) {
+                grid.innerHTML = '<p>No teams registered yet</p>';
+                return;
+            }
+
+            grid.innerHTML = teams.map(team => `
+                <div class="card">
+                    <h3>${team.team_name}</h3>
+                    <p><strong>Contact:</strong> ${team.contact_email}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge" style="background: ${getStatusColor(team.status)}">
+                            ${team.status}
+                        </span>
+                    </p>
+                    ${team.status === 'pending' ? `
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn btn-sm btn-primary" onclick="updateTeamStatus('${team.id}', 'approved')">Approve</button>
+                            <button class="btn btn-sm" onclick="updateTeamStatus('${team.id}', 'rejected')">Reject</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function displayMatches(matches) {
+            const tbody = document.getElementById('matchesBody');
+
+            if (matches.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No matches yet. Generate fixtures to get started!</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = matches.map(match => `
+                <tr>
+                    <td>Round ${match.round_number || 1}</td>
+                    <td>#${match.match_number || '-'}</td>
+                    <td>${match.home_team_name || 'TBD'}</td>
+                    <td>
+                        ${match.status === 'completed'
+                    ? `<strong>${match.home_score} - ${match.away_score}</strong>`
+                    : match.status === 'scheduled'
+                        ? '<button class="btn btn-sm" onclick="openScoreModal(\'' + match.id + '\', \'' + match.home_team_name + '\', \'' + match.away_team_name + '\')">Enter Score</button>'
+                        : 'TBD'
+                }
+                    </td>
+                    <td>${match.away_team_name || 'TBD'}</td>
+                    <td><span class="badge">${match.status}</span></td>
+                    <td>
+                        ${match.start_time ? new Date(match.start_time).toLocaleString() : 'Not scheduled'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderBracket(matches, teams) {
+            const container = document.getElementById('bracketContainer');
+
+            if (matches.length === 0) {
+                container.innerHTML = '<p style="padding: 2rem;">No bracket yet. Generate fixtures first!</p>';
+                return;
+            }
+
+            // Group by round
+            const rounds = matches.reduce((acc, match) => {
+                const round = match.round_number || 1;
+                if (!acc[round]) acc[round] = [];
+                acc[round].push(match);
+                return acc;
+            }, {});
+
+            container.innerHTML = Object.entries(rounds)
+                .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                .map(([round, roundMatches]) => `
+                    <div class="bracket-round">
+                        <h3 style="text-align: center; margin-bottom: 1rem;">Round ${round}</h3>
+                        ${roundMatches.map(match => `
+                            <div class="bracket-match">
+                                <div class="bracket-team ${match.home_score > match.away_score ? 'winner' : ''}">
+                                    <span>${match.home_team_name || 'TBD'}</span>
+                                    <strong>${match.home_score !== null ? match.home_score : '-'}</strong>
+                                </div>
+                                <div class="bracket-team ${match.away_score > match.home_score ? 'winner' : ''}">
+                                    <span>${match.away_team_name || 'TBD'}</span>
+                                    <strong>${match.away_score !== null ? match.away_score : '-'}</strong>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('');
+        }
+
+        async function generateFixtures(type) {
+            if (!currentTournamentId) return;
+            if (!confirm(`Generate ${type} fixtures for this tournament?`)) return;
+
+            try {
+                await apiService.makeRequest(`/tournaments/${currentTournamentId}/generate-fixtures`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        stageName: type === 'knockout' ? 'Knockout Stage' : 'League Stage',
+                        type
+                    })
+                });
+
+                alert('Fixtures generated!');
+                loadTournament();
+            } catch (error) {
+                alert('Failed to generate fixtures: ' + error.message);
+            }
+        }
+
+        async function updateTeamStatus(teamId, status) {
+            try {
+                await apiService.makeRequest(`/tournaments/teams/${teamId}/status`, {
+                    method: 'POST',
+                    body: JSON.stringify({ status })
+                });
+
+                loadTournament();
+            } catch (error) {
+                alert('Failed to update status: ' + error.message);
+            }
+        }
+
+        function openScoreModal(matchId, homeTeam, awayTeam) {
+            currentMatch = matchId;
+            document.getElementById('homeLabel').textContent = homeTeam;
+            document.getElementById('awayLabel').textContent = awayTeam;
+            document.getElementById('matchDetails').innerHTML = `
+                <p style="text-align: center; font-size: 1.2rem;">
+                    <strong>${homeTeam}</strong> vs <strong>${awayTeam}</strong>
+                </p>
+            `;
+            document.getElementById('scoreModal').style.display = 'block';
+        }
+
+        function closeScoreModal() {
+            document.getElementById('scoreModal').style.display = 'none';
+            currentMatch = null;
+        }
+
+        async function submitScore(event) {
+            event.preventDefault();
+            if (!currentMatch) return;
+
+            const formData = new FormData(event.target);
+
+            try {
+                await apiService.makeRequest(`/tournaments/matches/${currentMatch}/result`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        homeScore: parseInt(formData.get('homeScore')),
+                        awayScore: parseInt(formData.get('awayScore'))
+                    })
+                });
+
+                alert('Result submitted! Bracket updated.');
+                closeScoreModal();
+                loadTournament();
+            } catch (error) {
+                alert('Failed to submit result: ' + error.message);
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'pending': '#f59e0b',
+                'approved': '#22c55e',
+                'rejected': '#ef4444',
+                'checked_in': '#3b82f6'
+            };
+            return colors[status] || '#6b7280';
+        }
+
+        window.onclick = function (event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
