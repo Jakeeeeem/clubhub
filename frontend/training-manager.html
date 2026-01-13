@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Manager - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary-color), #b91c1c);
+            padding: 2rem;
+            border-radius: 12px;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .registrants-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .registrants-table th,
+        .registrants-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .bib-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .schedule-item {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text">ClubHub</span>
+            </div>
+            <button class="btn btn-secondary" onclick="history.back()">← Back</button>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="container" style="max-width: 1400px; padding: 2rem 0;">
+            <h1>Training Event Manager</h1>
+
+            <!-- Event Selector -->
+            <div class="card" style="margin: 2rem 0;">
+                <label><strong>Select Training Event:</strong></label>
+                <select id="eventSelect" onchange="loadEventDashboard()"
+                    style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
+                    <option value="">-- Select Event --</option>
+                </select>
+            </div>
+
+            <div id="dashboardContent" style="display: none;">
+                <!-- Stats Overview -->
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div>Total Registrants</div>
+                        <div class="stat-number" id="totalRegistrants">0</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                        <div>Checked In</div>
+                        <div class="stat-number" id="checkedIn">0</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                        <div>Groups Created</div>
+                        <div class="stat-number" id="groupsCount">0</div>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <div>Bibs Available</div>
+                        <div class="stat-number" id="bibsCount">0</div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tabs" style="margin: 2rem 0;">
+                    <button class="tab active" onclick="showTab('registrants')">Registrants</button>
+                    <button class="tab" onclick="showTab('groups')">Groups</button>
+                    <button class="tab" onclick="showTab('bibs')">Bibs</button>
+                    <button class="tab" onclick="showTab('schedule')">Schedule</button>
+                </div>
+
+                <!-- Registrants Tab -->
+                <div id="registrants-tab" class="tab-content active">
+                    <div style="margin-bottom: 1rem;">
+                        <button class="btn btn-primary" onclick="autoAssignAll()">🎯 Auto-Assign Bibs & Groups</button>
+                    </div>
+                    <table class="registrants-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Position</th>
+                                <th>Bib</th>
+                                <th>Group</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registrantsBody">
+                            <!-- Registrants will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Groups Tab -->
+                <div id="groups-tab" class="tab-content" style="display: none;">
+                    <div style="margin-bottom: 1rem;">
+                        <button class="btn btn-primary" onclick="openCreateGroupModal()">+ Create Group</button>
+                    </div>
+                    <div id="groupsContainer">
+                        <!-- Groups will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Bibs Tab -->
+                <div id="bibs-tab" class="tab-content" style="display: none;">
+                    <div style="margin-bottom: 1rem;">
+                        <button class="btn btn-primary" onclick="openAddBibsModal()">+ Add Bibs (Batch)</button>
+                    </div>
+                    <div id="bibsContainer">
+                        <!-- Bibs will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Schedule Tab -->
+                <div id="schedule-tab" class="tab-content" style="display: none;">
+                    <div style="margin-bottom: 1rem;">
+                        <button class="btn btn-primary" onclick="openAddScheduleModal()">+ Add Schedule Item</button>
+                    </div>
+                    <div id="scheduleContainer">
+                        <!-- Schedule will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Group Modal -->
+    <div id="createGroupModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCreateGroupModal()">&times;</span>
+            <h2>Create Training Group</h2>
+            <form id="createGroupForm" onsubmit="createGroup(event)">
+                <div class="form-group">
+                    <label>Group Name *</label>
+                    <input type="text" name="name" placeholder="e.g., U10 Red Team" required>
+                </div>
+                <div class="form-group">
+                    <label>Assign Coach</label>
+                    <select name="coachId">
+                        <option value="">-- No Coach --</option>
+                        <option value="coach1">Coach 1</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Group</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Bibs Modal -->
+    <div id="addBibsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddBibsModal()">&times;</span>
+            <h2>Add Bibs (Batch)</h2>
+            <form id="addBibsForm" onsubmit="addBibs(event)">
+                <div class="form-group">
+                    <label>Color *</label>
+                    <select name="color" required>
+                        <option value="Red">Red</option>
+                        <option value="Blue">Blue</option>
+                        <option value="Yellow">Yellow</option>
+                        <option value="Green">Green</option>
+                        <option value="Orange">Orange</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Start Number *</label>
+                    <input type="number" name="startNum" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>End Number *</label>
+                    <input type="number" name="endNum" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Size</label>
+                    <select name="size">
+                        <option value="S">Small</option>
+                        <option value="M">Medium</option>
+                        <option value="L">Large</option>
+                        <option value="XL">Extra Large</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Bibs</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Schedule Modal -->
+    <div id="addScheduleModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddScheduleModal()">&times;</span>
+            <h2>Add Schedule Item</h2>
+            <form id="addScheduleForm" onsubmit="addSchedule(event)">
+                <div class="form-group">
+                    <label>Activity Name *</label>
+                    <input type="text" name="activityName" placeholder="e.g., Warm-up" required>
+                </div>
+                <div class="form-group">
+                    <label>Format</label>
+                    <select name="format">
+                        <option value="SSG">Small-Sided Game (SSG)</option>
+                        <option value="11v11">11 vs 11</option>
+                        <option value="7v7">7 vs 7</option>
+                        <option value="5v5">5 vs 5</option>
+                        <option value="Drill">Drill</option>
+                        <option value="Fitness">Fitness</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Start Time *</label>
+                    <input type="time" name="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label>End Time *</label>
+                    <input type="time" name="endTime" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Add to Schedule</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script>
+        let currentEventId = null;
+        let dashboardData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEvents();
+        });
+
+        async function loadEvents() {
+            try {
+                const orgId = localStorage.getItem('currentOrganizationId');
+                const data = await apiService.makeRequest(`/events?organizationId=${orgId}&eventType=talent-id`);
+
+                const select = document.getElementById('eventSelect');
+                select.innerHTML = '<option value="">-- Select Event --</option>' +
+                    data.map(event => `<option value="${event.id}">${event.title} - ${new Date(event.event_date).toLocaleDateString()}</option>`).join('');
+            } catch (error) {
+                console.error('Load events error:', error);
+            }
+        }
+
+        async function loadEventDashboard() {
+            const eventId = document.getElementById('eventSelect').value;
+            if (!eventId) {
+                document.getElementById('dashboardContent').style.display = 'none';
+                return;
+            }
+
+            currentEventId = eventId;
+
+            try {
+                const data = await apiService.makeRequest(`/talent-id/events/${eventId}/dashboard`);
+                dashboardData = data;
+
+                // Update stats
+                document.getElementById('totalRegistrants').textContent = data.registrants.length;
+                document.getElementById('checkedIn').textContent = data.registrants.filter(r => r.status === 'checked_in').length;
+                document.getElementById('groupsCount').textContent = data.groups.length;
+                document.getElementById('bibsCount').textContent = data.bibs.filter(b => b.status === 'available').length;
+
+                // Display data
+                displayRegistrants(data.registrants);
+                displayGroups(data.groups);
+                displayBibs(data.bibs);
+                displaySchedule(data.schedule);
+
+                document.getElementById('dashboardContent').style.display = 'block';
+            } catch (error) {
+                console.error('Load dashboard error:', error);
+                alert('Failed to load event dashboard');
+            }
+        }
+
+        function displayRegistrants(registrants) {
+            const tbody = document.getElementById('registrantsBody');
+
+            if (registrants.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No registrants yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = registrants.map(reg => `
+                <tr>
+                    <td><strong>${reg.first_name} ${reg.last_name}</strong></td>
+                    <td>${calculateAge(reg.date_of_birth)}</td>
+                    <td>${reg.position || 'N/A'}</td>
+                    <td>${reg.bib_number ? `<span class="bib-badge" style="background: ${getBibColor(reg.bib_color)}">${reg.bib_color} #${reg.bib_number}</span>` : '-'}</td>
+                    <td>${reg.group_name || '-'}</td>
+                    <td>${reg.status === 'checked_in' ? '<span class="badge" style="background: #22c55e;">Checked In</span>' : '<span class="badge">Registered</span>'}</td>
+                    <td>
+                        ${reg.status !== 'checked_in' ? `<button class="btn btn-sm" onclick="checkIn('${reg.id}')">Check In</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function displayGroups(groups) {
+            const container = document.getElementById('groupsContainer');
+
+            if (groups.length === 0) {
+                container.innerHTML = '<p>No groups created yet</p>';
+                return;
+            }
+
+            container.innerHTML = groups.map(group => `
+                <div class="card" style="margin-bottom: 1rem;">
+                    <h3>${group.name}</h3>
+                    <p><strong>Coach:</strong> ${group.coach_first_name ? `${group.coach_first_name} ${group.coach_last_name}` : 'Not assigned'}</p>
+                    <p><strong>Players:</strong> ${group.players ? group.players.length : 0}</p>
+                </div>
+            `).join('');
+        }
+
+        function displayBibs(bibs) {
+            const container = document.getElementById('bibsContainer');
+
+            if (bibs.length === 0) {
+                container.innerHTML = '<p>No bibs in stock. Add bibs to get started!</p>';
+                return;
+            }
+
+            // Group by color
+            const grouped = bibs.reduce((acc, bib) => {
+                if (!acc[bib.color]) acc[bib.color] = [];
+                acc[bib.color].push(bib);
+                return acc;
+            }, {});
+
+            container.innerHTML = Object.entries(grouped).map(([color, colorBibs]) => `
+                <div class="card" style="margin-bottom: 1rem;">
+                    <h3>${color} Bibs</h3>
+                    <p><strong>Total:</strong> ${colorBibs.length}</p>
+                    <p><strong>Available:</strong> ${colorBibs.filter(b => b.status === 'available').length}</p>
+                    <p><strong>Assigned:</strong> ${colorBibs.filter(b => b.status === 'assigned').length}</p>
+                </div>
+            `).join('');
+        }
+
+        function displaySchedule(schedule) {
+            const container = document.getElementById('scheduleContainer');
+
+            if (schedule.length === 0) {
+                container.innerHTML = '<p>No schedule items yet</p>';
+                return;
+            }
+
+            container.innerHTML = schedule.map(item => `
+                <div class="schedule-item">
+                    <h3>${item.activity_name}</h3>
+                    <p><strong>Format:</strong> ${item.format || 'N/A'}</p>
+                    <p><strong>Time:</strong> ${item.start_time} - ${item.end_time}</p>
+                    ${item.description ? `<p>${item.description}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function autoAssignAll() {
+            if (!currentEventId) return;
+            if (!confirm('Auto-assign bibs and groups to all unassigned registrants?')) return;
+
+            try {
+                await apiService.makeRequest(`/talent-id/events/${currentEventId}/auto-assign`, {
+                    method: 'POST'
+                });
+
+                alert('Auto-assignment complete!');
+                loadEventDashboard();
+            } catch (error) {
+                alert('Auto-assign failed: ' + error.message);
+            }
+        }
+
+        async function checkIn(registrationId) {
+            try {
+                await apiService.makeRequest(`/talent-id/registrations/${registrationId}/checkin`, {
+                    method: 'POST',
+                    body: JSON.stringify({ status: 'checked_in' })
+                });
+
+                loadEventDashboard();
+            } catch (error) {
+                alert('Check-in failed: ' + error.message);
+            }
+        }
+
+        function openCreateGroupModal() {
+            document.getElementById('createGroupModal').style.display = 'block';
+        }
+
+        function closeCreateGroupModal() {
+            document.getElementById('createGroupModal').style.display = 'none';
+        }
+
+        async function createGroup(event) {
+            event.preventDefault();
+            if (!currentEventId) return;
+
+            const formData = new FormData(event.target);
+
+            try {
+                await apiService.makeRequest(`/talent-id/events/${currentEventId}/groups`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: formData.get('name'),
+                        coachId: formData.get('coachId') || null
+                    })
+                });
+
+                alert('Group created!');
+                closeCreateGroupModal();
+                loadEventDashboard();
+            } catch (error) {
+                alert('Failed to create group: ' + error.message);
+            }
+        }
+
+        function openAddBibsModal() {
+            document.getElementById('addBibsModal').style.display = 'block';
+        }
+
+        function closeAddBibsModal() {
+            document.getElementById('addBibsModal').style.display = 'none';
+        }
+
+        async function addBibs(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const clubId = localStorage.getItem('currentOrganizationId');
+
+            try {
+                await apiService.makeRequest('/talent-id/bibs/batch', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        clubId,
+                        color: formData.get('color'),
+                        startNum: parseInt(formData.get('startNum')),
+                        endNum: parseInt(formData.get('endNum')),
+                        size: formData.get('size')
+                    })
+                });
+
+                alert('Bibs added successfully!');
+                closeAddBibsModal();
+                loadEventDashboard();
+            } catch (error) {
+                alert('Failed to add bibs: ' + error.message);
+            }
+        }
+
+        function openAddScheduleModal() {
+            document.getElementById('addScheduleModal').style.display = 'block';
+        }
+
+        function closeAddScheduleModal() {
+            document.getElementById('addScheduleModal').style.display = 'none';
+        }
+
+        async function addSchedule(event) {
+            event.preventDefault();
+            if (!currentEventId) return;
+
+            const formData = new FormData(event.target);
+
+            try {
+                await apiService.makeRequest(`/talent-id/events/${currentEventId}/schedule`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        activityName: formData.get('activityName'),
+                        format: formData.get('format'),
+                        startTime: formData.get('startTime'),
+                        endTime: formData.get('endTime'),
+                        description: formData.get('description')
+                    })
+                });
+
+                alert('Schedule item added!');
+                closeAddScheduleModal();
+                loadEventDashboard();
+            } catch (error) {
+                alert('Failed to add schedule: ' + error.message);
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+        }
+
+        function calculateAge(dob) {
+            const birthDate = new Date(dob);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        function getBibColor(color) {
+            const colors = {
+                'Red': '#ef4444',
+                'Blue': '#3b82f6',
+                'Yellow': '#eab308',
+                'Green': '#22c55e',
+                'Orange': '#f97316'
+            };
+            return colors[color] || '#6b7280';
+        }
+
+        window.onclick = function (event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
