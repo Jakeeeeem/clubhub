@@ -1,0 +1,4 @@
+{
+    "sql-up": "./sqls/20260113000005-guest-submissions-up.sql",
+    "sql-down": "./sqls/20260113000005-guest-submissions-down.sql"
+}
