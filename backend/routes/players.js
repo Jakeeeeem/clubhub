@@ -886,4 +886,58 @@ function calculateAge(dateOfBirth) {
   return age;
 }
 
+// ========================================
+// PLAYER HISTORY / PREVIOUS TEAMS
+// ========================================
+
+// GET player history
+router.get('/:id/history', authenticateToken, async (req, res) => {
+    try {
+        const result = await query(
+            'SELECT * FROM player_history WHERE player_id = $1 ORDER BY start_date DESC',
+            [req.params.id]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Get player history error:', error);
+        res.status(500).json({ error: 'Failed to fetch player history' });
+    }
+});
+
+// POST add player history
+router.post('/:id/history', authenticateToken, [
+    body('teamName').trim().notEmpty(),
+    body('startDate').optional().isISO8601(),
+    body('endDate').optional().isISO8601()
+], async (req, res) => {
+    try {
+        const { teamName, clubName, startDate, endDate, position, achievements } = req.body;
+        
+        const result = await query(`
+            INSERT INTO player_history (player_id, team_name, club_name, start_date, end_date, position, achievements)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+        `, [req.params.id, teamName, clubName, startDate, endDate, position, achievements]);
+        
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error('Add player history error:', error);
+        res.status(500).json({ error: 'Failed to add player history' });
+    }
+});
+
+// DELETE player history entry
+router.delete('/:id/history/:historyId', authenticateToken, async (req, res) => {
+    try {
+        await query(
+            'DELETE FROM player_history WHERE id = $1 AND player_id = $2',
+            [req.params.historyId, req.params.id]
+        );
+        res.json({ message: 'History entry deleted' });
+    } catch (error) {
+        console.error('Delete player history error:', error);
+        res.status(500).json({ error: 'Failed to delete history entry' });
+    }
+});
+
 module.exports = router;

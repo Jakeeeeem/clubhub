@@ -4751,10 +4751,78 @@
                 loadPlayers();
             }
 
-            function exportPlayers() {
-                // TODO: Implement CSV export
-                alert('Export functionality coming soon!');
+            async function deletePlayer(playerId) {
+                if (!confirm('Are you sure you want to remove this player? This action cannot be undone.')) {
+                    return;
+                }
+
+                try {
+                    await apiService.makeRequest(`/players/${playerId}`, {
+                        method: 'DELETE'
+                    });
+
+                    showNotification('Player removed successfully', 'success');
+                    loadPlayers();
+                } catch (error) {
+                    console.error('Delete player error:', error);
+                    showNotification('Failed to delete player: ' + error.message, 'error');
+                }
             }
+
+            async function editPlayer(playerId) {
+                // TODO: Open edit modal with player data
+                showNotification('Edit functionality coming soon!', 'info');
+            }
+
+            function exportPlayers() {
+                try {
+                    const players = PlayerDashboardState?.players || [];
+
+                    if (players.length === 0) {
+                        showNotification('No players to export', 'warning');
+                        return;
+                    }
+
+                    // Create CSV header
+                    const headers = ['First Name', 'Last Name', 'Email', 'Position', 'Age', 'Location', 'Sport', 'Status'];
+                    const csvRows = [headers.join(',')];
+
+                    // Add player data
+                    players.forEach(player => {
+                        const row = [
+                            player.first_name || '',
+                            player.last_name || '',
+                            player.email || '',
+                            player.position || '',
+                            player.age || '',
+                            player.location || '',
+                            player.sport || '',
+                            player.has_payment_plan ? 'On Plan' : 'No Plan'
+                        ];
+                        csvRows.push(row.map(field => `"${field}"`).join(','));
+                    });
+
+                    // Create and download CSV
+                    const csvContent = csvRows.join('\n');
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `players_export_${new Date().toISOString().split('T')[0]}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+
+                    showNotification('Players exported successfully!', 'success');
+                } catch (error) {
+                    console.error('Export error:', error);
+                    showNotification('Failed to export players', 'error');
+                }
+            }
+
+            // Expose functions globally
+            window.deletePlayer = deletePlayer;
+            window.editPlayer = editPlayer;
+            window.exportPlayers = exportPlayers;
         </script>
 
         <!-- Organization Switcher -->
