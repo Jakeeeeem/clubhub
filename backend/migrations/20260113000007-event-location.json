@@ -1,0 +1,4 @@
+{
+    "up": "sqls/20260113000007-event-location-up.sql",
+    "down": "sqls/20260113000007-event-location-down.sql"
+}

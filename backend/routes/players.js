@@ -55,6 +55,23 @@ router.get('/', authenticateToken, async (req, res) => {
       paramCount++;
       queryText += ` AND p.club_id = $${paramCount}`;
       queryParams.push(clubId);
+
+      // Coach Team Scoping: If user is staff/coach, limit to their teams
+      const staffCheck = await query(
+        'SELECT id, role FROM staff WHERE user_id = $1 AND club_id = $2',
+        [req.user.id, clubId]
+      );
+
+      if (staffCheck.rows.length > 0 && staffCheck.rows[0].role === 'coach') {
+        const coachId = staffCheck.rows[0].id;
+        paramCount++;
+        queryText += ` AND p.id IN (
+          SELECT player_id FROM team_players tp
+          JOIN teams t ON tp.team_id = t.id
+          WHERE t.coach_id = $${paramCount}
+        )`;
+        queryParams.push(coachId);
+      }
     }
 
     if (search) {

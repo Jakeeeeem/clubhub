@@ -1,0 +1,4 @@
+{
+    "up": "sqls/20260113000008-venue-documents-up.sql",
+    "down": "sqls/20260113000008-venue-documents-down.sql"
+}

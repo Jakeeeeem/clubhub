@@ -192,6 +192,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/talent-id', talentIdRoutes);
 app.use('/api/venues', require('./routes/venues'));  // Venue booking system
 app.use('/api/leagues', require('./routes/leagues'));  // League management system
+app.use('/api/polls', require('./routes/polls'));  // Voting/Polls system
 
 
 

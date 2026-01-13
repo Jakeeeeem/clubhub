@@ -1,0 +1,4 @@
+{
+    "up": "sqls/20260113000006-voting-system-up.sql",
+    "down": "sqls/20260113000006-voting-system-down.sql"
+}

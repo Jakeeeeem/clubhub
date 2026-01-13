@@ -649,6 +649,12 @@ router.post('/:id/images', authenticateToken, requireOrganization, upload.single
         if (clubResult.rows.length === 0) return res.status(404).json({ error: 'Club not found' });
         if (clubResult.rows[0].owner_id !== req.user.id) return res.status(403).json({ error: 'Access denied' });
 
+        if (clubResult.rows[0].images && clubResult.rows[0].images.length >= 5) {
+            // Optional: Delete the file that was just uploaded since we're rejecting it
+            try { fs.unlinkSync(req.file.path); } catch (e) {}
+            return res.status(400).json({ error: 'Image limit reached (max 5 images)' });
+        }
+
         const imageUrl = `/uploads/club-images/${req.file.filename}`;
 
         // Append to images array

@@ -1074,11 +1074,26 @@ router.post('/:id/checkin', authenticateToken, async (req, res) => {
     // Check if already checked in
     const existing = await query(
       'SELECT id FROM event_checkins WHERE event_id = $1 AND user_id = $2',
-      [req.params.id, req.user.userId]
+      [req.params.id, req.user.id]
     );
-    
+
     if (existing.rows.length > 0) {
       return res.status(409).json({ error: 'Already checked in to this event' });
+    }
+
+    // Geofencing Validation
+    if (latitude && longitude && eventResult.rows[0].latitude && eventResult.rows[0].longitude) {
+      const distance = calculateDistance(
+        latitude, longitude, 
+        eventResult.rows[0].latitude, eventResult.rows[0].longitude
+      );
+      
+      if (distance > 500) { // 500 meters limit
+        return res.status(400).json({ 
+          error: 'Location validation failed', 
+          message: 'You must be within 500 meters of the venue to check in.' 
+        });
+      }
     }
     
     // Create check-in record
@@ -1086,7 +1101,7 @@ router.post('/:id/checkin', authenticateToken, async (req, res) => {
       INSERT INTO event_checkins (event_id, user_id, checkin_method, location_lat, location_lng)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
-    `, [req.params.id, req.user.userId, method, latitude, longitude]);
+    `, [req.params.id, req.user.id, method, latitude, longitude]);
     
     res.status(201).json({
       message: 'Checked in successfully',
@@ -1116,5 +1131,18 @@ router.get('/:id/checkins', authenticateToken, requireOrganization, async (req, 
     res.status(500).json({ error: 'Failed to fetch check-ins' });
   }
 });
+
+// Helper function for geofencing distance calculation (Haversine formula)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Earth radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 module.exports = router;
