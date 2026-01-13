@@ -1056,4 +1056,65 @@ router.delete('/:id', authenticateToken, requireOrganization, async (req, res) =
   }
 });
 
+// ========================================
+// QR CHECK-IN & 'I'M HERE' FUNCTIONALITY
+// ========================================
+
+// Check-in to event (QR or manual)
+router.post('/:id/checkin', authenticateToken, async (req, res) => {
+  try {
+    const { method = 'manual', latitude, longitude } = req.body;
+    
+    // Verify event exists
+    const eventResult = await query('SELECT * FROM events WHERE id = $1', [req.params.id]);
+    if (eventResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    
+    // Check if already checked in
+    const existing = await query(
+      'SELECT id FROM event_checkins WHERE event_id = $1 AND user_id = $2',
+      [req.params.id, req.user.userId]
+    );
+    
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Already checked in to this event' });
+    }
+    
+    // Create check-in record
+    const result = await query(`
+      INSERT INTO event_checkins (event_id, user_id, checkin_method, location_lat, location_lng)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `, [req.params.id, req.user.userId, method, latitude, longitude]);
+    
+    res.status(201).json({
+      message: 'Checked in successfully',
+      checkin: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Check-in error:', error);
+    res.status(500).json({ error: 'Failed to check in' });
+  }
+});
+
+// Get event check-ins (for organizers)
+router.get('/:id/checkins', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT ec.*, u.first_name, u.last_name, u.email
+      FROM event_checkins ec
+      JOIN users u ON ec.user_id = u.id
+      WHERE ec.event_id = $1
+      ORDER BY ec.checkin_time DESC
+    `, [req.params.id]);
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get checkins error:', error);
+    res.status(500).json({ error: 'Failed to fetch check-ins' });
+  }
+});
+
 module.exports = router;

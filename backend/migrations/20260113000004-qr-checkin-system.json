@@ -1,0 +1,4 @@
+{
+    "sql-up": "./sqls/20260113000004-qr-checkin-system-up.sql",
+    "sql-down": "./sqls/20260113000004-qr-checkin-system-down.sql"
+}
