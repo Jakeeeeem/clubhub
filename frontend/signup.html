@@ -375,12 +375,28 @@
 
             <div class="form-group">
                 <label>Password</label>
-                <input type="password" id="password" placeholder="Create a strong password">
+                <div style="position: relative;">
+                    <input type="password" id="password" placeholder="Create a strong password"
+                        style="padding-right: 2.5rem;">
+                    <button type="button" onclick="togglePasswordVisibility('password', this)"
+                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
+                        aria-label="Toggle password visibility">
+                        👁️
+                    </button>
+                </div>
             </div>
 
             <div class="form-group">
                 <label>Confirm Password</label>
-                <input type="password" id="confirmPassword" placeholder="Confirm your password">
+                <div style="position: relative;">
+                    <input type="password" id="confirmPassword" placeholder="Confirm your password"
+                        style="padding-right: 2.5rem;">
+                    <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)"
+                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
+                        aria-label="Toggle password visibility">
+                        👁️
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -618,6 +634,20 @@
             } else {
                 navContainer.style.display = 'flex';
                 nextBtn.textContent = currentStep === totalSteps - 1 ? 'Create Account' : 'Next';
+            }
+        }
+
+        // Toggle password visibility
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.style.opacity = '1';
+                button.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                button.style.opacity = '0.6';
+                button.textContent = '👁️';
             }
         }
     </script>

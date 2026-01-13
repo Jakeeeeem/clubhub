@@ -540,17 +540,22 @@ function closeModal(modalId) {
 
 /**
  * Quick Demo Login Bypass
- * @param {string} type - admin, coach, player
+ * @param {string} type - superadmin, admin, coach, player
  */
 window.quickLogin = async function(type) {
     const demos = {
-        admin: { email: 'demo-admin@clubhub.com', pass: 'demo123' },
-        coach: { email: 'demo-coach@clubhub.com', pass: 'demo123' },
-        player: { email: 'demo-player@clubhub.com', pass: 'demo123' }
+        superadmin: { email: 'superadmin@clubhub.com', pass: 'Super@123' },
+        admin: { email: 'admin@proclubdemo.com', pass: 'Admin@123' },
+        coach: { email: 'coach@proclubdemo.com', pass: 'Coach@123' },
+        player: { email: 'player@proclubdemo.com', pass: 'Player@123' }
     };
 
     const credentials = demos[type];
-    if (!credentials) return;
+    if (!credentials) {
+        console.error('Invalid demo type:', type);
+        showNotification('Invalid demo user type', 'error');
+        return;
+    }
 
     // Clear any existing session to ensure a clean demo state
     localStorage.clear();
