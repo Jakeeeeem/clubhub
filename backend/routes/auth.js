@@ -526,6 +526,47 @@ router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 
+// SEED DEMO USERS (public endpoint for quick setup)
+router.post('/seed-demo-users', async (req, res) => {
+  try {
+    const demoUsers = [
+      { email: 'superadmin@clubhub.com', pass: 'Super@123', firstName: 'Super', lastName: 'Admin', type: 'organization', isPlatformAdmin: true },
+      { email: 'admin@proclubdemo.com', pass: 'Admin@123', firstName: 'John', lastName: 'Smith', type: 'organization', isPlatformAdmin: false },
+      { email: 'coach@proclubdemo.com', pass: 'Coach@123', firstName: 'Michael', lastName: 'Thompson', type: 'organization', isPlatformAdmin: false },
+      { email: 'player@proclubdemo.com', pass: 'Player@123', firstName: 'David', lastName: 'Williams', type: 'adult', isPlatformAdmin: false }
+    ];
+
+    const created = [];
+    const existed = [];
+
+    for (const demo of demoUsers) {
+      const existing = await query(queries.findUserByEmail, [demo.email]);
+      
+      if (existing.rows.length === 0) {
+        const hashedPassword = await bcrypt.hash(demo.pass, 10);
+        await query(
+          `INSERT INTO users (email, password_hash, first_name, last_name, account_type, is_platform_admin, email_verified)
+           VALUES ($1, $2, $3, $4, $5, $6, true)`,
+          [demo.email, hashedPassword, demo.firstName, demo.lastName, demo.type, demo.isPlatformAdmin]
+        );
+        created.push(demo.email);
+      } else {
+        existed.push(demo.email);
+      }
+    }
+
+    res.json({
+      message: 'Demo users seeded',
+      created,
+      existed,
+      total: created.length + existed.length
+    });
+  } catch (error) {
+    console.error('Seed demo users error:', error);
+    res.status(500).json({ error: 'Failed to seed demo users' });
+  }
+});
+
 // CURRENT USER (/api/auth/me) — Authorization: Bearer <token>
 router.get('/me', async (req, res) => {
   try {
