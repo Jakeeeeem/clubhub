@@ -489,8 +489,99 @@
                     return;
                 }
 
+                // If on step 2 (personal info), register the user
+                if (currentStep === 2) {
+                    registerUser();
+                    return; // Don't increment step yet, wait for registration
+                }
+
                 currentStep++;
                 updateUI();
+            }
+        }
+
+        async function registerUser() {
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validation
+            if (!firstName || !lastName || !email || !password || !confirmPassword) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+
+            try {
+                const nextBtn = document.getElementById('nextBtn');
+                nextBtn.disabled = true;
+                nextBtn.textContent = 'Creating Account...';
+
+                const userData = {
+                    firstName,
+                    lastName,
+                    email,
+                    password,
+                    userType: formData.accountType === 'organization' ? 'organization' : 'adult'
+                };
+
+                console.log('Registering user:', userData);
+
+                const response = await apiService.register(userData);
+
+                console.log('Registration successful:', response);
+
+                // Store auth token and user data
+                localStorage.setItem('authToken', response.token);
+                localStorage.setItem('currentUser', JSON.stringify(response.user));
+
+                // Show success step
+                currentStep = 3;
+                updateUI();
+
+                // Update the "Go to Dashboard" button to actually redirect
+                const dashboardBtn = document.querySelector('.form-step[data-step="3"] .btn-primary');
+                dashboardBtn.onclick = async function () {
+                    // Determine redirect based on user type
+                    let redirectUrl = 'player-dashboard.html';
+
+                    if (response.user.is_platform_admin || response.user.isPlatformAdmin) {
+                        redirectUrl = 'super-admin-dashboard.html';
+                    } else if (response.user.account_type === 'organization') {
+                        // Check if they have organizations
+                        try {
+                            const context = await apiService.makeRequest('/auth/context');
+                            if (context.organizations && context.organizations.length > 0) {
+                                redirectUrl = 'admin-dashboard.html';
+                            } else {
+                                redirectUrl = 'create-organization.html';
+                            }
+                        } catch (error) {
+                            redirectUrl = 'create-organization.html';
+                        }
+                    }
+
+                    window.location.href = redirectUrl;
+                };
+
+            } catch (error) {
+                console.error('Registration failed:', error);
+                alert(error.message || 'Registration failed. Please try again.');
+
+                const nextBtn = document.getElementById('nextBtn');
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Create Account';
             }
         }
 
