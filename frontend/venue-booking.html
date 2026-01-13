@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venue Booking - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .venue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .venue-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+
+        .venue-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .venue-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-view {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+
+        .time-slot {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .time-slot.available {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+        }
+
+        .time-slot.booked {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            cursor: not-allowed;
+        }
+
+        .time-slot.available:hover {
+            background: rgba(34, 197, 94, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text">ClubHub</span>
+            </div>
+            <button class="btn btn-secondary" onclick="history.back()">← Back to Dashboard</button>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="container" style="max-width: 1200px; padding: 2rem 0;">
+            <h1>Venue Booking</h1>
+
+            <!-- Tabs -->
+            <div class="tabs" style="margin: 2rem 0;">
+                <button class="tab active" onclick="showTab('browse')">Browse Venues</button>
+                <button class="tab" onclick="showTab('mybookings')">My Bookings</button>
+            </div>
+
+            <!-- Browse Venues Tab -->
+            <div id="browse-tab" class="tab-content active">
+                <div class="filters" style="margin-bottom: 2rem;">
+                    <input type="text" id="searchVenue" placeholder="Search venues..." style="margin-right: 1rem;">
+                    <select id="locationFilter">
+                        <option value="">All Locations</option>
+                    </select>
+                </div>
+
+                <div id="venueGrid" class="venue-grid">
+                    <!-- Venues will be loaded here -->
+                </div>
+            </div>
+
+            <!-- My Bookings Tab -->
+            <div id="mybookings-tab" class="tab-content" style="display: none;">
+                <div id="myBookingsList">
+                    <!-- Bookings will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeBookingModal()">&times;</span>
+            <h2 id="venueName">Venue Name</h2>
+
+            <div id="venueDetails" style="margin: 2rem 0;">
+                <!-- Venue details -->
+            </div>
+
+            <h3>Select Date & Time</h3>
+            <input type="date" id="bookingDate" onchange="loadAvailability()">
+
+            <div id="availabilitySlots" class="calendar-view">
+                <!-- Time slots will appear here -->
+            </div>
+
+            <div id="bookingForm" style="display: none; margin-top: 2rem;">
+                <h3>Confirm Booking</h3>
+                <p><strong>Date:</strong> <span id="selectedDate"></span></p>
+                <p><strong>Time:</strong> <span id="selectedTime"></span></p>
+                <p><strong>Cost:</strong> £<span id="bookingCost"></span></p>
+
+                <textarea id="bookingNotes" placeholder="Any special requirements?" rows="3"></textarea>
+
+                <button class="btn btn-primary" onclick="confirmBooking()">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script>
+        let venues = [];
+        let selectedVenue = null;
+        let selectedSlot = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVenues();
+        });
+
+        async function loadVenues() {
+            try {
+                const data = await apiService.makeRequest('/venues');
+                venues = data;
+                displayVenues(data);
+            } catch (error) {
+                console.error('Load venues error:', error);
+                alert('Failed to load venues');
+            }
+        }
+
+        function displayVenues(venueList) {
+            const grid = document.getElementById('venueGrid');
+
+            if (venueList.length === 0) {
+                grid.innerHTML = '<p>No venues available</p>';
+                return;
+            }
+
+            grid.innerHTML = venueList.map(venue => `
+                <div class="venue-card" onclick="openBookingModal('${venue.id}')">
+                    ${venue.image_url ? `<img src="${venue.image_url}" class="venue-image" alt="${venue.name}">` : ''}
+                    <h3>${venue.name}</h3>
+                    <p><strong>Location:</strong> ${venue.location || 'N/A'}</p>
+                    <p><strong>Capacity:</strong> ${venue.capacity || 'N/A'}</p>
+                    <p><strong>Rate:</strong> £${venue.hourly_rate || 0}/hour</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">${venue.description || ''}</p>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Book Now</button>
+                </div>
+            `).join('');
+        }
+
+        async function openBookingModal(venueId) {
+            selectedVenue = venues.find(v => v.id === venueId);
+            if (!selectedVenue) return;
+
+            document.getElementById('venueName').textContent = selectedVenue.name;
+            document.getElementById('venueDetails').innerHTML = `
+                <p><strong>Location:</strong> ${selectedVenue.location}</p>
+                <p><strong>Capacity:</strong> ${selectedVenue.capacity} people</p>
+                <p><strong>Hourly Rate:</strong> £${selectedVenue.hourly_rate}</p>
+                <p>${selectedVenue.description || ''}</p>
+            `;
+
+            // Set min date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('bookingDate').min = today;
+            document.getElementById('bookingDate').value = today;
+
+            document.getElementById('bookingModal').style.display = 'block';
+            loadAvailability();
+        }
+
+        function closeBookingModal() {
+            document.getElementById('bookingModal').style.display = 'none';
+            document.getElementById('bookingForm').style.display = 'none';
+            selectedSlot = null;
+        }
+
+        async function loadAvailability() {
+            const date = document.getElementById('bookingDate').value;
+            if (!date || !selectedVenue) return;
+
+            try {
+                const data = await apiService.makeRequest(`/venues/${selectedVenue.id}/availability?date=${date}`);
+                displayAvailability(data);
+            } catch (error) {
+                console.error('Load availability error:', error);
+            }
+        }
+
+        function displayAvailability(data) {
+            const container = document.getElementById('availabilitySlots');
+
+            // Generate time slots (9 AM to 9 PM)
+            const slots = [];
+            for (let hour = 9; hour <= 21; hour++) {
+                const startTime = `${hour.toString().padStart(2, '0')}:00`;
+                const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
+
+                // Check if slot is booked
+                const isBooked = data.bookings.some(booking => {
+                    const bookingStart = new Date(booking.start_time).getHours();
+                    return bookingStart === hour;
+                });
+
+                slots.push({
+                    startTime,
+                    endTime,
+                    available: !isBooked
+                });
+            }
+
+            container.innerHTML = slots.map(slot => `
+                <div class="time-slot ${slot.available ? 'available' : 'booked'}" 
+                     onclick="${slot.available ? `selectSlot('${slot.startTime}', '${slot.endTime}')` : ''}">
+                    ${slot.startTime} - ${slot.endTime}
+                    <span style="float: right;">${slot.available ? '✓ Available' : '✗ Booked'}</span>
+                </div>
+            `).join('');
+        }
+
+        function selectSlot(startTime, endTime) {
+            selectedSlot = { startTime, endTime };
+
+            const date = document.getElementById('bookingDate').value;
+            const cost = selectedVenue.hourly_rate;
+
+            document.getElementById('selectedDate').textContent = date;
+            document.getElementById('selectedTime').textContent = `${startTime} - ${endTime}`;
+            document.getElementById('bookingCost').textContent = cost;
+            document.getElementById('bookingForm').style.display = 'block';
+        }
+
+        async function confirmBooking() {
+            if (!selectedVenue || !selectedSlot) return;
+
+            const date = document.getElementById('bookingDate').value;
+            const notes = document.getElementById('bookingNotes').value;
+
+            const startTime = `${date}T${selectedSlot.startTime}:00`;
+            const endTime = `${date}T${selectedSlot.endTime}:00`;
+
+            try {
+                await apiService.makeRequest(`/venues/${selectedVenue.id}/book`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        startTime,
+                        endTime,
+                        notes
+                    })
+                });
+
+                alert('Booking confirmed!');
+                closeBookingModal();
+                showTab('mybookings');
+                loadMyBookings();
+            } catch (error) {
+                console.error('Booking error:', error);
+                alert('Booking failed: ' + error.message);
+            }
+        }
+
+        async function loadMyBookings() {
+            try {
+                const data = await apiService.makeRequest('/venues/bookings/my');
+                displayMyBookings(data);
+            } catch (error) {
+                console.error('Load bookings error:', error);
+            }
+        }
+
+        function displayMyBookings(bookings) {
+            const container = document.getElementById('myBookingsList');
+
+            if (bookings.length === 0) {
+                container.innerHTML = '<p>No bookings yet</p>';
+                return;
+            }
+
+            container.innerHTML = bookings.map(booking => `
+                <div class="card" style="margin-bottom: 1rem;">
+                    <h3>${booking.venue_name}</h3>
+                    <p><strong>Location:</strong> ${booking.location}</p>
+                    <p><strong>Date:</strong> ${new Date(booking.start_time).toLocaleDateString()}</p>
+                    <p><strong>Time:</strong> ${new Date(booking.start_time).toLocaleTimeString()} - ${new Date(booking.end_time).toLocaleTimeString()}</p>
+                    <p><strong>Cost:</strong> £${booking.total_cost}</p>
+                    <p><strong>Status:</strong> <span class="badge">${booking.status}</span></p>
+                    ${booking.notes ? `<p><strong>Notes:</strong> ${booking.notes}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+
+            if (tabName === 'mybookings') {
+                loadMyBookings();
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('bookingModal');
+            if (event.target === modal) {
+                closeBookingModal();
+            }
+        }
+    </script>
+</body>
+
+</html>
