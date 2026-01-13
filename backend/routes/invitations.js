@@ -3,6 +3,8 @@ const router = express.Router();
 const { pool } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const crypto = require('crypto');
+const EmailService = require('../services/email-service');
+const emailService = new EmailService();
 
 // ============================================================================
 // INVITATION ROUTES
@@ -104,13 +106,36 @@ router.post('/:orgId/invite', authenticateToken, async (req, res) => {
 
     const invitation = inviteResult.rows[0];
 
-    // TODO: Send email with invitation link
-    // const inviteLink = `${process.env.FRONTEND_URL}/invite/${token}`;
+    // Get organization name for email
+    const orgResult = await client.query('SELECT name FROM organizations WHERE id = $1', [orgId]);
+    const orgName = orgResult.rows[0]?.name || 'a club';
+    
+    // Get inviter name
+    const inviterResult = await client.query('SELECT first_name, last_name FROM users WHERE id = $1', [userId]);
+    const inviterName = inviterResult.rows[0] ? `${inviterResult.rows[0].first_name} ${inviterResult.rows[0].last_name}` : 'A Club Administrator';
+
+    // Send email with invitation link
+    try {
+      const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:8000'}/invite-page.html?token=${token}`;
+      
+      await emailService.sendClubInviteEmail({
+        email,
+        clubName: orgName,
+        inviterName,
+        inviteLink,
+        personalMessage: message,
+        isPublic: false,
+        clubRole: role
+      });
+    } catch (emailError) {
+      console.error('Failed to send invitation email:', emailError);
+      // We don't rollback here because the invite is still created in the DB
+    }
 
     res.status(201).json({
       success: true,
       invitation,
-      inviteLink: `/invite/${token}`,
+      inviteLink: `/invite-page.html?token=${token}`,
       message: 'Invitation sent successfully'
     });
   } catch (error) {

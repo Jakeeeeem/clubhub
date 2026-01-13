@@ -124,6 +124,23 @@ router.get('/:id/availability', authenticateToken, async (req, res) => {
     }
 });
 
+// GET /api/venues/:id/documents - Get documents for a venue
+router.get('/:id/documents', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await query(`
+            SELECT * FROM documents
+            WHERE venue_id = $1
+            ORDER BY created_at DESC
+        `, [id]);
+        
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Get venue documents error:', error);
+        res.status(500).json({ error: 'Failed to fetch venue documents' });
+    }
+});
+
 // POST /api/venues/:id/book - Book a venue
 router.post('/:id/book', authenticateToken, [
     body('startTime').isISO8601(),

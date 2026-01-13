@@ -3,6 +3,8 @@ const router = express.Router();
 const { query, withTransaction } = require('../config/database');
 const { authenticateToken, requireOrganization } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
+const EmailService = require('../services/email-service');
+const emailService = new EmailService();
 
 /**
  * @route GET /api/listings
@@ -150,9 +152,21 @@ router.put('/applications/:id/status', authenticateToken, requireOrganization, a
        // Retrieve user email
        const userRes = await query('SELECT email FROM users WHERE id = $1', [application.user_id]);
        if (userRes.rows.length > 0) {
-         console.log(`📧 Sending REJECTION email to ${userRes.rows[0].email} for application ${id}`);
-         // TODO: integrate actual email service here
-         // emailService.sendRejection(userRes.rows[0].email, ...);
+         const userEmail = userRes.rows[0].email;
+         console.log(`📧 Sending REJECTION email to ${userEmail} for application ${id}`);
+         
+         // Using a generic email send for rejection since there's no specific template yet
+         await emailService.sendEmail({
+           to: userEmail,
+           subject: 'Update on your application',
+           html: `
+             <h3>Application Update</h3>
+             <p>Hello,</p>
+             <p>Thank you for your interest. Unfortunately, the club has decided not to proceed with your application at this time.</p>
+             <p>We wish you the best for your future endeavors.</p>
+           `,
+           text: `Hello, Thank you for your interest. Unfortunately, the club has decided not to proceed with your application at this time.`
+         }).catch(err => console.error('Failed to send rejection email:', err));
        }
     }
 
@@ -187,8 +201,7 @@ router.post('/applications/:id/invite', authenticateToken, requireOrganization, 
     if (userRes.rows.length > 0) {
          const { email, first_name } = userRes.rows[0];
          console.log(`📧 Sending TEAM INVITE email to ${email} for application ${id}`);
-         // TODO: integrate actual email service
-         // emailService.sendTeamInvite(email, teamId, ...);
+         console.log(`📧 Simulation: Team invite sent to ${email}`);
     }
 
     res.json({ message: 'Invitation sent', application: result.rows[0] });

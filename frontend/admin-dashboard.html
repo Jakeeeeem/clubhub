@@ -610,8 +610,24 @@
                             <div id="tournamentMatchesList" class="item-list"></div>
                         </div>
                     </div>
-                </div> <!-- End dashboard-content -->
-            </div>
+                </div>
+
+                <!-- Specialized Polls Section -->
+                <div id="polls-section" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3>🗳️ Voting & Polls</h3>
+                            <button class="btn btn-primary" onclick="showModal('createPollModal')">➕ Create
+                                Poll</button>
+                        </div>
+                        <div id="pollsContainer" class="card-grid">
+                            <!-- Polls will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End dashboard-content -->
+        </div>
     </main>
 
     <!-- Enhanced Modals -->
@@ -801,6 +817,81 @@
                     <input type="number" id="playerFee" step="0.01" min="0" placeholder="e.g., 45">
                 </div>
                 <button type="submit" class="btn btn-primary">➕ Add Player</button>
+            </form>
+        </div>
+
+        <!-- Edit Player Modal -->
+        <div id="editPlayerModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✏️ Edit Player Details</h2>
+                    <button class="close" onclick="closeModal('editPlayerModal')">&times;</button>
+                </div>
+                <form id="editPlayerForm">
+                    <input type="hidden" id="editPlayerId">
+                    <div class="form-group">
+                        <label for="editPlayerFirstName">First Name *</label>
+                        <input type="text" id="editPlayerFirstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerLastName">Last Name *</label>
+                        <input type="text" id="editPlayerLastName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerEmail">Email</label>
+                        <input type="email" id="editPlayerEmail">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerPhone">Phone</label>
+                        <input type="tel" id="editPlayerPhone">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerDOB">Date of Birth *</label>
+                        <input type="date" id="editPlayerDOB" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerPosition">Position</label>
+                        <input type="text" id="editPlayerPosition" placeholder="e.g., Striker, Point Guard">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerPaymentStatus">Payment Status</label>
+                        <select id="editPlayerPaymentStatus">
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="overdue">Overdue</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Poll Modal -->
+    <div id="createPollModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🗳️ Create New Poll</h2>
+                <button class="close" onclick="closeModal('createPollModal')">&times;</button>
+            </div>
+            <form id="createPollForm">
+                <div class="form-group">
+                    <label for="pollTitle">Poll Question / Title</label>
+                    <input type="text" id="pollTitle" placeholder="e.g. What color should our new kit be?" required>
+                </div>
+                <div class="form-group">
+                    <label for="pollDescription">Description (Optional)</label>
+                    <textarea id="pollDescription" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Options (One per line)</label>
+                    <textarea id="pollOptions" rows="4" placeholder="Red\nBlue\nGreen" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="pollExpires">Expiration Date (Optional)</label>
+                    <input type="datetime-local" id="pollExpires">
+                </div>
+                <button type="submit" class="btn btn-primary">🚀 Launch Poll</button>
             </form>
         </div>
     </div>
@@ -1598,6 +1689,7 @@
                 loadEvents();
                 loadFinances();
                 initAddPlayerModalControls();
+                checkAndConfigureStripe();
 
                 console.log('✅ Admin Dashboard loaded successfully');
             } catch (error) {
@@ -1611,6 +1703,21 @@
             setupEnhancedEventListeners();
         });
 
+        async function checkAndConfigureStripe() {
+            try {
+                const status = await apiService.makeRequest('/payments/stripe/connect/status');
+                if (status.stripeAccountId && status.details_submitted) {
+                    console.log('💳 Stripe connected, ensuring monthly payout schedule (1st of month)');
+                    await apiService.makeRequest(`/stripe-payouts/configure-payout/${status.stripeAccountId}`, {
+                        method: 'POST'
+                    });
+                }
+            } catch (err) {
+                // Silently skip if not onboarded
+                console.log('Stripe configuration check skipped or failed');
+            }
+        }
+
 
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
@@ -1618,6 +1725,11 @@
             const addPlayerForm = document.getElementById('addPlayerForm');
             if (addPlayerForm) {
                 addPlayerForm.addEventListener('submit', handleAddPlayer);
+            }
+
+            const editPlayerForm = document.getElementById('editPlayerForm');
+            if (editPlayerForm) {
+                editPlayerForm.addEventListener('submit', handleEditPlayer);
             }
 
             // Team form  
@@ -4333,6 +4445,8 @@
                 event_date: document.getElementById('eventDate').value,
                 event_time: document.getElementById('eventTime').value,
                 location: document.getElementById('eventLocation').value,
+                latitude: document.getElementById('eventLat').value || null,
+                longitude: document.getElementById('eventLng').value || null,
                 description: document.getElementById('eventDescription').value,
                 team_id: document.getElementById('eventTeam').value || null,
                 opponent: document.getElementById('eventOpponent').value || null,
@@ -4577,8 +4691,19 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="eventLocation">Location</label>
+                        <label for="eventLocation">Location Name</label>
                         <input type="text" id="eventLocation" required placeholder="e.g. Training Ground Pitch 1">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="eventLat">Latitude (for Geofencing)</label>
+                            <input type="number" id="eventLat" step="any" placeholder="e.g. 51.5074">
+                        </div>
+                        <div class="form-group">
+                            <label for="eventLng">Longitude (for Geofencing)</label>
+                            <input type="number" id="eventLng" step="any" placeholder="e.g. -0.1278">
+                        </div>
                     </div>
 
                     <!-- Dynamic Field: Team Selection -->
@@ -4778,8 +4903,59 @@
             }
 
             async function editPlayer(playerId) {
-                // TODO: Open edit modal with player data
-                showNotification('Edit functionality coming soon!', 'info');
+                try {
+                    showLoading(true);
+                    const player = await apiService.makeRequest(`/players/${playerId}`);
+
+                    document.getElementById('editPlayerId').value = player.id;
+                    document.getElementById('editPlayerFirstName').value = player.first_name;
+                    document.getElementById('editPlayerLastName').value = player.last_name;
+                    document.getElementById('editPlayerEmail').value = player.email || '';
+                    document.getElementById('editPlayerPhone').value = player.phone || '';
+                    document.getElementById('editPlayerDOB').value = player.date_of_birth ? player.date_of_birth.split('T')[0] : '';
+                    document.getElementById('editPlayerPosition').value = player.position || '';
+                    document.getElementById('editPlayerPaymentStatus').value = player.payment_status || 'pending';
+
+                    showModal('editPlayerModal');
+                } catch (error) {
+                    console.error('Fetch player error:', error);
+                    showNotification('Failed to load player data', 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function handleEditPlayer(e) {
+                e.preventDefault();
+                const playerId = document.getElementById('editPlayerId').value;
+
+                const payload = {
+                    firstName: document.getElementById('editPlayerFirstName').value.trim(),
+                    lastName: document.getElementById('editPlayerLastName').value.trim(),
+                    email: document.getElementById('editPlayerEmail').value.trim(),
+                    phone: document.getElementById('editPlayerPhone').value.trim(),
+                    dateOfBirth: document.getElementById('editPlayerDOB').value,
+                    position: document.getElementById('editPlayerPosition').value.trim(),
+                    paymentStatus: document.getElementById('editPlayerPaymentStatus').value,
+                    clubId: AppState.currentOrganization?.id || (AppState.clubs?.[0]?.id)
+                };
+
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/players/${playerId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(payload)
+                    });
+
+                    showNotification('Player updated successfully', 'success');
+                    closeModal('editPlayerModal');
+                    loadPlayers();
+                } catch (error) {
+                    console.error('Update player error:', error);
+                    showNotification('Failed to update player: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
             }
 
             function exportPlayers() {
@@ -4826,6 +5002,123 @@
                     showNotification('Failed to export players', 'error');
                 }
             }
+
+            // ========================================
+            // POLLS & VOTING ✅
+            // ========================================
+            async function loadPolls() {
+                try {
+                    const orgId = AppState.currentOrganization?.id;
+                    const polls = await apiService.makeRequest(`/polls?organizationId=${orgId}`);
+                    displayPolls(polls);
+                } catch (error) {
+                    console.error('Load polls error:', error);
+                    document.getElementById('pollsContainer').innerHTML = '<p>Error loading polls.</p>';
+                }
+            }
+
+            function displayPolls(polls) {
+                const container = document.getElementById('pollsContainer');
+                if (!polls || polls.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No active polls found.</p>';
+                    return;
+                }
+
+                container.innerHTML = polls.map(poll => {
+                    const options = JSON.parse(poll.options);
+                    const totalVotes = poll.results.reduce((sum, r) => sum + parseInt(r.count), 0);
+
+                    return `
+                        <div class="card" style="border: 1px solid var(--border-color);">
+                            <h4>${poll.title}</h4>
+                            <p style="opacity: 0.7; font-size: 0.9rem;">${poll.description || ''}</p>
+                            <div class="poll-options" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                                ${options.map(opt => {
+                        const voteData = poll.results.find(r => r.selection === opt);
+                        const count = voteData ? parseInt(voteData.count) : 0;
+                        const percent = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+                        const isUserVote = poll.userVote === opt;
+
+                        return `
+                                        <div class="poll-option-row" onclick="voteOnPoll('${poll.id}', '${opt}')" 
+                                             style="cursor: pointer; position: relative; background: var(--bg-secondary); border-radius: 8px; overflow: hidden; border: 1px solid ${isUserVote ? 'var(--primary)' : 'transparent'};">
+                                            <div class="poll-bar" style="position: absolute; left: 0; top: 0; bottom: 0; width: ${percent}%; background: rgba(220, 67, 67, 0.1);"></div>
+                                            <div style="position: relative; z-index: 1; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                                <span>${isUserVote ? '● ' : ''}${opt}</span>
+                                                <span style="font-weight: bold;">${Math.round(percent)}% (${count})</span>
+                                            </div>
+                                        </div>
+                                    `;
+                    }).join('')}
+                            </div>
+                            <p style="margin-top: 1rem; font-size: 0.8rem; opacity: 0.5;">Total Votes: ${totalVotes} • Status: ${poll.status}</p>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async function createPoll(e) {
+                e.preventDefault();
+                const title = document.getElementById('pollTitle').value;
+                const description = document.getElementById('pollDescription').value;
+                const optionsRaw = document.getElementById('pollOptions').value;
+                const expiresAt = document.getElementById('pollExpires').value;
+
+                const options = optionsRaw.split('\n').map(o => o.trim()).filter(o => o.length > 0);
+
+                if (options.length < 2) {
+                    alert('Please provide at least 2 options.');
+                    return;
+                }
+
+                try {
+                    await apiService.makeRequest('/polls', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            title,
+                            description,
+                            options,
+                            expiresAt: expiresAt || null,
+                            organizationId: AppState.currentOrganization.id
+                        })
+                    });
+
+                    closeModal('createPollModal');
+                    document.getElementById('createPollForm').reset();
+                    loadPolls();
+                    showNotification('Poll launched successfully!', 'success');
+                } catch (error) {
+                    console.error('Create poll error:', error);
+                    alert('Failed to launch poll: ' + error.message);
+                }
+            }
+
+            async function voteOnPoll(pollId, selection) {
+                try {
+                    await apiService.makeRequest(`/polls/${pollId}/vote`, {
+                        method: 'POST',
+                        body: JSON.stringify({ selection })
+                    });
+                    loadPolls();
+                } catch (error) {
+                    console.error('Vote error:', error);
+                    showNotification(error.message, 'error');
+                }
+            }
+
+            // Bind forms
+            document.getElementById('createPollForm')?.addEventListener('submit', createPoll);
+
+            // Expose globally
+            window.loadPolls = loadPolls;
+            window.voteOnPoll = voteOnPoll;
+
+            // Updated showSection switcher for Polls
+            const originalShowSection = window.showSection;
+            window.showSection = function (sectionId) {
+                if (originalShowSection) originalShowSection(sectionId);
+                if (sectionId === 'polls-section') loadPolls();
+            };
 
             // Expose functions globally
             window.deletePlayer = deletePlayer;

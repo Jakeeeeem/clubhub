@@ -91,6 +91,42 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 /**
+ * GET /api/organizations/super/:id
+ * Get organization details for Super Admin
+ */
+const { requirePlatformAdmin } = require('../middleware/auth');
+router.get('/super/:id', authenticateToken, requirePlatformAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(`
+      SELECT o.*, u.email as owner_email, u.first_name as owner_name, u.last_name as owner_last_name
+      FROM organizations o
+      LEFT JOIN users u ON o.owner_id = u.id
+      WHERE o.id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Organization not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      organization: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Super Admin fetch org error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch organization details'
+    });
+  }
+});
+
+/**
  * POST /api/organizations
  * Create a new organization
  */

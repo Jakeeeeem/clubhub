@@ -793,6 +793,7 @@ function loadPlayerTeams() {
             </div>
             <div>
                 <button class="btn btn-primary btn-small" onclick="submitAvailability('${event.id}')">Set Availability</button>
+                <button class="btn btn-success btn-small" style="background:#28a745; border-color:#28a745;" onclick="checkInEvent('${event.id}')">📍 I'm Here</button>
             </div>
         </div>
        `;
@@ -867,6 +868,7 @@ function displayEvents(events) {
       '<p>' + escapeHTML(event.description || 'No description available') + '</p>' +
       '<div class="item-actions">' +
         '<button class="btn btn-small btn-primary" onclick="bookEvent(\'' + event.id + '\')">Book Event</button>' +
+        '<button class="btn btn-small btn-success" style="background:#28a745; border-color:#28a745;" onclick="checkInEvent(\'' + event.id + '\')">📍 I\'m Here</button>' +
         '<button class="btn btn-small btn-secondary" onclick="viewEventDetails(\'' + event.id + '\')">View Details</button>' +
       '</div>' +
     '</div>';
@@ -1151,6 +1153,36 @@ function submitAvailability(eventId) {
   if (eventIdEl) eventIdEl.value = eventId;
   showModal('availabilityModal');
 }
+
+async function checkInEvent(eventId) {
+    if (!navigator.geolocation) {
+        showNotification('Geolocation is not supported by your browser', 'error');
+        return;
+    }
+
+    showNotification('Verifying location...', 'info');
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+        try {
+            const { latitude, longitude } = position.coords;
+            
+            await apiService.makeRequest(`/events/${eventId}/checkin`, {
+                method: 'POST',
+                body: JSON.stringify({ latitude, longitude })
+            });
+
+            showNotification('✅ Checked in successfully!', 'success');
+            loadPlayerOverview(); // Refresh
+        } catch (error) {
+            console.error('Check-in error:', error);
+            showNotification(error.message || 'Check-in failed. Are you at the venue?', 'error');
+        }
+    }, (error) => {
+        showNotification('Failed to get location. Please enable GPS.', 'error');
+    });
+}
+
+window.checkInEvent = checkInEvent;
 
 async function handleAvailabilitySubmission(e) {
   e.preventDefault();

@@ -583,9 +583,27 @@
         }
 
         // View organization details
-        function viewOrganization(id) {
-            // TODO: Implement organization detail view
-            alert(`View organization: ${id}`);
+        async function viewOrganization(id) {
+            try {
+                const response = await apiService.makeRequest(`/organizations/super/${id}`);
+                const org = response.organization;
+                const owner = org.owner_name || (org.first_name ? `${org.first_name} ${org.last_name}` : 'N/A');
+
+                // For now, using a detailed alert as a placeholder for a complex modal
+                // In a real production app, this would be a beautiful modal
+                alert(`
+Organization: ${org.name}
+Owner: ${owner}
+Email: ${org.owner_email || org.email || 'N/A'}
+Status: ${org.status || 'Active'}
+Joined: ${new Date(org.created_at).toLocaleDateString()}
+Plan: ${org.subscription_plan || 'Pro'}
+Location: ${org.location || 'N/A'}
+                `);
+            } catch (error) {
+                console.error('Failed to view organization:', error);
+                alert('Failed to load organization details');
+            }
         }
 
         // Logout

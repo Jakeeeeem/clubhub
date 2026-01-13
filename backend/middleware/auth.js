@@ -63,6 +63,23 @@ function requireAdult(req, res, next) {
   next();
 }
 
+// Middleware to check if user is a platform admin (Super Admin)
+function requirePlatformAdmin(req, res, next) {
+  // Coalesce accountType and role check
+  const isPlatformAdmin = 
+    req.user.accountType === 'platform_admin' || 
+    req.user.userType === 'platform_admin' ||
+    req.user.role === 'platform_admin';
+
+  if (!isPlatformAdmin) {
+    return res.status(403).json({
+      error: 'Access denied',
+      message: 'Platform administrator privileges required'
+    });
+  }
+  next();
+}
+
 // Optional authentication - sets user if token exists but doesn't require it
 function optionalAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -102,6 +119,7 @@ module.exports = {
   authenticateToken,
   requireOrganization,
   requireAdult,
+  requirePlatformAdmin,
   optionalAuth,
   requireClubOwnership,
   rateLimitSensitive

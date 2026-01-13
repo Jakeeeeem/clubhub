@@ -121,6 +121,11 @@
                 <!-- Venue details -->
             </div>
 
+            <div id="venueDocuments"
+                style="margin: 1.5rem 0; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <!-- Venue documents will be loaded here -->
+            </div>
+
             <h3>Select Date & Time</h3>
             <input type="date" id="bookingDate" onchange="loadAvailability()">
 
@@ -202,6 +207,29 @@
 
             document.getElementById('bookingModal').style.display = 'block';
             loadAvailability();
+            loadVenueDocuments(venueId);
+        }
+
+        async function loadVenueDocuments(venueId) {
+            const container = document.getElementById('venueDocuments');
+            if (!container) return;
+
+            try {
+                const docs = await apiService.makeRequest(`/venues/${venueId}/documents`);
+                if (docs && docs.length > 0) {
+                    container.innerHTML = '<h3>Venue Documents</h3><ul style="list-style: none; padding: 0;">' +
+                        docs.map(doc => `
+                            <li style="margin-bottom: 0.5rem;">
+                                📄 <a href="${doc.file_url}" target="_blank" style="color: var(--primary); text-decoration: none;">${doc.name}</a>
+                            </li>
+                        `).join('') + '</ul>';
+                } else {
+                    container.innerHTML = '';
+                }
+            } catch (error) {
+                console.warn('Failed to load venue documents:', error);
+                container.innerHTML = '';
+            }
         }
 
         function closeBookingModal() {
