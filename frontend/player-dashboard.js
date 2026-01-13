@@ -1182,6 +1182,104 @@ async function checkInEvent(eventId) {
     });
 }
 
+// ========================================
+// POLLS & VOTING ✅
+// ========================================
+async function loadPolls() {
+    const container = document.getElementById('pollsContainer');
+    if (!container) return;
+
+    try {
+        container.innerHTML = '<p class="loading-text">Loading polls...</p>';
+        
+        // Get organization ID from first club (players are usually in one org context)
+        const orgId = PlayerDashboardState.clubs?.[0]?.organization_id || 
+                      PlayerDashboardState.player?.organization_id;
+        
+        if (!orgId) {
+            container.innerHTML = '<p>Join a club to participate in polls.</p>';
+            return;
+        }
+
+        const polls = await apiService.makeRequest(`/polls?organizationId=${orgId}`);
+        displayPolls(polls);
+    } catch (error) {
+        console.error('Load polls error:', error);
+        container.innerHTML = '<p style="color: #dc3545;">Error loading polls. Please try again later.</p>';
+    }
+}
+
+function displayPolls(polls) {
+    const container = document.getElementById('pollsContainer');
+    if (!container) return;
+
+    if (!polls || polls.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No active polls found.</p>';
+        return;
+    }
+
+    container.innerHTML = polls.map(poll => {
+        const options = typeof poll.options === 'string' ? JSON.parse(poll.options) : poll.options;
+        const totalVotes = poll.results?.reduce((sum, r) => sum + parseInt(r.count), 0) || 0;
+
+        return `
+            <div class="card" style="border: 1px solid var(--border-color); padding: 1.5rem;">
+                <h4 style="margin-bottom: 0.5rem;">${escapeHTML(poll.title)}</h4>
+                <p style="opacity: 0.7; font-size: 0.9rem; margin-bottom: 1.5rem;">${escapeHTML(poll.description || '')}</p>
+                <div class="poll-options" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    ${options.map(opt => {
+                        const voteData = poll.results?.find(r => r.selection === opt);
+                        const count = voteData ? parseInt(voteData.count) : 0;
+                        const percent = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+                        const isUserVote = poll.userVote === opt;
+
+                        return `
+                            <div class="poll-option-row" onclick="voteOnPoll('${poll.id}', '${escapeAttr(opt)}')" 
+                                 style="cursor: pointer; position: relative; background: rgba(255,255,255,0.03); border-radius: 8px; overflow: hidden; border: 1px solid ${isUserVote ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; transition: all 0.2s ease;">
+                                <div class="poll-bar" style="position: absolute; left: 0; top: 0; bottom: 0; width: ${percent}%; background: ${isUserVote ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}; opacity: 0.2; pointer-events: none;"></div>
+                                <div style="position: relative; z-index: 1; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                        ${isUserVote ? '<span style="color: var(--primary);">✅</span>' : ''}
+                                        ${escapeHTML(opt)}
+                                    </span>
+                                    <span style="font-weight: bold; font-family: monospace;">${Math.round(percent)}%</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; opacity: 0.5;">
+                    <span>Total Votes: ${totalVotes}</span>
+                    <span>Status: ${poll.status || 'Active'}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function voteOnPoll(pollId, selection) {
+    try {
+        await apiService.makeRequest(`/polls/${pollId}/vote`, {
+            method: 'POST',
+            body: JSON.stringify({ selection })
+        });
+
+        // Silently reload polls to show updated results
+        loadPolls();
+    } catch (error) {
+        console.error('Vote error:', error);
+        if (error.message.includes('already voted')) {
+            showNotification('You have already voted in this poll.', 'info');
+        } else {
+            showNotification('Failed to cast vote: ' + error.message, 'error');
+        }
+    }
+}
+
+// Expose to window
+window.voteOnPoll = voteOnPoll;
+window.loadPolls = loadPolls;
+
 window.checkInEvent = checkInEvent;
 
 async function handleAvailabilitySubmission(e) {
@@ -1450,6 +1548,9 @@ function showPlayerSection(sectionId) {
     case 'finances': 
       loadPlayerFinances(); 
       break;
+    case 'polls':
+      loadPolls();
+      break;
     case 'players': 
       const activeFilter = document.querySelector('.filter-tab.active')?.dataset.filter || 'all';
       renderPlayersList(activeFilter); 
@@ -1499,6 +1600,9 @@ async function loadPlayerProducts() {
       const results = await Promise.all(productPromises);
       products = results.flat();
     }
+    
+    // Save to state for easy access in buyProduct
+    PlayerDashboardState.products = products;
 
     if (!products || products.length === 0) {
       container.innerHTML = '<div class="empty-state"><h4>No products available</h4><p>Check back later for club merchandise</p></div>';
@@ -1526,30 +1630,67 @@ async function loadPlayerProducts() {
 }
 
 async function buyProduct(productId, price, name) {
-  const onSuccess = async (paymentResult) => {
-    try {
-      showLoading(true);
-      await apiService.purchaseProduct(productId, {
-        quantity: 1,
-        paymentIntentId: paymentResult.id
-      });
-      
-      showNotification(`Successfully purchased ${name}!`, 'success');
-      await loadPlayerProducts(); // Refresh stock
-    } catch (error) {
-      console.error('Purchase confirmation failed:', error);
-      showNotification('Purchase confirmation failed: ' + error.message, 'error');
-    } finally {
-      showLoading(false);
+  const product = PlayerDashboardState.products.find(p => p.id === productId);
+  const customFields = product?.custom_fields ? (typeof product.custom_fields === 'string' ? JSON.parse(product.custom_fields) : product.custom_fields) : [];
+
+  const handlePurchase = (customization_details = null) => {
+    const onSuccess = async (paymentResult) => {
+      try {
+        showLoading(true);
+        await apiService.purchaseProduct(productId, {
+          quantity: 1,
+          paymentIntentId: paymentResult.id,
+          customization_details: customization_details
+        });
+        
+        showNotification(`Successfully purchased ${name}!`, 'success');
+        await loadPlayerProducts(); // Refresh stock
+      } catch (error) {
+        console.error('Purchase confirmation failed:', error);
+        showNotification('Purchase confirmation failed: ' + error.message, 'error');
+      } finally {
+        showLoading(false);
+      }
+    };
+
+    const onError = (error) => {
+      console.error('Payment failed:', error);
+      showNotification('Payment failed: ' + error.message, 'error');
+    };
+
+    createPaymentModal(Number(price), name, onSuccess, onError);
+  };
+
+  if (customFields && customFields.length > 0) {
+    // Show customization modal
+    const container = byId('productQuestionsContainer');
+    if (container) {
+      container.innerHTML = customFields.map((field, idx) => `
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>${escapeHTML(field)}</label>
+          <input type="text" name="q_${idx}" required class="custom-answer-input" data-question="${escapeHTML(field)}">
+        </div>
+      `).join('');
+
+      const form = byId('productCustomizationForm');
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        const answers = {};
+        const inputs = form.querySelectorAll('.custom-answer-input');
+        inputs.forEach(input => {
+          answers[input.dataset.question] = input.value;
+        });
+        closeModal('productCustomizationModal');
+        handlePurchase(answers);
+      };
+
+      showModal('productCustomizationModal');
+    } else {
+      handlePurchase();
     }
-  };
-
-  const onError = (error) => {
-    console.error('Payment failed:', error);
-    showNotification('Payment failed: ' + error.message, 'error');
-  };
-
-  createPaymentModal(Number(price), name, onSuccess, onError);
+  } else {
+    handlePurchase();
+  }
 }
 
 function byId(id) { return document.getElementById(id); }
@@ -2035,6 +2176,57 @@ window.openAddChildModal = openAddChildModal;
 
 // Add family to state
 PlayerDashboardState.family = [];
+
+function handleSportChange(sport) {
+    const container = document.getElementById('dynamicSportFields');
+    if (!container) return;
+    
+    let html = '';
+    switch(sport) {
+        case 'Football':
+        case 'Rugby':
+            html = `
+                <div class="form-group">
+                    <label>Position</label>
+                    <select name="position">
+                        <option value="">Select Position</option>
+                        <option value="Goalkeeper">Goalkeeper</option>
+                        <option value="Defender">Defender</option>
+                        <option value="Midfielder">Midfielder</option>
+                        <option value="Forward">Forward</option>
+                    </select>
+                </div>
+            `;
+            break;
+        case 'Cricket':
+            html = `
+                <div class="form-group">
+                    <label>Batting Style</label>
+                    <select name="battingStyle">
+                        <option value="Right-hand">Right-hand</option>
+                        <option value="Left-hand">Left-hand</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Bowling Style</label>
+                    <input type="text" name="bowlingStyle" placeholder="e.g. Right-arm fast">
+                </div>
+            `;
+            break;
+        case 'Athletics':
+            html = `
+                <div class="form-group">
+                    <label>Primary Event</label>
+                    <input type="text" name="event" placeholder="e.g. 100m, Long Jump">
+                </div>
+            `;
+            break;
+        default:
+            html = '';
+    }
+    container.innerHTML = html;
+}
+window.handleSportChange = handleSportChange;
 
 async function wireFamilyListeners() {
     await loadFamilyMembers();

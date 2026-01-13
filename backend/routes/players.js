@@ -581,14 +581,27 @@ router.delete('/:id', authenticateToken, requireOrganization, async (req, res) =
 
     const player = playerResult.rows[0];
 
-    // Verify user owns the club
+    // Verify user owns the club or is an admin staff
     const clubResult = await query(queries.findClubById, [player.club_id]);
     const club = clubResult.rows[0];
     
-    if (club.owner_id !== req.user.id) {
+    let isAuthorized = club.owner_id === req.user.id;
+    
+    if (!isAuthorized) {
+      // Check if user is an admin staff member of this club
+      const staffResult = await query(
+        'SELECT role FROM staff WHERE user_id = $1 AND club_id = $2',
+        [req.user.id, player.club_id]
+      );
+      if (staffResult.rows.length > 0 && staffResult.rows[0].role === 'admin') {
+        isAuthorized = true;
+      }
+    }
+    
+    if (!isAuthorized) {
       return res.status(403).json({
         error: 'Access denied',
-        message: 'You can only delete players from your own clubs'
+        message: 'You do not have permission to delete players from this club'
       });
     }
 

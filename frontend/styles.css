@@ -1443,11 +1443,19 @@ section#benefits {
 /* Landing Page Components */
 .hero-platforms {
     height: calc(100vh - 80px);
-    display: none;
-    margin-top: 0px;
-    overflow: hidden;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
     background: #000;
-    position: relative; /* Ensure absolute children are relative to this */
+    position: relative;
+    -ms-overflow-style: none; /* Hide scrollbar IE/Edge */
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+}
+
+.hero-platforms::-webkit-scrollbar {
+    display: none; /* Hide scrollbar Chrome/Safari */
 }
 
 .hero-overlay-text {
@@ -1490,7 +1498,8 @@ section#benefits {
 }
 
 .platform-col {
-    flex: 1;
+    min-width: 50vw; /* 2 columns visible on large screens, scroll for more */
+    flex: 0 0 50vw; 
     height: 100%;
     position: relative;
     display: flex;
@@ -1503,6 +1512,15 @@ section#benefits {
     overflow: hidden;
     text-decoration: none;
     color: white;
+    scroll-snap-align: start;
+    border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+@media (min-width: 1200px) {
+    .platform-col {
+        min-width: 25vw;
+        flex: 0 0 25vw;
+    }
 }
 
 .platform-col::before {
@@ -1514,9 +1532,10 @@ section#benefits {
     height: 100%;
     background-size: cover;
     background-position: center;
-    transition: transform 0.8s ease;
+    transition: transform 0.1s linear; /* Faster transition for parallax */
     z-index: 1;
     opacity: 0.6;
+    transform: translateX(var(--parallax-offset, 0px)) scale(1.1);
 }
 
 .platform-col.org::before {
@@ -1525,6 +1544,16 @@ section#benefits {
 
 .platform-col.player::before {
     background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url('images/players-hero.jpg');
+}
+
+.platform-col.coach::before {
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url('images/coach-hero.jpg');
+    background-color: #1a1a1a;
+}
+
+.platform-col.league::before {
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.8)), url('images/league-hero.jpg');
+    background-color: #0d0d0d;
 }
 
 .platform-col:hover::before {

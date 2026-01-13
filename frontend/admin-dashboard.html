@@ -1234,9 +1234,19 @@
                 </div>
                 <div class="form-group">
                     <label for="productDescription">Description</label>
-                    <textarea id="productDescription" rows="3"></textarea>
+                    <textarea id="productDescription" rows="2"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">➕ Add Product</button>
+                <div class="form-group">
+                    <label>Custom Questions (e.g., Size, Initials)</label>
+                    <div id="customQuestionsContainer"
+                        style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                        <!-- Dynamic question inputs -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small" onclick="addQuestionField()"
+                        style="margin-top: 0.5rem;">+ Add Question</button>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">➕ Add
+                    Product</button>
             </form>
         </div>
     </div>
@@ -1474,15 +1484,33 @@
             }
         }
 
+        function addQuestionField() {
+            const container = document.getElementById('customQuestionsContainer');
+            if (!container) return;
+            const div = document.createElement('div');
+            div.style.display = 'flex';
+            div.style.gap = '0.5rem';
+            div.innerHTML = `
+                <input type="text" class="custom-question-input" placeholder="e.g. Size" style="flex: 1; padding: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; color: white;">
+                <button type="button" class="btn btn-secondary btn-small" onclick="this.parentElement.remove()" style="background: #444; border: none; align-self: stretch;">×</button>
+            `;
+            container.appendChild(div);
+        }
+
         async function handleAddProduct(e) {
             if (e) e.preventDefault();
+
+            const customFields = Array.from(document.querySelectorAll('.custom-question-input'))
+                .map(input => input.value.trim())
+                .filter(val => val !== '');
 
             const payload = {
                 name: document.getElementById('productName').value.trim(),
                 price: parseFloat(document.getElementById('productPrice').value),
                 stock_quantity: document.getElementById('productStock').value ? parseInt(document.getElementById('productStock').value) : null,
                 description: document.getElementById('productDescription').value.trim(),
-                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id),
+                custom_fields: customFields
             };
 
             try {

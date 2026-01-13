@@ -43,12 +43,12 @@ router.get('/', authenticateToken, async (req, res) => {
       queryParams.push(`%${position}%`);
     }
 
-    // Role-based filtering for coaches (if implemented on frontend/calling side)
-    // Or just generic filter if passed
-    if (teamId) {
-      paramCount++;
-      queryText += ` AND l.team_id = $${paramCount}`;
-      queryParams.push(teamId);
+    // Coach Scoping: If user is a coach, limit them to their team's listings
+    const staffCheck = await query('SELECT id, role FROM staff WHERE user_id = $1', [req.user.id]);
+    if (staffCheck.rows.length > 0 && staffCheck.rows[0].role === 'coach') {
+        const coachId = staffCheck.rows[0].id;
+        queryText += ` AND l.team_id IN (SELECT id FROM teams WHERE coach_id = $${++paramCount})`;
+        queryParams.push(coachId);
     }
 
     queryText += ' ORDER BY l.created_at DESC';
@@ -108,6 +108,20 @@ router.get('/:id/applications', authenticateToken, requireOrganization, async (r
       WHERE la.listing_id = $1
     `;
     const queryParams = [id];
+
+    // Coach Scoping: If user is a coach, ensure they can only see applications for their team
+    const staffCheck = await query('SELECT id, role FROM staff WHERE user_id = $1', [req.user.id]);
+    if (staffCheck.rows.length > 0 && staffCheck.rows[0].role === 'coach') {
+      const coachId = staffCheck.rows[0].id;
+      const listingCheck = await query('SELECT team_id FROM listings WHERE id = $1', [id]);
+      if (listingCheck.rows.length > 0) {
+        const teamId = listingCheck.rows[0].team_id;
+        const ownershipCheck = await query('SELECT id FROM teams WHERE id = $1 AND coach_id = $2', [teamId, coachId]);
+        if (ownershipCheck.rows.length === 0) {
+          return res.status(403).json({ error: 'Access denied: You are not the coach for this listing\'s team' });
+        }
+      }
+    }
 
     if (status) {
       queryText += ` AND la.status = $2`;

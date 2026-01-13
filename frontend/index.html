@@ -76,7 +76,7 @@
             <a href="signup.html?type=organization" class="platform-col org">
                 <div class="platform-content">
                     <h2 class="platform-title">Organizations</h2>
-                    <p class="platform-tagline">Manage your ecosystem. Recruit talent. Drive revenue.</p>
+                    <p class="platform-tagline">Manage your club. Recruit talent. Drive revenue.</p>
                     <span class="platform-btn">Start Managing</span>
                 </div>
             </a>
@@ -89,6 +89,22 @@
                 </div>
             </a>
 
+            <a href="signup.html?type=coach" class="platform-col coach">
+                <div class="platform-content">
+                    <h2 class="platform-title">Coaches</h2>
+                    <p class="platform-tagline">Manage teams. Track progress. Master the game.</p>
+                    <span class="platform-btn">Start Coaching</span>
+                </div>
+            </a>
+
+            <a href="signup.html?type=league" class="platform-col league">
+                <div class="platform-content">
+                    <h2 class="platform-title">Leagues</h2>
+                    <h2 class="platform-title">Leagues/Venues</h2>
+                    <p class="platform-tagline">Schedule fixtures. Manage bookings. Run the show.</p>
+                    <span class="platform-btn">Organize Now</span>
+                </div>
+            </a>
         </section>
 
         <!-- Why Choose ClubHub -->
@@ -474,8 +490,13 @@
                 <div class="form-group">
                     <label for="loginPassword">Password</label>
                     <input type="password" id="loginPassword" required>
+                    <div style="text-align: right; margin-top: 0.5rem;">
+                        <a href="forgot-password.html"
+                            style="color: var(--primary); font-size: 0.85rem; text-decoration: none;">Forgot
+                            Password?</a>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Login</button>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
             </form>
         </div>
     </div>
@@ -558,14 +579,28 @@
 
         // Basic fallback functions in case enhanced handler fails to load
         if (typeof showModal === 'undefined') {
-            window.showModal = function (modalId) {
-                document.getElementById(modalId).style.display = 'block';
-            };
-
-            window.closeModal = function (modalId) {
-                document.getElementById(modalId).style.display = 'none';
-            };
+            window.showModal = (id) => { const el = document.getElementById(id); if (el) el.style.display = 'block'; };
+            window.closeModal = (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
         }
+
+        // Horizontal Parallax for Hero Platforms
+        document.addEventListener('DOMContentLoaded', () => {
+            const platforms = document.querySelector('.hero-platforms');
+            if (platforms) {
+                platforms.addEventListener('scroll', () => {
+                    const scrollLeft = platforms.scrollLeft;
+                    const cols = platforms.querySelectorAll('.platform-col');
+                    cols.forEach((col) => {
+                        const colLeft = col.offsetLeft;
+                        const colWidth = col.offsetWidth;
+                        const center = colLeft + (colWidth / 2);
+                        const platformCenter = platforms.scrollLeft + (platforms.offsetWidth / 2);
+                        const offset = (scrollLeft - colLeft) * 0.3; // Speed factor
+                        col.style.setProperty('--parallax-offset', `${offset}px`);
+                    });
+                });
+            }
+        });
     </script>
 
     <!-- Load your existing handlers -->

@@ -36,18 +36,20 @@
       <!-- Dashboard Navigation -->
       <div class="dashboard-nav">
         <button class="active" onclick="showPlayerSection('overview')">Overview</button>
-        <button onclick="showSection('my-availability')">Voting/Availability</button>
-        <button onclick="showSection('family')">My Family</button>
+        <button onclick="showPlayerSection('polls')">Polls & Voting</button>
+        <button onclick="showPlayerSection('family')">My Family</button>
         <button onclick="showPlayerSection('shop')">Club Shop</button>
-        <button onclick="showSection('payments')">Payments</button>
+        <button onclick="showPlayerSection('payments')">Payments</button>
         <button onclick="showPlayerSection('my-clubs')">My Clubs</button>
         <button onclick="showPlayerSection('teams')">Teams</button>
         <button onclick="showPlayerSection('subscriptions')">Subscriptions</button>
         <button onclick="showPlayerSection('payments')">Payments</button>
         <button onclick="showPlayerSection('item-shop')">🛒 Item Shop</button>
+        <button onclick="window.location.href='venue-booking.html'">🏟️ Book Venue</button>
         <button onclick="showPlayerSection('club-finder')">Find Clubs</button>
         <button onclick="showPlayerSection('event-finder')">Find Events</button>
         <button onclick="showPlayerSection('documents')">Documents</button>
+        <button onclick="window.location.href='player-settings.html'">⚙️ Settings</button>
       </div>
 
       <div class="dashboard-content">
@@ -167,6 +169,17 @@
           <div class="card">
             <h3>Team Events & Availability</h3>
             <div id="teamEventsContainer"></div>
+          </div>
+        </div>
+
+        <!-- Polls & Voting -->
+        <div id="player-polls" class="dashboard-section">
+          <div class="card">
+            <h3>🗳️ Active Polls</h3>
+            <p>Have your say in club decisions.</p>
+            <div id="pollsContainer" class="card-grid" style="margin-top: 1.5rem;">
+              <p class="loading-text">Loading polls...</p>
+            </div>
           </div>
         </div>
 
@@ -609,6 +622,23 @@
   </script>
 
   <!-- Add Child Modal -->
+  <!-- Product Customization Modal -->
+  <div id="productCustomizationModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Product Customization</h2>
+        <span class="close" onclick="closeModal('productCustomizationModal')">&times;</span>
+      </div>
+      <form id="productCustomizationForm">
+        <div id="productQuestionsContainer" style="margin-top: 1rem;">
+          <!-- Questions will be injected here -->
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">Confirm Details &
+          Pay</button>
+      </form>
+    </div>
+  </div>
+
   <div id="addChildModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -629,18 +659,8 @@
           <input type="date" name="dateOfBirth" required>
         </div>
         <div class="form-group">
-          <label>Position (Optional)</label>
-          <select name="position">
-            <option value="">Select Position</option>
-            <option value="Goalkeeper">Goalkeeper</option>
-            <option value="Defender">Defender</option>
-            <option value="Midfielder">Midfielder</option>
-            <option value="Forward">Forward</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label>Sport</label>
-          <select name="sport" required>
+          <select name="sport" required onchange="handleSportChange(this.value)">
             <option value="Football">Football</option>
             <option value="Basketball">Basketball</option>
             <option value="Tennis">Tennis</option>
@@ -649,6 +669,9 @@
             <option value="Athletics">Athletics</option>
             <option value="Other">Other</option>
           </select>
+        </div>
+        <div id="dynamicSportFields" style="margin-top: 1rem;">
+          <!-- Dynamic fields like Position, Batting Style, etc. -->
         </div>
         <div class="form-group">
           <label>Gender</label>
