@@ -1573,21 +1573,22 @@ section#benefits {
 }
 
 .platform-title {
-    font-size: 4rem;
+    font-size: 2.5rem;
     font-weight: 800;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     font-family: 'Outfit', sans-serif;
     text-transform: uppercase;
-    letter-spacing: -1px;
-    line-height: 1;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
     text-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
 .platform-tagline {
-    font-size: 1.2rem;
-    margin-bottom: 2.5rem;
-    opacity: 0.9;
-    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    opacity: 0.85;
+    font-weight: 400;
+    line-height: 1.4;
 }
 
 .platform-btn {
@@ -1921,7 +1922,11 @@ section#benefits {
     }
 
     .platform-title {
-        font-size: 2.5rem;
+        font-size: 2rem;
+    }
+    
+    .platform-tagline {
+        font-size: 0.85rem;
     }
 
     .club-finder-hero {
