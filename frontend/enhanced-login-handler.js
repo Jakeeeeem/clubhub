@@ -155,6 +155,12 @@ async function determineUserRedirect(user) {
 
     // Check if user is admin/organization
     if (user.userType === 'organization' || user.userType === 'admin' || user.account_type === 'organization') {
+        // Demo accounts get clubs auto-created, skip check
+        if (userEmail === 'demo-admin@clubhub.com' || userEmail === 'demo-coach@clubhub.com') {
+            console.log('Demo admin account, redirecting to dashboard (club auto-created)');
+            return 'admin-dashboard.html';
+        }
+        
         // NEW: Check if they have any organizations
         try {
             const context = await apiService.makeRequest('/auth/context');
