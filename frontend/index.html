@@ -650,7 +650,7 @@
 
                 grid.innerHTML = clubs.map(club => `
                     <div class="card" style="cursor: pointer; transition: transform 0.2s;" 
-                         onclick="window.location.href='apply.html?id=${club.id}&name=${encodeURIComponent(club.name)}&sport=${encodeURIComponent(club.sport || '')}'">
+                         onclick="window.location.href='club-detail.html?id=${club.id || club._id}'">
                         <div style="margin-bottom: 1rem;">
                             <h3 style="margin-bottom: 0.5rem; color: var(--primary-color);">${club.name}</h3>
                             <span style="background: rgba(220, 67, 67, 0.1); color: var(--primary-color); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">

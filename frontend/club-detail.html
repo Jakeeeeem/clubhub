@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Details - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .club-header {
+            background: linear-gradient(135deg, rgba(220, 67, 67, 0.1) 0%, rgba(13, 13, 13, 0.95) 100%);
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .club-logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .club-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .info-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-value {
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .application-form {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            color: #22c55e;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .error-message {
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            color: #ff6b6b;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="images/logo.png" alt="ClubHub" style="width: 40px; height: 40px;">
+                    <span class="neon-text">ClubHub</span>
+                </div>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">← Back to Home</a>
+                    <a href="login.html" class="nav-link">Login</a>
+                    <a href="signup.html" class="btn btn-primary">Sign Up</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Club Header -->
+    <section class="club-header">
+        <div class="container" style="text-align: center;">
+            <img id="clubLogo" src="images/logo.png" alt="Club Logo" class="club-logo">
+            <h1 id="clubName" class="neon-text" style="font-size: 2.5rem; margin-bottom: 0.5rem;">Loading...</h1>
+            <p id="clubTagline" style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1rem;"></p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <span class="badge" id="clubSport">Sport</span>
+                <span class="badge" id="clubLocation">Location</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Club Details -->
+    <section style="padding: 3rem 0;">
+        <div class="container" style="max-width: 1000px;">
+            <!-- Club Info -->
+            <div class="card">
+                <h2>📋 About the Club</h2>
+                <p id="clubDescription" style="color: var(--text-muted); line-height: 1.8; margin: 1.5rem 0;"></p>
+
+                <div class="club-info-grid">
+                    <div class="info-card">
+                        <div class="info-label">🏟️ Location</div>
+                        <div class="info-value" id="clubLocationFull">-</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">⚽ Sport</div>
+                        <div class="info-value" id="clubSportFull">-</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">🌐 Website</div>
+                        <div class="info-value"><a id="clubWebsite" href="#" target="_blank"
+                                style="color: var(--primary);">Visit Website</a></div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">💡 Philosophy</div>
+                        <div class="info-value" id="clubPhilosophy">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Application Form -->
+            <div class="application-form">
+                <h2>📝 Apply to Join</h2>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">Interested in joining this club? Fill out the
+                    application below and we'll get back to you!</p>
+
+                <div class="success-message" id="successMessage">
+                    ✅ Application submitted successfully! The club will review your application and contact you soon.
+                </div>
+
+                <div class="error-message" id="errorMessage"></div>
+
+                <form id="applicationForm">
+                    <div id="personalDetails">
+                        <div class="form-group">
+                            <label for="playerName">Full Name *</label>
+                            <input type="text" id="playerName" name="playerName" required
+                                placeholder="Enter your full name">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="playerEmail">Email Address *</label>
+                            <input type="email" id="playerEmail" name="playerEmail" required
+                                placeholder="your.email@example.com">
+                        </div>
+
+                        <div class="form-group" id="passwordGroup">
+                            <label for="playerPassword">Create Password * (To manage your application later)</label>
+                            <input type="password" id="playerPassword" name="playerPassword"
+                                placeholder="Min 6 characters">
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Already have an
+                                account? <a href="login.html" style="color: var(--primary);">Login here</a> first.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="playerPhone">Phone Number</label>
+                        <input type="tel" id="playerPhone" name="playerPhone" placeholder="+44 7700 900000">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="playerAge">Age</label>
+                        <input type="number" id="playerAge" name="playerAge" min="5" max="100"
+                            placeholder="Enter your age">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="playerPosition">Preferred Position</label>
+                        <input type="text" id="playerPosition" name="playerPosition"
+                            placeholder="e.g., Forward, Midfielder, Defender">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="playerExperience">Experience Level</label>
+                        <select id="playerExperience" name="playerExperience">
+                            <option value="">Select experience level</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                            <option value="professional">Professional</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="playerMessage">Why do you want to join? *</label>
+                        <textarea id="playerMessage" name="playerMessage" required
+                            placeholder="Tell us about yourself and why you'd like to join this club..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn" style="width: 100%;">
+                        📨 Submit Application & Join ClubHub
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <script src="api-service.js"></script>
+    <script>
+        // Get club ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const clubId = urlParams.get('id');
+
+        if (!clubId) {
+            window.location.href = 'index.html';
+        }
+
+        // Load club details
+        async function loadClubDetails() {
+            try {
+                // 1. Check for dummy data first (for testing)
+                if (clubId.startsWith('dummy-')) {
+                    console.log('🧪 Loading dummy club data...');
+                    const dummyData = {
+                        'dummy-1': { name: 'Elite Performance Club', sport: 'football', location: 'London', description: 'A premier test club for testing search functionality.', philosophy: 'Excellence in every move.' },
+                        'dummy-2': { name: 'The Tennis Club Specialists', sport: 'tennis', location: 'Manchester', description: 'Test club focused on tennis activities and events.', philosophy: 'Play with passion.' },
+                        'dummy-3': { name: 'Global Sport Club United', sport: 'basketball', location: 'Birmingham', description: 'Multi-sport club for all ages.', philosophy: 'Unity through sport.' }
+                    };
+
+                    const club = dummyData[clubId] || dummyData['dummy-1'];
+                    populateClubUI(club);
+                    return;
+                }
+
+                // 2. Try loading from organizations endpoint first
+                try {
+                    const response = await apiService.makeRequest(`/organizations/${clubId}`);
+                    if (response.success && response.organization) {
+                        populateClubUI(response.organization);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Organization not found, trying clubs endpoint...');
+                }
+
+                // 3. Fallback to clubs endpoint
+                const club = await apiService.makeRequest(`/clubs/${clubId}`);
+                if (club) {
+                    populateClubUI(club);
+                } else {
+                    throw new Error('Club not found in either organizations or clubs');
+                }
+
+            } catch (error) {
+                console.error('Failed to load club:', error);
+                document.getElementById('errorMessage').textContent = '❌ Club not found. Redirecting to home...';
+                document.getElementById('errorMessage').style.display = 'block';
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+            }
+        }
+
+        function populateClubUI(club) {
+            document.getElementById('clubName').textContent = club.name || 'Unknown Club';
+            document.getElementById('clubTagline').textContent = club.description ? club.description.substring(0, 100) + '...' : '';
+            document.getElementById('clubDescription').textContent = club.description || 'No description available.';
+            document.getElementById('clubSport').textContent = club.sport || 'Sport';
+            document.getElementById('clubLocation').textContent = club.location || 'Location';
+            document.getElementById('clubLocationFull').textContent = club.location || '-';
+            document.getElementById('clubSportFull').textContent = club.sport || '-';
+            document.getElementById('clubPhilosophy').textContent = club.philosophy || '-';
+
+            if (club.website) {
+                document.getElementById('clubWebsite').href = club.website;
+                document.getElementById('clubWebsite').textContent = 'Visit Website';
+            } else {
+                document.getElementById('clubWebsite').textContent = '-';
+                document.getElementById('clubWebsite').removeAttribute('href');
+            }
+
+            if (club.logo_url) {
+                document.getElementById('clubLogo').src = club.logo_url;
+            }
+
+            document.title = `${club.name} - ClubHub`;
+        }
+
+        // Check if user is logged in to hide password field
+        async function checkInitialAuth() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                    // Try to get user info if token exists
+                    const user = await apiService.makeRequest('/auth/me');
+                    if (user) {
+                        document.getElementById('passwordGroup').style.display = 'none';
+                        document.getElementById('playerName').value = (user.first_name || '') + ' ' + (user.last_name || '');
+                        document.getElementById('playerEmail').value = user.email || '';
+                        document.getElementById('playerName').readOnly = true;
+                        document.getElementById('playerEmail').readOnly = true;
+                    }
+                }
+            } catch (e) {
+                console.log('User not logged in or session expired');
+            }
+        }
+
+        // Handle application submission
+        document.getElementById('applicationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            try {
+                const token = localStorage.getItem('authToken');
+
+                // 1. Register if not logged in
+                if (!token) {
+                    const password = document.getElementById('playerPassword').value;
+                    if (!password || password.length < 6) {
+                        throw new Error('Please create a password (at least 6 characters) to secure your account.');
+                    }
+
+                    const fullName = document.getElementById('playerName').value.split(' ');
+                    const firstName = fullName[0];
+                    const lastName = fullName.slice(1).join(' ') || 'Player';
+
+                    const registerResponse = await apiService.makeRequest('/auth/register', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            firstName,
+                            lastName,
+                            email: document.getElementById('playerEmail').value,
+                            password: password,
+                            accountType: 'adult' // Default for players applying via web
+                        })
+                    });
+
+                    if (registerResponse.token) {
+                        localStorage.setItem('authToken', registerResponse.token);
+                        localStorage.setItem('currentUser', JSON.stringify(registerResponse.user));
+                    }
+                }
+
+                // 2. Submit application
+                const formData = {
+                    organizationId: clubId,
+                    playerName: document.getElementById('playerName').value,
+                    playerEmail: document.getElementById('playerEmail').value,
+                    playerPhone: document.getElementById('playerPhone').value,
+                    playerAge: document.getElementById('playerAge').value,
+                    playerPosition: document.getElementById('playerPosition').value,
+                    playerExperience: document.getElementById('playerExperience').value,
+                    playerMessage: document.getElementById('playerMessage').value
+                };
+
+                const response = await apiService.makeRequest('/applications', {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.success) {
+                    successMessage.style.display = 'block';
+                    document.getElementById('applicationForm').innerHTML = `
+                        <div style="text-align: center; padding: 2rem;">
+                            <h3 style="color: #22c55e;">✅ All Set!</h3>
+                            <p>Your application has been sent. You can now access your player dashboard to track your status.</p>
+                            <button class="btn btn-primary" onclick="window.location.href='player-dashboard.html'" style="margin-top: 1rem;">Go to Dashboard</button>
+                        </div>
+                    `;
+                    successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    throw new Error(response.error || 'Failed to submit application');
+                }
+
+            } catch (error) {
+                console.error('Process error:', error);
+                errorMessage.textContent = `❌ ${error.message || 'Failed to process request. Please try again.'}`;
+                errorMessage.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '📨 Submit Application & Join ClubHub';
+            }
+        });
+
+        // Initialize
+        loadClubDetails();
+        checkInitialAuth();
+    </script>
+</body>
+
+</html>
