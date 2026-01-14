@@ -484,10 +484,9 @@ router.post(
                   console.log('🏢 Creating demo club for admin...');
                   
                   const clubResult = await query(
-                    `INSERT INTO clubs (name, sport, description, location, contact_email, contact_phone, owner_id, member_count)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-                    ['Demo Sports Club', 'Football', 'A demo club showcasing ClubHub features', 'London, UK', 
-                     'demo-admin@clubhub.com', '+44 20 7946 0958', user.id, 12]
+                    `INSERT INTO clubs (name, sport, description, location, owner_id, member_count)
+                     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                    ['Demo Sports Club', 'Football', 'A demo club showcasing ClubHub features', 'London, UK', user.id, 12]
                   );
                   const clubId = clubResult.rows[0].id;
                   
