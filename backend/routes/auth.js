@@ -452,8 +452,8 @@ router.post(
           const hashedPassword = await bcrypt.hash(demo.pass, 10);
           
           userResult = await query(
-            `INSERT INTO users (email, password_hash, first_name, last_name, account_type, is_platform_admin, email_verified)
-             VALUES ($1, $2, $3, $4, $5, $6, true)
+            `INSERT INTO users (email, password_hash, first_name, last_name, account_type, is_platform_admin)
+             VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING id, email, first_name, last_name, account_type, is_platform_admin`,
             [normalizedEmail, hashedPassword, demo.firstName, demo.lastName, demo.type, demo.isPlatformAdmin]
           );
