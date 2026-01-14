@@ -2685,12 +2685,41 @@
             `;
         }
 
-        function shortlistApplicant(applicantId) {
-            showNotification('Applicant shortlisted!', 'success');
+        async function shortlistApplicant(applicantId) {
+            try {
+                showLoading(true);
+                await apiService.makeRequest(`/applications/${applicantId}/shortlist`, { method: 'POST' });
+                showNotification('Applicant shortlisted!', 'success');
+
+                // Update UI
+                const appItem = document.querySelector(`.application-item:has(button[onclick*="${applicantId}"])`);
+                if (appItem) {
+                    appItem.classList.add('shortlisted');
+                    appItem.style.background = 'rgba(255, 215, 0, 0.05)';
+                }
+            } catch (error) {
+                showNotification('Failed to shortlist: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
         }
 
         async function inviteToSession(applicantId) {
-            showNotification('Invitation to trial session sent!', 'success');
+            const sessionDetails = prompt('Enter trial session details (date, time, location):');
+            if (!sessionDetails) return;
+
+            try {
+                showLoading(true);
+                await apiService.makeRequest(`/applications/${applicantId}/invite`, {
+                    method: 'POST',
+                    body: JSON.stringify({ sessionDetails })
+                });
+                showNotification('Invitation to trial session sent!', 'success');
+            } catch (error) {
+                showNotification('Failed to send invitation: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
         }
 
         async function handleStaffInvite(e) {
