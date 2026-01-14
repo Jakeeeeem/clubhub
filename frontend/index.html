@@ -72,6 +72,45 @@
             </div>
         </section>
 
+        <!-- Find Clubs Recruiting Section (USP) -->
+        <section
+            style="background: linear-gradient(135deg, rgba(220, 67, 67, 0.1) 0%, rgba(13, 13, 13, 0.95) 50%); padding: 4rem 0; border-top: 1px solid rgba(220, 67, 67, 0.2); border-bottom: 1px solid rgba(220, 67, 67, 0.2);">
+            <div class="container">
+                <div style="text-align: center; margin-bottom: 3rem;">
+                    <h2
+                        style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, var(--primary-color), #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        🔍 Find Clubs Recruiting Now
+                    </h2>
+                    <p style="font-size: 1.2rem; color: #cbd5e1; max-width: 600px; margin: 0 auto;">
+                        Discover clubs actively looking for players. No signup required to search!
+                    </p>
+                </div>
+
+                <!-- Search Bar -->
+                <div style="max-width: 800px; margin: 0 auto 3rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <input type="text" id="clubSearchInput" placeholder="Search by club name, sport, or location..."
+                            style="flex: 1; min-width: 250px; padding: 1rem 1.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 12px; color: #fff; font-size: 1rem;"
+                            onkeyup="searchRecruitingClubs()">
+                        <button class="btn btn-primary" onclick="searchRecruitingClubs()" style="padding: 1rem 2rem;">
+                            Search
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Grid -->
+                <div id="recruitingClubsGrid"
+                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <!-- Populated by JavaScript -->
+                    <div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;">
+                        <p style="font-size: 1.1rem;">🔍 Start searching to find clubs recruiting players...</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Currently showing clubs with active
+                            recruitment listings</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="hero-platforms">
             <a href="signup.html?type=organization" class="platform-col org">
                 <div class="platform-content">
@@ -570,6 +609,65 @@
             const activeList = document.getElementById(`${role}-features`);
             if (activeList) {
                 activeList.classList.add('active');
+            }
+        }
+
+        // Search for clubs with active recruitment listings
+        async function searchRecruitingClubs() {
+            const searchTerm = document.getElementById('clubSearchInput').value;
+            const grid = document.getElementById('recruitingClubsGrid');
+
+            try {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem;"><p>🔍 Searching...</p></div>';
+
+                // Fetch clubs with optional search filter
+                const url = searchTerm
+                    ? `https://clubhub-dev.onrender.com/api/clubs?search=${encodeURIComponent(searchTerm)}`
+                    : `https://clubhub-dev.onrender.com/api/clubs?limit=20`;
+
+                const response = await fetch(url);
+                const clubs = await response.json();
+
+                if (!clubs || clubs.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;">
+                            <p style="font-size: 1.1rem;">No clubs found matching "${searchTerm}"</p>
+                            <p style="margin-top: 0.5rem;">Try a different search term or browse all clubs</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = clubs.map(club => `
+                    <div class="card" style="cursor: pointer; transition: transform 0.2s;" 
+                         onclick="window.location.href='club-details.html?id=${club.id}'">
+                        <div style="margin-bottom: 1rem;">
+                            <h3 style="margin-bottom: 0.5rem; color: var(--primary-color);">${club.name}</h3>
+                            <span style="background: rgba(220, 67, 67, 0.1); color: var(--primary-color); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">
+                                ${club.sport || 'Multi-Sport'}
+                            </span>
+                        </div>
+                        <p style="color: #cbd5e1; margin-bottom: 1rem; font-size: 0.9rem;">
+                            ${club.description ? club.description.substring(0, 120) + '...' : 'Recruiting players now'}
+                        </p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                            <span style="color: #64748b; font-size: 0.85rem;">
+                                📍 ${club.location || 'Location TBD'}
+                            </span>
+                            <span style="color: #22c55e; font-size: 0.85rem; font-weight: 600;">
+                                ✓ Recruiting
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Search error:', error);
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; color: #ef4444; padding: 2rem;">
+                        <p>Failed to load clubs. Please try again.</p>
+                    </div>
+                `;
             }
         }
 

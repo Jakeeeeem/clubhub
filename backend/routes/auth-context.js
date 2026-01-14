@@ -69,7 +69,7 @@ router.post('/switch-organization', authenticateToken, async (req, res) => {
 
 /**
  * GET /api/auth/context
- * Get the user's current context (user + organizations + current org)
+ * Get the user's current context (user + clubs they own/belong to)
  */
 router.get('/context', authenticateToken, async (req, res) => {
   try {
@@ -77,7 +77,7 @@ router.get('/context', authenticateToken, async (req, res) => {
 
     // Get user info
     const userResult = await pool.query(`
-      SELECT id, email, first_name, last_name, avatar_url, created_at
+      SELECT id, email, first_name, last_name, account_type, created_at
       FROM users WHERE id = $1
     `, [userId]);
 
@@ -90,55 +90,45 @@ router.get('/context', authenticateToken, async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // Get all organizations user belongs to
-    const orgsResult = await pool.query(`
+    // Get clubs user owns
+    const ownedClubsResult = await pool.query(`
       SELECT 
-        o.*,
-        om.role,
-        om.status as membership_status,
-        om.joined_at
-      FROM organizations o
-      INNER JOIN organization_members om ON o.id = om.organization_id
-      WHERE om.user_id = $1
-      AND om.status = 'active'
-      ORDER BY om.joined_at DESC
+        id, name, sport, description, location, created_at,
+        'owner' as role
+      FROM clubs
+      WHERE owner_id = $1
+      ORDER BY created_at DESC
     `, [userId]);
 
-    const organizations = orgsResult.rows;
-
-    // Get current organization from preferences
-    const prefResult = await pool.query(`
-      SELECT current_organization_id FROM user_preferences
-      WHERE user_id = $1
+    // Get clubs user is staff/member of
+    const staffClubsResult = await pool.query(`
+      SELECT 
+        c.id, c.name, c.sport, c.description, c.location, c.created_at,
+        s.role
+      FROM clubs c
+      INNER JOIN staff s ON c.id = s.club_id
+      WHERE s.user_id = $1 AND s.is_active = true
+      ORDER BY s.created_at DESC
     `, [userId]);
 
-    let currentOrganization = null;
-    
-    if (prefResult.rows.length > 0 && prefResult.rows[0].current_organization_id) {
-      currentOrganization = organizations.find(
-        org => org.id === prefResult.rows[0].current_organization_id
-      );
-    }
+    // Combine and deduplicate clubs
+    const allClubs = [...ownedClubsResult.rows, ...staffClubsResult.rows];
+    const uniqueClubs = allClubs.filter((club, index, self) => 
+      index === self.findIndex(c => c.id === club.id)
+    );
 
-    // If no current org set, use the first one
-    if (!currentOrganization && organizations.length > 0) {
-      currentOrganization = organizations[0];
-      
-      // Update preference
-      await pool.query(`
-        INSERT INTO user_preferences (user_id, current_organization_id)
-        VALUES ($1, $2)
-        ON CONFLICT (user_id) DO UPDATE
-        SET current_organization_id = $2
-      `, [userId, currentOrganization.id]);
-    }
+    // For now, use first club as current (later we'll add club switcher preference)
+    const currentClub = uniqueClubs.length > 0 ? uniqueClubs[0] : null;
 
     res.json({
       success: true,
       user,
-      organizations,
-      currentOrganization,
-      hasMultipleOrganizations: organizations.length > 1
+      clubs: uniqueClubs,
+      organizations: uniqueClubs, // Alias for backwards compatibility
+      currentClub,
+      currentOrganization: currentClub, // Alias for backwards compatibility
+      hasMultipleClubs: uniqueClubs.length > 1,
+      hasMultipleOrganizations: uniqueClubs.length > 1 // Alias
     });
   } catch (error) {
     console.error('Error fetching user context:', error);

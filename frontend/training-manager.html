@@ -64,7 +64,42 @@
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
                 <span class="logo-text">ClubHub</span>
             </div>
-            <button class="btn btn-secondary" onclick="history.back()">← Back</button>
+
+            <!-- Dashboard Navigation -->
+            <div class="dashboard-nav" style="display: flex; gap: 0.5rem; flex: 1; margin: 0 2rem; overflow-x: auto;">
+                <button onclick="window.location.href='admin-dashboard.html'"
+                    style="min-width: fit-content;">Overview</button>
+                <button onclick="window.location.href='admin-dashboard.html#club-profile'"
+                    style="min-width: fit-content;">Profile</button>
+                <button onclick="window.location.href='admin-dashboard.html#players'"
+                    style="min-width: fit-content;">Players</button>
+                <button onclick="window.location.href='admin-dashboard.html#teams'"
+                    style="min-width: fit-content;">Teams</button>
+                <button onclick="window.location.href='admin-dashboard.html#staff'"
+                    style="min-width: fit-content;">Staff</button>
+                <button onclick="window.location.href='admin-dashboard.html#events'"
+                    style="min-width: fit-content;">Events</button>
+                <button onclick="window.location.href='admin-dashboard.html#finances'"
+                    style="min-width: fit-content;">Finances</button>
+                <button onclick="window.location.href='admin-dashboard.html#listings'"
+                    style="min-width: fit-content;">Listings</button>
+                <button onclick="window.location.href='admin-dashboard.html#item-shop'"
+                    style="min-width: fit-content;">Shop</button>
+                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'"
+                    style="min-width: fit-content;">Marketing</button>
+                <button onclick="window.location.href='admin-dashboard.html#tactical'"
+                    style="min-width: fit-content;">Tactical</button>
+                <div style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
+                <button onclick="window.location.href='venue-booking.html'" class="btn-special"
+                    style="min-width: fit-content;">🏟️ Venues</button>
+                <button onclick="window.location.href='league-management.html'" class="btn-special"
+                    style="min-width: fit-content;">🏆 Leagues</button>
+                <button class="btn-special active" style="min-width: fit-content;">🎯 Training</button>
+                <button onclick="window.location.href='tournament-manager.html'" class="btn-special"
+                    style="min-width: fit-content;">⚔️ Tournaments</button>
+                <button onclick="window.location.href='email-campaigns.html'" class="btn-special"
+                    style="min-width: fit-content;">📧 Email</button>
+            </div>
         </nav>
     </header>
 
