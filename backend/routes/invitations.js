@@ -3,8 +3,7 @@ const router = express.Router();
 const { pool } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const crypto = require('crypto');
-const EmailService = require('../services/email-service');
-const emailService = new EmailService();
+const emailService = require('../services/email-service');
 
 // ============================================================================
 // INVITATION ROUTES
