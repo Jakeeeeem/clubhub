@@ -3,8 +3,7 @@ const router = express.Router();
 const { query, withTransaction } = require('../config/database');
 const { authenticateToken, requireOrganization } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
-const EmailService = require('../services/email-service');
-const emailService = new EmailService();
+const emailService = require('../services/email-service');
 
 /**
  * @route GET /api/listings
