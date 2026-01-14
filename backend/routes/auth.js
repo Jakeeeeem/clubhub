@@ -477,7 +477,7 @@ router.post(
           if (demoCredentials[normalizedEmail]) {
             try {
               // ADMIN DEMO - Create full club setup
-              if (normalizedEmail === 'admin@clubhub.com' && user.account_type === 'organization') {
+              if (normalizedEmail === 'demo-admin@clubhub.com' && user.account_type === 'organization') {
                 const existingClub = await query('SELECT id FROM clubs WHERE owner_id = $1', [user.id]);
                 
                 if (existingClub.rows.length === 0) {
@@ -487,7 +487,7 @@ router.post(
                     `INSERT INTO clubs (name, sport, description, location, contact_email, contact_phone, owner_id, member_count)
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
                     ['Demo Sports Club', 'Football', 'A demo club showcasing ClubHub features', 'London, UK', 
-                     'admin@clubhub.com', '+44 20 7946 0958', user.id, 12]
+                     'demo-admin@clubhub.com', '+44 20 7946 0958', user.id, 12]
                   );
                   const clubId = clubResult.rows[0].id;
                   
@@ -511,8 +511,8 @@ router.post(
               }
               
               // COACH DEMO - Add to demo club as staff
-              if (normalizedEmail === 'coach@clubhub.com' && user.account_type === 'organization') {
-                const demoClub = await query(`SELECT id FROM clubs WHERE contact_email = 'admin@clubhub.com' LIMIT 1`);
+              if (normalizedEmail === 'demo-coach@clubhub.com' && user.account_type === 'organization') {
+                const demoClub = await query(`SELECT id FROM clubs WHERE contact_email = 'demo-admin@clubhub.com' LIMIT 1`);
                 
                 if (demoClub.rows.length > 0) {
                   const clubId = demoClub.rows[0].id;
@@ -528,8 +528,8 @@ router.post(
                 }
               }
               
-              // PLAYER DEMO - Create player profile and link to demo club
-              if (normalizedEmail === 'player@clubhub.com' && user.account_type === 'adult') {
+              // PLAYER DEMO - Create player profile
+              if (normalizedEmail === 'demo-player@clubhub.com' && user.account_type === 'adult') {
                 const existingProfile = await query('SELECT id FROM user_profiles WHERE user_id = $1', [user.id]);
                 
                 if (existingProfile.rows.length === 0) {
