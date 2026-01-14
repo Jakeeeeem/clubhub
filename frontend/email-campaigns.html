@@ -11,59 +11,62 @@
 <body>
     <header class="header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+            <div class="logo" onclick="window.location.href='index.html'">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text">ClubHub</span>
+                <span class="logo-text neon-text">ClubHub</span>
             </div>
 
-            <!-- Dashboard Navigation -->
-            <div class="dashboard-nav" style="display: flex; gap: 0.5rem; flex: 1; margin: 0 2rem; overflow-x: auto;">
-                <button onclick="window.location.href='admin-dashboard.html'"
-                    style="min-width: fit-content;">Overview</button>
-                <button onclick="window.location.href='admin-dashboard.html#club-profile'"
-                    style="min-width: fit-content;">Profile</button>
-                <button onclick="window.location.href='admin-dashboard.html#players'"
-                    style="min-width: fit-content;">Players</button>
-                <button onclick="window.location.href='admin-dashboard.html#teams'"
-                    style="min-width: fit-content;">Teams</button>
-                <button onclick="window.location.href='admin-dashboard.html#staff'"
-                    style="min-width: fit-content;">Staff</button>
-                <button onclick="window.location.href='admin-dashboard.html#events'"
-                    style="min-width: fit-content;">Events</button>
-                <button onclick="window.location.href='admin-dashboard.html#finances'"
-                    style="min-width: fit-content;">Finances</button>
-                <button onclick="window.location.href='admin-dashboard.html#listings'"
-                    style="min-width: fit-content;">Listings</button>
-                <button onclick="window.location.href='admin-dashboard.html#item-shop'"
-                    style="min-width: fit-content;">Shop</button>
-                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'"
-                    style="min-width: fit-content;">Marketing</button>
-                <button onclick="window.location.href='admin-dashboard.html#tactical'"
-                    style="min-width: fit-content;">Tactical</button>
-                <div style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
-                <button onclick="window.location.href='venue-booking.html'" class="btn-special"
-                    style="min-width: fit-content;">🏟️ Venues</button>
-                <button onclick="window.location.href='league-management.html'" class="btn-special"
-                    style="min-width: fit-content;">🏆 Leagues</button>
-                <button onclick="window.location.href='training-manager.html'" class="btn-special"
-                    style="min-width: fit-content;">🎯 Training</button>
-                <button onclick="window.location.href='tournament-manager.html'" class="btn-special"
-                    style="min-width: fit-content;">⚔️ Tournaments</button>
-                <button class="btn-special active" style="min-width: fit-content;">📧 Email</button>
+            <!-- Organization Switcher -->
+            <div id="org-switcher-container"></div>
+
+            <div class="user-info">
+                <span id="adminNameDisplay">Hello, Admin!</span>
+                <div class="user-avatar" id="adminAvatar">A</div>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
             </div>
         </nav>
     </header>
 
     <main class="main">
-        <div class="container" style="max-width: 1000px; padding: 2rem 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h1>Email Campaigns</h1>
-                <button class="btn btn-primary" onclick="openCreateCampaign()">+ New Campaign</button>
+        <div class="dashboard container dashboard-container">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="neon-text">Email Campaigns</h1>
+                    <p style="color: var(--text-muted);">Communicate with your players and parents effectively</p>
+                </div>
+                <div class="stripe-access">
+                    <button class="btn btn-primary" onclick="openCreateCampaign()">+ New Campaign</button>
+                </div>
             </div>
 
-            <!-- Campaigns List -->
-            <div id="campaignsList">
-                <p>Loading campaigns...</p>
+            <!-- Dashboard Navigation -->
+            <div class="dashboard-nav">
+                <button onclick="window.location.href='admin-dashboard.html'">Overview</button>
+                <button onclick="window.location.href='admin-dashboard.html#club-profile'">Profile</button>
+                <button onclick="window.location.href='admin-dashboard.html#players'">Players</button>
+                <button onclick="window.location.href='admin-dashboard.html#teams'">Teams</button>
+                <button onclick="window.location.href='admin-dashboard.html#staff'">Staff</button>
+                <button onclick="window.location.href='admin-dashboard.html#events'">Events</button>
+                <button onclick="window.location.href='admin-dashboard.html#finances'">Finances</button>
+                <button onclick="window.location.href='admin-dashboard.html#listings'">Listings</button>
+                <button onclick="window.location.href='admin-dashboard.html#item-shop'">Shop</button>
+                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'">Marketing</button>
+                <button onclick="window.location.href='admin-dashboard.html#tactical'">Tactical</button>
+                <div class="nav-divider"
+                    style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
+                <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
+                <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
+                <button onclick="window.location.href='training-manager.html'" class="btn-special">🎯 Training</button>
+                <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️
+                    Tournaments</button>
+                <button class="btn-special active">📧 Email</button>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- Campaigns List -->
+                <div id="campaignsList">
+                    <p>Loading campaigns...</p>
+                </div>
             </div>
         </div>
     </main>
@@ -114,9 +117,28 @@
     </div>
 
     <script src="api-service.js"></script>
+    <script src="script.js"></script>
+    <script src="enhanced-login-handler.js"></script>
+    <script src="org-switcher.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check auth status
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user || (user.userType !== 'admin' && user.userType !== 'organization')) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load campaigns
             loadCampaigns();
+
+            // Initialize user display
+            if (document.getElementById('adminNameDisplay')) {
+                document.getElementById('adminNameDisplay').innerText = `Hello, ${user.firstName || user.first_name || 'Admin'}!`;
+            }
+            if (document.getElementById('adminAvatar')) {
+                document.getElementById('adminAvatar').innerText = (user.firstName || user.first_name || 'A').charAt(0).toUpperCase();
+            }
         });
 
         async function loadCampaigns() {

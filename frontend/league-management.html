@@ -61,26 +61,65 @@
 <body>
     <header class="header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+            <div class="logo" onclick="window.location.href='index.html'">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text">ClubHub</span>
+                <span class="logo-text neon-text">ClubHub</span>
             </div>
-            <button class="btn btn-secondary" onclick="history.back()">← Back</button>
+
+            <!-- Organization Switcher -->
+            <div id="org-switcher-container"></div>
+
+            <div class="user-info">
+                <span id="adminNameDisplay">Hello, Admin!</span>
+                <div class="user-avatar" id="adminAvatar">A</div>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+            </div>
         </nav>
     </header>
 
     <main class="main">
-        <div class="container" style="max-width: 1400px; padding: 2rem 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h1>League Management</h1>
-                <button class="btn btn-primary" onclick="openCreateLeagueModal()">+ Create League</button>
+        <div class="dashboard container dashboard-container">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="neon-text">League Management</h1>
+                    <p style="color: var(--text-muted);">Scale your club with professional league structures and
+                        automated fixtures.</p>
+                </div>
+                <div class="stripe-access">
+                    <button class="btn btn-primary" onclick="openCreateLeagueModal()">+ Create League</button>
+                </div>
             </div>
 
-            <!-- Leagues List -->
-            <div id="leaguesGrid" class="league-grid">
-                <!-- Leagues will be loaded here -->
+            <!-- Dashboard Navigation -->
+            <div class="dashboard-nav">
+                <button onclick="window.location.href='admin-dashboard.html'">Overview</button>
+                <button onclick="window.location.href='admin-dashboard.html#club-profile'">Profile</button>
+                <button onclick="window.location.href='admin-dashboard.html#players'">Players</button>
+                <button onclick="window.location.href='admin-dashboard.html#teams'">Teams</button>
+                <button onclick="window.location.href='admin-dashboard.html#staff'">Staff</button>
+                <button onclick="window.location.href='admin-dashboard.html#events'">Events</button>
+                <button onclick="window.location.href='admin-dashboard.html#finances'">Finances</button>
+                <button onclick="window.location.href='admin-dashboard.html#listings'">Listings</button>
+                <button onclick="window.location.href='admin-dashboard.html#item-shop'">Shop</button>
+                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'">Marketing</button>
+                <button onclick="window.location.href='admin-dashboard.html#tactical'">Tactical</button>
+                <div class="nav-divider"
+                    style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
+                <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
+                <button class="btn-special active">🏆 Leagues</button>
+                <button onclick="window.location.href='training-manager.html'" class="btn-special">🎯 Training</button>
+                <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️
+                    Tournaments</button>
+                <button onclick="window.location.href='email-campaigns.html'" class="btn-special">📧 Email</button>
             </div>
-        </div>
+
+            <div class="dashboard-content">
+
+                <!-- Leagues List -->
+                <div id="leaguesGrid" class="league-grid">
+                    <!-- Leagues will be loaded here -->
+                </div>
+            </div>
     </main>
 
     <!-- Create League Modal -->
@@ -238,15 +277,34 @@
     </div>
 
     <script src="api-service.js"></script>
+    <script src="script.js"></script>
+    <script src="enhanced-login-handler.js"></script>
+    <script src="org-switcher.js"></script>
     <script>
         let leagues = [];
         let currentLeague = null;
         let currentFixture = null;
         let availableTeams = [];
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check auth status
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user || (user.userType !== 'admin' && user.userType !== 'organization')) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load leagues
             loadLeagues();
             loadAvailableTeams();
+
+            // Initialize user display
+            if (document.getElementById('adminNameDisplay')) {
+                document.getElementById('adminNameDisplay').innerText = `Hello, ${user.firstName || user.first_name || 'Admin'}!`;
+            }
+            if (document.getElementById('adminAvatar')) {
+                document.getElementById('adminAvatar').innerText = (user.firstName || user.first_name || 'A').charAt(0).toUpperCase();
+            }
         });
 
         async function loadLeagues() {

@@ -56,111 +56,114 @@
 <body>
     <header class="header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+            <div class="logo" onclick="window.location.href='index.html'">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text">ClubHub</span>
+                <span class="logo-text neon-text">ClubHub</span>
             </div>
 
-            <!-- Dashboard Navigation -->
-            <div class="dashboard-nav" style="display: flex; gap: 0.5rem; flex: 1; margin: 0 2rem; overflow-x: auto;">
-                <button onclick="window.location.href='admin-dashboard.html'"
-                    style="min-width: fit-content;">Overview</button>
-                <button onclick="window.location.href='admin-dashboard.html#club-profile'"
-                    style="min-width: fit-content;">Profile</button>
-                <button onclick="window.location.href='admin-dashboard.html#players'"
-                    style="min-width: fit-content;">Players</button>
-                <button onclick="window.location.href='admin-dashboard.html#teams'"
-                    style="min-width: fit-content;">Teams</button>
-                <button onclick="window.location.href='admin-dashboard.html#staff'"
-                    style="min-width: fit-content;">Staff</button>
-                <button onclick="window.location.href='admin-dashboard.html#events'"
-                    style="min-width: fit-content;">Events</button>
-                <button onclick="window.location.href='admin-dashboard.html#finances'"
-                    style="min-width: fit-content;">Finances</button>
-                <button onclick="window.location.href='admin-dashboard.html#listings'"
-                    style="min-width: fit-content;">Listings</button>
-                <button onclick="window.location.href='admin-dashboard.html#item-shop'"
-                    style="min-width: fit-content;">Shop</button>
-                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'"
-                    style="min-width: fit-content;">Marketing</button>
-                <button onclick="window.location.href='admin-dashboard.html#tactical'"
-                    style="min-width: fit-content;">Tactical</button>
-                <div style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
-                <button onclick="window.location.href='venue-booking.html'" class="btn-special"
-                    style="min-width: fit-content;">🏟️ Venues</button>
-                <button onclick="window.location.href='league-management.html'" class="btn-special"
-                    style="min-width: fit-content;">🏆 Leagues</button>
-                <button onclick="window.location.href='training-manager.html'" class="btn-special"
-                    style="min-width: fit-content;">🎯 Training</button>
-                <button class="btn-special active" style="min-width: fit-content;">⚔️ Tournaments</button>
-                <button onclick="window.location.href='email-campaigns.html'" class="btn-special"
-                    style="min-width: fit-content;">📧 Email</button>
+            <!-- Organization Switcher -->
+            <div id="org-switcher-container"></div>
+
+            <div class="user-info">
+                <span id="adminNameDisplay">Hello, Admin!</span>
+                <div class="user-avatar" id="adminAvatar">A</div>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
             </div>
         </nav>
     </header>
 
     <main class="main">
-        <div class="container" style="max-width: 1600px; padding: 2rem 0;">
-            <h1>Tournament Manager</h1>
-
-            <!-- Event Selector -->
-            <div class="card" style="margin: 2rem 0;">
-                <label><strong>Select Tournament:</strong></label>
-                <select id="tournamentSelect" onchange="loadTournament()"
-                    style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
-                    <option value="">-- Select Tournament --</option>
-                </select>
-            </div>
-
-            <div id="tournamentContent" style="display: none;">
-                <!-- Tabs -->
-                <div class="tabs" style="margin: 2rem 0;">
-                    <button class="tab active" onclick="showTab('teams')">Teams</button>
-                    <button class="tab" onclick="showTab('bracket')">Bracket</button>
-                    <button class="tab" onclick="showTab('matches')">Matches</button>
-                </div>
-
-                <!-- Teams Tab -->
-                <div id="teams-tab" class="tab-content active">
-                    <div style="margin-bottom: 1rem;">
-                        <button class="btn btn-primary" onclick="generateFixtures('knockout')">Generate Knockout
-                            Bracket</button>
-                        <button class="btn btn-secondary" onclick="generateFixtures('league')">Generate League
-                            Format</button>
-                    </div>
-                    <div id="teamsGrid" class="team-grid">
-                        <!-- Teams will be loaded here -->
-                    </div>
-                </div>
-
-                <!-- Bracket Tab -->
-                <div id="bracket-tab" class="tab-content" style="display: none;">
-                    <div id="bracketContainer" class="bracket">
-                        <!-- Bracket will be rendered here -->
-                    </div>
-                </div>
-
-                <!-- Matches Tab -->
-                <div id="matches-tab" class="tab-content" style="display: none;">
-                    <table class="fixtures-table" style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th>Round</th>
-                                <th>Match #</th>
-                                <th>Home Team</th>
-                                <th>Score</th>
-                                <th>Away Team</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="matchesBody">
-                            <!-- Matches will be loaded here -->
-                        </tbody>
-                    </table>
+        <div class="dashboard container dashboard-container">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="neon-text">Tournament Manager</h1>
+                    <p style="color: var(--text-muted);">Manage your knockout brackets and league format tournaments.
+                    </p>
                 </div>
             </div>
-        </div>
+
+            <!-- Dashboard Navigation -->
+            <div class="dashboard-nav">
+                <button onclick="window.location.href='admin-dashboard.html'">Overview</button>
+                <button onclick="window.location.href='admin-dashboard.html#club-profile'">Profile</button>
+                <button onclick="window.location.href='admin-dashboard.html#players'">Players</button>
+                <button onclick="window.location.href='admin-dashboard.html#teams'">Teams</button>
+                <button onclick="window.location.href='admin-dashboard.html#staff'">Staff</button>
+                <button onclick="window.location.href='admin-dashboard.html#events'">Events</button>
+                <button onclick="window.location.href='admin-dashboard.html#finances'">Finances</button>
+                <button onclick="window.location.href='admin-dashboard.html#listings'">Listings</button>
+                <button onclick="window.location.href='admin-dashboard.html#item-shop'">Shop</button>
+                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'">Marketing</button>
+                <button onclick="window.location.href='admin-dashboard.html#tactical'">Tactical</button>
+                <div class="nav-divider"
+                    style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
+                <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
+                <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
+                <button onclick="window.location.href='training-manager.html'" class="btn-special">🎯 Training</button>
+                <button class="btn-special active">⚔️ Tournaments</button>
+                <button onclick="window.location.href='email-campaigns.html'" class="btn-special">📧 Email</button>
+            </div>
+
+            <div class="dashboard-content">
+
+                <!-- Event Selector -->
+                <div class="card" style="margin: 2rem 0;">
+                    <label><strong>Select Tournament:</strong></label>
+                    <select id="tournamentSelect" onchange="loadTournament()"
+                        style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
+                        <option value="">-- Select Tournament --</option>
+                    </select>
+                </div>
+
+                <div id="tournamentContent" style="display: none;">
+                    <!-- Tabs -->
+                    <div class="tabs" style="margin: 2rem 0;">
+                        <button class="tab active" onclick="showTab('teams')">Teams</button>
+                        <button class="tab" onclick="showTab('bracket')">Bracket</button>
+                        <button class="tab" onclick="showTab('matches')">Matches</button>
+                    </div>
+
+                    <!-- Teams Tab -->
+                    <div id="teams-tab" class="tab-content active">
+                        <div style="margin-bottom: 1rem;">
+                            <button class="btn btn-primary" onclick="generateFixtures('knockout')">Generate Knockout
+                                Bracket</button>
+                            <button class="btn btn-secondary" onclick="generateFixtures('league')">Generate League
+                                Format</button>
+                        </div>
+                        <div id="teamsGrid" class="team-grid">
+                            <!-- Teams will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Bracket Tab -->
+                    <div id="bracket-tab" class="tab-content" style="display: none;">
+                        <div id="bracketContainer" class="bracket">
+                            <!-- Bracket will be rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- Matches Tab -->
+                    <div id="matches-tab" class="tab-content" style="display: none;">
+                        <table class="fixtures-table" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Round</th>
+                                    <th>Match #</th>
+                                    <th>Home Team</th>
+                                    <th>Score</th>
+                                    <th>Away Team</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matchesBody">
+                                <!-- Matches will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
     </main>
 
     <!-- Score Modal -->
@@ -190,13 +193,32 @@
     </div>
 
     <script src="api-service.js"></script>
+    <script src="script.js"></script>
+    <script src="enhanced-login-handler.js"></script>
+    <script src="org-switcher.js"></script>
     <script>
         let currentTournamentId = null;
         let tournamentData = null;
         let currentMatch = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check auth status
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user || (user.userType !== 'admin' && user.userType !== 'organization')) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load tournaments
             loadTournaments();
+
+            // Initialize user display
+            if (document.getElementById('adminNameDisplay')) {
+                document.getElementById('adminNameDisplay').innerText = `Hello, ${user.firstName || user.first_name || 'Admin'}!`;
+            }
+            if (document.getElementById('adminAvatar')) {
+                document.getElementById('adminAvatar').innerText = (user.firstName || user.first_name || 'A').charAt(0).toUpperCase();
+            }
         });
 
         async function loadTournaments() {

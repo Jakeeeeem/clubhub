@@ -70,45 +70,83 @@
 <body>
     <header class="header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+            <div class="logo" onclick="window.location.href='index.html'">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text">ClubHub</span>
+                <span class="logo-text neon-text">ClubHub</span>
             </div>
-            <button class="btn btn-secondary" onclick="history.back()">← Back to Dashboard</button>
+
+            <!-- Organization Switcher -->
+            <div id="org-switcher-container"></div>
+
+            <div class="user-info">
+                <span id="adminNameDisplay">Hello, Admin!</span>
+                <div class="user-avatar" id="adminAvatar">A</div>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+            </div>
         </nav>
     </header>
 
     <main class="main">
-        <div class="container" style="max-width: 1200px; padding: 2rem 0;">
-            <h1>Venue Booking</h1>
-
-            <!-- Tabs -->
-            <div class="tabs" style="margin: 2rem 0;">
-                <button class="tab active" onclick="showTab('browse')">Browse Venues</button>
-                <button class="tab" onclick="showTab('mybookings')">My Bookings</button>
-            </div>
-
-            <!-- Browse Venues Tab -->
-            <div id="browse-tab" class="tab-content active">
-                <div class="filters" style="margin-bottom: 2rem;">
-                    <input type="text" id="searchVenue" placeholder="Search venues..." style="margin-right: 1rem;">
-                    <select id="locationFilter">
-                        <option value="">All Locations</option>
-                    </select>
-                </div>
-
-                <div id="venueGrid" class="venue-grid">
-                    <!-- Venues will be loaded here -->
+        <div class="dashboard container dashboard-container">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="neon-text">Venue Booking</h1>
+                    <p style="color: var(--text-muted);">Browse and book sports venues for your club.</p>
                 </div>
             </div>
 
-            <!-- My Bookings Tab -->
-            <div id="mybookings-tab" class="tab-content" style="display: none;">
-                <div id="myBookingsList">
-                    <!-- Bookings will be loaded here -->
+            <!-- Dashboard Navigation -->
+            <div class="dashboard-nav">
+                <button onclick="window.location.href='admin-dashboard.html'">Overview</button>
+                <button onclick="window.location.href='admin-dashboard.html#club-profile'">Profile</button>
+                <button onclick="window.location.href='admin-dashboard.html#players'">Players</button>
+                <button onclick="window.location.href='admin-dashboard.html#teams'">Teams</button>
+                <button onclick="window.location.href='admin-dashboard.html#staff'">Staff</button>
+                <button onclick="window.location.href='admin-dashboard.html#events'">Events</button>
+                <button onclick="window.location.href='admin-dashboard.html#finances'">Finances</button>
+                <button onclick="window.location.href='admin-dashboard.html#listings'">Listings</button>
+                <button onclick="window.location.href='admin-dashboard.html#item-shop'">Shop</button>
+                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'">Marketing</button>
+                <button onclick="window.location.href='admin-dashboard.html#tactical'">Tactical</button>
+                <div class="nav-divider"
+                    style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
+                <button class="btn-special active">🏟️ Venues</button>
+                <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
+                <button onclick="window.location.href='training-manager.html'" class="btn-special">🎯 Training</button>
+                <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️
+                    Tournaments</button>
+                <button onclick="window.location.href='email-campaigns.html'" class="btn-special">📧 Email</button>
+            </div>
+
+            <div class="dashboard-content">
+
+                <!-- Tabs -->
+                <div class="tabs" style="margin: 2rem 0;">
+                    <button class="tab active" onclick="showTab('browse')">Browse Venues</button>
+                    <button class="tab" onclick="showTab('mybookings')">My Bookings</button>
+                </div>
+
+                <!-- Browse Venues Tab -->
+                <div id="browse-tab" class="tab-content active">
+                    <div class="filters" style="margin-bottom: 2rem;">
+                        <input type="text" id="searchVenue" placeholder="Search venues..." style="margin-right: 1rem;">
+                        <select id="locationFilter">
+                            <option value="">All Locations</option>
+                        </select>
+                    </div>
+
+                    <div id="venueGrid" class="venue-grid">
+                        <!-- Venues will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- My Bookings Tab -->
+                <div id="mybookings-tab" class="tab-content" style="display: none;">
+                    <div id="myBookingsList">
+                        <!-- Bookings will be loaded here -->
+                    </div>
                 </div>
             </div>
-        </div>
     </main>
 
     <!-- Booking Modal -->
@@ -147,13 +185,32 @@
     </div>
 
     <script src="api-service.js"></script>
+    <script src="script.js"></script>
+    <script src="enhanced-login-handler.js"></script>
+    <script src="org-switcher.js"></script>
     <script>
         let venues = [];
         let selectedVenue = null;
         let selectedSlot = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check auth status
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user || (user.userType !== 'admin' && user.userType !== 'organization')) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load venues
             loadVenues();
+
+            // Initialize user display
+            if (document.getElementById('adminNameDisplay')) {
+                document.getElementById('adminNameDisplay').innerText = `Hello, ${user.firstName || user.first_name || 'Admin'}!`;
+            }
+            if (document.getElementById('adminAvatar')) {
+                document.getElementById('adminAvatar').innerText = (user.firstName || user.first_name || 'A').charAt(0).toUpperCase();
+            }
         });
 
         async function loadVenues() {

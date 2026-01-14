@@ -60,145 +60,150 @@
 <body>
     <header class="header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='admin-dashboard.html'">
+            <div class="logo" onclick="window.location.href='index.html'">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text">ClubHub</span>
+                <span class="logo-text neon-text">ClubHub</span>
             </div>
 
-            <!-- Dashboard Navigation -->
-            <div class="dashboard-nav" style="display: flex; gap: 0.5rem; flex: 1; margin: 0 2rem; overflow-x: auto;">
-                <button onclick="window.location.href='admin-dashboard.html'"
-                    style="min-width: fit-content;">Overview</button>
-                <button onclick="window.location.href='admin-dashboard.html#club-profile'"
-                    style="min-width: fit-content;">Profile</button>
-                <button onclick="window.location.href='admin-dashboard.html#players'"
-                    style="min-width: fit-content;">Players</button>
-                <button onclick="window.location.href='admin-dashboard.html#teams'"
-                    style="min-width: fit-content;">Teams</button>
-                <button onclick="window.location.href='admin-dashboard.html#staff'"
-                    style="min-width: fit-content;">Staff</button>
-                <button onclick="window.location.href='admin-dashboard.html#events'"
-                    style="min-width: fit-content;">Events</button>
-                <button onclick="window.location.href='admin-dashboard.html#finances'"
-                    style="min-width: fit-content;">Finances</button>
-                <button onclick="window.location.href='admin-dashboard.html#listings'"
-                    style="min-width: fit-content;">Listings</button>
-                <button onclick="window.location.href='admin-dashboard.html#item-shop'"
-                    style="min-width: fit-content;">Shop</button>
-                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'"
-                    style="min-width: fit-content;">Marketing</button>
-                <button onclick="window.location.href='admin-dashboard.html#tactical'"
-                    style="min-width: fit-content;">Tactical</button>
-                <div style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
-                <button onclick="window.location.href='venue-booking.html'" class="btn-special"
-                    style="min-width: fit-content;">🏟️ Venues</button>
-                <button onclick="window.location.href='league-management.html'" class="btn-special"
-                    style="min-width: fit-content;">🏆 Leagues</button>
-                <button class="btn-special active" style="min-width: fit-content;">🎯 Training</button>
-                <button onclick="window.location.href='tournament-manager.html'" class="btn-special"
-                    style="min-width: fit-content;">⚔️ Tournaments</button>
-                <button onclick="window.location.href='email-campaigns.html'" class="btn-special"
-                    style="min-width: fit-content;">📧 Email</button>
+            <!-- Organization Switcher -->
+            <div id="org-switcher-container"></div>
+
+            <div class="user-info">
+                <span id="adminNameDisplay">Hello, Admin!</span>
+                <div class="user-avatar" id="adminAvatar">A</div>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
             </div>
         </nav>
     </header>
 
     <main class="main">
-        <div class="container" style="max-width: 1400px; padding: 2rem 0;">
-            <h1>Training Event Manager</h1>
-
-            <!-- Event Selector -->
-            <div class="card" style="margin: 2rem 0;">
-                <label><strong>Select Training Event:</strong></label>
-                <select id="eventSelect" onchange="loadEventDashboard()"
-                    style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
-                    <option value="">-- Select Event --</option>
-                </select>
-            </div>
-
-            <div id="dashboardContent" style="display: none;">
-                <!-- Stats Overview -->
-                <div class="dashboard-grid">
-                    <div class="stat-card">
-                        <div>Total Registrants</div>
-                        <div class="stat-number" id="totalRegistrants">0</div>
-                    </div>
-                    <div class="stat-card" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
-                        <div>Checked In</div>
-                        <div class="stat-number" id="checkedIn">0</div>
-                    </div>
-                    <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-                        <div>Groups Created</div>
-                        <div class="stat-number" id="groupsCount">0</div>
-                    </div>
-                    <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                        <div>Bibs Available</div>
-                        <div class="stat-number" id="bibsCount">0</div>
-                    </div>
-                </div>
-
-                <!-- Tabs -->
-                <div class="tabs" style="margin: 2rem 0;">
-                    <button class="tab active" onclick="showTab('registrants')">Registrants</button>
-                    <button class="tab" onclick="showTab('groups')">Groups</button>
-                    <button class="tab" onclick="showTab('bibs')">Bibs</button>
-                    <button class="tab" onclick="showTab('schedule')">Schedule</button>
-                </div>
-
-                <!-- Registrants Tab -->
-                <div id="registrants-tab" class="tab-content active">
-                    <div style="margin-bottom: 1rem;">
-                        <button class="btn btn-primary" onclick="autoAssignAll()">🎯 Auto-Assign Bibs & Groups</button>
-                    </div>
-                    <table class="registrants-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Age</th>
-                                <th>Position</th>
-                                <th>Bib</th>
-                                <th>Group</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="registrantsBody">
-                            <!-- Registrants will be loaded here -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Groups Tab -->
-                <div id="groups-tab" class="tab-content" style="display: none;">
-                    <div style="margin-bottom: 1rem;">
-                        <button class="btn btn-primary" onclick="openCreateGroupModal()">+ Create Group</button>
-                    </div>
-                    <div id="groupsContainer">
-                        <!-- Groups will be loaded here -->
-                    </div>
-                </div>
-
-                <!-- Bibs Tab -->
-                <div id="bibs-tab" class="tab-content" style="display: none;">
-                    <div style="margin-bottom: 1rem;">
-                        <button class="btn btn-primary" onclick="openAddBibsModal()">+ Add Bibs (Batch)</button>
-                    </div>
-                    <div id="bibsContainer">
-                        <!-- Bibs will be loaded here -->
-                    </div>
-                </div>
-
-                <!-- Schedule Tab -->
-                <div id="schedule-tab" class="tab-content" style="display: none;">
-                    <div style="margin-bottom: 1rem;">
-                        <button class="btn btn-primary" onclick="openAddScheduleModal()">+ Add Schedule Item</button>
-                    </div>
-                    <div id="scheduleContainer">
-                        <!-- Schedule will be loaded here -->
-                    </div>
+        <div class="dashboard container dashboard-container">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="neon-text">Training Manager</h1>
+                    <p style="color: var(--text-muted);">Manage your talent identified players, groups and bibs.</p>
                 </div>
             </div>
-        </div>
+
+            <!-- Dashboard Navigation -->
+            <div class="dashboard-nav">
+                <button onclick="window.location.href='admin-dashboard.html'">Overview</button>
+                <button onclick="window.location.href='admin-dashboard.html#club-profile'">Profile</button>
+                <button onclick="window.location.href='admin-dashboard.html#players'">Players</button>
+                <button onclick="window.location.href='admin-dashboard.html#teams'">Teams</button>
+                <button onclick="window.location.href='admin-dashboard.html#staff'">Staff</button>
+                <button onclick="window.location.href='admin-dashboard.html#events'">Events</button>
+                <button onclick="window.location.href='admin-dashboard.html#finances'">Finances</button>
+                <button onclick="window.location.href='admin-dashboard.html#listings'">Listings</button>
+                <button onclick="window.location.href='admin-dashboard.html#item-shop'">Shop</button>
+                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'">Marketing</button>
+                <button onclick="window.location.href='admin-dashboard.html#tactical'">Tactical</button>
+                <div class="nav-divider"
+                    style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
+                <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
+                <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
+                <button class="btn-special active">🎯 Training</button>
+                <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️
+                    Tournaments</button>
+                <button onclick="window.location.href='email-campaigns.html'" class="btn-special">📧 Email</button>
+            </div>
+
+            <div class="dashboard-content">
+
+                <!-- Event Selector -->
+                <div class="card" style="margin: 2rem 0;">
+                    <label><strong>Select Training Event:</strong></label>
+                    <select id="eventSelect" onchange="loadEventDashboard()"
+                        style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
+                        <option value="">-- Select Event --</option>
+                    </select>
+                </div>
+
+                <div id="dashboardContent" style="display: none;">
+                    <!-- Stats Overview -->
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div>Total Registrants</div>
+                            <div class="stat-number" id="totalRegistrants">0</div>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                            <div>Checked In</div>
+                            <div class="stat-number" id="checkedIn">0</div>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                            <div>Groups Created</div>
+                            <div class="stat-number" id="groupsCount">0</div>
+                        </div>
+                        <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <div>Bibs Available</div>
+                            <div class="stat-number" id="bibsCount">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="tabs" style="margin: 2rem 0;">
+                        <button class="tab active" onclick="showTab('registrants')">Registrants</button>
+                        <button class="tab" onclick="showTab('groups')">Groups</button>
+                        <button class="tab" onclick="showTab('bibs')">Bibs</button>
+                        <button class="tab" onclick="showTab('schedule')">Schedule</button>
+                    </div>
+
+                    <!-- Registrants Tab -->
+                    <div id="registrants-tab" class="tab-content active">
+                        <div style="margin-bottom: 1rem;">
+                            <button class="btn btn-primary" onclick="autoAssignAll()">🎯 Auto-Assign Bibs &
+                                Groups</button>
+                        </div>
+                        <table class="registrants-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Age</th>
+                                    <th>Position</th>
+                                    <th>Bib</th>
+                                    <th>Group</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registrantsBody">
+                                <!-- Registrants will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Groups Tab -->
+                    <div id="groups-tab" class="tab-content" style="display: none;">
+                        <div style="margin-bottom: 1rem;">
+                            <button class="btn btn-primary" onclick="openCreateGroupModal()">+ Create Group</button>
+                        </div>
+                        <div id="groupsContainer">
+                            <!-- Groups will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Bibs Tab -->
+                    <div id="bibs-tab" class="tab-content" style="display: none;">
+                        <div style="margin-bottom: 1rem;">
+                            <button class="btn btn-primary" onclick="openAddBibsModal()">+ Add Bibs (Batch)</button>
+                        </div>
+                        <div id="bibsContainer">
+                            <!-- Bibs will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Schedule Tab -->
+                    <div id="schedule-tab" class="tab-content" style="display: none;">
+                        <div style="margin-bottom: 1rem;">
+                            <button class="btn btn-primary" onclick="openAddScheduleModal()">+ Add Schedule
+                                Item</button>
+                        </div>
+                        <div id="scheduleContainer">
+                            <!-- Schedule will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
     </main>
 
     <!-- Create Group Modal -->
@@ -300,12 +305,31 @@
     </div>
 
     <script src="api-service.js"></script>
+    <script src="script.js"></script>
+    <script src="enhanced-login-handler.js"></script>
+    <script src="org-switcher.js"></script>
     <script>
         let currentEventId = null;
         let dashboardData = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check auth status
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user || (user.userType !== 'admin' && user.userType !== 'organization')) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load events
             loadEvents();
+
+            // Initialize user display
+            if (document.getElementById('adminNameDisplay')) {
+                document.getElementById('adminNameDisplay').innerText = `Hello, ${user.firstName || user.first_name || 'Admin'}!`;
+            }
+            if (document.getElementById('adminAvatar')) {
+                document.getElementById('adminAvatar').innerText = (user.firstName || user.first_name || 'A').charAt(0).toUpperCase();
+            }
         });
 
         async function loadEvents() {
