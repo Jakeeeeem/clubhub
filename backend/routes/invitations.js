@@ -18,7 +18,7 @@ router.post('/:orgId/invite', authenticateToken, async (req, res) => {
   
   try {
     const { orgId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { email, role, message } = req.body;
 
     if (!email || !role) {
@@ -217,7 +217,7 @@ router.post('/:token/accept', authenticateToken, async (req, res) => {
   
   try {
     const { token } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     await client.query('BEGIN');
 
@@ -361,7 +361,7 @@ router.post('/:token/decline', async (req, res) => {
 router.get('/:orgId/invitations', authenticateToken, async (req, res) => {
   try {
     const { orgId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Check permission
     const permissionCheck = await pool.query(`

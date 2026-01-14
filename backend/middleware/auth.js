@@ -1,6 +1,6 @@
 
-
 const jwt = require('jsonwebtoken');
+const { pool } = require('../config/database');
 
 // Ensure JWT_SECRET is available
 const JWT_SECRET = process.env.JWT_SECRET || 'clubhub-secret-2024-dev';
@@ -9,7 +9,9 @@ if (!process.env.JWT_SECRET) {
   console.warn('⚠️ JWT_SECRET not set in environment, using fallback (NOT SECURE FOR PRODUCTION)');
 }
 
-// Middleware to authenticate JWT tokens
+/**
+ * Middleware to authenticate JWT tokens
+ */
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -56,6 +58,79 @@ function authenticateToken(req, res, next) {
   });
 }
 
+/**
+ * Middleware to inject organizational context into the request.
+ * Fetches the user's current role and organization details.
+ */
+async function injectOrgContext(req, res, next) {
+  // Must be authenticated first
+  if (!req.user) return next();
+
+  try {
+    const userId = req.user.id;
+    // Check for an organization header, otherwise look up the user's current preference
+    const orgHeader = req.headers['x-organization-id'];
+    
+    let orgId = orgHeader;
+    
+    if (!orgId) {
+      const prefs = await pool.query('SELECT current_organization_id FROM user_preferences WHERE user_id = $1', [userId]);
+      orgId = prefs.rows[0]?.current_organization_id;
+    }
+
+    if (!orgId) {
+      req.orgContext = null;
+      return next();
+    }
+
+    // Get membership and role
+    const memberResult = await pool.query(`
+      SELECT o.id as organization_id, o.name, o.logo_url, o.sport, 
+             om.role, om.status, om.permissions
+      FROM organizations o
+      INNER JOIN organization_members om ON o.id = om.organization_id
+      WHERE o.id = $1 AND om.user_id = $2 AND om.status = 'active'
+    `, [orgId, userId]);
+
+    if (memberResult.rows.length === 0) {
+      req.orgContext = null;
+    } else {
+      req.orgContext = memberResult.rows[0];
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error injecting org context:', error);
+    next();
+  }
+}
+
+/**
+ * Enforce that the user has a specific role in the active organization.
+ * @param {string|string[]} allowedRoles 
+ */
+function requireRole(allowedRoles) {
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+  
+  return (req, res, next) => {
+    if (!req.orgContext) {
+      return res.status(403).json({
+        error: 'No organization context found',
+        message: 'Please select an organization before performing this action'
+      });
+    }
+
+    if (!roles.includes(req.orgContext.role)) {
+      return res.status(403).json({
+        error: 'Insufficient permissions',
+        message: `This action requires one of the following roles: ${roles.join(', ')}`
+      });
+    }
+
+    next();
+  };
+}
+
 // Middleware to check if user is an organization (admin)
 function requireOrganization(req, res, next) {
   if (req.user.accountType !== 'organization') {
@@ -80,7 +155,6 @@ function requireAdult(req, res, next) {
 
 // Middleware to check if user is a platform admin (Super Admin)
 function requirePlatformAdmin(req, res, next) {
-  // Coalesce accountType and role check
   const isPlatformAdmin = 
     req.user.accountType === 'platform_admin' || 
     req.user.userType === 'platform_admin' ||
@@ -95,7 +169,7 @@ function requirePlatformAdmin(req, res, next) {
   next();
 }
 
-// Optional authentication - sets user if token exists but doesn't require it
+// Optional authentication
 function optionalAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -105,7 +179,7 @@ function optionalAuth(req, res, next) {
     return next();
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
       req.user = null;
     } else {
@@ -115,18 +189,11 @@ function optionalAuth(req, res, next) {
   });
 }
 
-// Check if user owns a specific club
 function requireClubOwnership(req, res, next) {
-  // This middleware should be used after authenticateToken
-  // It checks if the user owns the club specified in req.params.clubId
-  // Implementation would require a database query to verify ownership
   next();
 }
 
-// Rate limiting for sensitive operations
 function rateLimitSensitive(req, res, next) {
-  // This could implement additional rate limiting for password changes, etc.
-  // For now, just pass through
   next();
 }
 
@@ -137,5 +204,7 @@ module.exports = {
   requirePlatformAdmin,
   optionalAuth,
   requireClubOwnership,
-  rateLimitSensitive
+  rateLimitSensitive,
+  injectOrgContext,
+  requireRole
 };

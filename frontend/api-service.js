@@ -10,6 +10,26 @@ class ApiService {
     
     // Test connection on initialization
     this.testConnection();
+    this.context = null;
+  }
+
+  async getContext() {
+    if (this.context) return this.context;
+    try {
+      this.context = await this.makeRequest('/auth/context');
+      return this.context;
+    } catch (error) {
+      console.error('Failed to get context:', error);
+      return null;
+    }
+  }
+
+  getCurrentOrg() {
+    return this.context?.currentOrganization || null;
+  }
+
+  getUserRole() {
+    return this.context?.currentOrganization?.user_role || null;
   }
 
   getBaseURL() {
@@ -691,6 +711,86 @@ async deletePaymentPlan(planId) {
       method: 'PUT',
       body: JSON.stringify(clubData)
     });
+  }
+
+  // ============================================================================
+  // INVITATION METHODS
+  // ============================================================================
+
+  /**
+   * Send an invitation to join an organization
+   * @param {string} organizationId - Organization ID
+   * @param {object} inviteData - { email, role, message }
+   */
+  async sendInvitation(organizationId, inviteData) {
+    try {
+      console.log(`📧 Sending invitation for org ${organizationId}:`, inviteData);
+      return await this.makeRequest(`/organizations/${organizationId}/invite`, {
+        method: 'POST',
+        body: JSON.stringify(inviteData)
+      });
+    } catch (error) {
+      console.error('❌ Failed to send invitation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get invitation details by token
+   * @param {string} token - Invitation token
+   */
+  async getInvitation(token) {
+    try {
+      return await this.makeRequest(`/invitations/${token}`);
+    } catch (error) {
+      console.error('❌ Failed to get invitation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Accept an invitation
+   * @param {string} token - Invitation token
+   */
+  async acceptInvitation(token) {
+    try {
+      console.log(`✅ Accepting invitation with token: ${token}`);
+      return await this.makeRequest(`/invitations/${token}/accept`, {
+        method: 'POST'
+      });
+    } catch (error) {
+      console.error('❌ Failed to accept invitation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Decline an invitation
+   * @param {string} token - Invitation token
+   */
+  async declineInvitation(token) {
+    try {
+      console.log(`❌ Declining invitation with token: ${token}`);
+      return await this.makeRequest(`/invitations/${token}/decline`, {
+        method: 'POST'
+      });
+    } catch (error) {
+      console.error('❌ Failed to decline invitation:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all invitations for an organization
+   * @param {string} organizationId - Organization ID
+   */
+  async getOrganizationInvitations(organizationId) {
+    try {
+      return await this.makeRequest(`/organizations/${organizationId}/invitations`);
+    } catch (error) {
+      console.error('❌ Failed to get organization invitations:', error);
+      throw error;
+    }
   }
 
   async deleteClub(id) {

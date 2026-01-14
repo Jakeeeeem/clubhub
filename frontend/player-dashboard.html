@@ -6,7 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Player Dashboard - ClubHub</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="org-switcher.css">
   <script src="https://js.stripe.com/v3/"></script>
+  <script src="api-service.js"></script>
+  <script src="org-switcher.js"></script>
+  <script src="workspace-manager.js"></script>
 </head>
 
 <body>
@@ -28,9 +32,9 @@
 
   <main class="main">
     <div class="dashboard container dashboard-container">
-      <div class="dashboard-header">
-        <h1 class="neon-text">Player Dashboard</h1>
-        <p>Manage your sports activities, subscriptions, and bookings</p>
+      <div class="dashboard-header" style="margin-bottom: 2rem;">
+        <h1 class="neon-text display-org-name">Player Dashboard</h1>
+        <p>Manage your sporting activities within <span class="display-org-name">your organization</span></p>
       </div>
 
       <!-- Dashboard Navigation -->

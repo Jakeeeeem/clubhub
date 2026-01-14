@@ -75,60 +75,60 @@ router.get('/context', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Get user info
+    // 1. Get user info and preferences
     const userResult = await pool.query(`
-      SELECT id, email, first_name, last_name, account_type, created_at
-      FROM users WHERE id = $1
+      SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, 
+             up.current_organization_id
+      FROM users u
+      LEFT JOIN user_preferences up ON u.id = up.user_id
+      WHERE u.id = $1
     `, [userId]);
 
     if (userResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found'
-      });
+      return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    const user = userResult.rows[0];
+    const userData = userResult.rows[0];
 
-    // Get clubs user owns
-    const ownedClubsResult = await pool.query(`
+    // 2. Get all organizations the user is a member of
+    const orgsResult = await pool.query(`
       SELECT 
-        id, name, sport, description, location, created_at,
-        'owner' as role
-      FROM clubs
-      WHERE owner_id = $1
-      ORDER BY created_at DESC
+        o.id, o.name, o.sport, o.location, o.slug, o.logo_url,
+        om.role as user_role, om.status as member_status
+      FROM organizations o
+      INNER JOIN organization_members om ON o.id = om.organization_id
+      WHERE om.user_id = $1 AND om.status = 'active'
+      ORDER BY o.name ASC
     `, [userId]);
 
-    // Get clubs user is staff/member of
-    const staffClubsResult = await pool.query(`
-      SELECT 
-        c.id, c.name, c.sport, c.description, c.location, c.created_at,
-        s.role
-      FROM clubs c
-      INNER JOIN staff s ON c.id = s.club_id
-      WHERE s.user_id = $1 AND s.is_active = true
-      ORDER BY s.created_at DESC
-    `, [userId]);
+    const organizations = orgsResult.rows;
 
-    // Combine and deduplicate clubs
-    const allClubs = [...ownedClubsResult.rows, ...staffClubsResult.rows];
-    const uniqueClubs = allClubs.filter((club, index, self) => 
-      index === self.findIndex(c => c.id === club.id)
-    );
-
-    // For now, use first club as current (later we'll add club switcher preference)
-    const currentClub = uniqueClubs.length > 0 ? uniqueClubs[0] : null;
+    // 3. Determine current organization
+    let currentOrg = null;
+    if (userData.current_organization_id) {
+        currentOrg = organizations.find(o => o.id === userData.current_organization_id);
+    }
+    
+    // Fallback: Use first organization if current isn't set or no longer valid
+    if (!currentOrg && organizations.length > 0) {
+        currentOrg = organizations[0];
+        
+        // Update preference in background if not already set
+        pool.query('UPDATE user_preferences SET current_organization_id = $1 WHERE user_id = $2', [currentOrg.id, userId]).catch(console.error);
+    }
 
     res.json({
       success: true,
-      user,
-      clubs: uniqueClubs,
-      organizations: uniqueClubs, // Alias for backwards compatibility
-      currentClub,
-      currentOrganization: currentClub, // Alias for backwards compatibility
-      hasMultipleClubs: uniqueClubs.length > 1,
-      hasMultipleOrganizations: uniqueClubs.length > 1 // Alias
+      user: {
+        id: userData.id,
+        email: userData.email,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        accountType: userData.account_type
+      },
+      organizations: organizations,
+      currentOrganization: currentOrg,
+      hasMultipleOrganizations: organizations.length > 1
     });
   } catch (error) {
     console.error('Error fetching user context:', error);
