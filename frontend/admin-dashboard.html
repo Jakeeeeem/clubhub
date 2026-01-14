@@ -57,576 +57,578 @@
                 <button onclick="showSection('item-shop')" data-roles="owner, admin, staff">Shop</button>
                 <button onclick="showSection('marketing-hub')" data-roles="owner, admin, staff">Marketing</button>
                 <button onclick="showSection('tactical')" data-roles="owner, admin, coach">Tactical</button>
+
                 <div class="nav-divider"
                     style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
-            </div>
-            <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
-            <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
-            <button onclick="window.location.href='training-manager.html'" class="btn-special">🎯 Training</button>
-            <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️
-                Tournaments</button>
-            <button onclick="window.location.href='email-campaigns.html'" class="btn-special">📧 Email</button>
-        </div>
 
-        <div class="dashboard-content">
-            <!-- Overview Section -->
-            <div id="overview" class="dashboard-section active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <span class="stat-number" id="totalPlayers">0</span>
-                        <span class="stat-label">Total Players</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number" id="totalStaff">0</span>
-                        <span class="stat-label">Staff Members</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number" id="totalEvents">0</span>
-                        <span class="stat-label">Active Events</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number" id="totalRevenue">£0</span>
-                        <span class="stat-label">Monthly Revenue</span>
-                    </div>
-                </div>
-
-                <div class="card-grid">
-                    <div class="card">
-                        <h3>📈 Recent Activity</h3>
-                        <div id="recentActivity">
-                            <!-- Populated by JavaScript from database -->
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>📅 Upcoming Events</h3>
-                        <div id="upcomingEvents">
-                            <!-- Populated by JavaScript from database -->
-                        </div>
-                    </div>
-                </div>
+                <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
+                <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
+                <button onclick="window.location.href='training-manager.html'" class="btn-special">🎯 Training</button>
+                <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️
+                    Tournaments</button>
+                <button onclick="window.location.href='email-campaigns.html'" class="btn-special">📧 Email</button>
             </div>
 
-            <!-- Enhanced Players Section -->
-            <div id="players" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                        <h3>👥 Player Management</h3>
-                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                            <button class="btn btn-success" onclick="invitePlayerRBAC()">📧 Invite Player</button>
+            <div class="dashboard-content">
+                <!-- Overview Section -->
+                <div id="overview" class="dashboard-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-number" id="totalPlayers">0</span>
+                            <span class="stat-label">Total Players</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="totalStaff">0</span>
+                            <span class="stat-label">Staff Members</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="totalEvents">0</span>
+                            <span class="stat-label">Active Events</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-number" id="totalRevenue">£0</span>
+                            <span class="stat-label">Monthly Revenue</span>
                         </div>
                     </div>
 
-                    <!-- Enhanced Player Filters -->
-                    <div class="player-filters"
-                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
-                        <div class="filter-group">
-                            <label>View Type</label>
-                            <select id="playerListFilter" onchange="loadPlayers()">
-                                <option value="all">Full List</option>
-                                <option value="on-plan">On Plan</option>
-                                <option value="not-on-plan">No Plan</option>
-                                <option value="overdue">Overdue</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Team</label>
-                            <select id="teamFilter" onchange="loadPlayers()">
-                                <option value="">All Teams</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Sport</label>
-                            <select id="sportFilter" onchange="loadPlayers()">
-                                <option value="">All Sports</option>
-                                <option value="Football">Football</option>
-                                <option value="Basketball">Basketball</option>
-                                <option value="Tennis">Tennis</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Location</label>
-                            <input type="text" id="locationFilter" placeholder="London..." onkeyup="loadPlayers()">
-                        </div>
-                        <div class="filter-group" style="display: flex; gap: 0.5rem; flex-direction: column;">
-                            <label>Age Range</label>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <input type="number" id="minAgeFilter" placeholder="Min" style="width: 60px;"
-                                    onchange="loadPlayers()">
-                                <input type="number" id="maxAgeFilter" placeholder="Max" style="width: 60px;"
-                                    onchange="loadPlayers()">
-                            </div>
-                        </div>
-                        <div class="filter-buttons" style="display: flex; align-items: flex-end; gap: 0.5rem;">
-                            <button class="btn btn-secondary btn-small" onclick="resetPlayerFilters()">Reset</button>
-                            <button class="btn btn-primary btn-small" onclick="exportPlayers()">📊 Export</button>
-                        </div>
-                    </div>
-
-                    <!-- Enhanced Player Cards -->
-                    <div id="playersContainer">
-                        <!-- Players will be loaded from database via JavaScript -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Teams Section with Clickable Names -->
-            <div id="teams" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>⚽ Team Management</h3>
-                        <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create
-                            Team</button>
-                    </div>
-
-                    <div class="card-grid" id="teamsContainer">
-                        <!-- Team cards with clickable names will be loaded from database -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Staff Section with Invite Links -->
-            <div id="staff" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>👨‍💼 Staff Management</h3>
-                        <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">📧
-                            Invite
-                            Staff</button>
-                    </div>
-
-                    <div class="invite-section">
-                        <h3>📎 Staff Invite System</h3>
-                        <p>Generate invite links for coaches with specific team assignments. Coaches can
-                            only view
-                            their assigned teams:</p>
-                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
-                            <button class="btn btn-secondary" onclick="generateStaffInvite('coach')">Invite
-                                Coach</button>
-                            <button class="btn btn-warning" onclick="generateStaffInvite('assistant')">Invite
-                                Assistant</button>
-                            <button class="btn btn-primary" onclick="generateStaffInvite('admin')">Invite
-                                Administrator</button>
-                        </div>
-                    </div>
-
-                    <div id="staffContainer">
-                        <!-- Staff cards will be loaded from database -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Events Section -->
-            <div id="events" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>📅 Event Management</h3>
-                        <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create
-                            Event</button>
-                    </div>
-
-                    <div class="card-grid" id="eventsContainer">
-                        <!-- Events will be loaded from database -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Finances Section with Payment Plans -->
-            <div id="finances" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>💰 Financial Management</h3>
-                        <div style="display: flex; gap: 1rem;">
-                            <button class="btn btn-stripe" onclick="accessStripeAccount()">Access
-                                Stripe</button>
-                            <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">➕ Create
-                                Payment Plan</button>
-                        </div>
-                    </div>
-
-                    <div class="finance-overview">
-                        <div class="finance-card">
-                            <span class="finance-amount" id="monthlyRevenue">£0</span>
-                            <span class="finance-label">Monthly Revenue</span>
-                        </div>
-                        <div class="finance-card">
-                            <span class="finance-amount" id="overdueAmount">£0</span>
-                            <span class="finance-label">Outstanding</span>
-                        </div>
-                        <div class="finance-card">
-                            <span class="finance-amount" id="pendingAmount">£0</span>
-                            <span class="finance-label">Pending</span>
-                        </div>
-                        <div class="finance-card">
-                            <span class="finance-amount" id="totalMembers">0</span>
-                            <span class="finance-label">Paying Members</span>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>💳 Payment Plans</h3>
-                        <p>Players should be assigned to payment plans for easier workflow management:
-                        </p>
-                        <div id="paymentPlansContainer">
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>📊 Recent Transactions</h3>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Player</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="paymentsTableBody">
-                                <!-- Payments will be loaded from database -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Enhanced Listings Section with Indeed-like Interface -->
-            <div id="listings" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>📋 Club Listings & Applications</h3>
-                        <button class="btn btn-primary" onclick="showModal('createListingModal')">➕
-                            Create
-                            Listing</button>
-                    </div>
-
-                    <div class="card">
-                        <h3>📝 Active Listings</h3>
-                        <div id="activeListingsContainer">
-                            <!-- Active listings will be loaded from database -->
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>📋 Application Management (Indeed-like Interface)</h3>
-                        <p>Once applicants come, manage them with shortlist, reject, and invite options:
-                        </p>
-
-                        <div id="applicationsContainer">
-                            <!-- Applications will be loaded from database -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Club Profile Section -->
-            <div id="club-profile" class="dashboard-section">
-                <div class="card">
-                    <h3>🏠 Club Profile</h3>
-                    <form id="clubProfileForm">
-                        <div class="form-group">
-                            <label for="clubName">Club Name</label>
-                            <input type="text" id="clubName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="clubDescription">Description</label>
-                            <textarea id="clubDescription" rows="4"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="clubLocation">Location</label>
-                            <input type="text" id="clubLocation" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="clubPhilosophy">Club Philosophy</label>
-                            <textarea id="clubPhilosophy" rows="3"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="clubWebsite">Website</label>
-                            <input type="url" id="clubWebsite">
-                        </div>
-
-                        <div class="card" style="margin-top: 2rem;">
-                            <h3>📸 Club Pictures (Max 3-5)</h3>
-                            <div class="picture-upload-area"
-                                style="border: 2px dashed rgba(220, 67, 67, 0.3); border-radius: 8px; padding: 2rem; text-align: center; margin: 1rem 0;">
-                                <p>📸 Drag and drop images here or click to upload</p>
-                                <input type="file" multiple accept="image/*" style="display: none;" id="clubPictures"
-                                    onchange="handlePictureUpload(this)">
-                                <button type="button" class="btn btn-primary"
-                                    onclick="document.getElementById('clubPictures').click()">Choose
-                                    Files</button>
-                            </div>
-                            <div class="uploaded-pictures" id="uploadedPictures">
-                                <!-- Uploaded pictures will appear here -->
+                    <div class="card-grid">
+                        <div class="card">
+                            <h3>📈 Recent Activity</h3>
+                            <div id="recentActivity">
+                                <!-- Populated by JavaScript from database -->
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">💾 Save Club Profile</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Item Shop Section -->
-            <div id="item-shop" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                        <h3>🛒 Item Shop Management</h3>
-                        <button class="btn btn-primary" onclick="showModal('addProductModal')">➕ Add
-                            Product</button>
-                    </div>
-                    <div id="productsContainer" class="card-grid">
-                        <!-- Products will be loaded from database -->
+                        <div class="card">
+                            <h3>📅 Upcoming Events</h3>
+                            <div id="upcomingEvents">
+                                <!-- Populated by JavaScript from database -->
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Marketing Hub Section -->
-            <div id="marketing-hub" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                        <h3>📢 Marketing Hub</h3>
-                        <button class="btn btn-primary" onclick="showModal('createCampaignModal')">📣
-                            New
-                            Campaign</button>
-                    </div>
+                <!-- Enhanced Players Section -->
+                <div id="players" class="dashboard-section">
                     <div class="card">
-                        <h3>✉️ Active Campaigns</h3>
-                        <div id="campaignsContainer">
-                            <!-- Campaigns will be loaded from database -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Team Detail Section -->
-            <div id="team-details" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button class="btn btn-secondary btn-small" onclick="showSection('teams')">← Back to
-                                Teams</button>
-                            <h3 style="margin: 0;" id="teamDetailName">Team Name</h3>
-                        </div>
-                        <div class="team-meta-badges" id="teamDetailStats">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Team Tabs -->
-                    <div class="tabs">
-                        <button class="tab-btn active" onclick="switchTeamTab('roster')">👥 Roster</button>
-                        <button class="tab-btn" onclick="switchTeamTab('events')">📅 Events</button>
-                        <button class="tab-btn" onclick="switchTeamTab('availability')">✅ Availability</button>
-                    </div>
-
-                    <!-- Roster Tab -->
-                    <div id="team-tab-roster" class="team-tab-content active">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                            <h4>Players</h4>
-                            <button class="btn btn-primary btn-small" onclick="openAddTeamPlayerModal()">➕ Add
-                                Player</button>
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                            <h3>👥 Player Management</h3>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button class="btn btn-success" onclick="invitePlayerRBAC()">📧 Invite Player</button>
+                            </div>
                         </div>
-                        <div class="table-container">
+
+                        <!-- Enhanced Player Filters -->
+                        <div class="player-filters"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+                            <div class="filter-group">
+                                <label>View Type</label>
+                                <select id="playerListFilter" onchange="loadPlayers()">
+                                    <option value="all">Full List</option>
+                                    <option value="on-plan">On Plan</option>
+                                    <option value="not-on-plan">No Plan</option>
+                                    <option value="overdue">Overdue</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Team</label>
+                                <select id="teamFilter" onchange="loadPlayers()">
+                                    <option value="">All Teams</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Sport</label>
+                                <select id="sportFilter" onchange="loadPlayers()">
+                                    <option value="">All Sports</option>
+                                    <option value="Football">Football</option>
+                                    <option value="Basketball">Basketball</option>
+                                    <option value="Tennis">Tennis</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Location</label>
+                                <input type="text" id="locationFilter" placeholder="London..." onkeyup="loadPlayers()">
+                            </div>
+                            <div class="filter-group" style="display: flex; gap: 0.5rem; flex-direction: column;">
+                                <label>Age Range</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <input type="number" id="minAgeFilter" placeholder="Min" style="width: 60px;"
+                                        onchange="loadPlayers()">
+                                    <input type="number" id="maxAgeFilter" placeholder="Max" style="width: 60px;"
+                                        onchange="loadPlayers()">
+                                </div>
+                            </div>
+                            <div class="filter-buttons" style="display: flex; align-items: flex-end; gap: 0.5rem;">
+                                <button class="btn btn-secondary btn-small"
+                                    onclick="resetPlayerFilters()">Reset</button>
+                                <button class="btn btn-primary btn-small" onclick="exportPlayers()">📊 Export</button>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Player Cards -->
+                        <div id="playersContainer">
+                            <!-- Players will be loaded from database via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Teams Section with Clickable Names -->
+                <div id="teams" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>⚽ Team Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create
+                                Team</button>
+                        </div>
+
+                        <div class="card-grid" id="teamsContainer">
+                            <!-- Team cards with clickable names will be loaded from database -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Staff Section with Invite Links -->
+                <div id="staff" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>👨‍💼 Staff Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">📧
+                                Invite
+                                Staff</button>
+                        </div>
+
+                        <div class="invite-section">
+                            <h3>📎 Staff Invite System</h3>
+                            <p>Generate invite links for coaches with specific team assignments. Coaches can
+                                only view
+                                their assigned teams:</p>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                                <button class="btn btn-secondary" onclick="generateStaffInvite('coach')">Invite
+                                    Coach</button>
+                                <button class="btn btn-warning" onclick="generateStaffInvite('assistant')">Invite
+                                    Assistant</button>
+                                <button class="btn btn-primary" onclick="generateStaffInvite('admin')">Invite
+                                    Administrator</button>
+                            </div>
+                        </div>
+
+                        <div id="staffContainer">
+                            <!-- Staff cards will be loaded from database -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Events Section -->
+                <div id="events" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>📅 Event Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create
+                                Event</button>
+                        </div>
+
+                        <div class="card-grid" id="eventsContainer">
+                            <!-- Events will be loaded from database -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Finances Section with Payment Plans -->
+                <div id="finances" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>💰 Financial Management</h3>
+                            <div style="display: flex; gap: 1rem;">
+                                <button class="btn btn-stripe" onclick="accessStripeAccount()">Access
+                                    Stripe</button>
+                                <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">➕ Create
+                                    Payment Plan</button>
+                            </div>
+                        </div>
+
+                        <div class="finance-overview">
+                            <div class="finance-card">
+                                <span class="finance-amount" id="monthlyRevenue">£0</span>
+                                <span class="finance-label">Monthly Revenue</span>
+                            </div>
+                            <div class="finance-card">
+                                <span class="finance-amount" id="overdueAmount">£0</span>
+                                <span class="finance-label">Outstanding</span>
+                            </div>
+                            <div class="finance-card">
+                                <span class="finance-amount" id="pendingAmount">£0</span>
+                                <span class="finance-label">Pending</span>
+                            </div>
+                            <div class="finance-card">
+                                <span class="finance-amount" id="totalMembers">0</span>
+                                <span class="finance-label">Paying Members</span>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>💳 Payment Plans</h3>
+                            <p>Players should be assigned to payment plans for easier workflow management:
+                            </p>
+                            <div id="paymentPlansContainer">
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>📊 Recent Transactions</h3>
                             <table class="table">
                                 <thead>
                                     <tr>
                                         <th>Player</th>
-                                        <th>Position</th>
-                                        <th>Age</th>
+                                        <th>Amount</th>
                                         <th>Status</th>
+                                        <th>Date</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="teamRosterBody">
-                                    <!-- Populated via JS -->
+                                <tbody id="paymentsTableBody">
+                                    <!-- Payments will be loaded from database -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Events Tab -->
-                    <div id="team-tab-events" class="team-tab-content" style="display: none;">
+                <!-- Enhanced Listings Section with Indeed-like Interface -->
+                <div id="listings" class="dashboard-section">
+                    <div class="card">
                         <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                            <h4>Team Events</h4>
-                            <button class="btn btn-primary btn-small" onclick="showModal('addEventModal')">➕ Plan
-                                Event</button>
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>📋 Club Listings & Applications</h3>
+                            <button class="btn btn-primary" onclick="showModal('createListingModal')">➕
+                                Create
+                                Listing</button>
                         </div>
-                        <div id="teamEventsContainer" class="card-grid">
-                            <!-- Populated via JS -->
-                        </div>
-                    </div>
 
-                    <!-- Availability Tab (Spond-like) -->
-                    <div id="team-tab-availability" class="team-tab-content" style="display: none;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                            <h4>Availability Tracker</h4>
-                            <div class="legend" style="display: flex; gap: 1rem; font-size: 0.9rem;">
-                                <span style="color: var(--success-color);">✅ Going</span>
-                                <span style="color: var(--danger-color);">❌ No</span>
-                                <span style="color: var(--warning-color);">❓ Maybe</span>
-                                <span style="opacity: 0.5;">⚪ No Response</span>
-                            </div>
-                        </div>
-                        <div class="availability-grid" id="availabilityGrid"
-                            style="overflow-x: auto; background: var(--bg-secondary); border-radius: 8px; padding: 1rem;">
-                            <!-- Spond-like grid -->
-                            <p style="text-align: center; opacity: 0.7;">Select an upcoming event to view
-                                availability.</p>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Talent ID Manager Tab -->
-            <div id="talent-id" class="dashboard-section">
-                <div class="section-header">
-                    <h2>Talent ID Manager</h2>
-                    <div class="action-buttons">
-                        <button class="btn btn-secondary" onclick="exportTalentCSV()">Export CSV</button>
-                        <button class="btn btn-primary" onclick="showGenerateBibsModal()">+ Generate Bibs</button>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-bottom: 2rem;">
-                    <h3>Active Event Dashboard</h3>
-                    <div class="form-group">
-                        <label>Select Event</label>
-                        <select id="talentEventSelect" onchange="loadTalentDashboard(this.value)">
-                            <option value="">Select an event...</option>
-                            <!-- Populated via JS -->
-                        </select>
-                    </div>
-
-                    <div class="stats-grid" id="talentStats">
-                        <div class="stat-card">
-                            <h3>Registrants</h3>
-                            <p class="stat-number" id="totalRegistrants">0</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>Bibs Available</h3>
-                            <p class="stat-number" id="bibsAvailable">0</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>Groups</h3>
-                            <p class="stat-number" id="totalGroups">0</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 2rem;">
-                    <!-- Left Col: Schedule & Bibs -->
-                    <div>
                         <div class="card">
-                            <h3>Day Schedule</h3>
-                            <div id="scheduleList" class="item-list">
-                                <p class="empty-state">No schedule items yet.</p>
+                            <h3>📝 Active Listings</h3>
+                            <div id="activeListingsContainer">
+                                <!-- Active listings will be loaded from database -->
                             </div>
-                            <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
-                                onclick="showAddScheduleModal()">+ Add Activity</button>
                         </div>
 
-                        <div class="card" style="margin-top: 2rem;">
-                            <h3>Bib Inventory</h3>
-                            <div id="bibsList" class="item-list">
-                                <!-- Bib ranges -->
+                        <div class="card">
+                            <h3>📋 Application Management (Indeed-like Interface)</h3>
+                            <p>Once applicants come, manage them with shortlist, reject, and invite options:
+                            </p>
+
+                            <div id="applicationsContainer">
+                                <!-- Applications will be loaded from database -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Club Profile Section -->
+                <div id="club-profile" class="dashboard-section">
+                    <div class="card">
+                        <h3>🏠 Club Profile</h3>
+                        <form id="clubProfileForm">
+                            <div class="form-group">
+                                <label for="clubName">Club Name</label>
+                                <input type="text" id="clubName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clubDescription">Description</label>
+                                <textarea id="clubDescription" rows="4"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="clubLocation">Location</label>
+                                <input type="text" id="clubLocation" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clubPhilosophy">Club Philosophy</label>
+                                <textarea id="clubPhilosophy" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="clubWebsite">Website</label>
+                                <input type="url" id="clubWebsite">
+                            </div>
+
+                            <div class="card" style="margin-top: 2rem;">
+                                <h3>📸 Club Pictures (Max 3-5)</h3>
+                                <div class="picture-upload-area"
+                                    style="border: 2px dashed rgba(220, 67, 67, 0.3); border-radius: 8px; padding: 2rem; text-align: center; margin: 1rem 0;">
+                                    <p>📸 Drag and drop images here or click to upload</p>
+                                    <input type="file" multiple accept="image/*" style="display: none;"
+                                        id="clubPictures" onchange="handlePictureUpload(this)">
+                                    <button type="button" class="btn btn-primary"
+                                        onclick="document.getElementById('clubPictures').click()">Choose
+                                        Files</button>
+                                </div>
+                                <div class="uploaded-pictures" id="uploadedPictures">
+                                    <!-- Uploaded pictures will appear here -->
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">💾 Save Club Profile</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Item Shop Section -->
+                <div id="item-shop" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3>🛒 Item Shop Management</h3>
+                            <button class="btn btn-primary" onclick="showModal('addProductModal')">➕ Add
+                                Product</button>
+                        </div>
+                        <div id="productsContainer" class="card-grid">
+                            <!-- Products will be loaded from database -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Marketing Hub Section -->
+                <div id="marketing-hub" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3>📢 Marketing Hub</h3>
+                            <button class="btn btn-primary" onclick="showModal('createCampaignModal')">📣
+                                New
+                                Campaign</button>
+                        </div>
+                        <div class="card">
+                            <h3>✉️ Active Campaigns</h3>
+                            <div id="campaignsContainer">
+                                <!-- Campaigns will be loaded from database -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Detail Section -->
+                <div id="team-details" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <button class="btn btn-secondary btn-small" onclick="showSection('teams')">← Back to
+                                    Teams</button>
+                                <h3 style="margin: 0;" id="teamDetailName">Team Name</h3>
+                            </div>
+                            <div class="team-meta-badges" id="teamDetailStats">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Team Tabs -->
+                        <div class="tabs">
+                            <button class="tab-btn active" onclick="switchTeamTab('roster')">👥 Roster</button>
+                            <button class="tab-btn" onclick="switchTeamTab('events')">📅 Events</button>
+                            <button class="tab-btn" onclick="switchTeamTab('availability')">✅ Availability</button>
+                        </div>
+
+                        <!-- Roster Tab -->
+                        <div id="team-tab-roster" class="team-tab-content active">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                                <h4>Players</h4>
+                                <button class="btn btn-primary btn-small" onclick="openAddTeamPlayerModal()">➕ Add
+                                    Player</button>
+                            </div>
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Player</th>
+                                            <th>Position</th>
+                                            <th>Age</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="teamRosterBody">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Events Tab -->
+                        <div id="team-tab-events" class="team-tab-content" style="display: none;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                                <h4>Team Events</h4>
+                                <button class="btn btn-primary btn-small" onclick="showModal('addEventModal')">➕ Plan
+                                    Event</button>
+                            </div>
+                            <div id="teamEventsContainer" class="card-grid">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Availability Tab (Spond-like) -->
+                        <div id="team-tab-availability" class="team-tab-content" style="display: none;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                                <h4>Availability Tracker</h4>
+                                <div class="legend" style="display: flex; gap: 1rem; font-size: 0.9rem;">
+                                    <span style="color: var(--success-color);">✅ Going</span>
+                                    <span style="color: var(--danger-color);">❌ No</span>
+                                    <span style="color: var(--warning-color);">❓ Maybe</span>
+                                    <span style="opacity: 0.5;">⚪ No Response</span>
+                                </div>
+                            </div>
+                            <div class="availability-grid" id="availabilityGrid"
+                                style="overflow-x: auto; background: var(--bg-secondary); border-radius: 8px; padding: 1rem;">
+                                <!-- Spond-like grid -->
+                                <p style="text-align: center; opacity: 0.7;">Select an upcoming event to view
+                                    availability.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Talent ID Manager Tab -->
+                <div id="talent-id" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Talent ID Manager</h2>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="exportTalentCSV()">Export CSV</button>
+                            <button class="btn btn-primary" onclick="showGenerateBibsModal()">+ Generate Bibs</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3>Active Event Dashboard</h3>
+                        <div class="form-group">
+                            <label>Select Event</label>
+                            <select id="talentEventSelect" onchange="loadTalentDashboard(this.value)">
+                                <option value="">Select an event...</option>
+                                <!-- Populated via JS -->
+                            </select>
+                        </div>
+
+                        <div class="stats-grid" id="talentStats">
+                            <div class="stat-card">
+                                <h3>Registrants</h3>
+                                <p class="stat-number" id="totalRegistrants">0</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Bibs Available</h3>
+                                <p class="stat-number" id="bibsAvailable">0</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Groups</h3>
+                                <p class="stat-number" id="totalGroups">0</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Col: Groups & Auto Assign -->
-                    <div>
+                    <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <!-- Left Col: Schedule & Bibs -->
+                        <div>
+                            <div class="card">
+                                <h3>Day Schedule</h3>
+                                <div id="scheduleList" class="item-list">
+                                    <p class="empty-state">No schedule items yet.</p>
+                                </div>
+                                <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
+                                    onclick="showAddScheduleModal()">+ Add Activity</button>
+                            </div>
+
+                            <div class="card" style="margin-top: 2rem;">
+                                <h3>Bib Inventory</h3>
+                                <div id="bibsList" class="item-list">
+                                    <!-- Bib ranges -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Col: Groups & Auto Assign -->
+                        <div>
+                            <div class="card">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h3>Groups</h3>
+                                    <button class="btn btn-primary btn-small" onclick="autoAssignBibs()">✨ Auto-Assign
+                                        Bibs</button>
+                                </div>
+                                <p style="font-size:0.9rem; opacity:0.7; margin-bottom:1rem;">Automatically assign bibs
+                                    to unassigned players.</p>
+
+                                <div id="groupsList">
+                                    <!-- Groups rendered here -->
+                                </div>
+
+                                <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
+                                    onclick="showCreateGroupModal()">+ Create Group</button>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- End talent-id -->
+
+                <!-- Tournament Manager Tab -->
+                <div id="tournaments" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Tournament Manager</h2>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="exportTournamentCSV()">Export CSV</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <h3>Tournament Overview</h3>
+                        <div class="form-group">
+                            <label>Select Tournament</label>
+                            <select id="tournamentSelect" onchange="loadTournamentDashboard(this.value)">
+                                <option value="">Select a tournament...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-container" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
+                        <!-- Teams Column -->
+                        <div class="card">
+                            <h3>Registered Teams</h3>
+                            <div id="tournamentTeamsList" class="item-list"></div>
+                        </div>
+
+                        <!-- Fixtures Column -->
                         <div class="card">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <h3>Groups</h3>
-                                <button class="btn btn-primary btn-small" onclick="autoAssignBibs()">✨ Auto-Assign
-                                    Bibs</button>
+                                <h3>Fixtures / Bracket</h3>
+                                <div>
+                                    <button class="btn btn-small btn-secondary"
+                                        onclick="generateFixtures('regular')">League</button>
+                                    <button class="btn btn-small btn-primary"
+                                        onclick="generateFixtures('knockout')">Knockout</button>
+                                </div>
                             </div>
-                            <p style="font-size:0.9rem; opacity:0.7; margin-bottom:1rem;">Automatically assign bibs
-                                to unassigned players.</p>
-
-                            <div id="groupsList">
-                                <!-- Groups rendered here -->
-                            </div>
-
-                            <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
-                                onclick="showCreateGroupModal()">+ Create Group</button>
+                            <div id="tournamentMatchesList" class="item-list"></div>
                         </div>
                     </div>
                 </div>
-            </div> <!-- End talent-id -->
 
-            <!-- Tournament Manager Tab -->
-            <div id="tournaments" class="dashboard-section">
-                <div class="section-header">
-                    <h2>Tournament Manager</h2>
-                    <div class="action-buttons">
-                        <button class="btn btn-secondary" onclick="exportTournamentCSV()">Export CSV</button>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-bottom: 2rem;">
-                    <h3>Tournament Overview</h3>
-                    <div class="form-group">
-                        <label>Select Tournament</label>
-                        <select id="tournamentSelect" onchange="loadTournamentDashboard(this.value)">
-                            <option value="">Select a tournament...</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid-container" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
-                    <!-- Teams Column -->
+                <!-- Specialized Polls Section -->
+                <div id="polls-section" class="dashboard-section">
                     <div class="card">
-                        <h3>Registered Teams</h3>
-                        <div id="tournamentTeamsList" class="item-list"></div>
-                    </div>
-
-                    <!-- Fixtures Column -->
-                    <div class="card">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <h3>Fixtures / Bracket</h3>
-                            <div>
-                                <button class="btn btn-small btn-secondary"
-                                    onclick="generateFixtures('regular')">League</button>
-                                <button class="btn btn-small btn-primary"
-                                    onclick="generateFixtures('knockout')">Knockout</button>
-                            </div>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3>🗳️ Voting & Polls</h3>
+                            <button class="btn btn-primary" onclick="showModal('createPollModal')">➕ Create
+                                Poll</button>
                         </div>
-                        <div id="tournamentMatchesList" class="item-list"></div>
+                        <div id="pollsContainer" class="card-grid">
+                            <!-- Polls will be loaded here -->
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Specialized Polls Section -->
-            <div id="polls-section" class="dashboard-section">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                        <h3>🗳️ Voting & Polls</h3>
-                        <button class="btn btn-primary" onclick="showModal('createPollModal')">➕ Create
-                            Poll</button>
-                    </div>
-                    <div id="pollsContainer" class="card-grid">
-                        <!-- Polls will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div> <!-- End dashboard-content -->
+            </div> <!-- End dashboard-content -->
         </div>
     </main>
 
