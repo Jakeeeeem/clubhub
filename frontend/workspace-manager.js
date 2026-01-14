@@ -56,17 +56,29 @@ class WorkspaceManager {
         const userRole = this.context.currentOrganization.user_role;
         const protectedElements = document.querySelectorAll('[data-roles]');
 
+        console.log(`🔐 Enforcing permissions for role: "${userRole}"`);
+        console.log(`📋 Found ${protectedElements.length} protected elements`);
+
         protectedElements.forEach(el => {
-            const allowedRoles = el.getAttribute('data-roles').split(',').map(r => r.trim());
+            const allowedRolesStr = el.getAttribute('data-roles');
+            const allowedRoles = allowedRolesStr.split(',').map(r => r.trim().toLowerCase());
+            const userRoleLower = userRole.toLowerCase();
             
-            if (!allowedRoles.includes(userRole)) {
+            // Owner should see EVERYTHING
+            const isOwner = userRoleLower === 'owner';
+            const hasAccess = isOwner || allowedRoles.includes(userRoleLower);
+            
+            if (!hasAccess) {
                 el.style.display = 'none';
                 el.setAttribute('data-hidden-by-role', 'true');
+                console.log(`🚫 Hiding element (allowed: ${allowedRolesStr}, user: ${userRole})`);
             } else {
                 // Only show if it wasn't hidden for other reasons
                 if (el.style.display === 'none' && !el.classList.contains('hidden-manual')) {
                     el.style.display = '';
                 }
+                el.removeAttribute('data-hidden-by-role');
+                console.log(`✅ Showing element (allowed: ${allowedRolesStr}, user: ${userRole})`);
             }
         });
     }
