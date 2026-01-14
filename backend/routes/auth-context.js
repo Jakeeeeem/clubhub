@@ -13,7 +13,7 @@ const { authenticateToken } = require('../middleware/auth');
  */
 router.post('/switch-organization', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { organizationId } = req.body;
 
     if (!organizationId) {
@@ -73,7 +73,7 @@ router.post('/switch-organization', authenticateToken, async (req, res) => {
  */
 router.get('/context', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Get user info
     const userResult = await pool.query(`
@@ -155,7 +155,7 @@ router.get('/context', authenticateToken, async (req, res) => {
  */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const result = await pool.query(`
       SELECT 
