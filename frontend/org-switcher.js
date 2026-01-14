@@ -33,13 +33,9 @@ class OrganizationSwitcher {
     const container = document.getElementById('org-switcher-container');
     if (!container) return;
 
-    if (this.organizations.length === 0) {
-      container.innerHTML = '';
-      return;
-    }
-
-    const currentOrgName = this.currentOrg?.name || 'Select Organization';
-    const currentOrgRole = this.currentOrg?.role || '';
+    // Always show switcher, even with 0 or 1 organizations
+    const currentOrgName = this.currentOrg?.name || 'No Organization';
+    const currentOrgRole = this.currentOrg?.user_role || this.currentOrg?.role || '';
 
     container.innerHTML = `
       <div class="org-switcher">
@@ -66,7 +62,17 @@ class OrganizationSwitcher {
             <span>Switch Organization</span>
           </div>
           <div class="org-switcher-list">
-            ${this.organizations.map(org => this.renderOrgItem(org)).join('')}
+            ${this.organizations.length === 0 
+              ? `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                   No organizations yet.<br>Create your first one below!
+                 </div>`
+              : this.organizations.length === 1
+                ? `${this.organizations.map(org => this.renderOrgItem(org)).join('')}
+                   <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border-color); margin-top: 0.5rem;">
+                     💡 Create additional organizations to manage multiple clubs
+                   </div>`
+                : this.organizations.map(org => this.renderOrgItem(org)).join('')
+            }
           </div>
           <div class="org-switcher-footer">
             <button class="org-switcher-action" onclick="window.location.href='create-organization.html'">

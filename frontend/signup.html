@@ -453,10 +453,56 @@
                 });
             });
 
-            // Check URL params
+            // ============================================================================
+            // HANDLE INVITATION PARAMETERS
+            // ============================================================================
             const urlParams = new URLSearchParams(window.location.search);
+            const inviteToken = urlParams.get('invite');
+            const inviteEmail = urlParams.get('email');
+
+            if (inviteToken) {
+                console.log('📧 Invitation detected, pre-filling email');
+
+                // Store the invite token for later
+                localStorage.setItem('pendingInviteToken', inviteToken);
+
+                // Pre-fill email if provided
+                if (inviteEmail) {
+                    const emailInput = document.getElementById('email');
+                    if (emailInput) {
+                        emailInput.value = decodeURIComponent(inviteEmail);
+                        emailInput.readOnly = true;
+                        emailInput.style.background = 'rgba(255, 255, 255, 0.05)';
+                        emailInput.style.cursor = 'not-allowed';
+                    }
+                }
+
+                // Add invitation banner
+                const step2 = document.querySelector('.form-step[data-step="2"]');
+                if (step2) {
+                    const banner = document.createElement('div');
+                    banner.style.cssText = 'background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; text-align: center;';
+                    banner.innerHTML = `
+                        <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">
+                            ✉️ You're Joining via Invitation
+                        </div>
+                        <div style="color: #6ee7b7; font-size: 0.9rem;">
+                            After creating your account, you'll automatically join the organization
+                        </div>
+                    `;
+                    step2.insertBefore(banner, step2.firstChild.nextSibling);
+                }
+
+                // Auto-select "Player Account" for invitations (can be changed)
+                const playerCard = document.querySelector('.account-type-card[data-type="adult"]');
+                if (playerCard) {
+                    playerCard.click();
+                }
+            }
+
+            // Check URL params for account type
             const type = urlParams.get('type');
-            if (type) {
+            if (type && !inviteToken) { // Don't override if invitation exists
                 const card = document.querySelector(`.account-type-card[data-type="${type}"]`);
                 if (card) card.click();
             }
@@ -562,6 +608,37 @@
                 localStorage.setItem('authToken', response.token);
                 localStorage.setItem('currentUser', JSON.stringify(response.user));
 
+                // ============================================================================
+                // HANDLE PENDING INVITATION (if exists)
+                // ============================================================================
+                const pendingInviteToken = localStorage.getItem('pendingInviteToken');
+                let invitationAccepted = false;
+                let invitationRole = null;
+
+                if (pendingInviteToken) {
+                    try {
+                        console.log('📧 Accepting pending invitation:', pendingInviteToken);
+                        nextBtn.textContent = 'Joining Organization...';
+
+                        const inviteResponse = await apiService.acceptInvitation(pendingInviteToken);
+
+                        if (inviteResponse.success) {
+                            console.log('✅ Invitation accepted successfully');
+                            invitationAccepted = true;
+
+                            // Get the invitation details to determine role
+                            const inviteDetails = await apiService.getInvitation(pendingInviteToken);
+                            invitationRole = inviteDetails.invitation?.role;
+
+                            // Clear the pending token
+                            localStorage.removeItem('pendingInviteToken');
+                        }
+                    } catch (error) {
+                        console.error('Failed to accept invitation:', error);
+                        // Don't fail registration if invitation acceptance fails
+                    }
+                }
+
                 // Show success step
                 currentStep = 3;
                 updateUI();
@@ -569,13 +646,22 @@
                 // Update the "Go to Dashboard" button to actually redirect
                 const dashboardBtn = document.querySelector('.form-step[data-step="3"] .btn-primary');
                 dashboardBtn.onclick = async function () {
-                    // Determine redirect based on user type
                     let redirectUrl = 'player-dashboard.html';
 
+                    // Priority 1: Platform Admin
                     if (response.user.is_platform_admin || response.user.isPlatformAdmin) {
                         redirectUrl = 'super-admin-dashboard.html';
-                    } else if (response.user.account_type === 'organization') {
-                        // Check if they have organizations
+                    }
+                    // Priority 2: Invitation Role (if they just accepted an invite)
+                    else if (invitationAccepted && invitationRole) {
+                        if (['owner', 'admin', 'coach', 'assistant_coach', 'staff'].includes(invitationRole)) {
+                            redirectUrl = 'admin-dashboard.html';
+                        } else {
+                            redirectUrl = 'player-dashboard.html';
+                        }
+                    }
+                    // Priority 3: Organization Account
+                    else if (response.user.account_type === 'organization') {
                         try {
                             const context = await apiService.makeRequest('/auth/context');
                             if (context.organizations && context.organizations.length > 0) {
@@ -587,7 +673,12 @@
                             redirectUrl = 'create-organization.html';
                         }
                     }
+                    // Priority 4: Adult/Player Account
+                    else {
+                        redirectUrl = 'player-dashboard.html';
+                    }
 
+                    console.log('🚀 Redirecting to:', redirectUrl);
                     window.location.href = redirectUrl;
                 };
 
