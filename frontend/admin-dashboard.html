@@ -3302,35 +3302,6 @@
 
 
 
-        // Picture Upload Handler
-        function handlePictureUpload(input) {
-            const files = input.files;
-            const uploadedPictures = document.getElementById('uploadedPictures');
-
-            if (files.length > 5) {
-                showNotification('Maximum 5 pictures allowed', 'error');
-                return;
-            }
-
-            uploadedPictures.innerHTML = '';
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const reader = new FileReader();
-
-                reader.onload = function (e) {
-                    const imgDiv = document.createElement('div');
-                    imgDiv.style.cssText = 'display: inline-block; margin: 0.5rem; position: relative;';
-                    imgDiv.innerHTML = `
-                        <img src="${e.target.result}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                        <button type="button" onclick="this.parentElement.remove()" style="position: absolute; top: -5px; right: -5px; background: #dc4343; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">×</button>
-                    `;
-                    uploadedPictures.appendChild(imgDiv);
-                };
-
-                reader.readAsDataURL(file);
-            }
-        }
 
         async function loadEvents() {
             const container = document.getElementById('eventsContainer');
@@ -3609,25 +3580,55 @@
         async function handlePictureUpload(input) {
             if (!input.files || input.files.length === 0) return;
 
-            const file = input.files[0];
+            const files = Array.from(input.files);
             const clubId = await getActiveClubId();
+
+            if (!clubId) {
+                showNotification('No active organization/club found. Please select or create one first.', 'error');
+                input.value = '';
+                return;
+            }
+
+            // Get current images to check limit
+            const currentSection = document.getElementById('uploadedPictures');
+            const currentImagesCount = currentSection.querySelectorAll('.gallery-item').length;
+
+            if (currentImagesCount + files.length > 5) {
+                showNotification(`Maximum 5 images allowed. You already have ${currentImagesCount}.`, 'error');
+                input.value = '';
+                return;
+            }
 
             try {
                 showLoading(true);
-                // Upload
-                const result = await apiService.uploadClubImage(clubId, file);
+                let successCount = 0;
+                let failCount = 0;
 
-                showNotification('Image uploaded successfully!', 'success');
-                // Refresh gallery
-                if (result.images) {
-                    displayClubImages(result.images);
-                } else {
-                    // Fallback reload
-                    await loadClubProfileImages();
+                for (const file of files) {
+                    try {
+                        const result = await apiService.uploadClubImage(clubId, file);
+                        if (result.images) {
+                            displayClubImages(result.images);
+                        }
+                        successCount++;
+                    } catch (err) {
+                        console.error('File upload failed:', file.name, err);
+                        failCount++;
+                    }
                 }
 
+                if (successCount > 0) {
+                    showNotification(`${successCount} image(s) uploaded successfully!`, 'success');
+                }
+                if (failCount > 0) {
+                    showNotification(`${failCount} image(s) failed to upload.`, 'error');
+                }
+
+                // Final refresh to be sure
+                await loadClubProfileImages();
+
             } catch (error) {
-                console.error('Upload failed:', error);
+                console.error('Upload process failed:', error);
                 showNotification('Upload failed: ' + error.message, 'error');
             } finally {
                 showLoading(false);
@@ -3644,10 +3645,15 @@
                 return;
             }
 
+            container.style.display = 'grid';
+            container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(100px, 1fr))';
+            container.style.gap = '15px';
+            container.style.marginTop = '15px';
+
             container.innerHTML = images.map(imgUrl => `
-                <div class="gallery-item" style="position: relative; display: inline-block; margin: 10px;">
-                    <img src="${imgUrl}" style="height: 100px; width: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #444;">
-                    <button onclick="deleteClubImage('${imgUrl}')" style="position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;">×</button>
+                <div class="gallery-item" style="position: relative; width: 100%; aspect-ratio: 1/1; overflow: visible;">
+                    <img src="${imgUrl}" style="height: 100%; width: 100%; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color, #444);">
+                    <button onclick="deleteClubImage('${imgUrl}')" style="position: absolute; top: -8px; right: -8px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 5;">&times;</button>
                 </div>
             `).join('');
         }

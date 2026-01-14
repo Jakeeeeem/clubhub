@@ -360,7 +360,10 @@ class ApiService {
           body: formData
       });
       
-      if (!response.ok) throw new Error('Upload failed');
+      if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || errorData.message || `Upload failed (${response.status})`);
+      }
       return await response.json();
   }
   
