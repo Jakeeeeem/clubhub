@@ -474,6 +474,68 @@ router.post(
 
           console.log(`✅ Demo login successful: ${normalizedEmail}`);
           
+          // Auto-create demo organization and data for admin accounts
+          if (normalizedEmail === 'admin@clubhub.com' && user.account_type === 'organization') {
+            try {
+              // Check if club already exists
+              const existingClub = await query('SELECT id FROM clubs WHERE owner_id = $1', [user.id]);
+              
+              if (existingClub.rows.length === 0) {
+                console.log('🏢 Creating demo club for admin...');
+                
+                // Create demo club
+                const clubResult = await query(
+                  `INSERT INTO clubs (name, sport, description, location, contact_email, contact_phone, owner_id, member_count)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                   RETURNING id`,
+                  [
+                    'Demo Sports Club',
+                    'Football',
+                    'A demo club to showcase ClubHub features',
+                    'London, UK',
+                    'admin@clubhub.com',
+                    '+44 20 7946 0958',
+                    user.id,
+                    12
+                  ]
+                );
+                
+                const clubId = clubResult.rows[0].id;
+                console.log(`✅ Demo club created with ID: ${clubId}`);
+                
+                // Create demo team
+                const teamResult = await query(
+                  `INSERT INTO teams (name, age_group, sport, club_id)
+                   VALUES ($1, $2, $3, $4)
+                   RETURNING id`,
+                  ['Under 18s', 'U18', 'Football', clubId]
+                );
+                console.log(`✅ Demo team created`);
+                
+                // Create 3 demo players
+                for (let i = 1; i <= 3; i++) {
+                  await query(
+                    `INSERT INTO players (first_name, last_name, email, date_of_birth, position, club_id, monthly_fee)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    [
+                      `Player${i}`,
+                      'Demo',
+                      `player${i}.demo@clubhub.com`,
+                      '2006-01-15',
+                      i === 1 ? 'Forward' : i === 2 ? 'Midfielder' : 'Defender',
+                      clubId,
+                      50.00
+                    ]
+                  );
+                }
+                console.log(`✅ 3 demo players created`);
+              }
+            } catch (error) {
+              console.error('⚠️ Failed to create demo data:', error.message);
+              // Don't fail login if demo data creation fails
+            }
+          }
+          
           return res.json({
             message: 'Login successful',
             token,
