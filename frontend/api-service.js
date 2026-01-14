@@ -88,7 +88,11 @@ class ApiService {
       }
 
       if (!response.ok) {
-        console.error(`❌ API Error ${response.status}:`, data);
+        console.error(`❌ API Error ${response.status} [${options.method || 'GET'} ${endpoint}]:`, {
+          data,
+          statusText: response.statusText,
+          payload: options.body ? JSON.parse(options.body) : null
+        });
         
         // Don't trigger global auth error for login/register attempts
         if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
@@ -164,15 +168,33 @@ class ApiService {
   // =========================== MARKETING CAMPAIGN METHODS ===========================
 
   async getStripeConnectStatus() {
-    return await this.makeRequest('/payments/stripe/connect/status');
+    try {
+      console.log('🔄 Fetching Stripe Connect status...');
+      return await this.makeRequest('/payments/stripe/connect/status');
+    } catch (error) {
+      console.error('❌ Failed to get Stripe Connect status:', error);
+      throw error;
+    }
   }
 
   async getStripeOnboardLink() {
-    return await this.makeRequest('/payments/stripe/connect/onboard', { method: 'POST' });
+    try {
+      console.log('🔄 Fetching Stripe Connect onboarding link...');
+      return await this.makeRequest('/payments/stripe/connect/onboard', { method: 'POST' });
+    } catch (error) {
+      console.error('❌ Failed to get Stripe Connect onboarding link:', error);
+      throw error;
+    }
   }
 
   async getStripeManageLink() {
-    return await this.makeRequest('/payments/stripe/connect/manage');
+    try {
+      console.log('🔄 Fetching Stripe Connect management link...');
+      return await this.makeRequest('/payments/stripe/connect/manage');
+    } catch (error) {
+      console.error('❌ Failed to get Stripe Connect management link:', error);
+      throw error;
+    }
   }
 
   async getCampaigns(clubId = null) {
@@ -379,15 +401,33 @@ class ApiService {
 
 
   async ensureStripeAccount() {
-    return this.makeRequest('/payments/stripe/account', { method: 'POST' });
+    try {
+      console.log('🔄 Ensuring Stripe account...');
+      return await this.makeRequest('/payments/stripe/account', { method: 'POST' });
+    } catch (error) {
+      console.error('❌ Failed to ensure Stripe account:', error);
+      throw error;
+    }
   }
 
   async getStripeOnboardingLink() {
-    return this.makeRequest('/payments/stripe/onboarding-link', { method: 'POST' });
+    try {
+      console.log('🔄 Fetching Stripe onboarding link...');
+      return await this.makeRequest('/payments/stripe/onboarding-link', { method: 'POST' });
+    } catch (error) {
+      console.error('❌ Failed to get Stripe onboarding link:', error);
+      throw error;
+    }
   }
 
   async getStripeDashboardLink() {
-    return this.makeRequest('/payments/stripe/dashboard-link', { method: 'POST' });
+    try {
+      console.log('🔄 Fetching Stripe dashboard link...');
+      return await this.makeRequest('/payments/stripe/dashboard-link', { method: 'POST' });
+    } catch (error) {
+      console.error('❌ Failed to get Stripe dashboard link:', error);
+      throw error;
+    }
   }
 
   /* ------------ Payment plans (assignment) ------------ */
@@ -401,18 +441,24 @@ class ApiService {
 }
 
 async createPaymentPlan({ name, amount, price, interval, frequency, description, clubId }) {
-  const payload = {
-    name,
-    amount: Number.isFinite(Number(amount)) ? Number(amount) : Number(price), // map price→amount if needed
-    interval: interval || frequency,                                         // map frequency→interval if needed
-    description,
-    clubId
-  };
+  try {
+    const payload = {
+      name,
+      amount: Number.isFinite(Number(amount)) ? Number(amount) : Number(price), // map price→amount if needed
+      interval: interval || frequency,                                         // map frequency→interval if needed
+      description,
+      clubId
+    };
 
-  return this.makeRequest('/payments/plans', {   // ← keep your existing URL if different
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
+    console.log('📝 Creating payment plan:', payload);
+    return await this.makeRequest('/payments/plans', {   // ← keep your existing URL if different
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  } catch (error) {
+    console.error('❌ Failed to create payment plan:', error);
+    throw error;
+  }
 }
 
 async updatePaymentPlan(planId, planData) {

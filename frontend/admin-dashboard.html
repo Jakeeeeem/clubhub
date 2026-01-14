@@ -3297,10 +3297,26 @@
 
 
         // Stripe Integration
-        function accessStripeAccount() {
-            console.log('💳 Accessing Stripe dashboard...');
-            const stripeUrl = 'https://dashboard.stripe.com/';
-            window.open(stripeUrl, '_blank');
+        async function accessStripeAccount() {
+            console.log('💳 Initiating Stripe dashboard access...');
+            try {
+                showLoading(true);
+                // Try to get dynamic management link first
+                const response = await apiService.getStripeManageLink();
+                if (response && response.url) {
+                    console.log('✅ Found dynamic Stripe management link:', response.url);
+                    window.open(response.url, '_blank');
+                } else {
+                    console.warn('⚠️ No dynamic link found, falling back to standard Stripe dashboard');
+                    window.open('https://dashboard.stripe.com/', '_blank');
+                }
+            } catch (error) {
+                console.error('❌ Failed to get dynamic Stripe link:', error);
+                console.log('ℹ️ Falling back to standard Stripe dashboard URL');
+                window.open('https://dashboard.stripe.com/', '_blank');
+            } finally {
+                showLoading(false);
+            }
         }
 
 
