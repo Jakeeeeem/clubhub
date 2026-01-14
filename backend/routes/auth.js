@@ -555,6 +555,7 @@ router.post(
               firstName: user.first_name,
               lastName: user.last_name,
               userType: user.account_type,
+              account_type: user.account_type, // For dashboard compatibility
               isPlatformAdmin: user.is_platform_admin || false
             }
           });
