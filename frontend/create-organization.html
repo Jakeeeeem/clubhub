@@ -129,6 +129,34 @@
             margin-bottom: 1.5rem;
             display: none;
         }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(255, 51, 51, 0.05);
+        }
+
+        .upload-placeholder {
+            color: var(--text-muted);
+        }
+
+        .upload-placeholder svg {
+            color: var(--text-muted);
+            margin: 0 auto;
+        }
+
+        .image-preview {
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -219,6 +247,31 @@
                         placeholder="Tell us about your organization..."></textarea>
                 </div>
 
+                <div class="form-group">
+                    <label for="logo">Organization Logo (Optional)</label>
+                    <div class="file-upload-area" id="logoUploadArea">
+                        <input type="file" id="logo" name="logo" accept="image/*" style="display: none;">
+                        <div class="upload-placeholder" id="uploadPlaceholder">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <p style="margin: 1rem 0 0.5rem; color: var(--text-main);">Click to upload or drag and drop
+                            </p>
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">PNG, JPG or WEBP (max
+                                5MB)</p>
+                        </div>
+                        <div class="image-preview" id="imagePreview" style="display: none;">
+                            <img id="previewImg" src="" alt="Logo preview"
+                                style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                            <button type="button" class="btn btn-secondary" onclick="clearLogo()"
+                                style="margin-top: 1rem;">Remove Logo</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="window.history.back()">
                         Cancel
@@ -233,6 +286,88 @@
 
     <script src="api-service.js"></script>
     <script>
+        let selectedLogoFile = null;
+
+        // Logo upload handling
+        const logoInput = document.getElementById('logo');
+        const logoUploadArea = document.getElementById('logoUploadArea');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+
+        // Click to upload
+        logoUploadArea.addEventListener('click', () => {
+            if (!imagePreview.style.display || imagePreview.style.display === 'none') {
+                logoInput.click();
+            }
+        });
+
+        // File input change
+        logoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleLogoFile(file);
+            }
+        });
+
+        // Drag and drop
+        logoUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            logoUploadArea.style.borderColor = 'var(--primary)';
+            logoUploadArea.style.background = 'rgba(255, 51, 51, 0.05)';
+        });
+
+        logoUploadArea.addEventListener('dragleave', () => {
+            logoUploadArea.style.borderColor = 'var(--border-color)';
+            logoUploadArea.style.background = 'rgba(255, 255, 255, 0.03)';
+        });
+
+        logoUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            logoUploadArea.style.borderColor = 'var(--border-color)';
+            logoUploadArea.style.background = 'rgba(255, 255, 255, 0.03)';
+
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleLogoFile(file);
+            } else {
+                alert('Please upload an image file');
+            }
+        });
+
+        function handleLogoFile(file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file (PNG, JPG, or WEBP)');
+                return;
+            }
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                return;
+            }
+
+            selectedLogoFile = file;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                uploadPlaceholder.style.display = 'none';
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearLogo() {
+            selectedLogoFile = null;
+            logoInput.value = '';
+            uploadPlaceholder.style.display = 'block';
+            imagePreview.style.display = 'none';
+            previewImg.src = '';
+        }
+
         const form = document.getElementById('createOrgForm');
         const submitBtn = document.getElementById('submitBtn');
         const successMessage = document.getElementById('successMessage');
@@ -261,6 +396,10 @@
                 if (response.success) {
                     // Show success message
                     successMessage.style.display = 'block';
+
+                    // Refresh context to load the new organization
+                    console.log('✅ Organization created, refreshing context...');
+                    await apiService.refreshContext();
 
                     // Redirect to dashboard after 2 seconds
                     setTimeout(() => {

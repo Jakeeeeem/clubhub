@@ -24,6 +24,13 @@ class ApiService {
     }
   }
 
+  // Force refresh context (clears cache)
+  async refreshContext() {
+    this.context = null;
+    return await this.getContext();
+  }
+
+
   getCurrentOrg() {
     return this.context?.currentOrganization || null;
   }

@@ -272,185 +272,109 @@
         <div class="step-indicator">
             <div class="step active" data-step="1">1</div>
             <div class="step" data-step="2">2</div>
-            <div class="step" data-step="3">3</div>
-            <div class="step" data-step="4">4</div>
-            <div class="step" data-step="5">✓</div>
+            <div class="step" data-step="3">✓</div>
         </div>
 
-        <!-- Step 1: Account Type -->
+        <!-- Step 1: Personal Information -->
         <div class="form-step active" data-step="1">
-            <h2 style="text-align: center; margin-bottom: 2rem; font-family: 'Outfit';">Choose Your Account Type</h2>
-
-            <div class="selection-grid">
-                <div class="account-type-card" data-type="adult">
-                    <span class="icon" style="font-size: 3.5rem; display: block; margin-bottom: 1rem;">⚽</span>
-                    <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Player Account</h3>
-                    <p style="font-size: 0.9rem; color: var(--text-muted);">For players, parents, and enthusiasts</p>
-                </div>
-
-                <div class="account-type-card" data-type="organization">
-                    <span class="icon" style="font-size: 3.5rem; display: block; margin-bottom: 1rem;">🏢</span>
-                    <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">Organization</h3>
-                    <p style="font-size: 0.9rem; color: var(--text-muted);">For clubs, academies, and leagues</p>
-                </div>
+            <div
+                style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem; color: #10b981; font-weight: 700; font-size: 1.1rem;">
+                <span
+                    style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #10b981; color: white; border-radius: 4px; font-size: 14px;">✓</span>
+                Adult Account Required
             </div>
-
-            <!-- Organization Options (Hidden by default, shows when Org is selected) -->
-            <div id="orgOptions"
-                style="display: none; border-top: 1px solid var(--border-color); padding-top: 2rem; margin-top: 2rem;">
-                <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem; font-family: 'Outfit';">Organization Type</h3>
-
-                <div class="org-type-grid">
-                    <label class="checkbox-card">
-                        <input type="checkbox" value="club">
-                        <span>Sports Club</span>
-                    </label>
-                    <label class="checkbox-card">
-                        <input type="checkbox" value="academy">
-                        <span>Sports Academy</span>
-                    </label>
-                    <label class="checkbox-card">
-                        <input type="checkbox" value="event">
-                        <span>Event Organizer</span>
-                    </label>
-                    <label class="checkbox-card">
-                        <input type="checkbox" value="tournament">
-                        <span>Tournament Organizer</span>
-                    </label>
-                    <label class="checkbox-card">
-                        <input type="checkbox" value="league">
-                        <span>League Management</span>
-                    </label>
-                </div>
-
-                <div style="margin-top: 2.5rem;">
-                    <h3 style="margin-bottom: 1rem; font-size: 1.25rem; font-family: 'Outfit';">Multiple Organizations
-                    </h3>
-                    <div class="toggle-grid">
-                        <div class="toggle-card selected" data-toggle="single">
-                            <strong>Single Organization</strong>
-                            <p>Manage one organization</p>
-                        </div>
-                        <div class="toggle-card" data-toggle="multiple">
-                            <strong>Multiple Organizations</strong>
-                            <p>Switch between different organizations</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pro-tip">
-                    <i>💡</i>
-                    <div>
-                        <strong>Pro Tip:</strong> You can create separate organizations (e.g., "Pro Elite" and "Pro
-                        Elite League") and easily toggle between them in your dashboard.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Adult account info (Hidden by default) -->
-            <div id="adultInfo" style="display: none; margin-top: 2rem;">
-
-                <!-- Green Box: Adult Account Required -->
-                <div
-                    style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem;">
-                    <div
-                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem; color: #10b981; font-weight: 700; font-size: 1.1rem;">
-                        <span
-                            style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #10b981; color: white; border-radius: 4px; font-size: 14px;">✓</span>
-                        Adult Account Required
-                    </div>
-                    <p style="color: #6ee7b7; font-size: 0.95rem; line-height: 1.5; margin: 0;">
-                        This is an adult account. You can add and manage children's profiles within your account once
-                        registered.
-                    </p>
-                </div>
-
-                <!-- Yellow Box: Managing Children -->
-                <div
-                    style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 12px; padding: 1.5rem; text-align: left;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                        <span style="font-size: 1.5rem;">👶</span>
-                        <strong style="color: #fbbf24; font-size: 1.1rem;">Managing Children</strong>
-                    </div>
-                    <p style="color: #fcd34d; font-size: 0.95rem; line-height: 1.6; margin: 0;">
-                        After creating your adult account, you'll be able to add multiple children to your profile.
-                        You'll manage all bookings, payments, and communications for your children through your parent
-                        account.
-                    </p>
-                </div>
-
-            </div>
+            <p style="color: #6ee7b7; font-size: 0.95rem; line-height: 1.5; margin: 0;">
+                This is an adult account. You can add and manage children's profiles within your account once
+                registered.
+            </p>
         </div>
 
-        <!-- Step 2: Personal Info -->
-        <div class="form-step" data-step="2">
-            <h2 style="text-align: center; margin-bottom: 2rem; font-family: 'Outfit';">Personal Information</h2>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <div class="form-group">
-                    <label>First Name</label>
-                    <input type="text" id="firstName" placeholder="Enter first name">
-                </div>
-                <div class="form-group">
-                    <label>Last Name</label>
-                    <input type="text" id="lastName" placeholder="Enter last name">
-                </div>
+        <!-- Yellow Box: Managing Children -->
+        <div
+            style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 12px; padding: 1.5rem; text-align: left;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.5rem;">👶</span>
+                <strong style="color: #fbbf24; font-size: 1.1rem;">Managing Children</strong>
             </div>
+            <p style="color: #fcd34d; font-size: 0.95rem; line-height: 1.6; margin: 0;">
+                After creating your adult account, you'll be able to add multiple children to your profile.
+                You'll manage all bookings, payments, and communications for your children through your parent
+                account.
+            </p>
+        </div>
 
+    </div>
+    </div>
+
+    <!-- Step 2: Personal Info -->
+    <div class="form-step" data-step="2">
+        <h2 style="text-align: center; margin-bottom: 2rem; font-family: 'Outfit';">Personal Information</h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
             <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="email" placeholder="you@example.com">
+                <label>First Name</label>
+                <input type="text" id="firstName" placeholder="Enter first name">
             </div>
-
             <div class="form-group">
-                <label>Password</label>
-                <div style="position: relative;">
-                    <input type="password" id="password" placeholder="Create a strong password"
-                        style="padding-right: 2.5rem;">
-                    <button type="button" onclick="togglePasswordVisibility('password', this)"
-                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
-                        aria-label="Toggle password visibility">
-                        👁️
-                    </button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Confirm Password</label>
-                <div style="position: relative;">
-                    <input type="password" id="confirmPassword" placeholder="Confirm your password"
-                        style="padding-right: 2.5rem;">
-                    <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)"
-                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
-                        aria-label="Toggle password visibility">
-                        👁️
-                    </button>
-                </div>
+                <label>Last Name</label>
+                <input type="text" id="lastName" placeholder="Enter last name">
             </div>
         </div>
 
-        <!-- Success Step -->
-        <div class="form-step" data-step="3">
-            <div style="text-align: center; padding: 3rem 0;">
-                <div
-                    style="width: 90px; height: 90px; background: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; margin: 0 auto 2rem; border: 2px solid #10b981;">
-                    ✓</div>
-                <h2 style="margin-bottom: 1rem; font-family: 'Outfit'; font-size: 2rem;">Welcome to ClubHub!</h2>
-                <p style="color: var(--text-muted); font-size: 1.1rem;">Your account has been successfully created.</p>
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="email" placeholder="you@example.com">
+        </div>
 
-                <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 3rem;">
-                    <button class="btn btn-primary" onclick="window.location.href='index.html'"
-                        style="padding: 1rem 3rem;">Go to Dashboard</button>
-                </div>
+        <div class="form-group">
+            <label>Password</label>
+            <div style="position: relative;">
+                <input type="password" id="password" placeholder="Create a strong password"
+                    style="padding-right: 2.5rem;">
+                <button type="button" onclick="togglePasswordVisibility('password', this)"
+                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
+                    aria-label="Toggle password visibility">
+                    👁️
+                </button>
             </div>
         </div>
 
-        <!-- Navigation Buttons -->
-        <div class="step-navigation" id="navButtons"
-            style="display: flex; justify-content: space-between; margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
-            <button class="btn-prev" id="prevBtn" onclick="prevStep()" style="visibility: hidden;">Previous</button>
-            <button class="btn-next" id="nextBtn" onclick="nextStep()" style="max-width: 200px;">Next</button>
+        <div class="form-group">
+            <label>Confirm Password</label>
+            <div style="position: relative;">
+                <input type="password" id="confirmPassword" placeholder="Confirm your password"
+                    style="padding-right: 2.5rem;">
+                <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)"
+                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
+                    aria-label="Toggle password visibility">
+                    👁️
+                </button>
+            </div>
         </div>
+    </div>
+
+    <!-- Success Step -->
+    <div class="form-step" data-step="3">
+        <div style="text-align: center; padding: 3rem 0;">
+            <div
+                style="width: 90px; height: 90px; background: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; margin: 0 auto 2rem; border: 2px solid #10b981;">
+                ✓</div>
+            <h2 style="margin-bottom: 1rem; font-family: 'Outfit'; font-size: 2rem;">Welcome to ClubHub!</h2>
+            <p style="color: var(--text-muted); font-size: 1.1rem;">Your account has been successfully created.</p>
+
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 3rem;">
+                <button class="btn btn-primary" onclick="window.location.href='index.html'"
+                    style="padding: 1rem 3rem;">Go to Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="step-navigation" id="navButtons"
+        style="display: flex; justify-content: space-between; margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+        <button class="btn-prev" id="prevBtn" onclick="prevStep()" style="visibility: hidden;">Previous</button>
+        <button class="btn-next" id="nextBtn" onclick="nextStep()" style="max-width: 200px;">Next</button>
+    </div>
     </div>
 
 
@@ -458,30 +382,10 @@
     <script src="api-service.js"></script>
     <script>
         let currentStep = 1;
-        const totalSteps = 3;
-        let formData = {
-            accountType: null,
-            orgType: [],
-            isMultiple: false
-        };
+        const totalSteps = 2; // Simplified to 2 steps
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function () {
-            setupEventListeners();
-
-            // Allow clicking checkboxes directly
-            document.querySelectorAll('.checkbox-card input').forEach(input => {
-                input.addEventListener('change', function () {
-                    if (this.checked) {
-                        this.parentElement.style.borderColor = 'var(--primary)';
-                        this.parentElement.style.background = 'rgba(255, 51, 51, 0.05)';
-                    } else {
-                        this.parentElement.style.borderColor = 'var(--border-color)';
-                        this.parentElement.style.background = 'rgba(255, 255, 255, 0.03)';
-                    }
-                });
-            });
-
             // ============================================================================
             // HANDLE INVITATION PARAMETERS
             // ============================================================================
@@ -506,9 +410,9 @@
                     }
                 }
 
-                // Add invitation banner
-                const step2 = document.querySelector('.form-step[data-step="2"]');
-                if (step2) {
+                // Add invitation banner to step 1
+                const step1 = document.querySelector('.form-step[data-step="1"]');
+                if (step1) {
                     const banner = document.createElement('div');
                     banner.style.cssText = 'background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; text-align: center;';
                     banner.innerHTML = `
@@ -519,100 +423,95 @@
                             After creating your account, you'll automatically join the organization
                         </div>
                     `;
-                    step2.insertBefore(banner, step2.firstChild.nextSibling);
+                    step1.insertBefore(banner, step1.firstChild.nextSibling);
                 }
-
-                // Auto-select "Player Account" for invitations (can be changed)
-                const playerCard = document.querySelector('.account-type-card[data-type="adult"]');
-                if (playerCard) {
-                    playerCard.click();
-                }
-            }
-
-            // Check URL params for account type
-            const type = urlParams.get('type');
-            if (type && !inviteToken) { // Don't override if invitation exists
-                const card = document.querySelector(`.account-type-card[data-type="${type}"]`);
-                if (card) card.click();
             }
         });
 
-        function setupEventListeners() {
-            // Account Type Selection
-            document.querySelectorAll('.account-type-card').forEach(card => {
-                card.addEventListener('click', function () {
-                    // Update UI
-                    document.querySelectorAll('.account-type-card').forEach(c => c.classList.remove('selected'));
-                    this.classList.add('selected');
-
-                    // Update Data
-                    const type = this.dataset.type;
-                    formData.accountType = type;
-
-                    // Show/Hide Options
-                    const orgOptions = document.getElementById('orgOptions');
-                    const adultInfo = document.getElementById('adultInfo');
-
-                    if (type === 'organization') {
-                        orgOptions.style.display = 'block';
-                        adultInfo.style.display = 'none';
-                    } else {
-                        orgOptions.style.display = 'none';
-                        adultInfo.style.display = 'block';
-                    }
-                });
-            });
-
-            // Toggle Options (Single/Multiple)
-            document.querySelectorAll('.toggle-card').forEach(card => {
-                card.addEventListener('click', function () {
-                    document.querySelectorAll('.toggle-card').forEach(c => c.classList.remove('selected'));
-                    this.classList.add('selected');
-                    formData.isMultiple = this.dataset.toggle === 'multiple';
-                });
-            });
-        }
-
         function nextStep() {
-            if (currentStep < totalSteps) {
-                if (currentStep === 1 && !formData.accountType) {
-                    alert('Please select an account type first.');
+            if (currentStep === 1) {
+                // Validate Step 1
+                const firstName = document.getElementById('firstName').value.trim();
+                const lastName = document.getElementById('lastName').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                if (!firstName || !lastName || !email || !password || !confirmPassword) {
+                    alert('Please fill in all required fields');
                     return;
                 }
 
-                // If on step 2 (personal info), register the user
-                if (currentStep === 2) {
-                    registerUser();
-                    return; // Don't increment step yet, wait for registration
+                if (password !== confirmPassword) {
+                    alert('Passwords do not match');
+                    return;
                 }
 
-                currentStep++;
+                if (password.length < 8) {
+                    alert('Password must be at least 8 characters');
+                    return;
+                }
+
+                // Update review
+                // document.getElementById('reviewName').textContent = `${firstName} ${lastName}`; // These elements don't exist in the current HTML
+                // document.getElementById('reviewEmail').textContent = email; // These elements don't exist in the current HTML
+
+                // Move to step 2
+                currentStep = 2;
+                updateUI();
+            } else if (currentStep === 2) {
+                registerUser();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
                 updateUI();
             }
         }
 
+        function updateUI() {
+            // Update Step Indicators
+            document.querySelectorAll('.step').forEach((step, idx) => {
+                step.className = 'step';
+                if (idx + 1 < currentStep) step.classList.add('completed');
+                if (idx + 1 === currentStep) step.classList.add('active');
+            });
+
+            // Update header step indicator
+            const stepNumEl = document.getElementById('currentStepNum');
+            if (stepNumEl) stepNumEl.textContent = currentStep;
+
+            // Show/Hide Form Parts
+            document.querySelectorAll('.form-step').forEach((form, idx) => {
+                form.classList.remove('active');
+                if (idx + 1 === currentStep) {
+                    form.classList.add('active');
+                }
+            });
+
+            // Update Buttons
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const navContainer = document.getElementById('navButtons');
+
+            prevBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+
+            if (currentStep === totalSteps + 1) { // totalSteps is 2, so 3 is the success step
+                navContainer.style.display = 'none';
+            } else {
+                navContainer.style.display = 'flex';
+                nextBtn.textContent = currentStep === totalSteps ? 'Create Account' : 'Next';
+                nextBtn.disabled = false; // Re-enable button if it was disabled during registration
+            }
+        }
+
         async function registerUser() {
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const email = document.getElementById('email').value;
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            // Validation
-            if (!firstName || !lastName || !email || !password || !confirmPassword) {
-                alert('Please fill in all fields');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                alert('Passwords do not match');
-                return;
-            }
-
-            if (password.length < 6) {
-                alert('Password must be at least 6 characters');
-                return;
-            }
 
             try {
                 const nextBtn = document.getElementById('nextBtn');
@@ -624,7 +523,7 @@
                     lastName,
                     email,
                     password,
-                    userType: formData.accountType === 'organization' ? 'organization' : 'adult'
+                    userType: 'adult' // Default to adult, as organization selection is removed
                 };
 
                 console.log('Registering user:', userData);
@@ -655,61 +554,56 @@
                             console.log('✅ Invitation accepted successfully');
                             invitationAccepted = true;
 
-                            // Get the invitation details to determine role
+                            // Get the role from the invitation
                             const inviteDetails = await apiService.getInvitation(pendingInviteToken);
                             invitationRole = inviteDetails.invitation?.role;
-
-                            // Clear the pending token
-                            localStorage.removeItem('pendingInviteToken');
+                            console.log('📋 Assigned role:', invitationRole);
                         }
-                    } catch (error) {
-                        console.error('Failed to accept invitation:', error);
-                        // Don't fail registration if invitation acceptance fails
+
+                        // Clear the pending token
+                        localStorage.removeItem('pendingInviteToken');
+                    } catch (inviteError) {
+                        console.error('Failed to accept invitation:', inviteError);
+                        // Continue with registration even if invitation fails
                     }
                 }
 
-                // Show success step
+                // ============================================================================
+                // DETERMINE REDIRECT URL
+                // ============================================================================
+                let redirectUrl = 'player-dashboard.html'; // Default for new users
+
+                // Check if user is platform admin
+                if (response.user.is_platform_admin) {
+                    redirectUrl = 'super-admin-dashboard.html';
+                }
+                // If invitation was accepted, route based on role
+                else if (invitationAccepted && invitationRole) {
+                    if (['owner', 'admin', 'coach', 'assistant_coach', 'staff'].includes(invitationRole)) {
+                        redirectUrl = 'admin-dashboard.html';
+                    } else {
+                        redirectUrl = 'player-dashboard.html';
+                    }
+                }
+                // If it's an adult account and no invitation, they go to player dashboard
+                else if (response.user.userType === 'adult') {
+                    redirectUrl = 'player-dashboard.html';
+                }
+                // If it's an organization account and no invitation, they need to create an organization
+                else if (response.user.userType === 'organization') {
+                    redirectUrl = 'create-organization.html';
+                }
+
+
+                console.log('🚀 Redirecting to:', redirectUrl);
+
+                // Show success and redirect
                 currentStep = 3;
                 updateUI();
 
-                // Update the "Go to Dashboard" button to actually redirect
-                const dashboardBtn = document.querySelector('.form-step[data-step="3"] .btn-primary');
-                dashboardBtn.onclick = async function () {
-                    let redirectUrl = 'player-dashboard.html';
-
-                    // Priority 1: Platform Admin
-                    if (response.user.is_platform_admin || response.user.isPlatformAdmin) {
-                        redirectUrl = 'super-admin-dashboard.html';
-                    }
-                    // Priority 2: Invitation Role (if they just accepted an invite)
-                    else if (invitationAccepted && invitationRole) {
-                        if (['owner', 'admin', 'coach', 'assistant_coach', 'staff'].includes(invitationRole)) {
-                            redirectUrl = 'admin-dashboard.html';
-                        } else {
-                            redirectUrl = 'player-dashboard.html';
-                        }
-                    }
-                    // Priority 3: Organization Account
-                    else if (response.user.account_type === 'organization') {
-                        try {
-                            const context = await apiService.makeRequest('/auth/context');
-                            if (context.organizations && context.organizations.length > 0) {
-                                redirectUrl = 'admin-dashboard.html';
-                            } else {
-                                redirectUrl = 'create-organization.html';
-                            }
-                        } catch (error) {
-                            redirectUrl = 'create-organization.html';
-                        }
-                    }
-                    // Priority 4: Adult/Player Account
-                    else {
-                        redirectUrl = 'player-dashboard.html';
-                    }
-
-                    console.log('🚀 Redirecting to:', redirectUrl);
+                setTimeout(() => {
                     window.location.href = redirectUrl;
-                };
+                }, 1500);
 
             } catch (error) {
                 console.error('Registration failed:', error);
@@ -721,44 +615,18 @@
             }
         }
 
-        function prevStep() {
-            if (currentStep > 1) {
-                currentStep--;
-                updateUI();
-            }
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const navContainer = document.getElementById('navButtons');
+
+        prevBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+
+        if (currentStep === totalSteps) {
+            navContainer.style.display = 'none';
+        } else {
+            navContainer.style.display = 'flex';
+            nextBtn.textContent = currentStep === totalSteps - 1 ? 'Create Account' : 'Next';
         }
-
-        function updateUI() {
-            // Update Step Indicators
-            document.querySelectorAll('.step').forEach((step, idx) => {
-                step.className = 'step';
-                if (idx + 1 < currentStep) step.classList.add('completed');
-                if (idx + 1 === currentStep) step.classList.add('active');
-            });
-
-            // Update header step indicator
-            const stepNumEl = document.getElementById('currentStepNum');
-            if (stepNumEl) stepNumEl.textContent = currentStep;
-
-            // Show/Hide Form Parts
-            document.querySelectorAll('.form-step').forEach((form, idx) => {
-                form.classList.remove('active');
-                if (idx + 1 === currentStep) form.classList.add('active');
-            });
-
-            // Update Buttons
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const navContainer = document.getElementById('navButtons');
-
-            prevBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
-
-            if (currentStep === totalSteps) {
-                navContainer.style.display = 'none';
-            } else {
-                navContainer.style.display = 'flex';
-                nextBtn.textContent = currentStep === totalSteps - 1 ? 'Create Account' : 'Next';
-            }
         }
 
         // Toggle password visibility
