@@ -229,14 +229,29 @@ async function handleLogout() {
 }
 
 // Check authentication status on page load
-function checkAuthStatus() {
+async function checkAuthStatus() {
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('currentUser');
     
     if (token && userData) {
         try {
-            const user = JSON.parse(userData);
+            let user = JSON.parse(userData);
             console.log('✅ User authenticated:', user.email);
+            
+            // If user data is missing account_type, fetch fresh data from API
+            if (!user.account_type && !user.userType) {
+                console.log('🔄 Refreshing user data from API...');
+                try {
+                    const freshUser = await apiService.getCurrentUser();
+                    if (freshUser) {
+                        user = freshUser;
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                        console.log('✅ User data refreshed');
+                    }
+                } catch (error) {
+                    console.warn('Failed to refresh user data:', error);
+                }
+            }
             
             // Update global state
             if (typeof AppState !== 'undefined') {
