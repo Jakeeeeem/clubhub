@@ -434,10 +434,9 @@ router.post(
 
       // Auto-create demo users if they don't exist
       const demoCredentials = {
-        'superadmin@clubhub.com': { pass: 'Super@123', firstName: 'Super', lastName: 'Admin', type: 'organization', isPlatformAdmin: true },
-        'admin@proclubdemo.com': { pass: 'Admin@123', firstName: 'John', lastName: 'Smith', type: 'organization', isPlatformAdmin: false },
-        'coach@proclubdemo.com': { pass: 'Coach@123', firstName: 'Michael', lastName: 'Thompson', type: 'organization', isPlatformAdmin: false },
-        'player@proclubdemo.com': { pass: 'Player@123', firstName: 'David', lastName: 'Williams', type: 'adult', isPlatformAdmin: false }
+        'admin@clubhub.com': { pass: 'password123', firstName: 'Demo', lastName: 'Admin', type: 'organization', isPlatformAdmin: false },
+        'coach@clubhub.com': { pass: 'password123', firstName: 'Michael', lastName: 'Coach', type: 'organization', isPlatformAdmin: false },
+        'player@clubhub.com': { pass: 'password123', firstName: 'John', lastName: 'Player', type: 'adult', isPlatformAdmin: false }
       };
 
       // Check if this is a demo login attempt
