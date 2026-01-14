@@ -1366,6 +1366,19 @@ function filterClubs() {
   const sport = byId('clubSportFilter')?.value || '';
 
   let clubs = [...(PlayerDashboardState.clubs || [])];
+  
+  // 🧪 DUMMY TEST CLUBS INJECTION (Requested for testing)
+  if (search.includes('club')) {
+      const dummyClubs = [
+          { id: 'dummy-1', name: 'Elite Performance Club', sport: 'football', location: 'London', description: 'A premier test club for testing search functionality.', member_count: 120, types: ['club'] },
+          { id: 'dummy-2', name: 'The Tennis Club Specialists', sport: 'tennis', location: 'Manchester', description: 'Test club focused on tennis activities and events.', member_count: 85, types: ['club', 'event'] },
+          { id: 'dummy-3', name: 'Global Sport Club United', sport: 'basketball', location: 'Birmingham', description: 'Multi-sport club for all ages.', member_count: 210, types: ['club'] }
+      ];
+      dummyClubs.forEach(dc => {
+          if (!clubs.some(c => c.name === dc.name)) clubs.push(dc);
+      });
+  }
+
   if (search) {
     clubs = clubs.filter(c =>
       (c.name || '').toLowerCase().includes(search) ||

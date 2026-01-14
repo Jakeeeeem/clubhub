@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="org-switcher.css">
 </head>
 
 <body>
@@ -16,10 +17,10 @@
                 <span class="logo-text neon-text">ClubHub</span>
             </div>
 
-            <!-- Organization Switcher -->
-            <div id="org-switcher-container"></div>
-
             <div class="user-info">
+                <!-- Organization Switcher -->
+                <div id="org-switcher-container"></div>
+
                 <span id="adminNameDisplay">Hello, Admin!</span>
                 <div class="user-avatar" id="adminAvatar">A</div>
                 <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
@@ -38,6 +39,8 @@
                     <button class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe Dashboard</button>
                     <button class="btn btn-primary" onclick="generateShareableInviteLink()">🔗 Generate Invite
                         Link</button>
+                    <button class="btn btn-secondary" onclick="window.location.href='create-organization.html'">🏢
+                        Create New Organization</button>
                 </div>
             </div>
 
@@ -5187,8 +5190,6 @@
             window.exportPlayers = exportPlayers;
         </script>
 
-        <!-- Organization Switcher -->
-        <link rel="stylesheet" href="org-switcher.css">
         <script src="org-switcher.js"></script>
 </body>
 

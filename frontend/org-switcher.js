@@ -69,7 +69,7 @@ class OrganizationSwitcher {
             ${this.organizations.map(org => this.renderOrgItem(org)).join('')}
           </div>
           <div class="org-switcher-footer">
-            <button class="org-switcher-action" onclick="window.location.href='/create-organization.html'">
+            <button class="org-switcher-action" onclick="window.location.href='create-organization.html'">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>

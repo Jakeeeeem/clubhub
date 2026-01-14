@@ -14,7 +14,7 @@ const crypto = require('crypto');
  */
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const result = await pool.query(`
       SELECT 
@@ -50,7 +50,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Check if user is a member
     const memberCheck = await pool.query(`
@@ -134,7 +134,7 @@ router.post('/', authenticateToken, async (req, res) => {
   const client = await pool.connect();
   
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { name, description, sport, location, website } = req.body;
 
     if (!name) {
@@ -214,7 +214,7 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const updates = req.body;
 
     // Check if user is admin or owner
@@ -288,7 +288,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Check if user is owner
     const roleCheck = await pool.query(`
@@ -325,7 +325,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 router.get('/:id/members', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Check if user is a member
     const memberCheck = await pool.query(`

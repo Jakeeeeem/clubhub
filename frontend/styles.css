@@ -23,6 +23,11 @@
     box-sizing: border-box;
 }
 
+input, select, textarea {
+    font-family: inherit;
+    color-scheme: dark;
+}
+
 body {
     font-family: 'Plus Jakarta Sans', sans-serif;
     background: var(--bg-dark);
@@ -33,6 +38,7 @@ body {
     min-height: 100vh;
     line-height: 1.6;
     overflow-x: hidden;
+    color-scheme: dark;
 }
 
 .container {
@@ -947,12 +953,36 @@ section#benefits {
     border-radius: 12px;
     padding: 1rem 1.25rem;
     transition: var(--transition);
+    color-scheme: dark;
 }
 
-.form-group input:focus {
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
     border-color: var(--primary);
     background: rgba(255, 255, 255, 0.06);
     box-shadow: 0 0 0 4px var(--primary-glow);
+    outline: none;
+}
+
+/* Global Select Option Styling (Dark Theme) */
+select {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    color-scheme: dark;
+    cursor: pointer;
+}
+
+select option {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    padding: 10px;
+}
+
+/* Ensure dropdowns inside cards are also styled correctly */
+.card select, .modal select, .form-group select {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
 }
 
 /* Modal Styles */

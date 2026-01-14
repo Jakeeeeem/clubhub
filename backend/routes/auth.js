@@ -366,27 +366,29 @@ router.post('/register', registerValidation, async (req, res) => {
       // organization bootstrap
       if (accountType === 'organization' && orgTypes.length > 0) {
         const clubName = `${firstName} ${lastName}'s ${orgTypes.join(', ')}`;
-        const clubResult = await client.query(queries.createClub, [
-          clubName,
-          'New organization created with ClubHub',
-          profile.location || 'To be updated',
-          null,
-          null,
-          orgTypes,
-          profile.primarySport || null,
-          newUser.id,
-          new Date().getFullYear().toString(),
-        ]);
+        const slug = clubName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 255);
+        
+        const orgResult = await client.query(`
+          INSERT INTO organizations (name, slug, sport, description, location, owner_id)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING *
+        `, [clubName, `${slug}-${Date.now()}`, orgTypes[0], 'New organization created with ClubHub', profile.location || 'To be updated', newUser.id]);
 
-        newUser.club = clubResult.rows[0];
+        newUser.club = orgResult.rows[0];
 
         await client.query(
           `
-          INSERT INTO organization_associations (user_id, club_id, role, is_primary, permissions)
-          VALUES ($1,$2,$3,$4,$5)
+          INSERT INTO organization_members (user_id, organization_id, role, status)
+          VALUES ($1,$2,$3,$4)
         `,
-          [newUser.id, clubResult.rows[0].id, 'owner', true, ['all']]
+          [newUser.id, orgResult.rows[0].id, 'owner', 'active']
         );
+
+        await client.query(`
+          INSERT INTO user_preferences (user_id, current_organization_id)
+          VALUES ($1, $2)
+          ON CONFLICT (user_id) DO UPDATE SET current_organization_id = $2
+        `, [newUser.id, orgResult.rows[0].id]);
       }
 
       return newUser;
@@ -412,6 +414,7 @@ router.post('/register', registerValidation, async (req, res) => {
         org_types: result.org_types,
         phone: result.phone,
         date_of_birth: result.date_of_birth,
+        organization: result.club || null,
         club: result.club || null,
       },
     });
@@ -809,29 +812,95 @@ router.get('/organizations', authenticateToken, async (req, res) => {
   }
 });
 
-// Switch org
-router.post('/switch-organization/:clubId', authenticateToken, async (req, res) => {
+// Get authentication context (current user + organizations)
+router.get('/context', authenticateToken, async (req, res) => {
   try {
-    if (req.user.accountType !== 'organization') {
-      return res.status(403).json({ error: 'Access denied', message: 'Only organization accounts can switch organizations' });
+    const userId = req.user.id;
+
+    // Get user info and current org preference
+    const userResult = await query(`
+      SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, up.current_organization_id
+      FROM users u
+      LEFT JOIN user_preferences up ON u.id = up.user_id
+      WHERE u.id = $1
+    `, [userId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    const { clubId } = req.params;
+    const user = userResult.rows[0];
 
-    await withTransaction(async (client) => {
-      const accessCheck = await client.query(`SELECT id FROM organization_associations WHERE user_id = $1 AND club_id = $2`, [req.user.id, clubId]);
-      if (accessCheck.rows.length === 0) {
-        throw new Error('Organization not found or access denied');
-      }
+    // Get all organizations user belongs to
+    const orgsResult = await query(`
+      SELECT o.id, o.name, o.sport, o.location, o.logo_url, om.role, om.status
+      FROM organizations o
+      INNER JOIN organization_members om ON o.id = om.organization_id
+      WHERE om.user_id = $1 AND om.status = 'active'
+      ORDER BY o.name
+    `, [userId]);
 
-      await client.query(`UPDATE organization_associations SET is_primary=false WHERE user_id=$1`, [req.user.id]);
-      await client.query(`UPDATE organization_associations SET is_primary=true WHERE user_id=$1 AND club_id=$2`, [req.user.id, clubId]);
+    const organizations = orgsResult.rows;
+    
+    // Determine current organization
+    let currentOrg = null;
+    if (user.current_organization_id) {
+      currentOrg = organizations.find(o => o.id === user.current_organization_id);
+    }
+    if (!currentOrg && organizations.length > 0) {
+      currentOrg = organizations[0];
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        userType: user.account_type
+      },
+      currentOrganization: currentOrg,
+      organizations: organizations,
+      hasMultipleOrganizations: organizations.length > 1
     });
+  } catch (error) {
+    console.error('Get context error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get auth context' });
+  }
+});
 
-    res.json({ message: 'Primary organization switched successfully' });
+// Switch organization
+router.post('/switch-organization', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { organizationId } = req.body;
+
+    if (!organizationId) {
+      return res.status(400).json({ success: false, error: 'Organization ID is required' });
+    }
+
+    // Verify membership
+    const memberCheck = await query(`
+      SELECT 1 FROM organization_members 
+      WHERE user_id = $1 AND organization_id = $2 AND status = 'active'
+    `, [userId, organizationId]);
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, error: 'Organization not found or access denied' });
+    }
+
+    // Update preference
+    await query(`
+      INSERT INTO user_preferences (user_id, current_organization_id)
+      VALUES ($1, $2)
+      ON CONFLICT (user_id) DO UPDATE SET current_organization_id = $2, updated_at = NOW()
+    `, [userId, organizationId]);
+
+    res.json({ success: true, message: 'Organization switched successfully' });
   } catch (error) {
     console.error('Switch organization error:', error);
-    res.status(500).json({ error: 'Failed to switch organization', message: error.message || 'An error occurred while switching organizations' });
+    res.status(500).json({ success: false, error: 'Failed to switch organization' });
   }
 });
 

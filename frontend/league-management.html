@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>League Management - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="org-switcher.css">
     <style>
         .league-grid {
             display: grid;
@@ -66,10 +67,10 @@
                 <span class="logo-text neon-text">ClubHub</span>
             </div>
 
-            <!-- Organization Switcher -->
-            <div id="org-switcher-container"></div>
-
             <div class="user-info">
+                <!-- Organization Switcher -->
+                <div id="org-switcher-container"></div>
+
                 <span id="adminNameDisplay">Hello, Admin!</span>
                 <div class="user-avatar" id="adminAvatar">A</div>
                 <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
@@ -601,6 +602,7 @@
             }
         }
     </script>
+    <script src="org-switcher.js"></script>
 </body>
 
 </html>
