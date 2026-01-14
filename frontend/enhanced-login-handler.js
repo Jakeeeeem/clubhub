@@ -576,6 +576,16 @@ window.quickLogin = async function(type) {
         const response = await apiService.login(credentials.email, credentials.pass);
         
         if (response.token) {
+            // Store user data (same as handleLogin)
+            localStorage.setItem('authToken', response.token);
+            localStorage.setItem('currentUser', JSON.stringify(response.user));
+            
+            // Update global state
+            if (typeof AppState !== 'undefined') {
+                AppState.currentUser = response.user;
+                AppState.isLoggedIn = true;
+            }
+            
             showNotification('Demo login successful! Redirecting...', 'success');
             const redirectUrl = await determineUserRedirect(response.user);
             setTimeout(() => {
