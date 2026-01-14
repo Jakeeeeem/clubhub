@@ -7,101 +7,133 @@
     <title>Club Details - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
     <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: #0a0a0b;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 11, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
         .club-header {
-            background: linear-gradient(135deg, rgba(220, 67, 67, 0.1) 0%, rgba(13, 13, 13, 0.95) 100%);
-            padding: 3rem 0;
-            border-bottom: 1px solid var(--border-color);
+            background: radial-gradient(circle at top, rgba(220, 67, 67, 0.15) 0%, rgba(13, 13, 13, 0) 70%);
+            padding: 120px 0 3rem;
+            /* Height of header (80px) + 40px gap */
+            position: relative;
+        }
+
+        .club-logo-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 2rem;
         }
 
         .club-logo {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
+            width: 140px;
+            height: 140px;
+            border-radius: 24px;
             object-fit: cover;
-            border: 3px solid var(--primary);
-            margin-bottom: 1.5rem;
+            border: 2px solid var(--primary);
+            box-shadow: 0 20px 40px rgba(220, 67, 67, 0.2);
+            background: var(--bg-card);
         }
 
         .club-info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
             margin: 2rem 0;
         }
 
         .info-card {
-            background: var(--bg-secondary);
+            background: var(--glass);
+            backdrop-filter: blur(10px);
             padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            border: 1px solid var(--glass-border);
+            transition: transform 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
         }
 
         .info-label {
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             margin-bottom: 0.5rem;
         }
 
         .info-value {
             color: var(--text-main);
             font-size: 1.1rem;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .application-form {
-            background: var(--bg-secondary);
-            padding: 2rem;
-            border-radius: 12px;
+            background: var(--bg-card);
+            padding: 3rem;
+            border-radius: 24px;
             border: 1px solid var(--border-color);
-            margin-top: 3rem;
+            margin-top: 4rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-main);
+            margin-bottom: 0.75rem;
+            color: var(--text-muted);
             font-weight: 500;
+            font-size: 0.9rem;
         }
 
         .form-group input,
         .form-group textarea,
         .form-group select {
             width: 100%;
-            padding: 0.75rem;
-            background: var(--bg-main);
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 12px;
             color: var(--text-main);
             font-size: 1rem;
+            transition: all 0.2s ease;
         }
 
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(220, 67, 67, 0.1);
         }
 
-        .success-message {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 12px;
-            padding: 1rem;
-            color: #22c55e;
-            margin-bottom: 1.5rem;
-            display: none;
-        }
-
-        .error-message {
-            background: rgba(220, 38, 38, 0.1);
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            border-radius: 12px;
-            padding: 1rem;
-            color: #ff6b6b;
-            margin-bottom: 1.5rem;
-            display: none;
+        .badge {
+            background: rgba(220, 67, 67, 0.1);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(220, 67, 67, 0.2);
         }
     </style>
 </head>
@@ -110,15 +142,19 @@
     <!-- Header -->
     <header class="header">
         <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <img src="images/logo.png" alt="ClubHub" style="width: 40px; height: 40px;">
-                    <span class="neon-text">ClubHub</span>
+            <div class="header-content"
+                style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;">
+                <div class="logo" onclick="window.location.href='index.html'"
+                    style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem;">
+                    <img src="images/logo.png" alt="ClubHub" style="width: 32px; height: 32px;">
+                    <span class="logo-text"
+                        style="font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;">Club<span
+                            style="color: var(--primary);">Hub</span></span>
                 </div>
                 <nav class="nav">
-                    <a href="index.html" class="nav-link">← Back to Home</a>
-                    <a href="login.html" class="nav-link">Login</a>
-                    <a href="signup.html" class="btn btn-primary">Sign Up</a>
+                    <a href="index.html" class="nav-link"
+                        style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500;">←
+                        Back</a>
                 </nav>
             </div>
         </div>
@@ -127,40 +163,46 @@
     <!-- Club Header -->
     <section class="club-header">
         <div class="container" style="text-align: center;">
-            <img id="clubLogo" src="images/logo.png" alt="Club Logo" class="club-logo">
-            <h1 id="clubName" class="neon-text" style="font-size: 2.5rem; margin-bottom: 0.5rem;">Loading...</h1>
-            <p id="clubTagline" style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 1rem;"></p>
+            <div class="club-logo-wrapper">
+                <img id="clubLogo" src="images/logo.png" alt="Club Logo" class="club-logo">
+            </div>
+            <h1 id="clubName" class="neon-text" style="font-size: 3.5rem; margin-bottom: 1rem; line-height: 1;">
+                Loading...</h1>
+            <p id="clubTagline"
+                style="color: var(--text-muted); font-size: 1.25rem; max-width: 700px; margin: 0 auto 2rem; line-height: 1.6;">
+            </p>
             <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                <span class="badge" id="clubSport">Sport</span>
-                <span class="badge" id="clubLocation">Location</span>
+                <span class="badge" id="clubSport">⚽ Sport</span>
+                <span class="badge" id="clubLocation">📍 Location</span>
             </div>
         </div>
     </section>
 
     <!-- Club Details -->
-    <section style="padding: 3rem 0;">
-        <div class="container" style="max-width: 1000px;">
+    <section style="padding: 4rem 0;">
+        <div class="container" style="max-width: 900px;">
             <!-- Club Info -->
-            <div class="card">
-                <h2>📋 About the Club</h2>
-                <p id="clubDescription" style="color: var(--text-muted); line-height: 1.8; margin: 1.5rem 0;"></p>
+            <div class="card"
+                style="background: var(--bg-card); padding: 3rem; border-radius: 24px; border: 1px solid var(--border-color);">
+                <p id="clubDescription"
+                    style="color: var(--text-muted); line-height: 1.8; font-size: 1.1rem; margin-bottom: 2.5rem;"></p>
 
                 <div class="club-info-grid">
                     <div class="info-card">
-                        <div class="info-label">🏟️ Location</div>
+                        <div class="info-label">🏟️ Venue</div>
                         <div class="info-value" id="clubLocationFull">-</div>
                     </div>
                     <div class="info-card">
-                        <div class="info-label">⚽ Sport</div>
+                        <div class="info-label">🏆 Category</div>
                         <div class="info-value" id="clubSportFull">-</div>
                     </div>
                     <div class="info-card">
-                        <div class="info-label">🌐 Website</div>
+                        <div class="info-label">🌐 Web</div>
                         <div class="info-value"><a id="clubWebsite" href="#" target="_blank"
-                                style="color: var(--primary);">Visit Website</a></div>
+                                style="color: var(--primary); text-decoration: none;">Link</a></div>
                     </div>
                     <div class="info-card">
-                        <div class="info-label">💡 Philosophy</div>
+                        <div class="info-label">💡 Vision</div>
                         <div class="info-value" id="clubPhilosophy">-</div>
                     </div>
                 </div>
@@ -168,65 +210,76 @@
 
             <!-- Application Form -->
             <div class="application-form">
-                <h2>📝 Apply to Join</h2>
-                <p style="color: var(--text-muted); margin-bottom: 2rem;">Interested in joining this club? Fill out the
-                    application below and we'll get back to you!</p>
+                <div style="text-align: center; margin-bottom: 3rem;">
+                    <h2 style="font-size: 2.25rem; margin-bottom: 0.5rem;">📝 Submit Application</h2>
+                    <p style="color: var(--text-muted);">Fill in your details below to express interest in joining.</p>
+                </div>
 
                 <div class="success-message" id="successMessage">
-                    ✅ Application submitted successfully! The club will review your application and contact you soon.
+                    ✅ Application submitted successfully! Welcome to the club.
                 </div>
 
                 <div class="error-message" id="errorMessage"></div>
 
                 <form id="applicationForm">
                     <div id="personalDetails">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label for="playerName">Full Name *</label>
+                                <input type="text" id="playerName" name="playerName" required placeholder="John Doe">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="playerPhone">Phone Number</label>
+                                <input type="tel" id="playerPhone" name="playerPhone" placeholder="+44 7700 900000">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label for="playerEmail">Email Address *</label>
+                                <input type="email" id="playerEmail" name="playerEmail" required
+                                    placeholder="john@example.com">
+                            </div>
+
+                            <div class="form-group" id="passwordGroup">
+                                <label for="playerPassword">Account Password *</label>
+                                <input type="password" id="playerPassword" name="playerPassword"
+                                    placeholder="Min 6 characters">
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                         <div class="form-group">
-                            <label for="playerName">Full Name *</label>
-                            <input type="text" id="playerName" name="playerName" required
-                                placeholder="Enter your full name">
+                            <label for="playerHeight">Height (cm)</label>
+                            <input type="number" id="playerHeight" name="playerHeight" placeholder="e.g. 180">
                         </div>
 
                         <div class="form-group">
-                            <label for="playerEmail">Email Address *</label>
-                            <input type="email" id="playerEmail" name="playerEmail" required
-                                placeholder="your.email@example.com">
-                        </div>
-
-                        <div class="form-group" id="passwordGroup">
-                            <label for="playerPassword">Create Password * (To manage your application later)</label>
-                            <input type="password" id="playerPassword" name="playerPassword"
-                                placeholder="Min 6 characters">
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">Already have an
-                                account? <a href="login.html" style="color: var(--primary);">Login here</a> first.</p>
+                            <label for="playerPosition">Preferred Position</label>
+                            <input type="text" id="playerPosition" name="playerPosition" placeholder="e.g. Forward">
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="playerPhone">Phone Number</label>
-                        <input type="tel" id="playerPhone" name="playerPhone" placeholder="+44 7700 900000">
-                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label for="playerAge">Age</label>
+                            <input type="number" id="playerAge" name="playerAge" min="5" max="100"
+                                placeholder="e.g. 18">
+                        </div>
 
-                    <div class="form-group">
-                        <label for="playerAge">Age</label>
-                        <input type="number" id="playerAge" name="playerAge" min="5" max="100"
-                            placeholder="Enter your age">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="playerPosition">Preferred Position</label>
-                        <input type="text" id="playerPosition" name="playerPosition"
-                            placeholder="e.g., Forward, Midfielder, Defender">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="playerExperience">Experience Level</label>
-                        <select id="playerExperience" name="playerExperience">
-                            <option value="">Select experience level</option>
-                            <option value="beginner">Beginner</option>
-                            <option value="intermediate">Intermediate</option>
-                            <option value="advanced">Advanced</option>
-                            <option value="professional">Professional</option>
-                        </select>
+                        <div class="form-group">
+                            <label for="playerExperience">Experience Level</label>
+                            <select id="playerExperience" name="playerExperience">
+                                <option value="">Select experience level</option>
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate">Intermediate</option>
+                                <option value="advanced">Advanced</option>
+                                <option value="professional">Professional</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -235,7 +288,8 @@
                             placeholder="Tell us about yourself and why you'd like to join this club..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" id="submitBtn" style="width: 100%;">
+                    <button type="submit" class="btn btn-primary" id="submitBtn"
+                        style="width: 100%; padding: 1.25rem; font-weight: 700; font-size: 1.1rem; border-radius: 12px; margin-top: 1rem;">
                         📨 Submit Application & Join ClubHub
                     </button>
                 </form>
@@ -256,7 +310,7 @@
         // Load club details
         async function loadClubDetails() {
             try {
-                // 1. Check for dummy data first (for testing)
+                // 1. Check for dummy data first (for testing/dev)
                 if (clubId.startsWith('dummy-')) {
                     console.log('🧪 Loading dummy club data...');
                     const dummyData = {
@@ -303,8 +357,12 @@
             document.getElementById('clubName').textContent = club.name || 'Unknown Club';
             document.getElementById('clubTagline').textContent = club.description ? club.description.substring(0, 100) + '...' : '';
             document.getElementById('clubDescription').textContent = club.description || 'No description available.';
-            document.getElementById('clubSport').textContent = club.sport || 'Sport';
-            document.getElementById('clubLocation').textContent = club.location || 'Location';
+            document.getElementById('clubSport').textContent = club.sport ? `⚽ ${club.sport}` : '';
+            if (!club.sport) document.getElementById('clubSport').style.display = 'none';
+
+            document.getElementById('clubLocation').textContent = club.location ? `📍 ${club.location}` : '';
+            if (!club.location) document.getElementById('clubLocation').style.display = 'none';
+
             document.getElementById('clubLocationFull').textContent = club.location || '-';
             document.getElementById('clubSportFull').textContent = club.sport || '-';
             document.getElementById('clubPhilosophy').textContent = club.philosophy || '-';
@@ -395,6 +453,7 @@
                     playerEmail: document.getElementById('playerEmail').value,
                     playerPhone: document.getElementById('playerPhone').value,
                     playerAge: document.getElementById('playerAge').value,
+                    playerHeight: document.getElementById('playerHeight').value,
                     playerPosition: document.getElementById('playerPosition').value,
                     playerExperience: document.getElementById('playerExperience').value,
                     playerMessage: document.getElementById('playerMessage').value

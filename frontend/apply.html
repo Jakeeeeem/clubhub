@@ -280,6 +280,16 @@
                         <label>Email Address</label>
                         <input type="email" id="email" required placeholder="john@example.com">
                     </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Age</label>
+                            <input type="number" id="playerAge" min="5" max="100" placeholder="e.g. 18">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Height (cm)</label>
+                            <input type="number" id="playerHeight" placeholder="e.g. 180">
+                        </div>
+                    </div>
                     <div class="form-group" id="passContainer">
                         <label>Create Password</label>
                         <input type="password" id="password" required placeholder="Min 6 characters">
@@ -354,11 +364,29 @@
                 return;
             }
 
-            // Populate static info
-            document.getElementById('displayClubName').textContent = clubName || 'Sports Club';
-            document.getElementById('displaySport').textContent = sport ? `${sport.toUpperCase()} ACADEMY` : 'ELITE SPORTS ACADEMY';
+            // Try to fetch full club details for logo and latest info
+            try {
+                const club = await apiService.makeRequest(`/clubs/${clubId}`).catch(() =>
+                    apiService.makeRequest(`/organizations/${clubId}`));
 
-            // Set icon based on sport
+                if (club) {
+                    document.getElementById('displayClubName').textContent = club.name;
+                    document.getElementById('displaySport').textContent = club.sport ? `${club.sport.toUpperCase()} ACADEMY` : 'ELITE SPORTS ACADEMY';
+
+                    if (club.logo_url) {
+                        const iconContainer = document.getElementById('clubIcon');
+                        iconContainer.innerHTML = `<img src="${club.logo_url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;">`;
+                        iconContainer.style.background = 'none';
+                        iconContainer.style.padding = '0';
+                    }
+                }
+            } catch (e) {
+                console.log('Using URL params fallback for club info');
+                document.getElementById('displayClubName').textContent = clubName || 'Sports Club';
+                document.getElementById('displaySport').textContent = sport ? `${sport.toUpperCase()} ACADEMY` : 'ELITE SPORTS ACADEMY';
+            }
+
+            // Set icon based on sport (fallback if no logo)
             const sportIcon = {
                 'football': '⚽',
                 'tennis': '🎾',
@@ -366,7 +394,11 @@
                 'cricket': '🏏',
                 'rugby': '🏉'
             }[sport?.toLowerCase()] || '🏆';
-            document.getElementById('clubIcon').textContent = sportIcon;
+
+            const iconContainer = document.getElementById('clubIcon');
+            if (!iconContainer.querySelector('img')) {
+                iconContainer.textContent = sportIcon;
+            }
 
             // Check if user is already logged in
             try {
@@ -447,7 +479,11 @@
                     availability: [] // Optional
                 };
 
-                await apiService.applyToClub(clubId, applicationData);
+                await apiService.applyToClub(clubId, {
+                    ...applicationData,
+                    playerAge: document.getElementById('playerAge').value,
+                    playerHeight: document.getElementById('playerHeight').value
+                });
 
                 // Success!
                 document.getElementById('applyForm').style.display = 'none';

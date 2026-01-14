@@ -623,7 +623,7 @@
                 // Use the shared apiService (it handles production URLs automatically)
                 let clubs = await apiService.getClubs(searchTerm);
 
-                // 🧪 DUMMY TEST CLUBS INJECTION (Requested for testing)
+                // 🧪 DUMMY TEST CLUBS INJECTION (Kept for testing/dev)
                 const s = searchTerm.toLowerCase();
                 const dummyClubs = [
                     { id: 'dummy-1', name: 'Elite Performance Club', sport: 'football', location: 'London', description: 'A premier test club for testing search functionality.', member_count: 120, has_active_listing: true },
@@ -632,7 +632,7 @@
                 ];
 
                 dummyClubs.forEach(dc => {
-                    const matches = dc.name.toLowerCase().includes(s) || dc.location.toLowerCase().includes(s) || s.includes('club');
+                    const matches = dc.name.toLowerCase().includes(s) || dc.location.toLowerCase().includes(s) || s.includes('club') || s === '';
                     if (matches && !clubs.some(c => c.name === dc.name)) {
                         clubs.push(dc);
                     }
@@ -654,7 +654,7 @@
                         <div style="margin-bottom: 1rem;">
                             <h3 style="margin-bottom: 0.5rem; color: var(--primary-color);">${club.name}</h3>
                             <span style="background: rgba(220, 67, 67, 0.1); color: var(--primary-color); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">
-                                ${club.sport || 'Multi-Sport'}
+                                ${club.sport || ''}
                             </span>
                         </div>
                         <p style="color: #cbd5e1; margin-bottom: 1rem; font-size: 0.9rem;">
