@@ -661,6 +661,7 @@ router.get('/me', async (req, res) => {
       firstName: u.first_name,
       lastName: u.last_name,
       userType: u.account_type,
+      account_type: u.account_type, // For dashboard compatibility
     });
   } catch (err) {
     console.error('Get current user error:', err);
