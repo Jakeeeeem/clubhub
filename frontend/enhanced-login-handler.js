@@ -544,10 +544,10 @@ function closeModal(modalId) {
  */
 window.quickLogin = async function(type) {
     const demos = {
-        superadmin: { email: 'admin@clubhub.com', pass: 'password123' },
-        admin: { email: 'admin@clubhub.com', pass: 'password123' },
-        coach: { email: 'coach@clubhub.com', pass: 'password123' },
-        player: { email: 'player@clubhub.com', pass: 'password123' }
+        superadmin: { email: 'demo-admin@clubhub.com', pass: 'password123' },
+        admin: { email: 'demo-admin@clubhub.com', pass: 'password123' },
+        coach: { email: 'demo-coach@clubhub.com', pass: 'password123' },
+        player: { email: 'demo-player@clubhub.com', pass: 'password123' }
     };
 
     const credentials = demos[type];
