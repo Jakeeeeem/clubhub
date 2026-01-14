@@ -108,6 +108,88 @@
                     </div>
                 </div>
 
+                <!-- Club Profile Section -->
+                <div id="club-profile" class="dashboard-section">
+                    <div class="card">
+                        <h3>🏢 Club Profile</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage your organization's information
+                            and branding</p>
+
+                        <form id="clubProfileForm">
+                            <div class="form-group">
+                                <label for="clubName">Club Name *</label>
+                                <input type="text" id="clubName" name="name" required placeholder="Enter club name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="clubDescription">Description</label>
+                                <textarea id="clubDescription" name="description" rows="4"
+                                    placeholder="Tell us about your club..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="clubLocation">Location</label>
+                                <input type="text" id="clubLocation" name="location" placeholder="e.g., London, UK">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="clubSport">Sport</label>
+                                <select id="clubSport" name="sport">
+                                    <option value="">Select a sport</option>
+                                    <option value="Football">Football</option>
+                                    <option value="Basketball">Basketball</option>
+                                    <option value="Rugby">Rugby</option>
+                                    <option value="Cricket">Cricket</option>
+                                    <option value="Tennis">Tennis</option>
+                                    <option value="Hockey">Hockey</option>
+                                    <option value="Athletics">Athletics</option>
+                                    <option value="Swimming">Swimming</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="clubWebsite">Website</label>
+                                <input type="url" id="clubWebsite" name="website" placeholder="https://yourclub.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="clubPhilosophy">Club Philosophy</label>
+                                <textarea id="clubPhilosophy" name="philosophy" rows="3"
+                                    placeholder="Your club's values and philosophy..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Club Pictures (Max 3-5)</label>
+                                <div class="file-upload-area" id="clubPicturesArea"
+                                    style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.03);">
+                                    <input type="file" id="clubPictures" name="pictures" accept="image/*" multiple
+                                        style="display: none;">
+                                    <div class="upload-placeholder">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" style="margin: 0 auto;">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                        <p style="margin: 1rem 0 0.5rem; color: var(--text-main);">📷 Drag and drop
+                                            images here or click to upload</p>
+                                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">PNG, JPG or
+                                            WEBP (max 5MB each)</p>
+                                    </div>
+                                    <div id="clubPicturesPreview" style="display: none; margin-top: 1rem;"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                                <button type="submit" class="btn btn-primary">💾 Save Club Profile</button>
+                                <button type="button" class="btn btn-secondary" onclick="loadClubProfile()">🔄
+                                    Reset</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Enhanced Players Section -->
                 <div id="players" class="dashboard-section">
                     <div class="card">
@@ -5285,6 +5367,91 @@
             // Expose globally
             window.invitePlayerRBAC = invitePlayerRBAC;
             window.quickInvite = quickInvite;
+
+            // ============================================================================
+            // CLUB PROFILE MANAGEMENT
+            // ============================================================================
+
+            async function loadClubProfile() {
+                try {
+                    const context = await apiService.getContext();
+                    const org = context.currentOrganization;
+
+                    if (!org) {
+                        console.warn('No organization found');
+                        return;
+                    }
+
+                    // Populate form fields
+                    document.getElementById('clubName').value = org.name || '';
+                    document.getElementById('clubDescription').value = org.description || '';
+                    document.getElementById('clubLocation').value = org.location || '';
+                    document.getElementById('clubSport').value = org.sport || '';
+                    document.getElementById('clubWebsite').value = org.website || '';
+                    document.getElementById('clubPhilosophy').value = org.philosophy || '';
+
+                    console.log('✅ Club profile loaded:', org.name);
+                } catch (error) {
+                    console.error('Failed to load club profile:', error);
+                    showNotification('Failed to load club profile', 'error');
+                }
+            }
+
+            async function saveClubProfile(e) {
+                e.preventDefault();
+
+                try {
+                    const context = await apiService.getContext();
+                    const orgId = context.currentOrganization?.id;
+
+                    if (!orgId) {
+                        throw new Error('No organization selected');
+                    }
+
+                    const formData = {
+                        name: document.getElementById('clubName').value,
+                        description: document.getElementById('clubDescription').value,
+                        location: document.getElementById('clubLocation').value,
+                        sport: document.getElementById('clubSport').value,
+                        website: document.getElementById('clubWebsite').value,
+                        philosophy: document.getElementById('clubPhilosophy').value
+                    };
+
+                    const response = await apiService.makeRequest(`/organizations/${orgId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (response.success) {
+                        showNotification('Club profile updated successfully!', 'success');
+                        // Refresh context to update org switcher
+                        await apiService.refreshContext();
+                    } else {
+                        throw new Error(response.error || 'Failed to update profile');
+                    }
+                } catch (error) {
+                    console.error('Save profile error:', error);
+                    showNotification(error.message || 'Failed to save profile', 'error');
+                }
+            }
+
+            // Bind club profile form
+            document.getElementById('clubProfileForm')?.addEventListener('submit', saveClubProfile);
+
+            // Update showSection switcher to also load club profile
+            window.showSection = function (sectionId) {
+                const originalShowSection = window.showSection; // Capture the *original* function before re-assignment
+                // Call the original function if it exists and is not this re-assigned function itself
+                if (originalShowSection && originalShowSection !== window.showSection) {
+                    originalShowSection(sectionId);
+                }
+                if (sectionId === 'polls-section') loadPolls();
+                if (sectionId === 'club-profile') loadClubProfile();
+            };
+
+            // Expose globally
+            window.loadClubProfile = loadClubProfile;
+            window.saveClubProfile = saveClubProfile;
         </script>
 
         <script src="org-switcher.js"></script>
