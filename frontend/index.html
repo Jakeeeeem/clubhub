@@ -624,18 +624,19 @@
                 let clubs = await apiService.getClubs(searchTerm);
 
                 // 🧪 DUMMY TEST CLUBS INJECTION (Requested for testing)
-                if (searchTerm.toLowerCase().includes('club')) {
-                    const dummyClubs = [
-                        { id: 'dummy-1', name: 'Elite Performance Club', sport: 'football', location: 'London', description: 'A premier test club for testing search functionality.', member_count: 120, has_active_listing: true },
-                        { id: 'dummy-2', name: 'The Tennis Club Specialists', sport: 'tennis', location: 'Manchester', description: 'Test club focused on tennis activities and events.', member_count: 85, has_active_listing: true },
-                        { id: 'dummy-3', name: 'Global Sport Club United', sport: 'basketball', location: 'Birmingham', description: 'Multi-sport club for all ages.', member_count: 210, has_active_listing: true }
-                    ];
+                const s = searchTerm.toLowerCase();
+                const dummyClubs = [
+                    { id: 'dummy-1', name: 'Elite Performance Club', sport: 'football', location: 'London', description: 'A premier test club for testing search functionality.', member_count: 120, has_active_listing: true },
+                    { id: 'dummy-2', name: 'The Tennis Club Specialists', sport: 'tennis', location: 'Manchester', description: 'Test club focused on tennis activities and events.', member_count: 85, has_active_listing: true },
+                    { id: 'dummy-3', name: 'Global Sport Club United', sport: 'basketball', location: 'Birmingham', description: 'Multi-sport club for all ages.', member_count: 210, has_active_listing: true }
+                ];
 
-                    // Add dummy clubs if they don't already exist in the results
-                    dummyClubs.forEach(dc => {
-                        if (!clubs.some(c => c.name === dc.name)) clubs.push(dc);
-                    });
-                }
+                dummyClubs.forEach(dc => {
+                    const matches = dc.name.toLowerCase().includes(s) || dc.location.toLowerCase().includes(s) || s.includes('club');
+                    if (matches && !clubs.some(c => c.name === dc.name)) {
+                        clubs.push(dc);
+                    }
+                });
 
                 if (!clubs || clubs.length === 0) {
                     grid.innerHTML = `
@@ -649,7 +650,7 @@
 
                 grid.innerHTML = clubs.map(club => `
                     <div class="card" style="cursor: pointer; transition: transform 0.2s;" 
-                         onclick="window.location.href='club-details.html?id=${club.id}'">
+                         onclick="window.location.href='apply.html?id=${club.id}&name=${encodeURIComponent(club.name)}&sport=${encodeURIComponent(club.sport || '')}'">
                         <div style="margin-bottom: 1rem;">
                             <h3 style="margin-bottom: 0.5rem; color: var(--primary-color);">${club.name}</h3>
                             <span style="background: rgba(220, 67, 67, 0.1); color: var(--primary-color); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">

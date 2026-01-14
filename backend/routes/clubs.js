@@ -38,7 +38,7 @@ router.get('/', optionalAuth, async (req, res) => {
     // Search by name or description
     if (search) {
       paramCount++;
-      queryText += ` AND (c.name ILIKE $${paramCount} OR c.description ILIKE $${paramCount})`;
+      queryText += ` AND (c.name ILIKE $${paramCount} OR c.description ILIKE $${paramCount} OR c.location ILIKE $${paramCount})`;
       queryParams.push(`%${search}%`);
     }
 

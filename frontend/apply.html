@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Club | ClubHub</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background: radial-gradient(circle at top right, #1a1a1c, #0a0a0b);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .apply-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2rem;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Club Info Panel */
+        .club-spotlight {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .club-spotlight::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, var(--primary) 0%, transparent 60%);
+            opacity: 0.05;
+            z-index: -1;
+        }
+
+        .club-badge {
+            width: 80px;
+            height: 80px;
+            background: var(--primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(255, 51, 51, 0.3);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .club-name {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            font-family: 'Outfit';
+        }
+
+        .sport-tag {
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            display: block;
+        }
+
+        /* Application Form Panel */
+        .form-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-header {
+            margin-bottom: 2.5rem;
+        }
+
+        .form-header h2 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-header p {
+            color: var(--text-muted);
+        }
+
+        .step-container {
+            display: none;
+        }
+
+        .step-container.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 0 4px rgba(255, 51, 51, 0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .auth-check {
+            background: rgba(255, 51, 51, 0.05);
+            border: 1px solid rgba(255, 51, 51, 0.2);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .apply-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .club-spotlight {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="apply-wrapper">
+        <!-- Left: Club Context -->
+        <div class="club-spotlight">
+            <div class="status-badge">
+                <span
+                    style="display:inline-block; width:8px; height:8px; background:#22c55e; border-radius:50%;"></span>
+                Accepting New Applications
+            </div>
+            <div class="club-badge" id="clubIcon">⚽</div>
+            <h1 class="club-name" id="displayClubName">Loading Club...</h1>
+            <span class="sport-tag" id="displaySport">Multi-Sport Academy</span>
+
+            <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem;">
+                Join our elite community and take your sporting career to the next level. Complete the application below
+                to get started.
+            </p>
+
+            <div style="display: flex; gap: 2rem;">
+                <div>
+                    <div style="font-weight: 700; font-size: 1.25rem;">100+</div>
+                    <div style="color: var(--text-muted); font-size: 0.8rem;">Active Members</div>
+                </div>
+                <div>
+                    <div style="font-weight: 700; font-size: 1.25rem;">Elite</div>
+                    <div style="color: var(--text-muted); font-size: 0.8rem;">Level Coaching</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Professional Flow -->
+        <div class="form-panel">
+            <div id="authNotice" class="auth-check">
+                👋 <strong>Note:</strong> You are already logged in. We'll use your account details for this
+                application.
+            </div>
+
+            <div class="form-header">
+                <h2 id="stepTitle">Personal Details</h2>
+                <p id="stepDesc">Step 1 of 2: Create your player profile</p>
+            </div>
+
+            <form id="applyForm">
+                <!-- Step 1: Accountability (Register) -->
+                <div id="step1" class="step-container active">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" id="firstName" required placeholder="John">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="lastName" required placeholder="Doe">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="email" required placeholder="john@example.com">
+                    </div>
+                    <div class="form-group" id="passContainer">
+                        <label>Create Password</label>
+                        <input type="password" id="password" required placeholder="Min 6 characters">
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" style="width: 100%;"
+                            onclick="navigate(2)">Continue to Sporting Details →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Sporting Intel (Application) -->
+                <div id="step2" class="step-container">
+                    <div class="form-group">
+                        <label>Preferred Position</label>
+                        <select id="position" required>
+                            <option value="">Select your position</option>
+                            <option value="forward">Forward / Attacker</option>
+                            <option value="midfielder">Midfielder</option>
+                            <option value="defender">Defender</option>
+                            <option value="goalkeeper">Goalkeeper</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Experience Level</label>
+                        <select id="experience" required>
+                            <option value="beginner">Beginner (Just starting)</option>
+                            <option value="intermediate" selected>Intermediate (Club level)</option>
+                            <option value="advanced">Advanced (County/High level)</option>
+                            <option value="professional">Elite / Professional</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pitch for the Club</label>
+                        <textarea id="message" rows="4" required
+                            placeholder="Tell the coach why you'd be a great fit for the team..."></textarea>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary" onclick="navigate(1)">Back</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;" id="submitBtn">Submit
+                            Application</button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="successView" style="display: none; text-align: center; padding: 2rem 0;">
+                <div style="font-size: 4rem; margin-bottom: 2rem;">🚀</div>
+                <h2 style="font-size: 2rem; margin-bottom: 1rem;">Application Delivered!</h2>
+                <p style="color: var(--text-muted); margin-bottom: 2rem;">
+                    Success! Your player profile has been created and your application is now in the coach's hands.
+                    We'll notify you as soon as they review it.
+                </p>
+                <button class="btn btn-primary" style="width: 100%;"
+                    onclick="window.location.href='player-dashboard.html'">Go to Player Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const clubId = params.get('id');
+        const clubName = params.get('name');
+        const sport = params.get('sport');
+
+        // State
+        let isUserLoggedIn = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!clubId) {
+                alert('No club specified. Returning to home.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Populate static info
+            document.getElementById('displayClubName').textContent = clubName || 'Sports Club';
+            document.getElementById('displaySport').textContent = sport ? `${sport.toUpperCase()} ACADEMY` : 'ELITE SPORTS ACADEMY';
+
+            // Set icon based on sport
+            const sportIcon = {
+                'football': '⚽',
+                'tennis': '🎾',
+                'basketball': '🏀',
+                'cricket': '🏏',
+                'rugby': '🏉'
+            }[sport?.toLowerCase()] || '🏆';
+            document.getElementById('clubIcon').textContent = sportIcon;
+
+            // Check if user is already logged in
+            try {
+                const currentUser = await apiService.getCurrentUser();
+                if (currentUser) {
+                    isUserLoggedIn = true;
+                    document.getElementById('authNotice').style.display = 'block';
+                    document.getElementById('passContainer').style.display = 'none';
+
+                    // Pre-fill user details
+                    document.getElementById('firstName').value = currentUser.first_name || '';
+                    document.getElementById('lastName').value = currentUser.last_name || '';
+                    document.getElementById('email').value = currentUser.email || '';
+
+                    // Disable personal info fields
+                    document.getElementById('firstName').readOnly = true;
+                    document.getElementById('lastName').readOnly = true;
+                    document.getElementById('email').readOnly = true;
+                }
+            } catch (err) {
+                // Not logged in, proceed as normal
+                isUserLoggedIn = false;
+            }
+
+            document.getElementById('applyForm').addEventListener('submit', handleApply);
+        });
+
+        function navigate(step) {
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const title = document.getElementById('stepTitle');
+            const desc = document.getElementById('stepDesc');
+
+            if (step === 2) {
+                // Basic validation for step 1
+                if (!document.getElementById('email').value || !document.getElementById('firstName').value) {
+                    alert('Please fill in your personal details first.');
+                    return;
+                }
+                step1.classList.remove('active');
+                step2.classList.add('active');
+                title.textContent = "Sporting Intel";
+                desc.textContent = "Step 2 of 2: Your skills and experience";
+            } else {
+                step2.classList.remove('active');
+                step1.classList.add('active');
+                title.textContent = "Personal Details";
+                desc.textContent = "Step 1 of 2: Create your player profile";
+            }
+        }
+
+        async function handleApply(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = "Processing...";
+
+            try {
+                // 1. If not logged in, register first
+                if (!isUserLoggedIn) {
+                    const registerData = {
+                        firstName: document.getElementById('firstName').value,
+                        lastName: document.getElementById('lastName').value,
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value,
+                        userType: 'adult' // Default for player signups
+                    };
+
+                    console.log('📝 Registering new player...');
+                    await apiService.register(registerData);
+                }
+
+                // 2. Submit application
+                const applicationData = {
+                    message: document.getElementById('message').value,
+                    preferredPosition: document.getElementById('position').value,
+                    experienceLevel: document.getElementById('experience').value,
+                    availability: [] // Optional
+                };
+
+                await apiService.applyToClub(clubId, applicationData);
+
+                // Success!
+                document.getElementById('applyForm').style.display = 'none';
+                document.querySelector('.form-header').style.display = 'none';
+                document.getElementById('successView').style.display = 'block';
+
+            } catch (error) {
+                console.error('❌ Application process failed:', error);
+                alert('Application failed: ' + (error.message || 'Unknown error'));
+                btn.disabled = false;
+                btn.textContent = "Submit Application";
+            }
+        }
+    </script>
+</body>
+
+</html>

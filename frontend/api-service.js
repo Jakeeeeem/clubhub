@@ -699,6 +699,19 @@ async deletePaymentPlan(planId) {
     });
   }
 
+  async applyToClub(clubId, applicationData) {
+    try {
+      console.log(`📝 Applying to club ${clubId}:`, applicationData);
+      return await this.makeRequest(`/clubs/${clubId}/apply`, {
+        method: 'POST',
+        body: JSON.stringify(applicationData)
+      });
+    } catch (error) {
+      console.error('❌ Failed to apply to club:', error);
+      throw error;
+    }
+  }
+
   // =========================== PLAYER METHODS ===========================
 
   async getPlayers(clubId = null) {
