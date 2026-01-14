@@ -653,9 +653,10 @@ async deletePaymentPlan(planId) {
 
   // =========================== CLUB METHODS ===========================
 
-  async getClubs() {
+  async getClubs(search = null) {
     try {
-      const clubs = await this.makeRequest('/clubs');
+      const endpoint = search ? `/clubs?search=${encodeURIComponent(search)}` : '/clubs';
+      const clubs = await this.makeRequest(endpoint);
       localStorage.setItem('cachedClubs', JSON.stringify(clubs));
       return clubs;
     } catch (error) {

@@ -100,7 +100,7 @@
 
                 <!-- Results Grid -->
                 <div id="recruitingClubsGrid"
-                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 350px)); gap: 1.5rem; justify-content: center;">
                     <!-- Populated by JavaScript -->
                     <div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;">
                         <p style="font-size: 1.1rem;">🔍 Start searching to find clubs recruiting players...</p>
@@ -620,13 +620,22 @@
             try {
                 grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem;"><p>🔍 Searching...</p></div>';
 
-                // Fetch clubs with optional search filter
-                const url = searchTerm
-                    ? `https://clubhub-dev.onrender.com/api/clubs?search=${encodeURIComponent(searchTerm)}`
-                    : `https://clubhub-dev.onrender.com/api/clubs?limit=20`;
+                // Use the shared apiService (it handles production URLs automatically)
+                let clubs = await apiService.getClubs(searchTerm);
 
-                const response = await fetch(url);
-                const clubs = await response.json();
+                // 🧪 DUMMY TEST CLUBS INJECTION (Requested for testing)
+                if (searchTerm.toLowerCase().includes('club')) {
+                    const dummyClubs = [
+                        { id: 'dummy-1', name: 'Elite Performance Club', sport: 'football', location: 'London', description: 'A premier test club for testing search functionality.', member_count: 120, has_active_listing: true },
+                        { id: 'dummy-2', name: 'The Tennis Club Specialists', sport: 'tennis', location: 'Manchester', description: 'Test club focused on tennis activities and events.', member_count: 85, has_active_listing: true },
+                        { id: 'dummy-3', name: 'Global Sport Club United', sport: 'basketball', location: 'Birmingham', description: 'Multi-sport club for all ages.', member_count: 210, has_active_listing: true }
+                    ];
+
+                    // Add dummy clubs if they don't already exist in the results
+                    dummyClubs.forEach(dc => {
+                        if (!clubs.some(c => c.name === dc.name)) clubs.push(dc);
+                    });
+                }
 
                 if (!clubs || clubs.length === 0) {
                     grid.innerHTML = `
