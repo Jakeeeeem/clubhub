@@ -2075,6 +2075,10 @@ select option {
     opacity: 1 !important;
     visibility: visible !important;
     height: auto !important;
+    min-height: 400px; /* Ensure it has height */
+    position: relative;
+    z-index: 10;
+    transform: none !important;
     animation: none !important;
 }
 

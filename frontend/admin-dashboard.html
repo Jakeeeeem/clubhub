@@ -4420,22 +4420,36 @@
         function showSection(sectionId) {
             console.log('📍 Switching to section:', sectionId);
 
-            // Remove active class from all sections
+            // Correct potential ID mismatches
+            let finalId = sectionId;
+            if (sectionId === 'marketing-hub') finalId = 'marketing';
+            if (sectionId === 'item-shop') finalId = 'shop';
+
+            // Remove active class and hide all sections
             const sections = document.querySelectorAll('.dashboard-section');
-            console.log(`Found ${sections.length} dashboard sections`);
-            sections.forEach(section => section.classList.remove('active'));
+            sections.forEach(section => {
+                section.classList.remove('active');
+                section.style.display = 'none'; // Force hide
+            });
 
             // Remove active class from all nav buttons
             const navButtons = document.querySelectorAll('.dashboard-nav button');
             navButtons.forEach(button => button.classList.remove('active'));
 
-            // Add active class to target section
-            const targetSection = document.getElementById(sectionId);
+            // Add active class and show target section
+            const targetSection = document.getElementById(finalId);
             if (targetSection) {
                 targetSection.classList.add('active');
-                console.log(`✅ Section '${sectionId}' is now active`);
+                targetSection.style.display = 'block'; // Force show
+                console.log(`✅ Section '${finalId}' is now active`);
             } else {
-                console.error(`❌ Section '${sectionId}' not found in DOM!`);
+                console.error(`❌ Section '${finalId}' not found in DOM!`);
+                // Fallback: Try original ID
+                const fallbackSection = document.getElementById(sectionId);
+                if (fallbackSection) {
+                    fallbackSection.classList.add('active');
+                    fallbackSection.style.display = 'block';
+                }
                 return;
             }
 
