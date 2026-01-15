@@ -5435,20 +5435,8 @@
                     // Refresh context in background
                     apiService.refreshContext();
 
-                    // Immediately populate form with saved data from response
-                    if (response.organization) {
-                        console.log('✅ Repopulating form with:', response.organization);
-                        const org = response.organization;
-                        document.getElementById('clubName').value = org.name || '';
-                        document.getElementById('clubDescription').value = org.description || '';
-                        document.getElementById('clubLocation').value = org.location || '';
-                        document.getElementById('clubSport').value = org.sport || '';
-                        document.getElementById('clubWebsite').value = org.website || '';
-                        document.getElementById('clubPhilosophy').value = org.philosophy || '';
-                    } else {
-                        console.warn('⚠️ No organization in response, reloading profile...');
-                        await loadClubProfile();
-                    }
+                    // Reload the entire profile to refresh images and all data
+                    await loadClubProfile();
                 } catch (error) {
                     console.error('Save profile error:', error);
                     showNotification('❌ ' + (error.message || 'Failed to save profile'), 'error');
