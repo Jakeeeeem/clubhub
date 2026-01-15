@@ -711,7 +711,7 @@ async deletePaymentPlan(planId) {
   }
 
   async updateClub(id, clubData) {
-    return await this.makeRequest(`/clubs/${id}`, {
+    return await this.makeRequest(`/organizations/${id}`, {
       method: 'PUT',
       body: JSON.stringify(clubData)
     });
