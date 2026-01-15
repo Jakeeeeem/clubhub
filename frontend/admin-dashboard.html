@@ -240,26 +240,38 @@
                         </div>
 
                         <!-- Enhanced Player Filters -->
+                        <!-- Enhanced Player Filters -->
                         <div class="player-filters"
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
-                            <div class="filter-group">
-                                <label>View Type</label>
-                                <select id="playerListFilter" onchange="loadPlayers()">
+                            style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 2rem;">
+
+                            <div style="flex: 1; min-width: 140px;">
+                                <label
+                                    style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">View
+                                    Type</label>
+                                <select id="playerListFilter" onchange="loadPlayers()"
+                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main);">
                                     <option value="all">Full List</option>
                                     <option value="on-plan">On Plan</option>
                                     <option value="not-on-plan">No Plan</option>
                                     <option value="overdue">Overdue</option>
                                 </select>
                             </div>
-                            <div class="filter-group">
-                                <label>Team</label>
-                                <select id="teamFilter" onchange="loadPlayers()">
+
+                            <div style="flex: 1; min-width: 140px;">
+                                <label
+                                    style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Team</label>
+                                <select id="teamFilter" onchange="loadPlayers()"
+                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main);">
                                     <option value="">All Teams</option>
+                                    <!-- Populated dynamically -->
                                 </select>
                             </div>
-                            <div class="filter-group">
-                                <label>Sport</label>
-                                <select id="sportFilter" onchange="loadPlayers()">
+
+                            <div style="flex: 1; min-width: 140px;">
+                                <label
+                                    style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Sport</label>
+                                <select id="sportFilter" onchange="loadPlayers()"
+                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main);">
                                     <option value="">All Sports</option>
                                     <option value="Football">Football</option>
                                     <option value="Basketball">Basketball</option>
@@ -267,23 +279,34 @@
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
-                            <div class="filter-group">
-                                <label>Location</label>
-                                <input type="text" id="locationFilter" placeholder="London..." onkeyup="loadPlayers()">
+
+                            <div style="flex: 1.5; min-width: 180px;">
+                                <label
+                                    style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Location</label>
+                                <input type="text" id="locationFilter" placeholder="Search location..."
+                                    onkeyup="loadPlayers()"
+                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main);">
                             </div>
-                            <div class="filter-group" style="display: flex; gap: 0.5rem; flex-direction: column;">
-                                <label>Age Range</label>
+
+                            <div style="flex: 1; min-width: 140px;">
+                                <label
+                                    style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">Age
+                                    Range</label>
                                 <div style="display: flex; gap: 0.5rem;">
-                                    <input type="number" id="minAgeFilter" placeholder="Min" style="width: 60px;"
-                                        onchange="loadPlayers()">
-                                    <input type="number" id="maxAgeFilter" placeholder="Max" style="width: 60px;"
-                                        onchange="loadPlayers()">
+                                    <input type="number" id="minAgeFilter" placeholder="Min" onchange="loadPlayers()"
+                                        style="width: 50%; padding: 0.6rem; border-radius: 8px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main);">
+                                    <input type="number" id="maxAgeFilter" placeholder="Max" onchange="loadPlayers()"
+                                        style="width: 50%; padding: 0.6rem; border-radius: 8px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main);">
                                 </div>
                             </div>
-                            <div class="filter-buttons" style="display: flex; align-items: flex-end; gap: 0.5rem;">
-                                <button class="btn btn-secondary btn-small"
-                                    onclick="resetPlayerFilters()">Reset</button>
-                                <button class="btn btn-primary btn-small" onclick="exportPlayers()">📊 Export</button>
+
+                            <div style="display: flex; gap: 0.75rem;">
+                                <button class="btn btn-secondary" onclick="resetPlayerFilters()"
+                                    style="padding: 0.6rem 1rem; border-radius: 8px;">Reset</button>
+                                <button class="btn btn-primary" onclick="exportPlayers()"
+                                    style="padding: 0.6rem 1rem; border-radius: 8px; display: flex; align-items: center; gap: 0.5rem;">
+                                    📊 <span class="desktop-only">Export</span>
+                                </button>
                             </div>
                         </div>
 
@@ -4142,6 +4165,8 @@
         async function loadTeams() {
             const container = document.getElementById('teamsContainer');
             if (!container) return;
+            // Remove grid layout to allow table to expand
+            container.classList.remove('card-grid');
 
             try {
                 showLoading(true);
@@ -4158,38 +4183,67 @@
                     return;
                 }
 
-                container.innerHTML = teams.map(team => `
-                        <div class="team-card" onclick="openTeamManagement('${team.id}', '${team.name}')">
-                            <h4>${team.name}</h4>
-                            <div class="team-stats">
-                                <div>
-                                    <span class="team-stat-number">${team.player_count}</span>
-                                    <span class="team-stat-label">Players</span>
-                                </div>
-                                <div>
-                                    <span class="team-stat-number">${team.wins || 0}</span>
-                                    <span class="team-stat-label">Wins</span>
-                                </div>
-                                <div>
-                                    <span class="team-stat-number">${team.losses || 0}</span>
-                                    <span class="team-stat-label">Losses</span>
-                                </div>
-                                <div>
-                                    <span class="team-stat-number">${team.draws || 0}</span>
-                                    <span class="team-stat-label">Draws</span>
-                                </div>
-                            </div>
-                            <p><strong>Coach:</strong> ${team.coach_first_name ? `${team.coach_first_name} ${team.coach_last_name}` : 'No coach assigned'}</p>
-                            <p><strong>Sport:</strong> ${team.sport}</p>
-                            <div class="player-actions" onclick="event.stopPropagation()">
-                                <button class="btn btn-small btn-primary" onclick="openTeamManagement('${team.id}', '${team.name}')">Manage</button>
-                                <button class="btn btn-small btn-secondary" onclick="editTeam('${team.id}')">Edit</button>
-                                <button class="btn btn-small btn-danger" onclick="deleteTeam('${team.id}')">Delete</button>
-                            </div>
-                        </div>
-                        `).join('');
+                container.innerHTML = `
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border-color);">
+                                    <th style="padding: 1rem; text-align: left;">Team Name</th>
+                                    <th style="padding: 1rem; text-align: left;">Sport / Age</th>
+                                    <th style="padding: 1rem; text-align: center;">Players</th>
+                                    <th style="padding: 1rem; text-align: center;">Stats (W/L/D)</th>
+                                    <th style="padding: 1rem; text-align: left;">Coach</th>
+                                    <th style="padding: 1rem; text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${teams.map(team => `
+                                    <tr style="border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s;" 
+                                        onclick="openTeamManagement('${team.id}', '${team.name}')"
+                                        onmouseover="this.style.background='rgba(255,255,255,0.05)'"
+                                        onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 1rem; font-weight: bold;">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <span class="status-badge status-active">⚽</span>
+                                                ${team.name}
+                                            </div>
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            <div style="font-size: 0.9rem;">${team.sport}</div>
+                                            <div style="font-size: 0.8rem; color: var(--text-muted);">${team.age_group || 'N/A'}</div>
+                                        </td>
+                                        <td style="padding: 1rem; text-align: center;">
+                                            <span class="badge badge-secondary">${team.player_count}</span>
+                                        </td>
+                                        <td style="padding: 1rem; text-align: center; font-family: monospace;">
+                                            <span style="color: #4caf50;">${team.wins || 0}</span> / 
+                                            <span style="color: #f44336;">${team.losses || 0}</span> / 
+                                            <span style="color: #ff9800;">${team.draws || 0}</span>
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            ${team.coach_first_name ?
+                        `<div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                    <div class="avatar-small" style="width: 24px; height: 24px; font-size: 0.8rem; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center;">${team.coach_first_name[0]}${team.coach_last_name[0]}</div>
+                                                    ${team.coach_first_name} ${team.coach_last_name}
+                                                 </div>`
+                        : '<span style="color: var(--text-muted); font-style: italic;">Unassigned</span>'}
+                                        </td>
+                                        <td style="padding: 1rem; text-align: right;">
+                                            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;" onclick="event.stopPropagation()">
+                                                <button class="btn btn-small btn-primary" onclick="openTeamManagement('${team.id}', '${team.name}')">Manage</button>
+                                                <button class="btn btn-small btn-secondary" onclick="editTeam('${team.id}')">Edit</button>
+                                                <button class="btn btn-small btn-danger" onclick="deleteTeam('${team.id}')" title="Delete Team">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
 
                 AppState.teams = teams;
+                populateTeamDropdowns(); // Update all Selects
 
             } catch (error) {
                 console.error('Failed to load teams:', error);
@@ -4197,6 +4251,31 @@
             } finally {
                 showLoading(false);
             }
+        }
+
+        function populateTeamDropdowns() {
+            const teams = AppState.teams || [];
+            if (teams.length === 0) return;
+
+            const selectorIds = ['teamFilter', 'playerTeam', 'editPlayerTeam'];
+
+            selectorIds.forEach(id => {
+                const select = document.getElementById(id);
+                if (!select) return;
+
+                // specific logic: Keep the first option (default), remove others
+                const defaultOption = select.firstElementChild;
+                select.innerHTML = '';
+                if (defaultOption) select.appendChild(defaultOption);
+
+                teams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    select.appendChild(option);
+                });
+            });
+            console.log('✅ Team dropdowns populated');
         }
 
         // Club Gallery Functions
