@@ -5393,37 +5393,57 @@
                 e.preventDefault();
 
                 try {
+                    showLoading(true);
                     const context = await apiService.getContext();
+                    console.log('📋 Context:', context);
+                    console.log('🏢 Current Org:', context.currentOrganization);
                     const orgId = context.currentOrganization?.id;
+                    console.log('🆔 Org ID:', orgId);
 
                     if (!orgId) {
-                        throw new Error('No organization selected');
+                        console.error('❌ No organization ID found in context');
+                        showNotification('❌ No active organization/club found. Please select or create one first.', 'error');
+                        return;
                     }
 
                     const formData = {
-                        name: document.getElementById('clubName').value,
-                        description: document.getElementById('clubDescription').value,
-                        location: document.getElementById('clubLocation').value,
-                        sport: document.getElementById('clubSport').value,
-                        website: document.getElementById('clubWebsite').value,
-                        philosophy: document.getElementById('clubPhilosophy').value
+                        name: document.getElementById('clubName').value.trim(),
+                        description: document.getElementById('clubDescription').value.trim(),
+                        location: document.getElementById('clubLocation').value.trim(),
+                        sport: document.getElementById('clubSport').value.trim(),
+                        philosophy: document.getElementById('clubPhilosophy').value.trim(),
+                        types: ['sports-club']
                     };
 
-                    const response = await apiService.makeRequest(`/organizations/${orgId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(formData)
-                    });
+                    // Only include website if it has a value (to avoid validation errors on empty URLs)
+                    const websiteValue = document.getElementById('clubWebsite').value.trim();
+                    if (websiteValue) {
+                        formData.website = websiteValue;
+                    }
 
-                    if (response.success) {
-                        showNotification('Club profile updated successfully!', 'success');
-                        // Refresh context to update org switcher
-                        await apiService.refreshContext();
-                    } else {
-                        throw new Error(response.error || 'Failed to update profile');
+                    // Use the organizations endpoint
+                    const response = await apiService.updateClub(orgId, formData);
+
+                    showNotification('✅ Club profile updated successfully!', 'success');
+
+                    // Refresh context in background
+                    apiService.refreshContext();
+
+                    // Immediately populate form with saved data from response
+                    if (response.organization) {
+                        const org = response.organization;
+                        document.getElementById('clubName').value = org.name || '';
+                        document.getElementById('clubDescription').value = org.description || '';
+                        document.getElementById('clubLocation').value = org.location || '';
+                        document.getElementById('clubSport').value = org.sport || '';
+                        document.getElementById('clubWebsite').value = org.website || '';
+                        document.getElementById('clubPhilosophy').value = org.philosophy || '';
                     }
                 } catch (error) {
                     console.error('Save profile error:', error);
-                    showNotification(error.message || 'Failed to save profile', 'error');
+                    showNotification('❌ ' + (error.message || 'Failed to save profile'), 'error');
+                } finally {
+                    showLoading(false);
                 }
             }
 
