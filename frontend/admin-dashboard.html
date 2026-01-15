@@ -5391,8 +5391,8 @@
 
                     showNotification('✅ Club profile updated successfully!', 'success');
 
-                    // Reload context to get updated organization data
-                    await apiService.getContext();
+                    // Force refresh context to get updated organization data (clears cache)
+                    await apiService.refreshContext();
 
                     // Reload the profile to show updated data
                     await loadClubProfile();
