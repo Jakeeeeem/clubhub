@@ -162,9 +162,10 @@
                             <div class="form-group">
                                 <label>Club Pictures (Max 3-5)</label>
                                 <div class="file-upload-area" id="clubPicturesArea"
+                                    onclick="document.getElementById('clubPictures').click()"
                                     style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.03);">
                                     <input type="file" id="clubPictures" name="pictures" accept="image/*" multiple
-                                        style="display: none;">
+                                        onchange="handlePictureUpload(this)" style="display: none;">
                                     <div class="upload-placeholder">
                                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
                                             stroke="currentColor" stroke-width="2" style="margin: 0 auto;">
@@ -177,7 +178,7 @@
                                         <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">PNG, JPG or
                                             WEBP (max 5MB each)</p>
                                     </div>
-                                    <div id="clubPicturesPreview" style="display: none; margin-top: 1rem;"></div>
+                                    <div id="uploadedPictures" style="display: none; margin-top: 1rem;"></div>
                                 </div>
                             </div>
 
@@ -1847,6 +1848,31 @@
             const editProductForm = document.getElementById('editProductForm');
             if (editProductForm) {
                 editProductForm.addEventListener('submit', handleUpdateProduct);
+            }
+
+            // Drag and Drop for Club Pictures
+            const dropArea = document.getElementById('clubPicturesArea');
+            if (dropArea) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, false);
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, () => dropArea.classList.add('drag-over'), false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropArea.addEventListener(eventName, () => dropArea.classList.remove('drag-over'), false);
+                });
+
+                dropArea.addEventListener('drop', (e) => {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    handlePictureUpload({ files: files, value: '' });
+                }, false);
             }
 
             // Marketing Hub form

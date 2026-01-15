@@ -688,6 +688,17 @@ section#benefits {
     width: fit-content;
 }
 
+.file-upload-area {
+    transition: var(--transition);
+}
+
+.file-upload-area.drag-over {
+    border-color: var(--primary) !important;
+    background: rgba(var(--primary-rgb), 0.1) !important;
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.2);
+}
+
 /* Card Styles */
 .card {
     background: var(--bg-card);
