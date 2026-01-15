@@ -5367,15 +5367,16 @@
                     // Display existing images if any
                     const uploadedPicturesDiv = document.getElementById('uploadedPictures');
                     const uploadPlaceholder = document.querySelector('.upload-placeholder');
+                    const orgImages = org.images || [];
 
-                    if (org.images && org.images.length > 0) {
-                        console.log('🖼️ Found images in DB:', org.images);
+                    if (orgImages && orgImages.length > 0) {
+                        console.log('🖼️ Found images in DB:', orgImages);
                         if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
                         if (uploadedPicturesDiv) {
                             uploadedPicturesDiv.style.display = 'block';
                             // Prepend backend URL to image paths
                             const backendUrl = apiService.baseURL.replace('/api', '');
-                            uploadedPicturesDiv.innerHTML = org.images.map(img => {
+                            uploadedPicturesDiv.innerHTML = orgImages.map(img => {
                                 const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
                                 return `
                                     <div style="display: inline-block; margin: 0.5rem; position: relative;">
