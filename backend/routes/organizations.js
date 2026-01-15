@@ -463,25 +463,29 @@ router.post('/:id/images', authenticateToken, upload.single('image'), async (req
         }
 
         const currentImages = orgResult.rows[0].images || [];
-        if (currentImages.length >= 5) {
+        if (currentImages.length >= 10) {
             try { fs.unlinkSync(req.file.path); } catch (e) {}
-            return res.status(400).json({ error: 'Image limit reached (max 5 images)' });
+            return res.status(400).json({ error: 'Image limit reached (max 10 images)' });
         }
 
         const imageUrl = `/uploads/club-images/${req.file.filename}`;
 
         // Append to images array
         const result = await pool.query(`
-            UPDATE organizations 
-            SET images = array_append(COALESCE(images, '{}'), $1), updated_at = NOW()
-            WHERE id = $2
-            RETURNING images
+          UPDATE organizations 
+          SET images = array_append(COALESCE(images, '{}'), $1), updated_at = NOW()
+          WHERE id = $2
+          RETURNING *
         `, [imageUrl, id]);
 
-        res.json({ message: 'Image uploaded', images: result.rows[0].images });
+        res.json({
+            success: true,
+            organization: result.rows[0],
+            message: 'Image uploaded successfully'
+        });
 
-    } catch (err) {
-        console.error('Upload image error:', err);
+    } catch (error) {
+        console.error('Error uploading image:', error);
         if (req.file) {
           try { fs.unlinkSync(req.file.path); } catch (e) {}
         }
