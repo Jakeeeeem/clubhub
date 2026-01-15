@@ -118,26 +118,23 @@
                         <form id="clubProfileForm">
                             <div class="form-group">
                                 <label for="clubName">Club Name *</label>
-                                <input type="text" id="clubName" name="name" required placeholder="Enter club name"
-                                    style="color: white !important;">
+                                <input type="text" id="clubName" name="name" required placeholder="Enter club name">
                             </div>
 
                             <div class="form-group">
                                 <label for="clubDescription">Description</label>
                                 <textarea id="clubDescription" name="description" rows="4"
-                                    placeholder="Tell us about your club..."
-                                    style="color: white !important;"></textarea>
+                                    placeholder="Tell us about your club..."></textarea>
                             </div>
 
                             <div class="form-group">
                                 <label for="clubLocation">Location</label>
-                                <input type="text" id="clubLocation" name="location" placeholder="e.g., London, UK"
-                                    style="color: white !important;">
+                                <input type="text" id="clubLocation" name="location" placeholder="e.g., London, UK">
                             </div>
 
                             <div class="form-group">
                                 <label for="clubSport">Sport</label>
-                                <select id="clubSport" name="sport" style="color: white !important;">
+                                <select id="clubSport" name="sport">
                                     <option value="">Select a sport</option>
                                     <option value="Football">Football</option>
                                     <option value="Basketball">Basketball</option>
@@ -153,15 +150,13 @@
 
                             <div class="form-group">
                                 <label for="clubWebsite">Website</label>
-                                <input type="url" id="clubWebsite" name="website" placeholder="https://yourclub.com"
-                                    style="color: white !important;">
+                                <input type="url" id="clubWebsite" name="website" placeholder="https://yourclub.com">
                             </div>
 
                             <div class="form-group">
                                 <label for="clubPhilosophy">Club Philosophy</label>
                                 <textarea id="clubPhilosophy" name="philosophy" rows="3"
-                                    placeholder="Your club's values and philosophy..."
-                                    style="color: white !important;"></textarea>
+                                    placeholder="Your club's values and philosophy..."></textarea>
                             </div>
 
                             <div class="form-group">
@@ -1838,6 +1833,11 @@
                 inviteStaffForm.addEventListener('submit', handleStaffInvite);
             }
 
+            // Club profile form
+            const clubProfileForm = document.getElementById('clubProfileForm');
+            if (clubProfileForm) {
+                clubProfileForm.addEventListener('submit', handleClubProfileUpdate);
+            }
 
             // Item Shop form
             const addProductForm = document.getElementById('addProductForm');
@@ -3282,6 +3282,31 @@
                 showNotification('Failed to create event: ' + error.message, 'error');
             } finally {
                 showLoading(false);
+            }
+        }
+
+        async function handleClubProfileUpdate(e) {
+            e.preventDefault();
+
+            const form = e.currentTarget;
+
+            const profileData = {
+                name: form.querySelector('#clubName')?.value?.trim(),
+                description: form.querySelector('#clubDescription')?.value?.trim(),
+                location: form.querySelector('#clubLocation')?.value?.trim(),
+                philosophy: form.querySelector('#clubPhilosophy')?.value?.trim(),
+                website: form.querySelector('#clubWebsite')?.value?.trim(),
+            };
+
+            try {
+                if (typeof apiService !== 'undefined' && apiService.updateClubProfile) {
+                    await apiService.updateClubProfile(profileData);
+                }
+
+                showNotification('✅ Club profile saved successfully!', 'success');
+            } catch (err) {
+                console.error('Failed to save club profile:', err);
+                showNotification('❌ Failed to save club profile: ' + err.message, 'error');
             }
         }
 
@@ -5326,32 +5351,6 @@
                     document.getElementById('clubWebsite').value = org.website || '';
                     document.getElementById('clubPhilosophy').value = org.philosophy || '';
 
-                    // Display existing images if any
-                    const uploadedPicturesDiv = document.getElementById('uploadedPictures');
-                    const uploadPlaceholder = document.querySelector('.upload-placeholder');
-
-                    if (org.images && org.images.length > 0) {
-                        if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
-                        if (uploadedPicturesDiv) {
-                            uploadedPicturesDiv.style.display = 'block';
-                            // Prepend backend URL to image paths
-                            const backendUrl = apiService.baseURL.replace('/api', '');
-                            uploadedPicturesDiv.innerHTML = org.images.map(img => {
-                                const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
-                                return `
-                                    <div style="display: inline-block; margin: 0.5rem; position: relative;">
-                                        <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                                        <button onclick="deleteClubImage('${org.id}', '${img}')" 
-                                                style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
-                                    </div>
-                                `;
-                            }).join('');
-                        }
-                    } else {
-                        if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
-                        if (uploadedPicturesDiv) uploadedPicturesDiv.style.display = 'none';
-                    }
-
                     console.log('✅ Club profile loaded:', org.name);
                 } catch (error) {
                     console.error('Failed to load club profile:', error);
@@ -5363,7 +5362,6 @@
                 e.preventDefault();
 
                 try {
-                    showLoading(true);
                     const context = await apiService.getContext();
                     const orgId = context.currentOrganization?.id;
 
@@ -5372,129 +5370,34 @@
                     }
 
                     const formData = {
-                        name: document.getElementById('clubName').value.trim(),
-                        description: document.getElementById('clubDescription').value.trim(),
-                        location: document.getElementById('clubLocation').value.trim(),
-                        sport: document.getElementById('clubSport').value.trim(),
-                        philosophy: document.getElementById('clubPhilosophy').value.trim(),
-                        types: ['sports-club']
+                        name: document.getElementById('clubName').value,
+                        description: document.getElementById('clubDescription').value,
+                        location: document.getElementById('clubLocation').value,
+                        sport: document.getElementById('clubSport').value,
+                        website: document.getElementById('clubWebsite').value,
+                        philosophy: document.getElementById('clubPhilosophy').value
                     };
 
-                    // Only include website if it has a value (to avoid validation errors on empty URLs)
-                    const websiteValue = document.getElementById('clubWebsite').value.trim();
-                    if (websiteValue) {
-                        formData.website = websiteValue;
-                    }
+                    const response = await apiService.makeRequest(`/organizations/${orgId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(formData)
+                    });
 
-                    // Use the organizations endpoint
-                    const response = await apiService.updateClub(orgId, formData);
-
-                    showNotification('✅ Club profile updated successfully!', 'success');
-
-                    // Refresh context in background
-                    apiService.refreshContext();
-
-                    // Immediately populate form with saved data from response
-                    if (response.organization) {
-                        const org = response.organization;
-                        document.getElementById('clubName').value = org.name || '';
-                        document.getElementById('clubDescription').value = org.description || '';
-                        document.getElementById('clubLocation').value = org.location || '';
-                        document.getElementById('clubSport').value = org.sport || '';
-                        document.getElementById('clubWebsite').value = org.website || '';
-                        document.getElementById('clubPhilosophy').value = org.philosophy || '';
+                    if (response.success) {
+                        showNotification('Club profile updated successfully!', 'success');
+                        // Refresh context to update org switcher
+                        await apiService.refreshContext();
+                    } else {
+                        throw new Error(response.error || 'Failed to update profile');
                     }
                 } catch (error) {
                     console.error('Save profile error:', error);
-                    showNotification('❌ ' + (error.message || 'Failed to save profile'), 'error');
-                } finally {
-                    showLoading(false);
-                }
-            }
-
-            // Handle picture upload for club profile
-            async function handlePictureUpload(input) {
-                if (!input.files || input.files.length === 0) return;
-
-                try {
-                    showLoading(true);
-                    const context = await apiService.getContext();
-                    const clubId = context.currentOrganization?.id;
-
-                    if (!clubId) {
-                        showNotification('❌ No club found. Please create a club first.', 'error');
-                        return;
-                    }
-
-                    const uploadedPicturesDiv = document.getElementById('uploadedPictures');
-                    const uploadPlaceholder = document.querySelector('.upload-placeholder');
-
-                    for (const file of input.files) {
-                        if (file.size > 5 * 1024 * 1024) {
-                            showNotification(`❌ ${file.name} is too large (max 5MB)`, 'error');
-                            continue;
-                        }
-
-                        try {
-                            const response = await apiService.uploadClubImage(clubId, file);
-
-                            if (response.images) {
-                                // Show uploaded images
-                                if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
-                                if (uploadedPicturesDiv) {
-                                    uploadedPicturesDiv.style.display = 'block';
-                                    const backendUrl = apiService.baseURL.replace('/api', '');
-                                    uploadedPicturesDiv.innerHTML = response.images.map(img => {
-                                        const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
-                                        return `
-                                            <div style="display: inline-block; margin: 0.5rem; position: relative;">
-                                                <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                                                <button onclick="deleteClubImage('${clubId}', '${img}')" 
-                                                        style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
-                                            </div>
-                                        `;
-                                    }).join('');
-                                }
-                                showNotification(`✅ ${file.name} uploaded successfully!`, 'success');
-                            }
-                        } catch (err) {
-                            showNotification(`❌ Failed to upload ${file.name}: ${err.message}`, 'error');
-                        }
-                    }
-
-                    // Clear the input
-                    input.value = '';
-                } catch (error) {
-                    console.error('Upload error:', error);
-                    showNotification('❌ Upload failed: ' + error.message, 'error');
-                } finally {
-                    showLoading(false);
-                }
-            }
-
-            // Delete club image
-            async function deleteClubImage(clubId, imageUrl) {
-                if (!confirm('Are you sure you want to delete this image?')) return;
-
-                try {
-                    showLoading(true);
-                    await apiService.deleteClubImage(clubId, imageUrl);
-                    showNotification('✅ Image deleted successfully!', 'success');
-                    await loadClubProfile();
-                } catch (error) {
-                    console.error('Delete image error:', error);
-                    showNotification('❌ Failed to delete image: ' + error.message, 'error');
-                } finally {
-                    showLoading(false);
+                    showNotification(error.message || 'Failed to save profile', 'error');
                 }
             }
 
             // Bind club profile form
             document.getElementById('clubProfileForm')?.addEventListener('submit', saveClubProfile);
-
-            // Expose globally
-            window.handlePictureUpload = handlePictureUpload;
-            window.deleteClubImage = deleteClubImage;
 
 
             // Expose globally
