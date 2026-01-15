@@ -199,7 +199,6 @@ app.use('/api/leagues', require('./routes/leagues'));  // League management syst
 app.use('/api/polls', require('./routes/polls'));  // Voting/Polls system
 
 // TEMPORARY DEBUG ROUTE
-const { pool } = require('./config/database');
 app.get('/api/public-debug/:id', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM organizations WHERE id = $1', [req.params.id]);
