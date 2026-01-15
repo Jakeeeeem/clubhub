@@ -5338,6 +5338,8 @@
             // CLUB PROFILE MANAGEMENT
             // ============================================================================
 
+            let currentOrgId = null; // Store the org ID when profile loads
+
             async function loadClubProfile() {
                 try {
                     const context = await apiService.getContext();
@@ -5347,6 +5349,10 @@
                         console.warn('No organization found');
                         return;
                     }
+
+                    // Store the org ID for saving later
+                    currentOrgId = org.id;
+                    console.log('✅ Stored org ID:', currentOrgId);
 
                     // Populate form fields
                     document.getElementById('clubName').value = org.name || '';
@@ -5394,15 +5400,14 @@
 
                 try {
                     showLoading(true);
-                    const context = await apiService.getContext();
-                    console.log('📋 Context:', context);
-                    console.log('🏢 Current Org:', context.currentOrganization);
-                    const orgId = context.currentOrganization?.id;
-                    console.log('🆔 Org ID:', orgId);
+
+                    // Use the stored org ID from when profile was loaded
+                    const orgId = currentOrgId;
+                    console.log('💾 Saving with org ID:', orgId);
 
                     if (!orgId) {
-                        console.error('❌ No organization ID found in context');
-                        showNotification('❌ No active organization/club found. Please select or create one first.', 'error');
+                        console.error('❌ No organization ID available. Profile may not have loaded yet.');
+                        showNotification('❌ Please wait for the profile to load before saving.', 'error');
                         return;
                     }
 
