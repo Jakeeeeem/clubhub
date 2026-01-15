@@ -2060,11 +2060,17 @@ select option {
 
 /* Dashboard Section Visibility */
 .dashboard-content {
-    display: none !important;
-    /* animation: fadeIn 0.3s ease-in; */
+    display: block !important; /* Container must be visible */
+    width: 100%;
 }
 
-.dashboard-content.active {
+.dashboard-section {
+    display: none !important; /* Individual sections hidden by default */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.dashboard-section.active {
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
@@ -2072,22 +2078,6 @@ select option {
     animation: none !important;
 }
 
-.dashboard-section {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
 /* Stats Grid */
 .stats-grid {
