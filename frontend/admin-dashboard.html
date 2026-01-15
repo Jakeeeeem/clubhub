@@ -5352,13 +5352,19 @@
                         return;
                     }
 
-                    // If we have an org but it's missing the profile fields (like description),
-                    // it means the context was partial. Let's refresh it once.
-                    if (org && org.id && org.description === undefined) {
-                        console.log('🔄 Context data partial, fetching fresh data...');
+                    // If we have an org but it's missing the profile fields,
+                    // it means the context was partial. Let's refresh it.
+                    if (org && org.id && (org.description === undefined || org.images === undefined)) {
+                        console.log('🔄 Context data partial (missing description or images), fetching fresh data...');
                         await apiService.refreshContext();
                         const freshContext = await apiService.getContext();
                         org = freshContext.currentOrganization;
+                        console.log('✨ Fresh org data:', org);
+                    }
+
+                    if (!org) {
+                        console.warn('⚠️ No organization found after refresh');
+                        return;
                     }
 
                     // Store the org ID for saving later
@@ -5378,8 +5384,8 @@
                     const uploadPlaceholder = document.querySelector('.upload-placeholder');
                     const orgImages = org.images || [];
 
-                    if (orgImages && orgImages.length > 0) {
-                        console.log('🖼️ Found images in DB:', orgImages);
+                    if (orgImages.length > 0) {
+                        console.log('🖼️ Found ' + orgImages.length + ' images in DB:', orgImages);
                         if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
                         if (uploadedPicturesDiv) {
                             uploadedPicturesDiv.style.display = 'block';
