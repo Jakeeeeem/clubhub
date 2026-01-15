@@ -4009,7 +4009,6 @@
         window.rejectApplicant = rejectApplicant;
         window.accessStripeAccount = accessStripeAccount;
         window.handlePictureUpload = handlePictureUpload;
-        window.handleLogoUpload = handleLogoUpload;
         window.filterPlayersByView = filterPlayersByView;
         window.filterPlayersByTeam = filterPlayersByTeam;
         window.filterPlayersByPayment = filterPlayersByPayment;
@@ -5542,7 +5541,7 @@
             }
 
             // Logo upload handler
-            async function handleLogoUpload(input) {
+            window.handleLogoUpload = async function (input) {
                 if (!input.files || input.files.length === 0) return;
 
                 if (!currentOrgId) {

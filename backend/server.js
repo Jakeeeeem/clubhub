@@ -173,6 +173,25 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Temporary Public Debug Endpoint (Restored)
+app.get('/api/public-debug/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(`
+            SELECT id, name, logo_url, images, description, sport, location 
+            FROM organizations WHERE id = $1
+        `, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Not found' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', require('./routes/auth-context'));  // Enhanced auth with org context
