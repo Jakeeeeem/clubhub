@@ -524,8 +524,74 @@ router.post('/applications/:applicationId/review', authenticateToken, requireOrg
       RETURNING *
     `, [decision, req.user.id, req.params.applicationId]);
 
-    // If approved, optionally create a player record
+    // If approved, create a player record
     if (decision === 'approved') {
+      // Get the detailed application with user info
+      const fullAppResult = await query(`
+        SELECT ca.*, u.first_name, u.last_name, u.email, u.id as user_id
+        FROM club_applications ca
+        JOIN users u ON ca.user_id = u.id
+        WHERE ca.id = $1
+      `, [req.params.applicationId]);
+
+      const appData = fullAppResult.rows[0];
+
+      // Check if player already exists in this club
+      const existingPlayer = await query(
+        'SELECT id FROM players WHERE (user_id = $1 OR email = $2) AND club_id = $3',
+        [appData.user_id, appData.email, appData.club_id]
+      );
+
+      if (existingPlayer.rows.length === 0) {
+        // Create player record
+        await query(`
+          INSERT INTO players (
+            first_name, last_name, email, club_id, user_id, 
+            position, experience_level, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        `, [
+          appData.first_name, 
+          appData.last_name, 
+          appData.email, 
+          appData.club_id, 
+          appData.user_id,
+          appData.preferred_position,
+          appData.experience_level
+        ]);
+
+        // Update club member count
+        await query(
+          'UPDATE clubs SET member_count = member_count + 1 WHERE id = $1',
+          [appData.club_id]
+        );
+
+        // Also check if they should be added to organization_members
+        // We look for an organization owned by the same user as the club
+        const orgResult = await query(
+          'SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1',
+          [application.owner_id]
+        );
+
+        if (orgResult.rows.length > 0) {
+            const orgId = orgResult.rows[0].id;
+            // Add to organization_members if not already there
+            await query(`
+                INSERT INTO organization_members (organization_id, user_id, role, status)
+                VALUES ($1, $2, 'player', 'active')
+                ON CONFLICT (organization_id, user_id) DO NOTHING
+            `, [orgId, appData.user_id]);
+        }
+      }
+
+      // Create notification for the user
+      await query(`
+          INSERT INTO notifications (user_id, title, message, notification_type)
+          VALUES ($1, $2, $3, 'application_approved')
+      `, [
+          appData.user_id,
+          'Application Approved!',
+          `Your application to join ${application.name || 'the club'} has been approved.`
+      ]);
     }
 
     res.json({

@@ -2867,6 +2867,234 @@
             }
         }
 
+        // Load Staff Members
+        async function loadStaff() {
+            const container = document.getElementById('staffContainer');
+            if (!container) return;
+
+            try {
+                showLoading(true);
+                const clubId = await getActiveClubId();
+                const staff = await apiService.makeRequest(`/organizations/${clubId}/members`);
+
+                if (!staff || staff.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                            <p>No staff members yet</p>
+                            <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">Invite Your First Staff Member</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = staff.map(member => `
+                    <div class="card" style="margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h4>${member.first_name} ${member.last_name}</h4>
+                                <p><strong>Role:</strong> ${member.role}</p>
+                                <p><strong>Email:</strong> ${member.email || 'N/A'}</p>
+                                <span class="status-badge status-${member.status}">${member.status}</span>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-small btn-secondary" onclick="editStaffMember('${member.id}')">Edit</button>
+                                <button class="btn btn-small btn-danger" onclick="removeStaffMember('${member.id}')">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load staff:', error);
+                container.innerHTML = '<p style="color:#dc3545">Failed to load staff members</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Load Talent ID Dashboard
+        async function loadTalentIdDashboard() {
+            console.log('📊 Loading Talent ID Dashboard...');
+            const container = document.getElementById('talentEventSelect');
+            if (container) {
+                try {
+                    const clubId = await getActiveClubId();
+                    const events = await apiService.getEvents(clubId);
+                    const talentEvents = events.filter(e => e.event_type === 'talent-id');
+
+                    container.innerHTML = '<option value="">Select an event...</option>' +
+                        talentEvents.map(e => `<option value="${e.id}">${e.title} - ${new Date(e.event_date).toLocaleDateString()}</option>`).join('');
+                } catch (error) {
+                    console.error('Failed to load talent events:', error);
+                }
+            }
+        }
+
+        // Load Tournaments Dashboard
+        async function loadTournamentsDashboard() {
+            console.log('🏆 Loading Tournaments Dashboard...');
+            showNotification('Tournaments dashboard loading...', 'info');
+        }
+
+        // Load and display club applications for approval/rejection
+        async function loadClubApplications() {
+            const container = document.getElementById('applicationsContainer');
+            if (!container) return;
+
+            try {
+                showLoading(true);
+                const clubId = await getActiveClubId();
+                const applications = await apiService.makeRequest(`/clubs/${clubId}/applications`);
+
+                if (!applications || applications.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                            <p>No applications received yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = applications.map(app => `
+                    <div class="application-item fade-in" data-status="${app.application_status}">
+                        <div>
+                            <h4>${app.first_name || 'Applicant'} ${app.last_name || ''}</h4>
+                            <p><strong>Email:</strong> ${app.email}</p>
+                            <p><strong>Phone:</strong> ${app.phone || 'N/A'}</p>
+                            <p><strong>Position:</strong> ${app.preferred_position || 'N/A'}</p>
+                            <p><strong>Experience:</strong> ${app.experience_level || 'N/A'}</p>
+                            <p><strong>Applied:</strong> ${new Date(app.created_at).toLocaleDateString()}</p>
+                            <p><strong>Status:</strong> <span class="status-badge status-${app.application_status}">${app.application_status}</span></p>
+                        </div>
+                        <div class="application-actions">
+                            ${app.application_status === 'pending' ? `
+                                <button class="btn btn-small btn-success" onclick="approveApplication('${app.id}')" title="Approve & Create Player">
+                                    ✅ Approve
+                                </button>
+                                <button class="btn btn-small btn-danger" onclick="rejectApplication('${app.id}')" title="Reject Application">
+                                    ❌ Reject
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-small btn-primary" onclick="viewApplicationDetails('${app.id}')">👁️ Details</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load applications:', error);
+                container.innerHTML = '<p style="color:#dc3545">Failed to load applications</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Approve application - this will create a player automatically via backend
+        async function approveApplication(applicationId) {
+            if (!confirm('Approve this application? This will automatically create a player record and add them to your club.')) return;
+
+            try {
+                showLoading(true);
+                await apiService.makeRequest(`/clubs/applications/${applicationId}/review`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        decision: 'approved',
+                        notes: 'Application approved via admin dashboard'
+                    })
+                });
+
+                showNotification('✅ Application approved! Player has been created and added to your club.', 'success');
+
+                // Reload applications and players
+                await loadClubApplications();
+                if (typeof loadPlayers === 'function') {
+                    await loadPlayers();
+                }
+
+            } catch (error) {
+                console.error('Failed to approve application:', error);
+                showNotification('Failed to approve application: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Reject application
+        async function rejectApplication(applicationId) {
+            const notes = prompt('Please provide a reason for rejection (optional):');
+            if (notes === null) return;
+
+            try {
+                showLoading(true);
+                await apiService.makeRequest(`/clubs/applications/${applicationId}/review`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        decision: 'rejected',
+                        notes: notes || 'Application rejected'
+                    })
+                });
+
+                showNotification('Application rejected', 'info');
+                await loadClubApplications();
+
+            } catch (error) {
+                console.error('Failed to reject application:', error);
+                showNotification('Failed to reject application: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // View application details
+        async function viewApplicationDetails(applicationId) {
+            try {
+                showLoading(true);
+                const clubId = await getActiveClubId();
+                const applications = await apiService.makeRequest(`/clubs/${clubId}/applications`);
+                const app = applications.find(a => a.id === applicationId);
+
+                if (!app) {
+                    showNotification('Application not found', 'error');
+                    return;
+                }
+
+                const content = document.getElementById('applicationDetailsContent');
+                if (content) {
+                    content.innerHTML = `
+                        <div class="application-detail">
+                            <h4>👤 Application Details</h4>
+                            <hr style="margin: 1rem 0; opacity: 0.1;">
+                            <p><strong>Name:</strong> ${app.first_name} ${app.last_name}</p>
+                            <p><strong>Email:</strong> ${app.email}</p>
+                            <p><strong>Phone:</strong> ${app.phone || 'N/A'}</p>
+                            <p><strong>Date of Birth:</strong> ${app.date_of_birth ? new Date(app.date_of_birth).toLocaleDateString() : 'N/A'}</p>
+                            <p><strong>Preferred Position:</strong> ${app.preferred_position || 'N/A'}</p>
+                            <p><strong>Experience Level:</strong> ${app.experience_level || 'N/A'}</p>
+                            <p><strong>Previous Clubs:</strong> ${app.previous_clubs || 'N/A'}</p>
+                            <p><strong>Medical Conditions:</strong> ${app.medical_conditions || 'None reported'}</p>
+                            <p><strong>Emergency Contact:</strong> ${app.emergency_contact_name || 'N/A'} - ${app.emergency_contact_phone || 'N/A'}</p>
+                            <p><strong>Status:</strong> <span class="status-badge status-${app.application_status}">${app.application_status}</span></p>
+                            <p><strong>Applied:</strong> ${new Date(app.created_at).toLocaleDateString()}</p>
+                            ${app.reviewed_at ? `<p><strong>Reviewed:</strong> ${new Date(app.reviewed_at).toLocaleDateString()}</p>` : ''}
+                            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                                ${app.application_status === 'pending' ? `
+                                    <button class="btn btn-success" onclick="closeModal('applicationDetailsModal'); approveApplication('${app.id}')">✅ Approve</button>
+                                    <button class="btn btn-danger" onclick="closeModal('applicationDetailsModal'); rejectApplication('${app.id}')">❌ Reject</button>
+                                ` : ''}
+                                <button class="btn btn-secondary" onclick="closeModal('applicationDetailsModal')">Close</button>
+                            </div>
+                        </div>
+                    `;
+                    showModal('applicationDetailsModal');
+                }
+
+            } catch (error) {
+                console.error('Failed to load application details:', error);
+                showNotification('Failed to load details: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
         async function handleCreateListing(e) {
             if (e) e.preventDefault();
 
@@ -3972,6 +4200,9 @@
                 case 'teams':
                     if (typeof loadTeams === 'function') loadTeams();
                     break;
+                case 'staff':
+                    if (typeof loadStaff === 'function') loadStaff();
+                    break;
                 case 'events':
                     if (typeof loadEvents === 'function') loadEvents();
                     break;
@@ -3983,11 +4214,21 @@
                     if (typeof loadFinances === 'function') loadFinances();
                     if (typeof loadPaymentPlans === 'function') loadPaymentPlans();
                     break;
+                case 'listings':
+                    if (typeof loadListings === 'function') loadListings();
+                    if (typeof loadClubApplications === 'function') loadClubApplications();
+                    break;
                 case 'item-shop':
                     if (typeof loadProducts === 'function') loadProducts();
                     break;
                 case 'marketing-hub':
                     if (typeof loadCampaigns === 'function') loadCampaigns();
+                    break;
+                case 'talent-id':
+                    if (typeof loadTalentIdDashboard === 'function') loadTalentIdDashboard();
+                    break;
+                case 'tournaments':
+                    if (typeof loadTournamentsDashboard === 'function') loadTournamentsDashboard();
                     break;
                 case 'polls-section':
                     if (typeof loadPolls === 'function') loadPolls();
@@ -4027,6 +4268,13 @@
         window.loadCampaigns = loadCampaigns;
         window.sendCampaign = sendCampaign;
         window.editProduct = editProduct;
+        window.loadStaff = loadStaff;
+        window.loadTalentIdDashboard = loadTalentIdDashboard;
+        window.loadTournamentsDashboard = loadTournamentsDashboard;
+        window.loadClubApplications = loadClubApplications;
+        window.approveApplication = approveApplication;
+        window.rejectApplication = rejectApplication;
+        window.viewApplicationDetails = viewApplicationDetails;
 
         // Team Management Functions
         let currentTeamId = null;
