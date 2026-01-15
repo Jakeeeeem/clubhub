@@ -921,6 +921,44 @@
                         <label for="editPlayerDOB">Date of Birth *</label>
                         <input type="date" id="editPlayerDOB" required>
                     </div>
+
+                    <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="editPlayerSport">Sport</label>
+                            <select id="editPlayerSport" onchange="updateEditPositionPlaceholder()">
+                                <option value="">Select Sport...</option>
+                                <option value="Football">Football</option>
+                                <option value="Basketball">Basketball</option>
+                                <option value="Tennis">Tennis</option>
+                                <option value="Rugby">Rugby</option>
+                                <option value="Cricket">Cricket</option>
+                                <option value="Hockey">Hockey</option>
+                                <option value="Volleyball">Volleyball</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlayerGender">Gender</label>
+                            <select id="editPlayerGender">
+                                <option value="">Select Gender...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                                <option value="Prefer not to say">Prefer not to say</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editPlayerLocation">Location</label>
+                        <input type="text" id="editPlayerLocation" placeholder="e.g., London, UK">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editPlayerBio">Bio / History (CV)</label>
+                        <textarea id="editPlayerBio" rows="3"
+                            placeholder="Player history, previous teams, etc..."></textarea>
+                    </div>
                     <div class="form-group">
                         <label for="editPlayerPosition">Position</label>
                         <input type="text" id="editPlayerPosition" placeholder="e.g., Striker, Point Guard">
@@ -4798,6 +4836,26 @@
             posInput.placeholder = placeholders[sport] || 'e.g., Position';
         }
 
+        // Exposed Function for Edit Form
+        function updateEditPositionPlaceholder() {
+            const sport = document.getElementById('editPlayerSport').value;
+            const posInput = document.getElementById('editPlayerPosition');
+            if (!posInput) return;
+
+            const placeholders = {
+                'Football': 'e.g., Striker, Goalkeeper, Midfielder',
+                'Basketball': 'e.g., Point Guard, Center',
+                'Rugby': 'e.g., Fly Half, Prop',
+                'Cricket': 'e.g., Bowler, Wicket Keeper',
+                'Tennis': 'e.g., Right-Handed',
+                'Hockey': 'e.g., Forward, Goalie',
+                'Volleyball': 'e.g., Setter, Libero'
+            };
+
+            posInput.placeholder = placeholders[sport] || 'e.g., Position';
+        }
+        window.updateEditPositionPlaceholder = updateEditPositionPlaceholder;
+
         // Initialize controls once script runs (or add to DOMContentLoaded if needed, but this works if elements exist)
         // Ideally should be in DOMContentLoaded, but we can just call it here as well if script is at end of body
         setTimeout(initAddPlayerModalControls, 1000);
@@ -5560,6 +5618,12 @@
                     document.getElementById('editPlayerEmail').value = player.email || '';
                     document.getElementById('editPlayerPhone').value = player.phone || '';
                     document.getElementById('editPlayerDOB').value = player.date_of_birth ? player.date_of_birth.split('T')[0] : '';
+
+                    document.getElementById('editPlayerSport').value = player.sport || '';
+                    document.getElementById('editPlayerGender').value = player.gender || '';
+                    document.getElementById('editPlayerLocation').value = player.location || '';
+                    document.getElementById('editPlayerBio').value = player.bio || '';
+
                     document.getElementById('editPlayerPosition').value = player.position || '';
                     document.getElementById('editPlayerPaymentStatus').value = player.payment_status || 'pending';
 
@@ -5582,10 +5646,19 @@
                     email: document.getElementById('editPlayerEmail').value.trim(),
                     phone: document.getElementById('editPlayerPhone').value.trim(),
                     dateOfBirth: document.getElementById('editPlayerDOB').value,
+
+                    // CV Fields
+                    sport: document.getElementById('editPlayerSport').value,
+                    gender: document.getElementById('editPlayerGender').value,
+                    location: document.getElementById('editPlayerLocation').value.trim(),
+                    bio: document.getElementById('editPlayerBio').value.trim(),
+
                     position: document.getElementById('editPlayerPosition').value.trim(),
                     paymentStatus: document.getElementById('editPlayerPaymentStatus').value,
                     clubId: AppState.currentOrganization?.id || (AppState.clubs?.[0]?.id)
                 };
+
+
 
                 try {
                     showLoading(true);
