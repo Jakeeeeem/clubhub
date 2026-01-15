@@ -53,34 +53,45 @@ class WorkspaceManager {
      * Hide/Show UI elements based on data-roles attribute
      */
     enforceRolePermissions() {
-        const userRole = this.context.currentOrganization.user_role;
+        if (!this.context || !this.context.currentOrganization) {
+            console.error('❌ Cannot enforce permissions: No organization context');
+            return;
+        }
+
+        const org = this.context.currentOrganization;
+        // Support various field names for roles (snake_case, camelCase, or 'role')
+        const rawRole = org.user_role || org.role || org.userRole || '';
+        const userRole = rawRole.toString().trim().toLowerCase();
+
         const protectedElements = document.querySelectorAll('[data-roles]');
 
-        console.log(`🔐 Enforcing permissions for role: "${userRole}"`);
+        console.log(`🔐 Enforcing permissions for role: "${userRole}" (raw: "${rawRole}")`);
         console.log(`📋 Found ${protectedElements.length} protected elements`);
 
         protectedElements.forEach(el => {
-            const allowedRolesStr = el.getAttribute('data-roles');
+            const allowedRolesStr = el.getAttribute('data-roles') || '';
             const allowedRoles = allowedRolesStr.split(',').map(r => r.trim().toLowerCase());
             
-            // Safety check for userRole
-            const userRoleLower = (userRole || '').toLowerCase();
-            
             // Owner should see EVERYTHING
-            const isOwner = userRoleLower === 'owner';
-            const hasAccess = isOwner || (userRoleLower && allowedRoles.includes(userRoleLower));
+            const isOwner = userRole === 'owner';
+            const hasAccess = isOwner || (userRole && allowedRoles.includes(userRole));
             
+            const elId = el.id || el.textContent.trim().substring(0, 15);
+
             if (!hasAccess) {
                 el.style.display = 'none';
                 el.setAttribute('data-hidden-by-role', 'true');
-                console.log(`🚫 Hiding element (allowed: ${allowedRolesStr}, user: ${userRole})`);
+                console.log(`🚫 Hiding "${elId}" (allowed: [${allowedRoles}], user: "${userRole}")`);
             } else {
-                // Only show if it wasn't hidden for other reasons
-                if (el.style.display === 'none' && !el.classList.contains('hidden-manual')) {
+                // Only show if it was hidden for roles (don't override other display logic)
+                if (el.style.display === 'none' && el.getAttribute('data-hidden-by-role') === 'true') {
+                    el.style.display = '';
+                } else if (el.style.display === 'none' && !el.classList.contains('hidden-manual')) {
+                    // Fallback to default if it was hidden but not manually
                     el.style.display = '';
                 }
                 el.removeAttribute('data-hidden-by-role');
-                console.log(`✅ Showing element (allowed: ${allowedRolesStr}, user: ${userRole})`);
+                console.log(`✅ Showing "${elId}" (allowed: [${allowedRoles}], user: "${userRole}")`);
             }
         });
     }
