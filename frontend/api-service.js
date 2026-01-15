@@ -389,15 +389,12 @@ class ApiService {
       });
   }
 
-  // =========================== CLUB GALLERY METHODS ===========================
-  async uploadClubImage(clubId, file) {
+  // =========================== ORGANIZATION GALLERY METHODS ===========================
+  async uploadClubImage(orgId, file) {
       const formData = new FormData();
       formData.append('image', file);
-      // apiService.makeRequest handles JSON. For FormData we need custom handling or update makeRequest?
-      // makeRequest sets Content-Type: application/json by default.
-      // I need to override headers.
       
-      const url = `${this.baseURL}/clubs/${clubId}/images`;
+      const url = `${this.baseURL}/organizations/${orgId}/images`;
       const token = localStorage.getItem('authToken');
       
       const response = await fetch(url, {
@@ -416,8 +413,8 @@ class ApiService {
       return await response.json();
   }
   
-  async deleteClubImage(clubId, imageUrl) {
-      return await this.makeRequest(`/clubs/${clubId}/images`, {
+  async deleteClubImage(orgId, imageUrl) {
+      return await this.makeRequest(`/organizations/${orgId}/images`, {
           method: 'DELETE',
           body: JSON.stringify({ imageUrl })
       });

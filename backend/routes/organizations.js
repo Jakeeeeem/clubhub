@@ -377,4 +377,159 @@ router.get('/:id/members', authenticateToken, async (req, res) => {
   }
 });
 
+// ============================================================================
+// IMAGE UPLOAD ENDPOINTS
+// ============================================================================
+
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Ensure directory exists
+const uploadDir = 'uploads/club-images';
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir)
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, 'org-' + uniqueSuffix + path.extname(file.originalname))
+  }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only images are allowed'));
+        }
+    }
+});
+
+/**
+ * POST /api/organizations/:id/images
+ * Upload image to organization gallery
+ */
+router.post('/:id/images', authenticateToken, upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image uploaded' });
+        }
+
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        // Check if user is admin or owner
+        const roleCheck = await pool.query(`
+          SELECT role FROM organization_members
+          WHERE organization_id = $1 AND user_id = $2 AND status = 'active'
+        `, [id, userId]);
+
+        if (roleCheck.rows.length === 0 || 
+            !['owner', 'admin'].includes(roleCheck.rows[0].role)) {
+          // Delete uploaded file
+          try { fs.unlinkSync(req.file.path); } catch (e) {}
+          return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Get current images
+        const orgResult = await pool.query(
+          'SELECT images FROM organizations WHERE id = $1',
+          [id]
+        );
+
+        if (orgResult.rows.length === 0) {
+          try { fs.unlinkSync(req.file.path); } catch (e) {}
+          return res.status(404).json({ error: 'Organization not found' });
+        }
+
+        const currentImages = orgResult.rows[0].images || [];
+        if (currentImages.length >= 5) {
+            try { fs.unlinkSync(req.file.path); } catch (e) {}
+            return res.status(400).json({ error: 'Image limit reached (max 5 images)' });
+        }
+
+        const imageUrl = `/uploads/club-images/${req.file.filename}`;
+
+        // Append to images array
+        const result = await pool.query(`
+            UPDATE organizations 
+            SET images = array_append(COALESCE(images, '{}'), $1), updated_at = NOW()
+            WHERE id = $2
+            RETURNING images
+        `, [imageUrl, id]);
+
+        res.json({ message: 'Image uploaded', images: result.rows[0].images });
+
+    } catch (err) {
+        console.error('Upload image error:', err);
+        if (req.file) {
+          try { fs.unlinkSync(req.file.path); } catch (e) {}
+        }
+        res.status(500).json({ error: 'Failed to upload image' });
+    }
+});
+
+/**
+ * DELETE /api/organizations/:id/images
+ * Delete image from organization gallery
+ */
+router.delete('/:id/images', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { imageUrl } = req.body;
+        const userId = req.user.id;
+
+        if (!imageUrl) {
+          return res.status(400).json({ error: 'Image URL required' });
+        }
+
+        // Check if user is admin or owner
+        const roleCheck = await pool.query(`
+          SELECT role FROM organization_members
+          WHERE organization_id = $1 AND user_id = $2 AND status = 'active'
+        `, [id, userId]);
+
+        if (roleCheck.rows.length === 0 || 
+            !['owner', 'admin'].includes(roleCheck.rows[0].role)) {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Remove from array
+        const result = await pool.query(`
+            UPDATE organizations 
+            SET images = array_remove(images, $1), updated_at = NOW()
+            WHERE id = $2
+            RETURNING images
+        `, [imageUrl, id]);
+
+        if (result.rows.length === 0) {
+          return res.status(404).json({ error: 'Organization not found' });
+        }
+
+        // Delete file from disk
+        try {
+            const filePath = path.join(__dirname, '..', imageUrl);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        } catch (e) {
+            console.warn('Failed to delete file from disk:', e);
+        }
+
+        res.json({ message: 'Image removed', images: result.rows[0].images });
+
+    } catch (err) {
+        console.error('Delete image error:', err);
+        res.status(500).json({ error: 'Failed to delete image' });
+    }
+});
+
 module.exports = router;
