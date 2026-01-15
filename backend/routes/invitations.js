@@ -105,9 +105,10 @@ router.post('/:orgId/invite', authenticateToken, async (req, res) => {
 
     const invitation = inviteResult.rows[0];
 
-    // Get organization name for email
-    const orgResult = await client.query('SELECT name FROM organizations WHERE id = $1', [orgId]);
+    // Get organization details for email
+    const orgResult = await client.query('SELECT name, logo_url FROM organizations WHERE id = $1', [orgId]);
     const orgName = orgResult.rows[0]?.name || 'a club';
+    const logoUrl = orgResult.rows[0]?.logo_url;
     
     // Get inviter name
     const inviterResult = await client.query('SELECT first_name, last_name FROM users WHERE id = $1', [userId]);
@@ -123,12 +124,11 @@ router.post('/:orgId/invite', authenticateToken, async (req, res) => {
         inviterName,
         inviteLink,
         personalMessage: message,
-        isPublic: false,
-        clubRole: role
+        clubRole: role,
+        logoUrl: logoUrl
       });
     } catch (emailError) {
       console.error('Failed to send invitation email:', emailError);
-      // We don't rollback here because the invite is still created in the DB
     }
 
     res.status(201).json({

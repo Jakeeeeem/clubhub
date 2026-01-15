@@ -411,52 +411,6 @@
                     </div>
                 </div>
 
-                <!-- Club Profile Section -->
-                <div id="club-profile" class="dashboard-section">
-                    <div class="card">
-                        <h3>🏠 Club Profile</h3>
-                        <form id="clubProfileForm">
-                            <div class="form-group">
-                                <label for="clubName">Club Name</label>
-                                <input type="text" id="clubName" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="clubDescription">Description</label>
-                                <textarea id="clubDescription" rows="4"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="clubLocation">Location</label>
-                                <input type="text" id="clubLocation" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="clubPhilosophy">Club Philosophy</label>
-                                <textarea id="clubPhilosophy" rows="3"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="clubWebsite">Website</label>
-                                <input type="url" id="clubWebsite">
-                            </div>
-
-                            <div class="card" style="margin-top: 2rem;">
-                                <h3>📸 Club Pictures (Max 3-5)</h3>
-                                <div class="picture-upload-area"
-                                    style="border: 2px dashed rgba(220, 67, 67, 0.3); border-radius: 8px; padding: 2rem; text-align: center; margin: 1rem 0;">
-                                    <p>📸 Drag and drop images here or click to upload</p>
-                                    <input type="file" multiple accept="image/*" style="display: none;"
-                                        id="clubPictures" onchange="handlePictureUpload(this)">
-                                    <button type="button" class="btn btn-primary"
-                                        onclick="document.getElementById('clubPictures').click()">Choose
-                                        Files</button>
-                                </div>
-                                <div class="uploaded-pictures" id="uploadedPictures">
-                                    <!-- Uploaded pictures will appear here -->
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">💾 Save Club Profile</button>
-                        </form>
-                    </div>
-                </div>
 
                 <!-- Item Shop Section -->
                 <div id="item-shop" class="dashboard-section">
@@ -1427,7 +1381,6 @@
 
     <!-- JavaScript Integration -->
     <script src="https://js.stripe.com/v3/"></script>
-    <script src="api-service.js"></script>
     <script src="stripe-service.js"></script>
     <script src="script.js"></script>
     <script src="enhanced-invite-system.js"></script>
@@ -3930,6 +3883,8 @@
 
         // Enhanced showSection function
         function showSection(sectionId) {
+            console.log('📍 Switching to section:', sectionId);
+
             const sections = document.querySelectorAll('.dashboard-section');
             sections.forEach(section => section.classList.remove('active'));
 
@@ -3939,34 +3894,40 @@
             const targetSection = document.getElementById(sectionId);
             if (targetSection) targetSection.classList.add('active');
 
-            const clickedButton = document.querySelector(`[onclick *= "showSection('${sectionId}')"]`);
+            // Set active button
+            const clickedButton = document.querySelector(`.dashboard-nav button[onclick*="${sectionId}"]`);
             if (clickedButton) clickedButton.classList.add('active');
 
+            // Handle data loading for specific sections
             switch (sectionId) {
                 case 'overview':
-                    loadDashboardStats();
+                    if (typeof loadDashboardStats === 'function') loadDashboardStats();
                     break;
                 case 'players':
-                    loadPlayers();
+                    if (typeof loadPlayers === 'function') loadPlayers();
                     break;
                 case 'teams':
-                    loadTeams();
+                    if (typeof loadTeams === 'function') loadTeams();
                     break;
                 case 'events':
-                    loadEvents();
+                    if (typeof loadEvents === 'function') loadEvents();
                     break;
                 case 'club-profile':
-                    loadClubProfileImages();
+                    if (typeof loadClubProfile === 'function') loadClubProfile();
+                    if (typeof loadClubProfileImages === 'function') loadClubProfileImages();
                     break;
                 case 'finances':
-                    loadFinances();
-                    loadPaymentPlans();
+                    if (typeof loadFinances === 'function') loadFinances();
+                    if (typeof loadPaymentPlans === 'function') loadPaymentPlans();
                     break;
                 case 'item-shop':
-                    loadProducts();
+                    if (typeof loadProducts === 'function') loadProducts();
                     break;
                 case 'marketing-hub':
-                    loadCampaigns();
+                    if (typeof loadCampaigns === 'function') loadCampaigns();
+                    break;
+                case 'polls-section':
+                    if (typeof loadPolls === 'function') loadPolls();
                     break;
             }
         }
@@ -4246,33 +4207,6 @@
         window.assignPlayerToBoard = assignPlayerToBoard;
 
         // Dashboard section switching
-        function showSection(sectionId) {
-            // Hide all sections
-            document.querySelectorAll('.dashboard-section').forEach(section => {
-                section.classList.remove('active');
-            });
-
-            // Remove active class from all nav buttons
-            document.querySelectorAll('.dashboard-nav button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Show selected section
-            const selectedSection = document.getElementById(sectionId);
-            if (selectedSection) {
-                selectedSection.classList.add('active');
-            }
-
-            // Add active class to clicked button
-            const clickedButton = event?.target;
-            if (clickedButton) {
-                clickedButton.classList.add('active');
-            }
-
-            console.log('📍 Switched to section:', sectionId);
-        }
-
-        window.showSection = showSection;
 
         // Close modal when clicking outside
         window.addEventListener('click', function (e) {
@@ -4972,7 +4906,8 @@
                     const minAge = document.getElementById('minAgeFilter')?.value || '';
                     const maxAge = document.getElementById('maxAgeFilter')?.value || '';
 
-                    const clubId = AppState.currentOrganization?.id;
+                    const context = await apiService.getContext();
+                    const clubId = context?.currentOrganization?.id;
 
                     // Build query string
                     let queryParams = `clubId=${clubId}`;
@@ -5438,16 +5373,6 @@
             // Bind club profile form
             document.getElementById('clubProfileForm')?.addEventListener('submit', saveClubProfile);
 
-            // Update showSection switcher to also load club profile
-            window.showSection = function (sectionId) {
-                const originalShowSection = window.showSection; // Capture the *original* function before re-assignment
-                // Call the original function if it exists and is not this re-assigned function itself
-                if (originalShowSection && originalShowSection !== window.showSection) {
-                    originalShowSection(sectionId);
-                }
-                if (sectionId === 'polls-section') loadPolls();
-                if (sectionId === 'club-profile') loadClubProfile();
-            };
 
             // Expose globally
             window.loadClubProfile = loadClubProfile;

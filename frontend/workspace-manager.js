@@ -62,11 +62,13 @@ class WorkspaceManager {
         protectedElements.forEach(el => {
             const allowedRolesStr = el.getAttribute('data-roles');
             const allowedRoles = allowedRolesStr.split(',').map(r => r.trim().toLowerCase());
-            const userRoleLower = userRole.toLowerCase();
+            
+            // Safety check for userRole
+            const userRoleLower = (userRole || '').toLowerCase();
             
             // Owner should see EVERYTHING
             const isOwner = userRoleLower === 'owner';
-            const hasAccess = isOwner || allowedRoles.includes(userRoleLower);
+            const hasAccess = isOwner || (userRoleLower && allowedRoles.includes(userRoleLower));
             
             if (!hasAccess) {
                 el.style.display = 'none';

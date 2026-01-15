@@ -70,17 +70,11 @@ async function sendWelcomeEmail(email, firstName, accountType) {
         ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin-dashboard.html`
         : `${process.env.FRONTEND_URL || 'http://localhost:3000'}/player-dashboard.html`;
 
-    const emailTemplate = createWelcomeEmailTemplate({
+    await emailService.sendWelcomeEmail({
+      email,
       firstName,
       accountType,
-      dashboardLink,
-    });
-
-    await emailService.sendEmail({
-      to: email,
-      subject: emailTemplate.subject,
-      html: emailTemplate.html,
-      text: emailTemplate.text,
+      dashboardLink
     });
 
     console.log('✅ Welcome email sent to:', email);
@@ -94,17 +88,7 @@ async function sendPasswordResetEmail(email, firstName, resetToken) {
   try {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/forgot-password.html?token=${resetToken}`;
 
-    const emailTemplate = createPasswordResetEmailTemplate({
-      firstName,
-      resetUrl,
-    });
-
-    await emailService.sendEmail({
-      to: email,
-      subject: emailTemplate.subject,
-      html: emailTemplate.html,
-      text: emailTemplate.text,
-    });
+    await emailService.sendPasswordResetEmail(email, firstName, resetUrl);
 
     console.log('✅ Password reset email sent to:', email);
   } catch (error) {
@@ -115,159 +99,18 @@ async function sendPasswordResetEmail(email, firstName, resetToken) {
 
 async function sendPasswordResetConfirmationEmail(email, firstName) {
   try {
-    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/index.html`;
-
-    const emailTemplate = createPasswordResetConfirmationTemplate({
-      firstName,
-      loginUrl,
-    });
-
-    await emailService.sendEmail({
-      to: email,
-      subject: emailTemplate.subject,
-      html: emailTemplate.html,
-      text: emailTemplate.text,
-    });
-
+    await emailService.sendPasswordResetConfirmationEmail(email, firstName);
     console.log('✅ Password reset confirmation sent to:', email);
   } catch (error) {
     console.error('❌ Failed to send password reset confirmation:', error);
-    // non-fatal
   }
 }
 
 /* ------------------------------- Templates ------------------------------ */
 
-function createWelcomeEmailTemplate({ firstName, accountType, dashboardLink }) {
-  const subject = `🎉 Welcome to ClubHub, ${firstName}!`;
-  const html = `
-<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333}
-.container{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden}
-.header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:40px 30px;text-align:center}
-.content{padding:40px 30px}
-.cta-button{display:inline-block;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:15px 30px;text-decoration:none;border-radius:8px;font-weight:bold;margin:20px 0}
-.features{background:#f8f9fa;padding:20px;border-radius:8px;margin:20px 0}
-</style></head><body>
-<div class="container">
-  <div class="header"><h1>🎉 Welcome to ClubHub!</h1><p>Your sports management journey starts here</p></div>
-  <div class="content">
-    <h2>Hello ${firstName}!</h2>
-    <p>Welcome to ClubHub! Your ${accountType === 'organization' ? 'organization' : 'player'} account has been created successfully.</p>
-    <div class="features"><h3>🚀 What's Next?</h3><ul>
-      ${
-        accountType === 'organization'
-          ? `<li>Set up your club profile</li><li>Add team members and staff</li><li>Create events and training sessions</li><li>Manage payments and finances</li>`
-          : `<li>Complete your sports profile</li><li>Find and join local clubs</li><li>Book training sessions and events</li><li>Connect with other players</li>`
-      }
-    </ul></div>
-    <div style="text-align:center;margin:30px 0;"><a href="${dashboardLink}" class="cta-button">📊 Go to Your Dashboard</a></div>
-    <p>If you have any questions, our support team is here to help!</p>
-    <p>Welcome to the ClubHub community!</p>
-  </div>
-</div>
-</body></html>`;
-  const text = `
-🎉 Welcome to ClubHub, ${firstName}!
+/* ------------------------------- Templates ------------------------------ */
+// (Moved to EmailService for centralized branding)
 
-Your ${accountType === 'organization' ? 'organization' : 'player'} account has been created successfully.
-
-What's Next?
-${
-  accountType === 'organization'
-    ? `• Set up your club profile
-• Add team members and staff
-• Create events and training sessions
-• Manage payments and finances`
-    : `• Complete your sports profile
-• Find and join local clubs
-• Book training sessions and events
-• Connect with other players`
-}
-
-Visit your dashboard: ${dashboardLink}
-
-Welcome to the ClubHub community!
-`;
-  return { subject, html, text };
-}
-
-function createPasswordResetEmailTemplate({ firstName, resetUrl }) {
-  const subject = `🔐 Reset Your ClubHub Password`;
-  const html = `
-<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333}
-.container{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden}
-.header{background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:#fff;padding:40px 30px;text-align:center}
-.content{padding:40px 30px}
-.cta-button{display:inline-block;background:linear-gradient(135deg,#28a745,#20c997);color:#fff;padding:15px 30px;text-decoration:none;border-radius:8px;font-weight:bold;margin:20px 0}
-.warning{background:#fff3cd;border:1px solid #ffeaa7;padding:15px;border-radius:8px;margin:20px 0}
-</style></head><body>
-<div class="container">
-  <div class="header"><h1>🔐 Password Reset Request</h1><p>Reset your ClubHub password</p></div>
-  <div class="content">
-    <h2>Hello ${firstName}!</h2>
-    <p>We received a request to reset your ClubHub password. If you made this request, click the button below to reset your password:</p>
-    <div style="text-align:center;margin:30px 0;"><a href="${resetUrl}" class="cta-button">🔑 Reset My Password</a></div>
-    <div class="warning"><strong>⚠️ Important:</strong>
-      <ul><li>This link will expire in 10 minutes</li><li>If you didn't request this reset, please ignore this email</li><li>Your password will remain unchanged if you don't click the link</li></ul>
-    </div>
-    <p>If the button doesn't work, copy and paste this link into your browser:</p>
-    <p style="word-break:break-all;color:#007bff;">${resetUrl}</p>
-  </div>
-</div>
-</body></html>`;
-  const text = `
-🔐 Password Reset Request
-
-Hello ${firstName}!
-
-We received a request to reset your ClubHub password. If you made this request, use the link below to reset your password:
-
-${resetUrl}
-
-⚠️ Important:
-• This link will expire in 10 minutes
-• If you didn't request this reset, please ignore this email
-• Your password will remain unchanged if you don't click the link
-`;
-  return { subject, html, text };
-}
-
-function createPasswordResetConfirmationTemplate({ firstName, loginUrl }) {
-  const subject = `✅ Your ClubHub Password Has Been Reset`;
-  const html = `
-<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-body{font-family:'Segoe UI',sans-serif;line-height:1.6;color:#333}
-.container{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden}
-.header{background:linear-gradient(135deg,#28a745,#20c997);color:#fff;padding:40px 30px;text-align:center}
-.content{padding:40px 30px}
-.cta-button{display:inline-block;background:linear-gradient(135deg,#007bff,#0056b3);color:#fff;padding:15px 30px;text-decoration:none;border-radius:8px;font-weight:bold;margin:20px 0}
-.security-tips{background:#e8f5e8;padding:20px;border-radius:8px;margin:20px 0}
-</style></head><body>
-<div class="container">
-  <div class="header"><h1>✅ Password Reset Successful</h1><p>Your password has been updated</p></div>
-  <div class="content">
-    <h2>Hello ${firstName}!</h2>
-    <p>Your ClubHub password has been successfully reset. You can now log in with your new password.</p>
-    <div style="text-align:center;margin:30px 0;"><a href="${loginUrl}" class="cta-button">🔑 Login to ClubHub</a></div>
-    <div class="security-tips"><h3>🔒 Security Tips:</h3>
-      <ul><li>Use a unique password for ClubHub</li><li>Consider enabling two-factor authentication</li><li>Never share your password with anyone</li><li>Log out from shared devices</li></ul>
-    </div>
-  </div>
-</div>
-</body></html>`;
-  const text = `
-✅ Password Reset Successful
-
-Hello ${firstName}!
-
-Your ClubHub password has been successfully reset. You can now log in with your new password.
-
-Login to ClubHub: ${loginUrl}
-`;
-  return { subject, html, text };
-}
 
 /* -------------------------------- Routes -------------------------------- */
 
