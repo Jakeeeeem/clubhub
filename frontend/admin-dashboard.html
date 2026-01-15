@@ -56,7 +56,9 @@
                 <button onclick="showSection('listings')" data-roles="owner, admin">Listings</button>
                 <button onclick="showSection('item-shop')" data-roles="owner, admin, staff">Shop</button>
                 <button onclick="showSection('marketing-hub')" data-roles="owner, admin, staff">Marketing</button>
-                <button onclick="showSection('tactical')" data-roles="owner, admin, coach">Tactical</button>
+                <button onclick="showSection('talent-id')" data-roles="owner, admin, coach">Talent ID</button>
+                <button onclick="showSection('tournaments')" data-roles="owner, admin, coach">Tournaments</button>
+                <button onclick="showSection('polls-section')" data-roles="owner, admin">Polls</button>
 
                 <div class="nav-divider"
                     style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
@@ -139,51 +141,49 @@
                                             Recommended: Square image (PNG/JPG)</p>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="form-group">
-                                <label for="clubDescription">Description</label>
-                                <textarea id="clubDescription" name="description" rows="4"
-                                    placeholder="Tell us about your club..."
-                                    style="color: white !important;"></textarea>
-                            </div>
+                                <div class="form-group">
+                                    <label for="clubDescription">Description</label>
+                                    <textarea id="clubDescription" name="description" rows="4"
+                                        placeholder="Tell us about your club..."
+                                        style="color: white !important;"></textarea>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="clubLocation">Location</label>
-                                <input type="text" id="clubLocation" name="location" placeholder="e.g., London, UK"
-                                    style="color: white !important;">
-                            </div>
+                                <div class="form-group">
+                                    <label for="clubLocation">Location</label>
+                                    <input type="text" id="clubLocation" name="location" placeholder="e.g., London, UK"
+                                        style="color: white !important;">
+                                </div>
 
-                            <div class="form-group">
-                                <label for="clubSport">Sport</label>
-                                <select id="clubSport" name="sport" style="color: white !important;">
-                                    <option value="">Select a sport</option>
-                                    <option value="Football">Football</option>
-                                    <option value="Basketball">Basketball</option>
-                                    <option value="Rugby">Rugby</option>
-                                    <option value="Cricket">Cricket</option>
-                                    <option value="Tennis">Tennis</option>
-                                    <option value="Hockey">Hockey</option>
-                                    <option value="Athletics">Athletics</option>
-                                    <option value="Swimming">Swimming</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
+                                <div class="form-group">
+                                    <label for="clubSport">Sport</label>
+                                    <select id="clubSport" name="sport" style="color: white !important;">
+                                        <option value="">Select a sport</option>
+                                        <option value="Football">Football</option>
+                                        <option value="Basketball">Basketball</option>
+                                        <option value="Rugby">Rugby</option>
+                                        <option value="Cricket">Cricket</option>
+                                        <option value="Tennis">Tennis</option>
+                                        <option value="Hockey">Hockey</option>
+                                        <option value="Athletics">Athletics</option>
+                                        <option value="Swimming">Swimming</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
 
-                            <div class="form-group">
-                                <label for="clubWebsite">Website</label>
-                                <input type="url" id="clubWebsite" name="website" placeholder="https://yourclub.com"
-                                    style="color: white !important;">
-                            </div>
+                                <div class="form-group">
+                                    <label for="clubWebsite">Website</label>
+                                    <input type="url" id="clubWebsite" name="website" placeholder="https://yourclub.com"
+                                        style="color: white !important;">
+                                </div>
 
-                            <div class="form-group">
-                                <label for="clubPhilosophy">Club Philosophy</label>
-                                <textarea id="clubPhilosophy" name="philosophy" rows="3"
-                                    placeholder="Your club's values and philosophy..."
-                                    style="color: white !important;"></textarea>
-                            </div>
+                                <div class="form-group">
+                                    <label for="clubPhilosophy">Club Philosophy</label>
+                                    <textarea id="clubPhilosophy" name="philosophy" rows="3"
+                                        placeholder="Your club's values and philosophy..."
+                                        style="color: white !important;"></textarea>
+                                </div>
 
-                            <div class="form-group">
                                 <div class="form-group">
                                     <label>Club Pictures (Max 5)</label>
                                     <div class="file-upload-area" id="clubPicturesArea"
@@ -2488,7 +2488,7 @@
 
         async function loadFinances() {
             try {
-                const clubId = AppState.clubs?.[0]?.id;
+                const clubId = await getActiveClubId();
                 if (!clubId) return;
 
                 // Load payments for financial overview
@@ -3422,7 +3422,7 @@
 
             try {
                 showLoading(true);
-                const clubId = AppState.clubs?.[0]?.id;
+                const clubId = await getActiveClubId();
                 const events = await apiService.getEvents(clubId);
 
                 if (events.length === 0) {
@@ -3635,7 +3635,7 @@
 
             try {
                 showLoading(true);
-                const clubId = AppState.clubs?.[0]?.id;
+                const clubId = await getActiveClubId();
                 const teams = await apiService.getTeams(clubId);
 
                 if (teams.length === 0) {
