@@ -170,7 +170,8 @@ router.get('/me', authenticateToken, async (req, res) => {
     if (user.current_organization_id) {
       const orgResult = await pool.query(`
         SELECT 
-          o.*,
+          o.id, o.name, o.sport, o.location, o.slug, o.logo_url,
+          o.description, o.website, o.philosophy, o.images,
           om.role as user_role
         FROM organizations o
         INNER JOIN organization_members om ON o.id = om.organization_id

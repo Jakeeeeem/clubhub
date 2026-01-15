@@ -267,16 +267,28 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     const result = await pool.query(query, values);
 
+    // After updating, let's fetch the fresh record to ensure we return everything (including images)
+    const freshResult = await pool.query('SELECT * FROM organizations WHERE id = $1', [id]);
+
     res.json({
       success: true,
-      organization: result.rows[0],
+      organization: freshResult.rows[0],
       message: 'Organization updated successfully'
     });
   } catch (error) {
-    console.error('Error updating organization:', error);
+    console.error('❌ Error updating organization:', error);
+    
+    // Check if it's a "column does not exist" error
+    if (error.code === '42703') {
+        return res.status(500).json({
+            success: false,
+            error: `Database schema mismatch: ${error.message}. Please ensure all migrations have run.`
+        });
+    }
+
     res.status(500).json({
       success: false,
-      error: 'Failed to update organization'
+      error: 'Failed to update organization: ' + error.message
     });
   }
 });

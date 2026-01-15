@@ -5343,13 +5343,22 @@
             async function loadClubProfile() {
                 try {
                     const context = await apiService.getContext();
-                    const org = context.currentOrganization;
+                    let org = context.currentOrganization;
 
                     console.log('📖 Loading profile for:', org?.name, org);
 
                     if (!org) {
                         console.warn('No organization found');
                         return;
+                    }
+
+                    // If we have an org but it's missing the profile fields (like description),
+                    // it means the context was partial. Let's refresh it once.
+                    if (org && org.id && org.description === undefined) {
+                        console.log('🔄 Context data partial, fetching fresh data...');
+                        await apiService.refreshContext();
+                        const freshContext = await apiService.getContext();
+                        org = freshContext.currentOrganization;
                     }
 
                     // Store the org ID for saving later
@@ -5381,8 +5390,8 @@
                                 return `
                                     <div style="display: inline-block; margin: 0.5rem; position: relative;">
                                         <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                                        <button onclick="event.stopPropagation(); deleteClubImage('${org.id}', '${img}')" 
-                                                style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px;">×</button>
+                                        <button type="button" onclick="event.stopPropagation(); deleteClubImage('${org.id}', '${img}')" 
+                                                style="position: absolute; top: -8px; right: -8px; background: #ff4757; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10;">×</button>
                                     </div>
                                 `;
                             }).join('');
@@ -5498,6 +5507,9 @@
                                 }).join('');
                             }
                             showNotification(`✅ ${file.name} uploaded successfully!`, 'success');
+
+                            // Reload profile to refresh all images from DB
+                            await loadClubProfile();
                         }
                     } catch (error) {
                         console.error('Upload error:', error);
