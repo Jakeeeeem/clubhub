@@ -7,6 +7,21 @@
     <title>Admin Dashboard - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="org-switcher.css">
+    <style>
+        /* CRITICAL: Dashboard section visibility - inline to bypass caching */
+        .dashboard-section {
+            display: none !important;
+        }
+
+        .dashboard-section.active {
+            display: block !important;
+            border: 5px solid #ff0000 !important;
+            background: rgba(255, 0, 0, 0.1) !important;
+            padding: 2rem !important;
+            min-height: 300px !important;
+            margin: 1rem 0 !important;
+        }
+    </style>
     <script src="api-service.js"></script>
     <script src="workspace-manager.js"></script>
 </head>
