@@ -5355,12 +5355,30 @@
                     }
 
                     // If we have an org but it's missing profile fields, it's partial data.
-                    // This happens if the session was created before the latest backend updates.
                     if (org && org.id && (org.description === undefined || org.images === undefined)) {
-                        console.log('🔄 Context data looks partial. Forcing fresh fetch...');
-                        await apiService.refreshContext();
-                        const freshContext = await apiService.getContext();
-                        org = freshContext.currentOrganization;
+                        console.log('🔄 Context data looks partial. Attempting deep fetch via getClub...');
+
+                        try {
+                            // Try to fetch full details using the clubs/organizations endpoint
+                            // (Since we updated clubs.js to query organizations, this should work)
+                            const fullOrg = await apiService.getClubById(org.id);
+
+                            if (fullOrg && fullOrg.id) {
+                                console.log('✅ Deep fetch successful:', fullOrg);
+                                // Merge the full data into our org object
+                                org = { ...org, ...fullOrg };
+                            } else {
+                                // Fallback to refresh context if deep fetch fails
+                                await apiService.refreshContext();
+                                const freshContext = await apiService.getContext();
+                                org = freshContext.currentOrganization;
+                            }
+                        } catch (err) {
+                            console.warn('⚠️ Deep fetch failed, falling back to refresh:', err);
+                            await apiService.refreshContext();
+                            const freshContext = await apiService.getContext();
+                            org = freshContext.currentOrganization;
+                        }
                     }
 
                     if (!org) return;

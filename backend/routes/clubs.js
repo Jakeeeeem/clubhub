@@ -96,16 +96,12 @@ router.get('/:id', optionalAuth, async (req, res) => {
       SELECT c.*, 
              u.first_name as owner_first_name,
              u.last_name as owner_last_name,
-             COUNT(DISTINCT p.id) as member_count,
-             COUNT(DISTINCT t.id) as team_count,
-             COUNT(DISTINCT s.id) as staff_count
-      FROM clubs c
+             (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = c.id AND om.role != 'owner') as member_count,
+             (SELECT COUNT(*) FROM teams t WHERE t.club_id = c.id) as team_count,
+             (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = c.id AND om.role != 'owner') as staff_count
+      FROM organizations c
       LEFT JOIN users u ON c.owner_id = u.id
-      LEFT JOIN players p ON c.id = p.club_id
-      LEFT JOIN teams t ON c.id = t.club_id
-      LEFT JOIN staff s ON c.id = s.club_id
       WHERE c.id = $1
-      GROUP BY c.id, u.first_name, u.last_name
     `, [req.params.id]);
     
     if (clubResult.rows.length === 0) {
