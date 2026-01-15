@@ -165,33 +165,35 @@
                             </div>
 
                             <div class="form-group">
-                                <label>Club Pictures (Max 3-5)</label>
-                                <div class="file-upload-area" id="clubPicturesArea"
-                                    onclick="document.getElementById('clubPictures').click()"
-                                    style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.03);">
-                                    <input type="file" id="clubPictures" name="pictures" accept="image/*" multiple
-                                        onchange="handlePictureUpload(this)" style="display: none;">
-                                    <div class="upload-placeholder">
-                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" style="margin: 0 auto;">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                            <polyline points="17 8 12 3 7 8"></polyline>
-                                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                                        </svg>
-                                        <p style="margin: 1rem 0 0.5rem; color: var(--text-main);">📷 Drag and drop
-                                            images here or click to upload</p>
-                                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">PNG, JPG or
-                                            WEBP (max 5MB each)</p>
+                                <div class="form-group">
+                                    <label>Club Pictures (Max 10)</label>
+                                    <div class="file-upload-area" id="clubPicturesArea"
+                                        onclick="if(!event.target.closest('button')) document.getElementById('clubPictures').click()"
+                                        style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.03);">
+                                        <input type="file" id="clubPictures" name="pictures" accept="image/*" multiple
+                                            onchange="handlePictureUpload(this)" style="display: none;">
+                                        <div class="upload-placeholder">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" style="margin: 0 auto;">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="17 8 12 3 7 8"></polyline>
+                                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                                            </svg>
+                                            <p style="margin: 1rem 0 0.5rem; color: var(--text-main);">📷 Drag and drop
+                                                images here or click to upload</p>
+                                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">PNG, JPG
+                                                or
+                                                WEBP (max 5MB each)</p>
+                                        </div>
+                                        <div id="uploadedPictures" style="display: none; margin-top: 1rem;"></div>
                                     </div>
-                                    <div id="uploadedPictures" style="display: none; margin-top: 1rem;"></div>
                                 </div>
-                            </div>
 
-                            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
-                                <button type="submit" class="btn btn-primary">💾 Save Club Profile</button>
-                                <button type="button" class="btn btn-secondary" onclick="loadClubProfile()">🔄
-                                    Reset</button>
-                            </div>
+                                <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                                    <button type="submit" class="btn btn-primary">💾 Save Club Profile</button>
+                                    <button type="button" class="btn btn-secondary" onclick="loadClubProfile()">🔄
+                                        Reset</button>
+                                </div>
                         </form>
                     </div>
                 </div>

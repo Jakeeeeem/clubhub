@@ -93,7 +93,9 @@ router.get('/context', authenticateToken, async (req, res) => {
     // 2. Get all organizations the user is a member of
     const orgsResult = await pool.query(`
       SELECT 
-        o.*,
+        o.id, o.name, o.slug, o.logo_url, o.cover_image_url,
+        o.sport, o.location, o.description, o.website, o.philosophy, o.images,
+        o.primary_color, o.secondary_color, o.email, o.phone,
         om.role as user_role, om.status as member_status
       FROM organizations o
       INNER JOIN organization_members om ON o.id = om.organization_id
@@ -169,8 +171,9 @@ router.get('/me', authenticateToken, async (req, res) => {
     if (user.current_organization_id) {
       const orgResult = await pool.query(`
         SELECT 
-          o.id, o.name, o.sport, o.location, o.slug, o.logo_url,
-          o.description, o.website, o.philosophy, o.images,
+          o.id, o.name, o.slug, o.logo_url, o.cover_image_url,
+          o.sport, o.location, o.description, o.website, o.philosophy, o.images,
+          o.primary_color, o.secondary_color, o.email, o.phone,
           om.role as user_role
         FROM organizations o
         INNER JOIN organization_members om ON o.id = om.organization_id
