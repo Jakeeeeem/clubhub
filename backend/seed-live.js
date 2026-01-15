@@ -60,6 +60,43 @@ async function seedLive() {
             console.log(`✅ Club found: ${clubId}`);
         }
 
+        // 2.1. Ensure Owner is in organization_members (RBAC)
+        const memberCheck = await client.query('SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2', [ownerId, clubId]);
+        if (memberCheck.rows.length === 0) {
+            await client.query(`
+                INSERT INTO organization_members (user_id, organization_id, role, status)
+                VALUES ($1, $2, 'owner', 'active')
+            `, [ownerId, clubId]);
+            console.log('✅ Added Owner to organization_members');
+        }
+
+        // 2.2. Create Secondary Club (Multi-Tenancy Test)
+        const secClubName = 'Sunday League FC';
+        let secClubId;
+        const secClubRes = await client.query('SELECT id FROM clubs WHERE name = $1', [secClubName]);
+        
+        if (secClubRes.rows.length === 0) {
+            const newSecClub = await client.query(`
+                INSERT INTO clubs (name, description, location, sport, owner_id)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+            `, [secClubName, 'Casual sunday games', 'Local Park', 'Football', ownerId]);
+            secClubId = newSecClub.rows[0].id;
+            console.log(`✅ Created Secondary Club: ${secClubName}`);
+        } else {
+            secClubId = secClubRes.rows[0].id;
+        }
+
+        // 2.3 Add User as PLAYER in Secondary Club
+        const secMemberCheck = await client.query('SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2', [ownerId, secClubId]);
+        if (secMemberCheck.rows.length === 0) {
+            await client.query(`
+                INSERT INTO organization_members (user_id, organization_id, role, status)
+                VALUES ($1, $2, 'player', 'active')
+            `, [ownerId, secClubId]);
+            console.log(`✅ Added User as PLAYER to ${secClubName}`);
+        }
+
         // 3. Create Teams
         const teams = [
             { name: 'U18 Elite', age: 'Under 18', sport: 'Football', desc: 'Top tier squad' },
