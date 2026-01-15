@@ -11,8 +11,8 @@ const clubValidation = [
   body('description').optional().trim(),
   body('location').optional().trim(),
   body('philosophy').optional().trim(),
-  body('website').optional().isURL().withMessage('Please provide a valid website URL'),
-  body('types').isArray().withMessage('Types must be an array'),
+  body('website').optional({ checkFalsy: true }).isURL().withMessage('Please provide a valid website URL'),
+  body('types').optional().isArray().withMessage('Types must be an array'),
   body('sport').optional().trim(),
   body('established').optional().trim()
 ];
@@ -281,7 +281,7 @@ router.put('/:id', authenticateToken, requireOrganization, clubValidation, async
       location || null,
       philosophy || null,
       website || null,
-      types,
+      types || ['sports-club'], // Default to sports-club if not provided
       sport || null,
       established || club.established,
       req.params.id
