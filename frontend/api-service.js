@@ -390,27 +390,24 @@ class ApiService {
   }
 
   // =========================== ORGANIZATION GALLERY METHODS ===========================
-  async uploadClubImage(orgId, file) {
-      const formData = new FormData();
-      formData.append('image', file);
-      
-      const url = `${this.baseURL}/organizations/${orgId}/images`;
-      const token = localStorage.getItem('authToken');
-      
-      const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-              'Authorization': `Bearer ${token}`
-              // No Content-Type, let browser set boundary
-          },
-          body: formData
-      });
-      
-      if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || errorData.message || `Upload failed (${response.status})`);
-      }
-      return await response.json();
+  async uploadClubImage(clubId, file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    return await this.makeRequest(`/organizations/${clubId}/images`, {
+      method: 'POST',
+      body: formData
+    });
+  }
+
+  async uploadClubLogo(clubId, file) {
+    const formData = new FormData();
+    formData.append('logo', file);
+    
+    return await this.makeRequest(`/organizations/${clubId}/logo`, {
+      method: 'POST',
+      body: formData
+    });
   }
   
   async deleteClubImage(orgId, imageUrl) {

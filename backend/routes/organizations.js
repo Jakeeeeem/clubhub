@@ -494,6 +494,56 @@ router.post('/:id/images', authenticateToken, upload.single('image'), async (req
 });
 
 /**
+ * POST /api/organizations/:id/logo
+ * Upload organization logo
+ */
+router.post('/:id/logo', authenticateToken, upload.single('logo'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No logo uploaded' });
+        }
+
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        // Check permissions
+        const roleCheck = await pool.query(`
+          SELECT role FROM organization_members
+          WHERE organization_id = $1 AND user_id = $2 AND status = 'active'
+        `, [id, userId]);
+
+        if (roleCheck.rows.length === 0 || 
+            !['owner', 'admin'].includes(roleCheck.rows[0].role)) {
+          try { fs.unlinkSync(req.file.path); } catch (e) {}
+          return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const logoUrl = `/uploads/club-images/${req.file.filename}`;
+
+        const result = await pool.query(`
+          UPDATE organizations 
+          SET logo_url = $1, updated_at = NOW()
+          WHERE id = $2
+          RETURNING *
+        `, [logoUrl, id]);
+
+        res.json({
+            success: true,
+            organization: result.rows[0],
+            logo_url: logoUrl,
+            message: 'Logo updated successfully'
+        });
+
+    } catch (error) {
+        console.error('Error uploading logo:', error);
+        if (req.file) {
+          try { fs.unlinkSync(req.file.path); } catch (e) {}
+        }
+        res.status(500).json({ error: 'Failed to upload logo' });
+    }
+});
+
+/**
  * DELETE /api/organizations/:id/images
  * Delete image from organization gallery
  */

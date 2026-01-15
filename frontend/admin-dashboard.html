@@ -123,6 +123,25 @@
                             </div>
 
                             <div class="form-group">
+                                <label>Club Logo</label>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <img id="clubLogoPreview" src="images/logo-placeholder.png"
+                                        onerror="this.src='images/logo-placeholder.png'"
+                                        style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); background: rgba(255,255,255,0.05);">
+                                    <div>
+                                        <button type="button" class="btn btn-secondary"
+                                            onclick="document.getElementById('clubLogoInput').click()">
+                                            Upload Logo
+                                        </button>
+                                        <input type="file" id="clubLogoInput" accept="image/*" style="display: none;"
+                                            onchange="handleLogoUpload(this)">
+                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                            Recommended: Square image (PNG/JPG)</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="clubDescription">Description</label>
                                 <textarea id="clubDescription" name="description" rows="4"
                                     placeholder="Tell us about your club..."
@@ -5399,7 +5418,16 @@
                     if (org.location !== undefined) document.getElementById('clubLocation').value = org.location || '';
                     if (org.sport !== undefined) document.getElementById('clubSport').value = org.sport || '';
                     if (org.website !== undefined) document.getElementById('clubWebsite').value = org.website || '';
+                    if (org.website !== undefined) document.getElementById('clubWebsite').value = org.website || '';
                     if (org.philosophy !== undefined) document.getElementById('clubPhilosophy').value = org.philosophy || '';
+
+                    // Display logo if exists
+                    if (org.logo_url) {
+                        const backendUrl = apiService.baseURL.replace('/api', '');
+                        const logoUrl = org.logo_url.startsWith('http') ? org.logo_url : `${backendUrl}${org.logo_url}`;
+                        const logoPreview = document.getElementById('clubLogoPreview');
+                        if (logoPreview) logoPreview.src = logoUrl;
+                    }
 
                     // Display images
                     const uploadedPicturesDiv = document.getElementById('uploadedPictures');
@@ -5498,6 +5526,40 @@
                 }
             }
 
+            // Logo upload handler
+            async function handleLogoUpload(input) {
+                if (!input.files || input.files.length === 0) return;
+
+                if (!currentOrgId) {
+                    showNotification('❌ Please wait for profile to load', 'error');
+                    return;
+                }
+
+                const file = input.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('❌ File too large (max 5MB)', 'error');
+                    return;
+                }
+
+                try {
+                    showLoading(true);
+                    const response = await apiService.uploadClubLogo(currentOrgId, file);
+
+                    if (response.success && response.logo_url) {
+                        // Update preview immediately
+                        const backendUrl = apiService.baseURL.replace('/api', '');
+                        const fullUrl = response.logo_url.startsWith('http') ? response.logo_url : `${backendUrl}${response.logo_url}`;
+                        document.getElementById('clubLogoPreview').src = fullUrl;
+                        showNotification('✅ Logo uploaded successfully!', 'success');
+                    }
+                } catch (error) {
+                    console.error('Logo upload error:', error);
+                    showNotification('❌ Failed to upload logo', 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
             // Image upload handler
             async function handlePictureUpload(input) {
                 if (!input.files || input.files.length === 0) return;
@@ -5510,6 +5572,12 @@
                 const uploadedPicturesDiv = document.getElementById('uploadedPictures');
                 const uploadPlaceholder = document.querySelector('.upload-placeholder');
 
+                // Show container immediately if hidden
+                if (uploadedPicturesDiv) uploadedPicturesDiv.style.display = 'block';
+                if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
+
+                let successCount = 0;
+
                 for (const file of input.files) {
                     if (file.size > 5 * 1024 * 1024) {
                         showNotification(`❌ ${file.name} is too large (max 5MB)`, 'error');
@@ -5521,36 +5589,34 @@
                         const response = await apiService.uploadClubImage(currentOrgId, file);
 
                         if (response.images) {
-                            // Show uploaded images
-                            if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
-                            if (uploadedPicturesDiv) {
-                                uploadedPicturesDiv.style.display = 'block';
-                                const backendUrl = apiService.baseURL.replace('/api', '');
-                                uploadedPicturesDiv.innerHTML = response.images.map(img => {
-                                    const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
-                                    return `
-                                        <div style="display: inline-block; margin: 0.5rem; position: relative;">
-                                            <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                                            <button onclick="deleteClubImage('${currentOrgId}', '${img}')" 
-                                                    style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
-                                        </div>
-                                    `;
-                                }).join('');
-                            }
-                            showNotification(`✅ ${file.name} uploaded successfully!`, 'success');
+                            successCount++;
+                            // Immediate update using the response images array
+                            const backendUrl = apiService.baseURL.replace('/api', '');
 
-                            // Reload profile to refresh all images from DB
-                            await loadClubProfile();
+                            // Re-render the gallery with the updated list from server
+                            uploadedPicturesDiv.innerHTML = response.images.map(img => {
+                                const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
+                                return `
+                                    <div style="display: inline-block; margin: 0.5rem; position: relative;">
+                                        <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                                        <button onclick="deleteClubImage('${currentOrgId}', '${img}', event)" 
+                                                style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
+                                    </div>
+                                `;
+                            }).join('');
                         }
                     } catch (error) {
                         console.error('Upload error:', error);
                         showNotification(`❌ Failed to upload ${file.name}: ${error.message}`, 'error');
-                    } finally {
-                        showLoading(false);
                     }
                 }
 
-                // Clear input
+                showLoading(false);
+                if (successCount > 0) {
+                    showNotification(`✅ ${successCount} image(s) uploaded successfully!`, 'success');
+                }
+
+                // Clear input to allow re-uploading same file if needed
                 input.value = '';
             }
 
