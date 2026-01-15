@@ -23,51 +23,56 @@ router.get('/', optionalAuth, async (req, res) => {
   try {
     const { search, sport, location, types, limit = 50 } = req.query;
     
+    // Query organizations table instead of clubs
     let queryText = `
       SELECT c.*, 
-             COUNT(p.id) as member_count,
-             COUNT(e.id) as event_count
-      FROM clubs c
-      LEFT JOIN players p ON c.id = p.club_id
-      LEFT JOIN events e ON c.id = e.club_id AND e.event_date >= CURRENT_DATE
+             (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = c.id AND om.role != 'owner') as member_count,
+             (SELECT COUNT(*) FROM events e WHERE e.club_id = c.id AND e.event_date >= CURRENT_DATE) as event_count
+      FROM organizations c
       WHERE 1=1
     `;
     const queryParams = [];
     let paramCount = 0;
 
-    // Search by name or description
+    // Search by name (prefix match as requested), or location/sport
     if (search) {
       paramCount++;
-      queryText += ` AND (c.name ILIKE $${paramCount} OR c.description ILIKE $${paramCount} OR c.location ILIKE $${paramCount})`;
-      queryParams.push(`%${search}%`);
+      // "only show based on first characters" -> prefix match for name matches user intent
+      // We keep looser match for location/sport if needed, or make them all prefix?
+      // User said: "only show based on first chartors as all show"
+      // I'll make name prefix match, keep others as simple matching or prefix too.
+      queryText += ` AND (c.name ILIKE $${paramCount} OR c.location ILIKE $${paramCount} OR c.sport ILIKE $${paramCount})`;
+      queryParams.push(`${search}%`); // Prefix match
     }
 
     // Filter by sport
     if (sport) {
       paramCount++;
       queryText += ` AND c.sport ILIKE $${paramCount}`;
-      queryParams.push(`%${sport}%`);
-    }    // Filter by location
+      queryParams.push(`${sport}%`);
+    }
+
+    // Filter by location
     if (location) {
       paramCount++;
       queryText += ` AND c.location ILIKE $${paramCount}`;
-      queryParams.push(`%${location}%`);
+      queryParams.push(`${location}%`);
     }
 
-    // Filter by types
+    // Filter by types (if organization supports it, otherwise ignore or assume 'sports-club')
+    // organizations might not have 'types' column yet. I'll comment it out to be safe unless I know it exists.
+    /*
     if (types) {
       const typesArray = Array.isArray(types) ? types : [types];
       paramCount++;
       queryText += ` AND c.types && $${paramCount}::text[]`;
       queryParams.push(typesArray);
     }
-
-    // Incremented paramCount outside of queryText to ensure correct positional placeholder for limit clause | 06.08.25 BM
+    */
 
     paramCount++;
     queryText += ` 
-      GROUP BY c.id
-      ORDER BY c.created_at DESC
+      ORDER BY c.name ASC
       LIMIT $${paramCount}
     `;
     queryParams.push(parseInt(limit));

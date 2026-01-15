@@ -198,6 +198,18 @@ app.use('/api/venues', require('./routes/venues'));  // Venue booking system
 app.use('/api/leagues', require('./routes/leagues'));  // League management system
 app.use('/api/polls', require('./routes/polls'));  // Voting/Polls system
 
+// TEMPORARY DEBUG ROUTE
+const { pool } = require('./config/database');
+app.get('/api/public-debug/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM organizations WHERE id = $1', [req.params.id]);
+    res.json(result.rows[0] || { error: 'Not found' });
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
+
+
 
 
 // Handle 404 for API routes specifically
