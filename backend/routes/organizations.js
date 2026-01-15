@@ -463,9 +463,9 @@ router.post('/:id/images', authenticateToken, upload.single('image'), async (req
         }
 
         const currentImages = orgResult.rows[0].images || [];
-        if (currentImages.length >= 10) {
+        if (currentImages.length >= 5) {
             try { fs.unlinkSync(req.file.path); } catch (e) {}
-            return res.status(400).json({ error: 'Image limit reached (max 10 images)' });
+            return res.status(400).json({ error: 'Image limit reached (max 5 images)' });
         }
 
         const imageUrl = `/uploads/club-images/${req.file.filename}`;

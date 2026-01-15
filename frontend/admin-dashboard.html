@@ -185,7 +185,7 @@
 
                             <div class="form-group">
                                 <div class="form-group">
-                                    <label>Club Pictures (Max 10)</label>
+                                    <label>Club Pictures (Max 5)</label>
                                     <div class="file-upload-area" id="clubPicturesArea"
                                         onclick="if(!event.target.closest('button')) document.getElementById('clubPictures').click()"
                                         style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.03);">
@@ -5575,6 +5575,14 @@
                 // Show container immediately if hidden
                 if (uploadedPicturesDiv) uploadedPicturesDiv.style.display = 'block';
                 if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
+
+                // Check limit (Max 5)
+                const currentImages = uploadedPicturesDiv.querySelectorAll('img').length;
+                if (currentImages + input.files.length > 5) {
+                    showNotification(`❌ Limit reached! You can only have 5 images. (Current: ${currentImages})`, 'error');
+                    input.value = '';
+                    return;
+                }
 
                 let successCount = 0;
 
