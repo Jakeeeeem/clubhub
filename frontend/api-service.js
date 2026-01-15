@@ -159,12 +159,15 @@ class ApiService {
   // =========================== ITEM SHOP METHODS ===========================
 
   async getProducts(clubId = null) {
-    const isDemo = localStorage.getItem('isDemoSession') === 'true';
-    if (isDemo && !this.baseURL.includes('localhost')) {
-      return this.getAdminDashboardFallback().products;
-    }
-    const endpoint = clubId ? `/products?clubId=${clubId}` : '/products';
-    return await this.makeRequest(endpoint);
+      try {
+          const endpoint = clubId ? `/products?clubId=${clubId}` : '/products';
+          return await this.makeRequest(endpoint);
+      } catch (error) {
+          if (localStorage.getItem('isDemoSession') === 'true') {
+              return this.getAdminDashboardFallback().products;
+          }
+          throw error;
+      }
   }
 
   async createProduct(productData) {
@@ -230,8 +233,17 @@ class ApiService {
   }
 
   async getCampaigns(clubId = null) {
-    const endpoint = clubId ? `/campaigns?clubId=${clubId}` : '/campaigns';
-    return await this.makeRequest(endpoint);
+    if (localStorage.getItem('isDemoSession') === 'true') {
+      return this.getAdminDashboardFallback().campaigns;
+    }
+    try {
+      const endpoint = clubId ? `/campaigns?clubId=${clubId}` : '/campaigns';
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.warn('❌ Failed to fetch campaigns:', error);
+      if (localStorage.getItem('isDemoSession') === 'true') return this.getAdminDashboardFallback().campaigns;
+      return [];
+    }
   }
 
   async createCampaign(campaignData) {
@@ -362,9 +374,8 @@ class ApiService {
 
   // =========================== PLAYER MANAGEMENT METHODS ===========================
   
-  async getPlayers(clubId) {
-      return await this.makeRequest(`/players?clubId=${clubId}`);
-  }
+  // Consolidated with line 833
+
 
   async getFilteredPlayers(filter, clubId) {
     // Backend API expects 'filter' usually as part of query?
@@ -680,6 +691,9 @@ async deletePaymentPlan(planId) {
   // =========================== CLUB METHODS ===========================
 
   async getClubs(search = null) {
+    if (localStorage.getItem('isDemoSession') === 'true') {
+      return this.getAdminDashboardFallback().clubs;
+    }
     try {
       const endpoint = search ? `/clubs?search=${encodeURIComponent(search)}` : '/clubs';
       const clubs = await this.makeRequest(endpoint);
@@ -687,14 +701,25 @@ async deletePaymentPlan(planId) {
       return clubs;
     } catch (error) {
       console.warn('❌ Failed to fetch clubs:', error);
-      
+      if (localStorage.getItem('isDemoSession') === 'true') return this.getAdminDashboardFallback().clubs;
       const cachedClubs = localStorage.getItem('cachedClubs');
-      if (cachedClubs) {
-        console.log('📚 Using cached clubs data');
-        return JSON.parse(cachedClubs);
+      return cachedClubs ? JSON.parse(cachedClubs) : [];
+    }
+  }
+
+  async getClub(id) {
+    if (localStorage.getItem('isDemoSession') === 'true' || id.startsWith('dummy-')) {
+      const demoClubs = this.getAdminDashboardFallback().clubs;
+      return demoClubs.find(c => c.id === id) || demoClubs[0];
+    }
+    try {
+      return await this.makeRequest(`/clubs/${id}`);
+    } catch (error) {
+      console.warn(`❌ Failed to fetch club ${id}:`, error);
+      if (localStorage.getItem('isDemoSession') === 'true') {
+        return this.getAdminDashboardFallback().clubs[0];
       }
-      
-      return [];
+      throw error;
     }
   }
 
@@ -821,17 +846,17 @@ async deletePaymentPlan(planId) {
   // =========================== PLAYER METHODS ===========================
 
   async getPlayers(clubId = null) {
-    const isDemo = localStorage.getItem('isDemoSession') === 'true';
-    if (isDemo && !this.baseURL.includes('localhost')) {
+    if (localStorage.getItem('isDemoSession') === 'true') {
       return this.getAdminDashboardFallback().players;
     }
     try {
       const endpoint = clubId
-  ? `/players?clubId=${clubId}&page=1&limit=1000`
-  : `/players?page=1&limit=1000`;
+        ? `/players?clubId=${clubId}&page=1&limit=1000`
+        : `/players?page=1&limit=1000`;
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn('❌ Failed to fetch players:', error);
+      if (localStorage.getItem('isDemoSession') === 'true') return this.getAdminDashboardFallback().players;
       return [];
     }
   }
@@ -863,26 +888,19 @@ async deletePaymentPlan(planId) {
   // =========================== EVENT METHODS ===========================
 
   async getEvents(clubId = null) {
-    const isDemo = localStorage.getItem('isDemoSession') === 'true';
-    if (isDemo && !this.baseURL.includes('localhost')) {
+    if (localStorage.getItem('isDemoSession') === 'true') {
       return this.getAdminDashboardFallback().events;
     }
     try {
       const endpoint = clubId ? `/events?clubId=${clubId}&upcoming=true` : '/events?upcoming=true';
       const events = await this.makeRequest(endpoint);
-      
       localStorage.setItem('cachedEvents', JSON.stringify(events));
       return events;
     } catch (error) {
       console.warn('❌ Failed to fetch events:', error);
-      
+      if (localStorage.getItem('isDemoSession') === 'true') return this.getAdminDashboardFallback().events;
       const cachedEvents = localStorage.getItem('cachedEvents');
-      if (cachedEvents) {
-        console.log('📚 Using cached events data');
-        return JSON.parse(cachedEvents);
-      }
-      
-      return [];
+      return cachedEvents ? JSON.parse(cachedEvents) : [];
     }
   }
 
@@ -939,8 +957,7 @@ async deletePaymentPlan(planId) {
   // =========================== TEAM METHODS ===========================
 
   async getTeams(clubId = null) {
-    const isDemo = localStorage.getItem('isDemoSession') === 'true';
-    if (isDemo && !this.baseURL.includes('localhost')) {
+    if (localStorage.getItem('isDemoSession') === 'true') {
       return this.getAdminDashboardFallback().teams;
     }
     try {
@@ -948,6 +965,7 @@ async deletePaymentPlan(planId) {
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn('❌ Failed to fetch teams:', error);
+      if (localStorage.getItem('isDemoSession') === 'true') return this.getAdminDashboardFallback().teams;
       return [];
     }
   }
@@ -1039,8 +1057,7 @@ async createTeamEvent(teamId, eventData) {
   // =========================== STAFF METHODS ===========================
 
   async getStaff(clubId = null) {
-    const isDemo = localStorage.getItem('isDemoSession') === 'true';
-    if (isDemo && !this.baseURL.includes('localhost')) {
+    if (localStorage.getItem('isDemoSession') === 'true') {
       return this.getAdminDashboardFallback().staff;
     }
     try {
@@ -1048,6 +1065,7 @@ async createTeamEvent(teamId, eventData) {
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn('❌ Failed to fetch staff:', error);
+      if (localStorage.getItem('isDemoSession') === 'true') return this.getAdminDashboardFallback().staff;
       return [];
     }
   }
@@ -1075,8 +1093,7 @@ async createTeamEvent(teamId, eventData) {
   // =========================== PAYMENT METHODS ===========================
 
   async getPayments(filters = {}) {
-    const isDemo = localStorage.getItem('isDemoSession') === 'true';
-    if (isDemo && !this.baseURL.includes('localhost')) {
+    if (localStorage.getItem('isDemoSession') === 'true') {
       return this.getAdminDashboardFallback().payments;
     }
     try {
@@ -1085,6 +1102,7 @@ async createTeamEvent(teamId, eventData) {
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn('❌ Failed to fetch payments:', error);
+      if (localStorage.getItem('isDemoSession') === 'true') return this.getAdminDashboardFallback().payments;
       return [];
     }
   }
@@ -1217,7 +1235,7 @@ async getPlayerPayments(playerId, status = null) {
   async getAdminDashboardData() {
     const isDemo = localStorage.getItem('isDemoSession') === 'true';
     try {
-      if (isDemo && !this.baseURL.includes('localhost')) {
+      if (isDemo) {
         console.log('✨ Demo session detected, using rich fallback data');
         return this.getAdminDashboardFallback();
       }
@@ -1354,7 +1372,12 @@ async getPlayerPayments(playerId, status = null) {
     };
 
     return {
-      clubs: [{ id: 'demo-club-1', name: 'Elite Performance Academy', location: 'London, UK', sport: 'Football', member_count: 124, is_primary: true }],
+      clubs: [
+        { id: 'demo-club-1', name: 'Elite Performance Academy', location: 'London, UK', sport: 'Football', member_count: 124, is_primary: true, logo_url: 'images/logo.png', description: 'The leading academy for professional football development.' },
+        { id: 'dummy-1', name: 'Elite Performance Club', sport: 'football', location: 'London', description: 'A premier test club for testing search functionality.', philosophy: 'Excellence in every move.' },
+        { id: 'dummy-2', name: 'The Tennis Club Specialists', sport: 'tennis', location: 'Manchester', description: 'Test club focused on tennis activities and events.', philosophy: 'Play with passion.' },
+        { id: 'dummy-3', name: 'Global Sport Club United', sport: 'basketball', location: 'Birmingham', description: 'Multi-sport club for all ages.', philosophy: 'Unity through sport.' }
+      ],
       players: [
         { id: 'p1', first_name: 'Harry', last_name: 'Kane', email: 'harry@example.com', position: 'Forward', payment_status: 'paid', attendance_rate: 95, date_of_birth: '1993-07-28' },
         { id: 'p2', first_name: 'Marcus', last_name: 'Rashford', email: 'marcus@example.com', position: 'Forward', payment_status: 'pending', attendance_rate: 88, date_of_birth: '1997-10-31' },
@@ -1454,8 +1477,17 @@ async getPlayerPayments(playerId, status = null) {
   // =========================== APPLICANT MANAGEMENT METHODS ===========================
 
   async getListings(clubId = null) {
-    const endpoint = clubId ? `/listings?clubId=${clubId}` : '/listings';
-    return await this.makeRequest(endpoint);
+    if (localStorage.getItem('isDemoSession') === 'true') {
+      return this.getAdminDashboardFallback().listings;
+    }
+    try {
+      const endpoint = clubId ? `/listings?clubId=${clubId}` : '/listings';
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.warn('❌ Failed to fetch listings:', error);
+      if (localStorage.getItem('isDemoSession') === 'true') return this.getAdminDashboardFallback().listings;
+      return [];
+    }
   }
 
   async createListing(listingData) {

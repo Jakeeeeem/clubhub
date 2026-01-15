@@ -593,13 +593,14 @@ window.quickLogin = async function(type) {
     showNotification(`Logging in as Demo ${type.charAt(0).toUpperCase() + type.slice(1)}...`, 'info');
 
     try {
-        // Normal login - will work with the existing demo accounts
-        const response = await apiService.login(credentials.email, credentials.pass);
+        // Pass true for demoBypass to trigger frontend fallback if backend is down
+        const response = await apiService.login(credentials.email, credentials.pass, true);
         
         if (response.token) {
             // Store user data (same as handleLogin)
             localStorage.setItem('authToken', response.token);
             localStorage.setItem('currentUser', JSON.stringify(response.user));
+            localStorage.setItem('isDemoSession', 'true'); // Explicitly set this too
             
             // Update global state
             if (typeof AppState !== 'undefined') {

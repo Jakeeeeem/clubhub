@@ -364,10 +364,9 @@
                 return;
             }
 
-            // Try to fetch full club details using the public clubs endpoint
             try {
-                // We use the clubs endpoint which is public-friendly
-                const club = await apiService.makeRequest(`/clubs/${clubId}`);
+                // Use the new getClub method which has demo fallback support
+                const club = await apiService.getClub(clubId);
 
                 if (club) {
                     document.getElementById('displayClubName').textContent = club.name;

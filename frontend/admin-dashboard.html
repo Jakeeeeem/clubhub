@@ -1842,10 +1842,10 @@
             const totalEventsEl = document.getElementById('totalEvents');
             const totalRevenueEl = document.getElementById('totalRevenue');
 
-            if (totalPlayersEl) totalPlayersEl.textContent = statistics.totalPlayers || AppState.players?.length || 0;
-            if (totalStaffEl) totalStaffEl.textContent = statistics.totalStaff || AppState.staff?.length || 0;
-            if (totalEventsEl) totalEventsEl.textContent = statistics.totalEvents || AppState.events?.length || 0;
-            if (totalRevenueEl) totalRevenueEl.textContent = `£${statistics.totalRevenue || 0}`;
+            if (totalPlayersEl) totalPlayersEl.textContent = statistics.totalPlayers || statistics.total_players || AppState.players?.length || 0;
+            if (totalStaffEl) totalStaffEl.textContent = statistics.totalStaff || statistics.total_staff || AppState.staff?.length || 0;
+            if (totalEventsEl) totalEventsEl.textContent = statistics.totalEvents || statistics.total_events || AppState.events?.length || 0;
+            if (totalRevenueEl) totalRevenueEl.textContent = `£${statistics.totalRevenue || statistics.monthly_revenue || 0}`;
         }
 
         // Load and update dashboard statistics
@@ -2990,7 +2990,8 @@
                     return;
                 }
 
-                const staff = await apiService.makeRequest(`/organizations/${clubId}/members`);
+                // Use the consolidated getStaff method with demo fallback support
+                const staff = await apiService.getStaff(clubId);
 
                 if (!staff || staff.length === 0) {
                     container.innerHTML = `
@@ -3128,8 +3129,19 @@
                     `;
                     return;
                 }
-
-                const applications = await apiService.makeRequest(`/clubs/${clubId}/applications`);
+                let applications;
+                try {
+                    applications = await apiService.makeRequest(`/clubs/${clubId}/applications`);
+                } catch (e) {
+                    if (localStorage.getItem('isDemoSession') === 'true') {
+                        applications = [
+                            { id: 'app1', first_name: 'David', last_name: 'Beckham', email: 'david@example.com', application_status: 'pending', preferred_position: 'Midfielder', experience_level: 'professional', created_at: new Date().toISOString() },
+                            { id: 'app2', first_name: 'Wayne', last_name: 'Rooney', email: 'wayne@example.com', application_status: 'pending', preferred_position: 'Forward', experience_level: 'professional', created_at: new Date().toISOString() }
+                        ];
+                    } else {
+                        throw e;
+                    }
+                }
 
                 if (!applications || applications.length === 0) {
                     container.innerHTML = `
@@ -4516,12 +4528,18 @@
         async function loadTeamDetails(teamId) {
             try {
                 showLoading(true);
-                // We reuse getTeams but maybe we need a specific getTeamDetails endpoint?
-                // For now, let's assume we fetch the full team object or find it in AppState
-                // But typically we want fresh data including roster.
-                // Using existing /api/teams/:id endpoint (lines 139 in backend)
+                // In demo mode or if API fails, try to find in AppState or use a placeholder
+                let team;
+                try {
+                    team = await apiService.makeRequest(`/teams/${teamId}`);
+                } catch (e) {
+                    if (localStorage.getItem('isDemoSession') === 'true') {
+                        team = (await apiService.getTeams()).find(t => t.id == teamId) || { name: 'Demo Team', players: [] };
+                    } else {
+                        throw e;
+                    }
+                }
 
-                const team = await apiService.makeRequest(`/teams/${teamId}`);
                 console.log('Team Details Loaded:', team);
 
                 // Populate Stats
@@ -4537,8 +4555,7 @@
                 // Populate Roster
                 renderRoster(team.players || []);
 
-                // Populate Events (if returned, or fetch separately)
-                // Backend returns upcoming_events
+                // Populate Events
                 renderTeamEvents(team.upcoming_events || []);
 
                 // Initialize Availability (Placeholder for now)

@@ -284,41 +284,12 @@
         // Load club details
         async function loadClubDetails() {
             try {
-                // 1. Check for dummy data first (for testing/dev)
-                if (clubId.startsWith('dummy-')) {
-                    console.log('🧪 Loading dummy club data...');
-                    const dummyData = {
-                        'dummy-1': { name: 'Elite Performance Club', sport: 'football', location: 'London', description: 'A premier test club for testing search functionality.', philosophy: 'Excellence in every move.' },
-                        'dummy-2': { name: 'The Tennis Club Specialists', sport: 'tennis', location: 'Manchester', description: 'Test club focused on tennis activities and events.', philosophy: 'Play with passion.' },
-                        'dummy-3': { name: 'Global Sport Club United', sport: 'basketball', location: 'Birmingham', description: 'Multi-sport club for all ages.', philosophy: 'Unity through sport.' }
-                    };
-
-                    const club = dummyData[clubId] || dummyData['dummy-1'];
+                // Use the consolidated getClub method with demo fallback support
+                const club = await apiService.getClub(clubId);
+                if (club) {
                     populateClubUI(club);
-                    return;
-                }
-
-                // 2. Try loading from public clubs endpoint first (guest friendly)
-                try {
-                    const club = await apiService.makeRequest(`/clubs/${clubId}`);
-                    if (club) {
-                        populateClubUI(club);
-                        return;
-                    }
-                } catch (e) {
-                    console.warn('Club not found via public endpoint, checking member access...');
-                }
-
-                // 3. Fallback to organizations endpoint if public fails (requires auth)
-                try {
-                    const response = await apiService.makeRequest(`/organizations/${clubId}`);
-                    if (response.success && response.organization) {
-                        populateClubUI(response.organization);
-                    } else {
-                        throw new Error('Club not found');
-                    }
-                } catch (e) {
-                    throw new Error('Club details unavailable');
+                } else {
+                    throw new Error('Club not found');
                 }
 
             } catch (error) {
