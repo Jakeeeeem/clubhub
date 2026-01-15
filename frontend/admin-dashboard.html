@@ -1884,6 +1884,28 @@
 
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
+            // Dashboard Navigation Buttons - Add event listeners as fallback
+            console.log('🔧 Setting up dashboard navigation event listeners...');
+            const navButtons = document.querySelectorAll('.dashboard-nav button[onclick*="showSection"]');
+            console.log(`Found ${navButtons.length} navigation buttons`);
+
+            navButtons.forEach(button => {
+                const onclickAttr = button.getAttribute('onclick');
+                if (onclickAttr) {
+                    // Extract section ID from onclick="showSection('section-id')"
+                    const match = onclickAttr.match(/showSection\('([^']+)'\)/);
+                    if (match) {
+                        const sectionId = match[1];
+                        button.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            console.log(`🖱️ Button clicked for section: ${sectionId}`);
+                            showSection(sectionId);
+                        });
+                        console.log(`✅ Added listener for: ${sectionId}`);
+                    }
+                }
+            });
+
             // Player form
             const addPlayerForm = document.getElementById('addPlayerForm');
             if (addPlayerForm) {
