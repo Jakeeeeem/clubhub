@@ -1360,6 +1360,45 @@ async getPlayerPayments(playerId, status = null) {
     }
   }
 
+  // =========================== MARKETING & SHOP METHODS ===========================
+
+  async getCampaigns(clubId) {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    try {
+      if (isDemo) {
+        console.log('✨ (Demo) Returning rich dummy campaigns');
+        return [
+          { id: 'c1', name: 'Summer Season Launch', subject: 'Get ready for summer!', target_group: 'All Members', status: 'draft', created_at: new Date().toISOString() },
+          { id: 'c2', name: 'Kit Order Reminder', subject: 'Order your new kits', target_group: 'Parents', status: 'sent', created_at: new Date().toISOString() },
+           { id: 'c3', name: 'End of Season Party', subject: 'Join us for the awards night!', target_group: 'All Members', status: 'scheduled', created_at: new Date().toISOString() }
+        ];
+      }
+      return await this.makeRequest(`/clubs/${clubId}/campaigns`);
+    } catch (error) {
+      console.warn('❌ Failed to fetch campaigns:', error);
+      return [];
+    }
+  }
+
+  async getProducts(clubId) {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    try {
+      if (isDemo) {
+        console.log('✨ (Demo) Returning rich dummy products');
+        return [
+          { id: 'p1', name: 'Training Kit Bundle', price: 45.00, stock_quantity: 100, description: 'Includes shirt, shorts and socks. Official club branding.' },
+          { id: 'p2', name: 'Club Hoodie', price: 35.00, stock_quantity: 50, description: 'Warm hoodie for winter training sessions. 100% Cotton.' },
+          { id: 'p3', name: 'Water Bottle', price: 10.00, stock_quantity: 200, description: 'BPA free re-usable water bottle.' },
+           { id: 'p4', name: 'Scarf', price: 15.00, stock_quantity: 75, description: 'Supporters scarf.' }
+        ];
+      }
+      return await this.makeRequest(`/clubs/${clubId}/products`);
+    } catch (error) {
+      console.warn('❌ Failed to fetch products:', error);
+      return [];
+    }
+  }
+
   // =========================== FALLBACK METHODS ===========================
 
   getAdminDashboardFallback() {
