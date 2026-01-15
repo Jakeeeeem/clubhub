@@ -84,6 +84,11 @@ class ApiService {
       ...options.headers
     };
 
+    // If sending FormData, let the browser set the Content-Type with boundary
+    if (options.body instanceof FormData) {
+        delete headers['Content-Type'];
+    }
+
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
@@ -118,7 +123,7 @@ class ApiService {
         console.error(`❌ API Error ${response.status} [${options.method || 'GET'} ${endpoint}]:`, {
           data,
           statusText: response.statusText,
-          payload: options.body ? JSON.parse(options.body) : null
+          payload: (options.body && !(options.body instanceof FormData)) ? JSON.parse(options.body) : '[FormData]'
         });
         
         // Don't trigger global auth error for login/register attempts

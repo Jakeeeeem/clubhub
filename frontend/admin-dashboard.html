@@ -2758,13 +2758,24 @@
         async function getActiveClubId() {
             if (AppState.activeClubId) return AppState.activeClubId;
             if (AppState.clubs && AppState.clubs.length > 0) return AppState.clubs[0].id;
+
+            // Fallback to checking apiService context directly or the global currentOrgId
+            try {
+                if (typeof currentOrgId !== 'undefined' && currentOrgId) return currentOrgId;
+                const context = await apiService.getContext();
+                if (context.organization?.id) {
+                    AppState.activeClubId = context.organization.id;
+                    return context.organization.id;
+                }
+            } catch (e) {
+                console.warn('Failed to resolve club ID:', e);
+            }
             return null;
         }
 
         async function viewApplicantDetails(applicationId) {
             const content = document.getElementById('applicationDetailsContent');
             if (!content) return;
-
             showModal('applicationDetailsModal');
             content.innerHTML = `
                 < div class="application-detail" >
@@ -3998,6 +4009,7 @@
         window.rejectApplicant = rejectApplicant;
         window.accessStripeAccount = accessStripeAccount;
         window.handlePictureUpload = handlePictureUpload;
+        window.handleLogoUpload = handleLogoUpload;
         window.filterPlayersByView = filterPlayersByView;
         window.filterPlayersByTeam = filterPlayersByTeam;
         window.filterPlayersByPayment = filterPlayersByPayment;
