@@ -2066,11 +2066,6 @@ select option {
 
 .dashboard-section.active {
     display: block !important;
-    border: 5px solid #ff3333 !important; /* Thick red border */
-    background: rgba(255, 51, 51, 0.1) !important; /* Red tint */
-    padding: 2rem !important;
-    min-height: 300px !important; /* Ensure it's visible even if empty */
-    margin: 1rem 0 !important;
 }
 
 @keyframes fadeIn {
