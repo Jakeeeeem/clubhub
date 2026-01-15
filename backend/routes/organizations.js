@@ -235,7 +235,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const allowedFields = [
       'name', 'description', 'sport', 'location', 'website', 
       'email', 'phone', 'logo_url', 'cover_image_url',
-      'primary_color', 'secondary_color'
+      'primary_color', 'secondary_color', 'philosophy'
     ];
 
     const updateFields = [];

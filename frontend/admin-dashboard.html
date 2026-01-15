@@ -5345,6 +5345,8 @@
                     const context = await apiService.getContext();
                     const org = context.currentOrganization;
 
+                    console.log('📖 Loading profile for:', org?.name, org);
+
                     if (!org) {
                         console.warn('No organization found');
                         return;
@@ -5367,6 +5369,7 @@
                     const uploadPlaceholder = document.querySelector('.upload-placeholder');
 
                     if (org.images && org.images.length > 0) {
+                        console.log('🖼️ Found images in DB:', org.images);
                         if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
                         if (uploadedPicturesDiv) {
                             uploadedPicturesDiv.style.display = 'block';
@@ -5377,18 +5380,22 @@
                                 return `
                                     <div style="display: inline-block; margin: 0.5rem; position: relative;">
                                         <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                                        <button onclick="deleteClubImage('${org.id}', '${img}')" 
-                                                style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
+                                        <button onclick="event.stopPropagation(); deleteClubImage('${org.id}', '${img}')" 
+                                                style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px;">×</button>
                                     </div>
                                 `;
                             }).join('');
                         }
                     } else {
+                        console.log('ℹ️ No images found in DB');
                         if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
-                        if (uploadedPicturesDiv) uploadedPicturesDiv.style.display = 'none';
+                        if (uploadedPicturesDiv) {
+                            uploadedPicturesDiv.style.display = 'none';
+                            uploadedPicturesDiv.innerHTML = '';
+                        }
                     }
 
-                    console.log('✅ Club profile loaded:', org.name);
+                    console.log('✅ Club profile logic complete');
                 } catch (error) {
                     console.error('Failed to load club profile:', error);
                     showNotification('Failed to load club profile', 'error');
@@ -5406,8 +5413,8 @@
                     console.log('💾 Saving with org ID:', orgId);
 
                     if (!orgId) {
-                        console.error('❌ No organization ID available. Profile may not have loaded yet.');
-                        showNotification('❌ Please wait for the profile to load before saving.', 'error');
+                        console.error('❌ No organization ID available.');
+                        showNotification('❌ No active organization found.', 'error');
                         return;
                     }
 
@@ -5416,24 +5423,29 @@
                         description: document.getElementById('clubDescription').value.trim(),
                         location: document.getElementById('clubLocation').value.trim(),
                         sport: document.getElementById('clubSport').value.trim(),
-                        philosophy: document.getElementById('clubPhilosophy').value.trim(),
-                        types: ['sports-club']
+                        philosophy: document.getElementById('clubPhilosophy').value.trim()
                     };
 
-                    // Only include website if it has a value (to avoid validation errors on empty URLs)
+                    // Only include website if it has a value
                     const websiteValue = document.getElementById('clubWebsite').value.trim();
                     if (websiteValue) {
                         formData.website = websiteValue;
                     }
 
+                    console.log('📤 Sending update request:', formData);
+
                     // Use the organizations endpoint
                     const response = await apiService.updateClub(orgId, formData);
                     console.log('📥 Save response:', response);
 
+                    if (!response.success) {
+                        throw new Error(response.error || 'Failed to save profile');
+                    }
+
                     showNotification('✅ Club profile updated successfully!', 'success');
 
-                    // Refresh context in background
-                    apiService.refreshContext();
+                    // Force refresh context so next getContext() gets fresh data
+                    await apiService.refreshContext();
 
                     // Reload the entire profile to refresh images and all data
                     await loadClubProfile();
