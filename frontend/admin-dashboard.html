@@ -125,8 +125,8 @@
                             <div class="form-group">
                                 <label>Club Logo</label>
                                 <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <img id="clubLogoPreview" src="images/logo-placeholder.png"
-                                        onerror="this.src='images/logo-placeholder.png'"
+                                    <img id="clubLogoPreview" src="images/placeholder-logo-profile.png"
+                                        onerror="this.src='images/placeholder-logo-profile.png'"
                                         style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); background: rgba(255,255,255,0.05);">
                                     <div>
                                         <button type="button" class="btn btn-secondary"
@@ -5421,13 +5421,16 @@
                     if (org.website !== undefined) document.getElementById('clubWebsite').value = org.website || '';
                     if (org.philosophy !== undefined) document.getElementById('clubPhilosophy').value = org.philosophy || '';
 
-                    // Display logo if exists
+                    // Display logo if exists or show placeholder
+                    const backendUrl = apiService.baseURL.replace('/api', '');
+                    let logoUrl = 'images/placeholder-logo-profile.png';
+
                     if (org.logo_url) {
-                        const backendUrl = apiService.baseURL.replace('/api', '');
-                        const logoUrl = org.logo_url.startsWith('http') ? org.logo_url : `${backendUrl}${org.logo_url}`;
-                        const logoPreview = document.getElementById('clubLogoPreview');
-                        if (logoPreview) logoPreview.src = logoUrl;
+                        logoUrl = org.logo_url.startsWith('http') ? org.logo_url : `${backendUrl}${org.logo_url}`;
                     }
+
+                    const logoPreview = document.getElementById('clubLogoPreview');
+                    if (logoPreview) logoPreview.src = logoUrl;
 
                     // Display images
                     const uploadedPicturesDiv = document.getElementById('uploadedPictures');
