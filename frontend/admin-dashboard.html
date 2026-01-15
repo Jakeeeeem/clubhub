@@ -5391,11 +5391,19 @@
 
                     showNotification('✅ Club profile updated successfully!', 'success');
 
-                    // Force refresh context to get updated organization data (clears cache)
-                    await apiService.refreshContext();
+                    // Refresh context in background
+                    apiService.refreshContext();
 
-                    // Reload the profile to show updated data
-                    await loadClubProfile();
+                    // Immediately populate form with saved data from response
+                    if (response.organization) {
+                        const org = response.organization;
+                        document.getElementById('clubName').value = org.name || '';
+                        document.getElementById('clubDescription').value = org.description || '';
+                        document.getElementById('clubLocation').value = org.location || '';
+                        document.getElementById('clubSport').value = org.sport || '';
+                        document.getElementById('clubWebsite').value = org.website || '';
+                        document.getElementById('clubPhilosophy').value = org.philosophy || '';
+                    }
                 } catch (error) {
                     console.error('Save profile error:', error);
                     showNotification('❌ ' + (error.message || 'Failed to save profile'), 'error');
