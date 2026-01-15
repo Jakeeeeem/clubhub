@@ -2061,11 +2061,15 @@ select option {
 /* Dashboard Section Visibility */
 .dashboard-section {
     display: none !important;
-    animation: fadeIn 0.3s ease-in;
+    /* animation: fadeIn 0.3s ease-in; */
 }
 
 .dashboard-section.active {
     display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    animation: none !important;
 }
 
 @keyframes fadeIn {
