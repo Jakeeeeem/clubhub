@@ -2066,6 +2066,9 @@ select option {
 
 .dashboard-section.active {
     display: block !important;
+    border: 2px solid #ff3333; /* Temporary debug border */
+    padding: 1rem;
+    min-height: 200px; /* Ensure it's visible even if empty */
 }
 
 @keyframes fadeIn {
