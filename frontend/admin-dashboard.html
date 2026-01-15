@@ -5356,6 +5356,32 @@
                     document.getElementById('clubWebsite').value = org.website || '';
                     document.getElementById('clubPhilosophy').value = org.philosophy || '';
 
+                    // Display existing images if any
+                    const uploadedPicturesDiv = document.getElementById('uploadedPictures');
+                    const uploadPlaceholder = document.querySelector('.upload-placeholder');
+
+                    if (org.images && org.images.length > 0) {
+                        if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
+                        if (uploadedPicturesDiv) {
+                            uploadedPicturesDiv.style.display = 'block';
+                            // Prepend backend URL to image paths
+                            const backendUrl = apiService.baseURL.replace('/api', '');
+                            uploadedPicturesDiv.innerHTML = org.images.map(img => {
+                                const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
+                                return `
+                                    <div style="display: inline-block; margin: 0.5rem; position: relative;">
+                                        <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                                        <button onclick="deleteClubImage('${org.id}', '${img}')" 
+                                                style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
+                                    </div>
+                                `;
+                            }).join('');
+                        }
+                    } else {
+                        if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
+                        if (uploadedPicturesDiv) uploadedPicturesDiv.style.display = 'none';
+                    }
+
                     console.log('✅ Club profile loaded:', org.name);
                 } catch (error) {
                     console.error('Failed to load club profile:', error);
