@@ -845,14 +845,29 @@ async deletePaymentPlan(planId) {
 
   // =========================== PLAYER METHODS ===========================
 
-  async getPlayers(clubId = null) {
+  async getPlayers(arg = null) {
     if (localStorage.getItem('isDemoSession') === 'true') {
       return this.getAdminDashboardFallback().players;
     }
     try {
+      let clubId = null;
+      let queryParams = "page=1&limit=1000";
+
+      if (typeof arg === 'object' && arg !== null) {
+          clubId = arg.clubId;
+          if (arg.sport) queryParams += `&sport=${encodeURIComponent(arg.sport)}`;
+          if (arg.location) queryParams += `&location=${encodeURIComponent(arg.location)}`;
+          if (arg.teamId) queryParams += `&team_id=${encodeURIComponent(arg.teamId)}`; // Map teamId to team_id if backend expects snake_case
+          if (arg.minAge) queryParams += `&min_age=${arg.minAge}`;
+          if (arg.maxAge) queryParams += `&max_age=${arg.maxAge}`;
+      } else {
+          clubId = arg;
+      }
+
       const endpoint = clubId
-        ? `/players?clubId=${clubId}&page=1&limit=1000`
-        : `/players?page=1&limit=1000`;
+        ? `/players?clubId=${clubId}&${queryParams}`
+        : `/players?${queryParams}`;
+
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn('❌ Failed to fetch players:', error);
