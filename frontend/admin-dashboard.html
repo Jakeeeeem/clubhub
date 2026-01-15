@@ -5345,76 +5345,81 @@
                     const context = await apiService.getContext();
                     let org = context.currentOrganization;
 
-                    console.log('📖 Loading profile for:', org?.name, org);
+                    console.log('📖 Loading profile section. Org from context:', org);
 
                     if (!org) {
-                        console.warn('No organization found');
+                        console.warn('⚠️ No organization found in context');
                         return;
                     }
 
-                    // If we have an org but it's missing the profile fields,
-                    // it means the context was partial. Let's refresh it.
+                    // If we have an org but it's missing profile fields, it's partial data.
+                    // This happens if the session was created before the latest backend updates.
                     if (org && org.id && (org.description === undefined || org.images === undefined)) {
-                        console.log('🔄 Context data partial (missing description or images), fetching fresh data...');
+                        console.log('🔄 Context data looks partial. Forcing fresh fetch...');
                         await apiService.refreshContext();
                         const freshContext = await apiService.getContext();
                         org = freshContext.currentOrganization;
-                        console.log('✨ Fresh org data:', org);
                     }
 
-                    if (!org) {
-                        console.warn('⚠️ No organization found after refresh');
-                        return;
-                    }
+                    if (!org) return;
 
-                    // Store the org ID for saving later
+                    console.log('✨ Data used for population:', {
+                        name: org.name,
+                        description: org.description ? 'present' : 'missing/empty',
+                        images: org.images ? `count: ${org.images.length}` : 'missing',
+                        philosophy: org.philosophy ? 'present' : 'missing'
+                    });
+
+                    // Store the org ID
                     currentOrgId = org.id;
-                    console.log('✅ Stored org ID:', currentOrgId);
 
-                    // Populate form fields
-                    document.getElementById('clubName').value = org.name || '';
-                    document.getElementById('clubDescription').value = org.description || '';
-                    document.getElementById('clubLocation').value = org.location || '';
-                    document.getElementById('clubSport').value = org.sport || '';
-                    document.getElementById('clubWebsite').value = org.website || '';
-                    document.getElementById('clubPhilosophy').value = org.philosophy || '';
+                    // Populate fields ONLY if the data exists in the object (avoid overwriting with empty if partial)
+                    if (org.name !== undefined) document.getElementById('clubName').value = org.name || '';
+                    if (org.description !== undefined) document.getElementById('clubDescription').value = org.description || '';
+                    if (org.location !== undefined) document.getElementById('clubLocation').value = org.location || '';
+                    if (org.sport !== undefined) document.getElementById('clubSport').value = org.sport || '';
+                    if (org.website !== undefined) document.getElementById('clubWebsite').value = org.website || '';
+                    if (org.philosophy !== undefined) document.getElementById('clubPhilosophy').value = org.philosophy || '';
 
-                    // Display existing images if any
+                    // Display images
                     const uploadedPicturesDiv = document.getElementById('uploadedPictures');
                     const uploadPlaceholder = document.querySelector('.upload-placeholder');
-                    const orgImages = org.images || [];
+
+                    // Handle potential stringified PG arrays just in case
+                    let orgImages = org.images || [];
+                    if (typeof orgImages === 'string') {
+                        try {
+                            orgImages = orgImages.replace(/{/g, '').replace(/}/g, '').split(',').filter(i => i);
+                        } catch (e) { orgImages = []; }
+                    }
 
                     if (orgImages.length > 0) {
-                        console.log('🖼️ Found ' + orgImages.length + ' images in DB:', orgImages);
+                        console.log('🖼️ Rendering ' + orgImages.length + ' images');
                         if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
                         if (uploadedPicturesDiv) {
                             uploadedPicturesDiv.style.display = 'block';
-                            // Prepend backend URL to image paths
                             const backendUrl = apiService.baseURL.replace('/api', '');
                             uploadedPicturesDiv.innerHTML = orgImages.map(img => {
                                 const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
                                 return `
                                     <div style="display: inline-block; margin: 0.5rem; position: relative;">
-                                        <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                                        <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
                                         <button type="button" onclick="event.stopPropagation(); deleteClubImage('${org.id}', '${img}')" 
-                                                style="position: absolute; top: -8px; right: -8px; background: #ff4757; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10;">×</button>
+                                                style="position: absolute; top: -8px; right: -8px; background: #ff4757; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 10;">×</button>
                                     </div>
                                 `;
                             }).join('');
                         }
                     } else {
-                        console.log('ℹ️ No images found in DB');
+                        console.log('ℹ️ No images to render');
                         if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
                         if (uploadedPicturesDiv) {
                             uploadedPicturesDiv.style.display = 'none';
                             uploadedPicturesDiv.innerHTML = '';
                         }
                     }
-
-                    console.log('✅ Club profile logic complete');
                 } catch (error) {
                     console.error('Failed to load club profile:', error);
-                    showNotification('Failed to load club profile', 'error');
                 }
             }
 
