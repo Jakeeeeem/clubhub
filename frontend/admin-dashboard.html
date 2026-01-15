@@ -5428,6 +5428,7 @@
 
                     // Use the organizations endpoint
                     const response = await apiService.updateClub(orgId, formData);
+                    console.log('📥 Save response:', response);
 
                     showNotification('✅ Club profile updated successfully!', 'success');
 
@@ -5436,6 +5437,7 @@
 
                     // Immediately populate form with saved data from response
                     if (response.organization) {
+                        console.log('✅ Repopulating form with:', response.organization);
                         const org = response.organization;
                         document.getElementById('clubName').value = org.name || '';
                         document.getElementById('clubDescription').value = org.description || '';
@@ -5443,10 +5445,85 @@
                         document.getElementById('clubSport').value = org.sport || '';
                         document.getElementById('clubWebsite').value = org.website || '';
                         document.getElementById('clubPhilosophy').value = org.philosophy || '';
+                    } else {
+                        console.warn('⚠️ No organization in response, reloading profile...');
+                        await loadClubProfile();
                     }
                 } catch (error) {
                     console.error('Save profile error:', error);
                     showNotification('❌ ' + (error.message || 'Failed to save profile'), 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Image upload handler
+            async function handlePictureUpload(input) {
+                if (!input.files || input.files.length === 0) return;
+
+                if (!currentOrgId) {
+                    showNotification('❌ Please wait for the profile to load before uploading images.', 'error');
+                    return;
+                }
+
+                const uploadedPicturesDiv = document.getElementById('uploadedPictures');
+                const uploadPlaceholder = document.querySelector('.upload-placeholder');
+
+                for (const file of input.files) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        showNotification(`❌ ${file.name} is too large (max 5MB)`, 'error');
+                        continue;
+                    }
+
+                    try {
+                        showLoading(true);
+                        const response = await apiService.uploadClubImage(currentOrgId, file);
+
+                        if (response.images) {
+                            // Show uploaded images
+                            if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
+                            if (uploadedPicturesDiv) {
+                                uploadedPicturesDiv.style.display = 'block';
+                                const backendUrl = apiService.baseURL.replace('/api', '');
+                                uploadedPicturesDiv.innerHTML = response.images.map(img => {
+                                    const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
+                                    return `
+                                        <div style="display: inline-block; margin: 0.5rem; position: relative;">
+                                            <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                                            <button onclick="deleteClubImage('${currentOrgId}', '${img}')" 
+                                                    style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
+                                        </div>
+                                    `;
+                                }).join('');
+                            }
+                            showNotification(`✅ ${file.name} uploaded successfully!`, 'success');
+                        }
+                    } catch (error) {
+                        console.error('Upload error:', error);
+                        showNotification(`❌ Failed to upload ${file.name}: ${error.message}`, 'error');
+                    } finally {
+                        showLoading(false);
+                    }
+                }
+
+                // Clear input
+                input.value = '';
+            }
+
+            // Delete image handler
+            async function deleteClubImage(orgId, imageUrl) {
+                if (!confirm('Are you sure you want to delete this image?')) return;
+
+                try {
+                    showLoading(true);
+                    await apiService.deleteClubImage(orgId, imageUrl);
+                    showNotification('✅ Image deleted successfully!', 'success');
+
+                    // Reload profile to refresh images
+                    await loadClubProfile();
+                } catch (error) {
+                    console.error('Delete image error:', error);
+                    showNotification('❌ Failed to delete image: ' + error.message, 'error');
                 } finally {
                     showLoading(false);
                 }
@@ -5459,6 +5536,8 @@
             // Expose globally
             window.loadClubProfile = loadClubProfile;
             window.saveClubProfile = saveClubProfile;
+            window.handlePictureUpload = handlePictureUpload;
+            window.deleteClubImage = deleteClubImage;
         </script>
 
         <script src="org-switcher.js"></script>
