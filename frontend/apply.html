@@ -364,10 +364,10 @@
                 return;
             }
 
-            // Try to fetch full club details for logo and latest info
+            // Try to fetch full club details using the public clubs endpoint
             try {
-                const club = await apiService.makeRequest(`/clubs/${clubId}`).catch(() =>
-                    apiService.makeRequest(`/organizations/${clubId}`));
+                // We use the clubs endpoint which is public-friendly
+                const club = await apiService.makeRequest(`/clubs/${clubId}`);
 
                 if (club) {
                     document.getElementById('displayClubName').textContent = club.name;
@@ -381,7 +381,7 @@
                     }
                 }
             } catch (e) {
-                console.log('Using URL params fallback for club info');
+                console.log('Using URL params fallback for club info:', e);
                 document.getElementById('displayClubName').textContent = clubName || 'Sports Club';
                 document.getElementById('displaySport').textContent = sport ? `${sport.toUpperCase()} ACADEMY` : 'ELITE SPORTS ACADEMY';
             }
