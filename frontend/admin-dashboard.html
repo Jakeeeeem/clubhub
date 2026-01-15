@@ -3728,12 +3728,32 @@
         async function handleAddTeam(e) {
             e.preventDefault();
 
+            // Robust Club ID Resolution
+            let clubId = AppState.activeClubId || AppState.clubs?.[0]?.id;
+
+            // If not in AppState, try to get from context directly (async check if needed, but for now assuming context is cached or we might need to await it?)
+            // Since this function is async, we can safely await getContext if needed, but let's check AppState first.
+            if (!clubId) {
+                try {
+                    // Since we are inside an async function, we can await
+                    const context = await apiService.getContext();
+                    clubId = context.currentOrganization?.id || context.currentUser?.clubId;
+                } catch (err) {
+                    console.error("Failed to fetch context for Club ID", err);
+                }
+            }
+
+            if (!clubId) {
+                showNotification('Error: Could not determine Organization/Club ID. Please refresh the page.', 'error');
+                return;
+            }
+
             const formData = {
                 name: document.getElementById('teamName').value,
                 ageGroup: document.getElementById('teamAgeGroup').value,
                 sport: document.getElementById('teamSport').value,
                 description: document.getElementById('teamDescription').value,
-                clubId: AppState.clubs[0]?.id
+                clubId: clubId
             };
 
             try {
@@ -3755,6 +3775,23 @@
         async function handleAddEvent(e) {
             e.preventDefault();
 
+            // Robust Club ID Resolution
+            let clubId = AppState.activeClubId || AppState.clubs?.[0]?.id;
+
+            if (!clubId) {
+                try {
+                    const context = await apiService.getContext();
+                    clubId = context.currentOrganization?.id || context.currentUser?.clubId;
+                } catch (err) {
+                    console.error("Failed to fetch context for Club ID", err);
+                }
+            }
+
+            if (!clubId) {
+                showNotification('Error: Could not determine Organization/Club ID.', 'error');
+                return;
+            }
+
             const formData = {
                 title: document.getElementById('eventTitle').value,
                 eventType: document.getElementById('eventType').value,
@@ -3764,7 +3801,7 @@
                 price: parseFloat(document.getElementById('eventPrice').value) || 0,
                 capacity: parseInt(document.getElementById('eventCapacity').value) || null,
                 description: document.getElementById('eventDescription').value,
-                clubId: AppState.clubs[0]?.id
+                clubId: clubId
             };
 
             try {
