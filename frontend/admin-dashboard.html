@@ -1817,6 +1817,71 @@
         }
 
 
+        // Update dashboard statistics with data
+        function updateDashboardStats(statistics) {
+            if (!statistics) {
+                console.warn('⚠️ No statistics data provided');
+                return;
+            }
+
+            console.log('📊 Updating dashboard stats:', statistics);
+
+            // Update stat cards
+            const totalPlayersEl = document.getElementById('totalPlayers');
+            const totalStaffEl = document.getElementById('totalStaff');
+            const totalEventsEl = document.getElementById('totalEvents');
+            const totalRevenueEl = document.getElementById('totalRevenue');
+
+            if (totalPlayersEl) totalPlayersEl.textContent = statistics.totalPlayers || AppState.players?.length || 0;
+            if (totalStaffEl) totalStaffEl.textContent = statistics.totalStaff || AppState.staff?.length || 0;
+            if (totalEventsEl) totalEventsEl.textContent = statistics.totalEvents || AppState.events?.length || 0;
+            if (totalRevenueEl) totalRevenueEl.textContent = `£${statistics.totalRevenue || 0}`;
+        }
+
+        // Load and update dashboard statistics
+        async function loadDashboardStats() {
+            console.log('📊 Loading dashboard statistics...');
+
+            try {
+                // If we already have dashboard data in AppState, use it
+                if (AppState.players || AppState.staff || AppState.events) {
+                    const stats = {
+                        totalPlayers: AppState.players?.length || 0,
+                        totalStaff: AppState.staff?.length || 0,
+                        totalEvents: AppState.events?.length || 0,
+                        totalRevenue: AppState.payments?.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0) || 0
+                    };
+                    updateDashboardStats(stats);
+                    return;
+                }
+
+                // Otherwise fetch fresh data
+                const dashboardData = await apiService.getAdminDashboardData();
+                if (dashboardData && dashboardData.statistics) {
+                    updateDashboardStats(dashboardData.statistics);
+                } else {
+                    // Calculate from the data we got
+                    const stats = {
+                        totalPlayers: dashboardData.players?.length || 0,
+                        totalStaff: dashboardData.staff?.length || 0,
+                        totalEvents: dashboardData.events?.length || 0,
+                        totalRevenue: dashboardData.payments?.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0) || 0
+                    };
+                    updateDashboardStats(stats);
+                }
+            } catch (error) {
+                console.error('Failed to load dashboard stats:', error);
+                // Set to 0 if failed
+                updateDashboardStats({
+                    totalPlayers: 0,
+                    totalStaff: 0,
+                    totalEvents: 0,
+                    totalRevenue: 0
+                });
+            }
+        }
+
+
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
             // Player form
@@ -2870,11 +2935,29 @@
         // Load Staff Members
         async function loadStaff() {
             const container = document.getElementById('staffContainer');
-            if (!container) return;
+            if (!container) {
+                console.error('❌ staffContainer not found!');
+                return;
+            }
+
+            console.log('👨‍💼 Loading staff members...');
+
+            // Show loading state immediately
+            container.innerHTML = '<p style="text-align: center; padding: 2rem;">Loading staff members...</p>';
 
             try {
                 showLoading(true);
                 const clubId = await getActiveClubId();
+
+                if (!clubId) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                            <p>No club ID found. Please select a club first.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
                 const staff = await apiService.makeRequest(`/organizations/${clubId}/members`);
 
                 if (!staff || staff.length === 0) {
@@ -2904,9 +2987,17 @@
                     </div>
                 `).join('');
 
+                console.log(`✅ Loaded ${staff.length} staff members`);
+
             } catch (error) {
                 console.error('Failed to load staff:', error);
-                container.innerHTML = '<p style="color:#dc3545">Failed to load staff members</p>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <p style="color:#dc3545">Failed to load staff members</p>
+                        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">${error.message}</p>
+                        <button class="btn btn-secondary" onclick="loadStaff()" style="margin-top: 1rem;">Retry</button>
+                    </div>
+                `;
             } finally {
                 showLoading(false);
             }
@@ -2916,40 +3007,103 @@
         async function loadTalentIdDashboard() {
             console.log('📊 Loading Talent ID Dashboard...');
             const container = document.getElementById('talentEventSelect');
-            if (container) {
-                try {
-                    const clubId = await getActiveClubId();
-                    const events = await apiService.getEvents(clubId);
-                    const talentEvents = events.filter(e => e.event_type === 'talent-id');
+            if (!container) {
+                console.error('❌ talentEventSelect not found!');
+                return;
+            }
 
+            container.innerHTML = '<option value="">Loading events...</option>';
+
+            try {
+                const clubId = await getActiveClubId();
+                if (!clubId) {
+                    container.innerHTML = '<option value="">No club selected</option>';
+                    return;
+                }
+
+                const events = await apiService.getEvents(clubId);
+                const talentEvents = events.filter(e => e.event_type === 'talent-id');
+
+                if (talentEvents.length === 0) {
+                    container.innerHTML = '<option value="">No talent ID events found</option>';
+                } else {
                     container.innerHTML = '<option value="">Select an event...</option>' +
                         talentEvents.map(e => `<option value="${e.id}">${e.title} - ${new Date(e.event_date).toLocaleDateString()}</option>`).join('');
-                } catch (error) {
-                    console.error('Failed to load talent events:', error);
+                    console.log(`✅ Loaded ${talentEvents.length} talent ID events`);
                 }
+            } catch (error) {
+                console.error('Failed to load talent events:', error);
+                container.innerHTML = '<option value="">Error loading events</option>';
             }
         }
 
         // Load Tournaments Dashboard
         async function loadTournamentsDashboard() {
             console.log('🏆 Loading Tournaments Dashboard...');
-            showNotification('Tournaments dashboard loading...', 'info');
+            const container = document.getElementById('tournamentSelect');
+            if (!container) {
+                console.error('❌ tournamentSelect not found!');
+                return;
+            }
+
+            container.innerHTML = '<option value="">Loading tournaments...</option>';
+
+            try {
+                const clubId = await getActiveClubId();
+                if (!clubId) {
+                    container.innerHTML = '<option value="">No club selected</option>';
+                    return;
+                }
+
+                const events = await apiService.getEvents(clubId);
+                const tournaments = events.filter(e => e.event_type === 'tournament');
+
+                if (tournaments.length === 0) {
+                    container.innerHTML = '<option value="">No tournaments found - Create one in Events!</option>';
+                } else {
+                    container.innerHTML = '<option value="">Select a tournament...</option>' +
+                        tournaments.map(e => `<option value="${e.id}">${e.title} - ${new Date(e.event_date).toLocaleDateString()}</option>`).join('');
+                    console.log(`✅ Loaded ${tournaments.length} tournaments`);
+                }
+            } catch (error) {
+                console.error('Failed to load tournaments:', error);
+                container.innerHTML = '<option value="">Error loading tournaments</option>';
+            }
         }
 
         // Load and display club applications for approval/rejection
         async function loadClubApplications() {
             const container = document.getElementById('applicationsContainer');
-            if (!container) return;
+            if (!container) {
+                console.error('❌ applicationsContainer not found!');
+                return;
+            }
+
+            console.log('📋 Loading club applications...');
+
+            // Show loading state immediately
+            container.innerHTML = '<p style="text-align: center; padding: 2rem;">Loading applications...</p>';
 
             try {
                 showLoading(true);
                 const clubId = await getActiveClubId();
+
+                if (!clubId) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
+                            <p>No club ID found. Please select a club first.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
                 const applications = await apiService.makeRequest(`/clubs/${clubId}/applications`);
 
                 if (!applications || applications.length === 0) {
                     container.innerHTML = `
                         <div style="text-align: center; padding: 2rem; opacity: 0.8;">
                             <p>No applications received yet</p>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Applications will appear here when players apply to join your club</p>
                         </div>
                     `;
                     return;
@@ -2980,9 +3134,17 @@
                     </div>
                 `).join('');
 
+                console.log(`✅ Loaded ${applications.length} applications`);
+
             } catch (error) {
                 console.error('Failed to load applications:', error);
-                container.innerHTML = '<p style="color:#dc3545">Failed to load applications</p>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <p style="color:#dc3545">Failed to load applications</p>
+                        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">${error.message}</p>
+                        <button class="btn btn-secondary" onclick="loadClubApplications()" style="margin-top: 1rem;">Retry</button>
+                    </div>
+                `;
             } finally {
                 showLoading(false);
             }
@@ -4176,63 +4338,92 @@
         function showSection(sectionId) {
             console.log('📍 Switching to section:', sectionId);
 
+            // Remove active class from all sections
             const sections = document.querySelectorAll('.dashboard-section');
+            console.log(`Found ${sections.length} dashboard sections`);
             sections.forEach(section => section.classList.remove('active'));
 
+            // Remove active class from all nav buttons
             const navButtons = document.querySelectorAll('.dashboard-nav button');
             navButtons.forEach(button => button.classList.remove('active'));
 
+            // Add active class to target section
             const targetSection = document.getElementById(sectionId);
-            if (targetSection) targetSection.classList.add('active');
+            if (targetSection) {
+                targetSection.classList.add('active');
+                console.log(`✅ Section '${sectionId}' is now active`);
+            } else {
+                console.error(`❌ Section '${sectionId}' not found in DOM!`);
+                return;
+            }
 
             // Set active button
             const clickedButton = document.querySelector(`.dashboard-nav button[onclick*="${sectionId}"]`);
-            if (clickedButton) clickedButton.classList.add('active');
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            } else {
+                console.warn(`⚠️ Nav button for '${sectionId}' not found`);
+            }
 
             // Handle data loading for specific sections
             switch (sectionId) {
                 case 'overview':
+                    console.log('Loading overview stats...');
                     if (typeof loadDashboardStats === 'function') loadDashboardStats();
                     break;
                 case 'players':
+                    console.log('Loading players...');
                     if (typeof loadPlayers === 'function') loadPlayers();
                     break;
                 case 'teams':
+                    console.log('Loading teams...');
                     if (typeof loadTeams === 'function') loadTeams();
                     break;
                 case 'staff':
+                    console.log('Loading staff...');
                     if (typeof loadStaff === 'function') loadStaff();
                     break;
                 case 'events':
+                    console.log('Loading events...');
                     if (typeof loadEvents === 'function') loadEvents();
                     break;
                 case 'club-profile':
+                    console.log('Loading club profile...');
                     if (typeof loadClubProfile === 'function') loadClubProfile();
                     if (typeof loadClubProfileImages === 'function') loadClubProfileImages();
                     break;
                 case 'finances':
+                    console.log('Loading finances...');
                     if (typeof loadFinances === 'function') loadFinances();
                     if (typeof loadPaymentPlans === 'function') loadPaymentPlans();
                     break;
                 case 'listings':
+                    console.log('Loading listings and applications...');
                     if (typeof loadListings === 'function') loadListings();
                     if (typeof loadClubApplications === 'function') loadClubApplications();
                     break;
                 case 'item-shop':
+                    console.log('Loading shop products...');
                     if (typeof loadProducts === 'function') loadProducts();
                     break;
                 case 'marketing-hub':
+                    console.log('Loading marketing campaigns...');
                     if (typeof loadCampaigns === 'function') loadCampaigns();
                     break;
                 case 'talent-id':
+                    console.log('Loading talent ID dashboard...');
                     if (typeof loadTalentIdDashboard === 'function') loadTalentIdDashboard();
                     break;
                 case 'tournaments':
+                    console.log('Loading tournaments dashboard...');
                     if (typeof loadTournamentsDashboard === 'function') loadTournamentsDashboard();
                     break;
                 case 'polls-section':
+                    console.log('Loading polls...');
                     if (typeof loadPolls === 'function') loadPolls();
                     break;
+                default:
+                    console.log(`No specific loader for section: ${sectionId}`);
             }
         }
 
@@ -4275,6 +4466,8 @@
         window.approveApplication = approveApplication;
         window.rejectApplication = rejectApplication;
         window.viewApplicationDetails = viewApplicationDetails;
+        window.loadDashboardStats = loadDashboardStats;
+        window.updateDashboardStats = updateDashboardStats;
 
         // Team Management Functions
         let currentTeamId = null;
