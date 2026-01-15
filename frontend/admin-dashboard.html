@@ -5334,13 +5334,18 @@
                         if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
                         if (uploadedPicturesDiv) {
                             uploadedPicturesDiv.style.display = 'block';
-                            uploadedPicturesDiv.innerHTML = org.images.map(img => `
-                                <div style="display: inline-block; margin: 0.5rem; position: relative;">
-                                    <img src="${img}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                                    <button onclick="deleteClubImage('${org.id}', '${img}')" 
-                                            style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
-                                </div>
-                            `).join('');
+                            // Prepend backend URL to image paths
+                            const backendUrl = apiService.baseURL.replace('/api', '');
+                            uploadedPicturesDiv.innerHTML = org.images.map(img => {
+                                const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
+                                return `
+                                    <div style="display: inline-block; margin: 0.5rem; position: relative;">
+                                        <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                                        <button onclick="deleteClubImage('${org.id}', '${img}')" 
+                                                style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
+                                    </div>
+                                `;
+                            }).join('');
                         }
                     } else {
                         if (uploadPlaceholder) uploadPlaceholder.style.display = 'block';
@@ -5381,12 +5386,15 @@
                         formData.website = websiteValue;
                     }
 
-                    // Use the clubs endpoint instead of organizations
+                    // Use the organizations endpoint
                     const response = await apiService.updateClub(orgId, formData);
 
                     showNotification('✅ Club profile updated successfully!', 'success');
-                    // Refresh context to update org switcher
-                    await apiService.refreshContext();
+
+                    // Reload context to get updated organization data
+                    await apiService.getContext();
+
+                    // Reload the profile to show updated data
                     await loadClubProfile();
                 } catch (error) {
                     console.error('Save profile error:', error);
@@ -5427,13 +5435,17 @@
                                 if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
                                 if (uploadedPicturesDiv) {
                                     uploadedPicturesDiv.style.display = 'block';
-                                    uploadedPicturesDiv.innerHTML = response.images.map(img => `
-                                        <div style="display: inline-block; margin: 0.5rem; position: relative;">
-                                            <img src="${img}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
-                                            <button onclick="deleteClubImage('${clubId}', '${img}')" 
-                                                    style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
-                                        </div>
-                                    `).join('');
+                                    const backendUrl = apiService.baseURL.replace('/api', '');
+                                    uploadedPicturesDiv.innerHTML = response.images.map(img => {
+                                        const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
+                                        return `
+                                            <div style="display: inline-block; margin: 0.5rem; position: relative;">
+                                                <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                                                <button onclick="deleteClubImage('${clubId}', '${img}')" 
+                                                        style="position: absolute; top: -8px; right: -8px; background: red; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">×</button>
+                                            </div>
+                                        `;
+                                    }).join('');
                                 }
                                 showNotification(`✅ ${file.name} uploaded successfully!`, 'success');
                             }
