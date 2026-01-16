@@ -691,9 +691,6 @@ async deletePaymentPlan(planId) {
   // =========================== CLUB METHODS ===========================
 
   async getClubs(search = null) {
-    if (localStorage.getItem('isDemoSession') === 'true') {
-      return this.getAdminDashboardFallback().clubs;
-    }
     try {
       const endpoint = search ? `/clubs?search=${encodeURIComponent(search)}` : '/clubs';
       const clubs = await this.makeRequest(endpoint);
@@ -724,11 +721,23 @@ async deletePaymentPlan(planId) {
   }
 
   async getClubById(id) {
-    if (localStorage.getItem('isDemoSession') === 'true' || (id && id.toString().startsWith('dummy-'))) {
+    // 1. Explicit dummy ID check
+    if (id && id.toString().startsWith('dummy-')) {
       const demoClubs = this.getAdminDashboardFallback().clubs;
       return demoClubs.find(c => c.id === id) || demoClubs[0];
     }
-    return await this.makeRequest(`/clubs/${id}`);
+    
+    // 2. Try real API
+    try {
+      return await this.makeRequest(`/clubs/${id}`);
+    } catch (error) {
+      // 3. Fallback only if in demo session
+      if (localStorage.getItem('isDemoSession') === 'true') {
+        const demoClubs = this.getAdminDashboardFallback().clubs;
+        return demoClubs[0];
+      }
+      throw error;
+    }
   }
 
   async createClub(clubData) {
@@ -850,9 +859,6 @@ async deletePaymentPlan(planId) {
   // =========================== PLAYER METHODS ===========================
 
   async getPlayers(arg = null) {
-    if (localStorage.getItem('isDemoSession') === 'true') {
-      return this.getAdminDashboardFallback().players;
-    }
     try {
       let clubId = null;
       let viewType = 'all';
@@ -889,11 +895,23 @@ async deletePaymentPlan(planId) {
   }
 
   async getPlayerById(id) {
-    if (localStorage.getItem('isDemoSession') === 'true' || (id && id.toString().startsWith('p'))) {
+    // 1. Explicit dummy ID check (mock IDs usually like 'p1', 'p2')
+    if (id && id.toString().startsWith('p') && id.toString().length < 5) {
       const demoPlayers = this.getAdminDashboardFallback().players;
       return demoPlayers.find(p => p.id === id) || demoPlayers[0];
     }
-    return await this.makeRequest(`/players/${id}`);
+    
+    // 2. Try real API
+    try {
+      return await this.makeRequest(`/players/${id}`);
+    } catch (error) {
+      // 3. Fallback only if in demo session
+      if (localStorage.getItem('isDemoSession') === 'true') {
+        const demoPlayers = this.getAdminDashboardFallback().players;
+        return demoPlayers[0];
+      }
+      throw error;
+    }
   }
 
   async createPlayer(playerData) {
@@ -936,11 +954,23 @@ async deletePaymentPlan(planId) {
   }
 
   async getEventById(id) {
-    if (localStorage.getItem('isDemoSession') === 'true' || (id && id.toString().startsWith('e'))) {
+    // 1. Explicit dummy ID check ('e1', 'e2')
+    if (id && id.toString().startsWith('e') && id.toString().length < 5) {
       const demoEvents = this.getAdminDashboardFallback().events;
       return demoEvents.find(e => e.id === id) || demoEvents[0];
     }
-    return await this.makeRequest(`/events/${id}`);
+    
+    // 2. Try real API
+    try {
+      return await this.makeRequest(`/events/${id}`);
+    } catch (error) {
+      // 3. Fallback only if in demo session
+      if (localStorage.getItem('isDemoSession') === 'true') {
+        const demoEvents = this.getAdminDashboardFallback().events;
+        return demoEvents[0];
+      }
+      throw error;
+    }
   }
 
   async createEvent(eventData) {
@@ -1006,11 +1036,23 @@ async deletePaymentPlan(planId) {
   }
 
   async getTeamById(id) {
-    if (localStorage.getItem('isDemoSession') === 'true' || (id && id.toString().startsWith('t'))) {
+    // 1. Explicit dummy ID check ('t1', 't2')
+    if (id && id.toString().startsWith('t') && id.toString().length < 5) {
       const demoTeams = this.getAdminDashboardFallback().teams;
       return demoTeams.find(t => t.id === id) || demoTeams[0];
     }
-    return await this.makeRequest(`/teams/${id}`);
+    
+    // 2. Try real API
+    try {
+      return await this.makeRequest(`/teams/${id}`);
+    } catch (error) {
+      // 3. Fallback only if in demo session
+      if (localStorage.getItem('isDemoSession') === 'true') {
+        const demoTeams = this.getAdminDashboardFallback().teams;
+        return demoTeams[0];
+      }
+      throw error;
+    }
   }
 
   async createTeam(teamData) {
@@ -1274,10 +1316,6 @@ async getPlayerPayments(playerId, status = null) {
   async getAdminDashboardData() {
     const isDemo = localStorage.getItem('isDemoSession') === 'true';
     try {
-      if (isDemo) {
-        console.log('✨ Demo session detected, using rich fallback data');
-        return this.getAdminDashboardFallback();
-      }
       return await this.makeRequest('/dashboard/admin');
     } catch (error) {
       console.warn('❌ Failed to fetch admin dashboard data:', error);
@@ -1354,6 +1392,56 @@ async getPlayerPayments(playerId, status = null) {
       method: 'POST',
       body: JSON.stringify(notificationData)
     });
+  }
+
+  async getAdminDashboardDataEnhanced() {
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    try {
+      return await this.makeRequest('/dashboard/admin/enhanced');
+    } catch (error) {
+      console.warn('❌ Failed to fetch admin dashboard data:', error);
+      
+      if (isDemo) return this.getAdminDashboardFallback();
+
+      try {
+        console.log('🔄 Attempting to load dashboard data from individual endpoints...');
+        
+        const [clubs, players, staff, events, teams, payments, products, campaigns, listings] = await Promise.allSettled([
+          this.getClubs(),
+          this.getPlayers(),
+          this.getStaff(),
+          this.getEvents(),
+          this.getTeams(),
+          this.getPayments(),
+          this.getProducts(),
+          this.getCampaigns(),
+          this.getListings()
+        ]);
+        
+        return {
+          clubs: clubs.status === 'fulfilled' ? clubs.value : [],
+          players: players.status === 'fulfilled' ? players.value : [],
+          staff: staff.status === 'fulfilled' ? staff.value : [],
+          events: events.status === 'fulfilled' ? events.value : [],
+          teams: teams.status === 'fulfilled' ? teams.value : [],
+          payments: payments.status === 'fulfilled' ? payments.value : [],
+          products: products.status === 'fulfilled' ? products.value : [],
+          campaigns: campaigns.status === 'fulfilled' ? campaigns.value : [],
+          listings: listings.status === 'fulfilled' ? listings.value : [],
+          statistics: {
+            total_clubs: clubs.status === 'fulfilled' ? clubs.value.length : 0,
+            total_players: players.status === 'fulfilled' ? players.value.length : 0,
+            total_staff: staff.status === 'fulfilled' ? staff.value.length : 0,
+            total_events: events.status === 'fulfilled' ? events.value.length : 0,
+            total_teams: teams.status === 'fulfilled' ? teams.value.length : 0,
+            monthly_revenue: 0
+          }
+        };
+      } catch (fallbackError) {
+        console.error('❌ Fallback data loading also failed:', fallbackError);
+        return this.getAdminDashboardFallback();
+      }
+    }
   }
 
   async getPlayerDashboardData(playerId = null) {
