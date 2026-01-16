@@ -1004,23 +1004,29 @@
                 <button class="close" onclick="closeModal('createPollModal')">&times;</button>
             </div>
             <form id="createPollForm">
-                <div class="form-group">
-                    <label for="pollTitle">Poll Question / Title</label>
-                    <input type="text" id="pollTitle" placeholder="e.g. What color should our new kit be?" required>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="pollTitle">Poll Question / Title</label>
+                        <input type="text" id="pollTitle" placeholder="e.g. What color should our new kit be?" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="pollDescription">Description (Optional)</label>
+                        <textarea id="pollDescription" rows="2"></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Options (One per line)</label>
+                        <textarea id="pollOptions" rows="4" placeholder="Red\nBlue\nGreen" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="pollExpires">Expiration Date (Optional)</label>
+                        <input type="datetime-local" id="pollExpires">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="pollDescription">Description (Optional)</label>
-                    <textarea id="pollDescription" rows="2"></textarea>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">🚀 Launch Poll</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('createPollModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label>Options (One per line)</label>
-                    <textarea id="pollOptions" rows="4" placeholder="Red\nBlue\nGreen" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="pollExpires">Expiration Date (Optional)</label>
-                    <input type="datetime-local" id="pollExpires">
-                </div>
-                <button type="submit" class="btn btn-primary">🚀 Launch Poll</button>
             </form>
         </div>
     </div>
@@ -1203,27 +1209,33 @@
             </div>
             <form id="editPaymentPlanForm">
                 <input type="hidden" id="editPlanId">
-                <div class="form-group">
-                    <label for="editPlanName">Plan Name</label>
-                    <input type="text" id="editPlanName" required>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="editPlanName">Plan Name</label>
+                        <input type="text" id="editPlanName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlanAmount">Amount (£)</label>
+                        <input type="number" id="editPlanAmount" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlanFrequency">Frequency</label>
+                        <select id="editPlanFrequency" required>
+                            <option value="month">Monthly</option>
+                            <option value="week">Weekly</option>
+                            <option value="year">Annually</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="editPlanDescription">Description</label>
+                        <textarea id="editPlanDescription" rows="3"></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editPlanAmount">Amount (£)</label>
-                    <input type="number" id="editPlanAmount" step="0.01" min="0" required>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('editPaymentPlanModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label for="editPlanFrequency">Frequency</label>
-                    <select id="editPlanFrequency" required>
-                        <option value="month">Monthly</option>
-                        <option value="week">Weekly</option>
-                        <option value="year">Annually</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editPlanDescription">Description</label>
-                    <textarea id="editPlanDescription" rows="3"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">💾 Save Changes</button>
             </form>
         </div>
     </div>
@@ -1435,23 +1447,29 @@
             </div>
             <form id="editProductForm">
                 <input type="hidden" id="editProductId">
-                <div class="form-group">
-                    <label for="editProductName">Product Name *</label>
-                    <input type="text" id="editProductName" required>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="editProductName">Product Name *</label>
+                        <input type="text" id="editProductName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductPrice">Price (£) *</label>
+                        <input type="number" id="editProductPrice" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductStock">Stock Quantity</label>
+                        <input type="number" id="editProductStock">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="editProductDescription">Description</label>
+                        <textarea id="editProductDescription" rows="3"></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editProductPrice">Price (£) *</label>
-                    <input type="number" id="editProductPrice" step="0.01" required>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('editProductModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label for="editProductStock">Stock Quantity</label>
-                    <input type="number" id="editProductStock">
-                </div>
-                <div class="form-group">
-                    <label for="editProductDescription">Description</label>
-                    <textarea id="editProductDescription" rows="3"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">💾 Save Changes</button>
             </form>
         </div>
     </div>
@@ -5466,23 +5484,25 @@
             </div>
             <form id="assignPlanForm">
                 <input type="hidden" id="assignPlanUserId">
-                <div class="form-group">
-                    <label for="assignPlanSelect">Select Plan</label>
-                    <select id="assignPlanSelect" required class="form-control">
-                        <!-- Populated by JS -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="assignPlanStartDate">Start Date</label>
-                    <input type="date" id="assignPlanStartDate" class="form-control" required>
-                    <script>
-                        document.getElementById('assignPlanStartDate').value = new Date().toISOString().split('T')[0];
-                    </script>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="assignPlanSelect">Select Plan</label>
+                        <select id="assignPlanSelect" required class="form-control">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assignPlanStartDate">Start Date</label>
+                        <input type="date" id="assignPlanStartDate" class="form-control" required>
+                        <script>
+                            document.getElementById('assignPlanStartDate').value = new Date().toISOString().split('T')[0];
+                        </script>
+                    </div>
                 </div>
                 <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Assign Plan</button>
                     <button type="button" class="btn btn-secondary"
                         onclick="closeModal('assignPlanModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Assign Plan</button>
                 </div>
             </form>
         </div>
