@@ -385,6 +385,32 @@
                 document.getElementById('displaySport').textContent = sport ? `${sport.toUpperCase()} ACADEMY` : 'ELITE SPORTS ACADEMY';
             }
 
+            // Fetch available positions from listings
+            try {
+                const listings = await apiService.makeRequest(`/clubs/${clubId}/public-listings`);
+                if (listings && listings.length > 0) {
+                    const positionSelect = document.getElementById('position');
+                    // Store the original static options just in case, or just clear them
+                    positionSelect.innerHTML = '<option value="">Select your position</option>';
+
+                    listings.forEach(listing => {
+                        const option = document.createElement('option');
+                        option.value = listing.position || listing.title;
+                        option.textContent = `${listing.title} (${listing.position || 'General'})`;
+                        option.dataset.listingId = listing.id; // Store ID
+                        positionSelect.appendChild(option);
+                    });
+
+                    // Also add a 'General Application' option
+                    const generalOption = document.createElement('option');
+                    generalOption.value = 'general';
+                    generalOption.textContent = 'General Application';
+                    positionSelect.appendChild(generalOption);
+                }
+            } catch (err) {
+                console.warn('Failed to load listings for dropdown', err);
+            }
+
             // Set icon based on sport (fallback if no logo)
             const sportIcon = {
                 'football': '⚽',
@@ -448,7 +474,6 @@
                 desc.textContent = "Step 1 of 2: Create your player profile";
             }
         }
-
         async function handleApply(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
@@ -471,10 +496,15 @@
                 }
 
                 // 2. Submit application
+                const positionSelect = document.getElementById('position');
+                const selectedOption = positionSelect.options[positionSelect.selectedIndex];
+                const listingId = selectedOption.dataset.listingId || null;
+
                 const applicationData = {
                     message: document.getElementById('message').value,
                     preferredPosition: document.getElementById('position').value,
                     experienceLevel: document.getElementById('experience').value,
+                    listingId: listingId, // Link to listing if applicable
                     availability: [] // Optional
                 };
 

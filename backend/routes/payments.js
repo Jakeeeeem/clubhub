@@ -180,10 +180,11 @@ router.get('/health', (req, res) => {
 
 router.get('/plans', async (req, res) => {
   try {
-    // Ensure plans table exists
+    // Ensure plans table exists with club_id
     await query(`
       CREATE TABLE IF NOT EXISTS plans (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        club_id UUID REFERENCES clubs(id),
         name VARCHAR(255) NOT NULL,
         price DECIMAL(10,2) NOT NULL DEFAULT 0,
         interval VARCHAR(50) DEFAULT 'month',
@@ -194,10 +195,20 @@ router.get('/plans', async (req, res) => {
       )
     `);
 
-    const result = await query(`
-      SELECT id, name, price, interval, active, description, created_at 
-      FROM plans WHERE active = true ORDER BY price ASC
-    `);
+    // Fetch plans for specific club (or all if not specified - but usually should be scoped)
+    // For now, let's allow fetching by clubId query param
+    const { clubId } = req.query;
+    let queryText = 'SELECT * FROM plans WHERE active = true';
+    const params = [];
+    
+    if (clubId) {
+        queryText += ' AND club_id = $1';
+        params.push(clubId);
+    }
+    
+    queryText += ' ORDER BY price ASC';
+
+    const result = await query(queryText, params);
     
     console.log('Plans loaded:', result.rows.length);
     res.json(result.rows);
@@ -211,40 +222,6 @@ router.get('/plans', async (req, res) => {
   }
 });
 
-
-// GET /api/payments/plans - Get all active plans
-router.get('/plans', async (req, res) => {
-  try {
-    // Ensure plans table exists
-    await query(`
-      CREATE TABLE IF NOT EXISTS plans (
-        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        price DECIMAL(10,2) NOT NULL DEFAULT 0,
-        interval VARCHAR(50) DEFAULT 'month',
-        active BOOLEAN DEFAULT true,
-        description TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-
-    const result = await query(`
-      SELECT id, name, price, interval, active, description, created_at 
-      FROM plans WHERE active = true ORDER BY price ASC
-    `);
-    
-    console.log('Plans loaded:', result.rows.length);
-    res.json(result.rows);
-    
-  } catch (err) {
-    console.error('Get plans error:', err);
-    res.status(500).json({ 
-      error: 'Failed to load plans',
-      message: err.message 
-    });
-  }
-});
 
 // POST /api/payments/plans - Create payment plan
 router.post('/plans', authenticateToken, requireOrganization, [
@@ -269,11 +246,18 @@ router.post('/plans', authenticateToken, requireOrganization, [
     if (interval === 'weekly') interval = 'week';
 
     // Get current organization's Stripe account
+    // Accessing club_id. In this system, currentOrganizationId usually maps to the club context.
+    // We'll check if we have a club linked to this org or if the org is the club.
+    // For simplicity, we assume orgId IS the clubId or 1:1.
+    // Let's check the database for the club associated with this org ID (just to be safe, or direct use).
+    const orgId = req.user.currentOrganizationId;
+    
     const orgResult = await query(`
-      SELECT stripe_account_id, name as org_name 
-      FROM organizations 
-      WHERE id = $1
-    `, [req.user.currentOrganizationId]);
+      SELECT o.stripe_account_id, o.name as org_name, c.id as club_id
+      FROM organizations o
+      LEFT JOIN clubs c ON o.id = c.id -- Assuming shared ID or simple link
+      WHERE o.id = $1
+    `, [orgId]);
 
     if (orgResult.rows.length === 0) {
       return res.status(404).json({
@@ -282,6 +266,7 @@ router.post('/plans', authenticateToken, requireOrganization, [
     }
 
     const organization = orgResult.rows[0];
+    const clubId = organization.club_id || orgId; // Fallback to orgId if club table not fully synced
 
     if (!organization.stripe_account_id) {
       return res.status(400).json({
@@ -295,7 +280,8 @@ router.post('/plans', authenticateToken, requireOrganization, [
       name: name,
       description: description || `${name} - ${organization.org_name}`,
       metadata: {
-        organization_id: req.user.currentOrganizationId,
+        organization_id: orgId,
+        club_id: clubId,
         created_by: req.user.userId
       }
     }, {
@@ -312,39 +298,23 @@ router.post('/plans', authenticateToken, requireOrganization, [
         interval_count: 1
       },
       metadata: {
-        organization_id: req.user.currentOrganizationId
+        organization_id: orgId,
+        club_id: clubId
       }
     }, {
       stripeAccount: organization.stripe_account_id  // Create on connected account
     });
 
-    // Ensure plans table exists
-    await query(`
-      CREATE TABLE IF NOT EXISTS plans (
-        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-        organization_id UUID REFERENCES organizations(id),
-        name VARCHAR(255) NOT NULL,
-        price DECIMAL(10,2) NOT NULL DEFAULT 0,
-        interval VARCHAR(50) DEFAULT 'month',
-        active BOOLEAN DEFAULT true,
-        description TEXT,
-        stripe_product_id VARCHAR(255),
-        stripe_price_id VARCHAR(255),
-        created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-
     // Save to database with Stripe IDs
     const result = await query(`
       INSERT INTO plans (
-        organization_id, name, price, interval, description, 
+        club_id, name, price, interval, description, 
         stripe_product_id, stripe_price_id, active, created_at, updated_at
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW(), NOW())
       RETURNING *
     `, [
-      req.user.currentOrganizationId,
+      clubId,
       name, 
       amount, 
       interval, 

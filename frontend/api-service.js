@@ -246,6 +246,20 @@ class ApiService {
     }
   }
 
+  async getClubs(query = '', hasListings = true) {
+      try {
+          const queryString = new URLSearchParams({ 
+              search: query,
+              has_listings: hasListings // Only fetch clubs with active listings if requested
+          }).toString();
+          
+          return await this.makeRequest(`/clubs?${queryString}`);
+      } catch (error) {
+          console.error('Failed to search clubs:', error);
+          throw error;
+      }
+  }
+
   async createCampaign(campaignData) {
     return await this.makeRequest('/campaigns', {
       method: 'POST',
@@ -582,6 +596,17 @@ async deletePaymentPlan(planId) {
   }
 
   // =========================== AUTHENTICATION METHODS ===========================
+
+  async getClubApplications(clubId) {
+    try {
+      const response = await this.makeRequest(`/clubs/${clubId}/applications`);
+      return response.applications || [];
+    } catch (error) {
+      console.warn('❌ Failed to fetch club applications:', error);
+      if (localStorage.getItem('isDemoSession') === 'true') return [];
+      throw error;
+    }
+  }
 
   async login(email, password, demoBypass = false) {
     localStorage.removeItem('isDemoSession');

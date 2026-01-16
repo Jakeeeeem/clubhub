@@ -21,28 +21,34 @@ const clubValidation = [
 //Changed all instances of '${paramCount}' to '$${paramCount}' | 06.08.25 BM
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { search, sport, location, types, limit = 50 } = req.query;
+    const { search, sport, location, types, has_listings, limit = 50 } = req.query;
     
-    // Query organizations table instead of clubs
+    // Query organizations table (using an alias 'c' for consistency with below code)
+    // Dynamic query construction
     let queryText = `
-      SELECT c.*, 
+      SELECT DISTINCT c.*, 
              (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = c.id AND om.role != 'owner') as member_count,
              (SELECT COUNT(*) FROM events e WHERE e.club_id = c.id AND e.event_date >= CURRENT_DATE) as event_count
       FROM organizations c
-      WHERE 1=1
     `;
+    
+    // If filtering by active listings, need to join or filter
+    if (has_listings === 'true') {
+        queryText += ` JOIN listings l ON c.id = l.club_id AND l.is_active = true `;
+    }
+
+    queryText += ` WHERE 1=1 `;
+    
     const queryParams = [];
     let paramCount = 0;
 
     // Search by name (prefix match as requested), or location/sport
     if (search) {
       paramCount++;
-      // "only show based on first characters" -> prefix match for name matches user intent
-      // We keep looser match for location/sport if needed, or make them all prefix?
-      // User said: "only show based on first chartors as all show"
-      // I'll make name prefix match, keep others as simple matching or prefix too.
+      // Search across name, location, and sport
+      // Using prefix match (%) for broader discovery as requested
       queryText += ` AND (c.name ILIKE $${paramCount} OR c.location ILIKE $${paramCount} OR c.sport ILIKE $${paramCount})`;
-      queryParams.push(`${search}%`); // Prefix match
+      queryParams.push(`${search}%`); 
     }
 
     // Filter by sport
@@ -59,17 +65,6 @@ router.get('/', optionalAuth, async (req, res) => {
       queryParams.push(`${location}%`);
     }
 
-    // Filter by types (if organization supports it, otherwise ignore or assume 'sports-club')
-    // organizations might not have 'types' column yet. I'll comment it out to be safe unless I know it exists.
-    /*
-    if (types) {
-      const typesArray = Array.isArray(types) ? types : [types];
-      paramCount++;
-      queryText += ` AND c.types && $${paramCount}::text[]`;
-      queryParams.push(typesArray);
-    }
-    */
-
     paramCount++;
     queryText += ` 
       ORDER BY c.name ASC
@@ -78,6 +73,18 @@ router.get('/', optionalAuth, async (req, res) => {
     queryParams.push(parseInt(limit));
 
     const result = await query(queryText, queryParams);
+    
+    // If they wanted listings, let's attach the positions to the response to show in UI
+    if (has_listings === 'true') {
+        for (let club of result.rows) {
+            const listingsRes = await query(
+                `SELECT position, title, listing_type FROM listings WHERE club_id = $1 AND is_active = true`,
+                [club.id]
+            );
+            club.available_positions = listingsRes.rows;
+        }
+    }
+
     res.json(result.rows);
 
   } catch (error) {
@@ -87,6 +94,23 @@ router.get('/', optionalAuth, async (req, res) => {
       message: 'An error occurred while fetching clubs'
     });
   }
+});
+
+/**
+ * @route GET /api/clubs/:id/public-listings
+ * @desc Get active listings for a club (public access for application form)
+ */
+router.get('/:id/public-listings', optionalAuth, async (req, res) => {
+    try {
+        const result = await query(
+            `SELECT * FROM listings WHERE club_id = $1 AND is_active = true ORDER BY created_at DESC`,
+            [req.params.id]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Get public listings error:', error);
+        res.status(500).json({ error: 'Failed to fetch listings' });
+    }
 });
 
 // Get specific club
@@ -372,7 +396,7 @@ router.post('/:id/apply', authenticateToken, [
       });
     }
 
-    const { message, preferredPosition, experienceLevel, availability } = req.body;
+    const { message, preferredPosition, experienceLevel, availability, listingId } = req.body;
 
     // Check if club exists
     const clubResult = await query(queries.findClubById, [req.params.id]);
@@ -382,32 +406,58 @@ router.post('/:id/apply', authenticateToken, [
       });
     }
 
-    // Check if user already applied
-    const existingApplication = await query(`
-      SELECT id FROM club_applications
-      WHERE club_id = $1 AND user_id = $2
-    `, [req.params.id, req.user.id]);
-    
-    if (existingApplication.rows.length > 0) {
-      return res.status(409).json({
-        error: 'Application already exists',
-        message: 'You have already applied to this club'
-      });
-    }
+    let result;
 
-    // Create application
-    const result = await query(`
-      INSERT INTO club_applications (club_id, user_id, message, preferred_position, experience_level, availability)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `, [
-      req.params.id,
-      req.user.id,
-      message,
-      preferredPosition || null,
-      experienceLevel || null,
-      availability || null
-    ]);
+    if (listingId) {
+        // --- Specific Listing Application ---
+        
+        // Check for existing listing application
+        const existingListingApp = await query(
+            `SELECT id FROM listing_applications WHERE listing_id = $1 AND user_id = $2`,
+            [listingId, req.user.id]
+        );
+
+        if (existingListingApp.rows.length > 0) {
+             return res.status(409).json({ error: 'You have already applied to this listing' });
+        }
+
+        // Insert into listing_applications
+        result = await query(`
+            INSERT INTO listing_applications (listing_id, applicant_id, cover_letter, status)
+            VALUES ($1, $2, $3, 'pending')
+            RETURNING *
+        `, [listingId, req.user.id, message]);
+        
+    } else {
+        // --- General Club Application (Legacy) ---
+        
+        // Check if user already applied generally
+        const existingApplication = await query(`
+          SELECT id FROM club_applications
+          WHERE club_id = $1 AND user_id = $2
+        `, [req.params.id, req.user.id]);
+        
+        if (existingApplication.rows.length > 0) {
+          return res.status(409).json({
+            error: 'Application already exists',
+            message: 'You have already applied to this club'
+          });
+        }
+    
+        // Create general application
+        result = await query(`
+          INSERT INTO club_applications (club_id, user_id, message, preferred_position, experience_level, availability)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING *
+        `, [
+          req.params.id,
+          req.user.id,
+          message,
+          preferredPosition || null,
+          experienceLevel || null,
+          availability || null
+        ]);
+    }
 
     res.status(201).json({
       message: 'Application submitted successfully',

@@ -9,12 +9,14 @@ router.get('/admin', authenticateToken, requireOrganization, async (req, res) =>
   try {
     const userId = req.user.id;
     
+    const { clubId } = req.query;
+
     // Get user's clubs
     const clubsResult = await query(
       'SELECT * FROM clubs WHERE owner_id = $1 ORDER BY created_at DESC',
       [userId]
     );
-    const clubs = clubsResult.rows;
+    let clubs = clubsResult.rows;
     
     if (clubs.length === 0) {
       return res.json({
@@ -35,8 +37,25 @@ router.get('/admin', authenticateToken, requireOrganization, async (req, res) =>
       });
     }
     
-    const clubIds = clubs.map(c => c.id);
-    const clubIdPlaceholders = clubIds.map((_, i) => `$${i + 1}`).join(',');
+    // Filter clubs if a specific clubId is requested for the context
+    let targetClubIds = clubs.map(c => c.id);
+    if (clubId) {
+        // Verify ownership/access
+        const targetClub = clubs.find(c => c.id === clubId);
+        if (targetClub) {
+            targetClubIds = [clubId];
+        }
+    } else if (clubs.length > 0) {
+        // Default to the first club (primary context) if not specified, 
+        // OR keep all? standard dashboard usually shows aggregate or primary.
+        // Let's default to specific context if possible, but for now we keep the list
+        // and let frontend filter? No, backend filtering is better for performance.
+        // If frontend doesn't send clubId, we might want to return all.
+        // But the user asked for "correct data" per switch. 
+        // Let's rely on the frontend sending ?clubId.
+    }
+
+    const clubIdPlaceholders = targetClubIds.map((_, i) => `$${i + 1}`).join(',');
     
     // Get players with team assignments
     const playersResult = await query(`
@@ -63,14 +82,14 @@ router.get('/admin', authenticateToken, requireOrganization, async (req, res) =>
   WHERE p.club_id = ANY($1)
   GROUP BY p.id, pp.plan_id, pl.name
   ORDER BY p.created_at DESC
-`, [clubIds]);
+`, [targetClubIds]);
     
     // Get staff
     const staffResult = await query(`
       SELECT * FROM staff 
       WHERE club_id = ANY($1)
       ORDER BY created_at DESC
-    `, [clubIds]);
+    `, [targetClubIds]);
     
     // Get teams with player counts
     const teamsResult = await query(`
@@ -98,14 +117,14 @@ router.get('/admin', authenticateToken, requireOrganization, async (req, res) =>
       WHERE t.club_id = ANY($1)
       GROUP BY t.id, s.first_name, s.last_name
       ORDER BY t.created_at DESC
-    `, [clubIds]);
+    `, [targetClubIds]);
     
     // Get events
     const eventsResult = await query(`
       SELECT * FROM events 
       WHERE club_id = ANY($1)
       ORDER BY event_date DESC
-    `, [clubIds]);
+    `, [targetClubIds]);
     
     // Get payments
     const paymentsResult = await query(`
@@ -114,7 +133,7 @@ router.get('/admin', authenticateToken, requireOrganization, async (req, res) =>
       JOIN players pl ON p.player_id = pl.id
       WHERE p.club_id = ANY($1)
       ORDER BY p.due_date DESC
-    `, [clubIds]);
+    `, [targetClubIds]);
     
     // Calculate statistics
     const totalPlayers = playersResult.rows.length;

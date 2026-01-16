@@ -28,6 +28,17 @@ router.get('/', authenticateToken, async (req, res) => {
       paramCount++;
       queryText += ` AND l.club_id = $${paramCount}`;
       queryParams.push(clubId);
+    } else {
+      // Enforce Isolation: If no clubId, limit to user's clubs context
+      paramCount++;
+      queryText += ` AND l.club_id IN (
+          SELECT id FROM clubs WHERE owner_id = $${paramCount}
+          UNION
+          SELECT club_id FROM staff WHERE user_id = $${paramCount}
+          UNION
+          SELECT club_id FROM players WHERE user_id = $${paramCount}
+      )`;
+      queryParams.push(req.user.id);
     }
 
     if (type) {

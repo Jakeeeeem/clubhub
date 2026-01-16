@@ -563,78 +563,7 @@ function closeModal(modalId) {
  * Quick Demo Login Bypass
  * @param {string} type - superadmin, admin, coach, player
  */
-window.quickLogin = async function(type) {
-    const demos = {
-        superadmin: { email: 'demo-admin@clubhub.com', pass: 'password123' },
-        admin: { email: 'demo-admin@clubhub.com', pass: 'password123' },
-        coach: { email: 'demo-coach@clubhub.com', pass: 'password123' },
-        player: { email: 'demo-player@clubhub.com', pass: 'password123' }
-    };
 
-    const credentials = demos[type];
-    if (!credentials) {
-        console.error('Invalid demo type:', type);
-        showNotification('Invalid demo user type', 'error');
-        return;
-    }
-
-    // Clear any existing session to ensure a clean demo state
-    localStorage.clear();
-
-    // Prefill form (optional, for visual feedback)
-    const emailInput = document.getElementById('loginEmail');
-    const passInput = document.getElementById('loginPassword');
-    
-    if (emailInput && passInput) {
-        emailInput.value = credentials.email;
-        passInput.value = credentials.pass;
-    }
-
-    showNotification(`Logging in as Demo ${type.charAt(0).toUpperCase() + type.slice(1)}...`, 'info');
-
-    try {
-        // Pass true for demoBypass to trigger frontend fallback if backend is down
-        const response = await apiService.login(credentials.email, credentials.pass, true);
-        
-        if (response.token) {
-            // Store user data (same as handleLogin)
-            localStorage.setItem('authToken', response.token);
-            localStorage.setItem('currentUser', JSON.stringify(response.user));
-            localStorage.setItem('isDemoSession', 'true'); // Explicitly set this too
-            
-            // Update global state
-            if (typeof AppState !== 'undefined') {
-                AppState.currentUser = response.user;
-                AppState.isLoggedIn = true;
-            }
-            
-            showNotification('Demo login successful! Redirecting...', 'success');
-            const redirectUrl = await determineUserRedirect(response.user);
-            setTimeout(() => {
-                window.location.href = redirectUrl;
-            }, 1000);
-        }
-    } catch (error) {
-        console.error('Demo login failed:', error);
-        if (error.message.includes('fetch') || error.message.includes('connect')) {
-            showNotification('Could not connect to the backend server. Please make sure it is running on port 3000.', 'error');
-        } else {
-            showNotification('Demo login failed: ' + error.message, 'error');
-        }
-    }
-};
-
-/**
- * Quick Login from Dropdown
- * Reads the selected demo user type from dropdown and logs in
- */
-window.quickLoginFromDropdown = function() {
-    const dropdown = document.getElementById('demoUserType');
-    if (dropdown) {
-        const selectedType = dropdown.value;
-        quickLogin(selectedType);
-    }
-};
 
 // Enhanced notification system
 function showNotification(message, type = 'info', duration = 4000) {

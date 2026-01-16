@@ -16,535 +16,292 @@ for (const file of envFiles) {
 const { pool } = require('./config/database');
 
 async function seedLive() {
-    console.log('🌱 STARTING LIVE SEED MIGRATION...');
+    console.log('🌱 STARTING COMPREHENSIVE LIVE SEED MIGRATION...');
     const client = await pool.connect();
 
     try {
         await client.query('BEGIN');
 
-        // 1. Identify Owner/Admin (Using the demo-admin email from logs)
+        // --- 1. ADMIN USER ---
         const ownerEmail = 'demo-admin@clubhub.com';
         let ownerId;
+        console.log(`🔍 Checking/Creating Admin Owner: ${ownerEmail}`);
         
-        console.log(`🔍 Checking for owner: ${ownerEmail}`);
         const ownerRes = await client.query('SELECT id FROM users WHERE email = $1', [ownerEmail]);
-        
         if (ownerRes.rows.length === 0) {
-            console.log('⚠️ Owner not found. Creating new owner...');
             const hash = await bcrypt.hash('password123', 10);
             const newOwner = await client.query(`
                 INSERT INTO users (email, password_hash, first_name, last_name, account_type, org_types)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING id
+                VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
             `, [ownerEmail, hash, 'Demo', 'Admin', 'organization', ['club']]);
             ownerId = newOwner.rows[0].id;
+            console.log('✅ Created Admin User');
         } else {
             ownerId = ownerRes.rows[0].id;
-            console.log(`✅ Owner found: ${ownerId}`);
+            console.log(`✅ Found Admin User: ${ownerId}`);
         }
 
-        // 2. Identify/Create Organization (using organizations table, not clubs)
-        let orgId;
-        const orgRes = await client.query('SELECT id FROM organizations WHERE owner_id = $1', [ownerId]);
-        
-        if (orgRes.rows.length === 0) {
-            console.log('Creating Organization "Elite Pro Academy"...');
-            const slug = 'elite-pro-academy';
+        // --- HELPER FUNCTIONS ---
+        const getOrCreateOrg = async (name, slug, desc, sport, type) => {
+            const res = await client.query('SELECT id FROM organizations WHERE slug = $1', [slug]);
+            if (res.rows.length > 0) return res.rows[0].id;
+            
+            console.log(`Creating Organization: ${name}`);
             const newOrg = await client.query(`
                 INSERT INTO organizations (name, slug, description, location, sport, owner_id)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING id
-            `, ['Elite Pro Academy', slug, 'Premier training facility for elite athletes.', 'London, UK', 'Football', ownerId]);
-            orgId = newOrg.rows[0].id;
-        } else {
-            orgId = orgRes.rows[0].id;
-            console.log(`✅ Organization found: ${orgId}`);
-        }
-
-        // Also get the club_id for teams/players (clubs table still exists for legacy)
-        let clubId;
-        const clubRes = await client.query('SELECT id FROM clubs WHERE owner_id = $1', [ownerId]);
-        if (clubRes.rows.length > 0) {
-            clubId = clubRes.rows[0].id;
-        } else {
-            // Create club entry with SAME ID as Organization to ensure compatibility
-            const newClub = await client.query(`
+                VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
+            `, [name, slug, desc, 'London, UK', sport, ownerId]);
+            
+            // Link to legacy clubs table
+            await client.query(`
                 INSERT INTO clubs (id, name, description, location, sport, owner_id, types)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id
-            `, [orgId, 'Elite Pro Academy', 'Premier training facility for elite athletes.', 'London, UK', 'Football', ownerId, ['club']]);
-            clubId = newClub.rows[0].id;
-        }
-
-        // 2.1. Ensure Owner is in organization_members (RBAC) - using orgId
-        const memberCheck = await client.query('SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2', [ownerId, orgId]);
-        if (memberCheck.rows.length === 0) {
-            await client.query(`
-                INSERT INTO organization_members (user_id, organization_id, role, status)
-                VALUES ($1, $2, 'owner', 'active')
-            `, [ownerId, orgId]);
-            console.log('✅ Added Owner to organization_members');
-        }
-
-        // 2.2. Create Secondary Organization (Multi-Tenancy Test)
-        const secOrgName = 'Sunday League FC';
-        const secOrgSlug = 'sunday-league-fc';
-        let secOrgId, secClubId;
-        const secOrgRes = await client.query('SELECT id FROM organizations WHERE slug = $1', [secOrgSlug]);
-        
-        if (secOrgRes.rows.length === 0) {
-            const newSecOrg = await client.query(`
-                INSERT INTO organizations (name, slug, description, location, sport, owner_id)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING id
-            `, [secOrgName, secOrgSlug, 'Casual sunday games', 'Local Park', 'Football', ownerId]);
-            secOrgId = newSecOrg.rows[0].id;
-            console.log(`✅ Created Secondary Organization: ${secOrgName}`);
+                VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING
+            `, [newOrg.rows[0].id, name, desc, 'London, UK', sport, ownerId, [type]]);
             
-            // Also create club entry with SAME ID
-            const newSecClub = await client.query(`
-                INSERT INTO clubs (id, name, description, location, sport, owner_id, types)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id
-            `, [secOrgId, secOrgName, 'Casual sunday games', 'Local Park', 'Football', ownerId, ['club']]);
-            secClubId = newSecClub.rows[0].id;
-        } else {
-            secOrgId = secOrgRes.rows[0].id;
-            const secClubRes = await client.query('SELECT id FROM clubs WHERE name = $1', [secOrgName]);
-            secClubId = secClubRes.rows.length > 0 ? secClubRes.rows[0].id : null;
-        }
-
-        // 2.3 Add User as PLAYER in Secondary Organization
-        const secMemberCheck = await client.query('SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2', [ownerId, secOrgId]);
-        if (secMemberCheck.rows.length === 0) {
+            // Add Owner as 'owner' in RBAC
             await client.query(`
                 INSERT INTO organization_members (user_id, organization_id, role, status)
-                VALUES ($1, $2, 'player', 'active')
-            `, [ownerId, secOrgId]);
-            console.log(`✅ Added User as PLAYER to ${secOrgName}`);
-        }
+                VALUES ($1, $2, 'owner', 'active') ON CONFLICT DO NOTHING
+            `, [ownerId, newOrg.rows[0].id]);
 
-        // ===========================================
-        // POPULATE SUNDAY LEAGUE FC (Secondary Org)
-        // ===========================================
-        if (secClubId) {
-            console.log(`🏟️ Populating ${secOrgName}...`);
-            // Staff
-            const secStaff = [
-                { first: 'Ted', last: 'Lasso', role: 'coach', email: 'ted@sundayleague.com' },
-                { first: 'Coach', last: 'Beard', role: 'assistant-coach', email: 'beard@sundayleague.com' }
+            return newOrg.rows[0].id;
+        };
+
+        const createProducts = async (clubId, prefix) => {
+            console.log(`   🛒 Seeding Products for Club ${clubId.substring(0,8)}...`);
+            const products = [
+                { name: `${prefix} Home Kit`, price: 49.99, cat: 'kit', img: 'https://placehold.co/400x400/000000/FFF?text=Home+Kit' },
+                { name: `${prefix} Away Kit`, price: 49.99, cat: 'kit', img: 'https://placehold.co/400x400/cccccc/000?text=Away+Kit' },
+                { name: `${prefix} Training Top`, price: 29.99, cat: 'training', img: 'https://placehold.co/400x400/blue/white?text=Training' },
+                { name: `${prefix} Hoodie`, price: 39.99, cat: 'merch', img: 'https://placehold.co/400x400/red/white?text=Hoodie' },
+                { name: `${prefix} Scarf`, price: 15.00, cat: 'merch', img: 'https://placehold.co/400x400/green/white?text=Scarf' },
+                { name: `${prefix} Water Bottle`, price: 10.00, cat: 'equipment', img: 'https://placehold.co/400x400/yellow/black?text=Bottle' }
             ];
-            let secStaffIds = [];
-            for (const s of secStaff) {
-                const sCheck = await client.query('SELECT id FROM staff WHERE email = $1 AND club_id = $2', [s.email, secClubId]);
-                if (sCheck.rows.length === 0) {
-                    const ns = await client.query(`INSERT INTO staff (first_name, last_name, email, role, club_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`, 
-                        [s.first, s.last, s.email, s.role, secClubId]);
-                    secStaffIds.push(ns.rows[0].id);
-                } else {
-                    secStaffIds.push(sCheck.rows[0].id);
-                }
+
+            for (const p of products) {
+                await client.query(`
+                    INSERT INTO products (club_id, name, description, price, category, image_url, stock_quantity, is_active)
+                    VALUES ($1, $2, $3, $4, $5, $6, 100, true)
+                `, [clubId, p.name, `Official ${p.name}`, p.price, p.cat, p.img]);
             }
+        };
 
-            // Teams
-            const secTeams = [
-                { name: 'The Greyhounds', age: 'Adult', sport: 'Football', coachId: secStaffIds[0] },
-                { name: 'Richmond B', age: 'Adult', sport: 'Football', coachId: secStaffIds[1] }
-            ];
-            let secTeamIds = [];
-            for (const t of secTeams) {
-                const tCheck = await client.query('SELECT id FROM teams WHERE club_id = $1 AND name = $2', [secClubId, t.name]);
-                if (tCheck.rows.length === 0) {
-                    const nt = await client.query(`INSERT INTO teams (club_id, name, age_group, sport, coach_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`, 
-                        [secClubId, t.name, t.age, t.sport, t.coachId]);
-                    secTeamIds.push(nt.rows[0].id);
-                } else {
-                    secTeamIds.push(tCheck.rows[0].id);
-                }
-            }
-
-            // Events
-            const secEvents = [
-                { title: 'Pub Gathering', type: 'social', date: new Date(Date.now() + 86400000).toISOString().split('T')[0], time: '20:00' },
-                { title: 'Sunday Kickabout', type: 'match', date: new Date(Date.now() + 172800000).toISOString().split('T')[0], time: '10:00' }
-            ];
-            for (const e of secEvents) {
-                const eCheck = await client.query('SELECT id FROM events WHERE title = $1 AND club_id = $2', [e.title, secClubId]);
-                if (eCheck.rows.length === 0) {
-                    await client.query(`INSERT INTO events (title, event_type, event_date, event_time, club_id, created_by) VALUES ($1, $2, $3, $4, $5, $6)`, 
-                        [e.title, e.type, e.date, e.time, secClubId, ownerId]);
-                }
-            }
-        }
-
-        // ===========================================
-        // CREATE & POPULATE Valley United (Third Org)
-        // ===========================================
-        const thirdOrgName = 'Valley United';
-        const thirdOrgSlug = 'valley-united';
-        let thirdOrgId, thirdClubId;
-        
-        const thirdOrgRes = await client.query('SELECT id FROM organizations WHERE slug = $1', [thirdOrgSlug]);
-        if (thirdOrgRes.rows.length === 0) {
-            const newThird = await client.query(`INSERT INTO organizations (name, slug, sport, owner_id) VALUES ($1, $2, 'Basketball', $3) RETURNING id`, [thirdOrgName, thirdOrgSlug, ownerId]);
-            thirdOrgId = newThird.rows[0].id;
-
-            const newThirdClub = await client.query(`INSERT INTO clubs (id, name, sport, owner_id, types) VALUES ($1, $2, 'Basketball', $3, $4) RETURNING id`, [thirdOrgId, thirdOrgName, ownerId, ['club']]);
-            thirdClubId = newThirdClub.rows[0].id;
-            console.log(`✅ Created Third Organization: ${thirdOrgName}`);
-        } else {
-            thirdOrgId = thirdOrgRes.rows[0].id;
-            const thirdClubRes = await client.query('SELECT id FROM clubs WHERE name = $1', [thirdOrgName]);
-            thirdClubId = thirdClubRes.rows.length > 0 ? thirdClubRes.rows[0].id : null;
-        }
-
-        // Add User as COACH in Third Org
-        const thirdMemberCheck = await client.query('SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2', [ownerId, thirdOrgId]);
-        if (thirdMemberCheck.rows.length === 0) {
-            await client.query(`
-                INSERT INTO organization_members (user_id, organization_id, role, status)
-                VALUES ($1, $2, 'coach', 'active')
-            `, [ownerId, thirdOrgId]);
-             console.log(`✅ Added User as COACH to ${thirdOrgName}`);
-        }
-
-        // Populate Valley United
-        if (thirdClubId) {
-             console.log(`🏀 Populating ${thirdOrgName}...`);
-             // Teams
-             const thirdTeams = [{ name: 'Varsity Hookers', age: 'U18', sport: 'Basketball' }];
-             for (const t of thirdTeams) {
-                const tCheck = await client.query('SELECT id FROM teams WHERE club_id = $1 AND name = $2', [thirdClubId, t.name]);
-                if (tCheck.rows.length === 0) {
-                    await client.query(`INSERT INTO teams (club_id, name, age_group, sport) VALUES ($1, $2, $3, $4)`, [thirdClubId, t.name, t.age, t.sport]);
-                }
+        const createEvents = async (clubId) => {
+             console.log(`   📅 Seeding Events for Club ${clubId.substring(0,8)}...`);
+             const eventTypes = ['training', 'match', 'social', 'tournament'];
+             const titles = ['Weekly Training', 'League Match vs Rivals', 'Team Dinner', 'Regional Cup'];
+             
+             for(let i=0; i<4; i++) {
+                 // Create events in future
+                 const date = new Date();
+                 date.setDate(date.getDate() + (i * 7) + 2); // Spread out weekly
+                 
+                  await client.query(`
+                    INSERT INTO events (club_id, title, event_type, event_date, event_time, location, description, created_by)
+                    VALUES ($1, $2, $3, $4, '18:00', 'Main Ground', 'Standard session', $5)
+                 `, [clubId, titles[i], eventTypes[i], date, ownerId]);
              }
-             // Events
-             const thirdEvents = [{ title: 'Court Practice', type: 'training', date: new Date(Date.now() + 432000000).toISOString().split('T')[0], time: '16:00' }];
-             for (const e of thirdEvents) {
-                const eCheck = await client.query('SELECT id FROM events WHERE title = $1 AND club_id = $2', [e.title, thirdClubId]);
-                if (eCheck.rows.length === 0) {
-                    await client.query(`INSERT INTO events (title, event_type, event_date, event_time, club_id, created_by) VALUES ($1, $2, $3, $4, $5, $6)`, 
-                        [e.title, e.type, e.date, e.time, thirdClubId, ownerId]);
-                }
+        };
+
+        const createPlans = async (clubId) => {
+            console.log(`   💳 Seeding Plans for Club ${clubId.substring(0,8)}...`);
+            const plans = [
+                { name: 'Elite Pathway (Gold)', price: 150.00, billing_cycle: 'month' },
+                { name: 'Academy Standard (Silver)', price: 85.00, billing_cycle: 'month' },
+                { name: 'Development Squad (Bronze)', price: 45.00, billing_cycle: 'month' },
+                { name: 'Annual Membership', price: 500.00, billing_cycle: 'year' }
+            ];
+
+            for (const p of plans) {
+                await client.query(`
+                    INSERT INTO plans (club_id, name, price, interval, description, active)
+                    VALUES ($1, $2, $3, $4, 'Membership Plan', true)
+                `, [clubId, p.name, p.price, p.billing_cycle]);
+            }
+        };
+
+        const createListingsWithApplications = async (clubId, clubName) => {
+             console.log(`   📋 Seeding Listings & Applications for ${clubName}...`);
+             
+             // 1. Create Listings
+             const listingsData = [
+                 { title: `First Team Striker`, type: 'recruitment', pos: 'Forward' },
+                 { title: `U18 Goalkeeper`, type: 'recruitment', pos: 'Goalkeeper' },
+                 { title: `Head Coach - U14`, type: 'recruitment', pos: 'Head Coach' }
+             ];
+
+             for (const l of listingsData) {
+                 const newListing = await client.query(`
+                    INSERT INTO listings (club_id, title, listing_type, position, description, is_active, created_at)
+                    VALUES ($1, $2, $3, $4, $5, true, NOW()) RETURNING id
+                 `, [clubId, l.title, l.type, l.pos, `Open role for ${l.title} at ${clubName}`]);
+                 
+                 const listingId = newListing.rows[0].id;
+
+                 // 2. Create Dummy Applicants
+                 const applicants = [
+                     { first: 'John', last: 'Doe', email: `john.doe.${Math.random().toString(36).substring(7)}@test.com`, pos: 'Forward' },
+                     { first: 'Jane', last: 'Smith', email: `jane.smith.${Math.random().toString(36).substring(7)}@test.com`, pos: 'Goalkeeper' },
+                     { first: 'Mike', last: 'Johnson', email: `mike.j.${Math.random().toString(36).substring(7)}@test.com`, pos: 'Coach' }
+                 ];
+
+                 for (const app of applicants) {
+                     // Get or Create User
+                     let userId;
+                     const userRes = await client.query('SELECT id FROM users WHERE email = $1', [app.email]);
+                     if (userRes.rows.length > 0) {
+                         userId = userRes.rows[0].id;
+                     } else {
+                         const newUser = await client.query(`
+                            INSERT INTO users (email, password_hash, first_name, last_name, account_type)
+                            VALUES ($1, $2, $3, $4, 'adult') RETURNING id
+                         `, [app.email, await bcrypt.hash('password', 10), app.first, app.last]);
+                         userId = newUser.rows[0].id;
+                     }
+
+                     // Apply to Listing
+                     await client.query(`
+                        INSERT INTO listing_applications (listing_id, applicant_id, cover_letter, status, created_at)
+                        VALUES ($1, $2, $3, 'pending', NOW())
+                     `, [listingId, userId, `I am interested in the ${l.title} role.`]);
+                 }
              }
-        }
+        };
+        const createStaff = async (clubId) => {
+             console.log(`   👥 Seeding Staff for Club ${clubId.substring(0,8)}...`);
+             const staffMembers = [
+                 { first: 'Alex', last: 'Coachman', role: 'coach', email: `alex.coach.${Math.random().toString(36).substring(7)}@test.com` },
+                 { first: 'Pep', last: 'Tactics', role: 'assistant-coach', email: `pep.tactics.${Math.random().toString(36).substring(7)}@test.com` },
+                 { first: 'Jurgen', last: 'Press', role: 'coach', email: `jurgen.press.${Math.random().toString(36).substring(7)}@test.com` }
+             ];
 
-        // 3. Create General Staff (Primary Org)
-        // ... (continuing with existing logic for Elite Pro Academy)
-        console.log('👔 Creating Elite Pro Academy Staff...');
-        const coaches = [
-            { first: 'Pep', last: 'Guardiola', role: 'coach', email: 'pep.guardiola@elitepro.com', phone: '+44 7700 900001' },
-            { first: 'Jurgen', last: 'Klopp', role: 'coach', email: 'jurgen.klopp@elitepro.com', phone: '+44 7700 900002' },
-            { first: 'Carlo', last: 'Ancelotti', role: 'assistant-coach', email: 'carlo.ancelotti@elitepro.com', phone: '+44 7700 900003' },
-            { first: 'Emma', last: 'Hayes', role: 'coaching-supervisor', email: 'emma.hayes@elitepro.com', phone: '+44 7700 900004' }
-        ];
+             for (const s of staffMembers) {
+                 // Check/Create User
+                 let userId;
+                 const userRes = await client.query('SELECT id FROM users WHERE email = $1', [s.email]);
+                 if (userRes.rows.length > 0) {
+                     userId = userRes.rows[0].id;
+                 } else {
+                     const newUser = await client.query(`
+                        INSERT INTO users (email, password_hash, first_name, last_name, account_type)
+                        VALUES ($1, $2, $3, $4, 'adult') RETURNING id
+                     `, [s.email, await bcrypt.hash('password123', 10), s.first, s.last]);
+                     userId = newUser.rows[0].id;
+                 }
 
-        let staffIds = [];
-        for (const coach of coaches) {
-            const staffCheck = await client.query('SELECT id FROM staff WHERE email = $1 AND club_id = $2', [coach.email, clubId]);
-            
-            if (staffCheck.rows.length === 0) {
-                const newStaff = await client.query(`
-                    INSERT INTO staff (first_name, last_name, email, phone, role, club_id)
-                    VALUES ($1, $2, $3, $4, $5, $6)
-                    RETURNING id
-                `, [coach.first, coach.last, coach.email, coach.phone, coach.role, clubId]);
-                staffIds.push({ id: newStaff.rows[0].id, name: `${coach.first} ${coach.last}`, role: coach.role });
-                console.log(`✅ Created Coach: ${coach.first} ${coach.last} (${coach.role})`);
-            } else {
-                staffIds.push({ id: staffCheck.rows[0].id, name: `${coach.first} ${coach.last}`, role: coach.role });
-                console.log(`ℹ️ Coach already exists: ${coach.first} ${coach.last}`);
-            }
-        }
+                 // Add to Staff
+                 await client.query(`
+                    INSERT INTO staff (user_id, club_id, first_name, last_name, role, email, phone)
+                    VALUES ($1, $2, $3, $4, $5, $6, '07700900000')
+                    ON CONFLICT DO NOTHING
+                 `, [userId, clubId, s.first, s.last, s.role, s.email]);
 
-        // 4. Create Teams with Coach Assignments
-        const teams = [
-            { name: 'U18 Elite', age: 'Under 18', sport: 'Football', desc: 'Top tier squad', coachName: 'Pep Guardiola' },
-            { name: 'U16 Development', age: 'Under 16', sport: 'Football', desc: 'Future stars', coachName: 'Jurgen Klopp' },
-            { name: 'Senior First Team', age: 'Adult', sport: 'Football', desc: 'Main competitive team', coachName: 'Pep Guardiola' }
-        ];
-
-        let teamIds = [];
-        for (const t of teams) {
-            // Find coach for this team
-            const assignedCoach = staffIds.find(s => s.name === t.coachName);
-            
-            const teamCheck = await client.query('SELECT id FROM teams WHERE club_id = $1 AND name = $2', [clubId, t.name]);
-            if (teamCheck.rows.length === 0) {
-                const newTeam = await client.query(`
-                    INSERT INTO teams (club_id, name, age_group, sport, description, coach_id, wins, losses, draws)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                    RETURNING id
-                `, [clubId, t.name, t.age, t.sport, t.desc, assignedCoach?.id, Math.floor(Math.random() * 10), Math.floor(Math.random() * 5), Math.floor(Math.random() * 3)]);
-                teamIds.push({ id: newTeam.rows[0].id, name: t.name });
-                console.log(`✅ Created Team: ${t.name} (Coach: ${t.coachName})`);
-            } else {
-                // Update coach if team exists
-                if (assignedCoach) {
-                    await client.query('UPDATE teams SET coach_id = $1 WHERE id = $2', [assignedCoach.id, teamCheck.rows[0].id]);
-                }
-                teamIds.push({ id: teamCheck.rows[0].id, name: t.name });
-                console.log(`ℹ️ Team already exists: ${t.name}`);
-            }
-        }
-
-        // 5. Ensure Schema has CV Fields (Migration)
-        console.log('🔄 Checking/Migrating Schema...');
-        await client.query(`
-            ALTER TABLE players 
-            ADD COLUMN IF NOT EXISTS sport VARCHAR(50),
-            ADD COLUMN IF NOT EXISTS gender VARCHAR(20),
-            ADD COLUMN IF NOT EXISTS location VARCHAR(100),
-            ADD COLUMN IF NOT EXISTS bio TEXT
-        `);
-        console.log('✅ Schema ready');
-
-        // 6. Create Players with CV Data (Expanded)
-        console.log('👥 Creating Players...');
-        const players = [
-            { first: 'Marcus', last: 'Rashford', pos: 'Forward', bio: 'Academy graduate with pace and finishing.', sport: 'Football', team: 'U18 Elite', jersey: 10 },
-            { first: 'Bukayo', last: 'Saka', pos: 'Winger', bio: 'High potential winger.', sport: 'Football', team: 'U18 Elite', jersey: 7 },
-            { first: 'Declan', last: 'Rice', pos: 'Midfielder', bio: 'Solid defensive midfielder.', sport: 'Football', team: 'Senior First Team', jersey: 4 },
-            { first: 'Phil', last: 'Foden', pos: 'Attacking Mid', bio: 'Creative playmaker.', sport: 'Football', team: 'U16 Development', jersey: 47 },
-            { first: 'Harry', last: 'Kane', pos: 'Striker', bio: 'Top scorer 2024.', sport: 'Football', team: 'Senior First Team', jersey: 9 },
-            { first: 'Jude', last: 'Bellingham', pos: 'Midfielder', bio: 'Box to box engine.', sport: 'Football', team: 'Senior First Team', jersey: 5 },
-            { first: 'Cole', last: 'Palmer', pos: 'Winger', bio: 'Skillful and creative.', sport: 'Football', team: 'U18 Elite', jersey: 20 },
-            { first: 'Kobbie', last: 'Mainoo', pos: 'Midfielder', bio: 'Young talent with vision.', sport: 'Football', team: 'U16 Development', jersey: 37 },
-            { first: 'Alejandro', last: 'Garnacho', pos: 'Winger', bio: 'Explosive pace and dribbling.', sport: 'Football', team: 'U18 Elite', jersey: 17 },
-            { first: 'Levi', last: 'Colwill', pos: 'Defender', bio: 'Strong in the air.', sport: 'Football', team: 'U16 Development', jersey: 6 },
-            { first: 'Trent', last: 'Alexander-Arnold', pos: 'Right Back', bio: 'Excellent crossing ability.', sport: 'Football', team: 'Senior First Team', jersey: 66 },
-            { first: 'Reece', last: 'James', pos: 'Right Back', bio: 'Powerful and athletic.', sport: 'Football', team: 'Senior First Team', jersey: 24 }
-        ];
-
-        let playerIdMap = [];
-        for (const p of players) {
-            const email = `${p.first.toLowerCase()}.${p.last.toLowerCase()}@example.com`;
-            
-            const pCheck = await client.query('SELECT id FROM players WHERE email = $1 AND club_id = $2', [email, clubId]);
-            
-            if (pCheck.rows.length === 0) {
-                const res = await client.query(`
-                    INSERT INTO players (
-                        first_name, last_name, email, club_id, 
-                        position, bio, sport, date_of_birth, 
-                        gender, location
-                    )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                    RETURNING id
-                `, [
-                    p.first, p.last, email, clubId,
-                    p.pos, p.bio, p.sport, '2005-06-15',
-                    'Male', 'London'
-                ]);
-                const playerId = res.rows[0].id;
-                playerIdMap.push({ id: playerId, teamName: p.team, jersey: p.jersey, name: `${p.first} ${p.last}` });
-                console.log(`✅ Created Player: ${p.first} ${p.last}`);
-            } else {
-                playerIdMap.push({ id: pCheck.rows[0].id, teamName: p.team, jersey: p.jersey, name: `${p.first} ${p.last}` });
-                console.log(`ℹ️ Player already exists: ${p.first} ${p.last}`);
-            }
-        }
-
-        // 7. Assign Players to Teams via team_players
-        console.log('🔗 Assigning Players to Teams...');
-        for (const player of playerIdMap) {
-            const team = teamIds.find(t => t.name === player.teamName);
-            if (team) {
-                const tpCheck = await client.query('SELECT 1 FROM team_players WHERE team_id = $1 AND player_id = $2', [team.id, player.id]);
-                if (tpCheck.rows.length === 0) {
-                    await client.query(`
-                        INSERT INTO team_players (team_id, player_id, jersey_number)
-                        VALUES ($1, $2, $3)
-                    `, [team.id, player.id, player.jersey]);
-                    console.log(`✅ Assigned ${player.name} to ${team.name} (Jersey #${player.jersey})`);
-                }
-            }
-        }
-
-        // 8. Create Events
-        console.log('📅 Creating Events...');
-        const events = [
-            {
-                title: 'Weekly Training Session',
-                description: 'Regular training for U18 Elite squad',
-                type: 'training',
-                date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 days from now
-                time: '18:00',
-                location: 'Main Training Ground',
-                teamName: 'U18 Elite'
-            },
-            {
-                title: 'Match vs City Rivals',
-                description: 'Important league match',
-                type: 'match',
-                date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 week from now
-                time: '15:00',
-                location: 'Home Stadium',
-                opponent: 'City Rivals FC',
-                teamName: 'Senior First Team'
-            },
-            {
-                title: 'Youth Development Camp',
-                description: 'Intensive 3-day training camp for young players',
-                type: 'camp',
-                date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 weeks from now
-                time: '09:00',
-                location: 'Training Complex',
-                price: 50.00,
-                capacity: 30,
-                teamName: 'U16 Development'
-            },
-            {
-                title: 'Friendly Tournament',
-                description: 'Pre-season friendly tournament',
-                type: 'tournament',
-                date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 weeks from now
-                time: '10:00',
-                location: 'Sports Complex',
-                price: 25.00,
-                capacity: 50,
-                teamName: 'U18 Elite'
-            },
-            {
-                title: 'Tactical Session',
-                description: 'Focus on set pieces and defensive organization',
-                type: 'training',
-                date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 4 days from now
-                time: '17:30',
-                location: 'Training Ground B',
-                teamName: 'Senior First Team'
-            }
-        ];
-
-        let eventIds = [];
-        for (const evt of events) {
-            const team = teamIds.find(t => t.name === evt.teamName);
-            
-            const eventCheck = await client.query('SELECT id FROM events WHERE title = $1 AND club_id = $2', [evt.title, clubId]);
-            
-            if (eventCheck.rows.length === 0) {
-                const newEvent = await client.query(`
-                    INSERT INTO events (
-                        title, description, event_type, event_date, event_time,
-                        location, price, capacity, spots_available, club_id, team_id,
-                        opponent, created_by
-                    )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-                    RETURNING id
-                `, [
-                    evt.title, evt.description, evt.type, evt.date, evt.time,
-                    evt.location, evt.price || 0, evt.capacity || null, evt.capacity || null,
-                    clubId, team?.id, evt.opponent || null, ownerId
-                ]);
-                eventIds.push({ id: newEvent.rows[0].id, title: evt.title });
-                console.log(`✅ Created Event: ${evt.title} (${evt.type})`);
-            } else {
-                eventIds.push({ id: eventCheck.rows[0].id, title: evt.title });
-                console.log(`ℹ️ Event already exists: ${evt.title}`);
-            }
-        }
-
-        // 9. Create Recruitment Listings
-        console.log('📝 Creating Recruitment Listings...');
-        const listings = [
-            { title: 'Youth Striker Needed', type: 'recruitment', pos: 'Striker', team: 'U16 Development' },
-            { title: 'Senior Goalkeeper', type: 'recruitment', pos: 'Goalkeeper', team: 'Senior First Team' },
-            { title: 'Tactical Analyst', type: 'trial', pos: 'Analyst', team: 'Senior First Team' }
-        ];
-
-        let listingIds = [];
-        for (const l of listings) {
-            const team = teamIds.find(t => t.name === l.team);
-            const lCheck = await client.query('SELECT id FROM listings WHERE title = $1 AND club_id = $2', [l.title, clubId]);
-            
-            if (lCheck.rows.length === 0) {
-                const res = await client.query(`
-                    INSERT INTO listings (title, description, listing_type, position, club_id, is_active)
-                    VALUES ($1, $2, $3, $4, $5, true)
-                    RETURNING id
-                `, [l.title, `Join our ${l.team} squad as a ${l.pos}.`, l.type, l.pos, clubId]);
-                listingIds.push(res.rows[0].id);
-                console.log(`✅ Created Listing: ${l.title}`);
-            } else {
-                listingIds.push(lCheck.rows[0].id);
-                console.log(`ℹ️ Listing already exists: ${l.title}`);
-            }
-        }
-
-        // 10. Create Dummy Applications
-        console.log('🤝 Creating Dummy Applications...');
-        if (listingIds.length > 0) {
-            const appCheck = await client.query('SELECT 1 FROM listing_applications WHERE listing_id = $1 AND applicant_id = $2', [listingIds[0], ownerId]);
-            if (appCheck.rows.length === 0) {
-                await client.query(`
-                    INSERT INTO listing_applications (listing_id, applicant_id, status)
-                    VALUES ($1, $2, 'pending')
-                `, [listingIds[0], ownerId]);
-                console.log('✅ Created Dummy Application for owner');
-            }
-        }
-
-        // 11. Create Shop Products
-        console.log('🛒 Creating Shop Products...');
-        const products = [
-            { name: 'Elite Training Jersey', price: 35.00, cat: 'Apparel', stock: 100 },
-            { name: 'Official Club Hoodie', price: 45.00, cat: 'Apparel', stock: 50 },
-            { name: 'Water Bottle', price: 9.99, cat: 'Accessories', stock: 200 },
-            { name: 'Match Day Shorts', price: 20.00, cat: 'Apparel', stock: 75 }
-        ];
-
-        for (const prod of products) {
-            const pCheck = await client.query('SELECT id FROM products WHERE name = $1 AND club_id = $2', [prod.name, clubId]);
-            if (pCheck.rows.length === 0) {
-                await client.query(`
-                    INSERT INTO products (name, price, category, stock_quantity, club_id, is_active)
-                    VALUES ($1, $2, $3, $4, $5, true)
-                `, [prod.name, prod.price, prod.cat, prod.stock, clubId]);
-                console.log(`✅ Created Product: ${prod.name}`);
-            }
-        }
-
-        // 12. Ensure owner is linked to ALL organizations
-        console.log('🔗 Ensuring owner is linked to all organizations...');
-        const allOrgs = await client.query('SELECT id, name FROM organizations');
-        
-        for (const org of allOrgs.rows) {
-            const linkCheck = await client.query('SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2', [ownerId, org.id]);
-            
-            if (linkCheck.rows.length === 0) {
-                // Determine role based on whether they own it
-                const ownerCheck = await client.query('SELECT 1 FROM organizations WHERE id = $1 AND owner_id = $2', [org.id, ownerId]);
-                const role = ownerCheck.rows.length > 0 ? 'owner' : 'admin';
-                
-                await client.query(`
+                 // Add to Organization Members
+                 await client.query(`
                     INSERT INTO organization_members (user_id, organization_id, role, status)
-                    VALUES ($1, $2, $3, 'active')
-                `, [ownerId, org.id, role]);
-                console.log(`✅ Linked ${ownerEmail} to ${org.name} as ${role}`);
-            }
+                    VALUES ($1, $2, 'staff', 'active') ON CONFLICT DO NOTHING
+                 `, [userId, clubId]);
+             }
+        };
+
+        // --- 2. CREATE ORGANIZATIONS & DATA ---
+        
+        // ORG A: Elite Pro Academy
+        const orgA = await getOrCreateOrg('Elite Pro Academy', 'elite-pro-academy', 'Premium Training', 'Football', 'club');
+        await createProducts(orgA, 'Elite');
+        await createEvents(orgA);
+        await createPlans(orgA);
+        await createListingsWithApplications(orgA, 'Elite Pro');
+        await createStaff(orgA);
+
+        // ORG B: Sunday League FC
+        const orgB = await getOrCreateOrg('Sunday League FC', 'sunday-league-fc', 'Casual Fun', 'Football', 'club');
+        await createProducts(orgB, 'Sunday');
+        await createEvents(orgB);
+        // await createPlans(orgB); // Maybe different plans?
+        await createListingsWithApplications(orgB, 'Sunday League');
+        await createStaff(orgB);
+
+        // --- 3. MULTI-ROLE USER SCENARIO ---
+        console.log('👤 Creating Multi-Role User (Coach in A, Player in B)...');
+        const multiEmail = 'multi@demo.com';
+        let multiUserId;
+
+        const multiRes = await client.query('SELECT id FROM users WHERE email = $1', [multiEmail]);
+        if (multiRes.rows.length === 0) {
+            const hash = await bcrypt.hash('password123', 10);
+            const newUser = await client.query(`
+                INSERT INTO users (email, password_hash, first_name, last_name, account_type)
+                VALUES ($1, $2, 'Multi', 'User', 'adult') RETURNING id
+            `, [multiEmail, hash]);
+            multiUserId = newUser.rows[0].id;
+        } else {
+            multiUserId = multiRes.rows[0].id;
         }
+
+        // Assign Role: COACH in Elite Pro Academy
+        console.log('   -> Assigning COACH role in Elite Pro Academy');
+        // 1. Add to staff
+        const staffRes = await client.query(`
+            INSERT INTO staff (user_id, club_id, first_name, last_name, role, email)
+            VALUES ($1, $2, 'Multi', 'User', 'coach', $3) RETURNING id
+        `, [multiUserId, orgA, multiEmail]);
+        // 2. Add to org_members
+        await client.query(`
+            INSERT INTO organization_members (user_id, organization_id, role, status)
+            VALUES ($1, $2, 'coach', 'active') ON CONFLICT (user_id, organization_id) DO UPDATE SET role='coach'
+        `, [multiUserId, orgA]);
+
+        // Assign Role: PLAYER in Sunday League FC
+        console.log('   -> Assigning PLAYER role in Sunday League FC');
+        // 1. Add to players
+        const playerRes = await client.query(`
+            INSERT INTO players (user_id, club_id, first_name, last_name, email, position, payment_status, date_of_birth)
+            VALUES ($1, $2, 'Multi', 'User', $3, 'Midfielder', 'paid', '1995-01-01') RETURNING id
+        `, [multiUserId, orgB, multiEmail]);
+        // 2. Add to org_members
+        await client.query(`
+            INSERT INTO organization_members (user_id, organization_id, role, status)
+            VALUES ($1, $2, 'player', 'active') ON CONFLICT (user_id, organization_id) DO UPDATE SET role='player'
+        `, [multiUserId, orgB]);
+
+        // --- 4. ADD OWNER AS PLAYER (For easiest testing) ---
+        console.log('👤 Adding Owner as Player to both clubs for easier testing...');
+        
+        // Owner -> Player in Elite Pro
+        await client.query(`
+            INSERT INTO players (user_id, club_id, first_name, last_name, email, position, payment_status, date_of_birth)
+            VALUES ($1, $2, 'Demo', 'Admin', $3, 'Striker', 'paid', '1990-01-01') 
+            ON CONFLICT DO NOTHING
+        `, [ownerId, orgA, ownerEmail]);
+        
+        // Owner -> Player in Sunday League
+        await client.query(`
+             INSERT INTO players (user_id, club_id, first_name, last_name, email, position, payment_status, date_of_birth)
+             VALUES ($1, $2, 'Demo', 'Admin', $3, 'Goalkeeper', 'paid', '1990-01-01') 
+             ON CONFLICT DO NOTHING
+        `, [ownerId, orgB, ownerEmail]);
+
 
         await client.query('COMMIT');
-        console.log('🎉 SEEDING COMPLETE!');
-        console.log(`📊 Summary:
-  - Organizations: ${allOrgs.rows.length}
-  - Teams: ${teamIds.length}
-  - Coaches: ${staffIds.length}
-  - Players: ${playerIdMap.length}
-  - Events: ${eventIds.length}
-  - Listings: ${listingIds.length}
-  - Products: ${products.length}
-  - All organizations linked to owner
-        `);
+        console.log('✅ SEEDING COMPLETE! Login with demo-admin@clubhub.com or multi@demo.com (password123)');
 
     } catch (e) {
         await client.query('ROLLBACK');
         console.error('❌ SEEDING FAILED:', e);
     } finally {
         client.release();
-        await pool.end();
+        // Don't exit process if run via API, but here likely script
+        if (require.main === module) {
+            pool.end();
+            process.exit();
+        }
     }
 }
 
-seedLive();
+// Run if called directly
+if (require.main === module) {
+    seedLive();
+}
+
+module.exports = { seedLive };

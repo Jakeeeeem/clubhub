@@ -88,10 +88,9 @@ class EmailService {
 
   // Base Premium Template Wrapper
   getBaseHtmlTemplate(content, clubInfo = {}) {
-    const clubHubLogo = process.env.CLUBHUB_LOGO_URL || 'https://elitepro-clubhub.web.app/assets/logo.png'; // Fallback
-    const orgLogo = clubInfo.logoUrl ? `<img src="${clubInfo.logoUrl}" style="max-height: 50px; margin-top: 10px; border-radius: 8px;">` : '';
-    const footerOrg = clubInfo.name ? `<p><strong>${clubInfo.name}</strong> powered by ClubHub</p>` : '<p>The ClubHub Team</p>';
-
+    const clubHubLogo = process.env.CLUBHUB_LOGO_URL || 'https://clubhubsports.net/images/logo.png'; 
+    // User requested only ClubHub logo, ignoring specific club logos for header consistency
+    
     return `
       <!DOCTYPE html>
       <html>
@@ -99,22 +98,102 @@ class EmailService {
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
-          body { font-family: 'Outfit', 'Segoe UI', Tahoma, Verdana, sans-serif; line-height: 1.6; color: #e2e8f0; margin: 0; padding: 0; background-color: #0a0a0b; }
-          .wrapper { background-color: #0a0a0b; padding: 40px 20px; }
-          .container { max-width: 600px; margin: 0 auto; background: #1a1a1c; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); }
-          .header { padding: 40px; text-align: center; background: radial-gradient(circle at top right, #252529, #1a1a1c); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-          .content { padding: 40px; }
-          .footer { padding: 30px; text-align: center; background: #0f172a; color: #94a3b8; font-size: 13px; border-top: 1px solid rgba(255, 255, 255, 0.05); }
-          .btn { display: inline-block; background: #dc2626; color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; margin: 25px 0; transition: all 0.3s; box-shadow: 0 10px 20px rgba(220, 38, 38, 0.2); text-align: center; }
-          .card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 25px; margin: 20px 0; }
-          h1, h2, h3 { color: #ffffff; margin-top: 0; font-family: 'Outfit', sans-serif; }
-          .accent { color: #dc2626; }
-          p { margin: 15px 0; color: #cbd5e1; }
-          .logo-main { max-height: 40px; margin-bottom: 10px; }
-          .divider { height: 1px; background: rgba(255, 255, 255, 0.05); margin: 30px 0; }
+          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+          body { 
+            font-family: 'Outfit', 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            line-height: 1.8; 
+            color: #f1f5f9; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #050505; 
+            -webkit-font-smoothing: antialiased;
+          }
+          .wrapper { 
+            background-color: #050505; 
+            padding: 60px 20px; 
+            width: 100%;
+            box-sizing: border-box;
+          }
+          .container { 
+            max-width: 680px; 
+            margin: 0 auto; 
+            background: #121214; 
+            border-radius: 32px; 
+            overflow: hidden; 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+          }
+          .header { 
+            padding: 50px 0 40px; 
+            text-align: center; 
+            background: #121214;
+            /* subtle glow */
+            background-image: radial-gradient(circle at 50% 0%, rgba(255, 51, 51, 0.08) 0%, transparent 50%);
+          }
+          .logo-main { 
+            height: 70px; /* Bigger logo */
+            width: auto; 
+            display: block;
+            margin: 0 auto;
+          }
+          .content { 
+            padding: 0 60px 50px; 
+            font-size: 17px; /* Larger text */
+            color: #cbd5e1;
+            text-align: left;
+          }
+          h1, h2, h3 { 
+            color: #ffffff; 
+            margin-top: 0; 
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-align: center;
+          }
+          h2 { font-size: 28px; margin-bottom: 24px; }
+          p { margin: 0 0 24px; }
+          
+          .btn { 
+            display: inline-block; 
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); 
+            color: #ffffff !important; 
+            padding: 18px 40px; 
+            text-decoration: none; 
+            border-radius: 50px; 
+            font-weight: 600; 
+            font-size: 18px; 
+            margin: 32px 0; 
+            transition: transform 0.2s; 
+            box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3); 
+            text-align: center; 
+          }
+          .btn:hover { transform: translateY(-2px); }
+          
+          .card { 
+            background: rgba(255, 255, 255, 0.02); 
+            border: 1px solid rgba(255, 255, 255, 0.06); 
+            border-radius: 20px; 
+            padding: 30px; 
+            margin: 30px 0; 
+          }
+          .footer { 
+            padding: 40px; 
+            text-align: center; 
+            background: #0a0a0c; 
+            color: #64748b; 
+            font-size: 14px; 
+            border-top: 1px solid rgba(255, 255, 255, 0.04); 
+          }
+          .accent { color: #ef4444; font-weight: 600; }
+          .divider { height: 1px; background: rgba(255, 255, 255, 0.06); margin: 40px 0; }
           ul { padding-left: 20px; }
-          li { margin-bottom: 8px; }
+          li { margin-bottom: 12px; }
+          
+          @media (max-width: 600px) {
+            .content { padding: 0 30px 40px; }
+            .header { padding: 40px 0 30px; }
+            h2 { font-size: 24px; }
+            .btn { width: 80%; }
+          }
         </style>
       </head>
       <body>
@@ -122,15 +201,16 @@ class EmailService {
           <div class="container">
             <div class="header">
               <img src="${clubHubLogo}" alt="ClubHub" class="logo-main">
-              ${orgLogo}
             </div>
             <div class="content">
               ${content}
             </div>
             <div class="footer">
-              ${footerOrg}
-              <p>© ${new Date().getFullYear()} ClubHub. All rights reserved.</p>
-              <p>Making sports club management simple and effective.</p>
+              <p style="margin-bottom: 10px; color: #94a3b8;">Powered by <strong>ClubHub</strong> &bull; The Future of Sports Management</p>
+              <p style="font-size: 12px; opacity: 0.6;">
+                You are receiving this email because of your association with a ClubHub organization. <br>
+                © ${new Date().getFullYear()} ClubHub. All rights reserved.
+              </p>
             </div>
           </div>
         </div>
@@ -147,43 +227,42 @@ class EmailService {
       inviterName,
       inviteLink,
       personalMessage,
-      clubRole,
-      logoUrl
+      clubRole
     } = inviteData;
 
     try {
-      const subject = `🏆 Join ${clubName} on ClubHub`;
+      const subject = `You're Invited to Join ${clubName}`;
       
       const content = `
-        <h2 style="text-align: center;">You're Invited!</h2>
+        <h2>Official Club Invitation</h2>
         <p>Hello,</p>
-        <p><strong>${inviterName}</strong> has invited you to join <span class="accent">${clubName}</span> as a <strong>${clubRole || 'member'}</strong>.</p>
+        <p>You have been officially invited to join <strong>${clubName}</strong> on the ClubHub platform. This invitation was sent by <span class="accent">${inviterName}</span> for the role of <strong>${clubRole || 'Member'}</strong>.</p>
         
+        <p>ClubHub is our central hub for all team operations, scheduling, payments, and communications. Joining will give you immediate access to your team's dashboard.</p>
+
         ${personalMessage ? `
           <div class="card">
-            <p style="margin: 0; font-style: italic; color: #94a3b8;">" ${personalMessage} "</p>
+            <p style="margin: 0; font-style: italic; color: #a1a1aa;">&ldquo;${personalMessage}&rdquo;</p>
           </div>
         ` : ''}
 
         <div style="text-align: center;">
-          <a href="${inviteLink}" class="btn">Accept Invitation & Join</a>
+          <a href="${inviteLink}" class="btn">Accept Invitation</a>
         </div>
-
-        <div class="divider"></div>
         
-        <p style="font-size: 14px; color: #94a3b8;">
-          ClubHub is the premier platform for sports management. By joining, you'll be able to manage your schedule, communicate with your team, and track your performance all in one place.
+        <p style="text-align: center; font-size: 15px; color: #94a3b8;">
+          Note: This invitation link is unique to you and will expire in 48 hours for security reasons.
         </p>
       `;
 
-      const html = this.getBaseHtmlTemplate(content, { name: clubName, logoUrl });
+      const html = this.getBaseHtmlTemplate(content); // No club logo passed
 
       const mailOptions = {
-        from: `"${clubName} via ClubHub" <${process.env.EMAIL_FROM || 'noreply@clubhub.app'}>`,
+        from: `"${clubName} • ClubHub" <${process.env.EMAIL_FROM || 'invite@clubhub.app'}>`,
         to: email,
         subject,
         html,
-        text: `You've been invited to join ${clubName} on ClubHub by ${inviterName}. Join here: ${inviteLink}`,
+        text: `You've been invited to join ${clubName} on ClubHub. Join here: ${inviteLink}`,
         replyTo: process.env.EMAIL_REPLY_TO
       };
 
@@ -199,43 +278,44 @@ class EmailService {
     const { email, firstName, accountType, dashboardLink } = welcomeData;
 
     try {
-      const subject = `🎉 Welcome to ClubHub, ${firstName}!`;
+      const subject = `Welcome to the ClubHub Experience`;
       
       const content = `
-        <h2 style="text-align: center;">Welcome to the Community!</h2>
-        <p>Hello ${firstName},</p>
-        <p>We're thrilled to have you on board. Your <span class="accent">${accountType}</span> account has been successfully created.</p>
+        <h2>Welcome Aboard, ${firstName}!</h2>
+        <p>We are absolutely thrilled to have you with us. Your account is now fully active, giving you access to the world's most advanced sports management platform.</p>
+        
+        <p>Whether you're here to manage an elite academy or track your personal development, ClubHub provides the professional tools you need to succeed.</p>
         
         <div class="card">
-          <h3 style="margin-bottom: 10px;">🚀 What's Next?</h3>
+          <h3 style="margin-bottom: 20px; font-size: 20px;">Your Next Steps</h3>
           <ul>
             ${accountType === 'organization' ? `
-              <li>Complete your club profile and upload your logo</li>
-              <li>Invite your coaching staff and players</li>
-              <li>Set up your first team and schedule sessions</li>
+              <li><strong>Complete Your Profile:</strong> comprehensive profiles attract more talent.</li>
+              <li><strong>Invite Staff & Players:</strong> Build your roster in seconds.</li>
+              <li><strong>Schedule Events:</strong> Set up your season calendar.</li>
             ` : `
-              <li>Refine your player profile with experience and stats</li>
-              <li>Search for local clubs and apply to join</li>
-              <li>Keep track of your training and development</li>
+              <li><strong>Build Your CV:</strong> Update stats and experience.</li>
+              <li><strong>Find a Club:</strong> Browse elite academies and local teams.</li>
+              <li><strong>Get Scouting:</strong> Opt-in to be seen by recruiters.</li>
             `}
           </ul>
         </div>
 
         <div style="text-align: center;">
-          <a href="${dashboardLink}" class="btn">Go to My Dashboard</a>
+          <a href="${dashboardLink}" class="btn">Access Dashboard</a>
         </div>
 
-        <p>If you need any help getting started, our team is always here to support you.</p>
+        <p>Thank you for choosing ClubHub. We're excited to see what you achieve.</p>
       `;
 
       const html = this.getBaseHtmlTemplate(content);
 
       const mailOptions = {
-        from: `"ClubHub" <${process.env.EMAIL_FROM || 'welcome@clubhub.app'}>`,
+        from: `"ClubHub Team" <${process.env.EMAIL_FROM || 'welcome@clubhub.app'}>`,
         to: email,
         subject,
         html,
-        text: `Welcome to ClubHub, ${firstName}! Your account is ready. Access your dashboard here: ${dashboardLink}`
+        text: `Welcome to ClubHub, ${firstName}! Access your dashboard: ${dashboardLink}`
       };
 
       return await this.transporter.sendMail(mailOptions);
@@ -248,20 +328,20 @@ class EmailService {
   // Send password reset email
   async sendPasswordResetEmail(email, firstName, resetUrl) {
     try {
-      const subject = `🔐 Reset Your ClubHub Password`;
+      const subject = `Secure Password Reset Request`;
       
       const content = `
-        <h2 style="text-align: center;">Password Reset Request</h2>
+        <h2>Reset Your Password</h2>
         <p>Hello ${firstName},</p>
-        <p>We received a request to reset your password. If this was you, please click the button below to secure your account:</p>
+        <p>We received a request to perform a security update on your account credentials. To proceed with setting a new password, please click the secure link below.</p>
         
         <div style="text-align: center;">
           <a href="${resetUrl}" class="btn">Reset Password</a>
         </div>
 
-        <div class="card" style="background: rgba(220, 38, 38, 0.05); border-color: rgba(220, 38, 38, 0.2);">
-          <p style="margin: 0; color: #fca5a5; font-size: 14px;">
-            <strong>Security Note:</strong> This link will expire in 60 minutes. If you did not request this, please ignore this email and your password will remain unchanged.
+        <div class="card" style="border-left: 4px solid #ef4444;">
+          <p style="margin: 0; color: #e2e8f0; font-size: 15px;">
+            <strong>Security Notice:</strong> If you did not request this change, please disregard this email. Your account remains secure and no changes have been made.
           </p>
         </div>
       `;
@@ -273,7 +353,7 @@ class EmailService {
         to: email,
         subject,
         html,
-        text: `Reset your ClubHub password using this link: ${resetUrl}`
+        text: `Reset your ClubHub password here: ${resetUrl}`
       };
 
       return await this.transporter.sendMail(mailOptions);
@@ -286,18 +366,17 @@ class EmailService {
   // Send password reset confirmation
   async sendPasswordResetConfirmationEmail(email, firstName) {
     try {
-      const subject = `✅ Password Reset Successful`;
+      const subject = `Password Successfully Updated`;
       
       const content = `
-        <h2 style="text-align: center;">Security Update</h2>
+        <h2>Account Security Updated</h2>
         <p>Hello ${firstName},</p>
-        <p>Your password has been successfully reset. You can now log in to your account with your new credentials.</p>
+        <p>This email is to confirm that the password for your ClubHub account has been successfully changed.</p>
+        <p>You may now log in using your new credentials.</p>
         
         <div style="text-align: center;">
-          <a href="${process.env.FRONTEND_URL || 'http://localhost:8000'}/login.html" class="btn">Login Now</a>
+          <a href="${process.env.FRONTEND_URL || 'http://localhost:8000'}/login.html" class="btn">Login to Account</a>
         </div>
-
-        <p>If you did not perform this action, please contact our support team immediately.</p>
       `;
 
       const html = this.getBaseHtmlTemplate(content);
@@ -307,7 +386,7 @@ class EmailService {
         to: email,
         subject,
         html,
-        text: `Your ClubHub password has been successfully reset.`
+        text: `Your ClubHub password was updated successfully.`
       };
 
       return await this.transporter.sendMail(mailOptions);
@@ -326,8 +405,7 @@ class EmailService {
       amount,
       dueDate,
       description,
-      paymentLink,
-      logoUrl
+      paymentLink
     } = paymentData;
 
     try {
@@ -336,32 +414,43 @@ class EmailService {
         currency: 'GBP'
       }).format(amount);
 
-      const subject = `💳 Payment Reminder: ${formattedAmount} for ${clubName}`;
+      const subject = `Payment Due: ${formattedAmount} - ${clubName}`;
       
       const content = `
-        <h2 style="text-align: center;">Payment Reminder</h2>
+        <h2>Payment Reminder</h2>
         <p>Hello ${firstName},</p>
-        <p>This is a friendly reminder for an upcoming or overdue payment.</p>
+        <p>This is an automated notification regarding an outstanding payment for <strong>${clubName}</strong>. Please ensure this is settled to maintain active status.</p>
         
         <div class="card">
-          <p><strong>Amount:</strong> ${formattedAmount}</p>
-          <p><strong>Description:</strong> ${description}</p>
-          <p><strong>Due Date:</strong> ${new Date(dueDate).toLocaleDateString()}</p>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+            <span style="color:#94a3b8;">Description</span>
+            <span style="font-weight:600;">${description}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="color:#94a3b8;">Due Date</span>
+            <span>${new Date(dueDate).toLocaleDateString()}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:18px;">
+            <span style="color:#ffffff;">Total Amount</span>
+            <span class="accent">${formattedAmount}</span>
+          </div>
         </div>
 
         <div style="text-align: center;">
-          <a href="${paymentLink}" class="btn">Complete Payment</a>
+          <a href="${paymentLink}" class="btn">Make Secure Payment</a>
         </div>
+        
+        <p style="text-align: center; color: #64748b; font-size: 14px;">Payments are processed securely via Stripe.</p>
       `;
 
-      const html = this.getBaseHtmlTemplate(content, { name: clubName, logoUrl });
+      const html = this.getBaseHtmlTemplate(content);
 
       const mailOptions = {
-        from: `"${clubName} via ClubHub" <${process.env.EMAIL_FROM || 'billing@clubhub.app'}>`,
+        from: `"${clubName} • Billing" <${process.env.EMAIL_FROM || 'billing@clubhub.app'}>`,
         to: email,
         subject,
         html,
-        text: `Payment reminder for ${clubName}: ${formattedAmount} for ${description}. Pay here: ${paymentLink}`
+        text: `Payment of ${formattedAmount} due for ${clubName}. Pay here: ${paymentLink}`
       };
 
       return await this.transporter.sendMail(mailOptions);
@@ -403,17 +492,17 @@ class EmailService {
     try {
       const result = await this.sendEmail({
         to: email,
-        subject: '🧪 ClubHub Email Test',
+        subject: 'Configuration Verified: ClubHub Email System',
         html: this.getBaseHtmlTemplate(`
-          <h2 style="text-align: center;">Email Test Successful!</h2>
-          <p>If you're reading this, the ClubHub email service is correctly configured and reaching your inbox.</p>
+          <h2>System Configuration Verified</h2>
+          <p>This is a confirmation that your ClubHub email infrastructure is correctly configured and operational.</p>
           <div class="card">
-            <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Status:</strong> <span style="color:#4ade80;">Operational</span></p>
             <p><strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}</p>
-            <p><strong>Service:</strong> ${process.env.EMAIL_SERVICE || 'Ethereal (Dev)'}</p>
+            <p><strong>Timestamp:</strong> ${new Date().toUTCString()}</p>
           </div>
         `),
-        text: `ClubHub Email Test Successful! Timestamp: ${new Date().toISOString()}`
+        text: `ClubHub Email System Verified. ${new Date().toISOString()}`
       });
 
       return result;
@@ -427,4 +516,5 @@ class EmailService {
 // Create singleton instance
 const emailService = new EmailService();
 
+// Export - Force V2 Rebuild
 module.exports = emailService;

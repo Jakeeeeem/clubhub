@@ -534,9 +534,14 @@
 
       try {
         const user = JSON.parse(currentUser);
-        if (user.account_type !== 'player' && user.account_type !== 'parent' && user.account_type !== 'adult') {
-          console.warn('🚫 User is not a player/parent/adult, redirecting to appropriate dashboard...');
-          // Redirect to correct dashboard based on account type
+
+        // Relaxed Check: Allow if role is 'player' (contextual) OR if account_type is player/parent/adult
+        const isPlayerContext = user.role === 'player';
+        const isPlayerAccount = ['player', 'parent', 'adult'].includes(user.account_type);
+
+        if (!isPlayerAccount && !isPlayerContext) {
+          console.warn('🚫 User is not a player/parent/adult AND not in player context, redirecting...');
+
           if (user.account_type === 'admin' || user.account_type === 'organization') {
             window.location.href = 'admin-dashboard.html';
           } else if (user.account_type === 'coach') {
@@ -546,6 +551,7 @@
           }
           return;
         }
+        console.log('✅ Player/Parent/Context authentication verified');
         console.log('✅ Player/Parent authentication verified');
       } catch (error) {
         console.error('❌ Failed to parse user data:', error);

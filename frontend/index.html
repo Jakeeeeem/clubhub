@@ -500,29 +500,7 @@
                 <h2>Login to ClubHub</h2>
                 <button class="close" onclick="closeModal('loginModal')">&times;</button>
             </div>
-            <div class="demo-access-panel"
-                style="background: rgba(255, 255, 255, 0.05); border: 1px dashed rgba(255, 255, 255, 0.2); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
-                <p
-                    style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem; text-align: center; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
-                    ⚡ Quick Demo Access</p>
-                <div style="display: flex; gap: 10px; align-items: stretch;">
-                    <select id="demoUserType"
-                        style="flex: 1; padding: 0.8rem 1rem; background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; color: #000; font-size: 0.9rem; cursor: pointer; font-weight: 500;">
-                        <option value="superadmin" style="color: #000; background: #fff;">🔐 Super Admin (Platform)
-                        </option>
-                        <option value="admin" style="color: #000; background: #fff;">🏢 Demo Admin (Club Owner)</option>
-                        <option value="coach" style="color: #000; background: #fff;">⚽ Demo Coach</option>
-                        <option value="player" style="color: #000; background: #fff;">👤 Demo Player</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="quickLoginFromDropdown()"
-                        style="padding: 0.8rem 1.5rem; font-size: 0.9rem; white-space: nowrap;">
-                        Try Demo
-                    </button>
-                </div>
-                <p style="color: #64748b; font-size: 0.75rem; margin-top: 0.75rem; text-align: center; opacity: 0.8;">
-                    No signup required • Explore full features
-                </p>
-            </div>
+
             <form id="loginForm">
                 <div class="form-group">
                     <label for="loginEmail">Email</label>
@@ -664,9 +642,19 @@
                                 </span>
                             </div>
                         </div>
-                        <p style="color: #cbd5e1; margin-bottom: 1rem; font-size: 0.9rem; line-height: 1.5;">
-                            ${club.description ? club.description.substring(0, 100) + '...' : 'Recruiting players now'}
-                        </p>
+                        <div style="margin-bottom: 1rem;">
+                            ${club.available_positions && club.available_positions.length > 0
+                            ? `<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    ${club.available_positions.slice(0, 3).map(p =>
+                                `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">
+                                            ${p.position || p.title}
+                                        </span>`
+                            ).join('')}
+                                    ${club.available_positions.length > 3 ? `<span style="font-size: 0.8rem; color: #94a3b8;">+${club.available_positions.length - 3} more</span>` : ''}
+                                   </div>`
+                            : `<p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5;">${club.description ? club.description.substring(0, 100) + '...' : 'Recruiting players now'}</p>`
+                        }
+                        </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color);">
                             <span style="color: #64748b; font-size: 0.85rem;">
                                 📍 ${club.location || 'Location TBD'}

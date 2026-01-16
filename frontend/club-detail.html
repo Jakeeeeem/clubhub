@@ -189,11 +189,11 @@
                     <p style="color: var(--text-muted);">Fill in your details below to express interest in joining.</p>
                 </div>
 
-                <div class="success-message" id="successMessage">
+                <div class="success-message" id="successMessage" style="display: none;">
                     ✅ Application submitted successfully! Welcome to the club.
                 </div>
 
-                <div class="error-message" id="errorMessage"></div>
+                <div class="error-message" id="errorMessage" style="display: none;"></div>
 
                 <form id="applicationForm">
                     <div id="personalDetails">
@@ -296,9 +296,9 @@
                 console.error('Failed to load club:', error);
                 document.getElementById('errorMessage').textContent = '❌ Club not found. Redirecting to home...';
                 document.getElementById('errorMessage').style.display = 'block';
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 3000);
+                // setTimeout(() => {
+                //    window.location.href = 'index.html';
+                // }, 3000);
             }
         }
 
