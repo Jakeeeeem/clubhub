@@ -5804,75 +5804,7 @@
             // ========================================
             // PLAYER FILTERS - WIRED UP ✅
             // ========================================
-            async function loadPlayers() {
-                try {
-                    const filter = document.getElementById('playerListFilter')?.value || 'all';
-                    const teamFilter = document.getElementById('teamFilter')?.value || '';
-                    const sportFilter = document.getElementById('sportFilter')?.value || '';
-                    const locationFilter = document.getElementById('locationFilter')?.value || '';
-                    const minAge = document.getElementById('minAgeFilter')?.value || '';
-                    const maxAge = document.getElementById('maxAgeFilter')?.value || '';
 
-                    const context = await apiService.getContext();
-                    const clubId = context?.currentOrganization?.id;
-
-                    // Build query string
-                    let queryParams = `clubId=${clubId}`;
-                    if (sportFilter) queryParams += `&sport=${sportFilter}`;
-                    if (locationFilter) queryParams += `&location=${locationFilter}`;
-                    if (minAge) queryParams += `&minAge=${minAge}`;
-                    if (maxAge) queryParams += `&maxAge=${maxAge}`;
-
-                    // Use filtered endpoint
-                    const players = await apiService.makeRequest(
-                        `/players/filtered/${filter}?${queryParams}`
-                    );
-
-                    displayPlayers(players);
-
-                } catch (error) {
-                    console.error('Load players error:', error);
-                    document.getElementById('playersContainer').innerHTML =
-                        '<p>Error loading players. Please try again.</p>';
-                }
-            }
-
-            function displayPlayers(players) {
-                const container = document.getElementById('playersContainer');
-
-                if (!players || players.length === 0) {
-                    container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No players found matching your filters.</p>';
-                    return;
-                }
-
-                container.innerHTML = players.map(player => `
-                    <div class="player-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <div>
-                                <h4 style="margin: 0 0 0.5rem 0;">${player.first_name} ${player.last_name}</h4>
-                                <p style="color: var(--text-muted); margin: 0.25rem 0;">
-                                    ${player.position || 'No position'} • Age ${player.age || 'N/A'}
-                                </p>
-                                <p style="color: var(--text-muted); margin: 0.25rem 0; font-size: 0.875rem;">
-                                    ${player.email || 'No email'} • ${player.location || 'No location'}
-                                </p>
-                            </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
-                                <button class="btn btn-small btn-danger" onclick="deletePlayer('${player.id}')">Delete</button>
-                            </div>
-                        </div>
-                        ${player.has_payment_plan ?
-                        '<span style="display: inline-block; background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; margin-top: 0.5rem;">On Payment Plan</span>' :
-                        '<span style="display: inline-block; background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; margin-top: 0.5rem;">No Plan</span>'
-                    }
-                        ${player.team_name ?
-                        `<span style="display: inline-block; background: rgba(59, 130, 246, 0.2); color: #3b82f6; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.75rem; margin-top: 0.5rem; margin-left: 0.5rem;">${player.team_name}</span>` :
-                        ''
-                    }
-                    </div>
-                `).join('');
-            }
 
             function resetPlayerFilters() {
                 document.getElementById('playerListFilter').value = 'all';
