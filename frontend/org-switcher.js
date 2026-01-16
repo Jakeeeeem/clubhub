@@ -33,7 +33,22 @@ class OrganizationSwitcher {
     const container = document.getElementById('org-switcher-container');
     if (!container) return;
 
-    // Always show switcher, even with 0 or 1 organizations
+    // For players with only 1 organization, we might want to hide this to reduce clutter,
+    // UNLESS they are an admin/owner who just happens to be viewing their player profile.
+    // However, if they only have 1 org total, there is nothing to switch to.
+    if (this.organizations && this.organizations.length <= 1) {
+        // If they only have 1 org, check if they are an owner/admin of it to decide if we show "Create Org"
+        // But generally, for a cleaner UI, we can just hide it or show a static badge.
+        // Let's hide it strictly if length is 1 to solve the "extra dropdown" complaint.
+        // container.innerHTML = ''; 
+        // return;
+        // User explicitly complained about "extra dropdown", so let's hide if <= 1.
+        if (this.organizations.length <= 1) {
+             container.innerHTML = '';
+             return;
+        }
+    }
+
     const currentOrgName = this.currentOrg?.name || 'No Organization';
     const currentOrgRole = this.currentOrg?.user_role || this.currentOrg?.role || '';
 
@@ -66,12 +81,7 @@ class OrganizationSwitcher {
               ? `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
                    No organizations yet.<br>Create your first one below!
                  </div>`
-              : this.organizations.length === 1
-                ? `${this.organizations.map(org => this.renderOrgItem(org)).join('')}
-                   <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border-color); margin-top: 0.5rem;">
-                     💡 Create additional organizations to manage multiple clubs
-                   </div>`
-                : this.organizations.map(org => this.renderOrgItem(org)).join('')
+              : this.organizations.map(org => this.renderOrgItem(org)).join('')
             }
           </div>
           <div class="org-switcher-footer">
@@ -201,14 +211,27 @@ class OrganizationSwitcher {
            if (context && context.currentOrganization) {
                const newRole = context.currentOrganization.role;
                
-               // Update local storage user
-               const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+               // Update local storage user - CRITICAL FIX: Ensure we merge with existing or fetch fresh if missing
+               let currentUser = null;
+               try {
+                   const stored = localStorage.getItem('currentUser');
+                   if (stored) currentUser = JSON.parse(stored);
+               } catch(e) { console.warn('Local storage parse error', e); }
+
+               // If currentUser is missing or broken (causing the "Login" button issue), recover it from context
+               if (!currentUser || !currentUser.id) {
+                   if (context.user) {
+                       currentUser = context.user;
+                   } else {
+                       // Fallback - this shouldn't happen if refreshContext worked
+                       currentUser = { role: newRole }; 
+                   }
+               }
+
                currentUser.role = newRole;
-               // If the user is an owner/admin acting as a player, we must ensure 
-               // the guard allows them into the player dashboard.
-               // The guard checks currently: user.role === 'player' OR account_type in ['player',..]
-               // So updating currentUser.role to 'player' should pass the guard.
-               
+               // Also sync clubId for determining active club
+               currentUser.clubId = context.currentOrganization.id;
+
                localStorage.setItem('currentUser', JSON.stringify(currentUser));
                
                // Redirect based on role

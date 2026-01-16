@@ -606,7 +606,7 @@ function updateNavigation() {
             loggedInNav.style.display = 'flex';
             loggedInNav.innerHTML = `
                 <div class="user-info">
-                    <div class="user-avatar">${AppState.currentUser.first_name.charAt(0)}</div>
+                    <div class="user-avatar">${(AppState.currentUser.first_name || 'U').charAt(0)}</div>
                     <span>Welcome, ${AppState.currentUser.first_name}</span>
                     ${AppState.notifications.length > 0 ? `
                         <div class="notification-icon" onclick="showNotificationsModal()">

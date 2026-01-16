@@ -28,31 +28,38 @@ function setupNavButtons() {
 
   if (AppState.currentUser) {
     const firstName = AppState.currentUser.first_name || AppState.currentUser.firstName || "User";
+    const lastInitial = (AppState.currentUser.last_name || AppState.currentUser.lastName || "").charAt(0);
+    const initials = (firstName.charAt(0) + lastInitial).toUpperCase();
     const unreadCount = PlayerDashboardState.notifications.filter(n => !n.is_read).length;
     
-    const profileSwitcher = PlayerDashboardState.family.length > 0 ? `
-      <div class="profile-switcher">
-        <select onchange="switchProfile(this.value)" class="profile-select">
-          <option value="" ${!PlayerDashboardState.activePlayerId ? 'selected' : ''}>Main Profil (${firstName})</option>
-          ${PlayerDashboardState.family.map(child => `
-            <option value="${child.id}" ${PlayerDashboardState.activePlayerId == child.id ? 'selected' : ''}>
-              ${child.first_name} ${child.last_name}
-            </option>
-          `).join('')}
-        </select>
-      </div>
-    ` : '';
+    // Admin dashboard structure:
+    // [Org Switcher] [Name] [Avatar] [Logout]
+    // Player dashboard needs:
+    // [Org Switcher] [Bell] [Name] [Avatar] [Logout]
 
+    // We need to inject the Org Switcher here to keep them grouped OR use flexbox to group the existing container.
+    // However, the OrganizationSwitcher class targets 'org-switcher-container'.
+    // A clean way is to move the 'org-switcher-container' element INTO 'loggedInNav' using JS, or structure HTML accordingly.
+    
+    // But since 'org-switcher-container' is already in HTML, let's keep it simple.
+    // We will render the rest of the items in 'loggedInNav' and ensure the parent <nav> aligns them.
+    // To match Admin exactly, 'org-switcher-container' should be close to the user info.
+    
+    // Let's grab the org-switcher-container and append it to our nav-controls if it's not already there
+    const orgSwitcherContainer = document.getElementById('org-switcher-container');
+    
     navContainer.innerHTML = `
-      <div class="nav-controls">
-        ${profileSwitcher}
-        <div class="notification-wrapper">
-          <button class="notification-bell ${unreadCount > 0 ? 'has-unread' : ''}" onclick="toggleNotifications()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="user-info" style="display: flex; align-items: center; gap: 1rem;">
+        <!-- Placeholder for Org Switcher if we move it -->
+        <div id="moved-org-switcher"></div>
+
+        <div class="notification-wrapper" style="position: relative;">
+          <button class="notification-bell ${unreadCount > 0 ? 'has-unread' : ''}" onclick="toggleNotifications()" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : ''}
+            ${unreadCount > 0 ? `<span class="unread-badge" style="position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 10px; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;">${unreadCount}</span>` : ''}
           </button>
           <div id="notificationDropdown" class="notification-dropdown">
             <div class="dropdown-header">
@@ -60,17 +67,22 @@ function setupNavButtons() {
               <button onclick="markAllNotificationsRead()" class="btn-text">Mark all read</button>
             </div>
             <div id="notificationList" class="notification-list">
-              <p class="empty-state">No notifications</p>
+              <!-- Populated by JS -->
             </div>
           </div>
         </div>
-        <div class="user-profile-nav" onclick="showModal('accountModal')">
-          <div class="user-avatar">${firstName.charAt(0).toUpperCase()}</div>
-          <span class="user-name">${firstName}</span>
-        </div>
+        
+        <span class="user-name" style="font-weight: 500;">Hello, ${firstName}!</span>
+        <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold;">${initials}</div>
         <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
       </div>
     `;
+
+    // Move Org Switcher into this flex container for perfect alignment
+    const movedContainer = document.getElementById('moved-org-switcher');
+    if (orgSwitcherContainer && movedContainer) {
+        movedContainer.appendChild(orgSwitcherContainer);
+    }
   } else {
     navContainer.innerHTML = '<button class="btn btn-primary" onclick="window.location.href=\'index.html\'">Login</button>';
   }
@@ -377,12 +389,34 @@ function loadPlayerTeams() {
   const grid = byId('playerTeamsContainer');
   if (!grid) return;
 
+  // Ensure grid container classes logic
+  grid.classList.remove('card-grid');
+
   if (!PlayerDashboardState.teams.length) {
-    grid.innerHTML = '<div class="empty-state">' +
-      '<h4>No teams joined yet</h4>' +
-      '<p>Join a club to be assigned to teams</p>' +
-      '<button class="btn btn-primary" onclick="showPlayerSection(\'club-finder\')">Find Clubs</button>' +
-    '</div>';
+    // Show empty table logic to satisfy "table ui" requirement
+    grid.innerHTML = `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 35%;">Team Name</th>
+            <th>Role / Position</th>
+            <th>Coach</th>
+            <th>Age Group</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 2rem;">
+              <p style="color: var(--text-muted); margin-bottom: 1rem;">No teams joined yet</p>
+              <button class="btn btn-primary btn-small" onclick="showPlayerSection('club-finder')">Find Clubs to Join</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    `;
     const container = byId('teamEventsContainer');
     if (container) container.innerHTML = '<p>No team events found</p>';
     return;

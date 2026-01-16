@@ -123,20 +123,22 @@
 
 /* Enhanced Dropdown */
 .org-switcher-dropdown {
-  position: absolute;
-  top: calc(100% + 12px);
-  left: 0;
-  min-width: 300px;
-  background: var(--bg-card);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
-  box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-15px) scale(0.95);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 280px;
+    background: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Ensure it doesn't get clipped */
+    max-height: 80vh;
+    overflow-y: auto;
   overflow: hidden;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
