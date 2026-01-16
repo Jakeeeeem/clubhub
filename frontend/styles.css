@@ -2460,3 +2460,175 @@ main.main.home-main {
     .welcome-hero { padding-top: 120px; }
     .role-cards-grid { grid-template-columns: 1fr; }
 }
+
+/* Modern Table Styles - Added by Antigravity */
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+    margin-top: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(10px);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: var(--text-main);
+}
+
+.data-table th {
+    text-align: left;
+    padding: 1.25rem 1.5rem;
+    background: rgba(20, 20, 25, 0.6);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.data-table td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    transition: var(--transition);
+}
+
+.data-table tbody tr {
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Team Specific Table Styles */
+.team-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.team-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 51, 51, 0.1);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.team-name-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-name {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 1rem;
+}
+
+.team-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.stats-cell {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.stat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 40px;
+}
+
+.stat-value {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.stat-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.win-stat { color: #4ade80; }
+.loss-stat { color: #f87171; }
+.draw-stat { color: #fbbf24; }
+
+.coach-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.coach-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--neon-purple) 0%, #4c1d95 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 2px solid rgba(255,255,255,0.1);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.data-table tr:hover .action-buttons {
+    opacity: 1;
+}
+
+.btn-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: var(--bg-card);
+    color: var(--text-main);
+    transform: translateY(-2px);
+    border-color: var(--text-muted);
+}
+
+.btn-icon.manage:hover { color: var(--primary); border-color: var(--primary); }
+.btn-icon.edit:hover { color: var(--neon-purple); border-color: var(--neon-purple); }
+.btn-icon.delete:hover { color: #ef4444; border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+

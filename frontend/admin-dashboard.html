@@ -4175,64 +4175,84 @@
 
                 if (teams.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-                            <p>No teams created yet</p>
-                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">Create Your First Team</button>
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">⚽</div>
+                            <h3 style="margin-bottom: 0.5rem;">No teams created yet</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Get started by creating your first team to manage players and events.</p>
+                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create Your First Team</button>
                         </div>
                     `;
                     return;
                 }
 
                 container.innerHTML = `
-                    <div style="overflow-x: auto;">
-                        <table class="data-table" style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                    <div class="table-responsive">
+                        <table class="data-table">
                             <thead>
-                                <tr style="background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border-color);">
-                                    <th style="padding: 1rem; text-align: left;">Team Name</th>
-                                    <th style="padding: 1rem; text-align: left;">Sport / Age</th>
-                                    <th style="padding: 1rem; text-align: center;">Players</th>
-                                    <th style="padding: 1rem; text-align: center;">Stats (W/L/D)</th>
-                                    <th style="padding: 1rem; text-align: left;">Coach</th>
-                                    <th style="padding: 1rem; text-align: right;">Actions</th>
+                                <tr>
+                                    <th style="width: 30%;">Team Details</th>
+                                    <th>Players</th>
+                                    <th style="text-align: center;">Performance</th>
+                                    <th>Coach</th>
+                                    <th style="text-align: right;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${teams.map(team => `
-                                    <tr style="border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background 0.2s;" 
-                                        onclick="openTeamManagement('${team.id}', '${team.name}')"
-                                        onmouseover="this.style.background='rgba(255,255,255,0.05)'"
-                                        onmouseout="this.style.background='transparent'">
-                                        <td style="padding: 1rem; font-weight: bold;">
-                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                                <span class="status-badge status-active">⚽</span>
-                                                ${team.name}
+                                    <tr onclick="openTeamManagement('${team.id}', '${team.name}')" style="cursor: pointer;">
+                                        <td>
+                                            <div class="team-info-cell">
+                                                <div class="team-icon">⚽</div>
+                                                <div class="team-name-group">
+                                                    <span class="team-name">${team.name}</span>
+                                                    <span class="team-meta">${team.sport} • ${team.age_group || 'No Age Group'}</span>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td style="padding: 1rem;">
-                                            <div style="font-size: 0.9rem;">${team.sport}</div>
-                                            <div style="font-size: 0.8rem; color: var(--text-muted);">${team.age_group || 'N/A'}</div>
+                                        <td style="text-align: left;">
+                                            <span class="badge" style="background: rgba(255, 255, 255, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">
+                                                👥 ${team.player_count} Players
+                                            </span>
                                         </td>
-                                        <td style="padding: 1rem; text-align: center;">
-                                            <span class="badge badge-secondary">${team.player_count}</span>
+                                        <td>
+                                            <div class="stats-cell">
+                                                <div class="stat-pill">
+                                                    <span class="stat-value win-stat">${team.wins || 0}</span>
+                                                    <span class="stat-label">Wins</span>
+                                                </div>
+                                                <div class="stat-pill">
+                                                    <span class="stat-value loss-stat">${team.losses || 0}</span>
+                                                    <span class="stat-label">Loss</span>
+                                                </div>
+                                                <div class="stat-pill">
+                                                    <span class="stat-value draw-stat">${team.draws || 0}</span>
+                                                    <span class="stat-label">Draw</span>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td style="padding: 1rem; text-align: center; font-family: monospace;">
-                                            <span style="color: #4caf50;">${team.wins || 0}</span> / 
-                                            <span style="color: #f44336;">${team.losses || 0}</span> / 
-                                            <span style="color: #ff9800;">${team.draws || 0}</span>
+                                        <td>
+                                            <div class="coach-cell">
+                                                ${team.coach_first_name ?
+                        `<div class="coach-avatar">${team.coach_first_name[0]}${team.coach_last_name[0]}</div>
+                                                     <div style="display:flex; flex-direction:column;">
+                                                        <span style="font-weight:500;">${team.coach_first_name} ${team.coach_last_name}</span>
+                                                        <span style="font-size:0.75rem; color:var(--text-muted);">Head Coach</span>
+                                                     </div>`
+                        : `<span style="color: var(--text-muted); font-style: italic; opacity: 0.6; font-size: 0.9rem;">No Coach Assigned</span>`
+                    }
+                                            </div>
                                         </td>
-                                        <td style="padding: 1rem;">
-                                            ${team.coach_first_name ?
-                        `<div style="display: flex; align-items: center; gap: 0.5rem;">
-                                                    <div class="avatar-small" style="width: 24px; height: 24px; font-size: 0.8rem; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center;">${team.coach_first_name[0]}${team.coach_last_name[0]}</div>
-                                                    ${team.coach_first_name} ${team.coach_last_name}
-                                                 </div>`
-                        : '<span style="color: var(--text-muted); font-style: italic;">Unassigned</span>'}
-                                        </td>
-                                        <td style="padding: 1rem; text-align: right;">
-                                            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;" onclick="event.stopPropagation()">
-                                                <button class="btn btn-small btn-primary" onclick="openTeamManagement('${team.id}', '${team.name}')">Manage</button>
-                                                <button class="btn btn-small btn-secondary" onclick="editTeam('${team.id}')">Edit</button>
-                                                <button class="btn btn-small btn-danger" onclick="deleteTeam('${team.id}')" title="Delete Team">🗑️</button>
+                                        <td>
+                                            <div class="action-buttons" onclick="event.stopPropagation()">
+                                                <button class="btn-icon manage" title="Manage Team" onclick="openTeamManagement('${team.id}', '${team.name}')">
+                                                    ⚙️
+                                                </button>
+                                                <button class="btn-icon edit" title="Edit Team" onclick="editTeam('${team.id}')">
+                                                    ✏️
+                                                </button>
+                                                <button class="btn-icon delete" title="Delete Team" onclick="deleteTeam('${team.id}')">
+                                                    🗑️
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
