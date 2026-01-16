@@ -615,19 +615,7 @@
             }
         }
 
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const navContainer = document.getElementById('navButtons');
 
-        prevBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
-
-        if (currentStep === totalSteps) {
-            navContainer.style.display = 'none';
-        } else {
-            navContainer.style.display = 'flex';
-            nextBtn.textContent = currentStep === totalSteps - 1 ? 'Create Account' : 'Next';
-        }
-        }
 
         // Toggle password visibility
         function togglePasswordVisibility(inputId, button) {

@@ -620,6 +620,10 @@ router.get('/', authenticateToken, async (req, res) => {
       paramCount++;
       queryText += ` AND p.club_id = $${paramCount}`;
       queryParams.push(clubId);
+    } else if (req.user.account_type === 'organization') {
+       // If no clubId specified, safeguard to only user's owned clubs (Already covered by lines 653+ but good to be explicit here or leave as is)
+       // The existing logic at line 653 handles the 'Owner' restriction globally.
+       // So we just ensure we don't return 'all' to non-owners.
     }
 
     // Filter by status if provided

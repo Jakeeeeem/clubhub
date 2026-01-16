@@ -55,6 +55,8 @@ app.use(helmet({
 
 app.use(cors({
   origin: [
+    'http://localhost:8081',
+    'http://127.0.0.1:8081',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'http://localhost:3000',      // Added common dev port
@@ -92,7 +94,28 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve uploaded files with CORS headers
+// Serve uploaded files with CORS headers
 const path = require('path');
+const fs = require('fs');
+
+// Ensure upload directories exist (Safely)
+const uploadDirs = ['uploads', 'uploads/organizations', 'uploads/clubs', 'uploads/profiles'];
+try {
+  uploadDirs.forEach(dir => {
+    const fullPath = path.join(__dirname, dir);
+    if (!fs.existsSync(fullPath)) {
+      try {
+        fs.mkdirSync(fullPath, { recursive: true });
+        console.log(`📂 Created directory: ${dir}`);
+      } catch (err) {
+        console.warn(`⚠️ Could not create directory ${dir}: ${err.message}`);
+      }
+    }
+  });
+} catch (err) {
+  console.error('⚠️ Error checking upload directories:', err);
+}
+
 app.use('/uploads', (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -108,7 +131,7 @@ app.options('*', cors());
 // 🔥 RATE LIMITING - Protect your payment endpoints
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 5000, // Increased for dev/dashboard usage
   message: {
     error: 'Too many requests',
     message: 'Please try again later'
@@ -216,6 +239,7 @@ app.use('/api/talent-id', talentIdRoutes);
 app.use('/api/venues', require('./routes/venues'));  // Venue booking system
 app.use('/api/leagues', require('./routes/leagues'));  // League management system
 app.use('/api/polls', require('./routes/polls'));  // Voting/Polls system
+app.use('/api/email', require('./routes/email')); // Email service routes
 
 
 
@@ -272,7 +296,7 @@ async function startServer() {
     }
     
     // Start server
-    const server = app.listen(PORT, () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 ClubHub API server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:8000'}`);

@@ -65,6 +65,19 @@ router.get('/', authenticateToken, async (req, res) => {
     const queryParams = [];
     let paramCount = 0;
 
+    // Enforce Isolation: If no clubId, limit to user's clubs
+    if (!clubId) {
+        paramCount++;
+        queryText += ` AND p.club_id IN (
+            SELECT club_id FROM staff WHERE user_id = $${paramCount}
+            UNION 
+            SELECT id FROM clubs WHERE owner_id = $${paramCount}
+            UNION
+            SELECT id FROM clubs WHERE id IN (SELECT club_id FROM players WHERE user_id = $${paramCount})
+        )`;
+        queryParams.push(req.user.id);
+    }
+
     if (clubId) {
       paramCount++;
       queryText += ` AND p.club_id = $${paramCount}`;

@@ -52,6 +52,17 @@ router.get('/', optionalAuth, async (req, res) => {
       paramCount++;
       queryText += ` AND e.club_id = $${paramCount}`;
       queryParams.push(clubId);
+    } else if (req.user) {
+        // Enforce Isolation: If no clubId, limit to user's clubs/teams context
+        paramCount++;
+        queryText += ` AND e.club_id IN (
+            SELECT id FROM clubs WHERE owner_id = $${paramCount}
+            UNION
+            SELECT club_id FROM staff WHERE user_id = $${paramCount}
+            UNION
+            SELECT club_id FROM players WHERE user_id = $${paramCount}
+        )`;
+        queryParams.push(req.user.id);
     }
 
     // Filter by team if provided

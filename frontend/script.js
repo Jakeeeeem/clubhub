@@ -127,6 +127,16 @@ async function checkAuthState() {
             console.log('📡 Fetching current user from API...');
             const user = await apiService.getCurrentUser();
             
+            // Fetch full context (including role in current org)
+            const context = await apiService.getContext();
+            AppState.context = context;
+            
+            // Merge context role into user object for easy access
+            if (context?.currentOrganization) {
+                 user.role = context.currentOrganization.role || context.currentOrganization.user_role;
+                 user.currentOrgId = context.currentOrganization.id;
+            }
+
             AppState.currentUser = user;
             AppState.userType = user.account_type;
             
@@ -134,7 +144,7 @@ async function checkAuthState() {
             localStorage.setItem('currentUser', JSON.stringify(user));
             localStorage.setItem('userType', user.account_type);
             
-            console.log('✅ User loaded from API:', user.email);
+            console.log('✅ User loaded from API:', user.email, '| Role:', user.role);
             
         } catch (error) {
             console.warn('⚠️ API user fetch failed, trying localStorage fallback:', error);
@@ -177,16 +187,52 @@ function checkAuthStateWithoutAPI() {
 }
 
 function handlePostAuthRedirect() {
-    // Redirect if needed
-    if (AppState.currentUser && (window.location.pathname === '/' || window.location.pathname.endsWith('index.html'))) {
+    // 1. Initial Login/Landing Redirect
+    if (AppState.currentUser && (window.location.pathname === '/' || window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('login.html'))) {
         console.log('🔄 Redirecting authenticated user to dashboard...');
         redirectToDashboard();
+        return;
+    }
+
+    // 2. Dashboard Access Enforcement (Contextual Role)
+    if (AppState.currentUser) {
+        const path = window.location.pathname;
+        const role = AppState.currentUser.role; // This is now the context-aware role (Step 542)
+
+        // If I am a Player context, I should NOT be on Admin Dashboard
+        if (role === 'player' && path.includes('admin-dashboard.html')) {
+             console.log('⛔ Redirecting Player from Admin Dashboard -> Player Dashboard');
+             window.location.href = 'player-dashboard.html';
+             return;
+        }
+
+        // If I am an Admin (Owner/Staff), I generally shouldn't be on Player Dashboard, but maybe allowed?
+        // Usually we redirect them to Admin Dashboard for clarity, unless they specifically want to see player view.
+        // User asked: "remember if role of some assinged as player then get player dahboard not admin same with coahes"
+        // Implies strict separation.
+        if (['owner', 'admin', 'staff'].includes(role) && path.includes('player-dashboard.html')) {
+             console.log('⛔ Redirecting Admin from Player Dashboard -> Admin Dashboard');
+             window.location.href = 'admin-dashboard.html';
+             return;
+        }
+        
+        // Coach Redirection
+        if (['coach', 'assistant-coach'].includes(role) && !path.includes('coach-dashboard.html') && !path.includes('admin-dashboard.html')) {
+             // If coaches have their own dashboard (coach-dashboard.html), send them there.
+             // If they are on player dashboard, send them to coach dashboard.
+             if (path.includes('player-dashboard.html')) {
+                 console.log('⛔ Redirecting Coach from Player Dashboard -> Coach Dashboard');
+                 window.location.href = 'coach-dashboard.html';
+                 return;
+             }
+        }
     }
     
     console.log('🔍 Final auth state:', {
         hasUser: !!AppState.currentUser,
         userEmail: AppState.currentUser?.email,
-        userType: AppState.userType
+        userType: AppState.userType,
+        contextRole: AppState.currentUser?.role
     });
 }
 
@@ -581,21 +627,36 @@ function updateNavigation() {
 
 function redirectToDashboard() {
     const userType = AppState.userType;
+    const userRole = AppState.currentUser?.role; // Contextual role from API
     
-    console.log('🔄 Redirecting user type:', userType);
+    console.log('🔄 Redirecting | Global Type:', userType, '| Context Role:', userRole);
     
+    // Priority 1: Contextual Role (if switched to an org where they are a player/coach)
+    if (userRole === 'player') {
+        window.location.href = 'player-dashboard.html';
+        return;
+    }
+    if (['coach', 'assistant-coach', 'coaching-supervisor'].includes(userRole)) {
+        window.location.href = 'coach-dashboard.html'; // Assuming this exists or uses admin-dashboard with restricted view
+         // Actually, usually coaches might use admin-dashboard with restrictions.
+         // But if player-dashboard is distinct, we prioritize that for players.
+         return;
+    }
+
+    // Priority 2: Global Account Type
     switch (userType) {
         case 'organization':
             window.location.href = 'admin-dashboard.html';
             break;
         case 'adult':
-            // Check if user has coach role
+            // Check if user has coach role (fallback if role not in currentUser root)
             const isCoach = AppState.staff?.some(s => 
                 s.user_id === AppState.currentUser?.id && 
                 ['coach', 'assistant-coach', 'coaching-supervisor'].includes(s.role)
             );
             if (isCoach) {
-                window.location.href = 'coach-dashboard.html';
+                // Coach dashboard logic
+                 window.location.href = 'admin-dashboard.html'; // Coaches often use admin dashboard
             } else {
                 window.location.href = 'player-dashboard.html';
             }

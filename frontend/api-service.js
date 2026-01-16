@@ -36,7 +36,7 @@ class ApiService {
   }
 
   getUserRole() {
-    return this.context?.currentOrganization?.user_role || null;
+    return this.context?.currentOrganization?.user_role || this.context?.currentOrganization?.role || null;
   }
 
   getBaseURL() {

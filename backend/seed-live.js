@@ -67,12 +67,12 @@ async function seedLive() {
         if (clubRes.rows.length > 0) {
             clubId = clubRes.rows[0].id;
         } else {
-            // Create club entry if needed
+            // Create club entry with SAME ID as Organization to ensure compatibility
             const newClub = await client.query(`
-                INSERT INTO clubs (name, description, location, sport, owner_id, types)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                INSERT INTO clubs (id, name, description, location, sport, owner_id, types)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id
-            `, ['Elite Pro Academy', 'Premier training facility for elite athletes.', 'London, UK', 'Football', ownerId, ['club']]);
+            `, [orgId, 'Elite Pro Academy', 'Premier training facility for elite athletes.', 'London, UK', 'Football', ownerId, ['club']]);
             clubId = newClub.rows[0].id;
         }
 
@@ -101,12 +101,12 @@ async function seedLive() {
             secOrgId = newSecOrg.rows[0].id;
             console.log(`✅ Created Secondary Organization: ${secOrgName}`);
             
-            // Also create club entry
+            // Also create club entry with SAME ID
             const newSecClub = await client.query(`
-                INSERT INTO clubs (name, description, location, sport, owner_id, types)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                INSERT INTO clubs (id, name, description, location, sport, owner_id, types)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id
-            `, [secOrgName, 'Casual sunday games', 'Local Park', 'Football', ownerId, ['club']]);
+            `, [secOrgId, secOrgName, 'Casual sunday games', 'Local Park', 'Football', ownerId, ['club']]);
             secClubId = newSecClub.rows[0].id;
         } else {
             secOrgId = secOrgRes.rows[0].id;
@@ -124,8 +124,115 @@ async function seedLive() {
             console.log(`✅ Added User as PLAYER to ${secOrgName}`);
         }
 
-        // 3. Create Coaches (Staff)
-        console.log('👔 Creating Coaches/Staff...');
+        // ===========================================
+        // POPULATE SUNDAY LEAGUE FC (Secondary Org)
+        // ===========================================
+        if (secClubId) {
+            console.log(`🏟️ Populating ${secOrgName}...`);
+            // Staff
+            const secStaff = [
+                { first: 'Ted', last: 'Lasso', role: 'coach', email: 'ted@sundayleague.com' },
+                { first: 'Coach', last: 'Beard', role: 'assistant-coach', email: 'beard@sundayleague.com' }
+            ];
+            let secStaffIds = [];
+            for (const s of secStaff) {
+                const sCheck = await client.query('SELECT id FROM staff WHERE email = $1 AND club_id = $2', [s.email, secClubId]);
+                if (sCheck.rows.length === 0) {
+                    const ns = await client.query(`INSERT INTO staff (first_name, last_name, email, role, club_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`, 
+                        [s.first, s.last, s.email, s.role, secClubId]);
+                    secStaffIds.push(ns.rows[0].id);
+                } else {
+                    secStaffIds.push(sCheck.rows[0].id);
+                }
+            }
+
+            // Teams
+            const secTeams = [
+                { name: 'The Greyhounds', age: 'Adult', sport: 'Football', coachId: secStaffIds[0] },
+                { name: 'Richmond B', age: 'Adult', sport: 'Football', coachId: secStaffIds[1] }
+            ];
+            let secTeamIds = [];
+            for (const t of secTeams) {
+                const tCheck = await client.query('SELECT id FROM teams WHERE club_id = $1 AND name = $2', [secClubId, t.name]);
+                if (tCheck.rows.length === 0) {
+                    const nt = await client.query(`INSERT INTO teams (club_id, name, age_group, sport, coach_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`, 
+                        [secClubId, t.name, t.age, t.sport, t.coachId]);
+                    secTeamIds.push(nt.rows[0].id);
+                } else {
+                    secTeamIds.push(tCheck.rows[0].id);
+                }
+            }
+
+            // Events
+            const secEvents = [
+                { title: 'Pub Gathering', type: 'social', date: new Date(Date.now() + 86400000).toISOString().split('T')[0], time: '20:00' },
+                { title: 'Sunday Kickabout', type: 'match', date: new Date(Date.now() + 172800000).toISOString().split('T')[0], time: '10:00' }
+            ];
+            for (const e of secEvents) {
+                const eCheck = await client.query('SELECT id FROM events WHERE title = $1 AND club_id = $2', [e.title, secClubId]);
+                if (eCheck.rows.length === 0) {
+                    await client.query(`INSERT INTO events (title, event_type, event_date, event_time, club_id, created_by) VALUES ($1, $2, $3, $4, $5, $6)`, 
+                        [e.title, e.type, e.date, e.time, secClubId, ownerId]);
+                }
+            }
+        }
+
+        // ===========================================
+        // CREATE & POPULATE Valley United (Third Org)
+        // ===========================================
+        const thirdOrgName = 'Valley United';
+        const thirdOrgSlug = 'valley-united';
+        let thirdOrgId, thirdClubId;
+        
+        const thirdOrgRes = await client.query('SELECT id FROM organizations WHERE slug = $1', [thirdOrgSlug]);
+        if (thirdOrgRes.rows.length === 0) {
+            const newThird = await client.query(`INSERT INTO organizations (name, slug, sport, owner_id) VALUES ($1, $2, 'Basketball', $3) RETURNING id`, [thirdOrgName, thirdOrgSlug, ownerId]);
+            thirdOrgId = newThird.rows[0].id;
+
+            const newThirdClub = await client.query(`INSERT INTO clubs (id, name, sport, owner_id, types) VALUES ($1, $2, 'Basketball', $3, $4) RETURNING id`, [thirdOrgId, thirdOrgName, ownerId, ['club']]);
+            thirdClubId = newThirdClub.rows[0].id;
+            console.log(`✅ Created Third Organization: ${thirdOrgName}`);
+        } else {
+            thirdOrgId = thirdOrgRes.rows[0].id;
+            const thirdClubRes = await client.query('SELECT id FROM clubs WHERE name = $1', [thirdOrgName]);
+            thirdClubId = thirdClubRes.rows.length > 0 ? thirdClubRes.rows[0].id : null;
+        }
+
+        // Add User as COACH in Third Org
+        const thirdMemberCheck = await client.query('SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2', [ownerId, thirdOrgId]);
+        if (thirdMemberCheck.rows.length === 0) {
+            await client.query(`
+                INSERT INTO organization_members (user_id, organization_id, role, status)
+                VALUES ($1, $2, 'coach', 'active')
+            `, [ownerId, thirdOrgId]);
+             console.log(`✅ Added User as COACH to ${thirdOrgName}`);
+        }
+
+        // Populate Valley United
+        if (thirdClubId) {
+             console.log(`🏀 Populating ${thirdOrgName}...`);
+             // Teams
+             const thirdTeams = [{ name: 'Varsity Hookers', age: 'U18', sport: 'Basketball' }];
+             for (const t of thirdTeams) {
+                const tCheck = await client.query('SELECT id FROM teams WHERE club_id = $1 AND name = $2', [thirdClubId, t.name]);
+                if (tCheck.rows.length === 0) {
+                    await client.query(`INSERT INTO teams (club_id, name, age_group, sport) VALUES ($1, $2, $3, $4)`, [thirdClubId, t.name, t.age, t.sport]);
+                }
+             }
+             // Events
+             const thirdEvents = [{ title: 'Court Practice', type: 'training', date: new Date(Date.now() + 432000000).toISOString().split('T')[0], time: '16:00' }];
+             for (const e of thirdEvents) {
+                const eCheck = await client.query('SELECT id FROM events WHERE title = $1 AND club_id = $2', [e.title, thirdClubId]);
+                if (eCheck.rows.length === 0) {
+                    await client.query(`INSERT INTO events (title, event_type, event_date, event_time, club_id, created_by) VALUES ($1, $2, $3, $4, $5, $6)`, 
+                        [e.title, e.type, e.date, e.time, thirdClubId, ownerId]);
+                }
+             }
+        }
+
+        // 3. Create General Staff (Primary Org)
+        // ... (continuing with existing logic for Elite Pro Academy)
+        console.log('👔 Creating Elite Pro Academy Staff...');
         const coaches = [
             { first: 'Pep', last: 'Guardiola', role: 'coach', email: 'pep.guardiola@elitepro.com', phone: '+44 7700 900001' },
             { first: 'Jurgen', last: 'Klopp', role: 'coach', email: 'jurgen.klopp@elitepro.com', phone: '+44 7700 900002' },
@@ -353,10 +460,10 @@ async function seedLive() {
             
             if (lCheck.rows.length === 0) {
                 const res = await client.query(`
-                    INSERT INTO listings (title, description, listing_type, position, club_id, team_id, is_active)
-                    VALUES ($1, $2, $3, $4, $5, $6, true)
+                    INSERT INTO listings (title, description, listing_type, position, club_id, is_active)
+                    VALUES ($1, $2, $3, $4, $5, true)
                     RETURNING id
-                `, [l.title, `Join our ${l.team} squad as a ${l.pos}.`, l.type, l.pos, clubId, team?.id]);
+                `, [l.title, `Join our ${l.team} squad as a ${l.pos}.`, l.type, l.pos, clubId]);
                 listingIds.push(res.rows[0].id);
                 console.log(`✅ Created Listing: ${l.title}`);
             } else {
@@ -441,5 +548,3 @@ async function seedLive() {
 }
 
 seedLive();
-
-

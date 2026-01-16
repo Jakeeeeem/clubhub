@@ -18,7 +18,8 @@ class EmailService {
     // 4. Generic SMTP
     // 5. Ethereal (Dev fallback)
 
-    if (process.env.EMAIL_SERVICE === 'sendpulse') {
+    if (process.env.EMAIL_SERVICE === 'sendpulse' || (process.env.SENDPULSE_SMTP_USER && process.env.SENDPULSE_SMTP_PASS)) {
+      console.log('📧 Using SendPulse SMTP Service');
       return {
         host: 'smtp-pulse.com',
         port: process.env.SENDPULSE_SMTP_PORT || 587,

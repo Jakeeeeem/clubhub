@@ -13,6 +13,38 @@
             display: none !important;
         }
 
+        /* Horizontal Scrollable Nav */
+        .dashboard-nav {
+            overflow-x: auto;
+            white-space: nowrap;
+            display: flex;
+            gap: 10px;
+            padding-bottom: 5px;
+            /* Scrollbar hygiene */
+            -webkit-overflow-scrolling: touch;
+            /* Smooth scroll on iOS */
+            scrollbar-width: thin;
+            /* Firefox */
+        }
+
+        .dashboard-nav::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .dashboard-nav::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .dashboard-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .dashboard-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
         .dashboard-section.active {
             display: block !important;
         }
@@ -916,8 +948,9 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="playerPosition">Position</label>
-                        <input type="text" id="playerPosition" placeholder="e.g., Striker">
+                        <label for="playerPosition" id="playerPositionLabel">Position</label>
+                        <input type="text" id="playerPosition" placeholder="e.g., Striker" list="positionOptions">
+                        <datalist id="positionOptions"></datalist>
                     </div>
                     <div class="form-group">
                         <label for="playerGender">Gender</label>
@@ -998,8 +1031,10 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="editPlayerPosition">Position</label>
-                        <input type="text" id="editPlayerPosition" placeholder="e.g., Striker">
+                        <label for="editPlayerPosition" id="editPlayerPositionLabel">Position</label>
+                        <input type="text" id="editPlayerPosition" placeholder="e.g., Striker"
+                            list="editPositionOptions">
+                        <datalist id="editPositionOptions"></datalist>
                     </div>
                     <div class="form-group">
                         <label for="editPlayerGender">Gender</label>
@@ -5224,53 +5259,58 @@
         console.log('✅ Admin Dashboard Ready!');
 
         // Dynamic Sport Fields Logic
+        // Dynamic Sport Fields Logic
+        const sportConfigs = {
+            'Football': { label: 'Position', options: ['Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Striker', 'Winger', 'Full Back'] },
+            'Basketball': { label: 'Position', options: ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center'] },
+            'Rugby': { label: 'Position', options: ['Prop', 'Hooker', 'Lock', 'Flanker', 'Number 8', 'Scrum Half', 'Fly Half', 'Center', 'Winger', 'Full Back'] },
+            'Cricket': { label: 'Role', options: ['Batsman', 'Bowler', 'Wicket Keeper', 'All Rounder'] },
+            'Tennis': { label: 'Play Style', options: ['Right-Handed', 'Left-Handed'] },
+            'Hockey': { label: 'Position', options: ['Goalkeeper', 'Defense', 'Forward', 'Center'] },
+            'Volleyball': { label: 'Position', options: ['Setter', 'Libero', 'Outside Hitter', 'Opposite Hitter', 'Middle Blocker'] }
+        };
+
         function initAddPlayerModalControls() {
             const sportSelect = document.getElementById('playerSport');
             if (sportSelect) {
-                sportSelect.addEventListener('change', updatePositionPlaceholder);
+                sportSelect.addEventListener('change', () => updateSportFields('playerSport', 'playerPosition', 'positionOptions', 'playerPositionLabel'));
+            }
+            const editSportSelect = document.getElementById('editPlayerSport');
+            if (editSportSelect) {
+                editSportSelect.addEventListener('change', () => updateSportFields('editPlayerSport', 'editPlayerPosition', 'editPositionOptions', 'editPlayerPositionLabel'));
             }
         }
 
-        function updatePositionPlaceholder() {
-            const sport = document.getElementById('playerSport').value;
-            const posInput = document.getElementById('playerPosition');
-            if (!posInput) return;
+        function updateSportFields(sportSelectId, inputId, datalistId, labelId) {
+            const sport = document.getElementById(sportSelectId).value;
+            const input = document.getElementById(inputId);
+            const datalist = document.getElementById(datalistId);
+            const label = document.getElementById(labelId);
 
-            const placeholders = {
-                'Football': 'e.g., Striker, Goalkeeper, Midfielder',
-                'Basketball': 'e.g., Point Guard, Center',
-                'Rugby': 'e.g., Fly Half, Prop',
-                'Cricket': 'e.g., Bowler, Wicket Keeper',
-                'Tennis': 'e.g., Right-Handed',
-                'Hockey': 'e.g., Forward, Goalie',
-                'Volleyball': 'e.g., Setter, Libero'
-            };
+            if (!input || !datalist) return;
 
-            posInput.placeholder = placeholders[sport] || 'e.g., Position';
+            const config = sportConfigs[sport] || { label: 'Position', options: [] };
+
+            // Update Label
+            if (label) label.textContent = config.label;
+
+            // Update Options
+            datalist.innerHTML = config.options.map(opt => `<option value="${opt}">`).join('');
+
+            // Update Placeholder
+            input.placeholder = config.options.length > 0 ? `Select or type ${config.label}...` : `Enter ${config.label}`;
+
+            // Clear input if switching sports? Maybe annoying if fixing a typo. Let's keep it.
         }
 
-        // Exposed Function for Edit Form
-        function updateEditPositionPlaceholder() {
-            const sport = document.getElementById('editPlayerSport').value;
-            const posInput = document.getElementById('editPlayerPosition');
-            if (!posInput) return;
+        // Exposed Function for Edit Form (Legacy support if called elsewhere)
+        window.updateEditPositionPlaceholder = function () {
+            updateSportFields('editPlayerSport', 'editPlayerPosition', 'editPositionOptions', 'editPlayerPositionLabel');
+        };
 
-            const placeholders = {
-                'Football': 'e.g., Striker, Goalkeeper, Midfielder',
-                'Basketball': 'e.g., Point Guard, Center',
-                'Rugby': 'e.g., Fly Half, Prop',
-                'Cricket': 'e.g., Bowler, Wicket Keeper',
-                'Tennis': 'e.g., Right-Handed',
-                'Hockey': 'e.g., Forward, Goalie',
-                'Volleyball': 'e.g., Setter, Libero'
-            };
+        window.initAddPlayerModalControls = initAddPlayerModalControls;
 
-            posInput.placeholder = placeholders[sport] || 'e.g., Position';
-        }
-        window.updateEditPositionPlaceholder = updateEditPositionPlaceholder;
-
-        // Initialize controls once script runs (or add to DOMContentLoaded if needed, but this works if elements exist)
-        // Ideally should be in DOMContentLoaded, but we can just call it here as well if script is at end of body
+        // Initialize controls once script runs
         setTimeout(initAddPlayerModalControls, 1000);
 
         // Team Player Management
