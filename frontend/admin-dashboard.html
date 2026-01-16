@@ -3068,6 +3068,7 @@
                 console.error('❌ staffContainer not found!');
                 return;
             }
+            container.classList.remove('card-grid');
 
             console.log('👨‍💼 Loading staff members...');
 
@@ -3092,9 +3093,11 @@
 
                 if (!staff || staff.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-                            <p>No staff members yet</p>
-                            <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">Invite Your First Staff Member</button>
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">👔</div>
+                            <h3 style="margin-bottom: 0.5rem;">No staff members yet</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Invite coaches and assistants to help manage your club.</p>
+                            <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">➕ Invite Staff Member</button>
                         </div>
                     `;
                     return;
@@ -3105,7 +3108,7 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Staff Member</th>
+                                    <th style="width: 30%;">Staff Member</th>
                                     <th>Role</th>
                                     <th>Email</th>
                                     <th style="text-align: center;">Status</th>
@@ -3114,7 +3117,7 @@
                             </thead>
                             <tbody>
                                 ${staff.map(member => `
-                                    <tr>
+                                    <tr onclick="editStaffMember('${member.id}')" style="cursor: pointer;">
                                         <td>
                                             <div class="user-info-cell">
                                                 <div class="user-avatar">${(member.first_name?.[0] || '')}${(member.last_name?.[0] || '')}</div>
@@ -3132,7 +3135,7 @@
                                             <span class="status-badge status-${(member.status || 'active').toLowerCase()}">${member.status || 'Active'}</span>
                                         </td>
                                         <td>
-                                            <div class="action-buttons">
+                                            <div class="action-buttons" onclick="event.stopPropagation()">
                                                 <button class="btn-icon edit" title="Edit Staff" onclick="editStaffMember('${member.id}')">✏️</button>
                                                 <button class="btn-icon delete" title="Remove Staff" onclick="removeStaffMember('${member.id}')">🗑️</button>
                                             </div>
@@ -4015,6 +4018,7 @@
         async function loadEvents() {
             const container = document.getElementById('eventsContainer');
             if (!container) return;
+            container.classList.remove('card-grid');
 
             try {
                 showLoading(true);
@@ -4023,9 +4027,11 @@
 
                 if (events.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-                            <p>No events created yet</p>
-                            <button class="btn btn-primary" onclick="showModal('addEventModal')">Create Your First Event</button>
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+                            <h3 style="margin-bottom: 0.5rem;">No events scheduled</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Plan matches, training sessions, and club events.</p>
+                            <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create Event</button>
                         </div>
                     `;
                     return;
@@ -4036,7 +4042,7 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Event Details</th>
+                                    <th style="width: 30%;">Event Details</th>
                                     <th>Date & Time</th>
                                     <th>Location</th>
                                     <th style="text-align: center;">Access / Fee</th>
@@ -4045,7 +4051,7 @@
                             </thead>
                             <tbody>
                                 ${events.map(event => `
-                                    <tr>
+                                    <tr onclick="editEvent('${event.id}')" style="cursor: pointer;">
                                         <td>
                                             <div class="event-info-cell">
                                                 <div class="team-icon" style="background: rgba(124, 58, 237, 0.1); color: var(--neon-purple);">
@@ -4073,7 +4079,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <div class="action-buttons">
+                                            <div class="action-buttons" onclick="event.stopPropagation()">
                                                 <button class="btn-icon notify" title="Notify Members" onclick="notifyEventMembers('${event.id}')">🔔</button>
                                                 <button class="btn-icon edit" title="Edit Event" onclick="editEvent('${event.id}')">✏️</button>
                                                 <button class="btn-icon delete" title="Delete Event" onclick="deleteEvent('${event.id}')">🗑️</button>
@@ -4161,6 +4167,7 @@
         async function loadPlayers() {
             const container = document.getElementById('playersContainer');
             if (!container) return;
+            container.classList.remove('card-grid');
 
             try {
                 showLoading(true);
@@ -4202,11 +4209,13 @@
 
                 if (!players || players.length === 0) {
                     container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-                        <p>No players found</p>
-                        <button class="btn btn-primary" onclick="showModal('addPlayerModal')">Add Your First Player</button>
-                    </div>
-                `;
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🏃</div>
+                            <h3 style="margin-bottom: 0.5rem;">No players found</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Add players to your club manually or invite them via email.</p>
+                            <button class="btn btn-primary" onclick="showModal('addPlayerModal')">➕ Add Your First Player</button>
+                        </div>
+                    `;
                     return;
                 }
 
@@ -4215,7 +4224,7 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Player</th>
+                                    <th style="width: 30%;">Player</th>
                                     <th>Team / Sport</th>
                                     <th>Position</th>
                                     <th style="text-align: center;">Payment</th>
@@ -4224,7 +4233,7 @@
                             </thead>
                             <tbody>
                                 ${players.map(player => `
-                                    <tr>
+                                    <tr onclick="editPlayer('${player.id}')" style="cursor: pointer;">
                                         <td>
                                             <div class="user-info-cell">
                                                 <div class="user-avatar" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);">
@@ -4253,7 +4262,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="action-buttons">
+                                            <div class="action-buttons" onclick="event.stopPropagation()">
                                                 <button class="btn-icon manage" title="Manage Plans" onclick="assignPaymentPlan('${player.id}')">💳</button>
                                                 <button class="btn-icon edit" title="Edit Player" onclick="editPlayer('${player.id}')">✏️</button>
                                                 <button class="btn-icon delete" title="Remove Player" onclick="removePlayer('${player.id}')">🗑️</button>
