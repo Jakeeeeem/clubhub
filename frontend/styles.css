@@ -2552,7 +2552,7 @@ main.main.home-main {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 24px;
-    max-width: 600px;
+    max-width: 700px;
     width: 100%;
     margin: 0; /* Updated: Fix centering conflict */
     max-height: 90vh;

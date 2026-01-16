@@ -144,7 +144,25 @@ router.get('/filtered/:filter', authenticateToken, async (req, res) => {
         const { filter } = req.params;
         const { clubId } = req.query;
         
-        let queryText = 'SELECT p.* FROM players p WHERE 1=1';
+        let queryText = `
+            SELECT p.*,
+            (
+                SELECT t.name 
+                FROM team_players tp
+                JOIN teams t ON tp.team_id = t.id
+                WHERE tp.player_id = p.id
+                LIMIT 1
+            ) as team_name,
+            (
+                SELECT t.sport
+                FROM team_players tp
+                JOIN teams t ON tp.team_id = t.id
+                WHERE tp.player_id = p.id
+                LIMIT 1
+            ) as team_sport
+            FROM players p 
+            WHERE 1=1
+        `;
         const queryParams = [];
         let paramCount = 0;
 

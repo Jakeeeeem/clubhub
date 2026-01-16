@@ -851,23 +851,31 @@ async deletePaymentPlan(planId) {
     }
     try {
       let clubId = null;
+      let viewType = 'all';
       let queryParams = "page=1&limit=1000";
 
       if (typeof arg === 'object' && arg !== null) {
           clubId = arg.clubId;
+          viewType = arg.viewType || 'all';
           if (arg.sport) queryParams += `&sport=${encodeURIComponent(arg.sport)}`;
           if (arg.location) queryParams += `&location=${encodeURIComponent(arg.location)}`;
-          if (arg.teamId) queryParams += `&team_id=${encodeURIComponent(arg.teamId)}`; // Map teamId to team_id if backend expects snake_case
+          if (arg.teamId) queryParams += `&team_id=${encodeURIComponent(arg.teamId)}`;
           if (arg.minAge) queryParams += `&min_age=${arg.minAge}`;
           if (arg.maxAge) queryParams += `&max_age=${arg.maxAge}`;
       } else {
           clubId = arg;
       }
 
-      const endpoint = clubId
-        ? `/players?clubId=${clubId}&${queryParams}`
-        : `/players?${queryParams}`;
+      // Use filtered endpoint if a specific view is requested (on-plan, assigned, etc.)
+      const baseEndpoint = (viewType && viewType !== 'all') 
+        ? `/players/filtered/${viewType}`
+        : `/players`;
 
+      const endpoint = clubId
+        ? `${baseEndpoint}?clubId=${clubId}&${queryParams}`
+        : `${baseEndpoint}?${queryParams}`;
+
+      console.log(`🔍 Fetching players from: ${endpoint}`);
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn('❌ Failed to fetch players:', error);
