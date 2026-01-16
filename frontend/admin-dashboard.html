@@ -3881,6 +3881,12 @@
                 showLoading(false);
             }
         }
+
+        function filterPlayersByView() {
+            if (typeof loadPlayers === 'function') {
+                loadPlayers();
+            }
+        }
         function filterPlayersByTeam() {
             const teamId = document.getElementById('teamFilter').value;
             console.log('🔍 Filtering players by team:', teamId);
@@ -6341,11 +6347,18 @@
                     if (org.address !== undefined) document.getElementById('clubAddress').value = org.address || '';
 
                     // Display logo if exists or show placeholder
-                    const backendUrl = apiService.baseURL.replace('/api', '');
+                    const rawBaseUrl = apiService.baseURL.replace('/api', '');
+                    const backendUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl : rawBaseUrl + '/';
                     let logoUrl = 'images/placeholder-logo-profile.png';
 
                     if (org.logo_url) {
-                        logoUrl = org.logo_url.startsWith('http') ? org.logo_url : `${backendUrl}${org.logo_url}`;
+                        if (org.logo_url.startsWith('http')) {
+                            logoUrl = org.logo_url;
+                        } else {
+                            // Ensure no double slashes and no missing slashes
+                            const sanitizedLogoPath = org.logo_url.startsWith('/') ? org.logo_url.substring(1) : org.logo_url;
+                            logoUrl = `${backendUrl}${sanitizedLogoPath}`;
+                        }
                     }
 
                     const logoPreview = document.getElementById('clubLogoPreview');
@@ -6368,9 +6381,11 @@
                         if (uploadPlaceholder) uploadPlaceholder.style.display = 'none';
                         if (uploadedPicturesDiv) {
                             uploadedPicturesDiv.style.display = 'block';
-                            const backendUrl = apiService.baseURL.replace('/api', '');
+                            const rawBaseUrl = apiService.baseURL.replace('/api', '');
+                            const backendUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl : rawBaseUrl + '/';
                             uploadedPicturesDiv.innerHTML = orgImages.map(img => {
-                                const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${img}`;
+                                const sanitizedPath = img.startsWith('/') ? img.substring(1) : img;
+                                const fullImageUrl = img.startsWith('http') ? img : `${backendUrl}${sanitizedPath}`;
                                 return `
                                     <div style="display: inline-block; margin: 0.5rem; position: relative;">
                                         <img src="${fullImageUrl}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
@@ -6464,12 +6479,28 @@
 
                 try {
                     showLoading(true);
+
+                    // Demo mode handling
+                    if (localStorage.getItem('isDemoSession') === 'true' || String(currentOrgId).startsWith('demo-')) {
+                        console.log('✨ Demo mode: Simulating logo upload');
+                        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate delay
+
+                        // Just update preview with a local object URL for the demo session
+                        const objectUrl = URL.createObjectURL(file);
+                        document.getElementById('clubLogoPreview').src = objectUrl;
+                        showNotification('✅ Logo updated (Demo Mode)', 'success');
+                        return;
+                    }
+
                     const response = await apiService.uploadClubLogo(currentOrgId, file);
 
                     if (response.success && response.logo_url) {
                         // Update preview immediately
-                        const backendUrl = apiService.baseURL.replace('/api', '');
-                        const fullUrl = response.logo_url.startsWith('http') ? response.logo_url : `${backendUrl}${response.logo_url}`;
+                        const rawBaseUrl = apiService.baseURL.replace('/api', '');
+                        const backendUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl : rawBaseUrl + '/';
+                        const sanitizedLogoPath = response.logo_url.startsWith('/') ? response.logo_url.substring(1) : response.logo_url;
+                        const fullUrl = response.logo_url.startsWith('http') ? response.logo_url : `${backendUrl}${sanitizedLogoPath}`;
+
                         document.getElementById('clubLogoPreview').src = fullUrl;
                         showNotification('✅ Logo uploaded successfully!', 'success');
                     }
