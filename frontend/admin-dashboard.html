@@ -3392,15 +3392,25 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 30%;">Staff Member</th>
+                                    <th style="width: 25%;">Staff Member</th>
                                     <th>Role</th>
+                                    <th>Assigned Team</th>
                                     <th>Email</th>
                                     <th style="text-align: center;">Status</th>
                                     <th style="text-align: right;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${staff.map(member => `
+                                ${staff.map(member => {
+                    const isCoach = ['coach', 'assistant-coach'].includes(member.role);
+                    let teamDisplay = '-';
+                    if (isCoach) {
+                        teamDisplay = member.team_name ?
+                            `<span style="color: var(--primary-color);">⚽ ${member.team_name}</span>` :
+                            '<span style="opacity: 0.5;">Unassigned</span>';
+                    }
+
+                    return `
                                     <tr onclick="editStaffMember('${member.id}')" style="cursor: pointer;">
                                         <td>
                                             <div class="user-info-cell">
@@ -3412,8 +3422,9 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span style="font-weight:500;">${member.role}</span>
+                                            <span style="font-weight:500; text-transform: capitalize;">${member.role.replace('-', ' ')}</span>
                                         </td>
+                                        <td>${teamDisplay}</td>
                                         <td>${member.email || 'N/A'}</td>
                                         <td style="text-align: center;">
                                             <span class="status-badge status-${(member.status || 'active').toLowerCase()}">${member.status || 'Active'}</span>
@@ -3425,7 +3436,8 @@
                                             </div>
                                         </td>
                                     </tr>
-                                `).join('')}
+                                    `;
+                }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -3961,12 +3973,12 @@
                 modal.id = 'assignPlanModal';
 
                 modal.innerHTML = `
-                < div class="modal-content" >
+                <div class="modal-content">
         <div class="modal-header">
           <h2>Assign Payment Plan</h2>
           <button class="close" onclick="closeModal('assignPlanModal')">&times;</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 2rem;">
           <div class="form-group">
             <label for="selectPlan">Choose Payment Plan</label>
             <select id="selectPlan" required>
@@ -3991,7 +4003,7 @@
             <button class="btn btn-secondary" onclick="closeModal('assignPlanModal')">Cancel</button>
           </div>
         </div>
-      </div >
+      </div>
                 `;
 
                 document.body.appendChild(modal);
@@ -7046,6 +7058,181 @@
                 </div>
             </div>
         </div>
+        <!-- Edit Staff Modal -->
+        <!-- Edit Staff Modal -->
+        <div id="editStaffModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✏️ Edit Staff Member</h2>
+                    <button class="close" onclick="closeModal('editStaffModal')">&times;</button>
+                </div>
+                <form id="editStaffForm">
+                    <input type="hidden" id="editStaffId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="editStaffName" disabled
+                                style="opacity: 0.7; cursor: not-allowed; background: rgba(255,255,255,0.05);">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editStaffStatus">Status *</label>
+                            <select id="editStaffStatus" required>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editStaffRole">Role *</label>
+                        <select id="editStaffRole" required onchange="toggleTeamSelect()">
+                            <option value="admin">Admin</option>
+                            <option value="coach">Head Coach</option>
+                            <option value="assistant-coach">Assistant Coach</option>
+                            <option value="staff">General Staff</option>
+                            <option value="treasurer">Treasurer</option>
+                            <option value="secretary">Secretary</option>
+                            <option value="welfare-officer">Welfare Officer</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="teamSelectGroup">
+                        <label for="editStaffTeam">Assigned Team</label>
+                        <select id="editStaffTeam">
+                            <option value="">-- No Team Assigned --</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                        <p class="form-hint">For Head Coaches, this will set the team's coach.</p>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('editStaffModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function toggleTeamSelect() {
+                const role = document.getElementById('editStaffRole').value;
+                const teamGroup = document.getElementById('teamSelectGroup');
+                if (['coach', 'assistant-coach'].includes(role)) {
+                    teamGroup.style.display = 'block';
+                } else {
+                    teamGroup.style.display = 'none';
+                }
+            }
+
+            // Staff Management Functions
+            async function editStaffMember(id) {
+                try {
+                    showLoading(true);
+
+                    const clubId = AppState.activeClubId || (AppState.clubs?.[0]?.id);
+                    if (!clubId) throw new Error('No active club');
+
+                    // Fetch staff and teams in parallel
+                    const [staffList, teams] = await Promise.all([
+                        apiService.getStaff(clubId),
+                        apiService.getTeams(clubId)
+                    ]);
+
+                    const member = staffList.find(s => s.id === id);
+                    if (!member) throw new Error('Staff member not found');
+
+                    // Populate form
+                    document.getElementById('editStaffId').value = member.id;
+                    document.getElementById('editStaffName').value = `${member.first_name} ${member.last_name}`;
+                    document.getElementById('editStaffRole').value = member.role;
+                    document.getElementById('editStaffStatus').value = (member.status || 'active').toLowerCase();
+
+                    // Populate Teams
+                    const teamSelect = document.getElementById('editStaffTeam');
+                    teamSelect.innerHTML = '<option value="">-- No Team Assigned --</option>';
+
+                    teams.forEach(team => {
+                        const option = document.createElement('option');
+                        option.value = team.id;
+                        option.textContent = team.name + (team.coach_id && team.coach_id !== member.id ? ' (Has Coach)' : '');
+                        teamSelect.appendChild(option);
+                    });
+
+                    // Set selected team
+                    // Note: API returns `team_id` for this member if they are assigned
+                    if (member.team_id) {
+                        teamSelect.value = member.team_id;
+                    } else {
+                        teamSelect.value = "";
+                    }
+
+                    // Handle visibility
+                    toggleTeamSelect();
+
+                    showModal('editStaffModal');
+
+                } catch (error) {
+                    console.error('Edit staff error:', error);
+                    showNotification('Failed to load staff details: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function handleEditStaff(e) {
+                e.preventDefault();
+                const id = document.getElementById('editStaffId').value;
+                const role = document.getElementById('editStaffRole').value;
+                const status = document.getElementById('editStaffStatus').value;
+                const teamId = document.getElementById('editStaffTeam').value;
+
+                try {
+                    showLoading(true);
+
+                    // Call update method
+                    // Pass teamId only if it's relevant for the role, or always pass it and let backend handle
+                    await apiService.updateStaff(id, { role, status, teamId });
+
+                    showNotification('Staff member updated successfully', 'success');
+                    closeModal('editStaffModal');
+                    loadStaff(); // Refresh list to show changes
+                } catch (error) {
+                    console.error('Update staff error:', error);
+                    showNotification('Failed to update staff: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function removeStaffMember(id) {
+                if (!confirm('Are you sure you want to remove this staff member? They will lose access to the club dashboard.')) {
+                    return;
+                }
+
+                try {
+                    showLoading(true);
+                    await apiService.removeStaff(id);
+                    showNotification('Staff member removed successfully', 'success');
+                    loadStaff();
+                } catch (error) {
+                    console.error('Remove staff error:', error);
+                    showNotification('Failed to remove staff: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Bind the form
+            const staffForm = document.getElementById('editStaffForm');
+            if (staffForm) staffForm.addEventListener('submit', handleEditStaff);
+
+            // Expose globally
+            window.editStaffMember = editStaffMember;
+            window.removeStaffMember = removeStaffMember;
+        </script>
 </body>
 
 </html>

@@ -531,7 +531,9 @@ router.put('/:id', authenticateToken, requireOrganization, staffValidation, asyn
       email, 
       phone, 
       role, 
-      permissions
+      permissions,
+      status,
+      teamId
     } = req.body;
 
     const result = await query(`
@@ -556,6 +558,59 @@ router.put('/:id', authenticateToken, requireOrganization, staffValidation, asyn
     ]);
 
     const updatedStaff = result.rows[0];
+
+    // Update organization_members status and role
+    const roleMapping = {
+      'coach': 'coach',
+      'assistant-coach': 'assistant_coach',
+      'administrator': 'admin',
+      'treasurer': 'staff',
+      'coaching-supervisor': 'staff',
+      'referee': 'staff',
+      'secretary': 'staff',
+      'welfare-officer': 'staff',
+      'staff': 'staff'
+    };
+    const orgRole = roleMapping[role];
+
+    if (status || orgRole) {
+      let updateQuery = 'UPDATE organization_members SET updated_at = NOW()';
+      const updateParams = [];
+      let pIdx = 1;
+
+      if (status) {
+        updateQuery += `, status = $${pIdx++}`;
+        updateParams.push(status);
+      }
+      
+      if (orgRole) {
+        updateQuery += `, role = $${pIdx++}`;
+        updateParams.push(orgRole);
+      }
+
+      updateQuery += ` WHERE user_id = $${pIdx++} AND organization_id = $${pIdx++}`;
+      updateParams.push(staff.user_id, staff.club_id);
+
+      await query(updateQuery, updateParams);
+      
+      if (status) updatedStaff.status = status;
+    }
+
+    // Update team assignment if teamId is provided (or explicit null/empty to unassign)
+    if (typeof teamId !== 'undefined') {
+      // 1. Unassign from any previous teams this staff was coaching
+      await query(`UPDATE teams SET coach_id = NULL WHERE coach_id = $1`, [req.params.id]);
+
+      // 2. Assign to new team if provided
+      if (teamId) {
+        // Ensure the team belongs to this club to prevent unauthorized assignment
+        const teamCheck = await query(`SELECT id FROM teams WHERE id = $1 AND club_id = $2`, [teamId, staff.club_id]);
+        if (teamCheck.rows.length > 0) {
+           await query(`UPDATE teams SET coach_id = $1 WHERE id = $2`, [req.params.id, teamId]);
+           updatedStaff.team_id = teamId;
+        }
+      }
+    }
 
     res.json({
       message: 'Staff member updated successfully',

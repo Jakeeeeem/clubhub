@@ -1,7 +1,7 @@
 class StripePaymentService {
     constructor() {
         // Your actual Stripe TEST publishable key
-        this.stripePublishableKey = 'pk_live_51RZtoWRthpGbefAaiw5yuuXStTeNqyKMJplgHQVxxBpPqDTGp4xsu1tfUrQLlWqsGDyfhaROF9J9gjmDB8OhDCnz00HMu7iQ0o';
+        this.stripePublishableKey = 'pk_test_TYooMQauvdEDq54NiTphI7jx';
         this.stripe = null;
         this.elements = null;
         this.card = null;

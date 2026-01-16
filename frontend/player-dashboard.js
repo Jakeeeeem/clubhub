@@ -303,19 +303,56 @@ function loadPlayerClubs() {
     return;
   }
 
-  const clubsHTML = PlayerDashboardState.clubs.map(c => 
-    '<div class="card">' +
-      '<h4>' + escapeHTML(c.name) + '</h4>' +
-      '<p><strong>Location:</strong> ' + escapeHTML(c.location || 'Not specified') + '</p>' +
-      '<p><strong>Sport:</strong> ' + escapeHTML(c.sport || 'Not specified') + '</p>' +
-      '<p><strong>Members:</strong> ' + Number(c.member_count || 0) + '</p>' +
-      '<p>' + escapeHTML(c.description || 'No description available') + '</p>' +
-      '<div class="item-actions">' +
-        '<button class="btn btn-small btn-secondary" onclick="viewClubDetails(\'' + c.id + '\')">View Details</button>' +
-        '<button class="btn btn-small btn-primary" onclick="viewClubEvents(\'' + c.id + '\')">View Events</button>' +
-      '</div>' +
-    '</div>'
-  ).join('');
+  // Clear grid class
+  grid.classList.remove('card-grid');
+
+  const clubsHTML = `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 40%;">Club Details</th>
+            <th>Sport</th>
+            <th>Location</th>
+            <th>Members</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${PlayerDashboardState.clubs.map(c => `
+          <tr onclick="viewClubDetails('${c.id}')" style="cursor: pointer;">
+            <td>
+              <div class="team-info-cell">
+                <div class="team-icon" style="background: rgba(220, 38, 38, 0.1); color: var(--primary);">
+                  ${(c.name || 'C').charAt(0).toUpperCase()}
+                </div>
+                <div class="team-name-group">
+                  <span class="team-name">${escapeHTML(c.name)}</span>
+                  <span class="team-meta" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${escapeHTML(c.description || 'No description')}
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" style="text-transform: capitalize; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-main);">
+                ${escapeHTML(c.sport || 'Multi-sport')}
+              </span>
+            </td>
+            <td>${escapeHTML(c.location || 'Online / Remote')}</td>
+            <td>${Number(c.member_count || 0)}</td>
+            <td>
+              <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button class="btn btn-small btn-primary" onclick="event.stopPropagation(); viewClubEvents('${c.id}')">Events</button>
+                <button class="btn btn-small btn-secondary" onclick="event.stopPropagation(); viewClubDetails('${c.id}')">Details</button>
+              </div>
+            </td>
+          </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 
   grid.innerHTML = clubsHTML;
 
@@ -351,21 +388,59 @@ function loadPlayerTeams() {
     return;
   }
 
-  const teamsHTML = PlayerDashboardState.teams.map(t => {
-    const coachInfo = t.coach ? '<p><strong>Coach:</strong> ' + escapeHTML(t.coach.name || '') + '</p>' : '';
-    return '<div class="card">' +
-      '<h4>' + escapeHTML(t.name) + '</h4>' +
-      '<p><strong>Age Group:</strong> ' + escapeHTML(t.age_group || 'Not specified') + '</p>' +
-      '<p><strong>Sport:</strong> ' + escapeHTML(t.sport || 'Not specified') + '</p>' +
-      '<p><strong>Position:</strong> ' + escapeHTML(t.player_position || 'Not assigned') + '</p>' +
-      '<p><strong>Jersey Number:</strong> ' + escapeHTML(t.jersey_number || 'Not assigned') + '</p>' +
-      coachInfo +
-      '<div class="item-actions">' +
-        '<button class="btn btn-small btn-secondary" onclick="viewTeamDetails(\'' + t.id + '\')">View Team</button>' +
-        '<button class="btn btn-small btn-primary" onclick="viewTeamEvents(\'' + t.id + '\')">Team Events</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
+  // Remove default card grid class if present (though this container is usually naked)
+  grid.classList.remove('card-grid');
+
+  const teamsHTML = `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 35%;">Team Name</th>
+            <th>Role / Position</th>
+            <th>Coach</th>
+            <th>Age Group</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${PlayerDashboardState.teams.map(t => {
+            const coachName = t.coach ? escapeHTML(t.coach.name || '') : 'Not Assigned';
+            
+            return `
+            <tr onclick="viewTeamDetails('${t.id}')" style="cursor: pointer;">
+              <td>
+                <div class="team-info-cell">
+                   <div class="team-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                      ${(t.name || 'T').charAt(0).toUpperCase()}
+                   </div>
+                   <div class="team-name-group">
+                      <span class="team-name">${escapeHTML(t.name)}</span>
+                      <span class="team-meta">${escapeHTML(t.sport || 'Multi-sport')}</span>
+                   </div>
+                </div>
+              </td>
+              <td>
+                 <div style="display:flex; flex-direction:column; gap:2px;">
+                    <span style="font-weight:500;">${escapeHTML(t.player_position || 'Player')}</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">#${escapeHTML(t.jersey_number || 'N/A')}</span>
+                 </div>
+              </td>
+              <td>${coachName}</td>
+              <td>${escapeHTML(t.age_group || '-')}</td>
+              <td>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                  <button class="btn btn-small btn-primary" onclick="event.stopPropagation(); viewTeamEvents('${t.id}')">Events</button>
+                  <button class="btn btn-small btn-secondary" onclick="event.stopPropagation(); viewTeamDetails('${t.id}')">View</button>
+                </div>
+              </td>
+            </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 
   grid.innerHTML = teamsHTML;
   loadTeamEvents();
@@ -811,6 +886,9 @@ function displayClubs(clubs) {
   const container = byId('availableClubsContainer');
   if (!container) return;
   
+  // Remove card-grid class if present to allow table to take full width
+  container.classList.remove('card-grid');
+  
   if (!(clubs || []).length) {
     container.innerHTML = '<div class="empty-state">' +
       '<h4>No clubs available</h4>' +
@@ -820,21 +898,51 @@ function displayClubs(clubs) {
     return;
   }
 
-  const clubsHTML = clubs.map(club => 
-    '<div class="card">' +
-      '<h4>' + escapeHTML(club.name) + '</h4>' +
-      '<p><strong>Location:</strong> ' + escapeHTML(club.location || 'Not specified') + '</p>' +
-      '<p><strong>Sport:</strong> ' + escapeHTML(club.sport || 'Not specified') + '</p>' +
-      '<p><strong>Members:</strong> ' + Number(club.member_count || 0) + '</p>' +
-      '<p>' + escapeHTML(club.description || 'No description available') + '</p>' +
-      '<div class="item-actions">' +
-        '<button class="btn btn-small btn-primary" onclick="applyToClub(\'' + club.id + '\', \'' + escapeHTML((club.name || '').replace(/"/g, '&quot;')) + '\')">Apply</button>' +
-        '<button class="btn btn-small btn-secondary" onclick="viewClubDetails(\'' + club.id + '\')">View Details</button>' +
-      '</div>' +
-    '</div>'
-  ).join('');
-
-  container.innerHTML = clubsHTML;
+  container.innerHTML = `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 35%;">Club Name</th>
+            <th>Sport</th>
+            <th>Location</th>
+            <th>Members</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${clubs.map(club => `
+            <tr onclick="viewClubDetails('${club.id}')" style="cursor: pointer;">
+              <td>
+                <div class="team-info-cell">
+                  <div class="team-icon" style="background: rgba(255, 51, 51, 0.1); color: var(--primary);">
+                    ${(club.name || 'C').charAt(0).toUpperCase()}
+                  </div>
+                  <div class="team-name-group">
+                    <span class="team-name">${escapeHTML(club.name)}</span>
+                    <span class="team-meta" style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(club.description || 'No description')}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                 <span class="status-badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main); border: 1px solid var(--border-color); text-transform: capitalize;">
+                    ${escapeHTML(club.sport || 'General')}
+                 </span>
+              </td>
+              <td>${escapeHTML(club.location || 'Not specified')}</td>
+              <td>${Number(club.member_count || 0)}</td>
+              <td>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                  <button class="btn btn-small btn-primary" onclick="event.stopPropagation(); applyToClub('${club.id}', '${escapeHTML((club.name || '').replace(/"/g, '&quot;'))}')">Apply</button>
+                  <button class="btn btn-small btn-secondary" onclick="event.stopPropagation(); viewClubDetails('${club.id}')">View</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function loadEventFinder() {
@@ -846,6 +954,9 @@ function loadEventFinder() {
 function displayEvents(events) {
   const container = byId('availablePlayerEventsContainer');
   if (!container) return;
+  
+  // Remove card-grid class
+  container.classList.remove('card-grid');
 
   if (!(events || []).length) {
     container.innerHTML = '<div class="empty-state">' +
@@ -856,25 +967,66 @@ function displayEvents(events) {
     return;
   }
 
-  const eventsHTML = events.map(event => {
-    const eventTime = event.event_time ? ' at ' + escapeHTML(event.event_time) : '';
-    return '<div class="card">' +
-      '<h4>' + escapeHTML(event.title) + '</h4>' +
-      '<p><strong>Type:</strong> ' + escapeHTML(event.event_type || '') + '</p>' +
-      '<p><strong>Date:</strong> ' + formatDate(event.event_date) + eventTime + '</p>' +
-      '<p><strong>Location:</strong> ' + escapeHTML(event.location || 'TBD') + '</p>' +
-      '<p><strong>Price:</strong> ' + formatCurrency(event.price || 0) + '</p>' +
-      '<p><strong>Available Spots:</strong> ' + escapeHTML(String(event.spots_available ?? 'Unlimited')) + '</p>' +
-      '<p>' + escapeHTML(event.description || 'No description available') + '</p>' +
-      '<div class="item-actions">' +
-        '<button class="btn btn-small btn-primary" onclick="bookEvent(\'' + event.id + '\')">Book Event</button>' +
-        '<button class="btn btn-small btn-success" style="background:#28a745; border-color:#28a745;" onclick="checkInEvent(\'' + event.id + '\')">📍 I\'m Here</button>' +
-        '<button class="btn btn-small btn-secondary" onclick="viewEventDetails(\'' + event.id + '\')">View Details</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  container.innerHTML = eventsHTML;
+  container.innerHTML = `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 30%;">Event Details</th>
+            <th>Date & Time</th>
+            <th>Location</th>
+            <th style="text-align: center;">Fee / Spots</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${events.map(event => {
+            const eventTime = event.event_time ? event.event_time.slice(0, 5) : 'TBA';
+            const spots = event.spots_available ?? 'Unl.';
+            const price = Number(event.price || 0);
+            
+            return `
+            <tr onclick="viewEventDetails('${event.id}')" style="cursor: pointer;">
+              <td>
+                <div class="event-info-cell">
+                  <div class="team-icon" style="background: rgba(124, 58, 237, 0.1); color: var(--neon-purple);">
+                    ${event.event_type === 'match' ? '⚽' : event.event_type === 'training' ? '🏃' : '🎯'}
+                  </div>
+                  <div class="event-name-group">
+                    <span class="event-name">${escapeHTML(event.title)}</span>
+                    <span class="event-meta" style="text-transform: capitalize;">${escapeHTML(event.event_type || 'Event')}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex; flex-direction:column;">
+                   <span style="font-weight:500;">${formatDate(event.event_date)}</span>
+                   <span style="font-size:0.75rem; color:var(--text-muted);">${eventTime}</span>
+                </div>
+              </td>
+              <td>${escapeHTML(event.location || 'TBA')}</td>
+              <td style="text-align: center;">
+                 <div style="display:flex; flex-direction:column; align-items:center;">
+                    <span style="color: ${price > 0 ? '#fbbf24' : '#4ade80'}; font-weight: 600;">
+                        ${price > 0 ? formatCurrency(price) : 'Free'}
+                    </span>
+                    <span style="font-size: 0.75rem; opacity: 0.7;">${spots} spots</span>
+                 </div>
+              </td>
+              <td style="text-align: right;">
+                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button class="btn btn-small btn-primary" onclick="event.stopPropagation(); bookEvent('${event.id}')">Book</button>
+                    <button class="btn btn-small btn-success" style="background:#28a745; border-color:#28a745;" onclick="event.stopPropagation(); checkInEvent('${event.id}')">📍 I'm Here</button>
+                    <button class="btn btn-small btn-secondary" onclick="event.stopPropagation(); viewEventDetails('${event.id}')">View</button>
+                 </div>
+              </td>
+            </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function loadPlayerDocuments() {
@@ -1436,27 +1588,69 @@ function viewEventDetails(eventId) {
   modal.id = 'eventDetailsModal';
   modal.style.display = 'block';
   
-  const eventTime = event.event_time ? ' at ' + escapeHTML(event.event_time) : '';
+  const eventTime = event.event_time ? event.event_time.slice(0, 5) : 'TBA';
+  const price = Number(event.price || 0);
   
-  modal.innerHTML = '<div class="modal-content" style="max-width:600px;">' +
-    '<div class="modal-header">' +
-      '<h2>' + escapeHTML(event.title) + '</h2>' +
-      '<button class="close" onclick="closeModal(\'eventDetailsModal\')">&times;</button>' +
-    '</div>' +
-    '<div class="modal-body">' +
-      '<p><strong>Type:</strong> ' + escapeHTML(event.event_type || '') + '</p>' +
-      '<p><strong>Date:</strong> ' + formatDate(event.event_date) + eventTime + '</p>' +
-      '<p><strong>Location:</strong> ' + escapeHTML(event.location || 'TBD') + '</p>' +
-      '<p><strong>Price:</strong> ' + formatCurrency(event.price || 0) + '</p>' +
-      '<p><strong>Capacity:</strong> ' + escapeHTML(String(event.capacity ?? 'Unlimited')) + '</p>' +
-      '<p><strong>Available Spots:</strong> ' + escapeHTML(String(event.spots_available ?? 'Unlimited')) + '</p>' +
-      '<p><strong>Description:</strong> ' + escapeHTML(event.description || 'No description available') + '</p>' +
-      '<div style="margin-top:1rem;">' +
-        '<button class="btn btn-primary" onclick="bookEvent(\'' + event.id + '\'); closeModal(\'eventDetailsModal\')">Book Event</button>' +
-        '<button class="btn btn-secondary" onclick="closeModal(\'eventDetailsModal\')">Close</button>' +
-      '</div>' +
-    '</div>' +
-  '</div>';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:650px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+           <div class="team-icon" style="background: rgba(124, 58, 237, 0.1); color: var(--neon-purple); width: 48px; height: 48px; font-size: 1.5rem;">
+               ${event.event_type === 'match' ? '⚽' : event.event_type === 'training' ? '🏃' : '🎯'}
+           </div>
+           <div>
+               <h2 style="margin: 0; font-size: 1.5rem;">${escapeHTML(event.title)}</h2>
+               <span class="status-badge" style="margin-top: 4px; background: rgba(255,255,255,0.05); text-transform: capitalize;">${escapeHTML(event.event_type || '')}</span>
+           </div>
+        </div>
+        <button class="close" onclick="closeModal('eventDetailsModal')">&times;</button>
+      </div>
+      
+      <div class="modal-body" style="padding-top: 1.5rem;">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">Date & Time</label>
+                <div style="font-weight: 600; font-size: 1.1rem; color: var(--text-main);">
+                    ${formatDate(event.event_date)}
+                </div>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">${eventTime}</div>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                 <label style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">Price & Access</label>
+                 <div style="font-weight: 600; font-size: 1.1rem; color: ${price > 0 ? '#fbbf24' : '#4ade80'};">
+                    ${price > 0 ? formatCurrency(price) : 'Free Entry'}
+                 </div>
+                 <div style="color: var(--text-muted); font-size: 0.9rem;">
+                    ${event.spots_available !== undefined ? `${event.spots_available} spots left` : 'Open Availability'}
+                 </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label style="color: var(--text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">Location</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem;">
+                <span>📍</span> ${escapeHTML(event.location || 'Location to be announced')}
+            </div>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label style="color: var(--text-muted); font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">About this Event</label>
+            <div style="line-height: 1.6; opacity: 0.9; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                ${escapeHTML(event.description || 'No additional details provided.')}
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+             <button class="btn btn-primary" style="flex: 1;" onclick="bookEvent('${event.id}'); closeModal('eventDetailsModal')">
+                Book Spot ${price > 0 ? `(${formatCurrency(price)})` : ''}
+             </button>
+             <button class="btn btn-secondary" onclick="closeModal('eventDetailsModal')">Close</button>
+        </div>
+      </div>
+    </div>
+  `;
   document.body.appendChild(modal);
 }
 

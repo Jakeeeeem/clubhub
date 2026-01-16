@@ -726,8 +726,14 @@
             document.getElementById('inviteContent').querySelector('.invite-details').style.display = 'none';
 
             // Auto-redirect after 5 seconds
+            // Auto-redirect after 5 seconds
             setTimeout(() => {
-                window.location.href = 'player-dashboard.html';
+                const role = (inviteData?.invite?.clubRole || 'player').toLowerCase();
+                if (['admin', 'owner', 'coach', 'assistant-coach', 'assistant_coach', 'staff', 'treasurer', 'secretary', 'welfare-officer'].includes(role)) {
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    window.location.href = 'player-dashboard.html';
+                }
             }, 5000);
         }
 

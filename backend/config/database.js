@@ -136,7 +136,14 @@ const queries = {
   `,
   
   // Staff queries
-  findStaffByClub: 'SELECT * FROM staff WHERE club_id = $1 ORDER BY created_at DESC',
+  findStaffByClub: `
+    SELECT s.*, t.name as team_name, t.id as team_id, om.status
+    FROM staff s 
+    LEFT JOIN teams t ON s.id = t.coach_id 
+    LEFT JOIN organization_members om ON s.user_id = om.user_id AND s.club_id = om.organization_id
+    WHERE s.club_id = $1 
+    ORDER BY s.created_at DESC
+  `,
   findStaffById: 'SELECT * FROM staff WHERE id = $1',
   createStaff: `
     INSERT INTO staff (first_name, last_name, email, phone, role, permissions, club_id)

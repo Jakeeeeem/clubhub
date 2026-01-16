@@ -195,7 +195,37 @@ class OrganizationSwitcher {
       if (response.success) {
         showNotification('Organization switched successfully!', 'success');
         
-        // Reload the page to refresh all data
+        // Fetch new context to get updated role
+        try {
+           const context = await apiService.refreshContext();
+           if (context && context.currentOrganization) {
+               const newRole = context.currentOrganization.role;
+               
+               // Update local storage user
+               const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+               currentUser.role = newRole;
+               // If the user is an owner/admin acting as a player, we must ensure 
+               // the guard allows them into the player dashboard.
+               // The guard checks currently: user.role === 'player' OR account_type in ['player',..]
+               // So updating currentUser.role to 'player' should pass the guard.
+               
+               localStorage.setItem('currentUser', JSON.stringify(currentUser));
+               
+               // Redirect based on role
+               if (['player', 'parent', 'adult'].includes(newRole)) {
+                   window.location.href = 'player-dashboard.html';
+               } else if (['coach', 'assistant-coach'].includes(newRole)) {
+                   window.location.href = 'coach-dashboard.html';
+               } else {
+                   window.location.href = 'admin-dashboard.html';
+               }
+               return;
+           }
+        } catch (e) {
+            console.warn('Failed to refresh context during switch:', e);
+        }
+
+        // Fallback
         setTimeout(() => {
           window.location.reload();
         }, 500);

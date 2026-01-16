@@ -356,54 +356,80 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
     // Accept invite in transaction with enhanced error handling
     const result = await withTransaction(async (client) => {
       try {
-        console.log('👤 Creating player record...');
+        console.log('👤 Creating/Updating member record...');
         
-        // Create player record
-       const playerResult = await client.query(`
-  INSERT INTO players (
-    first_name, 
-    last_name, 
-    email, 
-    user_id, 
-    club_id, 
-    position, 
-    monthly_fee,
-    payment_status,
-    date_of_birth,
-    created_at
-  )
-  VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW())
-  RETURNING *
-`, [
-  invite.first_name || req.user.first_name || req.user.firstName || '',
-  invite.last_name || req.user.last_name || req.user.lastName || '',
-  req.user.email,
-  req.user.id,
-  invite.club_id,
-  invite.club_role === 'player' ? null : invite.club_role,
-  50, // Default monthly fee
-  invite.date_of_birth || '1990-01-01' // 🔥 Use date from invite or default
-]);
+        // 1. Add to organization_members (Unified System Core)
+        const memberCheck = await client.query(`
+          SELECT id FROM organization_members 
+          WHERE user_id = $1 AND organization_id = $2
+        `, [req.user.id, invite.club_id]);
 
-
-        const newPlayer = playerResult.rows[0];
-        console.log('✅ Player created:', newPlayer.id);
-
-        // If team was specified in invite, assign player to team
-        if (invite.team_id) {
-          console.log('⚽ Assigning player to team...');
-          await client.query(`
-            INSERT INTO team_players (team_id, player_id, joined_at)
-            VALUES ($1, $2, NOW())
-          `, [invite.team_id, newPlayer.id]);
-          
-          console.log(`✅ Player assigned to team: ${invite.team_name}`);
+        if (memberCheck.rows.length === 0) {
+            await client.query(`
+                INSERT INTO organization_members (user_id, organization_id, role, status, joined_at)
+                VALUES ($1, $2, $3, 'active', NOW())
+            `, [req.user.id, invite.club_id, invite.club_role || 'member']);
+             console.log('✅ Added to organization_members');
         }
 
-        // For shareable/public invites, don't mark as used - leave as pending for reuse
+        // 2. Create player record (Legacy/Specific functionality)
+        let newPlayer = null;
+        if (invite.club_role === 'player' || !invite.club_role) {
+             const playerResult = await client.query(`
+              INSERT INTO players (
+                first_name, last_name, email, user_id, club_id, 
+                position, monthly_fee, payment_status, date_of_birth, created_at
+              )
+              VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW())
+              RETURNING *
+            `, [
+              invite.first_name || req.user.first_name || '',
+              invite.last_name || req.user.last_name || '',
+              req.user.email,
+              req.user.id,
+              invite.club_id,
+              invite.club_role === 'player' ? null : invite.club_role, // Position
+              50, // Default fee
+              invite.date_of_birth || '1990-01-01'
+            ]);
+            newPlayer = playerResult.rows[0];
+            console.log('✅ Player profile created:', newPlayer.id);
+
+            // Assign to team if specified
+            if (invite.team_id) {
+                await client.query(`
+                    INSERT INTO team_players (team_id, player_id, joined_at)
+                    VALUES ($1, $2, NOW())
+                `, [invite.team_id, newPlayer.id]);
+                console.log(`✅ Assigned to team: ${invite.team_name}`);
+            }
+
+             // Create welcome payment
+            if (newPlayer.monthly_fee > 0) {
+                await client.query(`
+                    INSERT INTO payments (
+                    player_id, club_id, amount, payment_type, description, due_date, payment_status
+                    )
+                    VALUES ($1, $2, $3, 'monthly_fee', $4, $5, 'pending')
+                `, [
+                    newPlayer.id,
+                    invite.club_id,
+                    newPlayer.monthly_fee,
+                    `Welcome payment for ${invite.club_name}`,
+                    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                ]);
+            }
+        }
+
+        // 3. Update User's Current Context to this new club
+        await client.query(`
+            INSERT INTO user_preferences (user_id, current_organization_id)
+            VALUES ($1, $2)
+            ON CONFLICT (user_id) DO UPDATE SET current_organization_id = $2
+        `, [req.user.id, invite.club_id]);
+
+        // 4. Update Invite Status
         if (!invite.is_public) {
-          console.log('📝 Updating invite status...');
-          // Update invite status for specific email invites
           await client.query(`
             UPDATE club_invites SET 
               invite_status = 'accepted',
@@ -414,31 +440,7 @@ router.post('/accept/:token', authenticateToken, async (req, res) => {
           `, [req.user.id, invite.id]);
           console.log('✅ Invite marked as accepted');
         } else {
-          console.log('🔗 Keeping shareable invite active for reuse');
-        }
-
-        // Create welcome payment if monthly fee > 0
-        if (newPlayer.monthly_fee > 0) {
-          console.log('💰 Creating welcome payment...');
-          await client.query(`
-            INSERT INTO payments (
-              player_id, 
-              club_id, 
-              amount, 
-              payment_type, 
-              description, 
-              due_date,
-              payment_status
-            )
-            VALUES ($1, $2, $3, 'monthly_fee', $4, $5, 'pending')
-          `, [
-            newPlayer.id,
-            invite.club_id,
-            newPlayer.monthly_fee,
-            `Welcome payment for ${invite.club_name}`,
-            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
-          ]);
-          console.log('✅ Welcome payment created');
+             console.log('🔗 Keeping shareable invite active for reuse');
         }
 
         return { 
