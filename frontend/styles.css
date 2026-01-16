@@ -2546,6 +2546,42 @@ main.main.home-main {
     color: var(--text-muted);
 }
 
+.user-info-cell, .event-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-name-group, .event-name-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name, .event-name {
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.user-meta, .event-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, #991b1b 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+
 .stats-cell {
     display: flex;
     gap: 1rem;
@@ -2630,6 +2666,7 @@ main.main.home-main {
 
 .btn-icon.manage:hover { color: var(--primary); border-color: var(--primary); }
 .btn-icon.edit:hover { color: var(--neon-purple); border-color: var(--neon-purple); }
+.btn-icon.notify:hover { color: #3b82f6; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
 .btn-icon.delete:hover { color: #ef4444; border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
 
 /* Premium Modal Styles */
@@ -2646,10 +2683,13 @@ main.main.home-main {
     animation: fadeIn 0.3s ease-out;
     overflow-y: auto;
     padding: 2rem 1rem;
+    align-items: center;
+    justify-content: center;
 }
 
-.modal.active {
-    display: flex;
+.modal.active,
+.modal[style*="display: block"] {
+    display: flex !important;
     align-items: center;
     justify-content: center;
 }

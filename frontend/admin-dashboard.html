@@ -739,41 +739,48 @@
                 <button class="close" onclick="closeModal('invitePlayerModal')">&times;</button>
             </div>
             <form id="invitePlayerForm">
-                <div class="form-group">
-                    <label for="inviteEmail">Email Address</label>
-                    <input type="email" id="inviteEmail" required>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="inviteFirstName">First Name *</label>
+                        <input type="text" id="inviteFirstName" required placeholder="e.g., John">
+                    </div>
+                    <div class="form-group">
+                        <label for="inviteLastName">Last Name *</label>
+                        <input type="text" id="inviteLastName" required placeholder="e.g., Smith">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="inviteEmail">Email Address *</label>
+                        <input type="email" id="inviteEmail" required placeholder="player@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="inviteRole">Account Type</label>
+                        <select id="inviteRole" required>
+                            <option value="player">Player (Child Account)</option>
+                            <option value="parent">Parent (Adult Account)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inviteTeam">Assign to Team</label>
+                        <select id="inviteTeam">
+                            <option value="">No team assignment</option>
+                            <!-- Populated from database -->
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="inviteMessage">Personal Message</label>
+                        <textarea id="inviteMessage" rows="3"
+                            placeholder="Welcome to our club! We're excited to have you join our team..."></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="inviteFirstName">First Name</label>
-                    <input type="text" id="inviteFirstName" required>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">📧 Send Invite</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('invitePlayerModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label for="inviteLastName">Last Name</label>
-                    <input type="text" id="inviteLastName" required>
-                </div>
-                <div class="form-group">
-                    <label for="inviteRole">Role</label>
-                    <select id="inviteRole" required>
-                        <option value="player">Player</option>
-                        <option value="parent">Parent (Adult Account)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="inviteTeam">Assign to Team (Optional)</label>
-                    <select id="inviteTeam">
-                        <option value="">No team assignment</option>
-                        <!-- Populated from database -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="inviteMessage">Personal Message</label>
-                    <textarea id="inviteMessage" rows="3"
-                        placeholder="Welcome to our club! We're excited to have you join our team..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">📧 Send Invite</button>
             </form>
         </div>
     </div>
+
 
     <!-- Invite Staff Modal -->
     <div id="inviteStaffModal" class="modal">
@@ -783,51 +790,50 @@
                 <button class="close" onclick="closeModal('inviteStaffModal')">&times;</button>
             </div>
             <form id="inviteStaffForm" onsubmit="handleNewInvite(event)">
-                <div class="form-group">
-                    <label for="staffInviteEmail">Email Address *</label>
-                    <input type="email" id="staffInviteEmail" required placeholder="member@example.com">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="staffInviteEmail">Email Address *</label>
+                        <input type="email" id="staffInviteEmail" required placeholder="member@example.com">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="staffInviteRole">Access Role *</label>
+                        <select id="staffInviteRole" required>
+                            <option value="">Select Role</option>
+                            <option value="admin">Administrator (Full Access)</option>
+                            <option value="coach">Coach (Team Management)</option>
+                            <option value="assistant_coach">Assistant Coach</option>
+                            <option value="staff">Staff Member (Finances & Shop)</option>
+                            <option value="viewer">Viewer (Read-only)</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <div class="info-box">
+                            <strong>📋 Role Permissions:</strong>
+                            <ul>
+                                <li><strong>Admin:</strong> Full organization management</li>
+                                <li><strong>Coach:</strong> Assigned teams & player oversight</li>
+                                <li><strong>Staff:</strong> Shop, Marketing & Transactions</li>
+                                <li><strong>Viewer:</strong> Dashboard and data visibility only</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="staffInviteMessage">Personal Message (Optional)</label>
+                        <textarea id="staffInviteMessage" rows="3"
+                            placeholder="Welcome to our team! We're excited to have you join us."></textarea>
+                    </div>
                 </div>
-
-                <div class="form-group">
-                    <label for="staffInviteRole">Role *</label>
-                    <select id="staffInviteRole" required>
-                        <option value="">Select Role</option>
-                        <option value="admin">Administrator</option>
-                        <option value="coach">Coach</option>
-                        <option value="assistant_coach">Assistant Coach</option>
-                        <option value="staff">Staff Member</option>
-                        <option value="player">Player</option>
-                        <option value="parent">Parent/Guardian</option>
-                        <option value="viewer">Viewer (Read-only)</option>
-                    </select>
-                    <small style="display: block; margin-top: 0.5rem; opacity: 0.7;">
-                        This determines what features they can access
-                    </small>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">📧 Send Invitation</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('inviteStaffModal')">Cancel</button>
                 </div>
-
-                <div class="form-group">
-                    <label for="inviteMessage">Personal Message (Optional)</label>
-                    <textarea id="inviteMessage" rows="3"
-                        placeholder="Welcome to our team! We're excited to have you join us."></textarea>
-                </div>
-
-                <div
-                    style="background: rgba(220, 67, 67, 0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; font-size: 0.9rem;">
-                    <strong>📋 Role Permissions:</strong>
-                    <ul style="margin: 0.5rem 0 0 1.5rem; opacity: 0.9;">
-                        <li><strong>Admin:</strong> Full management access</li>
-                        <li><strong>Coach:</strong> Team & player management</li>
-                        <li><strong>Staff:</strong> Financial & shop access</li>
-                        <li><strong>Player:</strong> Personal dashboard only</li>
-                    </ul>
-                </div>
-
-                <button type="submit" class="btn btn-primary">📧 Send Invitation</button>
             </form>
         </div>
     </div>
 
-    <!-- Add Player Modal (Enhanced) -->
+
+    <!-- Add Player Modal -->
     <div id="addPlayerModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -835,96 +841,89 @@
                 <button class="close" onclick="closeModal('addPlayerModal')">&times;</button>
             </div>
             <form id="addPlayerForm">
-                <div class="form-group">
-                    <label for="playerFirstName">First Name</label>
-                    <input type="text" id="playerFirstName" required>
-                </div>
-                <div class="form-group">
-                    <label for="playerLastName">Last Name</label>
-                    <input type="text" id="playerLastName" required>
-                </div>
-                <div class="form-group">
-                    <label for="playerEmail">Email (for account linking)</label>
-                    <input type="email" id="playerEmail" placeholder="Link to existing user account">
-                </div>
-                <div class="form-group">
-                    <label for="playerPhone">Phone</label>
-                    <input type="tel" id="playerPhone">
-                </div>
-                <div class="form-group">
-                    <label for="playerDOB">Date of Birth</label>
-                    <input type="date" id="playerDOB" required>
-                </div>
-                <div class="form-group">
-                    <label for="playerSport">Sport</label>
-                    <select id="playerSport" onchange="updatePositionPlaceholder()">
-                        <option value="">Select Sport...</option>
-                        <option value="Football">Football</option>
-                        <option value="Basketball">Basketball</option>
-                        <option value="Tennis">Tennis</option>
-                        <option value="Rugby">Rugby</option>
-                        <option value="Cricket">Cricket</option>
-                        <option value="Hockey">Hockey</option>
-                        <option value="Volleyball">Volleyball</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="playerGender">Gender</label>
-                    <select id="playerGender">
-                        <option value="">Select Gender...</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                        <option value="Prefer not to say">Prefer not to say</option>
-                    </select>
-                </div>
-                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="playerFirstName">First Name *</label>
+                        <input type="text" id="playerFirstName" required placeholder="First Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerLastName">Last Name *</label>
+                        <input type="text" id="playerLastName" required placeholder="Last Name">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerEmail">Email address</label>
+                        <input type="email" id="playerEmail" placeholder="player@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerPhone">Phone Number</label>
+                        <input type="tel" id="playerPhone" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerDOB">Date of Birth *</label>
+                        <input type="date" id="playerDOB" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="playerSport">Sport</label>
+                        <select id="playerSport">
+                            <option value="">Select Sport...</option>
+                            <option value="Football">Football</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label for="playerPosition">Position</label>
-                        <input type="text" id="playerPosition" placeholder="e.g., Midfielder, Forward">
+                        <input type="text" id="playerPosition" placeholder="e.g., Striker">
                     </div>
                     <div class="form-group">
-                        <label for="playerLocation">Location</label>
-                        <input type="text" id="playerLocation" placeholder="e.g., London, UK">
+                        <label for="playerGender">Gender</label>
+                        <select id="playerGender">
+                            <option value="">Select Gender...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="playerTeam">Assign to Team</label>
+                        <select id="playerTeam">
+                            <option value="">No team assignment</option>
+                            <!-- Populated from database -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="playerPaymentPlan">Payment Plan</label>
+                        <select id="playerPaymentPlan">
+                            <option value="">No payment plan</option>
+                            <!-- Populated from database -->
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="playerBio">Bio / Achievements</label>
+                        <textarea id="playerBio" rows="3" placeholder="Tell us about the player..."></textarea>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="playerBio">Bio / Achievements</label>
-                    <textarea id="playerBio" rows="3"
-                        placeholder="Tell us about the player's history and highlights..."></textarea>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">➕ Add Player</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('addPlayerModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label for="playerTeam">Assign to Team</label>
-                    <select id="playerTeam">
-                        <option value="">No team assignment</option>
-                        <!-- Populated from database -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="playerPaymentPlan">Payment Plan</label>
-                    <select id="playerPaymentPlan">
-                        <option value="">No payment plan</option>
-                        <!-- Populated from database -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="playerFee">Monthly Fee (£)</label>
-                    <input type="number" id="playerFee" step="0.01" min="0" placeholder="e.g., 45">
-                </div>
-                <button type="submit" class="btn btn-primary">➕ Add Player</button>
             </form>
         </div>
+    </div>
 
-        <!-- Edit Player Modal -->
-        <div id="editPlayerModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>✏️ Edit Player Details</h2>
-                    <button class="close" onclick="closeModal('editPlayerModal')">&times;</button>
-                </div>
-                <form id="editPlayerForm">
-                    <input type="hidden" id="editPlayerId">
+
+    <!-- Edit Player Modal -->
+    <div id="editPlayerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Edit Player Details</h2>
+                <button class="close" onclick="closeModal('editPlayerModal')">&times;</button>
+            </div>
+            <form id="editPlayerForm">
+                <input type="hidden" id="editPlayerId">
+                <div class="form-grid">
                     <div class="form-group">
                         <label for="editPlayerFirstName">First Name *</label>
                         <input type="text" id="editPlayerFirstName" required>
@@ -934,58 +933,39 @@
                         <input type="text" id="editPlayerLastName" required>
                     </div>
                     <div class="form-group">
-                        <label for="editPlayerEmail">Email</label>
+                        <label for="editPlayerEmail">Email address</label>
                         <input type="email" id="editPlayerEmail">
                     </div>
                     <div class="form-group">
-                        <label for="editPlayerPhone">Phone</label>
+                        <label for="editPlayerPhone">Phone Number</label>
                         <input type="tel" id="editPlayerPhone">
                     </div>
                     <div class="form-group">
                         <label for="editPlayerDOB">Date of Birth *</label>
                         <input type="date" id="editPlayerDOB" required>
                     </div>
-
-                    <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label for="editPlayerSport">Sport</label>
-                            <select id="editPlayerSport" onchange="updateEditPositionPlaceholder()">
-                                <option value="">Select Sport...</option>
-                                <option value="Football">Football</option>
-                                <option value="Basketball">Basketball</option>
-                                <option value="Tennis">Tennis</option>
-                                <option value="Rugby">Rugby</option>
-                                <option value="Cricket">Cricket</option>
-                                <option value="Hockey">Hockey</option>
-                                <option value="Volleyball">Volleyball</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="editPlayerGender">Gender</label>
-                            <select id="editPlayerGender">
-                                <option value="">Select Gender...</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                                <option value="Prefer not to say">Prefer not to say</option>
-                            </select>
-                        </div>
-                    </div>
-
                     <div class="form-group">
-                        <label for="editPlayerLocation">Location</label>
-                        <input type="text" id="editPlayerLocation" placeholder="e.g., London, UK">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="editPlayerBio">Bio / History (CV)</label>
-                        <textarea id="editPlayerBio" rows="3"
-                            placeholder="Player history, previous teams, etc..."></textarea>
+                        <label for="editPlayerSport">Sport</label>
+                        <select id="editPlayerSport">
+                            <option value="">Select Sport...</option>
+                            <option value="Football">Football</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="editPlayerPosition">Position</label>
-                        <input type="text" id="editPlayerPosition" placeholder="e.g., Striker, Point Guard">
+                        <input type="text" id="editPlayerPosition" placeholder="e.g., Striker">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerGender">Gender</label>
+                        <select id="editPlayerGender">
+                            <option value="">Select Gender...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="editPlayerPaymentStatus">Payment Status</label>
@@ -995,10 +975,25 @@
                             <option value="overdue">Overdue</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="editPlayerLocation">Location</label>
+                        <input type="text" id="editPlayerLocation" placeholder="e.g., London, UK">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="editPlayerBio">Bio / History (CV)</label>
+                        <textarea id="editPlayerBio" rows="3"
+                            placeholder="Player history, highlights, etc..."></textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
                     <button type="submit" class="btn btn-primary">💾 Save Changes</button>
-                </form>
-            </div>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('editPlayerModal')">Cancel</button>
+                </div>
+            </form>
         </div>
+
+    </div>
     </div>
 
     <!-- Create Poll Modal -->
@@ -1089,64 +1084,73 @@
         </div>
     </div>
 
-    <!-- Add Event Modal (Enhanced) -->
+    <!-- Add Event Modal -->
     <div id="addEventModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>📅 Create New Event</h2>
                 <button class="close" onclick="closeModal('addEventModal')">&times;</button>
             </div>
-            <form id="addEventForm">
-                <div class="form-group">
-                    <label for="eventTitle">Event Title</label>
-                    <input type="text" id="eventTitle" required>
+            <form id="addEventForm" onsubmit="handleAddEvent(event)">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="eventTitle">Event Title *</label>
+                        <input type="text" id="eventTitle" required placeholder="e.g., U16 Weekly Training">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventType">Event Type *</label>
+                        <select id="eventType" required>
+                            <option value="">Select Type</option>
+                            <option value="training">Training Session</option>
+                            <option value="match">Match</option>
+                            <option value="tournament">Tournament</option>
+                            <option value="camp">Training Camp</option>
+                            <option value="social">Social Event</option>
+                            <option value="trial">Trial Session</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventLocation">Location</label>
+                        <input type="text" id="eventLocation" placeholder="Event venue">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventDate">Date *</label>
+                        <input type="date" id="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventTime">Time *</label>
+                        <input type="time" id="eventTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventPrice">Price (£)</label>
+                        <input type="number" id="eventPrice" step="0.01" min="0" value="0">
+                        <small>Set to 0 for free events</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventCapacity">Capacity</label>
+                        <input type="number" id="eventCapacity" min="1" placeholder="Unlimited">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="eventDescription">Description</label>
+                        <textarea id="eventDescription" rows="3"
+                            placeholder="Event details and information..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="notifyPlayers" checked>
+                            <span>📨 Notify all members via email/app</span>
+                        </label>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="eventType">Event Type</label>
-                    <select id="eventType" required>
-                        <option value="">Select Type</option>
-                        <option value="training">Training Session</option>
-                        <option value="match">Match</option>
-                        <option value="tournament">Tournament</option>
-                        <option value="camp">Training Camp</option>
-                        <option value="social">Social Event</option>
-                        <option value="trial">Trial Session</option>
-                    </select>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">📅 Create Event</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('addEventModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label for="eventDate">Date</label>
-                    <input type="date" id="eventDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="eventTime">Time</label>
-                    <input type="time" id="eventTime" required>
-                </div>
-                <div class="form-group">
-                    <label for="eventLocation">Location</label>
-                    <input type="text" id="eventLocation" placeholder="Event venue">
-                </div>
-                <div class="form-group">
-                    <label for="eventPrice">Price (£)</label>
-                    <input type="number" id="eventPrice" step="0.01" min="0" value="0">
-                    <small>Set to 0 for free events</small>
-                </div>
-                <div class="form-group">
-                    <label for="eventCapacity">Capacity</label>
-                    <input type="number" id="eventCapacity" min="1">
-                    <small>Leave empty for unlimited capacity</small>
-                </div>
-                <div class="form-group">
-                    <label for="eventDescription">Description</label>
-                    <textarea id="eventDescription" rows="3" placeholder="Event details and information..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label><input type="checkbox" id="notifyPlayers" checked> 📨 Notify all players via
-                        email/app</label>
-                </div>
-                <button type="submit" class="btn btn-primary">📅 Create Event</button>
             </form>
         </div>
     </div>
+
 
     <!-- Create Payment Plan Modal -->
     <div id="createPaymentPlanModal" class="modal">
@@ -1156,32 +1160,39 @@
                 <button class="close" onclick="closeModal('createPaymentPlanModal')">&times;</button>
             </div>
             <form id="createPaymentPlanForm">
-                <div class="form-group">
-                    <label for="planName">Plan Name</label>
-                    <input type="text" id="planName" required placeholder="e.g., Monthly Membership">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="planName">Plan Name *</label>
+                        <input type="text" id="planName" required placeholder="e.g., Monthly Membership">
+                    </div>
+                    <div class="form-group">
+                        <label for="planAmount">Amount (£) *</label>
+                        <input type="number" id="planAmount" step="0.01" min="0" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="planFrequency">Frequency *</label>
+                        <select id="planFrequency" required>
+                            <option value="">Select Frequency</option>
+                            <option value="month">Monthly</option>
+                            <option value="week">Weekly</option>
+                            <option value="year">Annually</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="planDescription">Description</label>
+                        <textarea id="planDescription" rows="3"
+                            placeholder="Plan details and what's included in this membership..."></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="planAmount">Amount (£)</label>
-                    <input type="number" id="planAmount" step="0.01" min="0" required>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💳 Create Plan</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('createPaymentPlanModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label for="planFrequency">Frequency</label>
-                    <select id="planFrequency" required>
-                        <option value="">Select Frequency</option>
-                        <option value="month">Monthly</option>
-                        <option value="week">Weekly</option>
-                        <option value="year">Annually</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="planDescription">Description</label>
-                    <textarea id="planDescription" rows="3"
-                        placeholder="Plan details and what's included..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">💳 Create Plan</button>
             </form>
         </div>
     </div>
+
 
     <!-- Edit Payment Plan Modal -->
     <div id="editPaymentPlanModal" class="modal">
@@ -1225,46 +1236,53 @@
                 <button class="close" onclick="closeModal('createListingModal')">&times;</button>
             </div>
             <form id="createListingForm">
-                <div class="form-group">
-                    <label for="listingTitle">Listing Title</label>
-                    <input type="text" id="listingTitle" required placeholder="e.g., U16 Midfielder Wanted">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="listingTitle">Listing Title *</label>
+                        <input type="text" id="listingTitle" required placeholder="e.g., U16 Midfielder Wanted">
+                    </div>
+                    <div class="form-group">
+                        <label for="listingType">Listing Type *</label>
+                        <select id="listingType" required>
+                            <option value="">Select Type</option>
+                            <option value="player-wanted">Player Wanted</option>
+                            <option value="trial-announcement">Trial Announcement</option>
+                            <option value="camp-promotion">Camp Promotion</option>
+                            <option value="club-promotion">Club Promotion</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="listingPosition">Position (if applicable)</label>
+                        <input type="text" id="listingPosition" placeholder="e.g., Goalkeeper, Midfielder">
+                    </div>
+                    <div class="form-group">
+                        <label for="listingAgeGroup">Age Group</label>
+                        <select id="listingAgeGroup">
+                            <option value="">Any Age</option>
+                            <option value="U8">Under 8</option>
+                            <option value="U10">Under 10</option>
+                            <option value="U12">Under 12</option>
+                            <option value="U14">Under 14</option>
+                            <option value="U16">Under 16</option>
+                            <option value="U18">Under 18</option>
+                            <option value="Senior">Senior</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="listingDescription">Requirements & Details</label>
+                        <textarea id="listingDescription" rows="3"
+                            placeholder="Tell applicants what you're looking for, training days, level, etc..."></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="listingType">Listing Type</label>
-                    <select id="listingType" required>
-                        <option value="">Select Type</option>
-                        <option value="player-wanted">Player Wanted</option>
-                        <option value="trial-announcement">Trial Announcement</option>
-                        <option value="camp-promotion">Camp Promotion</option>
-                        <option value="club-promotion">Club Promotion</option>
-                    </select>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">📋 Create Listing</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('createListingModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label for="listingPosition">Position (if applicable)</label>
-                    <input type="text" id="listingPosition" placeholder="e.g., Goalkeeper, Midfielder">
-                </div>
-                <div class="form-group">
-                    <label for="listingAgeGroup">Age Group</label>
-                    <select id="listingAgeGroup">
-                        <option value="">Any Age</option>
-                        <option value="U8">Under 8</option>
-                        <option value="U10">Under 10</option>
-                        <option value="U12">Under 12</option>
-                        <option value="U14">Under 14</option>
-                        <option value="U16">Under 16</option>
-                        <option value="U18">Under 18</option>
-                        <option value="Senior">Senior</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="listingDescription">Requirements & Details</label>
-                    <textarea id="listingDescription" rows="3"
-                        placeholder="Tell applicants what you're looking for..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">📋 Create Listing</button>
             </form>
         </div>
     </div>
+
 
     <!-- Edit Listing Modal -->
     <div id="editListingModal" class="modal">
@@ -1275,44 +1293,51 @@
             </div>
             <form id="editListingForm">
                 <input type="hidden" id="editListingId">
-                <div class="form-group">
-                    <label for="editListingTitle">Listing Title</label>
-                    <input type="text" id="editListingTitle" required>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="editListingTitle">Listing Title *</label>
+                        <input type="text" id="editListingTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editListingType">Listing Type *</label>
+                        <select id="editListingType" required>
+                            <option value="player-wanted">Player Wanted</option>
+                            <option value="trial-announcement">Trial Announcement</option>
+                            <option value="camp-promotion">Camp Promotion</option>
+                            <option value="club-promotion">Club Promotion</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editListingPosition">Position (if applicable)</label>
+                        <input type="text" id="editListingPosition">
+                    </div>
+                    <div class="form-group">
+                        <label for="editListingAgeGroup">Age Group</label>
+                        <select id="editListingAgeGroup">
+                            <option value="">Any Age</option>
+                            <option value="U8">Under 8</option>
+                            <option value="U10">Under 10</option>
+                            <option value="U12">Under 12</option>
+                            <option value="U14">Under 14</option>
+                            <option value="U16">Under 16</option>
+                            <option value="U18">Under 18</option>
+                            <option value="Senior">Senior</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="editListingDescription">Requirements & Details</label>
+                        <textarea id="editListingDescription" rows="3"></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editListingType">Listing Type</label>
-                    <select id="editListingType" required>
-                        <option value="player-wanted">Player Wanted</option>
-                        <option value="trial-announcement">Trial Announcement</option>
-                        <option value="camp-promotion">Camp Promotion</option>
-                        <option value="club-promotion">Club Promotion</option>
-                    </select>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('editListingModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label for="editListingPosition">Position (if applicable)</label>
-                    <input type="text" id="editListingPosition">
-                </div>
-                <div class="form-group">
-                    <label for="editListingAgeGroup">Age Group</label>
-                    <select id="editListingAgeGroup">
-                        <option value="">Any Age</option>
-                        <option value="U8">Under 8</option>
-                        <option value="U10">Under 10</option>
-                        <option value="U12">Under 12</option>
-                        <option value="U14">Under 14</option>
-                        <option value="U16">Under 16</option>
-                        <option value="U18">Under 18</option>
-                        <option value="Senior">Senior</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editListingDescription">Requirements & Details</label>
-                    <textarea id="editListingDescription" rows="3"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">💾 Save Changes</button>
             </form>
         </div>
     </div>
+
 
     <!-- Team Management Modal -->
     <div id="teamManagementModal" class="modal">
@@ -1364,36 +1389,42 @@
                 <button class="close" onclick="closeModal('addProductModal')">&times;</button>
             </div>
             <form id="addProductForm">
-                <div class="form-group">
-                    <label for="productName">Product Name *</label>
-                    <input type="text" id="productName" required placeholder="e.g., Club Hoodie">
-                </div>
-                <div class="form-group">
-                    <label for="productPrice">Price (£) *</label>
-                    <input type="number" id="productPrice" step="0.01" required placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label for="productStock">Stock Quantity</label>
-                    <input type="number" id="productStock" placeholder="Leave empty for unlimited">
-                </div>
-                <div class="form-group">
-                    <label for="productDescription">Description</label>
-                    <textarea id="productDescription" rows="2"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Custom Questions (e.g., Size, Initials)</label>
-                    <div id="customQuestionsContainer"
-                        style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
-                        <!-- Dynamic question inputs -->
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="productName">Product Name *</label>
+                        <input type="text" id="productName" required placeholder="e.g., Club Hoodie">
                     </div>
-                    <button type="button" class="btn btn-secondary btn-small" onclick="addQuestionField()"
-                        style="margin-top: 0.5rem;">+ Add Question</button>
+                    <div class="form-group">
+                        <label for="productPrice">Price (£) *</label>
+                        <input type="number" id="productPrice" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="productStock">Stock Quantity</label>
+                        <input type="number" id="productStock" placeholder="Leave empty for unlimited">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="productDescription">Description</label>
+                        <textarea id="productDescription" rows="2" placeholder="Product details..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Custom Questions (e.g., Size, Initials)</label>
+                        <div id="customQuestionsContainer"
+                            style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                            <!-- Dynamic question inputs -->
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="addQuestionField()"
+                            style="margin-top: 0.5rem;">+ Add Question</button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">➕ Add
-                    Product</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">➕ Add Product</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('addProductModal')">Cancel</button>
+                </div>
             </form>
         </div>
     </div>
+
 
     <!-- Edit Product Modal -->
     <div id="editProductModal" class="modal">
@@ -1433,32 +1464,39 @@
                 <button class="close" onclick="closeModal('createCampaignModal')">&times;</button>
             </div>
             <form id="createCampaignForm">
-                <div class="form-group">
-                    <label for="campaignTitle">Campaign Title *</label>
-                    <input type="text" id="campaignTitle" required placeholder="e.g., Summer Trial Recruitment">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="campaignTitle">Campaign Title *</label>
+                        <input type="text" id="campaignTitle" required placeholder="e.g., Summer Trial Recruitment">
+                    </div>
+                    <div class="form-group">
+                        <label for="campaignSubject">Email Subject *</label>
+                        <input type="text" id="campaignSubject" required placeholder="Don't miss out!">
+                    </div>
+                    <div class="form-group">
+                        <label for="campaignTarget">Target Audience</label>
+                        <select id="campaignTarget">
+                            <option value="all">All Members</option>
+                            <option value="players">Current Players</option>
+                            <option value="applicants">Club Applicants</option>
+                            <option value="staff">Staff Members</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="campaignMessage">Message Content (HTML Supported)</label>
+                        <textarea id="campaignMessage" rows="8" required
+                            placeholder="Write your message here..."></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="campaignSubject">Email Subject *</label>
-                    <input type="text" id="campaignSubject" required placeholder="Don't miss out!">
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">📨 Create & Send Campaign</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('createCampaignModal')">Cancel</button>
                 </div>
-                <div class="form-group">
-                    <label for="campaignTarget">Target Audience</label>
-                    <select id="campaignTarget">
-                        <option value="all">All Members</option>
-                        <option value="players">Current Players</option>
-                        <option value="applicants">Club Applicants</option>
-                        <option value="staff">Staff Members</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="campaignMessage">Message Content (HTML Supported)</label>
-                    <textarea id="campaignMessage" rows="8" required
-                        placeholder="Write your message here..."></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">📨 Create & Send Campaign</button>
             </form>
         </div>
     </div>
+
 
     <!-- Record Match Result Modal -->
     <div id="recordResultModal" class="modal">
@@ -1469,24 +1507,30 @@
             </div>
             <form id="recordResultForm">
                 <input type="hidden" id="resultGameId">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-grid">
                     <div class="form-group">
                         <label for="homeScore">Our Score</label>
-                        <input type="number" id="homeScore" min="0" required>
+                        <input type="number" id="homeScore" min="0" required placeholder="0">
                     </div>
                     <div class="form-group">
                         <label for="awayScore">Opponent Score</label>
-                        <input type="number" id="awayScore" min="0" required>
+                        <input type="number" id="awayScore" min="0" required placeholder="0">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="matchSummary">Match Summary</label>
+                        <textarea id="matchSummary" rows="3"
+                            placeholder="Notes about the performance, top scorers, etc..."></textarea>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="matchSummary">Match Summary</label>
-                    <textarea id="matchSummary" rows="3" placeholder="Notes about the performance..."></textarea>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Save Result</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('recordResultModal')">Cancel</button>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">💾 Save Result</button>
             </form>
         </div>
     </div>
+
 
     <!-- JavaScript Integration -->
     <script src="https://js.stripe.com/v3/"></script>
@@ -1966,27 +2010,8 @@
 
         // Enhanced Event Listeners
         function setupEnhancedEventListeners() {
-            // Dashboard Navigation Buttons - Add event listeners as fallback
-            console.log('🔧 Setting up dashboard navigation event listeners...');
-            const navButtons = document.querySelectorAll('.dashboard-nav button[onclick*="showSection"]');
-            console.log(`Found ${navButtons.length} navigation buttons`);
+            /* Redundant listeners removed - they cause double calls since HTML has onclick */
 
-            navButtons.forEach(button => {
-                const onclickAttr = button.getAttribute('onclick');
-                if (onclickAttr) {
-                    // Extract section ID from onclick="showSection('section-id')"
-                    const match = onclickAttr.match(/showSection\('([^']+)'\)/);
-                    if (match) {
-                        const sectionId = match[1];
-                        button.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            console.log(`🖱️ Button clicked for section: ${sectionId}`);
-                            showSection(sectionId);
-                        });
-                        console.log(`✅ Added listener for: ${sectionId}`);
-                    }
-                }
-            });
 
             // Player form
             const addPlayerForm = document.getElementById('addPlayerForm');
@@ -3075,22 +3100,50 @@
                     return;
                 }
 
-                container.innerHTML = staff.map(member => `
-                    <div class="card" style="margin-bottom: 1rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <h4>${member.first_name} ${member.last_name}</h4>
-                                <p><strong>Role:</strong> ${member.role}</p>
-                                <p><strong>Email:</strong> ${member.email || 'N/A'}</p>
-                                <span class="status-badge status-${member.status}">${member.status}</span>
-                            </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn btn-small btn-secondary" onclick="editStaffMember('${member.id}')">Edit</button>
-                                <button class="btn btn-small btn-danger" onclick="removeStaffMember('${member.id}')">Remove</button>
-                            </div>
-                        </div>
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Staff Member</th>
+                                    <th>Role</th>
+                                    <th>Email</th>
+                                    <th style="text-align: center;">Status</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${staff.map(member => `
+                                    <tr>
+                                        <td>
+                                            <div class="user-info-cell">
+                                                <div class="user-avatar">${(member.first_name?.[0] || '')}${(member.last_name?.[0] || '')}</div>
+                                                <div class="user-name-group">
+                                                    <span class="user-name">${member.first_name} ${member.last_name}</span>
+                                                    <span class="user-meta">Staff ID: ${member.id.substring(0, 8)}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style="font-weight:500;">${member.role}</span>
+                                        </td>
+                                        <td>${member.email || 'N/A'}</td>
+                                        <td style="text-align: center;">
+                                            <span class="status-badge status-${(member.status || 'active').toLowerCase()}">${member.status || 'Active'}</span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon edit" title="Edit Staff" onclick="editStaffMember('${member.id}')">✏️</button>
+                                                <button class="btn-icon delete" title="Remove Staff" onclick="removeStaffMember('${member.id}')">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
-                `).join('');
+                `;
+
 
                 console.log(`✅ Loaded ${staff.length} staff members`);
 
@@ -3978,21 +4031,61 @@
                     return;
                 }
 
-                container.innerHTML = events.map(event => `
-                        <div class="card event-card">
-                            <div class="card-body">
-                                <h4>${event.title}</h4>
-                                <p><strong>Type:</strong> ${event.event_type}</p>
-                                <p><strong>Date:</strong> ${new Date(event.event_date).toLocaleDateString()}</p>
-                                <p><strong>Location:</strong> ${event.location || 'TBA'}</p>
-                                <div class="event-actions" style="margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                    <button class="btn btn-small btn-primary" onclick="notifyEventMembers('${event.id}')">Notify Members</button>
-                                    <button class="btn btn-small btn-secondary" onclick="editEvent('${event.id}')">Edit</button>
-                                    <button class="btn btn-small btn-danger" onclick="deleteEvent('${event.id}')">Delete</button>
-                                </div>
-                            </div>
-                        </div>
-                        `).join('');
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Event Details</th>
+                                    <th>Date & Time</th>
+                                    <th>Location</th>
+                                    <th style="text-align: center;">Access / Fee</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${events.map(event => `
+                                    <tr>
+                                        <td>
+                                            <div class="event-info-cell">
+                                                <div class="team-icon" style="background: rgba(124, 58, 237, 0.1); color: var(--neon-purple);">
+                                                    ${event.event_type === 'match' ? '⚽' : event.event_type === 'training' ? '🏃' : '🎯'}
+                                                </div>
+                                                <div class="event-name-group">
+                                                    <span class="event-name">${event.title}</span>
+                                                    <span class="event-meta" style="text-transform: capitalize;">${event.event_type}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="display:flex; flex-direction:column;">
+                                                <span style="font-weight:500;">${new Date(event.event_date).toLocaleDateString()}</span>
+                                                <span style="font-size:0.75rem; color:var(--text-muted);">${event.event_time || 'TBA'}</span>
+                                            </div>
+                                        </td>
+                                        <td>${event.location || 'TBA'}</td>
+                                        <td style="text-align: center;">
+                                            <div style="font-size: 0.85rem; opacity: 0.8;">
+                                                <span style="color: ${event.price > 0 ? '#fbbf24' : '#4ade80'}; font-weight: 600;">
+                                                    ${event.price > 0 ? `£${event.price}` : 'Free'}
+                                                </span><br>
+                                                ${event.capacity ? `Limit: ${event.capacity}` : 'Open'}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon notify" title="Notify Members" onclick="notifyEventMembers('${event.id}')">🔔</button>
+                                                <button class="btn-icon edit" title="Edit Event" onclick="editEvent('${event.id}')">✏️</button>
+                                                <button class="btn-icon delete" title="Delete Event" onclick="deleteEvent('${event.id}')">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
 
                 AppState.events = events;
 
@@ -4117,51 +4210,62 @@
                     return;
                 }
 
-                container.innerHTML = players.map(player => {
-                    const hasTeamAssignment = Boolean(player.team_assignments?.length || player.team_name);
-                    const hasPaymentPlan = hasPlan(player);
-                    const isOverdue = (player.overdue_count || 0) > 0 || player.payment_status === 'overdue';
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Team / Sport</th>
+                                    <th>Position</th>
+                                    <th style="text-align: center;">Payment</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${players.map(player => `
+                                    <tr>
+                                        <td>
+                                            <div class="user-info-cell">
+                                                <div class="user-avatar" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);">
+                                                    ${(player.first_name?.[0] || '')}${(player.last_name?.[0] || '')}
+                                                </div>
+                                                <div class="user-name-group">
+                                                    <span class="user-name">${player.first_name} ${player.last_name}</span>
+                                                    <span class="user-meta">${player.email || 'No email linked'}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="display:flex; flex-direction:column;">
+                                                <span style="font-weight:500;">${player.team_name || 'Unassigned'}</span>
+                                                <span style="font-size:0.75rem; color:var(--text-muted);">${player.sport || 'Mixed'}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge" style="background:rgba(255,255,255,0.05); color:var(--text-main); border:1px solid var(--border-color);">
+                                                ${player.position || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="status-badge status-${(player.payment_status || 'pending').toLowerCase()}">
+                                                ${player.payment_status || 'Pending'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-icon manage" title="Manage Plans" onclick="assignPaymentPlan('${player.id}')">💳</button>
+                                                <button class="btn-icon edit" title="Edit Player" onclick="editPlayer('${player.id}')">✏️</button>
+                                                <button class="btn-icon delete" title="Remove Player" onclick="removePlayer('${player.id}')">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
 
-                    // feeHtml logic (no auto-£45)
-                    const onPlan = hasPaymentPlan;
-                    const rawFee = onPlan
-                        ? (player.plan_price ?? player.payment_plan?.price ?? player.payment_plan?.amount)
-                        : null;
-                    const hasRawFee = onPlan && rawFee !== undefined && rawFee !== null && rawFee !== '';
-                    const fee = hasRawFee ? Number(rawFee) : NaN;
-                    const feeHtml = (onPlan && Number.isFinite(fee)) ? `£${fee.toFixed(2)} ` : '—';
-
-                    return `
-                        <div class="player-card ${isOverdue ? 'overdue' : ''} ${!hasTeamAssignment ? 'not-assigned' : ''}">
-                            <div class="player-header">
-                                <div class="player-info">
-                                    <h4>${player.first_name} ${player.last_name}</h4>
-                                    ${hasPaymentPlan
-                            ? `<span class="payment-plan-badge">On Payment Plan</span>`
-                            : `<span class="no-plan-badge">No Plan Set</span>`}
-                                </div>
-                                <div class="player-status">
-                                    <span class="status-badge status-${player.payment_status || 'pending'}">
-                                        ${player.payment_status || 'Pending'}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="player-meta">
-                                <span><strong>Age:</strong> ${calculateAge(player.date_of_birth)} years</span>
-                                <span><strong>Team:</strong> ${player.team_name || (player.team_assignments?.[0]?.team_name || 'Not assigned')}</span>
-                                <span><strong>Email:</strong> ${player.email || 'No email'}</span>
-                                <span><strong>Phone:</strong> ${player.phone || 'No phone'}</span>
-                                <span><strong>Monthly Fee:</strong> ${feeHtml}</span>
-                            </div>
-                            <div class="player-actions">
-                                <button class="btn btn-small btn-secondary" onclick="editPlayer('${player.id}')">Edit</button>
-                                ${!hasPaymentPlan ? `<button class="btn btn-small btn-warning" onclick="assignPaymentPlan('${player.id}')">Assign Plan</button>` : ''}
-                                ${!hasTeamAssignment ? `<button class="btn btn-small btn-primary" onclick="showPlayerTeamAssignment('${player.id}')">Assign Team</button>` : ''}
-                                <button class="btn btn-small btn-danger" onclick="removePlayer('${player.id}')">Remove</button>
-                            </div>
-                        </div>
-                        `;
-                }).join('');
 
                 AppState.players = players;
             } catch (error) {

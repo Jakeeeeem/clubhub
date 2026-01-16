@@ -255,13 +255,118 @@ async function seedLive() {
             }
         }
 
+        // 8. Create Events
+        console.log('📅 Creating Events...');
+        const events = [
+            {
+                title: 'Weekly Training Session',
+                description: 'Regular training for U18 Elite squad',
+                type: 'training',
+                date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 days from now
+                time: '18:00',
+                location: 'Main Training Ground',
+                teamName: 'U18 Elite'
+            },
+            {
+                title: 'Match vs City Rivals',
+                description: 'Important league match',
+                type: 'match',
+                date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 week from now
+                time: '15:00',
+                location: 'Home Stadium',
+                opponent: 'City Rivals FC',
+                teamName: 'Senior First Team'
+            },
+            {
+                title: 'Youth Development Camp',
+                description: 'Intensive 3-day training camp for young players',
+                type: 'camp',
+                date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2 weeks from now
+                time: '09:00',
+                location: 'Training Complex',
+                price: 50.00,
+                capacity: 30,
+                teamName: 'U16 Development'
+            },
+            {
+                title: 'Friendly Tournament',
+                description: 'Pre-season friendly tournament',
+                type: 'tournament',
+                date: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 weeks from now
+                time: '10:00',
+                location: 'Sports Complex',
+                price: 25.00,
+                capacity: 50,
+                teamName: 'U18 Elite'
+            },
+            {
+                title: 'Tactical Session',
+                description: 'Focus on set pieces and defensive organization',
+                type: 'training',
+                date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 4 days from now
+                time: '17:30',
+                location: 'Training Ground B',
+                teamName: 'Senior First Team'
+            }
+        ];
+
+        let eventIds = [];
+        for (const evt of events) {
+            const team = teamIds.find(t => t.name === evt.teamName);
+            
+            const eventCheck = await client.query('SELECT id FROM events WHERE title = $1 AND club_id = $2', [evt.title, clubId]);
+            
+            if (eventCheck.rows.length === 0) {
+                const newEvent = await client.query(`
+                    INSERT INTO events (
+                        title, description, event_type, event_date, event_time,
+                        location, price, capacity, spots_available, club_id, team_id,
+                        opponent, created_by
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                    RETURNING id
+                `, [
+                    evt.title, evt.description, evt.type, evt.date, evt.time,
+                    evt.location, evt.price || 0, evt.capacity || null, evt.capacity || null,
+                    clubId, team?.id, evt.opponent || null, ownerId
+                ]);
+                eventIds.push({ id: newEvent.rows[0].id, title: evt.title });
+                console.log(`✅ Created Event: ${evt.title} (${evt.type})`);
+            } else {
+                eventIds.push({ id: eventCheck.rows[0].id, title: evt.title });
+                console.log(`ℹ️ Event already exists: ${evt.title}`);
+            }
+        }
+
+        // 9. Ensure owner is linked to ALL organizations
+        console.log('🔗 Ensuring owner is linked to all organizations...');
+        const allOrgs = await client.query('SELECT id, name FROM organizations');
+        
+        for (const org of allOrgs.rows) {
+            const linkCheck = await client.query('SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2', [ownerId, org.id]);
+            
+            if (linkCheck.rows.length === 0) {
+                // Determine role based on whether they own it
+                const ownerCheck = await client.query('SELECT 1 FROM organizations WHERE id = $1 AND owner_id = $2', [org.id, ownerId]);
+                const role = ownerCheck.rows.length > 0 ? 'owner' : 'admin';
+                
+                await client.query(`
+                    INSERT INTO organization_members (user_id, organization_id, role, status)
+                    VALUES ($1, $2, $3, 'active')
+                `, [ownerId, org.id, role]);
+                console.log(`✅ Linked ${ownerEmail} to ${org.name} as ${role}`);
+            }
+        }
+
         await client.query('COMMIT');
         console.log('🎉 SEEDING COMPLETE!');
         console.log(`📊 Summary:
-  - Clubs: 2
+  - Organizations: ${allOrgs.rows.length}
   - Teams: ${teamIds.length}
   - Coaches: ${staffIds.length}
   - Players: ${playerIdMap.length}
+  - Events: ${eventIds.length}
+  - All organizations linked to owner
         `);
 
     } catch (e) {
@@ -274,4 +379,5 @@ async function seedLive() {
 }
 
 seedLive();
+
 
