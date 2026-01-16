@@ -44,7 +44,21 @@ router.get('/', authenticateToken, async (req, res) => {
     
     let queryText = `
         SELECT p.*, 
-        EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) as age 
+        EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) as age,
+        (
+            SELECT t.name 
+            FROM team_players tp
+            JOIN teams t ON tp.team_id = t.id
+            WHERE tp.player_id = p.id
+            LIMIT 1
+        ) as team_name,
+        (
+            SELECT t.sport
+            FROM team_players tp
+            JOIN teams t ON tp.team_id = t.id
+            WHERE tp.player_id = p.id
+            LIMIT 1
+        ) as team_sport
         FROM players p 
         WHERE 1=1
     `;

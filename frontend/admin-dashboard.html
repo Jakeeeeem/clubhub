@@ -4208,6 +4208,7 @@
                 };
 
                 const players = await apiService.getPlayers(filters);
+                console.log('👥 Players Loaded:', players); // Debugging Log
 
                 // 👇 attach plan objects & normalize flags so hasPlan() works on reload
                 const plansById = Object.fromEntries((AppState.paymentPlans || []).map(pl => [String(pl.id), pl]));
@@ -4255,10 +4256,10 @@
                                         <td>
                                             <div class="user-info-cell">
                                                 <div class="user-avatar" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);">
-                                                    ${(player.first_name?.[0] || '')}${(player.last_name?.[0] || '')}
+                                                    ${(player.first_name?.[0] || '?')}${(player.last_name?.[0] || '')}
                                                 </div>
                                                 <div class="user-name-group">
-                                                    <span class="user-name">${player.first_name} ${player.last_name}</span>
+                                                    <span class="user-name">${player.first_name || 'Unknown'} ${player.last_name || 'Player'}</span>
                                                     <span class="user-meta">${player.email || 'No email linked'}</span>
                                                 </div>
                                             </div>
@@ -4266,7 +4267,7 @@
                                         <td>
                                             <div style="display:flex; flex-direction:column;">
                                                 <span style="font-weight:500;">${player.team_name || 'Unassigned'}</span>
-                                                <span style="font-size:0.75rem; color:var(--text-muted);">${player.sport || 'Mixed'}</span>
+                                                <span style="font-size:0.75rem; color:var(--text-muted);">${player.team_sport || player.sport || 'Mixed'}</span>
                                             </div>
                                         </td>
                                         <td>
