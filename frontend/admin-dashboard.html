@@ -128,101 +128,130 @@
                             and branding</p>
 
                         <form id="clubProfileForm">
-                            <div class="form-group">
-                                <label for="clubName">Club Name *</label>
-                                <input type="text" id="clubName" name="name" required placeholder="Enter club name"
-                                    style="color: white !important;">
-                            </div>
+                            <div class="premium-form-grid">
+                                <!-- LEFT COLUMN: CORE INFO -->
+                                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                                    <div class="form-section-title" style="margin-top: 0;">📋 Basic Information</div>
 
-                            <div class="form-group">
-                                <label>Club Logo</label>
-                                <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <img id="clubLogoPreview" src="images/placeholder-logo-profile.png"
-                                        onerror="this.src='images/placeholder-logo-profile.png'"
-                                        style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); background: rgba(255,255,255,0.05);">
-                                    <div>
-                                        <button type="button" class="btn btn-secondary"
-                                            onclick="document.getElementById('clubLogoInput').click()">
-                                            Upload Logo
-                                        </button>
-                                        <input type="file" id="clubLogoInput" accept="image/*" style="display: none;"
-                                            onchange="handleLogoUpload(this)">
-                                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">
-                                            Recommended: Square image (PNG/JPG)</p>
+                                    <div class="form-group">
+                                        <label for="clubName">🏢 Club Name *</label>
+                                        <input type="text" id="clubName" name="name" required
+                                            placeholder="Elite Pro Academy">
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div class="form-group">
+                                            <label for="clubSport">⚽ Sport</label>
+                                            <select id="clubSport" name="sport">
+                                                <option value="">Select sport</option>
+                                                <option value="Football">Football</option>
+                                                <option value="Basketball">Basketball</option>
+                                                <option value="Rugby">Rugby</option>
+                                                <option value="Cricket">Cricket</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="clubEstablished">📅 Established</label>
+                                            <input type="text" id="clubEstablished" name="established"
+                                                placeholder="e.g. 1995" maxlength="4">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-section-title">📞 Contact & Location</div>
+
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div class="form-group">
+                                            <label for="clubEmail">✉️ Club Email</label>
+                                            <input type="email" id="clubEmail" name="email"
+                                                placeholder="contact@club.com">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="clubPhone">📱 Club Phone</label>
+                                            <input type="tel" id="clubPhone" name="phone" placeholder="+44...">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="clubWebsite">🌐 Website</label>
+                                        <input type="url" id="clubWebsite" name="website"
+                                            placeholder="https://yourclub.com">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="clubLocation">📍 Town / City</label>
+                                        <input type="text" id="clubLocation" name="location"
+                                            placeholder="e.g. London, UK">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="clubAddress">🏠 Full Address</label>
+                                        <input type="text" id="clubAddress" name="address"
+                                            placeholder="123 Pitch Street">
+                                    </div>
+                                </div>
+
+                                <!-- RIGHT COLUMN: BRANDING & DESC -->
+                                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                                    <div class="form-section-title" style="margin-top: 0;">✨ Branding Assets</div>
+
+                                    <div class="branding-preview-box">
+                                        <label>Club Official Logo</label>
+                                        <img id="clubLogoPreview" src="images/placeholder-logo-profile.png"
+                                            onerror="this.src='images/placeholder-logo-profile.png'"
+                                            style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent-color); background: rgba(255,255,255,0.05);">
+                                        <div style="width: 100%;">
+                                            <button type="button" class="btn btn-secondary w-100" style="width: 100%;"
+                                                onclick="document.getElementById('clubLogoInput').click()">
+                                                Change Logo Image
+                                            </button>
+                                            <input type="file" id="clubLogoInput" accept="image/*"
+                                                style="display: none;" onchange="handleLogoUpload(this)">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="clubDescription">📝 Club Description</label>
+                                        <textarea id="clubDescription" name="description" rows="4"
+                                            placeholder="Write a brief overview of your club..."></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="clubPhilosophy">🎯 Club Philosophy</label>
+                                        <textarea id="clubPhilosophy" name="philosophy" rows="3"
+                                            placeholder="Values, mission, and style of play..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- FULL WIDTH: GALLERY -->
+                                <div class="full-width">
+                                    <div class="form-section-title">🖼️ Club Gallery (Photos)</div>
+                                    <div class="upload-zone-premium" id="clubPicturesArea"
+                                        onclick="if(!event.target.closest('button')) document.getElementById('clubPictures').click()">
+                                        <input type="file" id="clubPictures" name="pictures" accept="image/*" multiple
+                                            onchange="handlePictureUpload(this)" style="display: none;">
+                                        <div class="upload-placeholder">
+                                            <span class="icon">📸</span>
+                                            <p
+                                                style="margin: 0; color: var(--text-main); font-size: 1.1rem; font-weight: 500;">
+                                                Drag and drop club photos or click to browse</p>
+                                            <p
+                                                style="margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                                                Max 5 high-quality images (PNG/JPG)</p>
+                                        </div>
+                                        <div id="uploadedPictures"
+                                            style="display: none; margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 1rem;">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-group">
-                                <label for="clubDescription">Description</label>
-                                <textarea id="clubDescription" name="description" rows="4"
-                                    placeholder="Tell us about your club..."
-                                    style="color: white !important;"></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="clubLocation">Location</label>
-                                <input type="text" id="clubLocation" name="location" placeholder="e.g., London, UK"
-                                    style="color: white !important;">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="clubSport">Sport</label>
-                                <select id="clubSport" name="sport" style="color: white !important;">
-                                    <option value="">Select a sport</option>
-                                    <option value="Football">Football</option>
-                                    <option value="Basketball">Basketball</option>
-                                    <option value="Rugby">Rugby</option>
-                                    <option value="Cricket">Cricket</option>
-                                    <option value="Tennis">Tennis</option>
-                                    <option value="Hockey">Hockey</option>
-                                    <option value="Athletics">Athletics</option>
-                                    <option value="Swimming">Swimming</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="clubWebsite">Website</label>
-                                <input type="url" id="clubWebsite" name="website" placeholder="https://yourclub.com"
-                                    style="color: white !important;">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="clubPhilosophy">Club Philosophy</label>
-                                <textarea id="clubPhilosophy" name="philosophy" rows="3"
-                                    placeholder="Your club's values and philosophy..."
-                                    style="color: white !important;"></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Club Pictures (Max 5)</label>
-                                <div class="file-upload-area" id="clubPicturesArea"
-                                    onclick="if(!event.target.closest('button')) document.getElementById('clubPictures').click()"
-                                    style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.03);">
-                                    <input type="file" id="clubPictures" name="pictures" accept="image/*" multiple
-                                        onchange="handlePictureUpload(this)" style="display: none;">
-                                    <div class="upload-placeholder">
-                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2" style="margin: 0 auto;">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                            <polyline points="17 8 12 3 7 8"></polyline>
-                                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                                        </svg>
-                                        <p style="margin: 1rem 0 0.5rem; color: var(--text-main);">📷 Drag and drop
-                                            images here or click to upload</p>
-                                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">PNG, JPG
-                                            or
-                                            WEBP (max 5MB each)</p>
-                                    </div>
-                                    <div id="uploadedPictures" style="display: none; margin-top: 1rem;"></div>
-                                </div>
-                            </div>
-
-                            <div class="form-actions" style="display: flex; gap: 1rem; margin-top: 2rem;">
-                                <button type="submit" class="btn btn-primary">💾 Save Club Profile</button>
-                                <button type="button" class="btn btn-secondary" onclick="loadClubProfile()">🔄
-                                    Reset</button>
+                            <div class="form-actions"
+                                style="display: flex; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                                <button type="submit" class="btn btn-primary"
+                                    style="padding: 1rem 2.5rem; font-size: 1rem;">💾 Save Club Profile</button>
+                                <button type="button" class="btn btn-secondary" onclick="loadClubProfile()"
+                                    style="padding: 1rem 2rem;">🔄 Reset Changes</button>
                             </div>
                         </form>
                     </div>
@@ -444,30 +473,38 @@
 
                 <!-- Enhanced Listings Section with Indeed-like Interface -->
                 <div id="listings" class="dashboard-section">
+                    <!-- Listings Header -->
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div>
+                            <h2 style="margin: 0; font-size: 1.75rem;">📋 Recruitment & Applications</h2>
+                            <p style="color: var(--text-muted); margin: 0.5rem 0 0 0;">Manage your club listings and
+                                review incoming applications.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showModal('createListingModal')">
+                            ➕ Create New Listing
+                        </button>
+                    </div>
+
+                    <!-- Active Listings Section -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                            <span style="font-size: 1.25rem;">📝</span>
+                            <h3 style="margin: 0;">Active Listings</h3>
+                        </div>
+                        <div id="activeListingsContainer">
+                            <!-- Populated dynamically via loadListings() -->
+                        </div>
+                    </div>
+
+                    <!-- Applications Section -->
                     <div class="card">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3>📋 Club Listings & Applications</h3>
-                            <button class="btn btn-primary" onclick="showModal('createListingModal')">➕
-                                Create
-                                Listing</button>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+                            <span style="font-size: 1.25rem;">🤝</span>
+                            <h3 style="margin: 0;">Application Management</h3>
                         </div>
-
-                        <div class="card">
-                            <h3>📝 Active Listings</h3>
-                            <div id="activeListingsContainer">
-                                <!-- Active listings will be loaded from database -->
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <h3>📋 Application Management (Indeed-like Interface)</h3>
-                            <p>Once applicants come, manage them with shortlist, reject, and invite options:
-                            </p>
-
-                            <div id="applicationsContainer">
-                                <!-- Applications will be loaded from database -->
-                            </div>
+                        <div id="applicationsContainer">
+                            <!-- Populated dynamically via loadClubApplications() -->
                         </div>
                     </div>
                 </div>
@@ -475,15 +512,21 @@
 
                 <!-- Item Shop Section -->
                 <div id="shop" class="dashboard-section">
-                    <div class="card">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                            <h3>🛒 Item Shop Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('addProductModal')">➕ Add
-                                Product</button>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div>
+                            <h2 style="margin: 0; font-size: 1.75rem;">🛒 Item Shop Management</h2>
+                            <p style="color: var(--text-muted); margin: 0.5rem 0 0 0;">Manage your club merchandise,
+                                tickets, and other items.</p>
                         </div>
-                        <div id="productsContainer" class="card-grid">
-                            <!-- Products will be loaded from database -->
+                        <button class="btn btn-primary" onclick="showModal('addProductModal')">
+                            ➕ Add New Product
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div id="productsContainer">
+                            <!-- Populated dynamically via loadProducts() -->
                         </div>
                     </div>
                 </div>
@@ -1646,42 +1689,79 @@
 
             try {
                 showLoading(true);
-                const clubId = AppState.activeClubId || (AppState.clubs?.[0]?.id);
+                const clubId = await getActiveClubId();
                 const products = await apiService.getProducts(clubId);
 
                 if (!products || products.length === 0) {
                     container.innerHTML = `
-                <div style="text-align: center; padding: 2rem; opacity: 0.8; grid-column: 1/-1;">
-                    <p>No products added to the shop yet</p>
-                    <button class="btn btn-primary" style="margin-top: 1rem;" onclick="showModal('addProductModal')">Add Your First Product</button>
-                </div>
-            `;
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🛍️</div>
+                            <h3 style="margin-bottom: 0.5rem;">No products found</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Add merchandise or tickets to your club shop.</p>
+                            <button class="btn btn-primary" onclick="showModal('addProductModal')">➕ Add Your First Product</button>
+                        </div>
+                    `;
                     return;
                 }
 
                 AppState.products = products;
 
-                container.innerHTML = products.map(product => `
-            <div class="card product-card">
-                <div style="height: 150px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
-                    <span style="font-size: 3rem;">📦</span>
-                </div>
-                <h4>${product.name}</h4>
-                <p style="color: #dc4343; font-weight: bold; font-size: 1.2rem; margin: 0.5rem 0;">£${parseFloat(product.price).toFixed(2)}</p>
-                <p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">${product.description || 'No description available'}</p>
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 0.8rem; opacity: 0.6;">Stock: ${product.stock_quantity !== null ? product.stock_quantity : 'Unlimited'}</span>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn-small btn-secondary" onclick="editProduct('${product.id}')">Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteProduct('${product.id}')">Delete</button>
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">Product Details</th>
+                                    <th>Category</th>
+                                    <th style="text-align: center;">Price</th>
+                                    <th style="text-align: center;">Stock</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${products.map(product => `
+                                    <tr onclick="editProduct('${product.id}')" style="cursor: pointer;">
+                                        <td>
+                                            <div style="display:flex; align-items:center; gap:1rem;">
+                                                <div style="width: 44px; height: 44px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                                                    ${product.category === 'Apparel' ? '👕' : product.category === 'Tickets' ? '🎟️' : '📦'}
+                                                </div>
+                                                <div style="display: flex; flex-direction: column;">
+                                                    <span style="font-weight: 600; color: var(--text-main);">${product.name}</span>
+                                                    <span style="font-size: 0.75rem; color: var(--text-muted); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                        ${product.description || 'No description'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--border-color);">
+                                                ${product.category || 'General'}
+                                            </span>
+                                        </td>
+                                        <td style="text-align: center; font-weight: 600; color: var(--accent-color);">
+                                            £${parseFloat(product.price).toFixed(2)}
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="badge" style="background: ${product.stock_quantity > 10 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${product.stock_quantity > 10 ? '#22c55e' : '#ef4444'}; border: 1px solid ${product.stock_quantity > 10 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; padding: 0.25rem 0.75rem; border-radius: 20px;">
+                                                ${product.stock_quantity !== null ? product.stock_quantity : '∞'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons" onclick="event.stopPropagation()">
+                                                <button class="btn-icon edit" title="Edit Product" onclick="editProduct('${product.id}')">✏️</button>
+                                                <button class="btn-icon delete" title="Delete Product" onclick="deleteProduct('${product.id}')">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-            </div>
-        `).join('');
-
+                `;
             } catch (error) {
                 console.error('Failed to load products:', error);
-                container.innerHTML = '<p style="color:#dc3545">Failed to load products</p>';
+                container.innerHTML = '<p style="color:#dc3545; text-align:center; padding: 2rem;">Failed to load products</p>';
             } finally {
                 showLoading(false);
             }
@@ -1791,37 +1871,73 @@
 
             try {
                 showLoading(true);
-                const clubId = AppState.activeClubId || (AppState.clubs?.[0]?.id);
+                const clubId = await getActiveClubId();
                 const campaigns = await apiService.getCampaigns(clubId);
 
                 if (!campaigns || campaigns.length === 0) {
                     container.innerHTML = `
-                <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-                    <p>No marketing campaigns created yet</p>
-                </div>
-            `;
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📢</div>
+                            <h3 style="margin-bottom: 0.5rem;">No campaigns found</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Create email or notification campaigns to engage your members.</p>
+                            <button class="btn btn-primary" onclick="showModal('createCampaignModal')">➕ Create Your First Campaign</button>
+                        </div>
+                    `;
                     return;
                 }
 
-                container.innerHTML = campaigns.map(campaign => `
-            <div class="card campaign-card" style="margin-bottom: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <h4>${campaign.name}</h4>
-                        <p style="font-size: 0.9rem; opacity: 0.7;">Subject: ${campaign.subject}</p>
-                        <p style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.5rem;">Target: ${campaign.target_group} | Created: ${new Date(campaign.created_at).toLocaleDateString()}</p>
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 35%;">Campaign Name</th>
+                                    <th>Subject</th>
+                                    <th>Target Group</th>
+                                    <th style="text-align: center;">Status</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${campaigns.map(campaign => `
+                                    <tr>
+                                        <td>
+                                            <div style="display: flex; flex-direction: column;">
+                                                <span style="font-weight: 600; color: var(--text-main);">${campaign.name}</span>
+                                                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                                    Created: ${new Date(campaign.created_at).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style="font-size: 0.875rem; color: var(--text-muted);">${campaign.subject || 'No subject'}</span>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--border-color);">
+                                                ${campaign.target_group || 'All Members'}
+                                            </span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="status-badge status-${(campaign.status || 'draft').toLowerCase()}">
+                                                ${campaign.status || 'Draft'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons" onclick="event.stopPropagation()">
+                                                <button class="btn-icon manage" title="Send Now" onclick="sendCampaign('${campaign.id}')" ${campaign.status === 'sent' ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>🚀</button>
+                                                <button class="btn-icon edit" title="Edit Campaign" onclick="editCampaign('${campaign.id}')">✏️</button>
+                                                <button class="btn-icon delete" title="Delete Campaign" onclick="deleteCampaign('${campaign.id}')">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
-                    <div>
-                        <span class="status-badge status-${campaign.status || 'draft'}">${campaign.status || 'Draft'}</span>
-                        <button class="btn btn-small btn-primary" onclick="sendCampaign('${campaign.id}')" ${campaign.status === 'sent' ? 'disabled' : ''}>Send Now</button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-
+                `;
             } catch (error) {
                 console.error('Failed to load campaigns:', error);
-                container.innerHTML = '<p style="color:#dc3545">Failed to load campaigns</p>';
+                container.innerHTML = '<p style="color:#dc3545; text-align:center; padding: 2rem;">Failed to load campaigns</p>';
             } finally {
                 showLoading(false);
             }
@@ -2734,29 +2850,59 @@
                 AppState.listings = listings;
 
                 if (!listings || listings.length === 0) {
-                    container.innerHTML = '<div style="text-align: center; padding: 2rem; opacity: 0.8;"><p>No active listings. Create one to reach more players!</p></div>';
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+                            <h3 style="margin-bottom: 0.5rem;">No active listings</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Create a listing to start reaching new players and staff.</p>
+                            <button class="btn btn-primary" onclick="showModal('createListingModal')">➕ Create Your First Listing</button>
+                        </div>
+                    `;
                     return;
                 }
 
-                container.innerHTML = listings.map(listing => `
-                    <div class="card listing-card fade-in" style="border-left: 4px solid var(--accent-color);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                            <div>
-                                <h4 style="margin: 0; color: var(--text-main);">${listing.title}</h4>
-                                <span class="status-badge" style="font-size: 0.7rem; margin-top: 0.2rem; display: inline-block;">${listing.listing_type}</span>
-                            </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn btn-small btn-secondary" onclick="editListing('${listing.id}')" title="Edit Listing">✏️</button>
-                                <button class="btn btn-small btn-danger" onclick="deleteListing('${listing.id}')" title="Delete Listing">🗑️</button>
-                            </div>
-                        </div>
-                        <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem;">
-                            <p style="margin: 0.2rem 0;"><strong>Position:</strong> ${listing.position || 'N/A'}</p>
-                            <p style="margin: 0.2rem 0;"><strong>Applicants:</strong> ${listing.application_count || 0}</p>
-                        </div>
-                        <button class="btn btn-primary btn-small btn-block" onclick="viewListingApplications('${listing.id}')">View Applications</button>
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">Listing Title / Type</th>
+                                    <th>Position</th>
+                                    <th style="text-align: center;">Applicants</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${listings.map(listing => `
+                                    <tr onclick="viewListingApplications('${listing.id}')" style="cursor: pointer;">
+                                        <td>
+                                            <div style="display: flex; flex-direction: column;">
+                                                <span style="font-weight: 600; color: var(--text-main);">${listing.title}</span>
+                                                <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">${listing.listing_type}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--border-color);">
+                                                ${listing.position || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.25rem 0.75rem; border-radius: 20px;">
+                                                ${listing.application_count || 0} Applicants
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons" onclick="event.stopPropagation()">
+                                                <button class="btn-icon edit" title="Edit Listing" onclick="editListing('${listing.id}')">✏️</button>
+                                                <button class="btn-icon delete" title="Delete Listing" onclick="deleteListing('${listing.id}')">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
-                `).join('');
+                `;
 
             } catch (error) {
                 console.error('Failed to load listings:', error);
@@ -2775,29 +2921,69 @@
                 const applications = await apiService.getApplications(listingId);
 
                 if (!applications || applications.length === 0) {
-                    container.innerHTML = '<div style="text-align: center; padding: 2rem; opacity: 0.8;"><p>No applications received for this listing yet.</p></div>';
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🤝</div>
+                            <h3 style="margin-bottom: 0.5rem;">No applications yet</h3>
+                            <p style="color: var(--text-muted);">Applications for this listing will appear here.</p>
+                        </div>
+                    `;
                     return;
                 }
 
-                container.innerHTML = applications.map(app => `
-                    <div class="application-item fade-in" data-status="${app.status}">
-                        <div>
-                            <h4>${app.first_name || 'Applicant'} ${app.last_name || ''}</h4>
-                            <p><strong>Applied for:</strong> ${app.listing_title || 'This position'}</p>
-                            <p><strong>Age:</strong> ${app.dob ? calculateAge(app.dob) : 'N/A'}</p>
-                            <div class="contact-details" id="contact-${app.id}" style="${app.status === 'accepted' ? 'display: block; margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.05); border-radius: 4px;' : 'display: none;'}">
-                                <p><strong>Email:</strong> ${app.email}</p>
-                                <p><strong>Phone:</strong> ${app.phone || 'N/A'}</p>
-                                <p><strong>Experience:</strong> ${app.experience || 'Not provided'}</p>
-                            </div>
-                        </div>
-                        <div class="application-actions">
-                            ${app.status !== 'accepted' ? `<button class="btn btn-small btn-success" onclick="acceptApplicant('${app.id}')" title="Accept & Unlock Contact">⭐ Accept & Invite</button>` : ''}
-                            ${app.status !== 'rejected' && app.status !== 'accepted' ? `<button class="btn btn-small btn-danger" onclick="rejectApplicant('${app.id}')" title="Reject with message">❌ Reject</button>` : ''}
-                            <button class="btn btn-small btn-primary" onclick="viewApplicantDetails('${app.id}')">👁️ Details</button>
-                        </div>
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 35%;">Applicant</th>
+                                    <th>Preferred Position</th>
+                                    <th style="text-align: center;">Status</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${applications.map(app => {
+                    const status = app.status || 'pending';
+                    return `
+                                    <tr onclick="viewApplicantDetails('${app.id}')" style="cursor: pointer;">
+                                        <td>
+                                            <div class="user-info-cell">
+                                                <div class="user-avatar" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                                    ${(app.first_name?.[0] || 'A')}${(app.last_name?.[0] || '')}
+                                                </div>
+                                                <div class="user-name-group">
+                                                    <span class="user-name">${app.first_name || 'Applicant'} ${app.last_name || ''}</span>
+                                                    <span class="user-meta">${app.email || 'No email provided'}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--border-color);">
+                                                ${app.preferred_position || app.position || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="status-badge status-${status.toLowerCase()}">
+                                                ${status.charAt(0).toUpperCase() + status.slice(1)}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons" onclick="event.stopPropagation()">
+                                                ${status === 'pending' ? `
+                                                    <button class="btn-icon manage" title="Accept & Invite" onclick="acceptApplicant('${app.id}')">✅</button>
+                                                    <button class="btn-icon delete" title="Reject Application" onclick="rejectApplicant('${app.id}')">❌</button>
+                                                ` : ''}
+                                                <button class="btn-icon edit" title="View Details" onclick="viewApplicantDetails('${app.id}')">👁️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                }).join('')}
+                            </tbody>
+                        </table>
                     </div>
-                `).join('');
+                `;
 
             } catch (error) {
                 console.error('Failed to load applications:', error);
@@ -3174,9 +3360,6 @@
 
             console.log('📋 Loading club applications...');
 
-            // Show loading state immediately
-            container.innerHTML = '<p style="text-align: center; padding: 2rem;">Loading applications...</p>';
-
             try {
                 showLoading(true);
                 const clubId = await getActiveClubId();
@@ -3189,6 +3372,7 @@
                     `;
                     return;
                 }
+
                 let applications;
                 try {
                     applications = await apiService.makeRequest(`/clubs/${clubId}/applications`);
@@ -3205,54 +3389,79 @@
 
                 if (!applications || applications.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-                            <p>No applications received yet</p>
-                            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Applications will appear here when players apply to join your club</p>
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🤝</div>
+                            <h3 style="margin-bottom: 0.5rem;">No applications yet</h3>
+                            <p style="color: var(--text-muted);">New club applications will appear here once players apply through your club profile.</p>
                         </div>
                     `;
                     return;
                 }
 
-                container.innerHTML = applications.map(app => `
-                    <div class="application-item fade-in" data-status="${app.application_status}">
-                        <div>
-                            <h4>${app.first_name || 'Applicant'} ${app.last_name || ''}</h4>
-                            <p><strong>Email:</strong> ${app.email}</p>
-                            <p><strong>Phone:</strong> ${app.phone || 'N/A'}</p>
-                            <p><strong>Position:</strong> ${app.preferred_position || 'N/A'}</p>
-                            <p><strong>Experience:</strong> ${app.experience_level || 'N/A'}</p>
-                            <p><strong>Applied:</strong> ${new Date(app.created_at).toLocaleDateString()}</p>
-                            <p><strong>Status:</strong> <span class="status-badge status-${app.application_status}">${app.application_status}</span></p>
-                        </div>
-                        <div class="application-actions">
-                            ${app.application_status === 'pending' ? `
-                                <button class="btn btn-small btn-success" onclick="approveApplication('${app.id}')" title="Approve & Create Player">
-                                    ✅ Approve
-                                </button>
-                                <button class="btn btn-small btn-danger" onclick="rejectApplication('${app.id}')" title="Reject Application">
-                                    ❌ Reject
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-small btn-primary" onclick="viewApplicationDetails('${app.id}')">👁️ Details</button>
-                        </div>
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 35%;">Applicant</th>
+                                    <th>Preferred Position</th>
+                                    <th>Experience</th>
+                                    <th style="text-align: center;">Status</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${applications.map(app => `
+                                    <tr onclick="viewApplicationDetails('${app.id}')" style="cursor: pointer;">
+                                        <td>
+                                            <div class="user-info-cell">
+                                                <div class="user-avatar" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                                    ${(app.first_name?.[0] || 'A')}${(app.last_name?.[0] || '')}
+                                                </div>
+                                                <div class="user-name-group">
+                                                    <span class="user-name">${app.first_name || 'Applicant'} ${app.last_name || ''}</span>
+                                                    <span class="user-meta">${app.email}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--border-color);">
+                                                ${app.preferred_position || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span style="font-size: 0.875rem; color: var(--text-muted);">${app.experience_level || 'N/A'}</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="status-badge status-${(app.application_status || 'pending').toLowerCase()}">
+                                                ${app.application_status || 'Pending'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons" onclick="event.stopPropagation()">
+                                                ${app.application_status === 'pending' ? `
+                                                    <button class="btn-icon manage" title="Approve & Create Player" onclick="approveApplication('${app.id}')">✅</button>
+                                                    <button class="btn-icon delete" title="Reject Application" onclick="rejectApplication('${app.id}')">❌</button>
+                                                ` : ''}
+                                                <button class="btn-icon edit" title="View Details" onclick="viewApplicationDetails('${app.id}')">👁️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
-                `).join('');
-
-                console.log(`✅ Loaded ${applications.length} applications`);
+                `;
 
             } catch (error) {
                 console.error('Failed to load applications:', error);
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem;">
-                        <p style="color:#dc3545">Failed to load applications</p>
-                        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">${error.message}</p>
-                        <button class="btn btn-secondary" onclick="loadClubApplications()" style="margin-top: 1rem;">Retry</button>
-                    </div>
-                `;
+                container.innerHTML = `<p style="color:#dc3545; text-align:center; padding: 2rem;">Failed to load applications. ${error.message}</p>`;
             } finally {
                 showLoading(false);
             }
         }
+
+
 
         // Approve application - this will create a player automatically via backend
         async function approveApplication(applicationId) {
@@ -4774,16 +4983,7 @@
             try {
                 showLoading(true);
                 // In demo mode or if API fails, try to find in AppState or use a placeholder
-                let team;
-                try {
-                    team = await apiService.makeRequest(`/teams/${teamId}`);
-                } catch (e) {
-                    if (localStorage.getItem('isDemoSession') === 'true') {
-                        team = (await apiService.getTeams()).find(t => t.id == teamId) || { name: 'Demo Team', players: [] };
-                    } else {
-                        throw e;
-                    }
-                }
+                team = await apiService.getTeamById(teamId);
 
                 console.log('Team Details Loaded:', team);
 
@@ -5751,7 +5951,7 @@
             async function editPlayer(playerId) {
                 try {
                     showLoading(true);
-                    const player = await apiService.makeRequest(`/players/${playerId}`);
+                    const player = await apiService.getPlayerById(playerId);
 
                     document.getElementById('editPlayerId').value = player.id;
                     document.getElementById('editPlayerFirstName').value = player.first_name;
@@ -6134,8 +6334,11 @@
                     if (org.location !== undefined) document.getElementById('clubLocation').value = org.location || '';
                     if (org.sport !== undefined) document.getElementById('clubSport').value = org.sport || '';
                     if (org.website !== undefined) document.getElementById('clubWebsite').value = org.website || '';
-                    if (org.website !== undefined) document.getElementById('clubWebsite').value = org.website || '';
                     if (org.philosophy !== undefined) document.getElementById('clubPhilosophy').value = org.philosophy || '';
+                    if (org.email !== undefined) document.getElementById('clubEmail').value = org.email || '';
+                    if (org.phone !== undefined) document.getElementById('clubPhone').value = org.phone || '';
+                    if (org.established !== undefined) document.getElementById('clubEstablished').value = org.established || '';
+                    if (org.address !== undefined) document.getElementById('clubAddress').value = org.address || '';
 
                     // Display logo if exists or show placeholder
                     const backendUrl = apiService.baseURL.replace('/api', '');
@@ -6211,14 +6414,13 @@
                         description: document.getElementById('clubDescription').value.trim(),
                         location: document.getElementById('clubLocation').value.trim(),
                         sport: document.getElementById('clubSport').value.trim(),
-                        philosophy: document.getElementById('clubPhilosophy').value.trim()
+                        philosophy: document.getElementById('clubPhilosophy').value.trim(),
+                        email: document.getElementById('clubEmail').value.trim(),
+                        phone: document.getElementById('clubPhone').value.trim(),
+                        established: document.getElementById('clubEstablished').value.trim(),
+                        address: document.getElementById('clubAddress').value.trim(),
+                        website: document.getElementById('clubWebsite').value.trim()
                     };
-
-                    // Only include website if it has a value
-                    const websiteValue = document.getElementById('clubWebsite').value.trim();
-                    if (websiteValue) {
-                        formData.website = websiteValue;
-                    }
 
                     console.log('📤 Sending update request:', formData);
 

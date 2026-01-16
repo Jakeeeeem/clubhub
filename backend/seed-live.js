@@ -338,7 +338,67 @@ async function seedLive() {
             }
         }
 
-        // 9. Ensure owner is linked to ALL organizations
+        // 9. Create Recruitment Listings
+        console.log('📝 Creating Recruitment Listings...');
+        const listings = [
+            { title: 'Youth Striker Needed', type: 'recruitment', pos: 'Striker', team: 'U16 Development' },
+            { title: 'Senior Goalkeeper', type: 'recruitment', pos: 'Goalkeeper', team: 'Senior First Team' },
+            { title: 'Tactical Analyst', type: 'trial', pos: 'Analyst', team: 'Senior First Team' }
+        ];
+
+        let listingIds = [];
+        for (const l of listings) {
+            const team = teamIds.find(t => t.name === l.team);
+            const lCheck = await client.query('SELECT id FROM listings WHERE title = $1 AND club_id = $2', [l.title, clubId]);
+            
+            if (lCheck.rows.length === 0) {
+                const res = await client.query(`
+                    INSERT INTO listings (title, description, listing_type, position, club_id, team_id, is_active)
+                    VALUES ($1, $2, $3, $4, $5, $6, true)
+                    RETURNING id
+                `, [l.title, `Join our ${l.team} squad as a ${l.pos}.`, l.type, l.pos, clubId, team?.id]);
+                listingIds.push(res.rows[0].id);
+                console.log(`✅ Created Listing: ${l.title}`);
+            } else {
+                listingIds.push(lCheck.rows[0].id);
+                console.log(`ℹ️ Listing already exists: ${l.title}`);
+            }
+        }
+
+        // 10. Create Dummy Applications
+        console.log('🤝 Creating Dummy Applications...');
+        if (listingIds.length > 0) {
+            const appCheck = await client.query('SELECT 1 FROM listing_applications WHERE listing_id = $1 AND applicant_id = $2', [listingIds[0], ownerId]);
+            if (appCheck.rows.length === 0) {
+                await client.query(`
+                    INSERT INTO listing_applications (listing_id, applicant_id, status)
+                    VALUES ($1, $2, 'pending')
+                `, [listingIds[0], ownerId]);
+                console.log('✅ Created Dummy Application for owner');
+            }
+        }
+
+        // 11. Create Shop Products
+        console.log('🛒 Creating Shop Products...');
+        const products = [
+            { name: 'Elite Training Jersey', price: 35.00, cat: 'Apparel', stock: 100 },
+            { name: 'Official Club Hoodie', price: 45.00, cat: 'Apparel', stock: 50 },
+            { name: 'Water Bottle', price: 9.99, cat: 'Accessories', stock: 200 },
+            { name: 'Match Day Shorts', price: 20.00, cat: 'Apparel', stock: 75 }
+        ];
+
+        for (const prod of products) {
+            const pCheck = await client.query('SELECT id FROM products WHERE name = $1 AND club_id = $2', [prod.name, clubId]);
+            if (pCheck.rows.length === 0) {
+                await client.query(`
+                    INSERT INTO products (name, price, category, stock_quantity, club_id, is_active)
+                    VALUES ($1, $2, $3, $4, $5, true)
+                `, [prod.name, prod.price, prod.cat, prod.stock, clubId]);
+                console.log(`✅ Created Product: ${prod.name}`);
+            }
+        }
+
+        // 12. Ensure owner is linked to ALL organizations
         console.log('🔗 Ensuring owner is linked to all organizations...');
         const allOrgs = await client.query('SELECT id, name FROM organizations');
         
@@ -366,6 +426,8 @@ async function seedLive() {
   - Coaches: ${staffIds.length}
   - Players: ${playerIdMap.length}
   - Events: ${eventIds.length}
+  - Listings: ${listingIds.length}
+  - Products: ${products.length}
   - All organizations linked to owner
         `);
 

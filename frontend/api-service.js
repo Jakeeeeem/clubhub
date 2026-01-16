@@ -724,6 +724,10 @@ async deletePaymentPlan(planId) {
   }
 
   async getClubById(id) {
+    if (localStorage.getItem('isDemoSession') === 'true' || (id && id.toString().startsWith('dummy-'))) {
+      const demoClubs = this.getAdminDashboardFallback().clubs;
+      return demoClubs.find(c => c.id === id) || demoClubs[0];
+    }
     return await this.makeRequest(`/clubs/${id}`);
   }
 
@@ -885,6 +889,10 @@ async deletePaymentPlan(planId) {
   }
 
   async getPlayerById(id) {
+    if (localStorage.getItem('isDemoSession') === 'true' || (id && id.toString().startsWith('p'))) {
+      const demoPlayers = this.getAdminDashboardFallback().players;
+      return demoPlayers.find(p => p.id === id) || demoPlayers[0];
+    }
     return await this.makeRequest(`/players/${id}`);
   }
 
@@ -928,6 +936,10 @@ async deletePaymentPlan(planId) {
   }
 
   async getEventById(id) {
+    if (localStorage.getItem('isDemoSession') === 'true' || (id && id.toString().startsWith('e'))) {
+      const demoEvents = this.getAdminDashboardFallback().events;
+      return demoEvents.find(e => e.id === id) || demoEvents[0];
+    }
     return await this.makeRequest(`/events/${id}`);
   }
 
@@ -994,6 +1006,10 @@ async deletePaymentPlan(planId) {
   }
 
   async getTeamById(id) {
+    if (localStorage.getItem('isDemoSession') === 'true' || (id && id.toString().startsWith('t'))) {
+      const demoTeams = this.getAdminDashboardFallback().teams;
+      return demoTeams.find(t => t.id === id) || demoTeams[0];
+    }
     return await this.makeRequest(`/teams/${id}`);
   }
 

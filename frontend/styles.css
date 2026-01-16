@@ -2753,3 +2753,86 @@ main.main.home-main {
     }
 }
 
+/* Premium Form Layouts */
+.premium-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+}
+
+.premium-form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.form-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin: 1.5rem 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: var(--text-main);
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 10px !important;
+    padding: 0.85rem 1rem !important;
+    transition: all 0.3s ease !important;
+    color: white !important;
+}
+
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent-color) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    box-shadow: 0 0 0 4px rgba(220, 67, 67, 0.1) !important;
+    outline: none !important;
+}
+
+.branding-preview-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    height: 100%;
+}
+
+.branding-preview-box img {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.upload-zone-premium {
+    border: 2px dashed var(--border-color);
+    border-radius: 16px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.01);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.upload-zone-premium:hover {
+    border-color: var(--accent-color);
+    background: rgba(220, 67, 67, 0.03);
+    transform: translateY(-2px);
+}
+
+.upload-zone-premium .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
