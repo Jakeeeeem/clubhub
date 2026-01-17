@@ -1,4 +1,5 @@
 let PlayerDashboardState = {
+  activeSection: 'overview', // Added from instruction
   activePlayerId: null,
   player: null,
   attendance: null,
@@ -13,6 +14,8 @@ let PlayerDashboardState = {
   plans: [],            
   currentPlan: null,    
   notifications: [],
+  family: [], // Added from instruction
+  upcomingEvents: [], // Added from instruction
   stripe: {
     linked: false,
     payouts_enabled: false,
@@ -26,65 +29,163 @@ function setupNavButtons() {
   const navContainer = document.getElementById("loggedInNav");
   if (!navContainer) return;
 
-  if (AppState.currentUser) {
-    const firstName = AppState.currentUser.first_name || AppState.currentUser.firstName || "User";
-    const lastInitial = (AppState.currentUser.last_name || AppState.currentUser.lastName || "").charAt(0);
-    const initials = (firstName.charAt(0) + lastInitial).toUpperCase();
-    const unreadCount = PlayerDashboardState.notifications.filter(n => !n.is_read).length;
-    
-    // Admin dashboard structure:
-    // [Org Switcher] [Name] [Avatar] [Logout]
-    // Player dashboard needs:
-    // [Org Switcher] [Bell] [Name] [Avatar] [Logout]
+  // Ensure AppState exists and has currentUser
+  if (!window.AppState || !window.AppState.currentUser) {
+    console.warn('AppState.currentUser not ready yet, showing login button');
+    navContainer.innerHTML = '<button class="btn btn-primary" onclick="window.location.href=\'index.html\'">Login</button>';
+    return;
+  }
 
-    // We need to inject the Org Switcher here to keep them grouped OR use flexbox to group the existing container.
-    // However, the OrganizationSwitcher class targets 'org-switcher-container'.
-    // A clean way is to move the 'org-switcher-container' element INTO 'loggedInNav' using JS, or structure HTML accordingly.
-    
-    // But since 'org-switcher-container' is already in HTML, let's keep it simple.
-    // We will render the rest of the items in 'loggedInNav' and ensure the parent <nav> aligns them.
-    // To match Admin exactly, 'org-switcher-container' should be close to the user info.
-    
-    // Let's grab the org-switcher-container and append it to our nav-controls if it's not already there
-    const orgSwitcherContainer = document.getElementById('org-switcher-container');
-    
-    navContainer.innerHTML = `
-      <div class="user-info" style="display: flex; align-items: center; gap: 1rem;">
-        <!-- Placeholder for Org Switcher if we move it -->
-        <div id="moved-org-switcher"></div>
+  const currentUser = window.AppState.currentUser;
+  const firstName = currentUser.first_name || currentUser.firstName || "User";
+  const lastInitial = (currentUser.last_name || currentUser.lastName || "").charAt(0);
+  const initials = (firstName.charAt(0) + lastInitial).toUpperCase();
+  const unreadCount = PlayerDashboardState.notifications.filter(n => !n.is_read).length;
+  
+  // Admin dashboard structure:
+  // [Org Switcher] [Name] [Avatar] [Logout]
+  // Player dashboard needs:
+  // [Org Switcher] [Bell] [Family Switcher] [Name] [Avatar] [Logout]
 
-        <div class="notification-wrapper" style="position: relative;">
-          <button class="notification-bell ${unreadCount > 0 ? 'has-unread' : ''}" onclick="toggleNotifications()" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            ${unreadCount > 0 ? `<span class="unread-badge" style="position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 10px; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;">${unreadCount}</span>` : ''}
+  const orgSwitcherContainer = document.getElementById('org-switcher-container');
+  
+  const profileSwitcher = PlayerDashboardState.family.length > 0 || true ? `
+    <div class="profile-switcher" style="position: relative; margin-right: 0.5rem;">
+      <button class="profile-switcher-trigger" id="profile-switcher-trigger" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; padding: 6px 12px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">
+        <div class="profile-avatar" style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold;">
+          ${!PlayerDashboardState.activePlayerId ? firstName.charAt(0) : (PlayerDashboardState.family.find(f => f.id == PlayerDashboardState.activePlayerId)?.first_name?.charAt(0) || 'F')}
+        </div>
+        <span>${!PlayerDashboardState.activePlayerId ? 'Main Profile' : (PlayerDashboardState.family.find(f => f.id == PlayerDashboardState.activePlayerId)?.first_name || 'Family')}</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="opacity: 0.6;">
+          <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      
+      <div class="profile-switcher-dropdown" id="profile-switcher-dropdown" style="position: absolute; top: calc(100% + 8px); left: 0; min-width: 220px; background: #1e1e1e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.2s; z-index: 1000; overflow: hidden;">
+        <div style="padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: rgba(255,255,255,0.5);">
+          Switch Profile
+        </div>
+        <div class="profile-list" style="max-height: 300px; overflow-y: auto;">
+          <button class="profile-item ${!PlayerDashboardState.activePlayerId ? 'active' : ''}" onclick="switchProfile(null)" style="width: 100%; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: ${!PlayerDashboardState.activePlayerId ? 'rgba(220,67,67,0.1)' : 'transparent'}; border: none; color: white; cursor: pointer; transition: background 0.2s; text-align: left;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">
+              ${firstName.charAt(0)}
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 500; font-size: 0.9rem;">${firstName} ${currentUser.last_name || ''}</div>
+              <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Main Profile</div>
+            </div>
+            ${!PlayerDashboardState.activePlayerId ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8L6 11L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' : ''}
           </button>
-          <div id="notificationDropdown" class="notification-dropdown">
-            <div class="dropdown-header">
-              <h3>Notifications</h3>
-              <button onclick="markAllNotificationsRead()" class="btn-text">Mark all read</button>
-            </div>
-            <div id="notificationList" class="notification-list">
-              <!-- Populated by JS -->
-            </div>
+          ${PlayerDashboardState.family.map(child => `
+            <button class="profile-item ${PlayerDashboardState.activePlayerId == child.id ? 'active' : ''}" onclick="switchProfile('${child.id}')" style="width: 100%; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: ${PlayerDashboardState.activePlayerId == child.id ? 'rgba(220,67,67,0.1)' : 'transparent'}; border: none; color: white; cursor: pointer; transition: background 0.2s; text-align: left;">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">
+                ${child.first_name.charAt(0)}
+              </div>
+              <div style="flex: 1;">
+                <div style="font-weight: 500; font-size: 0.9rem;">${child.first_name} ${child.last_name}</div>
+                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Family Member</div>
+              </div>
+              ${PlayerDashboardState.activePlayerId == child.id ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8L6 11L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' : ''}
+            </button>
+          `).join('')}
+        </div>
+        <div style="padding: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1);">
+          <button onclick="showPlayerSection('family')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.6rem; background: rgba(220,67,67,0.1); border: 1px solid rgba(220,67,67,0.3); color: var(--primary); border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.85rem; transition: all 0.2s;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Add Family Member
+          </button>
+        </div>
+      </div>
+    </div>
+  ` : '';
+  
+  navContainer.innerHTML = `
+    <div class="user-info" style="display: flex; align-items: center; gap: 1rem;">
+      <!-- Placeholder for Org Switcher if we move it -->
+      <div id="moved-org-switcher"></div>
+
+      <div class="notification-wrapper" style="position: relative;">
+        <button class="notification-bell ${unreadCount > 0 ? 'has-unread' : ''}" onclick="toggleNotifications()" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          ${unreadCount > 0 ? `<span class="unread-badge" style="position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 10px; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;">${unreadCount}</span>` : ''}
+        </button>
+        <div id="notificationDropdown" class="notification-dropdown">
+          <div class="dropdown-header">
+            <h3>Notifications</h3>
+            <button onclick="markAllNotificationsRead()" class="btn-text">Mark all read</button>
+          </div>
+          <div id="notificationList" class="notification-list">
+            <!-- Populated by JS -->
           </div>
         </div>
-        
-        <span class="user-name" style="font-weight: 500;">Hello, ${firstName}!</span>
-        <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold;">${initials}</div>
-        <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
       </div>
-    `;
+      
+      ${profileSwitcher}
 
-    // Move Org Switcher into this flex container for perfect alignment
-    const movedContainer = document.getElementById('moved-org-switcher');
-    if (orgSwitcherContainer && movedContainer) {
-        movedContainer.appendChild(orgSwitcherContainer);
-    }
-  } else {
-    navContainer.innerHTML = '<button class="btn btn-primary" onclick="window.location.href=\'index.html\'">Login</button>';
+      <span class="user-name" style="font-weight: 500;">Hello, ${firstName}!</span>
+      <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold;">${initials}</div>
+      <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+    </div>
+  `;
+
+  // Move Org Switcher into this flex container for perfect alignment
+  const movedContainer = document.getElementById('moved-org-switcher');
+  if (orgSwitcherContainer && movedContainer) {
+      movedContainer.appendChild(orgSwitcherContainer);
+      // Force re-render/init if class exists
+      if (typeof OrganizationSwitcher !== 'undefined') {
+           orgSwitcherContainer.style.display = 'block';
+      }
+  }
+
+  // Setup profile switcher dropdown toggle
+  const profileTrigger = document.getElementById('profile-switcher-trigger');
+  const profileDropdown = document.getElementById('profile-switcher-dropdown');
+  
+  if (profileTrigger && profileDropdown) {
+    profileTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = profileDropdown.style.opacity === '1';
+      
+      if (isOpen) {
+        profileDropdown.style.opacity = '0';
+        profileDropdown.style.visibility = 'hidden';
+        profileDropdown.style.transform = 'translateY(-10px)';
+      } else {
+        profileDropdown.style.opacity = '1';
+        profileDropdown.style.visibility = 'visible';
+        profileDropdown.style.transform = 'translateY(0)';
+      }
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.profile-switcher')) {
+        profileDropdown.style.opacity = '0';
+        profileDropdown.style.visibility = 'hidden';
+        profileDropdown.style.transform = 'translateY(-10px)';
+      }
+    });
+
+    // Add hover effects to profile items
+    const profileItems = profileDropdown.querySelectorAll('.profile-item');
+    profileItems.forEach(item => {
+      item.addEventListener('mouseenter', function() {
+        if (!this.classList.contains('active')) {
+          this.style.background = 'rgba(255,255,255,0.05)';
+        }
+      });
+      item.addEventListener('mouseleave', function() {
+        if (!this.classList.contains('active')) {
+          this.style.background = 'transparent';
+        }
+      });
+    });
   }
 }
 
@@ -111,7 +212,29 @@ window.switchProfile = switchProfile;
 async function initializePlayerDashboard() {
   console.log('Initializing player dashboard...');
   try {
-    AppState.currentUser = safeGetCurrentUser();
+    // Ensure AppState exists globally
+    if (!window.AppState) {
+      window.AppState = {
+        currentUser: null,
+        userType: null,
+        clubs: [],
+        players: [],
+        staff: [],
+        events: [],
+        bookings: [],
+        teams: [],
+        notifications: []
+      };
+    }
+
+    // Load user from localStorage
+    const storedUser = safeGetCurrentUser();
+    if (storedUser) {
+      window.AppState.currentUser = storedUser;
+      window.AppState.userType = localStorage.getItem('userType') || storedUser.account_type;
+    }
+
+    // Initial setup of nav buttons
     setupNavButtons();
 
     showLoading(true);
@@ -142,6 +265,9 @@ async function initializePlayerDashboard() {
     ];
 
     await Promise.allSettled(additionalPromises);
+
+    // Refresh nav buttons after all data is loaded
+    setupNavButtons();
 
     console.log('Player dashboard initialized successfully');
   } catch (err) {
@@ -2053,12 +2179,18 @@ async function handleNotificationClick(id, actionUrl) {
     if (actionUrl && actionUrl !== 'null' && actionUrl) {
       window.location.href = actionUrl;
     } else {
-      await loadNotifications();
+        await loadNotifications();
     }
   } catch (error) {
-    console.warn('Failed to mark notification as read:', error);
+    console.warn('Notification handling error:', error);
   }
 }
+
+// Expose these to window so onclick works
+window.toggleNotifications = toggleNotifications;
+window.markAllNotificationsRead = markAllNotificationsRead;
+window.handleNotificationClick = handleNotificationClick;
+
 
 // Close dropdown when clicking outside
 window.addEventListener('click', (e) => {

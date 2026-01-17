@@ -257,15 +257,33 @@ async function handleLogin(e) {
     
     const response = await apiService.login(email, password);
     
+    console.log('🔐 Login Response:', {
+      user: response.user,
+      account_type: response.user.account_type,
+      role: response.user.role,
+      email: response.user.email
+    });
+    
     AppState.currentUser = response.user;
     AppState.userType = response.user.account_type;
     
     localStorage.setItem('currentUser', JSON.stringify(response.user));
     localStorage.setItem('userType', response.user.account_type);
     
+    console.log('💾 Stored in localStorage:', {
+      currentUser: localStorage.getItem('currentUser'),
+      userType: localStorage.getItem('userType')
+    });
+    
     closeModal('loginModal');
     updateNavigation();
     await loadInitialData();
+    
+    console.log('🚀 About to redirect with:', {
+      userType: AppState.userType,
+      userRole: AppState.currentUser?.role
+    });
+    
     redirectToDashboard();
     
     showNotification('Login successful!', 'success');
@@ -626,40 +644,37 @@ function updateNavigation() {
 }
 
 function redirectToDashboard() {
-    const userType = AppState.userType;
+    // 0. Ensure we have the user
+    if (!AppState.currentUser) return;
+
+    const userType = AppState.userType;         // Global type: 'organization' | 'adult' | ...
     const userRole = AppState.currentUser?.role; // Contextual role from API
     
     console.log('🔄 Redirecting | Global Type:', userType, '| Context Role:', userRole);
     
-    // Priority 1: Contextual Role (if switched to an org where they are a player/coach)
-    if (userRole === 'player') {
+    // Priority 1: Global Account Type (organization account = admin dashboard)
+    if (userType === 'organization') {
+        // Organization accounts should go to admin dashboard
+        // They can switch to player view if they have that role in another org
+        window.location.href = 'admin-dashboard.html';
+        return;
+    }
+    
+    // Priority 2: Contextual Role for non-organization accounts
+    if (userRole === 'player' || userRole === 'parent') {
         window.location.href = 'player-dashboard.html';
         return;
     }
+    
     if (['coach', 'assistant-coach', 'coaching-supervisor'].includes(userRole)) {
-        window.location.href = 'coach-dashboard.html'; // Assuming this exists or uses admin-dashboard with restricted view
-         // Actually, usually coaches might use admin-dashboard with restrictions.
-         // But if player-dashboard is distinct, we prioritize that for players.
-         return;
+        window.location.href = 'admin-dashboard.html'; // Coaches use admin dashboard
+        return;
     }
 
-    // Priority 2: Global Account Type
+    // Priority 3: Fallback based on account type
     switch (userType) {
-        case 'organization':
-            window.location.href = 'admin-dashboard.html';
-            break;
         case 'adult':
-            // Check if user has coach role (fallback if role not in currentUser root)
-            const isCoach = AppState.staff?.some(s => 
-                s.user_id === AppState.currentUser?.id && 
-                ['coach', 'assistant-coach', 'coaching-supervisor'].includes(s.role)
-            );
-            if (isCoach) {
-                // Coach dashboard logic
-                 window.location.href = 'admin-dashboard.html'; // Coaches often use admin dashboard
-            } else {
-                window.location.href = 'player-dashboard.html';
-            }
+            window.location.href = 'player-dashboard.html';
             break;
         default:
             window.location.href = 'player-dashboard.html';
