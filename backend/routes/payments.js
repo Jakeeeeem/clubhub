@@ -478,20 +478,23 @@ router.put(
         });
       }
 
-      const { name, amount, interval, description } = req.body;
+      const { id } = req.params;
+      const { name, amount, interval, description, active } = req.body;
 
+      // Update in database with COALESCE to support partial updates
       const result = await query(
         `
-      UPDATE plans SET 
-        name = $1, 
-        price = $2, 
-        interval = $3, 
-        description = $4,
-        updated_at = NOW()
-      WHERE id = $5 AND active = true
-      RETURNING *
-    `,
-        [name, amount, interval, description || null, req.params.id],
+        UPDATE plans SET 
+          name = COALESCE($1, name), 
+          price = COALESCE($2, price), 
+          interval = COALESCE($3, interval), 
+          description = COALESCE($4, description),
+          active = COALESCE($5, active),
+          updated_at = NOW()
+        WHERE id = $6
+        RETURNING *
+      `,
+        [name, amount, interval, description || null, active, id],
       );
 
       if (result.rows.length === 0) {
@@ -635,6 +638,7 @@ router.post("/bulk-assign-plan", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Plan not found" });
     }
     const plan = planResult.rows[0];
+    const clubId = plan.club_id;
 
     const start = startDate || new Date().toISOString().slice(0, 10);
 
@@ -649,24 +653,37 @@ router.post("/bulk-assign-plan", authenticateToken, async (req, res) => {
 
     const results = await withTransaction(async (client) => {
       const out = [];
-      const resolvedUserIds = [];
 
-      // Resolve playerIds to userIds if they aren't already userIds
+      // Resolve playerIds to userIds and verify club membership
       for (const id of playerIds) {
         const playerRes = await client.query(
-          "SELECT user_id FROM players WHERE id = $1",
+          "SELECT user_id, club_id FROM players WHERE id = $1",
           [id],
         );
-        if (playerRes.rows.length > 0 && playerRes.rows[0].user_id) {
-          resolvedUserIds.push(playerRes.rows[0].user_id);
-        } else {
-          // Fallback: maybe it IS a user_id
-          resolvedUserIds.push(id);
-        }
-      }
 
-      for (const userId of resolvedUserIds) {
-        // Deactivate other plans
+        if (playerRes.rows.length === 0) {
+          console.warn(`Player ${id} not found, skipping`);
+          continue;
+        }
+
+        const player = playerRes.rows[0];
+
+        // Security check: Ensure player belongs to the same club as the plan
+        if (player.club_id !== clubId) {
+          console.warn(
+            `Player ${id} does not belong to club ${clubId}, skipping`,
+          );
+          continue;
+        }
+
+        if (!player.user_id) {
+          console.warn(`Player ${id} has no associated user_id, skipping`);
+          continue;
+        }
+
+        const userId = player.user_id;
+
+        // Deactivate other active payment plans for this user in this club
         await client.query(
           `UPDATE player_plans SET is_active = false, updated_at = NOW() WHERE user_id = $1 AND is_active = true`,
           [userId],

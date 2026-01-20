@@ -608,9 +608,12 @@ class ApiService {
     }
   }
 
-  async listPaymentPlans() {
+  async listPaymentPlans(clubId = null) {
     try {
-      const response = await this.makeRequest("/payments/plans");
+      const endpoint = clubId
+        ? `/payments/plans?clubId=${clubId}`
+        : "/payments/plans";
+      const response = await this.makeRequest(endpoint);
       return response;
     } catch (error) {
       console.error("❌ Failed to fetch payment plans:", error);

@@ -2697,7 +2697,8 @@
 
             try {
                 showLoading(true);
-                const plans = await apiService.listPaymentPlans();
+                const clubId = await getActiveClubId();
+                const plans = await apiService.listPaymentPlans(clubId);
 
                 if (!plans || plans.length === 0) {
                     container.innerHTML = `
@@ -2710,6 +2711,8 @@
                     AppState.paymentPlans = [];
                     return;
                 }
+
+                AppState.paymentPlans = plans;
 
                 container.innerHTML = `
                     <div class="table-responsive">
@@ -3877,7 +3880,7 @@
             }
         }
 
-
+        // Finances & Payment Plans Logic
 
         async function editPaymentPlan(planId) {
             const plan = AppState.paymentPlans?.find(p => p.id === planId);
@@ -5614,10 +5617,31 @@
             }
         }
 
-        async function editPaymentPlan(planId) {
-            console.log('Editing plan:', planId);
-            // Implement edit modal later if needed
-            showNotification('Plan editing coming soon', 'info');
+        async function handleUpdatePaymentPlan(e) {
+            e.preventDefault();
+            const id = document.getElementById('editPlanId').value;
+            const name = document.getElementById('editPlanName').value;
+            const amount = document.getElementById('editPlanAmount').value;
+            const interval = document.getElementById('editPlanFrequency').value;
+            const description = document.getElementById('editPlanDescription').value;
+
+            try {
+                showLoading(true);
+                await apiService.updatePaymentPlan(id, {
+                    name,
+                    amount,
+                    interval,
+                    description
+                });
+                showNotification('Payment Plan updated successfully!', 'success');
+                closeModal('editPaymentPlanModal');
+                loadPaymentPlans();
+            } catch (error) {
+                console.error('Update Plan Error:', error);
+                showNotification('Failed to update plan: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
         }
 
         async function deletePaymentPlan(planId) {
@@ -5664,6 +5688,7 @@
 
         window.accessStripeAccount = accessStripeAccount;
         window.handleCreatePaymentPlan = handleCreatePaymentPlan;
+        window.handleUpdatePaymentPlan = handleUpdatePaymentPlan;
         window.editPaymentPlan = editPaymentPlan;
         window.deletePaymentPlan = deletePaymentPlan;
         window.clearDummyData = clearDummyData;
