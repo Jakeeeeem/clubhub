@@ -1,33 +1,28 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const path = require('path');
 
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  ssl: { rejectUnauthorized: false },
-};
+dotenv.config({ path: path.join(__dirname, 'clubhub-dev.env') });
 
-console.log('Testing connection with:', { ...dbConfig, password: '***' });
-
-const pool = new Pool(dbConfig);
-
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('❌ Connection failed:', err.message);
-    console.error('Full error:', err);
-    process.exit(1);
-  }
-  console.log('✅ Connection successful!');
-  client.query('SELECT current_database(), current_user', (err, result) => {
-    release();
-    if (err) {
-      console.error('❌ Query failed:', err.message);
-    } else {
-      console.log('Result:', result.rows[0]);
-    }
-    process.exit(0);
-  });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
 });
+
+async function run() {
+  try {
+    const players = await pool.query('SELECT * FROM players');
+    console.log('PLAYERS COUNT:', players.rows.length);
+    console.table(players.rows.map(p => ({ id: p.id, name: p.first_name, user_id: p.user_id })));
+
+    const users = await pool.query('SELECT * FROM users');
+    console.log('USERS COUNT:', users.rows.length);
+    console.table(users.rows.map(u => ({ id: u.id, email: u.email })));
+
+  } catch (e) {
+    console.error(e);
+  } finally {
+    await pool.end();
+  }
+}
+
+run();

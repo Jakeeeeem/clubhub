@@ -6,130 +6,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coach Dashboard | ClubHub</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="api-service.js"></script>
-    <style>
-        .group-card {
-            background: #1e1e1e;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .player-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.8rem 0;
-            border-bottom: 1px solid #333;
-        }
-
-        .check-in-btn {
-            background: #333;
-            color: #fff;
-            border: none;
-            padding: 0.4rem 0.8rem;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .check-in-btn.checked {
-            background: #4caf50;
-            color: #000;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <header class="header">
-        <nav class="nav container">
+        <nav class="nav container" id="loggedInNav">
             <div class="logo" onclick="window.location.href='index.html'">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
                 <span class="logo-text neon-text">ClubHub</span>
             </div>
 
-            <!-- Organization Switcher -->
             <div id="org-switcher-container"></div>
 
             <div class="user-info">
                 <div class="user-avatar" id="coachAvatar">C</div>
-                <span id="coachName">Coach</span>
+                <span id="coachNameDisplay">Coach</span>
                 <button onclick="logout()" class="btn btn-secondary btn-small">Logout</button>
             </div>
         </nav>
     </header>
 
-    <div class="dashboard-container" style="padding-top: 100px;">
-
-        <main class="dashboard-content" style="max-width: 800px; margin: 0 auto;">
-            <h1>My Training Groups</h1>
-            <div id="groupsContainer">
-                <div class="loading-spinner">Loading groups...</div>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="dashboard-nav">
+                <button class="active" onclick="showCoachSection('overview')">📊 Overview</button>
+                <button onclick="showCoachSection('teams')">📋 My Teams</button>
+                <button onclick="showCoachSection('players')">👥 My Players</button>
+                <button onclick="showCoachSection('events')">📅 Schedule</button>
+                <button onclick="showCoachSection('tactical-board')">📝 Tactics</button>
+                <button onclick="showCoachSection('profile')">👤 My Profile</button>
+                <button onclick="window.location.href='coach-settings.html'">⚙️ Settings</button>
             </div>
+        </aside>
+
+        <main class="dashboard-content">
+            <!-- Overview Section -->
+            <div id="coach-overview" class="dashboard-section active">
+                <div class="stats-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-number" id="managedTeamsCount">0</span>
+                        <span class="stat-label">Teams Managed</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalPlayersCount">0</span>
+                        <span class="stat-label">Total Players</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="upcomingSessionsCount">0</span>
+                        <span class="stat-label">Upcoming Sessions</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Recent Groups</h3>
+                    <div id="groupsContainer">
+                        <p class="loading-text">Loading groups...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="coach-profile" class="dashboard-section">
+                <div class="card">
+                    <div class="section-header"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>👤 Coach Profile</h3>
+                        <button class="btn-primary" onclick="saveCoachProfile()">Save Changes</button>
+                    </div>
+                    <form id="coachProfileForm">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <div class="form-group">
+                                <label>First Name</label>
+                                <input type="text" id="coach-prof-firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Last Name</label>
+                                <input type="text" id="coach-prof-lastName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" id="coach-prof-email" readonly style="opacity: 0.6;">
+                            </div>
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" id="coach-prof-phone">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label>Bio / Experience</label>
+                                <textarea id="coach-prof-bio" rows="4"
+                                    style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 0.8rem;"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Other placeholders for JS logic -->
+            <div id="coach-teams" class="dashboard-section">
+                <div class="card">
+                    <h3>My Teams</h3>
+                    <div id="coachTeamsList"></div>
+                </div>
+            </div>
+            <div id="coach-players" class="dashboard-section">
+                <div class="card">
+                    <h3>Active Rosters</h3>
+                    <div id="coachPlayersList"></div>
+                </div>
+            </div>
+            <div id="coach-events" class="dashboard-section">
+                <div class="card">
+                    <h3>Training & Match Schedule</h3>
+                    <div id="coachEventsList"></div>
+                </div>
+            </div>
+            <div id="coach-tactical-board" class="dashboard-section">
+                <div class="card">
+                    <h3>Formation & Tactics</h3>
+                    <div id="tacticalBoard"></div>
+                </div>
+            </div>
+
         </main>
     </div>
 
+    <!-- Core Dependencies -->
+    <script src="api-service.js"></script>
+    <script src="script.js"></script>
+    <script src="org-switcher.js"></script>
+    <script src="coach-dashboard.js"></script>
+
     <script>
-        async function initCoachDashboard() {
+        window.addEventListener('load', () => {
+            if (typeof initializeCoachDashboard === 'function') {
+                initializeCoachDashboard();
+            }
+
+            // Set name display
             const user = JSON.parse(localStorage.getItem('currentUser'));
-            if (!user) {
-                console.warn('No user found, redirecting...');
-                window.location.href = 'index.html';
-                return;
+            if (user) {
+                document.getElementById('coachNameDisplay').textContent = user.firstName || user.first_name || 'Coach';
+                if (document.getElementById('coachAvatar')) {
+                    document.getElementById('coachAvatar').textContent = (user.firstName || user.first_name || 'C').charAt(0).toUpperCase();
+                }
             }
-            document.getElementById('coachName').textContent = `${user.firstName || user.first_name || 'Coach'}`;
-
-            try {
-                // Fetch groups assigned to this coach (Mock logic for now, assumes we fetch all then filter or specific endpoint)
-                // For real implementation: GET /api/talent-id/coach/groups
-                // Using existing admin endpoint but filtering for demo purposes if needed, OR creating specific endpoint.
-                // Re-using the logic: let's verify if we have a specific endpoint. 
-                // Currently `talent-id.js` doesn't have a coach specific endpoint, adding mock fetch for now or we rely on admin dashboard for demo.
-                // Let's assume we use the generic events dashboard but filtered. 
-                // Actually, let's just show a placeholder as the backend endpoint /coach/groups wasn't strictly added yet in step 2 (my bad).
-                // I'll add a quick note to the user or just implement the fetch logic assuming I'll add the endpoint next or use a mock.
-
-                document.getElementById('groupsContainer').innerHTML = `
-                    <div class="group-card">
-                        <h3>Group A - U12</h3>
-                        <div class="player-row">
-                            <div>
-                                <strong>#10 - John Doe</strong><br>
-                                <span style="font-size:0.8rem; opacity:0.7;">Midfielder | 155cm</span>
-                            </div>
-                            <button class="check-in-btn" onclick="toggleCheckIn(this, 'reg_id_1')">Check In</button>
-                        </div>
-                        <div class="player-row">
-                            <div>
-                                <strong>#12 - Jane Smith</strong><br>
-                                <span style="font-size:0.8rem; opacity:0.7;">Defender | 160cm</span>
-                            </div>
-                            <button class="check-in-btn" onclick="toggleCheckIn(this, 'reg_id_2')">Check In</button>
-                        </div>
-                    </div>
-                `;
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        function toggleCheckIn(btn, id) {
-            btn.classList.toggle('checked');
-            btn.innerText = btn.classList.contains('checked') ? 'Checked In' : 'Check In';
-            // Call API implementation
-        }
+        });
 
         function logout() {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
+            localStorage.clear();
             window.location.href = 'index.html';
         }
-
-        initCoachDashboard();
     </script>
-
-    <!-- Organization Switcher -->
-    <link rel="stylesheet" href="org-switcher.css">
-    <script src="org-switcher.js"></script>
 </body>
 
 </html>

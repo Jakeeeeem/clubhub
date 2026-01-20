@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Login Test - ClubHub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0d0d0d;
+            color: #fff;
+        }
+
+        h1 {
+            color: #dc4343;
+        }
+
+        button {
+            background: #dc4343;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #c93333;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        a {
+            color: #dc4343;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .info {
+            background: rgba(33, 150, 243, 0.1);
+            border-left: 4px solid #2196f3;
+            padding: 10px;
+            margin: 20px 0;
+        }
+
+        .success {
+            color: #4caf50;
+        }
+
+        .error {
+            color: #f44336;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔧 Direct Login Test</h1>
+
+    <div class="info">
+        <strong>Purpose:</strong> This page bypasses all the complex login logic to test if basic authentication works.
+    </div>
+
+    <h2>Test Login</h2>
+    <p>Email: <code>demo-admin@clubhub.com</code></p>
+    <p>Password: <code>password123</code></p>
+
+    <button onclick="testLogin()">🔑 Test Login</button>
+    <button onclick="checkStorage()">📦 Check Storage</button>
+    <button onclick="testContext()">🌐 Test Context API</button>
+    <button onclick="clearStorage()">🗑️ Clear Storage</button>
+
+    <div id="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>⏳ Testing login...</p>';
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'demo-admin@clubhub.com',
+                        password: 'password123'
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Login response:', data);
+
+                if (data.token) {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Login successful!</p>
+                        <p><strong>User:</strong> ${data.user.email}</p>
+                        <p><strong>Account Type:</strong> ${data.user.account_type || data.user.userType}</p>
+                        <p><strong>Token:</strong> ${data.token.substring(0, 20)}...</p>
+                        <hr>
+                        <p><a href="admin-dashboard.html">→ Go to Admin Dashboard</a></p>
+                        <p><a href="player-dashboard.html">→ Go to Player Dashboard</a></p>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Login failed</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error: ${error.message}</p>
+                    <p>Check console for details</p>
+                `;
+            }
+        }
+
+        function checkStorage() {
+            const resultDiv = document.getElementById('result');
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('currentUser');
+
+            if (token && user) {
+                const userData = JSON.parse(user);
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Storage has data</p>
+                    <p><strong>Token:</strong> ${token.substring(0, 30)}...</p>
+                    <p><strong>User:</strong></p>
+                    <pre>${JSON.stringify(userData, null, 2)}</pre>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ No data in storage</p>
+                    <p>Token: ${token ? 'Present' : 'Missing'}</p>
+                    <p>User: ${user ? 'Present' : 'Missing'}</p>
+                `;
+            }
+        }
+
+        async function testContext() {
+            const resultDiv = document.getElementById('result');
+            const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                resultDiv.innerHTML = '<p class="error">❌ No token found. Login first!</p>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>⏳ Testing context API...</p>';
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/context`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                console.log('Context response:', data);
+
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <p class="success">✅ Context API works!</p>
+                        <p><strong>Organizations:</strong> ${data.organizations?.length || 0}</p>
+                        <p><strong>Current Org:</strong> ${data.currentOrganization?.name || 'None'}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <p class="error">❌ Context failed</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error: ${error.message}</p>
+                `;
+            }
+        }
+
+        function clearStorage() {
+            localStorage.clear();
+            document.getElementById('result').innerHTML = '<p class="success">✅ Storage cleared!</p>';
+        }
+
+        // Auto-check on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                document.getElementById('result').innerHTML = `
+                    <p class="success">ℹ️ You already have a token stored</p>
+                    <p>Click "Check Storage" to see it</p>
+                `;
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -72,6 +72,55 @@ function showCoachSection(sectionId) {
         case 'item-shop':
             loadCoachProducts();
             break;
+        case 'profile':
+            loadCoachProfile();
+            break;
+    }
+}
+
+function loadCoachProfile() {
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    if (!user) return;
+
+    const fields = {
+        'coach-prof-firstName': user.firstName || user.first_name || '',
+        'coach-prof-lastName': user.lastName || user.last_name || '',
+        'coach-prof-email': user.email || '',
+        'coach-prof-phone': user.phone || '',
+        'coach-prof-bio': user.bio || ''
+    };
+
+    for (const [id, val] of Object.entries(fields)) {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    }
+}
+
+async function saveCoachProfile() {
+    try {
+        const updatedData = {
+            firstName: document.getElementById('coach-prof-firstName').value,
+            lastName: document.getElementById('coach-prof-lastName').value,
+            phone: document.getElementById('coach-prof-phone').value,
+            bio: document.getElementById('coach-prof-bio').value
+        };
+
+        const response = await apiService.makeRequest('/auth/profile', {
+            method: 'PUT',
+            body: JSON.stringify(updatedData)
+        });
+
+        if (response.success) {
+            // Update local storage
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            const updatedUser = { ...user, ...updatedData };
+            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+            
+            showNotification('Profile updated successfully!', 'success');
+        }
+    } catch (error) {
+        console.error('❌ Failed to update coach profile:', error);
+        showNotification('Failed to update profile', 'error');
     }
 }
 

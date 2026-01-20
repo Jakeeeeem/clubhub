@@ -48,6 +48,13 @@
         .dashboard-section.active {
             display: block !important;
         }
+
+        .btn-stripe.connected {
+            background: #10b981 !important;
+            /* Green */
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
     </style>
     <script src="api-service.js"></script>
     <script src="workspace-manager.js"></script>
@@ -59,6 +66,16 @@
             <div class="logo" onclick="window.location.href='index.html'">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
                 <span class="logo-text neon-text">ClubHub</span>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="mode-toggle-container">
+                <span class="mode-label active" id="club-label">Club</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="mode-toggle" />
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="mode-label" id="player-label">Player</span>
             </div>
 
             <div class="user-info">
@@ -79,8 +96,9 @@
                     <h1 class="neon-text display-org-name">Admin Dashboard</h1>
                     <p style="color: var(--text-muted);">Manage your organization with complete control and insights</p>
                 </div>
-                <div class="stripe-access">
-                    <button class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe Dashboard</button>
+                <div class="stripe-access" style="display: flex; gap: 1.5rem; align-items: center;">
+                    <button id="stripeAccessBtn" class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe
+                        Dashboard</button>
                     <button class="btn btn-primary" onclick="generateShareableInviteLink()">🔗 Generate Invite
                         Link</button>
                 </div>
@@ -449,6 +467,9 @@
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>💰 Financial Management</h3>
                             <div style="display: flex; gap: 1rem;">
+                                <button class="btn btn-danger" onclick="clearDummyData()"
+                                    style="padding: 0.5rem 1rem; font-size: 0.8rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">🗑️
+                                    Clear Data</button>
                                 <button class="btn btn-stripe" onclick="accessStripeAccount()">Access
                                     Stripe</button>
                                 <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">➕ Create
@@ -2032,11 +2053,18 @@
             };
 
             try {
-                const dashboardData = await apiService.getAdminDashboardData();
+                // Determine active club ID from session/user if available
+                const activeClubId = user?.clubId || user?.currentOrganizationId || null;
+                console.log('📊 Fetching dashboard for Club ID:', activeClubId || 'All');
+
+                const dashboardData = await apiService.getAdminDashboardData(activeClubId);
 
                 if (dashboardData) {
                     AppState.clubs = dashboardData.clubs || [];
-                    AppState.activeClubId = await getActiveClubId();
+
+                    // Priority: activeClubId from user > first club in list
+                    AppState.activeClubId = activeClubId || (AppState.clubs[0]?.id);
+
                     AppState.players = dashboardData.players || [];
                     AppState.staff = dashboardData.staff || [];
                     AppState.events = dashboardData.events || [];
@@ -2076,84 +2104,59 @@
         });
 
         async function checkAndConfigureStripe() {
+            const btn = document.getElementById('stripeAccessBtn');
+            if (!btn) return;
+
             try {
                 const status = await apiService.makeRequest('/payments/stripe/connect/status');
+                AppState.stripeStatus = status;
+
                 if (status.stripeAccountId && status.details_submitted) {
+                    btn.innerHTML = '✅ Connected - View Dashboard';
+                    btn.classList.add('connected');
+                    btn.onclick = accessStripeAccount;
+
+                    // Auto-sync payout schedule
                     console.log('💳 Stripe connected, ensuring monthly payout schedule (1st of month)');
-                    await apiService.makeRequest(`/stripe-payouts/configure-payout/${status.stripeAccountId}`, {
-                        method: 'POST'
-                    });
+                    try {
+                        await apiService.makeRequest(`/stripe-payouts/configure-payout/${status.stripeAccountId}`, {
+                            method: 'POST'
+                        });
+                    } catch (e) {
+                        console.log('Schedule sync skipped');
+                    }
+                } else {
+                    btn.innerHTML = '⚠️ Connect Stripe Account';
+                    btn.classList.remove('connected');
+                    btn.onclick = startStripeOnboarding;
+                    showNotification('Please connect your Stripe account to start accepting payments.', 'info');
                 }
             } catch (err) {
-                // Silently skip if not onboarded
-                console.log('Stripe configuration check skipped or failed');
+                console.log('Stripe status check failed:', err);
+                btn.innerHTML = 'Connect Stripe Account';
+                btn.onclick = startStripeOnboarding;
             }
         }
 
-
-        // Update dashboard statistics with data
-        function updateDashboardStats(statistics) {
-            if (!statistics) {
-                console.warn('⚠️ No statistics data provided');
-                return;
-            }
-
-            console.log('📊 Updating dashboard stats:', statistics);
-
-            // Update stat cards
-            const totalPlayersEl = document.getElementById('totalPlayers');
-            const totalStaffEl = document.getElementById('totalStaff');
-            const totalEventsEl = document.getElementById('totalEvents');
-            const totalRevenueEl = document.getElementById('totalRevenue');
-
-            if (totalPlayersEl) totalPlayersEl.textContent = statistics.totalPlayers || statistics.total_players || AppState.players?.length || 0;
-            if (totalStaffEl) totalStaffEl.textContent = statistics.totalStaff || statistics.total_staff || AppState.staff?.length || 0;
-            if (totalEventsEl) totalEventsEl.textContent = statistics.totalEvents || statistics.total_events || AppState.events?.length || 0;
-            if (totalRevenueEl) totalRevenueEl.textContent = `£${statistics.totalRevenue || statistics.monthly_revenue || 0}`;
-        }
-
-        // Load and update dashboard statistics
-        async function loadDashboardStats() {
-            console.log('📊 Loading dashboard statistics...');
-
+        async function startStripeOnboarding() {
             try {
-                // If we already have dashboard data in AppState, use it
-                if (AppState.players || AppState.staff || AppState.events) {
-                    const stats = {
-                        totalPlayers: AppState.players?.length || 0,
-                        totalStaff: AppState.staff?.length || 0,
-                        totalEvents: AppState.events?.length || 0,
-                        totalRevenue: AppState.payments?.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0) || 0
-                    };
-                    updateDashboardStats(stats);
-                    return;
-                }
-
-                // Otherwise fetch fresh data
-                const dashboardData = await apiService.getAdminDashboardData();
-                if (dashboardData && dashboardData.statistics) {
-                    updateDashboardStats(dashboardData.statistics);
+                showLoading(true);
+                const result = await apiService.getStripeOnboardLink();
+                if (result && result.url) {
+                    window.location.href = result.url;
                 } else {
-                    // Calculate from the data we got
-                    const stats = {
-                        totalPlayers: dashboardData.players?.length || 0,
-                        totalStaff: dashboardData.staff?.length || 0,
-                        totalEvents: dashboardData.events?.length || 0,
-                        totalRevenue: dashboardData.payments?.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0) || 0
-                    };
-                    updateDashboardStats(stats);
+                    showNotification('Could not generate onboarding link', 'error');
                 }
             } catch (error) {
-                console.error('Failed to load dashboard stats:', error);
-                // Set to 0 if failed
-                updateDashboardStats({
-                    totalPlayers: 0,
-                    totalStaff: 0,
-                    totalEvents: 0,
-                    totalRevenue: 0
-                });
+                showNotification('Failed to start onboarding: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
             }
         }
+
+        window.startStripeOnboarding = startStripeOnboarding;
+
+
 
 
         // Enhanced Event Listeners
@@ -4445,18 +4448,35 @@
         }
 
         // Fallback data loading
+        // Fallback data loading
         async function loadDashboardStats() {
             try {
-                const stats = AppState.clubs?.[0] ? await apiService.getAdminDashboardData() : null;
+                const clubId = await getActiveClubId();
+                const stats = clubId ? await apiService.getAdminDashboardData(clubId) : null;
 
-                if (stats && stats.statistics) {
-                    document.getElementById('totalPlayers').textContent = stats.statistics.total_players || '0';
-                    document.getElementById('totalStaff').textContent = stats.statistics.total_staff || '0';
-                    document.getElementById('totalEvents').textContent = stats.statistics.total_events || '0';
-                    document.getElementById('totalRevenue').textContent = `£${stats.statistics.monthly_revenue || 0} `;
+                if (stats) {
+                    if (stats.statistics) {
+                        updateDashboardStats(stats.statistics);
+                    }
+                    // Also update title if we have the club info
+                    if (stats.club) {
+                        updateDashboardTitle(stats.club.name);
+                    } else if (clubId) {
+                        // Try to find name from AppState or Context
+                        const club = (AppState.clubs || []).find(c => c.id === clubId);
+                        if (club) updateDashboardTitle(club.name);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to load dashboard stats:', error);
+            }
+        }
+
+        function updateDashboardTitle(name) {
+            const titleEl = document.querySelector('.display-org-name');
+            if (titleEl && name) {
+                titleEl.textContent = name;
+                console.log(`✅ Updated Dashboard Title: ${name}`);
             }
         }
 
@@ -4827,14 +4847,11 @@
         }
 
         async function loadClubProfileImages() {
-            const clubId = await getActiveClubId();
             try {
-                const clubs = await apiService.getAdminDashboardData(); // or simpler endpoint?
-                // Actually dashboard data has clubs.
-                // Or verify current club
-                // Use the latest clubs data from dashboard
                 const activeClubId = await getActiveClubId();
-                const dashboardData = await apiService.getAdminDashboardData();
+                if (!activeClubId) return;
+
+                const dashboardData = await apiService.getAdminDashboardData(activeClubId);
                 const club = dashboardData.clubs?.find(c => c.id == activeClubId);
                 if (club && club.images) {
                     displayClubImages(club.images);
@@ -5564,6 +5581,13 @@
 
         async function handleCreatePaymentPlan(e) {
             e.preventDefault();
+
+            // Validation: Ensure Stripe is connected
+            if (!AppState.stripeStatus || !AppState.stripeStatus.details_submitted) {
+                showNotification('Cannot create payment plan: Stripe account is not fully connected. Please click "Connect Stripe Account" above.', 'error');
+                return;
+            }
+
             const name = document.getElementById('planName').value;
             const amount = document.getElementById('planAmount').value;
             const interval = document.getElementById('planInterval').value;
@@ -5616,10 +5640,33 @@
             createPlanForm.addEventListener('submit', handleCreatePaymentPlan);
         }
 
+        async function clearDummyData() {
+            if (!confirm('🚨 Are you sure? This will PERMANENTLY delete all payment plans, invoices, and payment records for this organization. This cannot be undone.')) return;
+
+            try {
+                showLoading(true);
+                const result = await apiService.makeRequest('/payments/cleanup', { method: 'POST' });
+                showNotification(result.message || 'Dummy data cleared!', 'success');
+
+                // Refresh all relevant sections
+                await Promise.all([
+                    loadPaymentPlans(),
+                    loadFinances(),
+                    loadDashboardStats()
+                ]);
+            } catch (error) {
+                console.error('Cleanup error:', error);
+                showNotification('Failed to clear data: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
         window.accessStripeAccount = accessStripeAccount;
         window.handleCreatePaymentPlan = handleCreatePaymentPlan;
         window.editPaymentPlan = editPaymentPlan;
         window.deletePaymentPlan = deletePaymentPlan;
+        window.clearDummyData = clearDummyData;
 
 
         // Shop & Event Custom Logic
@@ -7213,6 +7260,20 @@
             // Expose globally
             window.editStaffMember = editStaffMember;
             window.removeStaffMember = removeStaffMember;
+        </script>
+
+        <!-- Mode Toggle Handler -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const toggle = document.getElementById('mode-toggle');
+                if (toggle) {
+                    toggle.addEventListener('change', (e) => {
+                        if (e.target.checked) {
+                            window.location.href = 'player-dashboard.html';
+                        }
+                    });
+                }
+            });
         </script>
 </body>
 

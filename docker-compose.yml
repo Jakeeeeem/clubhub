@@ -40,6 +40,8 @@ services:
     restart: unless-stopped
     ports:
       - "8081:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
     depends_on:
       - backend
 

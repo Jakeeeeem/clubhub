@@ -14,11 +14,37 @@
 </head>
 
 <body>
+  <script>
+    // Global AppState initialization
+    window.AppState = window.AppState || {};
+    if (!window.AppState.currentUser) {
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
+        try {
+          window.AppState.currentUser = JSON.parse(storedUser);
+          window.AppState.isLoggedIn = true;
+          console.log('✅ Global AppState initialized');
+        } catch (e) {
+          console.error('AppState init error:', e);
+        }
+      }
+    }
+  </script>
   <header class="header">
     <nav class="nav container">
       <div class="logo" onclick="window.location.href='index.html'">
         <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
         <span class="logo-text">ClubHub</span>
+      </div>
+
+      <!-- Mode Toggle -->
+      <div class="mode-toggle-container">
+        <span class="mode-label" id="club-label">Club</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="mode-toggle" checked />
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="mode-label active" id="player-label">Player</span>
       </div>
 
       <!-- Organization Switcher -->
@@ -47,18 +73,63 @@
         <button onclick="showPlayerSection('my-clubs')">My Clubs</button>
         <button onclick="showPlayerSection('teams')">Teams</button>
         <button onclick="showPlayerSection('subscriptions')">Subscriptions</button>
-        <button onclick="showPlayerSection('payments')">Payments</button>
         <button onclick="showPlayerSection('item-shop')">🛒 Item Shop</button>
         <button onclick="window.location.href='venue-booking.html'">🏟️ Book Venue</button>
         <button onclick="showPlayerSection('club-finder')">Find Clubs</button>
         <button onclick="showPlayerSection('event-finder')">Find Events</button>
         <button onclick="showPlayerSection('documents')">Documents</button>
+        <button onclick="showPlayerSection('profile')">👤 My Profile</button>
         <button onclick="window.location.href='player-settings.html'">⚙️ Settings</button>
       </div>
 
       <div class="dashboard-content">
+        <!-- Profile Section -->
+        <div id="player-profile" class="dashboard-section">
+          <div class="card">
+            <div class="section-header">
+              <h3>👤 Personal Profile</h3>
+              <button class="btn-primary" onclick="savePlayerProfile()">Save Changes</button>
+            </div>
+            <form id="playerProfileForm" class="profile-form" style="margin-top: 2rem;">
+              <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div class="form-group">
+                  <label>First Name</label>
+                  <input type="text" id="prof-firstName" required>
+                </div>
+                <div class="form-group">
+                  <label>Last Name</label>
+                  <input type="text" id="prof-lastName" required>
+                </div>
+              </div>
+              <div class="form-row"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
+                <div class="form-group">
+                  <label>Email Address</label>
+                  <input type="email" id="prof-email" readonly
+                    style="background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5);">
+                </div>
+                <div class="form-group">
+                  <label>Phone Number</label>
+                  <input type="tel" id="prof-phone">
+                </div>
+              </div>
+              <div class="form-row"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
+                <div class="form-group">
+                  <label>Date of Birth</label>
+                  <input type="date" id="prof-dob">
+                </div>
+                <div class="form-group">
+                  <label>Position / Role</label>
+                  <input type="text" id="prof-position">
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
         <!-- Shop Section -->
-        <div id="shop" class="dashboard-section">
+        <div id="player-shop" class="dashboard-section">
           <div class="card">
             <h3>🛒 Club Shop</h3>
             <p>Purchase club kit and equipment directly.</p>
@@ -78,7 +149,7 @@
             </div>
             <button class="btn-primary" onclick="openAddChildModal()">+ Add Child</button>
           </div>
-          <div id="familyGrid" class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+          <div id="familyGrid" style="width: 100%;">
             <!-- Populated by JS -->
             <div class="stat-card loading-card">Loading family members...</div>
           </div>
@@ -211,19 +282,7 @@
             </div>
           </div>
 
-          <!-- Stripe Connect Account -->
-          <div class="card">
-            <h3>Payout Account Setup</h3>
-            <p>Set up your payout account to receive payments and refunds.</p>
-            <div id="stripeAccountStatus">
-              <div class="item-actions" style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-primary" id="stripeOnboardBtn">Create / Link Stripe Account</button>
-                <button class="btn btn-secondary" id="stripeManageBtn" disabled>Manage Account</button>
-                <button class="btn" id="stripeRefreshBtn">Refresh Status</button>
-              </div>
-              <div id="stripeAccountInfo" style="margin-top:8px;color:#666"></div>
-            </div>
-          </div>
+
         </div>
 
         <!-- Payments -->
@@ -518,7 +577,6 @@
   </div>
 
   <!-- Core services -->
-  <script src="api-service.js"></script>
 
   <script>
     // 🔒 AUTHENTICATION GUARD - Prevent unauthorized access
@@ -787,6 +845,41 @@
     });
   </script>
 
+  <!-- Mode Toggle Handler -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('mode-toggle');
+      if (toggle) {
+        toggle.addEventListener('change', (e) => {
+          if (!e.target.checked) {
+            window.location.href = 'admin-dashboard.html';
+          }
+        });
+      }
+    });
+  </script>
+
+  <!-- User Info & Logout -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loggedInNav = document.getElementById('loggedInNav');
+      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+
+      if (user && user.email && loggedInNav) {
+        const firstName = user.firstName || user.first_name || user.email.split('@')[0];
+        loggedInNav.innerHTML = `
+          <span style="color: #fff; margin-right: 1rem;">Hello, ${firstName}!</span>
+          <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+        `;
+      }
+    });
+
+    function logout() {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
+      window.location.href = 'index.html';
+    }
+  </script>
 
 </body>
 

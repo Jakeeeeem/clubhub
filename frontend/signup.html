@@ -10,19 +10,20 @@
         rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Dark Theme Specific Overrides for Signup Layout */
+        /* Fixed Layout: Header top, content center, footer bottom */
         body {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
+            flex-direction: column;
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
         }
 
         .signup-container {
             width: 100%;
             max-width: 650px;
-            margin: 0 auto;
+            margin: 3rem auto 2rem;
+            padding: 2rem;
         }
 
         /* Logo Section */
@@ -254,127 +255,91 @@
             </div>
 
             <div id="stepIndicatorHeader" style="color: var(--text-muted); font-size: 0.9rem;">
-                Step <span id="currentStepNum">1</span> of 3
+                Step <span id="currentStepNum">1</span> of 1
             </div>
         </nav>
     </header>
 
     <div class="signup-container" style="padding-top: 2rem;">
-        <!-- Logo Section -->
-        <div class="logo-section">
-            <img src="images/logo.png" alt="ClubHub"
-                style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 1rem;">
-            <h2 class="neon-text" style="font-size: 2rem; margin: 0;">ClubHub</h2>
-            <p style="color: var(--text-muted); margin-top: 0.5rem;">Join the sports management revolution</p>
-        </div>
 
         <!-- Step Indicator -->
         <div class="step-indicator">
             <div class="step active" data-step="1">1</div>
-            <div class="step" data-step="2">2</div>
-            <div class="step" data-step="3">✓</div>
+            <div class="step" data-step="2">✓</div>
         </div>
 
         <!-- Step 1: Personal Information -->
         <div class="form-step active" data-step="1">
-            <div
-                style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem; color: #10b981; font-weight: 700; font-size: 1.1rem;">
-                <span
-                    style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #10b981; color: white; border-radius: 4px; font-size: 14px;">✓</span>
-                Adult Account Required
-            </div>
-            <p style="color: #6ee7b7; font-size: 0.95rem; line-height: 1.5; margin: 0;">
-                This is an adult account. You can add and manage children's profiles within your account once
-                registered.
+            <h2 style="text-align: center; margin-bottom: 1rem; font-family: 'Outfit';">Create Your Account</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">
+                Join ClubHub to manage your sports organization or join existing clubs
             </p>
-        </div>
 
-        <!-- Yellow Box: Managing Children -->
-        <div
-            style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 12px; padding: 1.5rem; text-align: left;">
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                <span style="font-size: 1.5rem;">👶</span>
-                <strong style="color: #fbbf24; font-size: 1.1rem;">Managing Children</strong>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="firstName" placeholder="Enter first name">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="lastName" placeholder="Enter last name">
+                </div>
             </div>
-            <p style="color: #fcd34d; font-size: 0.95rem; line-height: 1.6; margin: 0;">
-                After creating your adult account, you'll be able to add multiple children to your profile.
-                You'll manage all bookings, payments, and communications for your children through your parent
-                account.
-            </p>
-        </div>
 
-    </div>
-    </div>
-
-    <!-- Step 2: Personal Info -->
-    <div class="form-step" data-step="2">
-        <h2 style="text-align: center; margin-bottom: 2rem; font-family: 'Outfit';">Personal Information</h2>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
             <div class="form-group">
-                <label>First Name</label>
-                <input type="text" id="firstName" placeholder="Enter first name">
+                <label>Email Address</label>
+                <input type="email" id="email" placeholder="you@example.com">
             </div>
+
             <div class="form-group">
-                <label>Last Name</label>
-                <input type="text" id="lastName" placeholder="Enter last name">
+                <label>Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="password" placeholder="Create a strong password"
+                        style="padding-right: 2.5rem;">
+                    <button type="button" onclick="togglePasswordVisibility('password', this)"
+                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
+                        aria-label="Toggle password visibility">
+                        👁️
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <div style="position: relative;">
+                    <input type="password" id="confirmPassword" placeholder="Confirm your password"
+                        style="padding-right: 2.5rem;">
+                    <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)"
+                        style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
+                        aria-label="Toggle password visibility">
+                        👁️
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" id="email" placeholder="you@example.com">
-        </div>
+        <!-- Success Step -->
+        <div class="form-step" data-step="2">
+            <div style="text-align: center; padding: 3rem 0;">
+                <div
+                    style="width: 90px; height: 90px; background: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; margin: 0 auto 2rem; border: 2px solid #10b981;">
+                    ✓</div>
+                <h2 style="margin-bottom: 1rem; font-family: 'Outfit'; font-size: 2rem;">Welcome to ClubHub!</h2>
+                <p style="color: var(--text-muted); font-size: 1.1rem;">Your account has been successfully created.</p>
 
-        <div class="form-group">
-            <label>Password</label>
-            <div style="position: relative;">
-                <input type="password" id="password" placeholder="Create a strong password"
-                    style="padding-right: 2.5rem;">
-                <button type="button" onclick="togglePasswordVisibility('password', this)"
-                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
-                    aria-label="Toggle password visibility">
-                    👁️
-                </button>
+                <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 3rem;">
+                    <button class="btn btn-primary" onclick="window.location.href='index.html'"
+                        style="padding: 1rem 3rem;">Go to Dashboard</button>
+                </div>
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Confirm Password</label>
-            <div style="position: relative;">
-                <input type="password" id="confirmPassword" placeholder="Confirm your password"
-                    style="padding-right: 2.5rem;">
-                <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)"
-                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
-                    aria-label="Toggle password visibility">
-                    👁️
-                </button>
-            </div>
+        <!-- Navigation Buttons -->
+        <div class="step-navigation" id="navButtons"
+            style="display: flex; justify-content: space-between; margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+            <button class="btn-prev" id="prevBtn" onclick="prevStep()" style="visibility: hidden;">Previous</button>
+            <button class="btn-next" id="nextBtn" onclick="nextStep()" style="max-width: 200px;">Next</button>
         </div>
-    </div>
-
-    <!-- Success Step -->
-    <div class="form-step" data-step="3">
-        <div style="text-align: center; padding: 3rem 0;">
-            <div
-                style="width: 90px; height: 90px; background: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; margin: 0 auto 2rem; border: 2px solid #10b981;">
-                ✓</div>
-            <h2 style="margin-bottom: 1rem; font-family: 'Outfit'; font-size: 2rem;">Welcome to ClubHub!</h2>
-            <p style="color: var(--text-muted); font-size: 1.1rem;">Your account has been successfully created.</p>
-
-            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 3rem;">
-                <button class="btn btn-primary" onclick="window.location.href='index.html'"
-                    style="padding: 1rem 3rem;">Go to Dashboard</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Navigation Buttons -->
-    <div class="step-navigation" id="navButtons"
-        style="display: flex; justify-content: space-between; margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
-        <button class="btn-prev" id="prevBtn" onclick="prevStep()" style="visibility: hidden;">Previous</button>
-        <button class="btn-next" id="nextBtn" onclick="nextStep()" style="max-width: 200px;">Next</button>
-    </div>
     </div>
 
 
@@ -382,7 +347,7 @@
     <script src="api-service.js"></script>
     <script>
         let currentStep = 1;
-        const totalSteps = 2; // Simplified to 2 steps
+        const totalSteps = 1; // Only 1 form step (Step 2 is success)
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function () {
@@ -518,12 +483,22 @@
                 nextBtn.disabled = true;
                 nextBtn.textContent = 'Creating Account...';
 
+                // Check for pending invite
+                const pendingInviteToken = localStorage.getItem('pendingInviteToken');
+
+                // IMPORTANT: Everyone signs up as 'organization' type
+                // This gives ALL users the capability to create clubs/organizations
+                // The invite only determines:
+                // 1. Whether they're added to an existing club immediately
+                // 2. Which dashboard they see first (player vs admin)
+                // But they can ALWAYS create their own organization later
+
                 const userData = {
                     firstName,
                     lastName,
                     email,
                     password,
-                    userType: 'adult' // Default to adult, as organization selection is removed
+                    userType: 'organization' // Everyone is organization type
                 };
 
                 console.log('Registering user:', userData);
@@ -539,7 +514,6 @@
                 // ============================================================================
                 // HANDLE PENDING INVITATION (if exists)
                 // ============================================================================
-                const pendingInviteToken = localStorage.getItem('pendingInviteToken');
                 let invitationAccepted = false;
                 let invitationRole = null;
 
@@ -554,52 +528,58 @@
                             console.log('✅ Invitation accepted successfully');
                             invitationAccepted = true;
 
-                            // Get the role from the invitation
-                            const inviteDetails = await apiService.getInvitation(pendingInviteToken);
-                            invitationRole = inviteDetails.invitation?.role;
-                            console.log('📋 Assigned role:', invitationRole);
+                            // Get the role from the invitation to decide redirect
+                            try {
+                                const inviteDetails = await apiService.getInvitation(pendingInviteToken);
+                                invitationRole = inviteDetails.invitation?.role;
+                                console.log('📋 Assigned role:', invitationRole);
+                            } catch (e) {
+                                console.warn('Could not fetch role, defaulting to player dashboard');
+                            }
                         }
 
                         // Clear the pending token
                         localStorage.removeItem('pendingInviteToken');
                     } catch (inviteError) {
                         console.error('Failed to accept invitation:', inviteError);
-                        // Continue with registration even if invitation fails
+                        // Continue even if invitation fails, they can retry later
                     }
                 }
 
                 // ============================================================================
                 // DETERMINE REDIRECT URL
                 // ============================================================================
-                let redirectUrl = 'player-dashboard.html'; // Default for new users
+                let redirectUrl = 'player-dashboard.html'; // Fallback
 
-                // Check if user is platform admin
+                // 1. Platform Admin
                 if (response.user.is_platform_admin) {
                     redirectUrl = 'super-admin-dashboard.html';
                 }
-                // If invitation was accepted, route based on role
-                else if (invitationAccepted && invitationRole) {
-                    if (['owner', 'admin', 'coach', 'assistant_coach', 'staff'].includes(invitationRole)) {
+                // 2. Uninvited User -> Create Organization
+                else if (!pendingInviteToken) {
+                    redirectUrl = 'create-organization.html';
+                }
+                // 3. Invited User -> Dashboard based on Role
+                else if (invitationAccepted) {
+                    if (['owner', 'admin', 'manager'].includes(invitationRole)) {
                         redirectUrl = 'admin-dashboard.html';
+                    } else if (['coach', 'assistant_coach', 'staff'].includes(invitationRole)) {
+                        redirectUrl = 'coach-dashboard.html'; // Assuming this exists or falls back to admin/player
                     } else {
                         redirectUrl = 'player-dashboard.html';
                     }
                 }
-                // If it's an adult account and no invitation, they go to player dashboard
-                else if (response.user.userType === 'adult') {
+                // 4. Invite Failed/Adult Fallback
+                else {
                     redirectUrl = 'player-dashboard.html';
                 }
-                // If it's an organization account and no invitation, they need to create an organization
-                else if (response.user.userType === 'organization') {
-                    redirectUrl = 'create-organization.html';
-                }
-
 
                 console.log('🚀 Redirecting to:', redirectUrl);
 
                 // Show success and redirect
                 currentStep = 3;
                 updateUI();
+
 
                 setTimeout(() => {
                     window.location.href = redirectUrl;
@@ -632,146 +612,22 @@
         }
     </script>
 
-    <!-- Professional Footer -->
-    <footer
-        style="background: linear-gradient(180deg, var(--bg-main) 0%, #0a0a0a 100%); border-top: 1px solid var(--border-color); margin-top: 4rem; padding: 3rem 0 1.5rem;">
-        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
-            <!-- Main Footer Content -->
-            <div
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 3rem; margin-bottom: 3rem;">
-                <!-- About Column -->
-                <div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-                        <img src="images/logo.png" alt="ClubHub"
-                            style="width: 40px; height: 40px; object-fit: contain;">
-                        <h3 class="neon-text" style="margin: 0; font-size: 1.5rem;">ClubHub</h3>
-                    </div>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem;">
-                        The all-in-one platform for sports club management, player development, and team organization.
-                    </p>
-                    <!-- Social Links -->
-                    <div style="display: flex; gap: 1rem;">
-                        <a href="#" style="color: var(--text-muted); font-size: 1.5rem; transition: color 0.3s;"
-                            onmouseover="this.style.color='var(--primary)'"
-                            onmouseout="this.style.color='var(--text-muted)'">📘</a>
-                        <a href="#" style="color: var(--text-muted); font-size: 1.5rem; transition: color 0.3s;"
-                            onmouseover="this.style.color='var(--primary)'"
-                            onmouseout="this.style.color='var(--text-muted)'">🐦</a>
-                        <a href="#" style="color: var(--text-muted); font-size: 1.5rem; transition: color 0.3s;"
-                            onmouseover="this.style.color='var(--primary)'"
-                            onmouseout="this.style.color='var(--text-muted)'">📷</a>
-                        <a href="#" style="color: var(--text-muted); font-size: 1.5rem; transition: color 0.3s;"
-                            onmouseover="this.style.color='var(--primary)'"
-                            onmouseout="this.style.color='var(--text-muted)'">💼</a>
-                    </div>
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo" style="margin: 0;">
+                    <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 35px;">
+                    <span class="logo-text" style="font-size: 1.5rem;">ClubHub</span>
                 </div>
-
-                <!-- Features Column -->
-                <div>
-                    <h4 style="color: var(--text-main); margin-bottom: 1.25rem; font-size: 1rem; font-weight: 600;">
-                        Features</h4>
-                    <ul style="list-style: none; padding: 0; margin: 0;">
-                        <li style="margin-bottom: 0.75rem;"><a href="index.html#features"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Player Management</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="index.html#features"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Team Organization</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="index.html#features"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Financial Management</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="index.html#features"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Event Scheduling</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="index.html#features"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Recruitment Tools</a></li>
-                    </ul>
+                <div class="footer-links">
+                    <a href="terms.html">Terms & Conditions</a>
+                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="contact.html">Contact Us</a>
                 </div>
-
-                <!-- Resources Column -->
-                <div>
-                    <h4 style="color: var(--text-main); margin-bottom: 1.25rem; font-size: 1rem; font-weight: 600;">
-                        Resources</h4>
-                    <ul style="list-style: none; padding: 0; margin: 0;">
-                        <li style="margin-bottom: 0.75rem;"><a href="index.html"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Home</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="signup.html"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Sign Up</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="login.html"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Login</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="#"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Help Center</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="#"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Contact Support</a></li>
-                    </ul>
-                </div>
-
-                <!-- Legal Column -->
-                <div>
-                    <h4 style="color: var(--text-main); margin-bottom: 1.25rem; font-size: 1rem; font-weight: 600;">
-                        Legal</h4>
-                    <ul style="list-style: none; padding: 0; margin: 0;">
-                        <li style="margin-bottom: 0.75rem;"><a href="#"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Terms of Service</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="#"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Privacy Policy</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="#"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Cookie Policy</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="#"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">GDPR Compliance</a></li>
-                        <li style="margin-bottom: 0.75rem;"><a href="#"
-                                style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.3s;"
-                                onmouseover="this.style.color='var(--primary)'"
-                                onmouseout="this.style.color='var(--text-muted)'">Acceptable Use</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Bottom Bar -->
-            <div
-                style="border-top: 1px solid var(--border-color); padding-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">
-                    © 2024 ClubHub. All rights reserved.
-                </p>
-                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-                    <a href="#"
-                        style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; transition: color 0.3s;"
-                        onmouseover="this.style.color='var(--primary)'"
-                        onmouseout="this.style.color='var(--text-muted)'">Status</a>
-                    <a href="#"
-                        style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; transition: color 0.3s;"
-                        onmouseover="this.style.color='var(--primary)'"
-                        onmouseout="this.style.color='var(--text-muted)'">API</a>
-                    <a href="#"
-                        style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; transition: color 0.3s;"
-                        onmouseover="this.style.color='var(--primary)'"
-                        onmouseout="this.style.color='var(--text-muted)'">Developers</a>
-                </div>
+                <p>&copy; 2025 ClubHub Sports. All rights reserved.</p>
             </div>
         </div>
     </footer>
 </body>
+
+</html>

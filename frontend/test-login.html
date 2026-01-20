@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login Test</title>
+</head>
+
+<body>
+    <h1>Login Test</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="checkStorage()">Check Storage</button>
+    <button onclick="clearAll()">Clear All Storage</button>
+    <pre id="output"></pre>
+
+    <script src="api-service.js"></script>
+    <script>
+        function log(msg) {
+            document.getElementById('output').textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        function checkStorage() {
+            document.getElementById('output').textContent = '';
+            log('=== LOCALSTORAGE ===');
+            log('authToken: ' + localStorage.getItem('authToken'));
+            log('currentUser: ' + localStorage.getItem('currentUser'));
+            log('userType: ' + localStorage.getItem('userType'));
+            log('lastActiveOrgId: ' + localStorage.getItem('lastActiveOrgId'));
+        }
+
+        function clearAll() {
+            localStorage.clear();
+            log('✅ Cleared all localStorage');
+        }
+
+        async function testLogin() {
+            document.getElementById('output').textContent = '';
+            try {
+                const response = await apiService.login('demo-admin@clubhub.com', 'password123');
+                log('✅ Login successful!');
+                log('User: ' + JSON.stringify(response.user, null, 2));
+                log('account_type: ' + response.user.account_type);
+
+                // Check what redirect would happen
+                if (response.user.account_type === 'organization') {
+                    log('🎯 SHOULD REDIRECT TO: admin-dashboard.html');
+                } else {
+                    log('🎯 SHOULD REDIRECT TO: player-dashboard.html');
+                }
+            } catch (error) {
+                log('❌ Login failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

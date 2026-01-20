@@ -1,0 +1,60 @@
+🔗 New client connected to database
+=== 🏥 SYSTEM DATA AUDIT 🏥 ===
+
+--- 🏢 CLUBS ---
+
+📌 CLUB: Elite Pro Academy (99ff70c8-c5b2-437c-b2f5-7c0ac1182adb)
+   - Players: 2
+   - Teams:   3
+   - Roster:
+     • Leo Admin [Linked User: demo-admin@clubhub.com]
+     • Demo Admin [Linked User: demo-admin@clubhub.com]
+
+📌 CLUB: Grassroots Giants (31fb37b6-15ba-490f-8e3c-1bbb57ec1c22)
+   - Players: 0
+   - Teams:   0
+
+📌 CLUB: Strikers United (f6108464-aedf-4be0-a8a4-8358eb441cb0)
+   - Players: 0
+   - Teams:   0
+
+📌 CLUB: Sunday League FC (12446f36-3eb1-4da3-86f2-8aead9cd5015)
+   - Players: 3
+   - Teams:   3
+   - Roster:
+     • Mia Admin [Linked User: demo-admin@clubhub.com]
+     • Demo Admin [Linked User: demo-admin@clubhub.com]
+     • Multi User [Linked User: multi@demo.com]
+
+--- 👤 USERS & ROLES ---
+
+👤 USER: Demo Admin (demo-admin@clubhub.com)
+   - Role: owner in 'Elite Pro Academy'
+   - Role: owner in 'Sunday League FC'
+   - Family Profiles (Linked Players):
+     • Demo Admin (Club: Elite Pro Academy) [PlayerID: 22dd5935-c529-4682-af36-37b779d18396]
+     • Demo Admin (Club: Sunday League FC) [PlayerID: 855e0de1-66ba-45d0-8dc0-e695e18f33e6]
+     • Leo Admin (Club: Elite Pro Academy) [PlayerID: d362d3e6-3411-49a3-881d-21addbeccdfa]
+     • Mia Admin (Club: Sunday League FC) [PlayerID: d5e00e39-dd93-45ba-9344-cbf4228191d9]
+
+👤 USER: Sarah Jones (noclub@demo.com)
+   - No linked player profiles found.
+
+👤 USER: Mike Miller (player@demo.com)
+   - Role: player in 'Elite Pro Academy'
+   - Role: player in 'Strikers United'
+   - Role: player in 'Grassroots Giants'
+   - No linked player profiles found.
+
+👤 USER: John Thompson (owner@demo.com)
+   - Role: owner in 'Elite Pro Academy'
+   - Role: owner in 'Strikers United'
+   - Role: player in 'Grassroots Giants'
+   - No linked player profiles found.
+
+👤 USER: Multi User (multi@demo.com)
+   - Role: coach in 'Elite Pro Academy'
+   - Role: player in 'Sunday League FC'
+   - Family Profiles (Linked Players):
+     • Multi User (Club: Sunday League FC) [PlayerID: d06cfaa5-ad6b-4ae8-bd8a-86b1320bfdae]
+📤 Client removed from pool

@@ -67,10 +67,6 @@ router.post('/switch-organization', authenticateToken, async (req, res) => {
   }
 });
 
-/**
- * GET /api/auth/context
- * Get the user's current context (user + clubs they own/belong to)
- */
 router.get('/context', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
