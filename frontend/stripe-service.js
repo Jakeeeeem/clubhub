@@ -1,409 +1,434 @@
 class StripePaymentService {
-    constructor() {
-        // Your actual Stripe TEST publishable key
-        this.stripePublishableKey = 'pk_test_TYooMQauvdEDq54NiTphI7jx';
-        this.stripe = null;
-        this.elements = null;
-        this.card = null;
-        
-        this.initializeStripe();
-    }
-    
-    async initializeStripe() {
-        try {
-            if (typeof Stripe !== 'undefined') {
-                this.stripe = Stripe(this.stripePublishableKey);
-                console.log('✅ Stripe initialized with your test key');
-            } else {
-                console.warn('⚠️ Stripe not loaded - ensure script is included');
-            }
-        } catch (error) {
-            console.error('❌ Stripe initialization failed:', error);
+  constructor() {
+    this.stripe = null;
+    this.elements = null;
+    this.card = null;
+    this.stripePublishableKey = null;
+
+    this.initializeStripe();
+  }
+
+  async initializeStripe() {
+    try {
+      // Fetch key from server
+      const response = await apiService.makeRequest("/payments/config");
+      if (response && response.publishableKey) {
+        this.stripePublishableKey = response.publishableKey;
+
+        if (typeof Stripe !== "undefined") {
+          this.stripe = Stripe(this.stripePublishableKey);
+          console.log("✅ Stripe initialized with server key");
+        } else {
+          console.warn("⚠️ Stripe script not loaded");
         }
+      } else {
+        console.error("❌ Could not load Stripe key from config");
+      }
+    } catch (error) {
+      console.error("❌ Stripe initialization failed:", error);
     }
-    
-    createPaymentForm(containerId) {
-        if (!this.stripe) {
-            console.error('Stripe not initialized');
-            return;
+  }
+
+  createPaymentForm(containerId) {
+    if (!this.stripe) {
+      console.error("Stripe not initialized");
+      return;
+    }
+
+    this.elements = this.stripe.elements();
+
+    const style = {
+      base: {
+        fontSize: "16px",
+        color: "#424770",
+        fontFamily: "Arial, sans-serif",
+        "::placeholder": {
+          color: "#aab7c4",
+        },
+        padding: "12px",
+      },
+      invalid: {
+        color: "#9e2146",
+      },
+    };
+
+    this.card = this.elements.create("card", {
+      style: style,
+      hidePostalCode: true,
+    });
+
+    this.card.mount(containerId);
+
+    this.card.on("change", ({ error }) => {
+      const displayError = document.getElementById("card-errors");
+      if (displayError) {
+        if (error) {
+          displayError.textContent = error.message;
+          displayError.style.color = "#9e2146";
+        } else {
+          displayError.textContent = "";
         }
-        
-        this.elements = this.stripe.elements();
-        
-        const style = {
-            base: {
-                fontSize: '16px',
-                color: '#424770',
-                fontFamily: 'Arial, sans-serif',
-                '::placeholder': {
-                    color: '#aab7c4',
-                },
-                padding: '12px',
+      }
+    });
+
+    console.log("💳 Payment form created");
+  }
+
+  // REAL payment function - processes actual payments
+  async processPayment(amount, description, metadata = {}, paymentId = null) {
+    console.log("💳 Processing REAL payment:", {
+      amount,
+      description,
+      paymentId,
+    });
+
+    if (!this.stripe || !this.card) {
+      throw new Error("Payment form not initialized");
+    }
+
+    try {
+      // Create payment intent via your backend
+      const intentResponse = await apiService.createPaymentIntent({
+        amount: amount,
+        description: description,
+        paymentId: paymentId,
+        metadata: metadata,
+      });
+
+      if (!intentResponse.clientSecret) {
+        throw new Error("Failed to create payment intent");
+      }
+
+      console.log("💳 Confirming payment with Stripe...");
+
+      // Confirm payment with Stripe
+      const { error, paymentIntent } = await this.stripe.confirmCardPayment(
+        intentResponse.clientSecret,
+        {
+          payment_method: {
+            card: this.card,
+            billing_details: {
+              name: metadata.customerName || "Customer",
+              email: metadata.customerEmail || "",
             },
-            invalid: {
-                color: '#9e2146',
+          },
+        },
+      );
+
+      if (error) {
+        console.error("❌ Stripe payment error:", error);
+        throw new Error(error.message);
+      }
+
+      if (paymentIntent.status === "succeeded") {
+        console.log("✅ Payment succeeded:", paymentIntent.id);
+
+        return {
+          id: paymentIntent.id,
+          status: paymentIntent.status,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          created: paymentIntent.created,
+        };
+      } else {
+        throw new Error(`Payment failed with status: ${paymentIntent.status}`);
+      }
+    } catch (error) {
+      console.error("❌ Payment processing failed:", error);
+      throw error;
+    }
+  }
+
+  // Process payment for specific payment record
+  async processPaymentRecord(paymentId, description, metadata = {}) {
+    console.log("💳 Processing payment for record:", paymentId);
+
+    try {
+      // Create payment intent for this specific payment
+      const intentResponse = await apiService.createPaymentIntent({
+        paymentId: paymentId,
+        metadata: {
+          paymentId: paymentId,
+          ...metadata,
+        },
+      });
+
+      if (!intentResponse.clientSecret) {
+        throw new Error("Failed to create payment intent");
+      }
+
+      // Confirm payment with Stripe
+      const { error, paymentIntent } = await this.stripe.confirmCardPayment(
+        intentResponse.clientSecret,
+        {
+          payment_method: {
+            card: this.card,
+            billing_details: {
+              name: metadata.customerName || "Customer",
+              email: metadata.customerEmail || "",
             },
+          },
+        },
+      );
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (paymentIntent.status === "succeeded") {
+        // Confirm payment in backend
+        await apiService.confirmPayment(paymentIntent.id, paymentId);
+
+        return {
+          id: paymentIntent.id,
+          status: paymentIntent.status,
+          amount: paymentIntent.amount_received,
+          paymentId: paymentId,
         };
-        
-        this.card = this.elements.create('card', { 
-            style: style,
-            hidePostalCode: true
+      } else {
+        throw new Error(`Payment failed with status: ${paymentIntent.status}`);
+      }
+    } catch (error) {
+      console.error("❌ Payment record processing failed:", error);
+      throw error;
+    }
+  }
+
+  // Create payment element for React/modern frameworks
+  createElement(type = "card", options = {}) {
+    if (!this.stripe) {
+      throw new Error("Stripe not initialized");
+    }
+
+    if (!this.elements) {
+      this.elements = this.stripe.elements();
+    }
+
+    const defaultOptions = {
+      style: {
+        base: {
+          fontSize: "16px",
+          color: "#424770",
+          fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+          fontSmoothing: "antialiased",
+          "::placeholder": {
+            color: "#aab7c4",
+          },
+        },
+        invalid: {
+          color: "#fa755a",
+          iconColor: "#fa755a",
+        },
+      },
+      ...options,
+    };
+
+    return this.elements.create(type, defaultOptions);
+  }
+
+  // Validate card details
+  async validateCard() {
+    if (!this.card) {
+      throw new Error("Card element not created");
+    }
+
+    return new Promise((resolve) => {
+      this.card.on("change", ({ error, complete }) => {
+        resolve({
+          isValid: complete && !error,
+          error: error ? error.message : null,
         });
-        
-        this.card.mount(containerId);
-        
-        this.card.on('change', ({ error }) => {
-            const displayError = document.getElementById('card-errors');
-            if (displayError) {
-                if (error) {
-                    displayError.textContent = error.message;
-                    displayError.style.color = '#9e2146';
-                } else {
-                    displayError.textContent = '';
-                }
-            }
-        });
-        
-        console.log('💳 Payment form created');
+      });
+    });
+  }
+
+  // Get payment methods for customer
+  async getPaymentMethods(customerId) {
+    try {
+      const response = await apiService.request("/payments/payment-methods", {
+        method: "GET",
+        headers: {
+          "X-Customer-ID": customerId,
+        },
+      });
+      return response.paymentMethods;
+    } catch (error) {
+      console.error("Failed to get payment methods:", error);
+      return [];
     }
-    
-    // REAL payment function - processes actual payments
-    async processPayment(amount, description, metadata = {}, paymentId = null) {
-        console.log('💳 Processing REAL payment:', { amount, description, paymentId });
-        
-        if (!this.stripe || !this.card) {
-            throw new Error('Payment form not initialized');
-        }
-        
-        try {
-            // Create payment intent via your backend
-            const intentResponse = await apiService.createPaymentIntent({
-                amount: amount,
-                description: description,
-                paymentId: paymentId,
-                metadata: metadata
-            });
-            
-            if (!intentResponse.clientSecret) {
-                throw new Error('Failed to create payment intent');
-            }
-            
-            console.log('💳 Confirming payment with Stripe...');
-            
-            // Confirm payment with Stripe
-            const { error, paymentIntent } = await this.stripe.confirmCardPayment(
-                intentResponse.clientSecret,
-                {
-                    payment_method: {
-                        card: this.card,
-                        billing_details: {
-                            name: metadata.customerName || 'Customer',
-                            email: metadata.customerEmail || '',
-                        },
-                    }
-                }
-            );
-            
-            if (error) {
-                console.error('❌ Stripe payment error:', error);
-                throw new Error(error.message);
-            }
-            
-            if (paymentIntent.status === 'succeeded') {
-                console.log('✅ Payment succeeded:', paymentIntent.id);
-                
-                return {
-                    id: paymentIntent.id,
-                    status: paymentIntent.status,
-                    amount: paymentIntent.amount,
-                    currency: paymentIntent.currency,
-                    created: paymentIntent.created
-                };
-            } else {
-                throw new Error(`Payment failed with status: ${paymentIntent.status}`);
-            }
-            
-        } catch (error) {
-            console.error('❌ Payment processing failed:', error);
-            throw error;
-        }
+  }
+
+  // Save payment method for future use
+  async savePaymentMethod(paymentMethodId, customerId) {
+    try {
+      return await apiService.request("/payments/save-payment-method", {
+        method: "POST",
+        body: JSON.stringify({
+          paymentMethodId,
+          customerId,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to save payment method:", error);
+      throw error;
     }
-    
-    // Process payment for specific payment record
-    async processPaymentRecord(paymentId, description, metadata = {}) {
-        console.log('💳 Processing payment for record:', paymentId);
-        
-        try {
-            // Create payment intent for this specific payment
-            const intentResponse = await apiService.createPaymentIntent({
-                paymentId: paymentId,
-                metadata: {
-                    paymentId: paymentId,
-                    ...metadata
-                }
-            });
-            
-            if (!intentResponse.clientSecret) {
-                throw new Error('Failed to create payment intent');
-            }
-            
-            // Confirm payment with Stripe
-            const { error, paymentIntent } = await this.stripe.confirmCardPayment(
-                intentResponse.clientSecret,
-                {
-                    payment_method: {
-                        card: this.card,
-                        billing_details: {
-                            name: metadata.customerName || 'Customer',
-                            email: metadata.customerEmail || '',
-                        },
-                    }
-                }
-            );
-            
-            if (error) {
-                throw new Error(error.message);
-            }
-            
-            if (paymentIntent.status === 'succeeded') {
-                // Confirm payment in backend
-                await apiService.confirmPayment(paymentIntent.id, paymentId);
-                
-                return {
-                    id: paymentIntent.id,
-                    status: paymentIntent.status,
-                    amount: paymentIntent.amount_received,
-                    paymentId: paymentId
-                };
-            } else {
-                throw new Error(`Payment failed with status: ${paymentIntent.status}`);
-            }
-            
-        } catch (error) {
-            console.error('❌ Payment record processing failed:', error);
-            throw error;
-        }
+  }
+
+  // Process refund
+  async processRefund(
+    paymentIntentId,
+    amount = null,
+    reason = "requested_by_customer",
+  ) {
+    try {
+      return await apiService.request("/payments/refund", {
+        method: "POST",
+        body: JSON.stringify({
+          paymentIntentId,
+          amount,
+          reason,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to process refund:", error);
+      throw error;
     }
-    
-    // Create payment element for React/modern frameworks
-    createElement(type = 'card', options = {}) {
-        if (!this.stripe) {
-            throw new Error('Stripe not initialized');
-        }
-        
-        if (!this.elements) {
-            this.elements = this.stripe.elements();
-        }
-        
-        const defaultOptions = {
-            style: {
-                base: {
-                    fontSize: '16px',
-                    color: '#424770',
-                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-                    fontSmoothing: 'antialiased',
-                    '::placeholder': {
-                        color: '#aab7c4',
-                    },
-                },
-                invalid: {
-                    color: '#fa755a',
-                    iconColor: '#fa755a'
-                }
-            },
-            ...options
-        };
-        
-        return this.elements.create(type, defaultOptions);
+  }
+
+  // Create subscription for recurring payments
+  async createSubscription(customerId, priceId, metadata = {}) {
+    try {
+      return await apiService.request("/payments/create-subscription", {
+        method: "POST",
+        body: JSON.stringify({
+          customerId,
+          priceId,
+          metadata,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to create subscription:", error);
+      throw error;
     }
-    
-    // Validate card details
-    async validateCard() {
-        if (!this.card) {
-            throw new Error('Card element not created');
-        }
-        
-        return new Promise((resolve) => {
-            this.card.on('change', ({ error, complete }) => {
-                resolve({
-                    isValid: complete && !error,
-                    error: error ? error.message : null
-                });
-            });
-        });
+  }
+
+  // Cancel subscription
+  async cancelSubscription(subscriptionId) {
+    try {
+      return await apiService.request(
+        `/payments/cancel-subscription/${subscriptionId}`,
+        {
+          method: "POST",
+        },
+      );
+    } catch (error) {
+      console.error("Failed to cancel subscription:", error);
+      throw error;
     }
-    
-    // Get payment methods for customer
-    async getPaymentMethods(customerId) {
-        try {
-            const response = await apiService.request('/payments/payment-methods', {
-                method: 'GET',
-                headers: {
-                    'X-Customer-ID': customerId
-                }
-            });
-            return response.paymentMethods;
-        } catch (error) {
-            console.error('Failed to get payment methods:', error);
-            return [];
-        }
+  }
+
+  // Handle 3D Secure authentication
+  async handle3DSecure(paymentIntent) {
+    if (paymentIntent.status === "requires_action") {
+      const { error, paymentIntent: updatedPaymentIntent } =
+        await this.stripe.confirmCardPayment(paymentIntent.client_secret);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return updatedPaymentIntent;
     }
-    
-    // Save payment method for future use
-    async savePaymentMethod(paymentMethodId, customerId) {
-        try {
-            return await apiService.request('/payments/save-payment-method', {
-                method: 'POST',
-                body: JSON.stringify({
-                    paymentMethodId,
-                    customerId
-                })
-            });
-        } catch (error) {
-            console.error('Failed to save payment method:', error);
-            throw error;
-        }
+
+    return paymentIntent;
+  }
+
+  // Format amount for display
+  formatAmount(amount, currency = "gbp") {
+    return new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(amount);
+  }
+
+  // Validate amount
+  validateAmount(amount, currency = "gbp") {
+    const minAmounts = {
+      gbp: 0.3,
+      usd: 0.5,
+      eur: 0.5,
+    };
+
+    const minAmount = minAmounts[currency.toLowerCase()] || 0.5;
+
+    if (amount < minAmount) {
+      throw new Error(
+        `Minimum amount is ${this.formatAmount(minAmount, currency)}`,
+      );
     }
-    
-    // Process refund
-    async processRefund(paymentIntentId, amount = null, reason = 'requested_by_customer') {
-        try {
-            return await apiService.request('/payments/refund', {
-                method: 'POST',
-                body: JSON.stringify({
-                    paymentIntentId,
-                    amount,
-                    reason
-                })
-            });
-        } catch (error) {
-            console.error('Failed to process refund:', error);
-            throw error;
-        }
+
+    if (amount > 999999.99) {
+      throw new Error("Amount too large");
     }
-    
-    // Create subscription for recurring payments
-    async createSubscription(customerId, priceId, metadata = {}) {
-        try {
-            return await apiService.request('/payments/create-subscription', {
-                method: 'POST',
-                body: JSON.stringify({
-                    customerId,
-                    priceId,
-                    metadata
-                })
-            });
-        } catch (error) {
-            console.error('Failed to create subscription:', error);
-            throw error;
-        }
+
+    return true;
+  }
+
+  // Error handling
+  handleStripeError(error) {
+    console.error("Stripe Error:", error);
+
+    switch (error.code) {
+      case "card_declined":
+        return "Your card was declined. Please try a different payment method.";
+      case "expired_card":
+        return "Your card has expired. Please use a different card.";
+      case "incorrect_cvc":
+        return "Your card's security code is incorrect. Please try again.";
+      case "processing_error":
+        return "An error occurred while processing your card. Please try again.";
+      case "incorrect_number":
+        return "Your card number is incorrect. Please try again.";
+      default:
+        return (
+          error.message || "An unexpected error occurred. Please try again."
+        );
     }
-    
-    // Cancel subscription
-    async cancelSubscription(subscriptionId) {
-        try {
-            return await apiService.request(`/payments/cancel-subscription/${subscriptionId}`, {
-                method: 'POST'
-            });
-        } catch (error) {
-            console.error('Failed to cancel subscription:', error);
-            throw error;
-        }
+  }
+
+  // Cleanup resources
+  destroy() {
+    if (this.card) {
+      this.card.destroy();
+      this.card = null;
     }
-    
-    // Handle 3D Secure authentication
-    async handle3DSecure(paymentIntent) {
-        if (paymentIntent.status === 'requires_action') {
-            const { error, paymentIntent: updatedPaymentIntent } = await this.stripe.confirmCardPayment(
-                paymentIntent.client_secret
-            );
-            
-            if (error) {
-                throw new Error(error.message);
-            }
-            
-            return updatedPaymentIntent;
-        }
-        
-        return paymentIntent;
+
+    if (this.elements) {
+      this.elements = null;
     }
-    
-    // Format amount for display
-    formatAmount(amount, currency = 'gbp') {
-        return new Intl.NumberFormat('en-GB', {
-            style: 'currency',
-            currency: currency.toUpperCase(),
-        }).format(amount);
-    }
-    
-    // Validate amount
-    validateAmount(amount, currency = 'gbp') {
-        const minAmounts = {
-            'gbp': 0.30,
-            'usd': 0.50,
-            'eur': 0.50
-        };
-        
-        const minAmount = minAmounts[currency.toLowerCase()] || 0.50;
-        
-        if (amount < minAmount) {
-            throw new Error(`Minimum amount is ${this.formatAmount(minAmount, currency)}`);
-        }
-        
-        if (amount > 999999.99) {
-            throw new Error('Amount too large');
-        }
-        
-        return true;
-    }
-    
-    // Error handling
-    handleStripeError(error) {
-        console.error('Stripe Error:', error);
-        
-        switch (error.code) {
-            case 'card_declined':
-                return 'Your card was declined. Please try a different payment method.';
-            case 'expired_card':
-                return 'Your card has expired. Please use a different card.';
-            case 'incorrect_cvc':
-                return 'Your card\'s security code is incorrect. Please try again.';
-            case 'processing_error':
-                return 'An error occurred while processing your card. Please try again.';
-            case 'incorrect_number':
-                return 'Your card number is incorrect. Please try again.';
-            default:
-                return error.message || 'An unexpected error occurred. Please try again.';
-        }
-    }
-    
-    // Cleanup resources
-    destroy() {
-        if (this.card) {
-            this.card.destroy();
-            this.card = null;
-        }
-        
-        if (this.elements) {
-            this.elements = null;
-        }
-    }
+  }
 }
 
 // Enhanced payment modal creation function
-function createPaymentModal(amount, description, onSuccess, onError = null, paymentId = null) {
-    // Remove existing modal if present
-    const existingModal = document.getElementById('stripePaymentModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    const modal = document.createElement('div');
-    modal.id = 'stripePaymentModal';
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    
-    modal.innerHTML = `
+function createPaymentModal(
+  amount,
+  description,
+  onSuccess,
+  onError = null,
+  paymentId = null,
+) {
+  // Remove existing modal if present
+  const existingModal = document.getElementById("stripePaymentModal");
+  if (existingModal) {
+    existingModal.remove();
+  }
+
+  const modal = document.createElement("div");
+  modal.id = "stripePaymentModal";
+  modal.className = "modal";
+  modal.style.display = "block";
+
+  modal.innerHTML = `
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h2>💳 Secure Payment</h2>
@@ -500,108 +525,120 @@ function createPaymentModal(amount, description, onSuccess, onError = null, paym
             }
         </style>
     `;
-    
-    document.body.appendChild(modal);
-    
-    // Initialize Stripe form after a short delay
-    setTimeout(() => {
-        try {
-            window.stripeService.createPaymentForm('#stripe-card-element');
-        } catch (error) {
-            console.error('Failed to create payment form:', error);
-            if (onError) {
-                onError(error);
-            }
+
+  document.body.appendChild(modal);
+
+  // Initialize Stripe form after a short delay
+  setTimeout(() => {
+    try {
+      window.stripeService.createPaymentForm("#stripe-card-element");
+    } catch (error) {
+      console.error("Failed to create payment form:", error);
+      if (onError) {
+        onError(error);
+      }
+    }
+  }, 100);
+
+  // Handle form submission
+  modal
+    .querySelector("#stripe-payment-form")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const submitButton = document.getElementById("stripe-submit-payment");
+      const buttonText = document.getElementById("button-text");
+      const buttonSpinner = document.getElementById("button-spinner");
+
+      // Disable button and show loading state
+      submitButton.disabled = true;
+      buttonText.style.display = "none";
+      buttonSpinner.style.display = "block";
+
+      try {
+        // Validate amount
+        window.stripeService.validateAmount(amount);
+
+        // Process payment
+        const result = await window.stripeService.processPayment(
+          amount,
+          description,
+          {
+            customerName:
+              AppState.currentUser?.first_name +
+                " " +
+                AppState.currentUser?.last_name || "Customer",
+            customerEmail: AppState.currentUser?.email || "",
+            paymentRecordId: paymentId, // Include in metadata too
+          },
+          paymentId,
+        );
+
+        // Payment successful
+        modal.remove();
+        showNotification(
+          `Payment of £${amount.toFixed(2)} successful!`,
+          "success",
+        );
+
+        if (onSuccess) {
+          onSuccess(result);
         }
-    }, 100);
-    
-    // Handle form submission
-    modal.querySelector('#stripe-payment-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const submitButton = document.getElementById('stripe-submit-payment');
-        const buttonText = document.getElementById('button-text');
-        const buttonSpinner = document.getElementById('button-spinner');
-        
-        // Disable button and show loading state
-        submitButton.disabled = true;
-        buttonText.style.display = 'none';
-        buttonSpinner.style.display = 'block';
-        
-        try {
-            // Validate amount
-            window.stripeService.validateAmount(amount);
-            
-            // Process payment
-            const result = await window.stripeService.processPayment(amount, description, {
-                customerName: AppState.currentUser?.first_name + ' ' + AppState.currentUser?.last_name || 'Customer',
-                customerEmail: AppState.currentUser?.email || '',
-                paymentRecordId: paymentId // Include in metadata too
-            }, paymentId);
-            
-            // Payment successful
-            modal.remove();
-            showNotification(`Payment of £${amount.toFixed(2)} successful!`, 'success');
-            
-            if (onSuccess) {
-                onSuccess(result);
-            }
-            
-        } catch (error) {
-            console.error('Payment failed:', error);
-            const errorMessage = window.stripeService.handleStripeError(error);
-            
-            const errorDiv = document.getElementById('card-errors');
-            if (errorDiv) {
-                errorDiv.textContent = errorMessage;
-                errorDiv.style.color = '#dc3545';
-            }
-            
-            if (onError) {
-                onError(error);
-            }
-        } finally {
-            // Re-enable button and restore original state
-            submitButton.disabled = false;
-            buttonText.style.display = 'inline';
-            buttonSpinner.style.display = 'none';
+      } catch (error) {
+        console.error("Payment failed:", error);
+        const errorMessage = window.stripeService.handleStripeError(error);
+
+        const errorDiv = document.getElementById("card-errors");
+        if (errorDiv) {
+          errorDiv.textContent = errorMessage;
+          errorDiv.style.color = "#dc3545";
         }
+
+        if (onError) {
+          onError(error);
+        }
+      } finally {
+        // Re-enable button and restore original state
+        submitButton.disabled = false;
+        buttonText.style.display = "inline";
+        buttonSpinner.style.display = "none";
+      }
     });
-    
-    return modal;
+
+  return modal;
 }
 
 // Enhanced payment modal for specific payment records
 function createPaymentRecordModal(payment, onSuccess, onError = null) {
-    return createPaymentModal(
-        payment.amount,
-        payment.description,
-        async (result) => {
-            try {
-                // The confirmation is now more robust as paymentId was associated with the intent
-                await apiService.confirmPayment(result.id, payment.id);
-                if (onSuccess) {
-                    onSuccess({ ...result, paymentId: payment.id });
-                }
-            } catch (error) {
-                if (onError) {
-                    onError(error);
-                }
-            }
-        },
-        onError,
-        payment.id
-    );
+  return createPaymentModal(
+    payment.amount,
+    payment.description,
+    async (result) => {
+      try {
+        // The confirmation is now more robust as paymentId was associated with the intent
+        await apiService.confirmPayment(result.id, payment.id);
+        if (onSuccess) {
+          onSuccess({ ...result, paymentId: payment.id });
+        }
+      } catch (error) {
+        if (onError) {
+          onError(error);
+        }
+      }
+    },
+    onError,
+    payment.id,
+  );
 }
 
 // Subscription payment modal
 function createSubscriptionModal(subscriptionData, onSuccess, onError = null) {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.id = 'subscriptionModal';
-    
-    modal.innerHTML = `
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.style.display = "block";
+  modal.id = "subscriptionModal";
+
+  modal.innerHTML = `
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h2>🔄 Set Up Subscription</h2>
@@ -633,85 +670,89 @@ function createSubscriptionModal(subscriptionData, onSuccess, onError = null) {
             </div>
         </div>
     `;
-    
-    document.body.appendChild(modal);
-    
-    // Initialize subscription form
-    setTimeout(() => {
-        const cardElement = window.stripeService.createElement('card');
-        cardElement.mount('#subscription-card-element');
-        
-        modal.querySelector('#subscription-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            try {
-                const result = await window.stripeService.createSubscription(
-                    subscriptionData.customerId,
-                    subscriptionData.priceId,
-                    subscriptionData.metadata || {}
-                );
-                
-                modal.remove();
-                showNotification('Subscription created successfully!', 'success');
-                
-                if (onSuccess) {
-                    onSuccess(result);
-                }
-                
-            } catch (error) {
-                const errorDiv = document.getElementById('subscription-errors');
-                if (errorDiv) {
-                    errorDiv.textContent = window.stripeService.handleStripeError(error);
-                }
-                
-                if (onError) {
-                    onError(error);
-                }
-            }
-        });
-    }, 100);
-    
-    return modal;
+
+  document.body.appendChild(modal);
+
+  // Initialize subscription form
+  setTimeout(() => {
+    const cardElement = window.stripeService.createElement("card");
+    cardElement.mount("#subscription-card-element");
+
+    modal
+      .querySelector("#subscription-form")
+      .addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        try {
+          const result = await window.stripeService.createSubscription(
+            subscriptionData.customerId,
+            subscriptionData.priceId,
+            subscriptionData.metadata || {},
+          );
+
+          modal.remove();
+          showNotification("Subscription created successfully!", "success");
+
+          if (onSuccess) {
+            onSuccess(result);
+          }
+        } catch (error) {
+          const errorDiv = document.getElementById("subscription-errors");
+          if (errorDiv) {
+            errorDiv.textContent =
+              window.stripeService.handleStripeError(error);
+          }
+
+          if (onError) {
+            onError(error);
+          }
+        }
+      });
+  }, 100);
+
+  return modal;
 }
 
 // Helper function to close payment modal
 function closeStripeModal() {
-    const modal = document.getElementById('stripePaymentModal');
-    if (modal) {
-        // Clean up Stripe elements
-        if (window.stripeService) {
-            window.stripeService.destroy();
-        }
-        modal.remove();
+  const modal = document.getElementById("stripePaymentModal");
+  if (modal) {
+    // Clean up Stripe elements
+    if (window.stripeService) {
+      window.stripeService.destroy();
     }
+    modal.remove();
+  }
 }
 
 // Helper function to close any modal
 function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.remove();
-    }
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.remove();
+  }
 }
 
 // Payment status checker for long-running payments
 function checkPaymentStatus(paymentIntentId, onStatusChange) {
-    const interval = setInterval(async () => {
-        try {
-            const status = await apiService.request(`/payments/status/${paymentIntentId}`);
-            
-            onStatusChange(status);
-            
-            if (status.status === 'succeeded' || status.status === 'failed') {
-                clearInterval(interval);
-            }
-        } catch (error) {
-            console.error('Failed to check payment status:', error);
-            clearInterval(interval);
-        }
-    }, 2000);
-    
-    return interval;
+  const interval = setInterval(async () => {
+    try {
+      const status = await apiService.request(
+        `/payments/status/${paymentIntentId}`,
+      );
+
+      onStatusChange(status);
+
+      if (status.status === "succeeded" || status.status === "failed") {
+        clearInterval(interval);
+      }
+    } catch (error) {
+      console.error("Failed to check payment status:", error);
+      clearInterval(interval);
+    }
+  }, 2000);
+
+  return interval;
 }
 
 // Create and export global Stripe service instance
@@ -726,6 +767,8 @@ window.closeStripeModal = closeStripeModal;
 window.closeModal = closeModal;
 window.checkPaymentStatus = checkPaymentStatus;
 
-console.log('✅ Complete Stripe service loaded with REAL payment processing using your test keys');
+console.log(
+  "✅ Complete Stripe service loaded with REAL payment processing using your test keys",
+);
 
 // End of stripe-service.js

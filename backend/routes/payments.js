@@ -30,6 +30,14 @@ router.use(
 // Handle preflight requests
 router.options("*", cors());
 
+// GET /api/payments/config - Get Stripe configuration
+router.get("/config", (req, res) => {
+  res.json({
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    mode: process.env.NODE_ENV,
+  });
+});
+
 // ---------- STRIPE CONNECT (PAYOUTS ACCOUNT) ENDPOINTS ----------
 
 // Helper: get or create a Stripe Connect account for the current user

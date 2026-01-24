@@ -437,22 +437,41 @@
         let paymentData = null;
         let selectedMethod = 'card';
 
-        const STRIPE_PUBLIC_KEY = 'pk_live_51RZtoWRthpGbefAaiw5yuuXStTeNqyKMJplgHQVxxBpPqDTGp4xsu1tfUrQLlWqsGDyfhaROF9J9gjmDB8OhDCnz00HMu7iQ0o';
-
-        document.addEventListener('DOMContentLoaded', function () {
+        // Fetch config and initialize
+        document.addEventListener('DOMContentLoaded', async function () {
             console.log('💳 Payment page loading...');
 
             try {
-                stripe = Stripe(STRIPE_PUBLIC_KEY);
-                console.log('✅ Stripe initialized successfully');
+                const response = await fetch(`${getBaseURL()}/api/payments/config`);
+                const config = await response.json();
+
+                if (config.publishableKey) {
+                    console.log('🔑 Stripe key loaded from server');
+                    stripe = Stripe(config.publishableKey);
+                    console.log('✅ Stripe initialized successfully');
+                } else {
+                    throw new Error('No public key found in config');
+                }
             } catch (error) {
                 console.error('❌ Failed to initialize Stripe:', error);
-                showError('Failed to initialize payment system. Please refresh the page.');
-                return;
+
+                // Fallback for demo/testing if server fails
+                const FALLBACK_KEY = 'pk_test_51RZtoWRthpGbefAaTaclnZlyGGcfJoYwqXUk8np1GC11EYv1VL0Z3UACVf8bbGjN7fiVvqbFiwM5ya96smTH5OTS008Hh1GnFi';
+                console.warn('⚠️ Using fallback test key');
+                stripe = Stripe(FALLBACK_KEY);
             }
 
             loadPaymentDetails();
         });
+
+        // Helper to get Base URL (copied from api-service.js logic)
+        function getBaseURL() {
+            const hostname = window.location.hostname;
+            if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+                return 'http://localhost:3000';
+            }
+            return 'https://clubhub-dev.onrender.com';
+        }
 
         // Load payment details from URL parameters
         async function loadPaymentDetails() {
