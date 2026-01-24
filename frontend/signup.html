@@ -483,22 +483,19 @@
                 nextBtn.disabled = true;
                 nextBtn.textContent = 'Creating Account...';
 
-                // Check for pending invite
-                const pendingInviteToken = localStorage.getItem('pendingInviteToken');
+                const urlParams = new URLSearchParams(window.location.search);
+                const roleParam = urlParams.get('type');
 
-                // IMPORTANT: Everyone signs up as 'organization' type
-                // This gives ALL users the capability to create clubs/organizations
-                // The invite only determines:
-                // 1. Whether they're added to an existing club immediately
-                // 2. Which dashboard they see first (player vs admin)
-                // But they can ALWAYS create their own organization later
+                // Default to 'organization' if no type specified (legacy behavior/power user)
+                // But respect 'adult' (player/parent) if passed
+                const userType = roleParam || 'organization';
 
                 const userData = {
                     firstName,
                     lastName,
                     email,
                     password,
-                    userType: 'organization' // Everyone is organization type
+                    userType: userType
                 };
 
                 console.log('Registering user:', userData);
@@ -549,14 +546,16 @@
                 // ============================================================================
                 // DETERMINE REDIRECT URL
                 // ============================================================================
-                let redirectUrl = 'player-dashboard.html'; // Fallback
+                let redirectUrl = 'player-dashboard.html'; // Default Fallback
 
                 // 1. Platform Admin
                 if (response.user.is_platform_admin) {
                     redirectUrl = 'super-admin-dashboard.html';
                 }
-                // 2. Uninvited User -> Create Organization
+                // 2. Uninvited User -> ALWAYS go to Create Organization (which now has a Skip option)
                 else if (!pendingInviteToken) {
+                    // As per user request: "just signing up would be great but on create org have skip"
+                    // This unifies the flow. Everyone gets the option to create a club or skip to player.
                     redirectUrl = 'create-organization.html';
                 }
                 // 3. Invited User -> Dashboard based on Role
@@ -564,14 +563,10 @@
                     if (['owner', 'admin', 'manager'].includes(invitationRole)) {
                         redirectUrl = 'admin-dashboard.html';
                     } else if (['coach', 'assistant_coach', 'staff'].includes(invitationRole)) {
-                        redirectUrl = 'coach-dashboard.html'; // Assuming this exists or falls back to admin/player
+                        redirectUrl = 'coach-dashboard.html';
                     } else {
                         redirectUrl = 'player-dashboard.html';
                     }
-                }
-                // 4. Invite Failed/Adult Fallback
-                else {
-                    redirectUrl = 'player-dashboard.html';
                 }
 
                 console.log('🚀 Redirecting to:', redirectUrl);

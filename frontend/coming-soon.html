@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coming Soon - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .coming-soon-container {
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            background: radial-gradient(circle at center, rgba(220, 67, 67, 0.1) 0%, var(--bg-main) 70%);
+        }
+
+        .icon-wrapper {
+            font-size: 5rem;
+            margin-bottom: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            color: var(--text-main);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(220, 67, 67, 0.2);
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        /* Construction Tape Effect */
+        .tape-banner {
+            background: #eab308;
+            color: #000;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 0.5rem 2rem;
+            transform: rotate(-2deg);
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            letter-spacing: 2px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text">ClubHub</span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="coming-soon-container">
+            <div class="tape-banner">Under Construction</div>
+
+            <div class="icon-wrapper">
+                🚀
+            </div>
+
+            <h1 class="title">Coming Soon</h1>
+            <p class="subtitle">
+                We're working hard to bring you an awesome new feature. <br>
+                This specialized shop module is currently under development and will be launching shortly.
+            </p>
+
+            <a href="javascript:history.back()" class="back-btn">
+                <span>←</span> Go Back
+            </a>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 ClubHub Sports. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

@@ -272,13 +272,25 @@
                     </div>
                 </div>
 
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                        Create Organization
-                    </button>
+                <div class="form-actions" style="flex-direction: column;">
+                    <div style="display: flex; gap: 1rem; width: 100%;">
+                        <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                            Back
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            Create Organization
+                        </button>
+                    </div>
+
+                    <div
+                        style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Not ready to
+                            create a club?</p>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="window.location.href='player-dashboard.html'" style="width: 100%; opacity: 0.8;">
+                            Skip & Continue as Player/Fan
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

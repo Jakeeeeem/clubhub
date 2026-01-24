@@ -126,8 +126,6 @@
                 <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
                 <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
                 <button onclick="window.location.href='training-manager.html'" class="btn-special">🎯 Training</button>
-                <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️
-                    Tournaments</button>
                 <button onclick="window.location.href='email-campaigns.html'" class="btn-special">📧 Email</button>
             </div>
 
@@ -5401,6 +5399,37 @@
         });
 
         console.log('✅ Admin Dashboard Ready!');
+
+        // OVERRIDE: Hide unfinished Shop and Polls section with Coming Soon page
+        setTimeout(() => {
+            const sectionsToHide = ['shop', 'polls-section'];
+
+            sectionsToHide.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) {
+                    section.innerHTML = `
+                        <div class="card" style="padding: 0; overflow: hidden; height: 85vh; border:none; background: transparent;">
+                            <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
+                        </div>
+                    `;
+                } else {
+                    // If section is missing from HTML but navigation exists, create it
+                    const dashboardContent = document.querySelector('.dashboard-content');
+                    if (dashboardContent) {
+                        const newSection = document.createElement('div');
+                        newSection.id = id;
+                        newSection.className = 'dashboard-section';
+                        newSection.style.display = 'none';
+                        newSection.innerHTML = `
+                            <div class="card" style="padding: 0; overflow: hidden; height: 85vh; border:none; background: transparent;">
+                                <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
+                            </div>
+                         `;
+                        dashboardContent.appendChild(newSection);
+                    }
+                }
+            });
+        }, 800);
 
         // Dynamic Sport Fields Logic
         // Dynamic Sport Fields Logic
