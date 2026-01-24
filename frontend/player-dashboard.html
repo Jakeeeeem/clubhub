@@ -64,22 +64,64 @@
       </div>
 
       <!-- Dashboard Navigation -->
-      <div class="dashboard-nav">
-        <button class="active" onclick="showPlayerSection('overview')">Overview</button>
-        <button onclick="showPlayerSection('polls')">Polls & Voting</button>
-        <button onclick="showPlayerSection('family')">My Family</button>
-        <button onclick="showPlayerSection('shop')">Club Shop</button>
-        <button onclick="showPlayerSection('payments')">Payments</button>
-        <button onclick="showPlayerSection('my-clubs')">My Clubs</button>
-        <button onclick="showPlayerSection('teams')">Teams</button>
-        <button onclick="showPlayerSection('subscriptions')">Subscriptions</button>
-        <button onclick="showPlayerSection('item-shop')">🛒 Item Shop</button>
-        <button onclick="window.location.href='venue-booking.html'">🏟️ Book Venue</button>
-        <button onclick="showPlayerSection('club-finder')">Find Clubs</button>
-        <button onclick="showPlayerSection('event-finder')">Find Events</button>
-        <button onclick="showPlayerSection('documents')">Documents</button>
-        <button onclick="showPlayerSection('profile')">👤 My Profile</button>
-        <button onclick="window.location.href='player-settings.html'">⚙️ Settings</button>
+      <!-- Grouped Dashboard Navigation -->
+      <div class="dashboard-nav-grouped">
+        <button class="nav-item active" onclick="showPlayerSection('overview')">
+          📊 Overview
+        </button>
+
+        <!-- Career Group -->
+        <div class="nav-dropdown-container">
+          <button class="nav-item dropdown-trigger">
+            🏅 My Career ▾
+          </button>
+          <div class="nav-dropdown-menu">
+            <button onclick="showPlayerSection('teams')">🏃 My Teams</button>
+            <button onclick="showPlayerSection('my-clubs')">🏰 My Clubs</button>
+            <button onclick="showPlayerSection('documents')">📄 Documents</button>
+            <button onclick="showPlayerSection('polls')">🗳️ Polls</button>
+          </div>
+        </div>
+
+        <!-- Family & Profile -->
+        <div class="nav-dropdown-container">
+          <button class="nav-item dropdown-trigger">
+            👥 Profile & Family ▾
+          </button>
+          <div class="nav-dropdown-menu">
+            <button onclick="showPlayerSection('profile')">👤 My Profile</button>
+            <button onclick="showPlayerSection('family')">👨‍👩‍👧‍👦 My Family</button>
+            <div class="dropdown-divider"></div>
+            <button onclick="window.location.href='player-settings.html'">⚙️ Settings</button>
+          </div>
+        </div>
+
+        <!-- Finance & Shop -->
+        <div class="nav-dropdown-container">
+          <button class="nav-item dropdown-trigger">
+            💳 Shop & Finance ▾
+          </button>
+          <div class="nav-dropdown-menu">
+            <button onclick="showPlayerSection('payments')">💸 Payments</button>
+            <button onclick="showPlayerSection('subscriptions')">📅 Subscriptions</button>
+            <div class="dropdown-divider"></div>
+            <button onclick="showPlayerSection('shop')">🛒 Club Shop</button>
+            <button onclick="showPlayerSection('item-shop')">🎁 Merchandise</button>
+          </div>
+        </div>
+
+        <!-- Discovery -->
+        <div class="nav-dropdown-container">
+          <button class="nav-item dropdown-trigger">
+            🌍 Discover ▾
+          </button>
+          <div class="nav-dropdown-menu">
+            <button onclick="showPlayerSection('club-finder')">🔍 Find Clubs</button>
+            <button onclick="showPlayerSection('event-finder')">📅 Find Events</button>
+            <div class="dropdown-divider"></div>
+            <button onclick="window.location.href='venue-booking.html'">🏟️ Book Venue</button>
+          </div>
+        </div>
       </div>
 
       <div class="dashboard-content">

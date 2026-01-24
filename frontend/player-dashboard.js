@@ -2434,19 +2434,31 @@ function showPlayerSection(sectionId) {
   document
     .querySelectorAll(".dashboard-section")
     .forEach((s) => s.classList.remove("active"));
+
+  // Remove active class from all nav buttons in grouped nav
   document
-    .querySelectorAll(".dashboard-nav button")
+    .querySelectorAll(".dashboard-nav-grouped button")
     .forEach((b) => b.classList.remove("active"));
 
   const target = byId("player-" + sectionId);
   if (target) target.classList.add("active");
 
+  // Find and highlight active button & parent dropdown
   const btn = document.querySelector(
-    ".dashboard-nav button[onclick*=\"showPlayerSection('" +
+    ".dashboard-nav-grouped button[onclick*=\"showPlayerSection('" +
       sectionId +
       "')\"]",
   );
-  if (btn) btn.classList.add("active");
+
+  if (btn) {
+    btn.classList.add("active");
+    // Highlight parent if in dropdown
+    const container = btn.closest(".nav-dropdown-container");
+    if (container) {
+      const trigger = container.querySelector(".dropdown-trigger");
+      if (trigger) trigger.classList.add("active");
+    }
+  }
 
   switch (sectionId) {
     case "overview":
