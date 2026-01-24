@@ -105,28 +105,66 @@
             </div>
 
             <!-- Dashboard Navigation -->
-            <div class="dashboard-nav">
-                <button class="active" onclick="showSection('overview')">Overview</button>
-                <button onclick="showSection('club-profile')" data-roles="owner, admin">Profile</button>
-                <button onclick="showSection('players')" data-roles="owner, admin, coach">Players</button>
-                <button onclick="showSection('teams')" data-roles="owner, admin, coach">Teams</button>
-                <button onclick="showSection('staff')" data-roles="owner, admin">Staff</button>
-                <button onclick="showSection('events')" data-roles="owner, admin, coach">Events</button>
-                <button onclick="showSection('finances')" data-roles="owner, admin, staff">Finances</button>
-                <button onclick="showSection('listings')" data-roles="owner, admin">Listings</button>
-                <button onclick="showSection('shop')" data-roles="owner, admin, staff">Shop</button>
-                <button onclick="showSection('marketing')" data-roles="owner, admin, staff">Marketing</button>
-                <button onclick="showSection('talent-id')" data-roles="owner, admin, coach">Talent ID</button>
-                <button onclick="showSection('tournaments')" data-roles="owner, admin, coach">Tournaments</button>
-                <button onclick="showSection('polls-section')" data-roles="owner, admin">Polls</button>
+            <!-- Grouped Dashboard Navigation -->
+            <div class="dashboard-nav-grouped">
+                <button class="nav-item active" onclick="showSection('overview')">
+                    📊 Overview
+                </button>
 
-                <div class="nav-divider"
-                    style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
+                <!-- Management Group -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        👥 Management ▾
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showSection('players')">🏃 Players</button>
+                        <button onclick="showSection('teams')">🛡️ Teams</button>
+                        <button onclick="showSection('staff')">👔 Staff</button>
+                        <div class="dropdown-divider"></div>
+                        <button onclick="showSection('talent-id')">🌟 Talent ID</button>
+                        <button onclick="showSection('club-profile')">🏢 Club Profile</button>
+                    </div>
+                </div>
 
-                <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
-                <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
-                <button onclick="window.location.href='training-manager.html'" class="btn-special">🎯 Training</button>
-                <button onclick="window.location.href='email-campaigns.html'" class="btn-special">📧 Email</button>
+                <!-- Operations Group -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        ⚡ Operations ▾
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showSection('events')">📅 Events Calendar</button>
+                        <button onclick="showSection('tournaments')">🏆 Tournaments</button>
+                        <div class="dropdown-divider"></div>
+                        <button onclick="window.location.href='training-manager.html'">🎯 Training Manager</button>
+                        <button onclick="window.location.href='venue-booking.html'">🏟️ Venue Booking</button>
+                        <button onclick="window.location.href='league-management.html'">🥇 Leagues</button>
+                    </div>
+                </div>
+
+                <!-- Finance Group -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        💷 Finance ▾
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showSection('finances')">💰 Financial Overview</button>
+                        <button onclick="showSection('shop')">🛒 Club Shop</button>
+                    </div>
+                </div>
+
+                <!-- Growth Group -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        🚀 Growth ▾
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showSection('listings')">📋 Recruiting Listings</button>
+                        <button onclick="showSection('marketing')">📢 Marketing Hub</button>
+                        <button onclick="showSection('polls-section')">🗳️ Polls & Voting</button>
+                        <div class="dropdown-divider"></div>
+                        <button onclick="window.location.href='email-campaigns.html'">📧 Email Campaigns</button>
+                    </div>
+                </div>
             </div>
 
             <div class="dashboard-content">
@@ -5017,9 +5055,9 @@
                 section.style.display = 'none'; // Force hide
             });
 
-            // Remove active class from all nav buttons
-            const navButtons = document.querySelectorAll('.dashboard-nav button');
-            navButtons.forEach(button => button.classList.remove('active'));
+            // Remove active class from all nav buttons in the new grouped structure
+            const allNavButtons = document.querySelectorAll('.dashboard-nav-grouped button');
+            allNavButtons.forEach(btn => btn.classList.remove('active'));
 
             // Add active class and show target section
             const targetSection = document.getElementById(finalId);
@@ -5038,10 +5076,20 @@
                 return;
             }
 
-            // Set active button
-            const clickedButton = document.querySelector(`.dashboard-nav button[onclick*="${sectionId}"]`);
+            // Set active button (supporting both direct buttons and dropdown items)
+            // We search for the button that triggers this section
+            const clickedButton = document.querySelector(`.dashboard-nav-grouped button[onclick*="'${sectionId}'"]`) ||
+                document.querySelector(`.dashboard-nav-grouped button[onclick*='"${sectionId}"']`);
+
             if (clickedButton) {
                 clickedButton.classList.add('active');
+
+                // If inside a dropdown, also highlight the parent trigger
+                const dropdownContainer = clickedButton.closest('.nav-dropdown-container');
+                if (dropdownContainer) {
+                    const trigger = dropdownContainer.querySelector('.dropdown-trigger');
+                    if (trigger) trigger.classList.add('active');
+                }
             } else {
                 console.warn(`⚠️ Nav button for '${sectionId}' not found`);
             }
