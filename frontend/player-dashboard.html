@@ -119,7 +119,10 @@
             <button onclick="showPlayerSection('club-finder')">🔍 Find Clubs</button>
             <button onclick="showPlayerSection('event-finder')">📅 Find Events</button>
             <div class="dropdown-divider"></div>
-            <button onclick="window.location.href='venue-booking.html'">🏟️ Book Venue</button>
+            <button onclick="showPlayerSection('venue-booking')">🏟️ Book Venue</button>
+            <button onclick="showPlayerSection('league-management')">🥇 Leagues</button>
+            <button onclick="showPlayerSection('training-manager')">🎯 Training</button>
+            <button onclick="showPlayerSection('tournament-manager')">⚔️ Tournaments</button>
           </div>
         </div>
       </div>
@@ -246,6 +249,38 @@
                 <span class="stat-label">Position</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Venue Booking Section -->
+        <div id="player-venue-booking" class="dashboard-section">
+          <div class="card">
+            <h3>🏟️ Venue Booking</h3>
+            <p>Loading booking system...</p>
+          </div>
+        </div>
+
+        <!-- League Management Section -->
+        <div id="player-league-management" class="dashboard-section">
+          <div class="card">
+            <h3>🥇 Leagues</h3>
+            <p>Loading leagues...</p>
+          </div>
+        </div>
+
+        <!-- Training Manager Section -->
+        <div id="player-training-manager" class="dashboard-section">
+          <div class="card">
+            <h3>🎯 Training</h3>
+            <p>Loading training sessions...</p>
+          </div>
+        </div>
+
+        <!-- Tournament Manager Section -->
+        <div id="player-tournament-manager" class="dashboard-section">
+          <div class="card">
+            <h3>⚔️ Tournaments</h3>
+            <p>Loading tournaments...</p>
           </div>
         </div>
 

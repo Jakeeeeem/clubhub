@@ -2461,6 +2461,18 @@ function showPlayerSection(sectionId) {
   }
 
   switch (sectionId) {
+    case "venue-booking":
+      if (typeof loadPlayerVenues === "function") loadPlayerVenues();
+      break;
+    case "league-management":
+      if (typeof loadPlayerLeagues === "function") loadPlayerLeagues();
+      break;
+    case "training-manager":
+      if (typeof loadPlayerTraining === "function") loadPlayerTraining();
+      break;
+    case "tournament-manager":
+      if (typeof loadPlayerTournaments === "function") loadPlayerTournaments();
+      break;
     case "overview":
       loadPlayerOverview();
       break;
@@ -2496,9 +2508,162 @@ function showPlayerSection(sectionId) {
     case "shop":
       loadShop();
       break;
+    case "profile":
+      loadPersonalProfile();
+      break;
+    case "venue-booking":
+      loadVenueBooking();
+      break;
+    case "league-management":
+      loadLeagues();
+      break;
+    case "training-manager":
+      loadTraining();
+      break;
+    case "tournament-manager":
+      loadTournaments();
+      break;
     default:
       console.warn("Unknown section:", sectionId);
   }
+}
+
+function loadPersonalProfile() {
+  const pid = PlayerDashboardState.activePlayerId;
+  const player = PlayerDashboardState.player;
+  const user = window.AppState?.currentUser;
+
+  console.log("👤 Loading personal profile. Player data:", player);
+
+  if (!player && !pid && user) {
+    // If no player record yet for main user, at least show user info
+    byId("prof-firstName").value = user.first_name || user.firstName || "";
+    byId("prof-lastName").value = user.last_name || user.lastName || "";
+    byId("prof-email").value = user.email || "";
+    return;
+  }
+
+  if (player) {
+    byId("prof-firstName").value = player.first_name || "";
+    byId("prof-lastName").value = player.last_name || "";
+    byId("prof-email").value = player.email || "";
+    byId("prof-phone").value = player.phone || "";
+    byId("prof-dob").value = player.date_of_birth
+      ? player.date_of_birth.substring(0, 10)
+      : "";
+    byId("prof-position").value = player.position || "";
+  }
+}
+
+async function savePlayerProfile() {
+  const pid = PlayerDashboardState.activePlayerId;
+  const formData = {
+    first_name: byId("prof-firstName").value,
+    last_name: byId("prof-lastName").value,
+    phone: byId("prof-phone").value,
+    date_of_birth: byId("prof-dob").value,
+    position: byId("prof-position").value,
+  };
+
+  showLoading(true);
+  try {
+    if (pid) {
+      await apiService.updatePlayer(pid, formData);
+    } else {
+      // Update main user profile (this endpoint might need careful handling if it's users table)
+      await apiService.makeRequest("/auth/profile-personal", {
+        method: "PUT",
+        body: JSON.stringify(formData),
+      });
+    }
+    showNotification("Profile updated successfully", "success");
+    await loadPlayerDataWithFallback();
+  } catch (error) {
+    console.error("Save profile error:", error);
+    showNotification("Failed to save profile: " + error.message, "error");
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function loadVenueBooking() {
+  const container = byId("player-venue-booking");
+  if (!container) return;
+
+  try {
+    showLoading(true);
+    const venues = await apiService.makeRequest("/venues").catch(() => []);
+
+    if (!venues || venues.length === 0) {
+      container.innerHTML = `
+          <div class="card">
+              <h3 style="margin-bottom: 1rem;">🏟️ Venue Booking</h3>
+              <p style="color: var(--text-muted); margin-bottom: 2rem;">No venues are currently available for booking in your area.</p>
+              <button class="btn btn-secondary" onclick="showPlayerSection('overview')">Back to Overview</button>
+          </div>
+        `;
+    } else {
+      container.innerHTML = `
+          <div class="card">
+              <h3 style="margin-bottom: 1rem;">🏟️ Available Venues</h3>
+              <div class="venue-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+                  ${venues
+                    .map(
+                      (v) => `
+                      <div class="venue-card" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s;">
+                          <div style="font-size: 1.5rem; margin-bottom: 1rem;">🏟️</div>
+                          <h4 style="margin-bottom: 0.5rem;">${v.name}</h4>
+                          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">${v.location || "Unknown location"}</p>
+                          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                              <span style="font-weight: 600; color: var(--primary);">£${v.hourly_rate}/hr</span>
+                              <button class="btn btn-primary btn-small" onclick="window.location.href='venue-booking.html'">Book Now</button>
+                          </div>
+                      </div>
+                  `,
+                    )
+                    .join("")}
+              </div>
+          </div>
+        `;
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    showLoading(false);
+  }
+}
+
+function loadLeagues() {
+  const container = byId("player-league-management");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">🏆 League Management</h3>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">League tables and fixtures will be available here soon.</p>
+    </div>
+  `;
+}
+
+function loadTraining() {
+  const container = byId("player-training-manager");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">🎯 Training Manager</h3>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Your training schedules and performance metrics will appear here.</p>
+    </div>
+  `;
+}
+
+function loadTournaments() {
+  const container = byId("player-tournament-manager");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">⚔️ Tournament Manager</h3>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Tournament registrations and brackets will be available here.</p>
+    </div>
+  `;
 }
 
 async function loadPlayerProducts() {
@@ -3607,3 +3772,172 @@ window.accessStripeAccount = accessStripeAccount;
 window.loadPaymentPlans = loadPaymentPlans;
 
 console.log("Player Dashboard script loaded successfully");
+
+// ==========================================
+// NEW: Venue, Training, League, Tournament Loaders
+// ==========================================
+
+async function loadPlayerVenues() {
+  const container = byId("player-venue-booking");
+  if (!container) return;
+  const content = container.querySelector(".card");
+
+  try {
+    content.innerHTML = "<p>Loading venues...</p>";
+    const venues = await apiService.makeRequest("/venues");
+
+    if (!venues || venues.length === 0) {
+      content.innerHTML = `
+        <h3>🏟️ Venue Booking</h3>
+        <div style="text-align: center; padding: 2rem;">
+            <p style="color: var(--text-muted);">No venues available for booking right now.</p>
+        </div>
+       `;
+      return;
+    }
+
+    content.innerHTML = `
+        <h3>🏟️ Venue Booking</h3>
+        <div class="venue-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+            ${venues
+              .map(
+                (v) => `
+                <div class="venue-card" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.25rem; transition: all 0.2s;">
+                    ${v.image_url ? `<img src="${v.image_url}" style="width: 100%; height: 140px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">` : '<div style="width: 100%; height: 140px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem;">🏟️</div>'}
+                    <h4 style="margin: 0 0 0.5rem 0;">${v.name}</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">${v.location || "No location set"}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                        <span style="font-weight: 600; color: var(--primary);">£${v.hourly_rate}/hr</span>
+                        <button class="btn btn-primary btn-small" onclick="alert('Booking feature coming soon for players!')">Book</button>
+                    </div>
+                </div>
+            `,
+              )
+              .join("")}
+        </div>
+    `;
+  } catch (error) {
+    console.error("Load player venues error:", error);
+    content.innerHTML = `<p style="color: red;">Failed to load venues.</p>`;
+  }
+}
+
+async function loadPlayerTraining() {
+  const container = byId("player-training-manager");
+  if (!container) return;
+  const content = container.querySelector(".card");
+
+  try {
+    content.innerHTML = "<p>Loading training sessions...</p>";
+    const orgId = localStorage.getItem("currentOrganizationId");
+    if (!orgId) {
+      content.innerHTML =
+        "<p>Please select a club to view training sessions.</p>";
+      return;
+    }
+
+    const events = await apiService.makeRequest(
+      `/events?organizationId=${orgId}&eventType=training`,
+    );
+
+    if (!events || events.length === 0) {
+      content.innerHTML = `
+            <h3>🎯 Training</h3>
+            <div style="text-align: center; padding: 2rem;">
+                <p style="color: var(--text-muted);">No upcoming training sessions found.</p>
+            </div>
+        `;
+      return;
+    }
+
+    content.innerHTML = `
+        <h3>🎯 Training Sessions</h3>
+        <div class="card-grid" style="margin-top: 1rem;">
+            ${events
+              .map(
+                (e) => `
+                <div class="card" style="background: rgba(255,255,255,0.03);">
+                    <h4>${e.title}</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">${new Date(e.event_date).toLocaleDateString()} at ${e.start_time ? e.start_time.substring(0, 5) : "TBD"}</p>
+                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">${e.location || "No location"}</p>
+                    <button class="btn btn-secondary btn-small" style="margin-top: 1rem;" onclick="viewEventDetails('${e.id}')">View Details</button>
+                </div>
+            `,
+              )
+              .join("")}
+        </div>
+     `;
+  } catch (error) {
+    console.error("Load player training error:", error);
+    content.innerHTML = `<p style="color: red;">Failed to load training sessions.</p>`;
+  }
+}
+
+async function loadPlayerTournaments() {
+  const container = byId("player-tournament-manager");
+  if (!container) return;
+  const content = container.querySelector(".card");
+
+  try {
+    content.innerHTML = "<p>Loading tournaments...</p>";
+    const orgId = localStorage.getItem("currentOrganizationId");
+    if (!orgId) {
+      content.innerHTML = "<p>Please select a club first.</p>";
+      return;
+    }
+
+    const events = await apiService.makeRequest(
+      `/events?organizationId=${orgId}&eventType=tournament`,
+    );
+
+    if (!events || events.length === 0) {
+      content.innerHTML = `
+            <h3>⚔️ Tournaments</h3>
+            <div style="text-align: center; padding: 2rem;">
+                <p style="color: var(--text-muted);">No tournaments scheduled.</p>
+            </div>
+        `;
+      return;
+    }
+
+    content.innerHTML = `
+        <h3>⚔️ Tournaments</h3>
+        <div class="card-grid" style="margin-top: 1rem;">
+            ${events
+              .map(
+                (e) => `
+                <div class="card" style="background: rgba(255,255,255,0.03);">
+                    <h4>${e.title}</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">${new Date(e.event_date).toLocaleDateString()}</p>
+                    <p style="margin-top: 0.5rem;">${e.description || "No description"}</p>
+                    <button class="btn btn-primary btn-small" style="margin-top: 1rem;" onclick="viewEventDetails('${e.id}')">Register / View</button>
+                </div>
+            `,
+              )
+              .join("")}
+        </div>
+     `;
+  } catch (error) {
+    console.error("Load player tournaments error:", error);
+    content.innerHTML = `<p style="color: red;">Failed to load tournaments.</p>`;
+  }
+}
+
+async function loadPlayerLeagues() {
+  const container = byId("player-league-management");
+  if (!container) return;
+  const content = container.querySelector(".card");
+
+  content.innerHTML = `
+    <h3>🥇 Leagues</h3>
+    <div style="text-align: center; padding: 3rem;">
+        <p style="color: var(--text-muted);">League standings and fixtures coming soon.</p>
+    </div>
+  `;
+}
+
+// Expose functions
+window.loadPlayerVenues = loadPlayerVenues;
+window.loadPlayerTraining = loadPlayerTraining;
+window.loadPlayerTournaments = loadPlayerTournaments;
+window.loadPlayerLeagues = loadPlayerLeagues;

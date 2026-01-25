@@ -136,9 +136,9 @@
                         <button onclick="showSection('events')">📅 Events Calendar</button>
                         <button onclick="showSection('tournaments')">🏆 Tournaments</button>
                         <div class="dropdown-divider"></div>
-                        <button onclick="window.location.href='training-manager.html'">🎯 Training Manager</button>
-                        <button onclick="window.location.href='venue-booking.html'">🏟️ Venue Booking</button>
-                        <button onclick="window.location.href='league-management.html'">🥇 Leagues</button>
+                        <button onclick="showSection('training-manager')">🎯 Training Manager</button>
+                        <button onclick="showSection('venue-booking')">🏟️ Venue Booking</button>
+                        <button onclick="showSection('league-management')">🥇 Leagues</button>
                     </div>
                 </div>
 
@@ -163,7 +163,7 @@
                         <button onclick="showSection('marketing')">📢 Marketing Hub</button>
                         <button onclick="showSection('polls-section')">🗳️ Polls & Voting</button>
                         <div class="dropdown-divider"></div>
-                        <button onclick="window.location.href='email-campaigns.html'">📧 Email Campaigns</button>
+                        <button onclick="showSection('email-campaigns')">📧 Email Campaigns</button>
                     </div>
                 </div>
             </div>
@@ -636,6 +636,178 @@
                             <div id="campaignsContainer">
                                 <!-- Campaigns will be loaded from database -->
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Manager Section -->
+                <div id="training-manager" class="dashboard-section">
+                    <div class="card">
+                        <div class="section-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <div>
+                                <h3>🎯 Training Manager</h3>
+                                <p style="color: var(--text-muted);">Manage your talent identified players, groups and
+                                    bibs.</p>
+                            </div>
+                        </div>
+
+                        <!-- Event Selector -->
+                        <div class="card" style="margin-bottom: 2rem; background: rgba(255,255,255,0.02);">
+                            <label><strong>Select Training Event:</strong></label>
+                            <select id="adminTrainingEventSelect" onchange="loadAdminTrainingDashboard()"
+                                style="width: 100%; margin-top: 0.5rem;">
+                                <option value="">-- Select Event --</option>
+                            </select>
+                        </div>
+
+                        <div id="adminTrainingDashboardContent" style="display: none;">
+                            <!-- Stats Overview -->
+                            <div class="stats-grid" style="margin-bottom: 2rem;">
+                                <div class="stat-card">
+                                    <span class="stat-label">Total Registrants</span>
+                                    <span class="stat-number" id="adminTotalRegistrants">0</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-label">Checked In</span>
+                                    <span class="stat-number" id="adminCheckedIn">0</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-label">Groups</span>
+                                    <span class="stat-number" id="adminGroupsCount">0</span>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="stat-label">Bibs Available</span>
+                                    <span class="stat-number" id="adminBibsCount">0</span>
+                                </div>
+                            </div>
+
+                            <!-- Tabs -->
+                            <div class="tabs" style="margin-bottom: 2rem;">
+                                <button class="tab-btn active"
+                                    onclick="showTrainingTab('registrants')">Registrants</button>
+                                <button class="tab-btn" onclick="showTrainingTab('groups')">Groups</button>
+                                <button class="tab-btn" onclick="showTrainingTab('bibs')">Bibs</button>
+                            </div>
+
+                            <!-- Registrants Tab -->
+                            <div id="training-registrants-tab" class="training-tab-content">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <button class="btn btn-primary" onclick="autoAssignTrainingAll()">🎯 Auto-Assign
+                                        Bibs & Groups</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Age</th>
+                                                <th>Position</th>
+                                                <th>Bib</th>
+                                                <th>Group</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="adminTrainingRegistrantsBody">
+                                            <!-- Registrants will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Groups Tab -->
+                            <div id="training-groups-tab" class="training-tab-content" style="display: none;">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <button class="btn btn-primary" onclick="showModal('createTrainingGroupModal')">+
+                                        Create Group</button>
+                                </div>
+                                <div id="adminTrainingGroupsContainer" class="card-grid">
+                                    <!-- Groups will be loaded here -->
+                                </div>
+                            </div>
+
+                            <!-- Bibs Tab -->
+                            <div id="training-bibs-tab" class="training-tab-content" style="display: none;">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <button class="btn btn-primary" onclick="showModal('addTrainingBibsModal')">+ Add
+                                        Bibs (Batch)</button>
+                                </div>
+                                <div id="adminTrainingBibsContainer" class="card-grid">
+                                    <!-- Bibs will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Venue Booking Section -->
+                <div id="venue-booking" class="dashboard-section">
+                    <div class="card">
+                        <div class="section-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <div>
+                                <h3>🏟️ Venue Booking</h3>
+                                <p style="color: var(--text-muted);">Browse and book sports venues for your club.</p>
+                            </div>
+                        </div>
+
+                        <!-- Tabs -->
+                        <div class="tabs" style="margin-bottom: 2rem;">
+                            <button class="tab-btn active" onclick="showVenueTab('browse')">Browse Venues</button>
+                            <button class="tab-btn" onclick="showVenueTab('mybookings')">My Bookings</button>
+                        </div>
+
+                        <!-- Browse Venues Tab -->
+                        <div id="venue-browse-tab" class="venue-tab-content">
+                            <div class="filters" style="margin-bottom: 2rem; display: flex; gap: 1rem;">
+                                <input type="text" id="adminSearchVenue" placeholder="Search venues..."
+                                    style="flex: 1;">
+                                <select id="adminLocationFilter" style="width: 200px;">
+                                    <option value="">All Locations</option>
+                                </select>
+                            </div>
+
+                            <div id="adminVenueGrid" class="venue-grid"
+                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                                <!-- Venues will be loaded here -->
+                                <p>Loading venues...</p>
+                            </div>
+                        </div>
+
+                        <!-- My Bookings Tab -->
+                        <div id="venue-mybookings-tab" class="venue-tab-content" style="display: none;">
+                            <div id="adminMyBookingsList">
+                                <!-- Bookings will be loaded here -->
+                                <p>Loading your bookings...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- League Management Section -->
+                <div id="league-management" class="dashboard-section">
+                    <div class="card">
+                        <h3>🏆 Leagues</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">View and manage league tables and
+                            fixtures.</p>
+                        <div class="card">
+                            <p>Loading league data...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Campaigns Section -->
+                <div id="email-campaigns" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3>📧 Email Campaigns</h3>
+                            <button class="btn btn-primary" onclick="showModal('createCampaignModal')">+ New
+                                Campaign</button>
+                        </div>
+                        <div id="campaignsContainerFull">
+                            <p>Loading email campaigns...</p>
                         </div>
                     </div>
                 </div>
@@ -5346,6 +5518,22 @@
                     console.log('Loading polls...');
                     if (typeof loadPolls === 'function') loadPolls();
                     break;
+                case 'training-manager':
+                    console.log('Loading training manager...');
+                    if (typeof loadTraining === 'function') loadTraining();
+                    break;
+                case 'venue-booking':
+                    console.log('Loading venue booking...');
+                    if (typeof loadVenues === 'function') loadVenues();
+                    break;
+                case 'league-management':
+                    console.log('Loading league management...');
+                    if (typeof loadLeagues === 'function') loadLeagues();
+                    break;
+                case 'email-campaigns':
+                    console.log('Loading email campaigns...');
+                    if (typeof loadCampaigns === 'function') loadCampaigns();
+                    break;
                 default:
                     console.log(`No specific loader for section: ${sectionId} `);
             }
@@ -7557,6 +7745,352 @@
             // Expose globally
             window.editStaffMember = editStaffMember;
             window.removeStaffMember = removeStaffMember;
+
+            let adminVenues = [];
+            let selectedAdminVenue = null;
+            let selectedAdminSlot = null;
+
+            async function loadVenues() {
+                const grid = document.getElementById('adminVenueGrid');
+                if (!grid) return;
+
+                try {
+                    showLoading(true);
+                    const venues = await apiService.makeRequest('/venues');
+                    adminVenues = venues;
+                    displayAdminVenues(venues);
+                } catch (error) {
+                    console.error('Load venues error:', error);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+
+            function displayAdminVenues(venueList) {
+                const grid = document.getElementById('adminVenueGrid');
+                if (venueList.length === 0) {
+                    grid.innerHTML = '<p>No venues available</p>';
+                    return;
+                }
+
+                grid.innerHTML = venueList.map(venue => `
+                    <div class="venue-card" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s; cursor: pointer;" onclick="openAdminBookingModal('${venue.id}')">
+                        ${venue.image_url ? `<img src="${venue.image_url}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;" alt="${venue.name}">` : '<div style="width: 100%; height: 150px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem;">🏟️</div>'}
+                        <h4 style="margin-bottom: 0.5rem;">${venue.name}</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;"><strong>Location:</strong> ${venue.location || 'N/A'}</p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;"><strong>Rate:</strong> £${venue.hourly_rate || 0}/hour</p>
+                        <button class="btn btn-primary btn-small" style="width: 100%;">Book Now</button>
+                    </div>
+                `).join('');
+            }
+
+            function showVenueTab(tabName) {
+                document.querySelectorAll('.venue-tab-content').forEach(t => t.style.display = 'none');
+                document.getElementById(`venue-${tabName}-tab`).style.display = 'block';
+
+                const tabs = document.querySelectorAll('#venue-booking .tab-btn');
+                tabs.forEach(t => t.classList.remove('active'));
+
+                const targetTab = Array.from(tabs).find(t => t.textContent.toLowerCase().includes(tabName === 'browse' ? 'browse' : 'booking'));
+                if (targetTab) targetTab.classList.add('active');
+
+                if (tabName === 'mybookings') loadAdminMyBookings();
+            }
+
+            async function openAdminBookingModal(venueId) {
+                selectedAdminVenue = adminVenues.find(v => v.id === venueId);
+                if (!selectedAdminVenue) return;
+
+                document.getElementById('modalVenueName').textContent = selectedAdminVenue.name;
+                document.getElementById('modalVenueDetails').innerHTML = `
+                    <div>
+                        <p><strong>Location:</strong> ${selectedAdminVenue.location || 'N/A'}</p>
+                        <p><strong>Capacity:</strong> ${selectedAdminVenue.capacity || 'N/A'} people</p>
+                        <p><strong>Hourly Rate:</strong> £${selectedAdminVenue.hourly_rate}</p>
+                    </div>
+                    <div>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">${selectedAdminVenue.description || 'No description provided.'}</p>
+                    </div>
+                `;
+
+                const dateInput = document.getElementById('adminBookingDate');
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.min = today;
+                dateInput.value = today;
+
+                showModal('bookingModal');
+                loadAdminVenueAvailability();
+            }
+
+            async function loadAdminVenueAvailability() {
+                const date = document.getElementById('adminBookingDate').value;
+                if (!date || !selectedAdminVenue) return;
+
+                try {
+                    const data = await apiService.makeRequest(`/venues/${selectedAdminVenue.id}/availability?date=${date}`);
+                    const container = document.getElementById('adminAvailabilitySlots');
+
+                    const slots = [];
+                    for (let hour = 9; hour <= 21; hour++) {
+                        const startTime = `${hour.toString().padStart(2, '0')}:00`;
+                        const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
+                        const isBooked = data.bookings.some(b => new Date(b.start_time).getHours() === hour);
+                        slots.push({ startTime, endTime, available: !isBooked });
+                    }
+
+                    container.innerHTML = slots.map(slot => `
+                        <div class="time-slot ${slot.available ? 'available' : 'booked'}" 
+                             style="padding: 0.75rem; border: 1px solid ${slot.available ? 'var(--primary)' : 'var(--border-color)'}; border-radius: 8px; cursor: ${slot.available ? 'pointer' : 'not-allowed'}; background: ${slot.available ? 'rgba(var(--primary-rgb), 0.05)' : 'rgba(0,0,0,0.2)'}; opacity: ${slot.available ? '1' : '0.5'};"
+                             onclick="${slot.available ? `selectAdminSlot('${slot.startTime}', '${slot.endTime}')` : ''}">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>${slot.startTime} - ${slot.endTime}</span>
+                                <span style="font-size: 0.8rem;">${slot.available ? '✓ Available' : '✗ Booked'}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    console.error('Load availability error:', e);
+                }
+            }
+
+            function selectAdminSlot(startTime, endTime) {
+                selectedAdminSlot = { startTime, endTime };
+                document.getElementById('adminSelectedTime').textContent = `${startTime} - ${endTime}`;
+                document.getElementById('adminBookingCost').textContent = `£${selectedAdminVenue.hourly_rate}.00`;
+                document.getElementById('adminBookingConfirmation').style.display = 'block';
+            }
+
+            async function confirmAdminBooking() {
+                if (!selectedAdminVenue || !selectedAdminSlot) return;
+                const date = document.getElementById('adminBookingDate').value;
+                const notes = document.getElementById('adminBookingNotes').value;
+                const startTime = `${date}T${selectedAdminSlot.startTime}:00`;
+                const endTime = `${date}T${selectedAdminSlot.endTime}:00`;
+
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/venues/${selectedAdminVenue.id}/book`, {
+                        method: 'POST',
+                        body: JSON.stringify({ startTime, endTime, notes })
+                    });
+                    showNotification('Booking confirmed successfully!', 'success');
+                    closeModal('bookingModal');
+                    showVenueTab('mybookings');
+                } catch (error) {
+                    showNotification('Booking failed: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function loadAdminMyBookings() {
+                const container = document.getElementById('adminMyBookingsList');
+                if (!container) return;
+
+                try {
+                    showLoading(true);
+                    const data = await apiService.makeRequest('/venues/bookings/my');
+                    if (data.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No bookings yet.</p>';
+                    } else {
+                        container.innerHTML = data.map(b => `
+                            <div class="card" style="margin-bottom: 1rem; background: rgba(255,255,255,0.02);">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <div>
+                                        <h4 style="margin: 0;">${b.venue_name}</h4>
+                                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">${new Date(b.start_time).toLocaleDateString()} | ${new Date(b.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(b.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    </div>
+                                    <span class="status-badge ${b.status === 'confirmed' ? 'status-active' : ''}">${b.status}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                } catch (e) {
+                    console.error('Load bookings error:', e);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function loadTraining() {
+                try {
+                    showLoading(true);
+                    const orgId = localStorage.getItem('currentOrganizationId');
+                    const events = await apiService.makeRequest(`/events?organizationId=${orgId}&eventType=talent-id`);
+
+                    const select = document.getElementById('adminTrainingEventSelect');
+                    if (select) {
+                        select.innerHTML = '<option value="">-- Select Event --</option>' +
+                            events.map(event => `<option value="${event.id}">${event.title} - ${new Date(event.event_date).toLocaleDateString()}</option>`).join('');
+                    }
+                } catch (error) {
+                    console.error('Load training events error:', error);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function loadAdminTrainingDashboard() {
+                const eventId = document.getElementById('adminTrainingEventSelect').value;
+                if (!eventId) {
+                    document.getElementById('adminTrainingDashboardContent').style.display = 'none';
+                    return;
+                }
+
+                try {
+                    showLoading(true);
+                    const data = await apiService.makeRequest(`/talent-id/events/${eventId}/dashboard`);
+
+                    document.getElementById('adminTotalRegistrants').textContent = data.registrants.length;
+                    document.getElementById('adminCheckedIn').textContent = data.registrants.filter(r => r.status === 'checked_in').length;
+                    document.getElementById('adminGroupsCount').textContent = data.groups.length;
+                    document.getElementById('adminBibsCount').textContent = data.bibs.filter(b => b.status === 'available').length;
+
+                    displayAdminTrainingRegistrants(data.registrants);
+                    displayAdminTrainingGroups(data.groups);
+                    displayAdminTrainingBibs(data.bibs);
+
+                    document.getElementById('adminTrainingDashboardContent').style.display = 'block';
+                } catch (error) {
+                    console.error('Load training dashboard error:', error);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            function showTrainingTab(tabName) {
+                document.querySelectorAll('.training-tab-content').forEach(t => t.style.display = 'none');
+                document.getElementById(`training-${tabName}-tab`).style.display = 'block';
+
+                const tabs = document.querySelectorAll('#training-manager .tab-btn');
+                tabs.forEach(t => t.classList.remove('active'));
+
+                const targetTab = Array.from(tabs).find(t => t.textContent.toLowerCase().includes(tabName));
+                if (targetTab) targetTab.classList.add('active');
+            }
+
+            function displayAdminTrainingRegistrants(registrants) {
+                const tbody = document.getElementById('adminTrainingRegistrantsBody');
+                if (!tbody) return;
+
+                if (registrants.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No registrants yet</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = registrants.map(reg => `
+                    <tr>
+                        <td><strong>${reg.first_name} ${reg.last_name}</strong></td>
+                        <td>${calculateAge(reg.date_of_birth)}</td>
+                        <td>${reg.position || 'N/A'}</td>
+                        <td>${reg.bib_number ? `<span style="padding: 2px 8px; border-radius: 4px; background: ${getBibColor(reg.bib_color)}; color: white; font-weight: 600;">${reg.bib_number}</span>` : '-'}</td>
+                        <td>${reg.group_name || '-'}</td>
+                        <td><span class="status-badge ${reg.status === 'checked_in' ? 'status-active' : ''}">${reg.status === 'checked_in' ? 'Checked In' : 'Registered'}</span></td>
+                        <td>
+                            ${reg.status !== 'checked_in' ? `<button class="btn btn-small" onclick="checkInTraining('${reg.id}')">Check In</button>` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            function calculateAge(dob) {
+                if (!dob) return 'N/A';
+                const birthDate = new Date(dob);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+                return age;
+            }
+
+            function getBibColor(color) {
+                const colors = { 'Red': '#ef4444', 'Blue': '#3b82f6', 'Yellow': '#eab308', 'Green': '#22c55e', 'Orange': '#f97316' };
+                return colors[color] || '#6b7280';
+            }
+
+            async function checkInTraining(registrationId) {
+                try {
+                    await apiService.makeRequest(`/talent-id/registrations/${registrationId}/checkin`, {
+                        method: 'POST',
+                        body: JSON.stringify({ status: 'checked_in' })
+                    });
+                    loadAdminTrainingDashboard();
+                } catch (error) {
+                    showNotification('Check-in failed: ' + error.message, 'error');
+                }
+            }
+
+            async function loadLeagues() {
+                const container = document.getElementById('league-management');
+                if (!container) return;
+                const content = container.querySelector('.card > div:last-child');
+                content.innerHTML = `
+                    <div style="text-align: center; padding: 3rem;">
+                        <p style="color: var(--text-muted);">League management is being integrated into this dashboard.</p>
+                        <button class="btn btn-primary" onclick="window.location.href='league-management.html'" style="margin-top: 1rem;">Open Legacy League Manager</button>
+                    </div>
+                `;
+            }
+
+            async function loadCampaigns() {
+                const container = document.getElementById('campaignsContainerFull');
+                if (!container) return;
+                try {
+                    const campaigns = await apiService.makeRequest('/notifications?type=email_campaign').catch(() => []);
+                    if (!campaigns || campaigns.length === 0) {
+                        container.innerHTML = `<div class="card" style="text-align: center; padding: 2rem; background: rgba(255,255,255,0.02);"><p style="color: var(--text-muted);">No email campaigns sent yet.</p></div>`;
+                    } else {
+                        container.innerHTML = campaigns.map(c => `
+                            <div class="card" style="margin-bottom: 1rem; background: rgba(255,255,255,0.03);">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <div><h4 style="margin: 0;">${c.title}</h4><p style="font-size: 0.85rem; color: var(--text-muted);">Sent to: ${c.segment || 'All Members'}</p></div>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">${new Date(c.created_at).toLocaleDateString()}</span>
+                                </div>
+                            </div>`).join('');
+                    }
+                } catch (e) {
+                    console.error('Load campaigns error:', e);
+                }
+            }
+
+            function openCreateCampaign() { showModal('createCampaignModal'); }
+
+            async function sendCampaign(event) {
+                event.preventDefault();
+                const title = document.getElementById('campaignTitle')?.value || document.getElementById('campaignSubject')?.value;
+                const message = document.getElementById('campaignMessage')?.value;
+                const segment = document.getElementById('campaignTarget')?.value;
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest('/notifications', { method: 'POST', body: JSON.stringify({ title, message, notification_type: 'general', segment }) });
+                    showNotification('Campaign sent successfully!', 'success');
+                    closeModal('createCampaignModal');
+                    if (typeof loadCampaigns === 'function') loadCampaigns();
+                } catch (error) { showNotification('Failed to send: ' + error.message, 'error'); } finally { showLoading(false); }
+            }
+
+            // Bind the campaign form
+            document.addEventListener('DOMContentLoaded', () => {
+                const campaignForm = document.getElementById('createCampaignForm');
+                if (campaignForm) campaignForm.addEventListener('submit', sendCampaign);
+            });
+
+            // Expose globally
+            window.loadVenues = loadVenues;
+            window.showVenueTab = showVenueTab;
+            window.openAdminBookingModal = openAdminBookingModal;
+            window.selectAdminSlot = selectAdminSlot;
+            window.confirmAdminBooking = confirmAdminBooking;
+            window.loadAdminVenueAvailability = loadAdminVenueAvailability;
+            window.loadTraining = loadTraining;
+            window.loadAdminTrainingDashboard = loadAdminTrainingDashboard;
+            window.showTrainingTab = showTrainingTab;
+            window.checkInTraining = checkInTraining;
+            window.loadLeagues = loadLeagues;
+            window.loadCampaigns = loadCampaigns;
+            window.sendCampaign = sendCampaign;
+            window.openCreateCampaign = openCreateCampaign;
         </script>
 
         <!-- Mode Toggle Handler -->
