@@ -240,27 +240,34 @@
         // Determine backend URL based on current hostname
         function getApiBase() {
             const hostname = window.location.hostname;
+            console.log('Detected hostname:', hostname);
 
-            // Production/Render
-            if (hostname.includes('onrender.com') || hostname.includes('clubhubsports.net')) {
-                // If the frontend is served from the same origin as backend (or standard pattern)
-                // Using relative path is safest if simple server-side serving
-
-                // If it's the specific render dev URL known
-                if (hostname === "clubhubsports-dev.onrender.com" || hostname === "clubhub-dev.onrender.com") {
-                    return "https://clubhub-dev.onrender.com/api";
-                }
-
-                // Fallback to relative path if we assume mono-repo/served by express
-                return '/api';
+            // 1. Localhost Development
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:3000/api';
             }
 
-            // Local development
-            return 'http://localhost:3000/api';
+            // 2. Specific Render Frontend -> Backend Mapping
+            // If we are on the known frontend URL, point to the known backend URL
+            if (hostname === 'clubhubsports-dev.onrender.com') {
+                return 'https://clubhub-dev.onrender.com/api';
+            }
+
+            // 3. Fallback / Production
+            // Assumes relative path (same origin) or handled by proxy
+            return '/api';
         }
 
         const API_BASE = getApiBase();
         console.log('Using API Base:', API_BASE);
+
+        // Add debug info to page
+        window.addEventListener('DOMContentLoaded', () => {
+            const subtitle = document.querySelector('.subtitle');
+            if (subtitle) {
+                subtitle.innerHTML += `<br><small style="color: #64748b; font-family: monospace;">API: ${API_BASE}</small>`;
+            }
+        });
 
         function showStatus(message, type) {
             const el = document.getElementById('status');
