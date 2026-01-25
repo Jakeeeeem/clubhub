@@ -140,10 +140,11 @@ class ApiService {
           {
             data,
             statusText: response.statusText,
-            payload:
-              options.body && !(options.body instanceof FormData)
-                ? JSON.parse(options.body)
-                : "[FormData]",
+            payload: options.body
+              ? options.body instanceof FormData
+                ? "[FormData]"
+                : JSON.parse(options.body)
+              : "None",
           },
         );
 

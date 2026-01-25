@@ -11,24 +11,8 @@ const cors = require("cors");
 
 const router = express.Router();
 
-// Enable CORS for payment routes
-router.use(
-  cors({
-    origin: [
-      "https://clubhubsports.net",
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-      "http://localhost:8080",
-      "http://127.0.0.1:8080",
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
-);
-
-// Handle preflight requests
-router.options("*", cors());
+// Basic routes follow below
+// ---------- STRIPE CONFIG ENDPOINT ----------
 
 // GET /api/payments/config - Get Stripe configuration
 router.get("/config", (req, res) => {

@@ -4,8 +4,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - ClubHub</title>
+    <title>Account Settings - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --card-footer: rgba(0, 0, 0, 0.2);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 992px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .settings-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .settings-nav-item {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-muted);
+            border: 1px solid transparent;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .settings-nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        .settings-nav-item.active {
+            background: rgba(220, 67, 67, 0.1);
+            color: var(--primary);
+            border-color: rgba(220, 67, 67, 0.2);
+        }
+
+        .settings-section {
+            display: none;
+        }
+
+        .settings-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .toggle-info h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .toggle-info p {
+            margin: 0.25rem 0 0 0;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        /* Switch styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--primary);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
+
+        .danger-zone {
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            background: rgba(220, 38, 38, 0.02);
+        }
+
+        .danger-zone h3 {
+            color: #ef4444;
+        }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-bottom-color: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            z-index: 10001;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-success {
+            background: #10b981;
+        }
+
+        .notification-error {
+            background: #ef4444;
+        }
+
+        .notification-info {
+            background: #3b82f6;
+        }
+    </style>
 </head>
 
 <body>
@@ -15,8 +221,7 @@
             <nav class="nav">
                 <div class="logo" onclick="window.location.href='index.html'">⚽ ClubHub</div>
                 <div class="nav-buttons">
-                    <button class="btn btn-secondary" onclick="window.location.href='player-dashboard.html'">← Back to
-                        Dashboard</button>
+                    <button class="btn btn-secondary" id="backBtn">← Back to Dashboard</button>
                     <button class="btn btn-danger" onclick="handleLogout()">Logout</button>
                 </div>
             </nav>
@@ -25,180 +230,376 @@
 
     <main class="main" style="margin-top: 100px;">
         <div class="container">
-            <div class="dashboard-container">
-                <h1 class="neon-text">⚙️ Account Settings</h1>
-                <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage your account details and security</p>
+            <h1 class="neon-text">⚙️ Settings</h1>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Manage your personal information, security, and
+                notification preferences.</p>
 
-                <!-- Profile Settings -->
-                <div class="card" style="margin-bottom: 2rem;">
-                    <h3>Profile Information</h3>
-                    <form id="updateProfileForm" style="margin-top: 1.5rem; max-width: 600px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                            <div class="form-group">
-                                <label>First Name</label>
-                                <input type="text" id="settingFirstName" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Last Name</label>
-                                <input type="text" id="settingLastName" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Email Address</label>
-                            <input type="email" id="settingEmail" disabled style="opacity: 0.6;">
-                            <small style="color: var(--text-muted);">Email cannot be changed</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Phone Number</label>
-                            <input type="tel" id="settingPhone" placeholder="Optional">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </form>
-                </div>
+            <div class="settings-grid">
+                <!-- Sidebar Navigation -->
+                <aside class="settings-sidebar">
+                    <button class="settings-nav-item active" onclick="showTab('profile')">👤 Profile
+                        Information</button>
+                    <button class="settings-nav-item" onclick="showTab('security')">🔒 Security & Password</button>
+                    <button class="settings-nav-item" onclick="showTab('notifications')">🔔 Notifications</button>
+                    <button class="settings-nav-item" onclick="showTab('privacy')">🛡️ Privacy & Marketing</button>
+                    <button class="settings-nav-item" onclick="showTab('danger')"
+                        style="margin-top: 2rem; color: #ef4444;">⚠️ Danger Zone</button>
+                </aside>
 
-                <!-- Password Change -->
-                <div class="card">
-                    <h3>Change Password</h3>
-                    <form id="changePasswordForm" style="margin-top: 1.5rem; max-width: 600px;">
-                        <div class="form-group">
-                            <label>Current Password</label>
-                            <div style="position: relative;">
-                                <input type="password" id="currentPassword" required style="padding-right: 2.5rem;">
-                                <button type="button" onclick="togglePasswordVisibility('currentPassword', this)"
-                                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
-                                    aria-label="Toggle password visibility">
-                                    👁️
-                                </button>
+                <!-- Content Area -->
+                <div class="settings-content">
+
+                    <!-- Profile Tab -->
+                    <div id="tab-profile" class="settings-section active">
+                        <div class="card">
+                            <h3>Profile Information</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Update your basic account details.
+                            </p>
+                            <form id="updateProfileForm">
+                                <div class="form-grid"
+                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                                    <div class="form-group">
+                                        <label>First Name</label>
+                                        <input type="text" id="settingFirstName" required
+                                            placeholder="Enter first name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Last Name</label>
+                                        <input type="text" id="settingLastName" required placeholder="Enter last name">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-top: 1.5rem;">
+                                    <label>Email Address</label>
+                                    <input type="email" id="settingEmail" disabled
+                                        style="opacity: 0.6; cursor: not-allowed;">
+                                    <small style="color: var(--text-muted);">Email address cannot be changed for
+                                        security reasons.</small>
+                                </div>
+                                <div class="form-group" style="margin-top: 1.5rem;">
+                                    <label>Phone Number</label>
+                                    <input type="tel" id="settingPhone" placeholder="e.g. +44 7700 900000">
+                                </div>
+                                <div style="margin-top: 2rem;">
+                                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Security Tab -->
+                    <div id="tab-security" class="settings-section">
+                        <div class="card">
+                            <h3>Update Password</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Ensure your account is using a
+                                long, random password to stay secure.</p>
+                            <form id="changePasswordForm" style="max-width: 500px;">
+                                <div class="form-group">
+                                    <label>Current Password</label>
+                                    <input type="password" id="currentPassword" required>
+                                </div>
+                                <div class="form-group" style="margin-top: 1.5rem;">
+                                    <label>New Password</label>
+                                    <input type="password" id="newPassword" required minlength="8">
+                                    <small style="color: var(--text-muted);">At least 8 characters long.</small>
+                                </div>
+                                <div class="form-group" style="margin-top: 1.5rem;">
+                                    <label>Confirm New Password</label>
+                                    <input type="password" id="confirmNewPassword" required>
+                                </div>
+                                <div style="margin-top: 2rem;">
+                                    <button type="submit" class="btn btn-primary">🔐 Update Password</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Tab -->
+                    <div id="tab-notifications" class="settings-section">
+                        <div class="card">
+                            <h3>Notification Preferences</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Choose how you want to be notified
+                                about updates.</p>
+
+                            <div class="toggle-container">
+                                <div class="toggle-info">
+                                    <h4>Email Notifications</h4>
+                                    <p>Receive updates about team activities, events, and bookings via email.</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="emailNotifToggle" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-container">
+                                <div class="toggle-info">
+                                    <h4>Push Notifications</h4>
+                                    <p>Receive real-time alerts on your device for urgent messages.</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="pushNotifToggle" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div style="margin-top: 2rem;">
+                                <button class="btn btn-primary" onclick="saveSettings()">💾 Save Preferences</button>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>New Password</label>
-                            <div style="position: relative;">
-                                <input type="password" id="newPassword" required minlength="6"
-                                    style="padding-right: 2.5rem;">
-                                <button type="button" onclick="togglePasswordVisibility('newPassword', this)"
-                                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
-                                    aria-label="Toggle password visibility">
-                                    👁️
-                                </button>
+                    </div>
+
+                    <!-- Privacy Tab -->
+                    <div id="tab-privacy" class="settings-section">
+                        <div class="card">
+                            <h3>Marketing & Privacy</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage your data and how we
+                                communicate with you.</p>
+
+                            <div class="toggle-container">
+                                <div class="toggle-info">
+                                    <h4>Marketing Emails</h4>
+                                    <p>Receive news about new features, promotions, and partner offers.</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="marketingToggle">
+                                    <span class="slider"></span>
+                                </label>
                             </div>
-                            <small style="color: var(--text-muted);">Must be at least 6 characters</small>
-                        </div>
-                        <div class="form-group">
-                            <label>Confirm New Password</label>
-                            <div style="position: relative;">
-                                <input type="password" id="confirmNewPassword" required minlength="6"
-                                    style="padding-right: 2.5rem;">
-                                <button type="button" onclick="togglePasswordVisibility('confirmNewPassword', this)"
-                                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #888; font-size: 1.2rem; padding: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;"
-                                    aria-label="Toggle password visibility">
-                                    👁️
-                                </button>
+
+                            <div
+                                style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                                <h4>Data Portability</h4>
+                                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Download a copy of your
+                                    personal data in JSON format.</p>
+                                <button class="btn btn-secondary" onclick="exportData()">📥 Export My Data</button>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Update Password</button>
-                    </form>
+                    </div>
+
+                    <!-- Danger Zone Tab -->
+                    <div id="tab-danger" class="settings-section">
+                        <div class="card danger-zone">
+                            <h3>Delete Account</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                                Once you delete your account, there is no going back. All of your data, including team
+                                history, achievements and memberships will be permanently removed.
+                            </p>
+                            <button class="btn btn-danger" onclick="confirmDeleteAccount()">🗑️ Delete My Account
+                                Permanently</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Scripts -->
+    <div id="loadingOverlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; flex-direction: column;">
+        <div class="loader"></div>
+        <p style="margin-top: 1rem; color: white;">Processing...</p>
+    </div>
+
     <script src="api-service.js"></script>
     <script>
-        let userData = null;
+        const apiService = new ApiService();
 
-        async function loadUserData() {
+        // Detect user type to set back button
+        const user = JSON.parse(localStorage.getItem('currentUser'));
+        const backBtn = document.getElementById('backBtn');
+        if (user) {
+            if (user.accountType === 'organization') {
+                backBtn.onclick = () => window.location.href = 'admin-dashboard.html';
+                backBtn.innerText = '← Back to Admin Panel';
+            } else {
+                backBtn.onclick = () => window.location.href = 'player-dashboard.html';
+            }
+        }
+
+        async function init() {
+            showLoading(true);
             try {
-                const response = await apiService.makeRequest('/auth/profile');
-                userData = response.user || response;
+                // Load profile
+                const profileRes = await apiService.makeRequest('/auth/profile');
+                const profile = profileRes.profile || profileRes.user || profileRes;
 
-                document.getElementById('settingFirstName').value = userData.first_name || '';
-                document.getElementById('settingLastName').value = userData.last_name || '';
-                document.getElementById('settingEmail').value = userData.email || '';
-                document.getElementById('settingPhone').value = userData.phone || '';
+                document.getElementById('settingFirstName').value = profile.first_name || '';
+                document.getElementById('settingLastName').value = profile.last_name || '';
+                document.getElementById('settingEmail').value = profile.email || '';
+                document.getElementById('settingPhone').value = profile.phone || '';
+
+                // Load settings
+                const settingsRes = await apiService.makeRequest('/auth/settings');
+                document.getElementById('emailNotifToggle').checked = settingsRes.emailNotifications ?? true;
+                document.getElementById('pushNotifToggle').checked = settingsRes.pushNotifications ?? true;
+                document.getElementById('marketingToggle').checked = settingsRes.marketingEmails ?? false;
+
             } catch (error) {
-                console.error('Failed to load user data:', error);
-                if (error.message.includes('401') || error.message.includes('token')) {
-                    window.location.href = 'index.html';
-                }
+                console.error('Failed to load settings:', error);
+                if (error.message.includes('401')) window.location.href = 'index.html';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        async function saveSettings() {
+            showLoading(true);
+            try {
+                const payload = {
+                    emailNotifications: document.getElementById('emailNotifToggle').checked,
+                    pushNotifications: document.getElementById('pushNotifToggle').checked,
+                    marketingEmails: document.getElementById('marketingToggle').checked
+                };
+
+                await apiService.makeRequest('/auth/settings', {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+
+                showNotification('Preferences updated successfully!', 'success');
+            } catch (error) {
+                showNotification('Failed to update settings: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
             }
         }
 
         document.getElementById('updateProfileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            const firstName = document.getElementById('settingFirstName').value;
-            const lastName = document.getElementById('settingLastName').value;
-            const phone = document.getElementById('settingPhone').value;
-
+            showLoading(true);
             try {
+                const payload = {
+                    firstName: document.getElementById('settingFirstName').value,
+                    lastName: document.getElementById('settingLastName').value,
+                    phone: document.getElementById('settingPhone').value
+                };
+
                 await apiService.makeRequest('/auth/profile', {
                     method: 'PUT',
-                    body: JSON.stringify({ firstName, lastName, phone })
+                    body: JSON.stringify(payload)
                 });
 
-                alert('Profile updated successfully!');
+                showNotification('Profile updated successfully!', 'success');
+                // Update local storage
+                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                currentUser.firstName = payload.firstName;
+                currentUser.lastName = payload.lastName;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
             } catch (error) {
-                console.error('Failed to update profile:', error);
-                alert('Failed to update profile: ' + error.message);
+                showNotification('Update failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
             }
         });
 
         document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const current = document.getElementById('currentPassword').value;
+            const next = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmNewPassword').value;
 
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-
-            if (newPassword !== confirmNewPassword) {
-                alert('New passwords do not match!');
+            if (next !== confirm) {
+                alert('New passwords do not match');
                 return;
             }
 
+            showLoading(true);
             try {
                 await apiService.makeRequest('/auth/change-password', {
                     method: 'POST',
-                    body: JSON.stringify({ currentPassword, newPassword })
+                    body: JSON.stringify({ currentPassword: current, newPassword: next })
                 });
-
-                alert('Password changed successfully!');
-                document.getElementById('changePasswordForm').reset();
+                showNotification('Password changed successfully!', 'success');
+                e.target.reset();
             } catch (error) {
-                console.error('Failed to change password:', error);
-                alert('Failed to change password: ' + error.message);
+                showNotification('Failed to change password: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
             }
         });
 
+        async function exportData() {
+            showLoading(true);
+            try {
+                const data = await apiService.makeRequest('/auth/profile');
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `clubhub-data-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                showNotification('Data export started!', 'success');
+            } catch (error) {
+                showNotification('Export failed', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function confirmDeleteAccount() {
+            if (confirm('CRITICAL WARNING: Are you sure you want to PERMANENTLY delete your account and all associated data? This action cannot be undone.')) {
+                const password = prompt('Please enter your password to confirm account deletion:');
+                if (!password) return;
+
+                showLoading(true);
+                try {
+                    await apiService.makeRequest('/auth/account', {
+                        method: 'DELETE'
+                    });
+                    alert('Your account has been deleted. We are sorry to see you go.');
+                    handleLogout();
+                } catch (error) {
+                    showNotification('Deletion failed: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function showNotification(msg, type = 'info') {
+            const container = document.body;
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+
+            const icons = {
+                success: '✅',
+                error: '❌',
+                info: 'ℹ️'
+            };
+
+            notification.innerHTML = `<span>${icons[type] || '🔔'}</span> ${msg}`;
+            container.appendChild(notification);
+
+            // Force reflow
+            notification.offsetHeight;
+
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
         function handleLogout() {
-            localStorage.removeItem('token');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
             window.location.href = 'index.html';
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = 'index.html';
-                return;
-            }
-            loadUserData();
-        });
-
-        // Toggle password visibility
-        function togglePasswordVisibility(inputId, button) {
-            const input = document.getElementById(inputId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                button.style.opacity = '1';
-                button.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                button.style.opacity = '0.6';
-                button.textContent = '👁️';
-            }
-        }
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 

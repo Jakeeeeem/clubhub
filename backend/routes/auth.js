@@ -1425,7 +1425,7 @@ router.put("/profile", authenticateToken, async (req, res) => {
 
     const result = await query(
       "UPDATE users SET first_name = $1, last_name = $2, phone = $3, updated_at = NOW() WHERE id = $4 RETURNING *",
-      [firstName, lastName, phone, req.user.userId],
+      [firstName, lastName, phone, req.user.id],
     );
 
     res.json({ message: "Profile updated successfully", user: result.rows[0] });
@@ -1452,7 +1452,7 @@ router.post(
       const { currentPassword, newPassword } = req.body;
 
       const userResult = await query("SELECT * FROM users WHERE id = $1", [
-        req.user.userId,
+        req.user.id,
       ]);
       if (userResult.rows.length === 0) {
         return res.status(404).json({ error: "User not found" });
@@ -1472,7 +1472,7 @@ router.post(
 
       await query(
         "UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2",
-        [hashedPassword, req.user.userId],
+        [hashedPassword, req.user.id],
       );
 
       res.json({ message: "Password changed successfully" });
@@ -1482,5 +1482,98 @@ router.post(
     }
   },
 );
+
+router.put("/settings", authenticateToken, async (req, res) => {
+  try {
+    const { emailNotifications, pushNotifications, marketingEmails, theme } =
+      req.body;
+
+    // Update user_preferences table
+    await query(
+      `INSERT INTO user_preferences (user_id, email_notifications, push_notifications, preferences, theme, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET 
+         email_notifications = EXCLUDED.email_notifications,
+         push_notifications = EXCLUDED.push_notifications,
+         preferences = EXCLUDED.preferences,
+         theme = EXCLUDED.theme,
+         updated_at = NOW()`,
+      [
+        req.user.id,
+        emailNotifications !== false,
+        pushNotifications !== false,
+        JSON.stringify({ marketingEmails: !!marketingEmails }),
+        theme || "dark",
+      ],
+    );
+
+    res.json({ message: "Settings updated successfully" });
+  } catch (error) {
+    console.error("Update settings error:", error);
+    res.status(500).json({ error: "Failed to update settings" });
+  }
+});
+
+router.get("/settings", authenticateToken, async (req, res) => {
+  try {
+    const result = await query(
+      "SELECT email_notifications, push_notifications, preferences, theme FROM user_preferences WHERE user_id = $1",
+      [req.user.id],
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({
+        emailNotifications: true,
+        pushNotifications: true,
+        marketingEmails: false,
+        theme: "dark",
+      });
+    }
+
+    const prefs = result.rows[0];
+    res.json({
+      emailNotifications: prefs.email_notifications,
+      pushNotifications: prefs.push_notifications,
+      marketingEmails: prefs.preferences?.marketingEmails || false,
+      theme: prefs.theme,
+    });
+  } catch (error) {
+    console.error("Get settings error:", error);
+    res.status(500).json({ error: "Failed to get settings" });
+  }
+});
+
+router.delete("/account", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Use transaction to ensure all user data is removed
+    await withTransaction(async (client) => {
+      // 1. Delete organization memberships (cascades usually, but let's be safe)
+      await client.query(
+        "DELETE FROM organization_members WHERE user_id = $1",
+        [userId],
+      );
+
+      // 2. Delete user preferences
+      await client.query("DELETE FROM user_preferences WHERE user_id = $1", [
+        userId,
+      ]);
+
+      // 3. Delete user profiles
+      await client.query("DELETE FROM user_profiles WHERE user_id = $1", [
+        userId,
+      ]);
+
+      // 4. Delete the user
+      await client.query("DELETE FROM users WHERE id = $1", [userId]);
+    });
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Delete account error:", error);
+    res.status(500).json({ error: "Failed to delete account" });
+  }
+});
 
 module.exports = router;

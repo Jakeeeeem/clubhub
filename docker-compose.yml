@@ -21,7 +21,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    command: sh -c "node server.js > server.log 2>&1"
+    command: npm run dev
     env_file:
       - ./backend/.env
     ports:

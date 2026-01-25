@@ -123,6 +123,7 @@
                         <div class="dropdown-divider"></div>
                         <button onclick="showSection('talent-id')">🌟 Talent ID</button>
                         <button onclick="showSection('club-profile')">🏢 Club Profile</button>
+                        <button onclick="window.location.href='player-settings.html'">⚙️ Account Settings</button>
                     </div>
                 </div>
 
@@ -3891,8 +3892,97 @@
         }
 
         async function showPlayerTeamAssignment(playerId) {
-            console.log('Assigning team to player:', playerId);
-            showNotification('Team assignment coming soon!', 'info');
+            try {
+                showLoading(true);
+                // Get active club ID to filter teams suitable for this club
+                const clubId = await getActiveClubId();
+                const teams = await apiService.getTeams(clubId);
+
+                // Remove existing modal
+                const existing = document.getElementById('assignTeamModal');
+                if (existing) existing.remove();
+
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.id = 'assignTeamModal';
+                modal.style.display = 'block';
+
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Assign to Team</h2>
+                            <button class="close" onclick="closeModal('assignTeamModal')">&times;</button>
+                        </div>
+                        <div class="modal-body" style="padding: 1.5rem;">
+                            <div class="form-group">
+                                <label for="assignTeamSelect">Select Team</label>
+                                <select id="assignTeamSelect" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-dark); color: white;">
+                                    <option value="">Select a team...</option>
+                                    ${teams.map(t => `<option value="${t.id}">${t.name} (${t.sport || 'General'})</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-top: 1rem;">
+                                <label for="assignTeamRole">Role</label>
+                                <select id="assignTeamRole" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-dark); color: white;">
+                                    <option value="Player">Player</option>
+                                    <option value="Captain">Captain</option>
+                                    <option value="Vice Captain">Vice Captain</option>
+                                    <option value="Goalkeeper">Goalkeeper</option>
+                                </select>
+                            </div>
+                             <div class="form-group" style="margin-top: 1rem;">
+                                <label for="assignTeamPosition">Position (Optional)</label>
+                                <input type="text" id="assignTeamPosition" placeholder="e.g. Forward, Striker" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-dark); color: white;">
+                            </div>
+                            <div class="form-actions" style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                                <button class="btn btn-secondary" onclick="closeModal('assignTeamModal')">Cancel</button>
+                                <button class="btn btn-primary" onclick="confirmTeamAssignment('${playerId}')">Assign to Team</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+            } catch (error) {
+                console.error('Failed to load teams for assignment:', error);
+                showNotification('Failed to load teams: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function confirmTeamAssignment(playerId) {
+            const teamId = document.getElementById('assignTeamSelect').value;
+            const role = document.getElementById('assignTeamRole').value;
+            const position = document.getElementById('assignTeamPosition').value;
+
+            if (!teamId) {
+                showNotification('Please select a team', 'error');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                await apiService.assignPlayerToTeam(teamId, {
+                    playerId,
+                    role,
+                    position
+                });
+
+                showNotification('Player assigned to team successfully!', 'success');
+                closeModal('assignTeamModal');
+
+                // Refresh player list
+                if (typeof loadPlayers === 'function') loadPlayers();
+                // Refresh teams list if visible
+                if (typeof loadTeams === 'function') loadTeams();
+
+            } catch (error) {
+                console.error('Failed to assign player to team:', error);
+                showNotification('Failed to assign team: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
         }
 
         async function editTeam(teamId) {
@@ -4078,6 +4168,111 @@
             } catch (error) {
                 console.error('Failed to assign payment plan:', error);
                 showNotification('Failed to assign payment plan: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function toggleSelectAllDocs(source, className) {
+            const checkboxes = document.querySelectorAll('.' + className);
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        }
+
+        async function bulkAssignPlan(planId) {
+            try {
+                showLoading(true);
+                const clubId = await getActiveClubId();
+                const players = await apiService.getPlayers({ clubId });
+                const plan = AppState.paymentPlans?.find(p => p.id === planId);
+                const planName = plan ? plan.name : 'Selected Plan';
+
+                // Remove existing
+                if (document.getElementById('bulkAssignModal')) document.getElementById('bulkAssignModal').remove();
+
+                const modal = document.createElement('div');
+                modal.id = 'bulkAssignModal';
+                modal.className = 'modal';
+                modal.style.display = 'block';
+
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 600px;">
+                        <div class="modal-header">
+                            <h2>Bulk Assign: ${planName}</h2>
+                            <button class="close" onclick="closeModal('bulkAssignModal')">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <p style="margin-bottom: 1rem; color: var(--text-muted);">Select players to assign this plan to:</p>
+                            
+                            <div style="max-height: 300px; overflow-y: auto; background: var(--bg-dark); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                                    <input type="checkbox" id="selectAllPlayers" onchange="toggleSelectAllDocs(this, 'player-select-check')">
+                                    <label for="selectAllPlayers" style="cursor: pointer; font-weight: 600;">Select All</label>
+                                </div>
+                                
+                                ${players.map(p => `
+                                    <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0;">
+                                        <input type="checkbox" class="player-select-check" value="${p.id}" id="chk_${p.id}">
+                                        <label for="chk_${p.id}" style="cursor: pointer; display: flex; flex-direction: column;">
+                                            <span style="font-weight: 500; color: white;">${p.first_name} ${p.last_name}</span>
+                                            <span style="font-size: 0.8rem; color: var(--text-muted);">${p.email || 'No email'}</span>
+                                        </label>
+                                    </div>
+                                `).join('')}
+                                
+                                ${players.length === 0 ? '<p style="text-align: center; color: var(--text-muted);">No players found.</p>' : ''}
+                            </div>
+                            
+                            <div class="form-group" style="margin-top: 1.5rem;">
+                                <label>Start Date</label>
+                                <input type="date" id="bulkStartDate" value="${new Date().toISOString().split('T')[0]}" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-dark); color: white;">
+                            </div>
+
+                            <div class="form-actions" style="margin-top: 2rem; text-align: right; display: flex; justify-content: flex-end; gap: 1rem;">
+                                <button class="btn btn-secondary" onclick="closeModal('bulkAssignModal')">Cancel</button>
+                                <button class="btn btn-primary" onclick="confirmBulkAssign('${planId}')">Assign Plan</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+            } catch (error) {
+                console.error('Failed to load players for bulk assign:', error);
+                showNotification('Failed to load players', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function confirmBulkAssign(planId) {
+            const checks = document.querySelectorAll('.player-select-check:checked');
+            const playerIds = Array.from(checks).map(cb => cb.value);
+            const startDate = document.getElementById('bulkStartDate').value;
+
+            if (playerIds.length === 0) {
+                showNotification('Please select at least one player', 'warning');
+                return;
+            }
+
+            if (!confirm(`Assign plan to ${playerIds.length} players?`)) return;
+
+            try {
+                showLoading(true);
+                if (apiService.bulkAssignPaymentPlan) {
+                    await apiService.bulkAssignPaymentPlan(playerIds, planId, startDate);
+                } else {
+                    // Fallback
+                    const clubId = AppState.activeClubId;
+                    const promises = playerIds.map(pid => apiService.assignPlayerToPaymentPlan(pid, planId, startDate, null, clubId));
+                    await Promise.allSettled(promises);
+                }
+
+                showNotification('Bulk assignment completed!', 'success');
+                closeModal('bulkAssignModal');
+                loadPlayers();
+            } catch (error) {
+                console.error('Bulk assign failed:', error);
+                showNotification('Bulk assignment failed partially or fully', 'error');
             } finally {
                 showLoading(false);
             }
@@ -4375,30 +4570,30 @@
 
                 if (events.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                < div style = "text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;" >
                             <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
                             <h3 style="margin-bottom: 0.5rem;">No events scheduled</h3>
                             <p style="color: var(--text-muted); margin-bottom: 2rem;">Plan matches, training sessions, and club events.</p>
                             <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create Event</button>
-                        </div>
-                    `;
+                        </div >
+                `;
                     return;
                 }
 
                 container.innerHTML = `
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 30%;">Event Details</th>
-                                    <th>Date & Time</th>
-                                    <th>Location</th>
-                                    <th style="text-align: center;">Access / Fee</th>
-                                    <th style="text-align: right;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${events.map(event => `
+                < div class= "table-responsive" >
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Event Details</th>
+                            <th>Date & Time</th>
+                            <th>Location</th>
+                            <th style="text-align: center;">Access / Fee</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${events.map(event => `
                                     <tr onclick="editEvent('${event.id}')" style="cursor: pointer;">
                                         <td>
                                             <div class="event-info-cell">
@@ -4435,9 +4630,9 @@
                                         </td>
                                     </tr>
                                 `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
+                    </tbody>
+                </table>
+                    </div >
                 `;
 
 
@@ -4575,30 +4770,30 @@
 
                 if (!players || players.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+            < div style = "text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;" >
                             <div style="font-size: 3rem; margin-bottom: 1rem;">🏃</div>
                             <h3 style="margin-bottom: 0.5rem;">No players found</h3>
                             <p style="color: var(--text-muted); margin-bottom: 2rem;">Add players to your club manually or invite them via email.</p>
                             <button class="btn btn-primary" onclick="showModal('addPlayerModal')">➕ Add Your First Player</button>
-                        </div>
-                    `;
+                        </div >
+                `;
                     return;
                 }
 
                 container.innerHTML = `
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 30%;">Player</th>
-                                    <th>Team / Sport</th>
-                                    <th>Position</th>
-                                    <th style="text-align: center;">Payment</th>
-                                    <th style="text-align: right;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${players.map(player => `
+                < div class= "table-responsive" >
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Player</th>
+                            <th>Team / Sport</th>
+                            <th>Position</th>
+                            <th style="text-align: center;">Payment</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${players.map(player => `
                                     <tr onclick="editPlayer('${player.id}')" style="cursor: pointer;">
                                         <td>
                                             <div class="user-info-cell">
@@ -4636,9 +4831,9 @@
                                         </td>
                                     </tr>
                                 `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
+                    </tbody>
+                </table>
+                    </div >
                 `;
 
 
@@ -4664,30 +4859,30 @@
 
                 if (teams.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                < div style = "text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;" >
                             <div style="font-size: 3rem; margin-bottom: 1rem;">⚽</div>
                             <h3 style="margin-bottom: 0.5rem;">No teams created yet</h3>
                             <p style="color: var(--text-muted); margin-bottom: 2rem;">Get started by creating your first team to manage players and events.</p>
                             <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create Your First Team</button>
-                        </div>
-                    `;
+                        </div >
+                `;
                     return;
                 }
 
                 container.innerHTML = `
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 30%;">Team Details</th>
-                                    <th>Players</th>
-                                    <th style="text-align: center;">Performance</th>
-                                    <th>Coach</th>
-                                    <th style="text-align: right;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${teams.map(team => `
+                < div class= "table-responsive" >
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Team Details</th>
+                            <th>Players</th>
+                            <th style="text-align: center;">Performance</th>
+                            <th>Coach</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${teams.map(team => `
                                     <tr onclick="openTeamManagement('${team.id}', '${team.name}')" style="cursor: pointer;">
                                         <td>
                                             <div class="team-info-cell">
@@ -4746,9 +4941,9 @@
                                         </td>
                                     </tr>
                                 `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
+                    </tbody>
+                </table>
+                    </div >
                 `;
 
                 AppState.teams = teams;
@@ -4805,7 +5000,7 @@
             const currentImagesCount = currentSection.querySelectorAll('.gallery-item').length;
 
             if (currentImagesCount + files.length > 5) {
-                showNotification(`Maximum 5 images allowed. You already have ${currentImagesCount}.`, 'error');
+                showNotification(`Maximum 5 images allowed.You already have ${currentImagesCount}.`, 'error');
                 input.value = '';
                 return;
             }
@@ -4862,10 +5057,10 @@
             container.style.marginTop = '15px';
 
             container.innerHTML = images.map(imgUrl => `
-                <div class="gallery-item" style="position: relative; width: 100%; aspect-ratio: 1/1; overflow: visible;">
-                    <img src="${imgUrl}" style="height: 100%; width: 100%; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color, #444);">
-                    <button onclick="deleteClubImage('${imgUrl}')" style="position: absolute; top: -8px; right: -8px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 5;">&times;</button>
-                </div>
+            < div class= "gallery-item" style = "position: relative; width: 100%; aspect-ratio: 1/1; overflow: visible;" >
+            <img src="${imgUrl}" style="height: 100%; width: 100%; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color, #444);">
+                <button onclick="deleteClubImage('${imgUrl}')" style="position: absolute; top: -8px; right: -8px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 5;">&times;</button>
+            </div>
             `).join('');
         }
 
@@ -4972,7 +5167,7 @@
             existingNotifications.forEach(notification => notification.remove());
 
             const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
+            notification.className = `notification notification - ${type}`;
 
             const colors = {
                 success: '#28a745',
@@ -4990,26 +5185,26 @@
 
             notification.style.cssText = `
                         position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        background: ${colors[type] || colors.info};
-                        color: white;
-                        padding: 16px 20px;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        font-size: 14px;
-                        z-index: 10000;
-                        max-width: 400px;
-                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-                        transform: translateX(100%);
-                        transition: transform 0.3s ease;
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                        `;
+            top: 20px;
+            right: 20px;
+            background: ${colors[type] || colors.info};
+            color: white;
+            padding: 16px 20px;
+            border - radius: 8px;
+            font - weight: 600;
+            font - size: 14px;
+            z - index: 10000;
+            max - width: 400px;
+            box - shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateX(100 %);
+            transition: transform 0.3s ease;
+            display: flex;
+            align - items: center;
+            gap: 10px;
+            `;
 
             notification.innerHTML = `
-                        <span>${icons[type] || icons.info}</span>
+                < span > ${icons[type] || icons.info}</span >
                         <span>${message}</span>
                         <button onclick="this.parentElement.remove()" style="
                     background: none;
@@ -5021,7 +5216,7 @@
                     padding: 0;
                     opacity: 0.8;
                 ">×</button>
-                        `;
+            `;
 
             document.body.appendChild(notification);
 
@@ -5152,7 +5347,7 @@
                     if (typeof loadPolls === 'function') loadPolls();
                     break;
                 default:
-                    console.log(`No specific loader for section: ${sectionId}`);
+                    console.log(`No specific loader for section: ${sectionId} `);
             }
         }
 
@@ -5222,10 +5417,10 @@
                 const statsContainer = document.getElementById('teamDetailStats');
                 if (statsContainer) {
                     statsContainer.innerHTML = `
-                        <span class="status-badge" style="background:#4caf50; color:white;">${team.wins || 0} Wins</span>
+                < span class="status-badge" style = "background:#4caf50; color:white;" > ${team.wins || 0} Wins</span >
                         <span class="status-badge" style="background:#f44336; color:white;">${team.losses || 0} Losses</span>
                         <span class="status-badge" style="background:#ff9800; color:white;">${team.draws || 0} Draws</span>
-                    `;
+            `;
                 }
 
                 // Populate Roster
@@ -5254,7 +5449,7 @@
             }
 
             tbody.innerHTML = players.map(p => `
-                <tr>
+                < tr >
                     <td>
                         <div style="display:flex; flex-direction:column;">
                             <span style="font-weight:bold;">${p.first_name} ${p.last_name}</span>
@@ -5273,8 +5468,8 @@
                             ❌ Remove
                         </button>
                     </td>
-                </tr>
-            `).join('');
+                </tr >
+                `).join('');
         }
 
         function renderTeamEvents(events) {
@@ -5287,13 +5482,13 @@
             }
 
             container.innerHTML = events.map(e => `
-                <div class="card event-card" style="border-left: 4px solid var(--accent-color);">
+                < div class="card event-card" style = "border-left: 4px solid var(--accent-color);" >
                     <h4>${e.title}</h4>
                     <p>📅 ${new Date(e.event_date).toLocaleDateString()} at ${e.event_time}</p>
                     <p>📍 ${e.location || 'TBA'}</p>
                     <button class="btn btn-small btn-secondary_outline" onclick="viewEventAvailability('${e.id}')">View Availability</button>
-                </div>
-            `).join('');
+                </div >
+                `).join('');
         }
 
         // Feature: Switch Tabs
@@ -5301,7 +5496,7 @@
             document.querySelectorAll('.team-tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
 
-            document.getElementById(`team-tab-${tabName}`).style.display = 'block';
+            document.getElementById(`team - tab - ${tabName} `).style.display = 'block';
 
             // Find the button (hacky way or add IDs to buttons)
             const buttons = document.querySelectorAll('.tab-btn');
@@ -5319,7 +5514,7 @@
             try {
                 showLoading(true);
                 // Call the new backend endpoint we verified
-                await apiService.makeRequest(`/teams/${teamId}/players/${playerId}`, {
+                await apiService.makeRequest(`/ teams / ${teamId} /players/${playerId} `, {
                     method: 'DELETE'
                 });
 
@@ -5337,7 +5532,7 @@
 
         async function loadTeamAvailability(teamId) {
             try {
-                const data = await apiService.makeRequest(`/teams/${teamId}/availability`);
+                const data = await apiService.makeRequest(`/ teams / ${teamId}/availability`);
                 renderAvailabilityGrid(data);
             } catch (error) {
                 console.error('Failed to load availability:', error);
