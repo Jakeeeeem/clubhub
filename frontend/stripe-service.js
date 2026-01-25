@@ -11,13 +11,23 @@ class StripePaymentService {
   async initializeStripe() {
     try {
       // Fetch key from server
-      const response = await apiService.makeRequest("/payments/config");
+      let response;
+      try {
+        response = await apiService.makeRequest("/payments/config");
+      } catch (e) {
+        console.warn("⚠️ API Config failed, using fallback key");
+        response = {
+          publishableKey:
+            "pk_test_51RZtoWRthpGbefAaTaclnZlyGGcfJoYwqXUk8np1GC11EYv1VL0Z3UACVf8bbGjN7fiVvqbFiwM5ya96smTH5OTS008Hh1GnFi",
+        };
+      }
+
       if (response && response.publishableKey) {
         this.stripePublishableKey = response.publishableKey;
 
         if (typeof Stripe !== "undefined") {
           this.stripe = Stripe(this.stripePublishableKey);
-          console.log("✅ Stripe initialized with server key");
+          console.log("✅ Stripe initialized with server key (or fallback)");
         } else {
           console.warn("⚠️ Stripe script not loaded");
         }

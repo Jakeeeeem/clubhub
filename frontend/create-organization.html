@@ -397,25 +397,52 @@
             errorMessage.style.display = 'none';
 
             try {
+                // 1. Create Organization (JSON)
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData);
+                // Remove logo from JSON data as it's handled separately
+                delete data.logo;
+
+                console.log('Creating organization...', data);
 
                 const response = await apiService.makeRequest('/organizations', {
                     method: 'POST',
                     body: JSON.stringify(data)
                 });
 
-                if (response.success) {
+                if (response.success && response.organization) {
+                    const orgId = response.organization.id;
+                    console.log('✅ Organization created with ID:', orgId);
+
+                    // 2. Upload Logo (if selected)
+                    if (selectedLogoFile) {
+                        try {
+                            submitBtn.textContent = 'Uploading Logo...';
+                            const logoFormData = new FormData();
+                            logoFormData.append('logo', selectedLogoFile);
+
+                            await apiService.makeRequest(`/organizations/${orgId}/logo`, {
+                                method: 'POST',
+                                body: logoFormData
+                            });
+                            console.log('✅ Logo uploaded successfully');
+                        } catch (logoError) {
+                            console.warn('⚠️ Logo upload failed:', logoError);
+                            // Don't fail the whole process just for logo
+                        }
+                    }
+
                     // Show success message
                     successMessage.style.display = 'block';
+                    submitBtn.textContent = 'Success!';
 
                     // Refresh context to load the new organization
-                    console.log('✅ Organization created, refreshing context...');
+                    console.log('🔄 Refreshing context...');
                     await apiService.refreshContext();
 
                     // Redirect to dashboard after 2 seconds
                     setTimeout(() => {
-                        window.location.href = '/admin-dashboard.html';
+                        window.location.href = 'admin-dashboard.html';
                     }, 2000);
                 } else {
                     throw new Error(response.error || 'Failed to create organization');

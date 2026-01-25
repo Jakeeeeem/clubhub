@@ -513,6 +513,7 @@
                 // ============================================================================
                 let invitationAccepted = false;
                 let invitationRole = null;
+                const pendingInviteToken = localStorage.getItem('pendingInviteToken');
 
                 if (pendingInviteToken) {
                     try {
