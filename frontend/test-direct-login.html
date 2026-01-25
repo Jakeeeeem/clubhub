@@ -63,14 +63,42 @@
             width: fit-content;
         }
 
-        .role-admin { background: rgba(220, 67, 67, 0.2); color: #dc4343; }
-        .role-super { background: rgba(147, 51, 234, 0.2); color: #c084fc; }
-        .role-coach { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-        .role-player { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .role-admin {
+            background: rgba(220, 67, 67, 0.2);
+            color: #dc4343;
+        }
 
-        h2 { margin: 0 0 8px 0; font-size: 1.25rem; }
-        .email { color: #94a3b8; font-family: monospace; margin-bottom: 8px; }
-        .password { color: #64748b; font-size: 0.9rem; margin-bottom: 24px; }
+        .role-super {
+            background: rgba(147, 51, 234, 0.2);
+            color: #c084fc;
+        }
+
+        .role-coach {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .role-player {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+        }
+
+        h2 {
+            margin: 0 0 8px 0;
+            font-size: 1.25rem;
+        }
+
+        .email {
+            color: #94a3b8;
+            font-family: monospace;
+            margin-bottom: 8px;
+        }
+
+        .password {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
 
         .btn {
             background: #dc4343;
@@ -86,14 +114,23 @@
             margin-top: auto;
         }
 
-        .btn:hover { background: #b93838; }
-        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn:hover {
+            background: #b93838;
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
 
         .btn-secondary {
             background: rgba(255, 255, 255, 0.1);
             margin-top: 10px;
         }
-        .btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
 
         #status {
             position: fixed;
@@ -106,18 +143,32 @@
             animation: slideIn 0.3s ease;
         }
 
-        .status-success { background: #22c55e; color: white; }
-        .status-error { background: #ef4444; color: white; }
+        .status-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .status-error {
+            background: #ef4444;
+            color: white;
+        }
 
         @keyframes slideIn {
-            from { transform: translateY(100px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         .tools {
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             width: 100%;
             max-width: 1200px;
             display: flex;
@@ -186,7 +237,30 @@
     <div id="status"></div>
 
     <script>
-        const API_BASE = 'http://localhost:3000/api';
+        // Determine backend URL based on current hostname
+        function getApiBase() {
+            const hostname = window.location.hostname;
+
+            // Production/Render
+            if (hostname.includes('onrender.com') || hostname.includes('clubhubsports.net')) {
+                // If the frontend is served from the same origin as backend (or standard pattern)
+                // Using relative path is safest if simple server-side serving
+
+                // If it's the specific render dev URL known
+                if (hostname === "clubhubsports-dev.onrender.com" || hostname === "clubhub-dev.onrender.com") {
+                    return "https://clubhub-dev.onrender.com/api";
+                }
+
+                // Fallback to relative path if we assume mono-repo/served by express
+                return '/api';
+            }
+
+            // Local development
+            return 'http://localhost:3000/api';
+        }
+
+        const API_BASE = getApiBase();
+        console.log('Using API Base:', API_BASE);
 
         function showStatus(message, type) {
             const el = document.getElementById('status');
@@ -199,7 +273,7 @@
         async function login(email, password) {
             try {
                 showStatus('Logging in...', 'success');
-                
+
                 const response = await fetch(`${API_BASE}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -217,7 +291,7 @@
 
                     // 2. Determine Redirect
                     let redirect = 'player-dashboard.html';
-                    
+
                     if (data.user.is_platform_admin) {
                         redirect = 'super-admin-dashboard.html';
                     } else if (data.user.account_type === 'organization') {
@@ -251,4 +325,5 @@
         }
     </script>
 </body>
+
 </html>
