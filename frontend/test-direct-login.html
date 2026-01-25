@@ -4,227 +4,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Direct Login Test - ClubHub</title>
+    <title>ClubHub Test Login Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #0d0d0d;
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: #0f172a;
             color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h1 {
             color: #dc4343;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
         }
 
-        button {
+        p.subtitle {
+            color: #94a3b8;
+            margin-bottom: 40px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #dc4343;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            width: fit-content;
+        }
+
+        .role-admin { background: rgba(220, 67, 67, 0.2); color: #dc4343; }
+        .role-super { background: rgba(147, 51, 234, 0.2); color: #c084fc; }
+        .role-coach { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .role-player { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+
+        h2 { margin: 0 0 8px 0; font-size: 1.25rem; }
+        .email { color: #94a3b8; font-family: monospace; margin-bottom: 8px; }
+        .password { color: #64748b; font-size: 0.9rem; margin-bottom: 24px; }
+
+        .btn {
             background: #dc4343;
             color: white;
             border: none;
-            padding: 12px 24px;
-            font-size: 16px;
+            padding: 12px;
             border-radius: 8px;
+            font-weight: 600;
             cursor: pointer;
-            margin: 10px 5px;
-        }
-
-        button:hover {
-            background: #c93333;
-        }
-
-        #result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        a {
-            color: #dc4343;
+            transition: background 0.2s;
+            text-align: center;
             text-decoration: none;
-            font-weight: bold;
+            margin-top: auto;
         }
 
-        a:hover {
-            text-decoration: underline;
+        .btn:hover { background: #b93838; }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+        }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+
+        #status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: none;
+            animation: slideIn 0.3s ease;
         }
 
-        .info {
-            background: rgba(33, 150, 243, 0.1);
-            border-left: 4px solid #2196f3;
-            padding: 10px;
-            margin: 20px 0;
+        .status-success { background: #22c55e; color: white; }
+        .status-error { background: #ef4444; color: white; }
+
+        @keyframes slideIn {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        .success {
-            color: #4caf50;
-        }
-
-        .error {
-            color: #f44336;
-        }
-
-        pre {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
+        .tools {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
         }
     </style>
 </head>
 
 <body>
-    <h1>🔧 Direct Login Test</h1>
+    <h1>🚀 Test Login Portal</h1>
+    <p class="subtitle">One-click login for all demo accounts</p>
 
-    <div class="info">
-        <strong>Purpose:</strong> This page bypasses all the complex login logic to test if basic authentication works.
+    <div class="grid">
+        <!-- Super Admin -->
+        <div class="card">
+            <span class="role-badge role-super">Platform Admin</span>
+            <h2>Super Admin</h2>
+            <div class="email">superadmin@clubhub.com</div>
+            <div class="password">Pass: Super@123</div>
+            <button class="btn" onclick="login('superadmin@clubhub.com', 'Super@123')">
+                Login as Super Admin
+            </button>
+        </div>
+
+        <!-- Club Admin -->
+        <div class="card">
+            <span class="role-badge role-admin">Club Owner</span>
+            <h2>Pro Club Admin</h2>
+            <div class="email">admin@proclubdemo.com</div>
+            <div class="password">Pass: Admin@123</div>
+            <button class="btn" onclick="login('admin@proclubdemo.com', 'Admin@123')">
+                Login as Club Owner
+            </button>
+        </div>
+
+        <!-- Coach -->
+        <div class="card">
+            <span class="role-badge role-coach">Coach</span>
+            <h2>Michael Thompson</h2>
+            <div class="email">coach@proclubdemo.com</div>
+            <div class="password">Pass: Coach@123</div>
+            <button class="btn" onclick="login('coach@proclubdemo.com', 'Coach@123')">
+                Login as Coach
+            </button>
+        </div>
+
+        <!-- Player -->
+        <div class="card">
+            <span class="role-badge role-player">Player</span>
+            <h2>David Williams</h2>
+            <div class="email">player@proclubdemo.com</div>
+            <div class="password">Pass: Player@123</div>
+            <button class="btn" onclick="login('player@proclubdemo.com', 'Player@123')">
+                Login as Player
+            </button>
+        </div>
     </div>
 
-    <h2>Test Login</h2>
-    <p>Email: <code>demo-admin@clubhub.com</code></p>
-    <p>Password: <code>password123</code></p>
+    <div class="tools">
+        <button class="btn btn-secondary" onclick="clearStorage()">🗑️ Clear LocalStorage</button>
+        <button class="btn btn-secondary" onclick="checkContext()">🔍 Check Auth State</button>
+        <a href="index.html" class="btn btn-secondary">🏠 Home</a>
+    </div>
 
-    <button onclick="testLogin()">🔑 Test Login</button>
-    <button onclick="checkStorage()">📦 Check Storage</button>
-    <button onclick="testContext()">🌐 Test Context API</button>
-    <button onclick="clearStorage()">🗑️ Clear Storage</button>
-
-    <div id="result"></div>
+    <div id="status"></div>
 
     <script>
         const API_BASE = 'http://localhost:3000/api';
 
-        async function testLogin() {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '<p>⏳ Testing login...</p>';
+        function showStatus(message, type) {
+            const el = document.getElementById('status');
+            el.textContent = message;
+            el.className = type === 'success' ? 'status-success' : 'status-error';
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
 
+        async function login(email, password) {
             try {
+                showStatus('Logging in...', 'success');
+                
                 const response = await fetch(`${API_BASE}/auth/login`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: 'demo-admin@clubhub.com',
-                        password: 'password123'
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
                 });
 
                 const data = await response.json();
-                console.log('Login response:', data);
 
                 if (data.token) {
+                    // 1. Store Token
                     localStorage.setItem('authToken', data.token);
                     localStorage.setItem('currentUser', JSON.stringify(data.user));
 
-                    resultDiv.innerHTML = `
-                        <p class="success">✅ Login successful!</p>
-                        <p><strong>User:</strong> ${data.user.email}</p>
-                        <p><strong>Account Type:</strong> ${data.user.account_type || data.user.userType}</p>
-                        <p><strong>Token:</strong> ${data.token.substring(0, 20)}...</p>
-                        <hr>
-                        <p><a href="admin-dashboard.html">→ Go to Admin Dashboard</a></p>
-                        <p><a href="player-dashboard.html">→ Go to Player Dashboard</a></p>
-                    `;
-                } else {
-                    resultDiv.innerHTML = `
-                        <p class="error">❌ Login failed</p>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
-                    `;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                resultDiv.innerHTML = `
-                    <p class="error">❌ Error: ${error.message}</p>
-                    <p>Check console for details</p>
-                `;
-            }
-        }
+                    showStatus('Login successful! Redirecting...', 'success');
 
-        function checkStorage() {
-            const resultDiv = document.getElementById('result');
-            const token = localStorage.getItem('authToken');
-            const user = localStorage.getItem('currentUser');
-
-            if (token && user) {
-                const userData = JSON.parse(user);
-                resultDiv.innerHTML = `
-                    <p class="success">✅ Storage has data</p>
-                    <p><strong>Token:</strong> ${token.substring(0, 30)}...</p>
-                    <p><strong>User:</strong></p>
-                    <pre>${JSON.stringify(userData, null, 2)}</pre>
-                `;
-            } else {
-                resultDiv.innerHTML = `
-                    <p class="error">❌ No data in storage</p>
-                    <p>Token: ${token ? 'Present' : 'Missing'}</p>
-                    <p>User: ${user ? 'Present' : 'Missing'}</p>
-                `;
-            }
-        }
-
-        async function testContext() {
-            const resultDiv = document.getElementById('result');
-            const token = localStorage.getItem('authToken');
-
-            if (!token) {
-                resultDiv.innerHTML = '<p class="error">❌ No token found. Login first!</p>';
-                return;
-            }
-
-            resultDiv.innerHTML = '<p>⏳ Testing context API...</p>';
-
-            try {
-                const response = await fetch(`${API_BASE}/auth/context`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
+                    // 2. Determine Redirect
+                    let redirect = 'player-dashboard.html';
+                    
+                    if (data.user.is_platform_admin) {
+                        redirect = 'super-admin-dashboard.html';
+                    } else if (data.user.account_type === 'organization') {
+                        // Check context to see if they are a coach or admin
+                        if (email.includes('coach')) {
+                            redirect = 'coach-dashboard.html';
+                        } else {
+                            redirect = 'admin-dashboard.html';
+                        }
                     }
-                });
 
-                const data = await response.json();
-                console.log('Context response:', data);
-
-                if (data.success) {
-                    resultDiv.innerHTML = `
-                        <p class="success">✅ Context API works!</p>
-                        <p><strong>Organizations:</strong> ${data.organizations?.length || 0}</p>
-                        <p><strong>Current Org:</strong> ${data.currentOrganization?.name || 'None'}</p>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
-                    `;
+                    setTimeout(() => window.location.href = redirect, 1000);
                 } else {
-                    resultDiv.innerHTML = `
-                        <p class="error">❌ Context failed</p>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
-                    `;
+                    showStatus('Login failed: ' + (data.message || 'Unknown error'), 'error');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                resultDiv.innerHTML = `
-                    <p class="error">❌ Error: ${error.message}</p>
-                `;
+                console.error(error);
+                showStatus('Network error - check console', 'error');
             }
         }
 
         function clearStorage() {
             localStorage.clear();
-            document.getElementById('result').innerHTML = '<p class="success">✅ Storage cleared!</p>';
+            showStatus('LocalStorage Cleared', 'success');
         }
 
-        // Auto-check on load
-        window.addEventListener('DOMContentLoaded', () => {
+        function checkContext() {
             const token = localStorage.getItem('authToken');
-            if (token) {
-                document.getElementById('result').innerHTML = `
-                    <p class="success">ℹ️ You already have a token stored</p>
-                    <p>Click "Check Storage" to see it</p>
-                `;
-            }
-        });
+            const user = localStorage.getItem('currentUser');
+            alert(`Token: ${token ? '✅ Present' : '❌ Missing'}\nUser: ${user ? '✅ Present' : '❌ Missing'}`);
+        }
     </script>
 </body>
-
 </html>
