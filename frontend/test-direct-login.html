@@ -229,6 +229,11 @@
     </div>
 
     <div class="tools">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="demoModeToggle" onchange="toggleDemoMode()" style="width: 18px; height: 18px;">
+            <span style="color: #cbd5e1; font-weight: 500;">Enable Demo / Offline Mode</span>
+        </label>
+        <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
         <button class="btn btn-secondary" onclick="clearStorage()">🗑️ Clear LocalStorage</button>
         <button class="btn btn-secondary" onclick="checkContext()">🔍 Check Auth State</button>
         <a href="index.html" class="btn btn-secondary">🏠 Home</a>
@@ -237,10 +242,72 @@
     <div id="status"></div>
 
     <script>
+        // Mock User Data for Demo Mode
+        const MOCK_USERS = {
+            'superadmin@clubhub.com': {
+                id: 'demo-superadmin-id',
+                first_name: 'Super',
+                last_name: 'Admin',
+                is_platform_admin: true,
+                account_type: 'admin',
+                role: 'superadmin'
+            },
+            'admin@proclubdemo.com': {
+                id: 'demo-pro-admin-id',
+                first_name: 'Pro',
+                last_name: 'Club Admin',
+                account_type: 'organization',
+                clubId: 'demo-club-id',
+                role: 'admin'
+            },
+            'coach@proclubdemo.com': {
+                id: 'demo-pro-coach-id',
+                first_name: 'Michael',
+                last_name: 'Thompson',
+                account_type: 'coach',
+                clubId: 'demo-club-id',
+                role: 'coach'
+            },
+            'player@proclubdemo.com': {
+                id: 'demo-pro-player-id',
+                first_name: 'David',
+                last_name: 'Williams',
+                account_type: 'player',
+                clubId: 'demo-club-id',
+                role: 'player'
+            }
+        };
+
+        // Initialize state
+        window.addEventListener('DOMContentLoaded', () => {
+            const isDemo = localStorage.getItem('isDemoSession') === 'true';
+            document.getElementById('demoModeToggle').checked = isDemo;
+            updateSubtitle();
+        });
+
+        function toggleDemoMode() {
+            const isChecked = document.getElementById('demoModeToggle').checked;
+            localStorage.setItem('isDemoSession', isChecked);
+            updateSubtitle();
+            showStatus(isChecked ? 'Demo Mode Enabled' : 'Demo Mode Disabled', 'success');
+        }
+
+        function updateSubtitle() {
+            const isDemo = document.getElementById('demoModeToggle').checked;
+            const subtitle = document.querySelector('.subtitle');
+            const apiBase = getApiBase();
+
+            if (subtitle) {
+                subtitle.innerHTML = `One-click login for all demo accounts<br>
+                    <small style="color: ${isDemo ? '#4ade80' : '#64748b'}; font-family: monospace;">
+                        ${isDemo ? '🟢 MODE: Offline / Demo Bypass' : `🔵 MODE: Live API (${apiBase})`}
+                    </small>`;
+            }
+        }
+
         // Determine backend URL based on current hostname
         function getApiBase() {
             const hostname = window.location.hostname;
-            console.log('Detected hostname:', hostname);
 
             // 1. Localhost Development
             if (hostname === 'localhost' || hostname === '127.0.0.1') {
@@ -248,26 +315,19 @@
             }
 
             // 2. Specific Render Frontend -> Backend Mapping
-            // If we are on the known frontend URL, point to the known backend URL
             if (hostname === 'clubhubsports-dev.onrender.com') {
                 return 'https://clubhub-dev.onrender.com/api';
             }
 
+            if (hostname === 'clubhubsports.net' || hostname === 'www.clubhubsports.net') {
+                return 'https://api.clubhubsports.net/api';
+            }
+
             // 3. Fallback / Production
-            // Assumes relative path (same origin) or handled by proxy
             return '/api';
         }
 
         const API_BASE = getApiBase();
-        console.log('Using API Base:', API_BASE);
-
-        // Add debug info to page
-        window.addEventListener('DOMContentLoaded', () => {
-            const subtitle = document.querySelector('.subtitle');
-            if (subtitle) {
-                subtitle.innerHTML += `<br><small style="color: #64748b; font-family: monospace;">API: ${API_BASE}</small>`;
-            }
-        });
 
         function showStatus(message, type) {
             const el = document.getElementById('status');
@@ -278,6 +338,13 @@
         }
 
         async function login(email, password) {
+            const isDemo = document.getElementById('demoModeToggle').checked;
+
+            if (isDemo) {
+                handleDemoLogin(email);
+                return;
+            }
+
             try {
                 showStatus('Logging in...', 'success');
 
@@ -287,48 +354,102 @@
                     body: JSON.stringify({ email, password })
                 });
 
-                const data = await response.json();
-
-                if (data.token) {
-                    // 1. Store Token
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('currentUser', JSON.stringify(data.user));
-
-                    showStatus('Login successful! Redirecting...', 'success');
-
-                    // 2. Determine Redirect
-                    let redirect = 'player-dashboard.html';
-
-                    if (data.user.is_platform_admin) {
-                        redirect = 'super-admin-dashboard.html';
-                    } else if (data.user.account_type === 'organization') {
-                        // Check context to see if they are a coach or admin
-                        if (email.includes('coach')) {
-                            redirect = 'coach-dashboard.html';
-                        } else {
-                            redirect = 'admin-dashboard.html';
-                        }
-                    }
-
-                    setTimeout(() => window.location.href = redirect, 1000);
-                } else {
-                    showStatus('Login failed: ' + (data.message || 'Unknown error'), 'error');
+                const text = await response.text();
+                let data;
+                try {
+                    data = text ? JSON.parse(text) : {};
+                } catch (e) {
+                    console.error('Failed to parse JSON response:', text);
+                    throw new Error(`Server returned non-JSON response (${response.status}).`);
                 }
+
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || `Server Error (${response.status})`);
+                }
+
+                handleLoginSuccess(data);
+
             } catch (error) {
                 console.error(error);
-                showStatus('Network error - check console', 'error');
+                showStatus('Login failed: ' + error.message, 'error');
+
+                // Prompt to switch to demo mode
+                if (confirm('Login failed. Would you like to try again in Demo Mode?')) {
+                    document.getElementById('demoModeToggle').checked = true;
+                    toggleDemoMode();
+                    handleDemoLogin(email);
+                }
+            }
+        }
+
+        function handleDemoLogin(email) {
+            showStatus('Processing Demo Login...', 'success');
+
+            setTimeout(() => {
+                const user = MOCK_USERS[email];
+                if (user) {
+                    handleLoginSuccess({
+                        token: 'demo-bypass-token-' + Date.now(),
+                        user: user
+                    });
+                } else {
+                    showStatus('Demo user not found in mock data', 'error');
+                }
+            }, 800);
+        }
+
+        function handleLoginSuccess(data) {
+            if (data.token) {
+                // 1. Store Token
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('currentUser', JSON.stringify(data.user));
+
+                // Ensure bypass flag is set if we used demo mode
+                if (document.getElementById('demoModeToggle').checked) {
+                    localStorage.setItem('isDemoSession', 'true');
+                }
+
+                showStatus('Login successful! Redirecting...', 'success');
+
+                // 2. Determine Redirect
+                let redirect = 'player-dashboard.html';
+
+                if (data.user.is_platform_admin) {
+                    redirect = 'super-admin-dashboard.html';
+                } else if (data.user.account_type === 'organization' || data.user.account_type === 'admin') {
+                    // Check context to see if they are a coach or admin
+                    if (data.user.account_type === 'coach' || (data.user.email && data.user.email.includes('coach'))) {
+                        redirect = 'coach-dashboard.html';
+                    } else {
+                        redirect = 'admin-dashboard.html';
+                    }
+                } else if (data.user.account_type === 'coach') {
+                    redirect = 'coach-dashboard.html';
+                }
+
+                // Force redirect for these specific demo emails
+                if (data.user.email === 'coach@proclubdemo.com') redirect = 'coach-dashboard.html';
+                if (data.user.email === 'admin@proclubdemo.com') redirect = 'admin-dashboard.html';
+                if (data.user.email === 'superadmin@clubhub.com') redirect = 'super-admin-dashboard.html';
+
+                setTimeout(() => window.location.href = redirect, 1000);
+            } else {
+                showStatus('Login failed: No token received', 'error');
             }
         }
 
         function clearStorage() {
             localStorage.clear();
+            document.getElementById('demoModeToggle').checked = false;
             showStatus('LocalStorage Cleared', 'success');
+            updateSubtitle();
         }
 
         function checkContext() {
             const token = localStorage.getItem('authToken');
             const user = localStorage.getItem('currentUser');
-            alert(`Token: ${token ? '✅ Present' : '❌ Missing'}\nUser: ${user ? '✅ Present' : '❌ Missing'}`);
+            const isDemo = localStorage.getItem('isDemoSession');
+            alert(`Token: ${token ? '✅' : '❌'}\nUser: ${user ? '✅' : '❌'}\nDemo Session: ${isDemo || 'false'}`);
         }
     </script>
 </body>

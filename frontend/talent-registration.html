@@ -86,6 +86,21 @@
             alert('Invalid Event Link. Please use the link provided by the club.');
         }
 
+        // Dynamic API Configuration
+        function getBaseURL() {
+            const hostname = window.location.hostname;
+            if (hostname === 'clubhubsports.net' || hostname === 'www.clubhubsports.net') {
+                return 'https://api.clubhubsports.net/api';
+            }
+            if (hostname === 'clubhubsports-dev.onrender.com' || hostname === 'clubhub-dev.onrender.com') {
+                return 'https://clubhub-dev.onrender.com/api';
+            }
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:3000/api';
+            }
+            return '/api';
+        }
+
         async function handleRegistration(e) {
             e.preventDefault();
             const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -104,7 +119,7 @@
             };
 
             try {
-                const response = await fetch('http://localhost:3000/api/talent-id/register', {
+                const response = await fetch(`${getBaseURL()}/talent-id/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)

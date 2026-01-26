@@ -67,7 +67,7 @@
             container.innerHTML = '<p class="text-center">Searching for talent...</p>';
 
             try {
-                let url = `${apiService.baseUrl}/players/scout?`;
+                let url = `${apiService.baseURL}/players/scout?`;
                 if (pos) url += `position=${pos}&`;
                 if (sport) url += `sport=${sport}&`;
                 if (minAge) url += `minAge=${minAge}&`;

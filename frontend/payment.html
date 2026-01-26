@@ -467,6 +467,9 @@
         // Helper to get Base URL (copied from api-service.js logic)
         function getBaseURL() {
             const hostname = window.location.hostname;
+            if (hostname === 'clubhubsports.net' || hostname === 'www.clubhubsports.net') {
+                return 'https://api.clubhubsports.net';
+            }
             if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
                 return 'http://localhost:3000';
             }

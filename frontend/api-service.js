@@ -707,6 +707,43 @@ class ApiService {
         userType: "player",
         role: "player",
       },
+      // Added for Test Portal Compatibility
+      "superadmin@clubhub.com": {
+        id: "demo-superadmin-id",
+        first_name: "Super",
+        last_name: "Admin",
+        account_type: "admin",
+        is_platform_admin: true,
+        userType: "admin",
+        role: "superadmin",
+      },
+      "admin@proclubdemo.com": {
+        id: "demo-pro-admin-id",
+        first_name: "Pro",
+        last_name: "Club Admin",
+        account_type: "organization",
+        userType: "organization",
+        role: "admin",
+        clubId: "demo-club-id",
+      },
+      "coach@proclubdemo.com": {
+        id: "demo-pro-coach-id",
+        first_name: "Michael",
+        last_name: "Thompson",
+        account_type: "coach",
+        userType: "coach",
+        role: "coach",
+        clubId: "demo-club-id",
+      },
+      "player@proclubdemo.com": {
+        id: "demo-pro-player-id",
+        first_name: "David",
+        last_name: "Williams",
+        account_type: "player",
+        userType: "player",
+        role: "player",
+        clubId: "demo-club-id",
+      },
     };
 
     if (demoBypass && demoUsers[normalizedEmail]) {
