@@ -399,42 +399,58 @@
         }
 
         function handleLoginSuccess(data) {
-            if (data.token) {
-                // 1. Store Token
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('currentUser', JSON.stringify(data.user));
+            console.log("Login success data:", data);
+            try {
+                if (data.token) {
+                    // 1. Store Token
+                    console.log("Storing token:", data.token.substring(0, 10) + "...");
+                    localStorage.setItem('authToken', data.token);
 
-                // Ensure bypass flag is set if we used demo mode
-                if (document.getElementById('demoModeToggle').checked) {
-                    localStorage.setItem('isDemoSession', 'true');
-                }
-
-                showStatus('Login successful! Redirecting...', 'success');
-
-                // 2. Determine Redirect
-                let redirect = 'player-dashboard.html';
-
-                if (data.user.is_platform_admin) {
-                    redirect = 'super-admin-dashboard.html';
-                } else if (data.user.account_type === 'organization' || data.user.account_type === 'admin') {
-                    // Check context to see if they are a coach or admin
-                    if (data.user.account_type === 'coach' || (data.user.email && data.user.email.includes('coach'))) {
-                        redirect = 'coach-dashboard.html';
-                    } else {
-                        redirect = 'admin-dashboard.html';
+                    if (!data.user) {
+                        console.error("User object missing in login response!");
+                        showStatus('Login Error: User data missing', 'error');
+                        return;
                     }
-                } else if (data.user.account_type === 'coach') {
-                    redirect = 'coach-dashboard.html';
+
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+
+                    // Ensure bypass flag is set if we used demo mode
+                    if (document.getElementById('demoModeToggle').checked) {
+                        localStorage.setItem('isDemoSession', 'true');
+                    }
+
+                    showStatus('Login successful! Redirecting...', 'success');
+
+                    // 2. Determine Redirect
+                    let redirect = 'player-dashboard.html';
+
+                    if (data.user.is_platform_admin) {
+                        redirect = 'super-admin-dashboard.html';
+                    } else if (data.user.account_type === 'organization' || data.user.account_type === 'admin') {
+                        // Check context to see if they are a coach or admin
+                        if (data.user.account_type === 'coach' || (data.user.email && data.user.email.includes('coach'))) {
+                            redirect = 'coach-dashboard.html';
+                        } else {
+                            redirect = 'admin-dashboard.html';
+                        }
+                    } else if (data.user.account_type === 'coach') {
+                        redirect = 'coach-dashboard.html';
+                    }
+
+                    // Force redirect for these specific demo emails
+                    if (data.user.email === 'coach@proclubdemo.com') redirect = 'coach-dashboard.html';
+                    if (data.user.email === 'admin@proclubdemo.com') redirect = 'admin-dashboard.html';
+                    if (data.user.email === 'superadmin@clubhub.com') redirect = 'super-admin-dashboard.html';
+
+                    console.log("Redirecting to:", redirect);
+                    setTimeout(() => window.location.href = redirect, 1000);
+                } else {
+                    console.error("No token in response:", data);
+                    showStatus('Login failed: No token received', 'error');
                 }
-
-                // Force redirect for these specific demo emails
-                if (data.user.email === 'coach@proclubdemo.com') redirect = 'coach-dashboard.html';
-                if (data.user.email === 'admin@proclubdemo.com') redirect = 'admin-dashboard.html';
-                if (data.user.email === 'superadmin@clubhub.com') redirect = 'super-admin-dashboard.html';
-
-                setTimeout(() => window.location.href = redirect, 1000);
-            } else {
-                showStatus('Login failed: No token received', 'error');
+            } catch (err) {
+                console.error("Error in handleLoginSuccess:", err);
+                showStatus('Login processing error: ' + err.message, 'error');
             }
         }
 
