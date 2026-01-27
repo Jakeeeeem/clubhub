@@ -554,21 +554,21 @@
                 <button class="close" onclick="closeModal('registerModal')">&times;</button>
             </div>
             <div style="padding: 2rem; text-align: center;">
-                <p style="margin-bottom: 2rem; color: #fff;">Choose how you'd like to register:</p>
+                <p style="margin-bottom: 2rem; color: #cbd5e1; font-size: 1.1rem; line-height: 1.6;">
+                    Join the complete ecosystem for grassroots sports. <br>One account connecting players, parents,
+                    coaches and clubs.
+                </p>
 
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    <a href="signup.html?type=adult" class="btn btn-primary"
-                        style="padding: 1rem; font-size: 1.1rem; text-decoration: none; display: block;">
-                        ⚽ Register as Player/Parent
+                    <a href="signup.html" class="btn btn-primary"
+                        style="padding: 1rem; font-size: 1.1rem; text-decoration: none; display: block; font-weight: 600;">
+                        🚀 Create Account
                     </a>
-                    <a href="signup.html?type=organization" class="btn btn-primary"
-                        style="padding: 1rem; font-size: 1.1rem; text-decoration: none; display: block;">
-                        🏢 Register as Organization
-                    </a>
-                    <a href="signup.html" class="btn btn-secondary"
-                        style="padding: 1rem; font-size: 1.1rem; text-decoration: none; display: block;">
-                        📝 Full Registration Form
-                    </a>
+                    <div style="margin-top: 10px;">
+                        <span style="color: #64748b; font-size: 0.9rem;">Already have an account?</span>
+                        <a href="#" onclick="closeModal('registerModal'); showModal('loginModal'); return false;"
+                            style="color: var(--primary-color); text-decoration: none; font-size: 0.9rem; margin-left: 5px;">Login</a>
+                    </div>
                 </div>
             </div>
         </div>
