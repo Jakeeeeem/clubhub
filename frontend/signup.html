@@ -486,9 +486,9 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const roleParam = urlParams.get('type');
 
-                // Default to 'organization' if no type specified (legacy behavior/power user)
-                // But respect 'adult' (player/parent) if passed
-                const userType = roleParam || 'organization';
+                // Default to 'adult' (player/parent) for unified flow.
+                // If they create an organization later, they will get the 'owner' role.
+                const userType = roleParam || 'adult';
 
                 const userData = {
                     firstName,

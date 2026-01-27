@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup Flow Tester</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0f172a;
+            color: #fff;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #38bdf8;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        pre {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid #334155;
+            color: #a5f3fc;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+
+        .success {
+            background: #059669;
+            color: #a7f3d0;
+        }
+
+        .error {
+            background: #991b1b;
+            color: #fecaca;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🚀 Backend Signup & Flow Tester</h1>
+    <p>Use this tool to verify the backend registration process works correctly.</p>
+
+    <div class="card">
+        <h2>1. Create Test User</h2>
+        <p>Register a random test user to check backend logic.</p>
+        <button onclick="testSignup()">Run Signup Test</button>
+        <span id="signupStatus"></span>
+        <pre id="signupResult">// Results will appear here...</pre>
+    </div>
+
+    <div class="card">
+        <h2>2. Create Organization (Optional)</h2>
+        <p>Verify that the new user can create an organization.</p>
+        <button onclick="testCreateOrg()" id="btnCreateOrg" disabled>Run Org Creation Test</button>
+        <span id="orgStatus"></span>
+        <pre id="orgResult">// Results will appear here...</pre>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script>
+        let createdUser = null;
+        let pAuthToken = null;
+
+        function log(elementId, data, isError = false) {
+            const el = document.getElementById(elementId);
+            const statusEl = document.getElementById(elementId.replace('Result', 'Status'));
+
+            el.textContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+
+            if (isError) {
+                statusEl.textContent = 'Failed ❌';
+                statusEl.className = 'status error';
+            } else {
+                statusEl.textContent = 'Success ✅';
+                statusEl.className = 'status success';
+            }
+        }
+
+        async function testSignup() {
+            const rand = Math.floor(Math.random() * 10000);
+            const testUser = {
+                firstName: 'Test',
+                lastName: 'User' + rand,
+                email: `testuser${rand}@example.com`,
+                password: 'Password123!',
+                // We test the default 'adult' flow
+                accountType: 'adult'
+            };
+
+            document.getElementById('signupResult').textContent = 'Testing...';
+
+            try {
+                // Use the real API service
+                const response = await apiService.makeRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify(testUser)
+                });
+
+                log('signupResult', response);
+
+                if (response.token) {
+                    createdUser = response.user;
+                    pAuthToken = response.token;
+                    apiService.setToken(response.token); // Set for next steps
+
+                    document.getElementById('btnCreateOrg').disabled = false;
+                }
+            } catch (error) {
+                log('signupResult', error.message || error, true);
+            }
+        }
+
+        async function testCreateOrg() {
+            if (!pAuthToken) return;
+
+            const rand = Math.floor(Math.random() * 1000);
+            const orgData = {
+                name: `Test Club ${rand}`,
+                sport: 'Football',
+                description: 'Automated test created club',
+                location: 'Test City'
+            };
+
+            document.getElementById('orgResult').textContent = 'Creating Org...';
+
+            try {
+                const response = await apiService.makeRequest('/organizations', {
+                    method: 'POST',
+                    body: JSON.stringify(orgData)
+                });
+
+                log('orgResult', response);
+            } catch (error) {
+                log('orgResult', error.message || error, true);
+            }
+        }
+    </script>
+</body>
+
+</html>
