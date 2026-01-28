@@ -1,8 +1,8 @@
-const path = require('path');
-const { pool, connectDB } = require('../config/database');
+const path = require("path");
+// Ensure we're in the right directory for .env - load this BEFORE database config
+require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
-// Ensure we're in the right directory for .env
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const { pool, connectDB } = require("../config/database");
 
 /**
  * Seed Demo Users for ClubHub
@@ -10,24 +10,26 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
  */
 async function seedDemoUsers() {
   const client = await pool.connect();
-  
+
   try {
-    console.log('🌱 Starting demo user seed...\n');
-    
-    await client.query('BEGIN');
+    console.log("🌱 Starting demo user seed...\n");
+
+    await client.query("BEGIN");
 
     // Pre-generated bcrypt hashes (cost factor 10)
     const hashes = {
-      superadmin: '$2a$10$DbQgrru3aY4tgf9oy36P8.1W4X/HTmdIlR4xnI5p8s1K31CDE8hyq',
-      admin: '$2a$10$Qi3zNFyHjSzA2EbjV6BkVucpQNRc8xrWGIEbBCADxlGVNk/wC07Xm',
-      coach: '$2a$10$eGNpeXkxK0DiD3KKQYyp5OLDcw3bOh8XKnaogYzK/yxKqBQvqHrT.',
-      player: '$2a$10$0n3T7iOBDMMQOdvYelBPoeDmTaTKAkr/E4KVf0mz3HeCK5Wyb5jSi'
+      superadmin:
+        "$2a$10$DbQgrru3aY4tgf9oy36P8.1W4X/HTmdIlR4xnI5p8s1K31CDE8hyq",
+      admin: "$2a$10$Qi3zNFyHjSzA2EbjV6BkVucpQNRc8xrWGIEbBCADxlGVNk/wC07Xm",
+      coach: "$2a$10$eGNpeXkxK0DiD3KKQYyp5OLDcw3bOh8XKnaogYzK/yxKqBQvqHrT.",
+      player: "$2a$10$0n3T7iOBDMMQOdvYelBPoeDmTaTKAkr/E4KVf0mz3HeCK5Wyb5jSi",
     };
 
     // 1. SUPER ADMIN - Platform Administrator
-    console.log('👑 Creating Super Admin...');
-    
-    const superAdminResult = await client.query(`
+    console.log("👑 Creating Super Admin...");
+
+    const superAdminResult = await client.query(
+      `
       INSERT INTO users (email, password_hash, first_name, last_name, account_type, is_platform_admin, email_verified)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (email) 
@@ -36,23 +38,26 @@ async function seedDemoUsers() {
         is_platform_admin = EXCLUDED.is_platform_admin,
         updated_at = NOW()
       RETURNING id, email
-    `, [
-      'superadmin@clubhub.com',
-      hashes.superadmin,
-      'Super',
-      'Admin',
-      'organization',
-      true,
-      true
-    ]);
+    `,
+      [
+        "superadmin@clubhub.com",
+        hashes.superadmin,
+        "Super",
+        "Admin",
+        "organization",
+        true,
+        true,
+      ],
+    );
     console.log(`   ✅ Super Admin created: ${superAdminResult.rows[0].email}`);
     console.log(`   📧 Email: superadmin@clubhub.com`);
     console.log(`   🔑 Password: Super@123\n`);
 
     // 2. CLUB ADMIN/OWNER - Club: "Pro Club Demo"
-    console.log('🏢 Creating Club Admin & Organization...');
-    
-    const adminResult = await client.query(`
+    console.log("🏢 Creating Club Admin & Organization...");
+
+    const adminResult = await client.query(
+      `
       INSERT INTO users (email, password_hash, first_name, last_name, account_type, email_verified)
       VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (email) 
@@ -61,53 +66,62 @@ async function seedDemoUsers() {
         account_type = EXCLUDED.account_type,
         updated_at = NOW()
       RETURNING id, email
-    `, [
-      'admin@proclubdemo.com',
-      hashes.admin,
-      'John',
-      'Smith',
-      'organization',
-      true
-    ]);
+    `,
+      [
+        "admin@proclubdemo.com",
+        hashes.admin,
+        "John",
+        "Smith",
+        "organization",
+        true,
+      ],
+    );
     const adminUserId = adminResult.rows[0].id;
     console.log(`   ✅ Admin user created: ${adminResult.rows[0].email}`);
 
     // Create the demo club/organization
-    const clubResult = await client.query(`
+    const clubResult = await client.query(
+      `
       INSERT INTO clubs (
         name, sport, description, location, contact_email, 
-        contact_phone, owner_id, member_count, stripe_account_id
+        contact_phone, owner_id, member_count, stripe_account_id, types
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       ON CONFLICT (owner_id) 
       DO UPDATE SET 
         name = EXCLUDED.name,
         updated_at = NOW()
       RETURNING id, name
-    `, [
-      'Pro Club Demo',
-      'Football',
-      'Premier demo football club showcasing ClubHub features',
-      'London, UK',
-      'admin@proclubdemo.com',
-      '+44 20 1234 5678',
-      adminUserId,
-      25,
-      null // Stripe will be configured separately
-    ]);
+    `,
+      [
+        "Pro Club Demo",
+        "Football",
+        "Premier demo football club showcasing ClubHub features",
+        "London, UK",
+        "admin@proclubdemo.com",
+        "+44 20 1234 5678",
+        adminUserId,
+        25,
+        null, // Stripe will be configured separately
+        ["academy"], // types
+      ],
+    );
     const clubId = clubResult.rows[0].id;
     console.log(`   ✅ Club created: ${clubResult.rows[0].name}`);
     console.log(`   📧 Email: admin@proclubdemo.com`);
     console.log(`   🔑 Password: Admin@123\n`);
 
     // Create a demo team
-    const teamResult = await client.query(`
+    const teamResult = await client.query(
+      `
       INSERT INTO teams (name, age_group, club_id, sport)
       VALUES ($1, $2, $3, $4)
       ON CONFLICT DO NOTHING
       RETURNING id, name
-    `, ['Under 18s', 'U18', clubId, 'Football']);
-    
+    `,
+      ["Under 18s", "U18", clubId, "Football"],
+    );
+
     let teamId = null;
     if (teamResult.rows.length > 0) {
       teamId = teamResult.rows[0].id;
@@ -115,8 +129,8 @@ async function seedDemoUsers() {
     } else {
       // Get existing team
       const existingTeam = await client.query(
-        'SELECT id FROM teams WHERE club_id = $1 LIMIT 1',
-        [clubId]
+        "SELECT id FROM teams WHERE club_id = $1 LIMIT 1",
+        [clubId],
       );
       if (existingTeam.rows.length > 0) {
         teamId = existingTeam.rows[0].id;
@@ -124,9 +138,10 @@ async function seedDemoUsers() {
     }
 
     // 3. COACH - Assigned to the demo club
-    console.log('⚽ Creating Coach...');
-    
-    const coachResult = await client.query(`
+    console.log("⚽ Creating Coach...");
+
+    const coachResult = await client.query(
+      `
       INSERT INTO users (email, password_hash, first_name, last_name, account_type, email_verified)
       VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (email) 
@@ -134,43 +149,60 @@ async function seedDemoUsers() {
         password_hash = EXCLUDED.password_hash,
         updated_at = NOW()
       RETURNING id, email
-    `, [
-      'coach@proclubdemo.com',
-      hashes.coach,
-      'Michael',
-      'Thompson',
-      'organization',
-      true
-    ]);
+    `,
+      [
+        "coach@proclubdemo.com",
+        hashes.coach,
+        "Michael",
+        "Thompson",
+        "organization",
+        true,
+      ],
+    );
     const coachUserId = coachResult.rows[0].id;
     console.log(`   ✅ Coach user created: ${coachResult.rows[0].email}`);
 
     // Add coach to staff table
-    await client.query(`
-      INSERT INTO staff (user_id, club_id, role, is_active)
-      VALUES ($1, $2, $3, $4)
+    await client.query(
+      `
+      INSERT INTO staff (user_id, club_id, role, is_active, first_name, last_name, email)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (user_id, club_id) 
       DO UPDATE SET role = EXCLUDED.role, is_active = true
-    `, [coachUserId, clubId, 'coach', true]);
+    `,
+      [
+        coachUserId,
+        clubId,
+        "coach",
+        true,
+        "Michael",
+        "Thompson",
+        "coach@proclubdemo.com",
+      ],
+    );
     console.log(`   ✅ Coach assigned to Pro Club Demo`);
 
     // Assign coach to team if team exists
     if (teamId) {
-      await client.query(`
+      await client.query(
+        `
         INSERT INTO team_coaches (team_id, coach_id)
         VALUES ($1, $2)
         ON CONFLICT (team_id, coach_id) DO NOTHING
-      `, [teamId, coachUserId]);
+      `,
+        [teamId, coachUserId],
+      );
       console.log(`   ✅ Coach assigned to team`);
     }
-    
+
     console.log(`   📧 Email: coach@proclubdemo.com`);
     console.log(`   🔑 Password: Coach@123\n`);
 
     // 4. PLAYER - Member of the demo club
-    console.log('👤 Creating Player...');
-    
-    const playerResult = await client.query(`
+    console.log("👤 Creating Player...");
+
+    const playerResult = await client.query(
+      `
       INSERT INTO users (email, password_hash, first_name, last_name, account_type, email_verified)
       VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (email) 
@@ -178,19 +210,22 @@ async function seedDemoUsers() {
         password_hash = EXCLUDED.password_hash,
         updated_at = NOW()
       RETURNING id, email
-    `, [
-      'player@proclubdemo.com',
-      hashes.player,
-      'David',
-      'Williams',
-      'adult',
-      true
-    ]);
+    `,
+      [
+        "player@proclubdemo.com",
+        hashes.player,
+        "David",
+        "Williams",
+        "adult",
+        true,
+      ],
+    );
     const playerUserId = playerResult.rows[0].id;
     console.log(`   ✅ Player user created: ${playerResult.rows[0].email}`);
 
     // Create player profile
-    await client.query(`
+    await client.query(
+      `
       INSERT INTO user_profiles (user_id, date_of_birth, gender, location, sport, position, bio)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (user_id) 
@@ -198,72 +233,79 @@ async function seedDemoUsers() {
         sport = EXCLUDED.sport,
         position = EXCLUDED.position,
         updated_at = NOW()
-    `, [
-      playerUserId,
-      '2006-05-15',
-      'Male',
-      'London, UK',
-      'Football',
-      'Forward',
-      'Passionate young footballer looking to develop skills and compete at the highest level.'
-    ]);
+    `,
+      [
+        playerUserId,
+        "2006-05-15",
+        "Male",
+        "London, UK",
+        "Football",
+        "Forward",
+        "Passionate young footballer looking to develop skills and compete at the highest level.",
+      ],
+    );
 
     // Add player to club
-    const playerProfileResult = await client.query(`
+    const playerProfileResult = await client.query(
+      `
       INSERT INTO players (first_name, last_name, email, date_of_birth, position, club_id, user_id, monthly_fee)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (email, club_id) 
       DO UPDATE SET user_id = EXCLUDED.user_id
       RETURNING id
-    `, [
-      'David',
-      'Williams',
-      'player@proclubdemo.com',
-      '2006-05-15',
-      'Forward',
-      clubId,
-      playerUserId,
-      50.00
-    ]);
-    
+    `,
+      [
+        "David",
+        "Williams",
+        "player@proclubdemo.com",
+        "2006-05-15",
+        "Forward",
+        clubId,
+        playerUserId,
+        50.0,
+      ],
+    );
+
     console.log(`   ✅ Player added to Pro Club Demo`);
 
     // Assign player to team if team exists
     if (teamId && playerProfileResult.rows.length > 0) {
-      await client.query(`
+      await client.query(
+        `
         INSERT INTO team_players (team_id, player_id)
         VALUES ($1, $2)
         ON CONFLICT (team_id, player_id) DO NOTHING
-      `, [teamId, playerProfileResult.rows[0].id]);
+      `,
+        [teamId, playerProfileResult.rows[0].id],
+      );
       console.log(`   ✅ Player assigned to team`);
     }
 
     console.log(`   📧 Email: player@proclubdemo.com`);
     console.log(`   🔑 Password: Player@123\n`);
 
-    await client.query('COMMIT');
-    
-    console.log('✨ Demo users seeded successfully!\n');
-    console.log('═══════════════════════════════════════════════════');
-    console.log('📋 DEMO LOGIN CREDENTIALS');
-    console.log('═══════════════════════════════════════════════════');
-    console.log('🔐 Super Admin (Platform):');
-    console.log('   Email: superadmin@clubhub.com');
-    console.log('   Pass:  Super@123\n');
-    console.log('🏢 Club Admin (Pro Club Demo):');
-    console.log('   Email: admin@proclubdemo.com');
-    console.log('   Pass:  Admin@123\n');
-    console.log('⚽ Coach (Pro Club Demo):');
-    console.log('   Email: coach@proclubdemo.com');
-    console.log('   Pass:  Coach@123\n');
-    console.log('👤 Player (Pro Club Demo):');
-    console.log('   Email: player@proclubdemo.com');
-    console.log('   Pass:  Player@123');
-    console.log('═══════════════════════════════════════════════════\n');
-    
+    await client.query("COMMIT");
+
+    console.log("✨ Demo users seeded successfully!\n");
+    console.log("═══════════════════════════════════════════════════");
+    console.log("📋 DEMO LOGIN CREDENTIALS");
+    console.log("═══════════════════════════════════════════════════");
+    console.log("🔐 Super Admin (Platform):");
+    console.log("   Email: superadmin@clubhub.com");
+    console.log("   Pass:  Super@123\n");
+    console.log("🏢 Club Admin (Pro Club Demo):");
+    console.log("   Email: admin@proclubdemo.com");
+    console.log("   Pass:  Admin@123\n");
+    console.log("⚽ Coach (Pro Club Demo):");
+    console.log("   Email: coach@proclubdemo.com");
+    console.log("   Pass:  Coach@123\n");
+    console.log("👤 Player (Pro Club Demo):");
+    console.log("   Email: player@proclubdemo.com");
+    console.log("   Pass:  Player@123");
+    console.log("═══════════════════════════════════════════════════\n");
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('❌ Error seeding demo users:', error);
+    await client.query("ROLLBACK");
+    console.error("❌ Error seeding demo users:", error);
     throw error;
   } finally {
     client.release();
@@ -275,11 +317,11 @@ async function seedDemoUsers() {
 if (require.main === module) {
   seedDemoUsers()
     .then(() => {
-      console.log('✅ Seed completed successfully!');
+      console.log("✅ Seed completed successfully!");
       process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Seed failed:', error);
+      console.error("❌ Seed failed:", error);
       process.exit(1);
     });
 }
