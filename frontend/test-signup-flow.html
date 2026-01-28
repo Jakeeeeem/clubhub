@@ -112,6 +112,20 @@
             }
         }
 
+        // JWT Decode Helper
+        function parseJwt(token) {
+            try {
+                var base64Url = token.split('.')[1];
+                var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return { error: "Failed to parse JWT: " + e.message };
+            }
+        }
+
         async function testSignup() {
             const rand = Math.floor(Math.random() * 10000);
             const testUser = {
@@ -123,23 +137,40 @@
                 accountType: 'adult'
             };
 
-            document.getElementById('signupResult').textContent = 'Testing...';
+            document.getElementById('signupResult').textContent = 'Testing Signup...';
 
             try {
-                // Use the real API service
+                // 1. Signup
                 const response = await apiService.makeRequest('/auth/register', {
                     method: 'POST',
                     body: JSON.stringify(testUser)
                 });
 
-                log('signupResult', response);
+                let debugInfo = { signupResponse: response };
 
                 if (response.token) {
                     createdUser = response.user;
                     pAuthToken = response.token;
-                    apiService.setToken(response.token); // Set for next steps
+                    apiService.setToken(response.token);
+
+                    // 2. Decode Token
+                    debugInfo.decodedToken = parseJwt(response.token);
+
+                    // 3. Test Context (The step failing for users)
+                    document.getElementById('signupResult').textContent += '\n\nTesting Context Endpoint...';
+                    try {
+                        const context = await apiService.makeRequest('/auth/context');
+                        debugInfo.contextResponse = context;
+                        debugInfo.contextStatus = "✅ Success";
+                    } catch (ctxErr) {
+                        debugInfo.contextStatus = "❌ Failed: " + ctxErr.message;
+                        debugInfo.contextError = ctxErr;
+                    }
 
                     document.getElementById('btnCreateOrg').disabled = false;
+                    log('signupResult', debugInfo, !debugInfo.contextResponse); // Error if context missing
+                } else {
+                    log('signupResult', response, true);
                 }
             } catch (error) {
                 log('signupResult', error.message || error, true);
