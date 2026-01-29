@@ -486,6 +486,26 @@ router.post(
                     `INSERT INTO teams (name, age_group, sport, club_id) VALUES ($1, $2, $3, $4) RETURNING id`,
                     ["Under 18s", "U18", "Football", clubId],
                   );
+                  const teamId = teamResult.rows[0].id;
+
+                  // Create Sample Event (Training)
+                  const eventDate = new Date();
+                  eventDate.setDate(eventDate.getDate() + 2); // 2 days from now
+
+                  await query(
+                    `INSERT INTO events (organization_id, title, description, start_time, end_time, location, type, status)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                    [
+                      clubId,
+                      "U18 Training Session",
+                      "Regular squad training focusing on possession.",
+                      eventDate.toISOString(),
+                      new Date(eventDate.getTime() + 7200000).toISOString(), // +2 hours
+                      "Main Pitch, London",
+                      "training",
+                      "scheduled",
+                    ],
+                  );
 
                   // Create 3 players
                   for (let i = 1; i <= 3; i++) {
