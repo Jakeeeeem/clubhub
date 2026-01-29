@@ -449,7 +449,11 @@ router.post(
           console.log(`✅ Demo login successful: ${normalizedEmail}`);
 
           // Auto-create demo organization and data for demo accounts
-          if (demoCredentials[normalizedEmail]) {
+          const demoKey = demoCredentials[normalizedEmail]
+            ? normalizedEmail
+            : null;
+
+          if (demoKey) {
             try {
               // ADMIN DEMO - Create full club setup (Existing or New Logic)
               if (
@@ -565,7 +569,8 @@ router.post(
 
               // PLAYER DEMO - Create player profile
               if (
-                normalizedEmail === "demo-player@clubhub.com" &&
+                (normalizedEmail === "demo-player@clubhub.com" ||
+                  normalizedEmail === "player@proclubdemo.com") &&
                 user.account_type === "adult"
               ) {
                 const existingProfile = await query(
