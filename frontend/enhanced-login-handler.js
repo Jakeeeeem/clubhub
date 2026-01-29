@@ -467,7 +467,11 @@ async function checkAuthStatus() {
       console.log("✅ User authenticated:", user.email);
 
       // If user data is missing account_type, fetch fresh data from API
-      if (!user.account_type && !user.userType) {
+      if (
+        !user.account_type &&
+        !user.userType &&
+        localStorage.getItem("isDemoSession") !== "true"
+      ) {
         console.log("🔄 Refreshing user data from API...");
         try {
           const freshUser = await apiService.getCurrentUser();

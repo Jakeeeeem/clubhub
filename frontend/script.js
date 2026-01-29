@@ -124,6 +124,13 @@ async function checkAuthState() {
   console.log("🎫 Token found:", !!token);
 
   if (token) {
+    // 🛡️ DEMO BYPASS: Skip API check if we are in an offline demo session
+    if (localStorage.getItem("isDemoSession") === "true") {
+      console.log("🛡️ Demo session detected - skipping API auth check");
+      checkAuthStateWithoutAPI();
+      return;
+    }
+
     try {
       // Try to get current user from API
       console.log("📡 Fetching current user from API...");

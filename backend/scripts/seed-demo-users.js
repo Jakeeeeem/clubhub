@@ -2,6 +2,7 @@ const path = require("path");
 // Ensure we're in the right directory for .env - load this BEFORE database config
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
+const bcrypt = require("bcryptjs");
 const { pool, connectDB } = require("../config/database");
 
 /**
@@ -16,13 +17,20 @@ async function seedDemoUsers() {
 
     await client.query("BEGIN");
 
-    // Pre-generated bcrypt hashes (cost factor 10)
+    // Demo Credentials
+    const demoUsers = {
+      super: { email: "superadmin@clubhub.com", pass: "Super@123" },
+      admin: { email: "demo-admin@clubhub.com", pass: "password123" },
+      coach: { email: "demo-coach@clubhub.com", pass: "password123" },
+      player: { email: "demo-player@clubhub.com", pass: "password123" },
+    };
+
+    // Generating hashes dynamically
     const hashes = {
-      superadmin:
-        "$2a$10$DbQgrru3aY4tgf9oy36P8.1W4X/HTmdIlR4xnI5p8s1K31CDE8hyq",
-      admin: "$2a$10$Qi3zNFyHjSzA2EbjV6BkVucpQNRc8xrWGIEbBCADxlGVNk/wC07Xm",
-      coach: "$2a$10$eGNpeXkxK0DiD3KKQYyp5OLDcw3bOh8XKnaogYzK/yxKqBQvqHrT.",
-      player: "$2a$10$0n3T7iOBDMMQOdvYelBPoeDmTaTKAkr/E4KVf0mz3HeCK5Wyb5jSi",
+      superadmin: await bcrypt.hash(demoUsers.super.pass, 10),
+      admin: await bcrypt.hash(demoUsers.admin.pass, 10),
+      coach: await bcrypt.hash(demoUsers.coach.pass, 10),
+      player: await bcrypt.hash(demoUsers.player.pass, 10),
     };
 
     // 1. SUPER ADMIN - Platform Administrator
@@ -68,7 +76,7 @@ async function seedDemoUsers() {
       RETURNING id, email
     `,
       [
-        "admin@proclubdemo.com",
+        "demo-admin@clubhub.com",
         hashes.admin,
         "John",
         "Smith",
@@ -98,7 +106,7 @@ async function seedDemoUsers() {
         "Football",
         "Premier demo football club showcasing ClubHub features",
         "London, UK",
-        "admin@proclubdemo.com",
+        "demo-admin@clubhub.com",
         "+44 20 1234 5678",
         adminUserId,
         25,
@@ -108,8 +116,8 @@ async function seedDemoUsers() {
     );
     const clubId = clubResult.rows[0].id;
     console.log(`   ✅ Club created: ${clubResult.rows[0].name}`);
-    console.log(`   📧 Email: admin@proclubdemo.com`);
-    console.log(`   🔑 Password: Admin@123\n`);
+    console.log(`   📧 Email: demo-admin@clubhub.com`);
+    console.log(`   🔑 Password: password123\n`);
 
     // Create a demo team
     const teamResult = await client.query(
@@ -151,7 +159,7 @@ async function seedDemoUsers() {
       RETURNING id, email
     `,
       [
-        "coach@proclubdemo.com",
+        "demo-coach@clubhub.com",
         hashes.coach,
         "Michael",
         "Thompson",
@@ -177,7 +185,7 @@ async function seedDemoUsers() {
         true,
         "Michael",
         "Thompson",
-        "coach@proclubdemo.com",
+        "demo-coach@clubhub.com",
       ],
     );
     console.log(`   ✅ Coach assigned to Pro Club Demo`);
@@ -195,8 +203,8 @@ async function seedDemoUsers() {
       console.log(`   ✅ Coach assigned to team`);
     }
 
-    console.log(`   📧 Email: coach@proclubdemo.com`);
-    console.log(`   🔑 Password: Coach@123\n`);
+    console.log(`   📧 Email: demo-coach@clubhub.com`);
+    console.log(`   🔑 Password: password123\n`);
 
     // 4. PLAYER - Member of the demo club
     console.log("👤 Creating Player...");
@@ -212,7 +220,7 @@ async function seedDemoUsers() {
       RETURNING id, email
     `,
       [
-        "player@proclubdemo.com",
+        "demo-player@clubhub.com",
         hashes.player,
         "David",
         "Williams",
@@ -257,7 +265,7 @@ async function seedDemoUsers() {
       [
         "David",
         "Williams",
-        "player@proclubdemo.com",
+        "demo-player@clubhub.com",
         "2006-05-15",
         "Forward",
         clubId,
@@ -281,8 +289,8 @@ async function seedDemoUsers() {
       console.log(`   ✅ Player assigned to team`);
     }
 
-    console.log(`   📧 Email: player@proclubdemo.com`);
-    console.log(`   🔑 Password: Player@123\n`);
+    console.log(`   📧 Email: demo-player@clubhub.com`);
+    console.log(`   🔑 Password: password123\n`);
 
     await client.query("COMMIT");
 
@@ -294,14 +302,14 @@ async function seedDemoUsers() {
     console.log("   Email: superadmin@clubhub.com");
     console.log("   Pass:  Super@123\n");
     console.log("🏢 Club Admin (Pro Club Demo):");
-    console.log("   Email: admin@proclubdemo.com");
-    console.log("   Pass:  Admin@123\n");
+    console.log("   Email: demo-admin@clubhub.com");
+    console.log("   Pass:  password123\n");
     console.log("⚽ Coach (Pro Club Demo):");
-    console.log("   Email: coach@proclubdemo.com");
-    console.log("   Pass:  Coach@123\n");
+    console.log("   Email: demo-coach@clubhub.com");
+    console.log("   Pass:  password123\n");
     console.log("👤 Player (Pro Club Demo):");
-    console.log("   Email: player@proclubdemo.com");
-    console.log("   Pass:  Player@123");
+    console.log("   Email: demo-player@clubhub.com");
+    console.log("   Pass:  password123");
     console.log("═══════════════════════════════════════════════════\n");
   } catch (error) {
     await client.query("ROLLBACK");

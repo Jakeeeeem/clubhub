@@ -148,11 +148,12 @@ class ApiService {
           },
         );
 
-        // Don't trigger global auth error for login/register attempts
+        // Don't trigger global auth error for login/register attempts or demo sessions
         if (
           (response.status === 401 || response.status === 403) &&
           !endpoint.includes("/auth/login") &&
-          !endpoint.includes("/auth/register")
+          !endpoint.includes("/auth/register") &&
+          localStorage.getItem("isDemoSession") !== "true"
         ) {
           console.warn(
             `Auth Error (${response.status}) on ${endpoint} - logging out`,
