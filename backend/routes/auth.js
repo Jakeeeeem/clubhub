@@ -498,17 +498,25 @@ router.post(
                   eventDate.setDate(eventDate.getDate() + 2); // 2 days from now
 
                   await query(
-                    `INSERT INTO events (organization_id, title, description, start_time, end_time, location, type, status)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                    `INSERT INTO events (
+                        title, description, event_type, event_date, event_time, 
+                        location, price, capacity, spots_available, club_id, 
+                        team_id, created_by, created_at, updated_at
+                      )
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())`,
                     [
-                      clubId,
                       "U18 Training Session",
                       "Regular squad training focusing on possession.",
-                      eventDate.toISOString(),
-                      new Date(eventDate.getTime() + 7200000).toISOString(), // +2 hours
-                      "Main Pitch, London",
                       "training",
-                      "scheduled",
+                      eventDate.toISOString().split("T")[0], // YYYY-MM-DD
+                      "18:00", // event_time
+                      "Main Pitch, London",
+                      0, // price
+                      22, // capacity
+                      22, // spots_available
+                      clubId,
+                      teamId,
+                      user.id,
                     ],
                   );
 
@@ -560,8 +568,17 @@ router.post(
 
                   if (existingStaff.rows.length === 0) {
                     await query(
-                      `INSERT INTO staff (user_id, club_id, role, is_active) VALUES ($1, $2, $3, $4)`,
-                      [user.id, clubId, "coach", true],
+                      `INSERT INTO staff (user_id, club_id, role, is_active, first_name, last_name, email) 
+                       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                      [
+                        user.id,
+                        clubId,
+                        "coach",
+                        true,
+                        user.first_name,
+                        user.last_name,
+                        user.email,
+                      ],
                     );
                     console.log(`✅ Coach added to demo club`);
                   }
