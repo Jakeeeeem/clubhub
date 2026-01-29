@@ -218,11 +218,12 @@ class ApiService {
           return this.getAdminDashboardFallback().players;
         }
         if (endpoint.includes("/payments/stripe/connect/status")) {
+          // Simulate "Real" Not Connected State for Demo
           return {
-            connected: true,
-            charges_enabled: true,
-            details_submitted: true,
-            stripeAccountId: "acct_demo",
+            connected: false,
+            charges_enabled: false,
+            details_submitted: false,
+            stripeAccountId: null,
           };
         }
         if (endpoint.includes("/platform-admin/stats")) {
