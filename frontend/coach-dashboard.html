@@ -225,13 +225,22 @@
             if (toggle) {
                 toggle.addEventListener('change', (e) => {
                     if (e.target.checked) {
+                        console.log('🔄 Coach → Player toggle activated');
+                        console.log('Before role change:', AppState.currentUser?.role);
+
+                        // Switch to Player mode
+                        if (AppState.currentUser) {
+                            AppState.currentUser.role = 'player';
+                            console.log('After role change:', AppState.currentUser.role);
+                            console.log('User type:', AppState.userType);
+                        }
+
+                        // Redirect will happen immediately, no need to restore role
                         if (typeof redirectToDashboard === 'function') {
-                            // Target player mode
-                            const originalRole = AppState.currentUser?.role;
-                            if (AppState.currentUser) AppState.currentUser.role = 'player';
+                            console.log('Calling redirectToDashboard()...');
                             redirectToDashboard();
-                            if (AppState.currentUser) AppState.currentUser.role = originalRole;
                         } else {
+                            console.log('redirectToDashboard not found, using direct navigation');
                             window.location.href = 'player-dashboard.html';
                         }
                     }

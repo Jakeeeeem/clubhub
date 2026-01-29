@@ -914,16 +914,24 @@
 
         toggle.addEventListener('change', (e) => {
           if (!e.target.checked) {
-            if (typeof redirectToDashboard === 'function') {
-              // Force AppState to non-player so we redirect out of player dashboard
-              if (AppState.currentUser) {
-                // If original role was player, fallback to admin for the toggle
-                if (AppState.currentUser.role === 'player' && AppState.userType === 'organization') {
-                  AppState.currentUser.role = 'admin';
-                }
+            console.log('🔄 Player → Club toggle activated');
+            console.log('Before role change:', AppState.currentUser?.role);
+
+            // Force AppState to non-player so we redirect out of player dashboard
+            if (AppState.currentUser) {
+              // If original role was player, fallback to admin for the toggle
+              if (AppState.currentUser.role === 'player' && AppState.userType === 'organization') {
+                AppState.currentUser.role = 'admin';
+                console.log('After role change:', AppState.currentUser.role);
+                console.log('User type:', AppState.userType);
               }
+            }
+
+            if (typeof redirectToDashboard === 'function') {
+              console.log('Calling redirectToDashboard()...');
               redirectToDashboard();
             } else {
+              console.log('redirectToDashboard not found, using direct navigation');
               window.location.href = 'admin-dashboard.html';
             }
           }
