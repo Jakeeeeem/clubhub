@@ -55,7 +55,28 @@
             color: white !important;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+
+        /* Feature Gating - Hidden by default unless in Dev/Local */
+        .closed-feature {
+            display: none !important;
+        }
     </style>
+    <script>
+        // Immediate Environment Check to prevent flash of content
+        (function () {
+            const hostname = window.location.hostname;
+            const isDev = hostname === 'localhost' ||
+                hostname === '127.0.0.1' ||
+                hostname.startsWith('dev.') ||
+                hostname.includes('-dev') ||
+                hostname.includes('clubhubsports-dev');
+
+            if (isDev) {
+                console.log('🚧 ClubHub Dev Mode: Enabling closed features (Polls, Venues)');
+                document.write('<style>.closed-feature { display: block !important; }</style>');
+            }
+        })();
+    </script>
     <script src="api-service.js"></script>
     <script src="workspace-manager.js"></script>
 </head>
@@ -137,8 +158,8 @@
                         <button onclick="showSection('tournaments')">🏆 Tournaments</button>
                         <div class="dropdown-divider"></div>
                         <button onclick="showSection('training-manager')">🎯 Training Manager</button>
-                        <button onclick="showSection('venue-booking')">🏟️ Venue Booking</button>
-                        <button onclick="showSection('league-management')">🥇 Leagues</button>
+                        <button onclick="showSection('venue-booking')" class="closed-feature">🏟️ Venue Booking</button>
+                        <button onclick="showSection('league-management')" class="closed-feature">🥇 Leagues</button>
                     </div>
                 </div>
 
@@ -161,7 +182,8 @@
                     <div class="nav-dropdown-menu">
                         <button onclick="showSection('listings')">📋 Recruiting Listings</button>
                         <button onclick="showSection('marketing')">📢 Marketing Hub</button>
-                        <button onclick="showSection('polls-section')">🗳️ Polls & Voting</button>
+                        <button onclick="showSection('polls-section')" class="closed-feature">🗳️ Polls &
+                            Voting</button>
                         <div class="dropdown-divider"></div>
                         <button onclick="showSection('email-campaigns')">📧 Email Campaigns</button>
                     </div>
