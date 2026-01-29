@@ -23,20 +23,34 @@ class ApiService {
     if (localStorage.getItem("isDemoSession") === "true") {
       console.log("🛡️ Returning mock context for demo session");
       const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+
+      // In demo mode, we should simulate the role change based on the organization the user is switching to.
+      // If the user has activePlayerId, they are definitely a player in this context.
+      const role = user.activePlayerId ? "player" : user.role || "admin";
+
       this.context = {
         success: true,
         user: user,
         currentOrganization: {
           id: user.clubId || "demo-club-id",
-          name: "Pro Club Demo",
-          role: user.role || "admin",
-          user_role: user.role || "admin",
+          name: user.activePlayerId
+            ? "Elite Academy (Player)"
+            : "Pro Club Demo",
+          role: role,
+          user_role: role,
         },
         organizations: [
           {
-            id: user.clubId || "demo-club-id",
+            id: "demo-club-id",
             name: "Pro Club Demo",
-            role: user.role || "admin",
+            role: "admin",
+          },
+          {
+            id: "demo-player-org",
+            name: "Elite Academy (Player)",
+            role: "player",
+            player_id: "demo-player-id",
+            player_name: "Jordan Smith",
           },
         ],
       };
@@ -149,21 +163,30 @@ class ApiService {
         // Return mock data for specific endpoints during demo session
         if (endpoint.includes("/auth/context")) {
           const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+          const role = user.activePlayerId ? "player" : user.role || "admin";
           return {
             success: true,
             user: user,
             currentOrganization: {
               id: user.clubId || "demo-club-id",
-              name: "Pro Club Demo",
-              role: user.role || "admin",
-              user_role: user.role || "admin",
+              name: user.activePlayerId
+                ? "Elite Academy (Player)"
+                : "Pro Club Demo",
+              role: role,
+              user_role: role,
             },
             organizations: [
               {
-                id: user.clubId || "demo-club-id",
+                id: "demo-club-id",
                 name: "Pro Club Demo",
-                role: user.role || "admin",
-                user_role: user.role || "admin",
+                role: "admin",
+              },
+              {
+                id: "demo-player-org",
+                name: "Elite Academy (Player)",
+                role: "player",
+                player_id: "demo-player-id",
+                player_name: "Jordan Smith",
               },
             ],
           };
@@ -199,6 +222,191 @@ class ApiService {
             connected: true,
             charges_enabled: true,
             details_submitted: true,
+            stripeAccountId: "acct_demo",
+          };
+        }
+        if (endpoint.includes("/platform-admin/stats")) {
+          return {
+            success: true,
+            stats: {
+              total_users: 1250,
+              total_organizations: 42,
+              active_plans: 38,
+              pending_invitations: 15,
+            },
+            recentSignups: 85,
+          };
+        }
+        if (endpoint.includes("/platform-admin/organizations")) {
+          return {
+            success: true,
+            organizations: [
+              {
+                id: "demo-club-id",
+                name: "Pro Club Demo",
+                sport: "Football",
+                owner_email: "demo-admin@clubhub.com",
+                member_count: 142,
+                created_at: "2024-01-01T00:00:00Z",
+              },
+              {
+                id: "club-2",
+                name: "Elite Academy",
+                sport: "Basketball",
+                owner_email: "owner2@example.com",
+                member_count: 85,
+                created_at: "2024-01-15T00:00:00Z",
+              },
+            ],
+            total: 2,
+            page: 1,
+          };
+        }
+        if (endpoint.includes("/platform-admin/users")) {
+          return {
+            success: true,
+            users: [
+              {
+                id: "u1",
+                first_name: "John",
+                last_name: "Smith",
+                email: "demo-admin@clubhub.com",
+                account_type: "organization",
+                org_count: 1,
+                is_platform_admin: false,
+                created_at: "2024-01-01T00:00:00Z",
+              },
+              {
+                id: "u2",
+                first_name: "Michael",
+                last_name: "Thompson",
+                email: "demo-coach@clubhub.com",
+                account_type: "organization",
+                org_count: 1,
+                is_platform_admin: false,
+                created_at: "2024-01-02T00:00:00Z",
+              },
+            ],
+            total: 2,
+            page: 1,
+          };
+        }
+        if (endpoint.includes("/platform-admin/activity")) {
+          return {
+            success: true,
+            activity: [
+              {
+                type: "organization_created",
+                title: "New Organization: Pro Club Demo",
+                user_email: "demo-admin@clubhub.com",
+                timestamp: "2024-01-01T10:00:00Z",
+              },
+              {
+                type: "user_registered",
+                title: "New User Registered: Michael Thompson",
+                user_email: "demo-coach@clubhub.com",
+                timestamp: "2024-01-02T11:00:00Z",
+              },
+            ],
+          };
+        }
+        if (endpoint.includes("/auth/profile") && options.method === "PUT") {
+          return {
+            success: true,
+            user: {
+              ...JSON.parse(localStorage.getItem("currentUser") || "{}"),
+              ...JSON.parse(options.body || "{}"),
+            },
+            message: "Profile updated successfully (Demo Mode)",
+          };
+        }
+        if (endpoint.includes("/players/dashboard")) {
+          return {
+            success: true,
+            player: {
+              id: "demo-player-id",
+              first_name: "Jordan",
+              last_name: "Smith",
+              email: "demo-player@clubhub.com",
+              position: "Midfielder",
+              date_of_birth: "2010-05-15",
+            },
+            clubs: [
+              {
+                id: "demo-club-id",
+                name: "Pro Club Demo",
+                sport: "Football",
+                location: "London",
+              },
+            ],
+            teams: [
+              {
+                id: "t1",
+                name: "Under 15s Elite",
+                coach: "Michael Thompson",
+              },
+            ],
+            events: [
+              {
+                id: "e1",
+                title: "Weekly Training",
+                event_date: new Date(Date.now() + 86400000).toISOString(),
+                event_time: "18:00",
+                price: 15,
+              },
+              {
+                id: "e2",
+                title: "Weekend Match v Tigers",
+                event_date: new Date(Date.now() + 172800000).toISOString(),
+                event_time: "10:30",
+                price: 0,
+              },
+            ],
+            payments: [],
+            attendance: 92,
+          };
+        }
+        if (endpoint.includes("/players/family")) {
+          return [
+            {
+              id: "child-1",
+              first_name: "Leo",
+              last_name: "Smith",
+              date_of_birth: "2012-08-20",
+              sport: "Football",
+              club_id: "demo-club-id",
+              club_name: "Pro Club Demo",
+            },
+          ];
+        }
+        if (endpoint.includes("/events/bookings/my-bookings")) {
+          return [
+            {
+              id: "b1",
+              title: "Last Week Training",
+              event_date: new Date(Date.now() - 86400000 * 3).toISOString(),
+              booking_status: "confirmed",
+              event_type: "training",
+            },
+          ];
+        }
+        if (endpoint.includes("/notifications")) {
+          return [
+            {
+              id: "n1",
+              title: "Team Selection",
+              message: "You have been selected for the upcoming match!",
+              is_read: false,
+              created_at: new Date().toISOString(),
+            },
+          ];
+        }
+        if (endpoint.includes("/players/me/plan")) {
+          return {
+            id: "p1",
+            name: "Academy Plus",
+            amount: 4500,
+            interval: "month",
           };
         }
         if (endpoint.includes("/api/health")) {
@@ -1211,6 +1419,16 @@ class ApiService {
     });
   }
 
+  async getPlayerDashboardData(playerId = null) {
+    if (localStorage.getItem("isDemoSession") === "true") {
+      return await this.makeRequest("/players/dashboard");
+    }
+    const endpoint = playerId
+      ? `/players/${playerId}/dashboard`
+      : "/players/dashboard";
+    return await this.makeRequest(endpoint);
+  }
+
   async deletePlayer(id) {
     return await this.makeRequest(`/players/${id}`, {
       method: "DELETE",
@@ -2062,13 +2280,17 @@ class ApiService {
           id: "t1",
           name: "Under 18s Elite",
           members: 22,
-          coach: "Jürgen Klopp",
+          coach: "Michael Thompson",
+          coachId: "demo-coach-id",
+          players: ["demo-player-id", "p2"],
         },
         {
           id: "t2",
           name: "Under 16s Development",
           members: 18,
-          coach: "Pep Guardiola",
+          coach: "Michael Thompson",
+          coachId: "demo-coach-id",
+          players: ["p3"],
         },
       ],
       payments: [

@@ -99,6 +99,7 @@
                 <span class="mode-label" id="player-label">Player</span>
             </div>
 
+            <!-- Mode Toggle -->
             <div class="user-info">
                 <!-- Organization Switcher -->
                 <div id="org-switcher-container"></div>
@@ -8522,7 +8523,15 @@
                 if (toggle) {
                     toggle.addEventListener('change', (e) => {
                         if (e.target.checked) {
-                            window.location.href = 'player-dashboard.html';
+                            if (typeof redirectToDashboard === 'function') {
+                                // Simulate player role for redirect logic
+                                const originalRole = AppState.currentUser?.role;
+                                if (AppState.currentUser) AppState.currentUser.role = 'player';
+                                redirectToDashboard();
+                                if (AppState.currentUser) AppState.currentUser.role = originalRole;
+                            } else {
+                                window.location.href = 'player-dashboard.html';
+                            }
                         }
                     });
                 }

@@ -909,9 +909,18 @@
     document.addEventListener('DOMContentLoaded', () => {
       const toggle = document.getElementById('mode-toggle');
       if (toggle) {
+        // Player dashboard should have toggle initially checked (Player mode)
+        toggle.checked = true;
+
         toggle.addEventListener('change', (e) => {
           if (!e.target.checked) {
-            window.location.href = 'admin-dashboard.html';
+            if (typeof redirectToDashboard === 'function') {
+              // The user wants "Club" mode. The redirectToDashboard logic will 
+              // find their coach/admin role and send them to the right place.
+              redirectToDashboard();
+            } else {
+              window.location.href = 'admin-dashboard.html';
+            }
           }
         });
       }

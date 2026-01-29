@@ -19,6 +19,16 @@
                 <span class="logo-text neon-text">ClubHub</span>
             </div>
 
+            <!-- Mode Toggle -->
+            <div class="mode-toggle-container">
+                <span class="mode-label active" id="club-label">Club</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="mode-toggle" />
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="mode-label" id="player-label">Player</span>
+            </div>
+
             <div id="org-switcher-container"></div>
 
             <div class="user-info">
@@ -29,20 +39,69 @@
         </nav>
     </header>
 
-    <div class="dashboard-container">
-        <aside class="sidebar">
-            <div class="dashboard-nav">
-                <button class="active" onclick="showCoachSection('overview')">📊 Overview</button>
-                <button onclick="showCoachSection('teams')">📋 My Teams</button>
-                <button onclick="showCoachSection('players')">👥 My Players</button>
-                <button onclick="showCoachSection('events')">📅 Schedule</button>
-                <button onclick="showCoachSection('tactical-board')">📝 Tactics</button>
-                <button onclick="showCoachSection('profile')">👤 My Profile</button>
-                <button onclick="window.location.href='coach-settings.html'">⚙️ Settings</button>
+    <main class="main">
+        <div class="dashboard container dashboard-container">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="neon-text display-org-name">Coach Dashboard</h1>
+                    <p style="color: var(--text-muted);">Manage your teams, sessions and players</p>
+                </div>
             </div>
-        </aside>
 
-        <main class="dashboard-content">
+            <!-- Grouped Dashboard Navigation -->
+            <div class="dashboard-nav-grouped">
+                <button class="nav-item active" onclick="showCoachSection('overview')">
+                    📊 Overview
+                </button>
+
+                <!-- Team Management Group -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        📋 Team Management ▾
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showCoachSection('teams')">🛡️ My Teams</button>
+                        <button onclick="showCoachSection('players')">👥 My Players</button>
+                        <button onclick="showCoachSection('tactical-board')">📝 Tactics Board</button>
+                    </div>
+                </div>
+
+                <!-- Schedule Group -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        📅 Schedule & Events ▾
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showCoachSection('events')">🗓️ Calendar</button>
+                        <button onclick="showCoachSection('event-finder')">🔍 Find Events</button>
+                    </div>
+                </div>
+
+                <!-- Profile Group -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        👤 Profile ▾
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showCoachSection('profile')">My Profile</button>
+                        <button onclick="window.location.href='coach-settings.html'">Settings</button>
+                    </div>
+                </div>
+
+                <!-- Shop Group -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        🛒 Shop ▾
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showCoachSection('item-shop')">Equipment Store</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Dashboard Sections -->
+
             <!-- Overview Section -->
             <div id="coach-overview" class="dashboard-section active">
                 <div class="stats-grid"
@@ -131,8 +190,8 @@
                 </div>
             </div>
 
-        </main>
-    </div>
+        </div>
+    </main>
 
     <!-- Core Dependencies -->
     <script src="api-service.js"></script>
@@ -160,6 +219,26 @@
             localStorage.clear();
             window.location.href = 'index.html';
         }
+
+        // Mode Toggle Handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggle = document.getElementById('mode-toggle');
+            if (toggle) {
+                toggle.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        if (typeof redirectToDashboard === 'function') {
+                            // Target player mode
+                            const originalRole = AppState.currentUser?.role;
+                            if (AppState.currentUser) AppState.currentUser.role = 'player';
+                            redirectToDashboard();
+                            if (AppState.currentUser) AppState.currentUser.role = originalRole;
+                        } else {
+                            window.location.href = 'player-dashboard.html';
+                        }
+                    }
+                });
+            }
+        });
     </script>
 </body>
 

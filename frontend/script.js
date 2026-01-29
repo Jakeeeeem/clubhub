@@ -731,22 +731,26 @@ function redirectToDashboard() {
     userRole,
   );
 
-  // Priority 1: Global Account Type (organization account = admin dashboard)
-  if (userType === "organization") {
-    // Organization accounts should go to admin dashboard
-    // They can switch to player view if they have that role in another org
-    window.location.href = "admin-dashboard.html";
-    return;
-  }
-
-  // Priority 2: Contextual Role for non-organization accounts
+  // Priority 1: Contextual Player Role (allows Org accounts to view as Player)
   if (userRole === "player" || userRole === "parent") {
     window.location.href = "player-dashboard.html";
     return;
   }
 
+  // Priority 2: Global Account Type (organization account = admin dashboard)
+  if (userType === "organization") {
+    // Only redirect to admin if not already handled above
+    window.location.href = "admin-dashboard.html";
+    return;
+  }
+
   if (["coach", "assistant-coach", "coaching-supervisor"].includes(userRole)) {
-    window.location.href = "admin-dashboard.html"; // Coaches use admin dashboard
+    window.location.href = "coach-dashboard.html";
+    return;
+  }
+
+  if (userRole === "superadmin") {
+    window.location.href = "super-admin-dashboard.html";
     return;
   }
 
