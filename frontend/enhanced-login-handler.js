@@ -299,6 +299,26 @@ async function determineUserRedirect(user) {
     user,
   });
 
+  // 0. EXPLICIT DEMO REDIRECTS - Force correct dashboard for demo accounts
+  if (
+    userEmail === "demo-admin@clubhub.com" ||
+    userEmail === "admin@proclubdemo.com"
+  ) {
+    console.log("✅ Demo Admin detected → admin-dashboard.html");
+    return "admin-dashboard.html";
+  }
+  if (
+    userEmail === "demo-coach@clubhub.com" ||
+    userEmail === "coach@proclubdemo.com"
+  ) {
+    console.log("✅ Demo Coach detected → coach-dashboard.html");
+    return "coach-dashboard.html";
+  }
+  if (userEmail === "superadmin@clubhub.com") {
+    console.log("✅ Super Admin detected → super-admin-dashboard.html");
+    return "super-admin-dashboard.html";
+  }
+
   // 1. Platform Admin always goes to super admin
   if (user.is_platform_admin || user.isPlatformAdmin) {
     console.log("✅ Platform admin detected → super-admin-dashboard.html");
