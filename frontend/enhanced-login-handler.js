@@ -116,7 +116,14 @@ async function handleLogin(e) {
     }
   } catch (error) {
     console.error("❌ Login failed:", error);
-    showNotification(error.message || "Login failed", "error");
+    // Enhanced error reporting for frontend
+    let errorMessage = error.message || "Login failed";
+    if (error.response && error.response.data && error.response.data.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response && error.response.status) {
+      errorMessage = `Login failed: Server responded with status ${error.response.status}`;
+    }
+    showNotification(errorMessage, "error");
   } finally {
     showLoading(false);
   }
@@ -554,11 +561,11 @@ function updateNavigation(isLoggedIn, user = null) {
 }
 
 // Enhanced initialization with invite support
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   console.log("🚀 Enhanced login handler loading...");
 
   // Check authentication status
-  const isLoggedIn = checkAuthStatus();
+  const isLoggedIn = await checkAuthStatus();
 
   // Handle invite redirect if on index page
   const urlParams = new URLSearchParams(window.location.search);

@@ -669,13 +669,15 @@ router.post(
           firstName: user.first_name,
           lastName: user.last_name,
           userType: user.account_type,
+          isPlatformAdmin: user.is_platform_admin || false,
         },
       });
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({
         error: "Login failed",
-        message: "An error occurred while logging in",
+        message: error.message,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       });
     }
   },
