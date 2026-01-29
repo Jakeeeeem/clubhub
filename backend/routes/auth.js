@@ -481,7 +481,7 @@ router.post(
                       "London, UK",
                       user.id,
                       24,
-                      JSON.stringify(["academy", "competitive"]),
+                      ["academy", "competitive"],
                     ],
                   );
                   const clubId = clubResult.rows[0].id;
