@@ -139,9 +139,14 @@ async function checkAuthState() {
         AppState.context = context;
 
         if (context?.currentOrganization) {
-          AppState.currentUser.role =
-            context.currentOrganization.role ||
-            context.currentOrganization.user_role;
+          // If we have forcibly set a role (e.g. via toggle), prefer that over context
+          // This allows transient switches between Admin <-> Player without API override
+          if (!AppState.currentUser.role) {
+            AppState.currentUser.role =
+              context.currentOrganization.role ||
+              context.currentOrganization.user_role;
+          }
+
           AppState.currentUser.currentOrgId = context.currentOrganization.id;
         }
 

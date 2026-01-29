@@ -915,8 +915,13 @@
         toggle.addEventListener('change', (e) => {
           if (!e.target.checked) {
             if (typeof redirectToDashboard === 'function') {
-              // The user wants "Club" mode. The redirectToDashboard logic will 
-              // find their coach/admin role and send them to the right place.
+              // Force AppState to non-player so we redirect out of player dashboard
+              if (AppState.currentUser) {
+                // If original role was player, fallback to admin for the toggle
+                if (AppState.currentUser.role === 'player' && AppState.userType === 'organization') {
+                  AppState.currentUser.role = 'admin';
+                }
+              }
               redirectToDashboard();
             } else {
               window.location.href = 'admin-dashboard.html';
