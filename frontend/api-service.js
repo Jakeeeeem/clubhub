@@ -18,6 +18,31 @@ class ApiService {
 
   async getContext() {
     if (this.context) return this.context;
+
+    // 🛡️ Demo session bypass
+    if (localStorage.getItem("isDemoSession") === "true") {
+      console.log("🛡️ Returning mock context for demo session");
+      const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      this.context = {
+        success: true,
+        user: user,
+        currentOrganization: {
+          id: user.clubId || "demo-club-id",
+          name: "Pro Club Demo",
+          role: user.role || "admin",
+          user_role: user.role || "admin",
+        },
+        organizations: [
+          {
+            id: user.clubId || "demo-club-id",
+            name: "Pro Club Demo",
+            role: user.role || "admin",
+          },
+        ],
+      };
+      return this.context;
+    }
+
     try {
       this.context = await this.makeRequest("/auth/context");
       return this.context;
@@ -116,6 +141,76 @@ class ApiService {
     };
 
     try {
+      if (localStorage.getItem("isDemoSession") === "true") {
+        console.log(
+          `🛡️ Demo session - Intercepting API Request: ${options.method || "GET"} ${url}`,
+        );
+
+        // Return mock data for specific endpoints during demo session
+        if (endpoint.includes("/auth/context")) {
+          const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+          return {
+            success: true,
+            user: user,
+            currentOrganization: {
+              id: user.clubId || "demo-club-id",
+              name: "Pro Club Demo",
+              role: user.role || "admin",
+              user_role: user.role || "admin",
+            },
+            organizations: [
+              {
+                id: user.clubId || "demo-club-id",
+                name: "Pro Club Demo",
+                role: user.role || "admin",
+                user_role: user.role || "admin",
+              },
+            ],
+          };
+        }
+        if (endpoint.includes("/auth/switch-organization")) {
+          console.log("🛡️ Intercepting Organization Switch for Demo");
+          const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+          const body = JSON.parse(options.body || "{}");
+          const newOrgId = body.organizationId || "demo-club-id";
+
+          // Update user object with new club ID
+          user.clubId = newOrgId;
+          user.currentOrganizationId = newOrgId;
+          localStorage.setItem("currentUser", JSON.stringify(user));
+
+          return {
+            success: true,
+            message: "Organization switched successfully (Demo Mode)",
+            organizationId: newOrgId,
+          };
+        }
+        if (endpoint.includes("/dashboard/admin")) {
+          return this.getAdminDashboardFallback();
+        }
+        if (endpoint.includes("/payments/plans")) {
+          return []; // Return empty plans for demo
+        }
+        if (endpoint.includes("/players")) {
+          return this.getAdminDashboardFallback().players;
+        }
+        if (endpoint.includes("/payments/stripe/connect/status")) {
+          return {
+            connected: true,
+            charges_enabled: true,
+            details_submitted: true,
+          };
+        }
+        if (endpoint.includes("/api/health")) {
+          return { status: "healthy", service: "ClubHub API (Demo Mode)" };
+        }
+
+        // For other requests in demo mode, optionally skip or return fallback
+        console.warn(
+          `🛡️ Demo mode: No mock data for ${endpoint}, allowing real request but it might 403`,
+        );
+      }
+
       console.log(`🌐 API Request: ${options.method || "GET"} ${url}`);
 
       const response = await fetch(url, config);
@@ -684,53 +779,29 @@ class ApiService {
 
   async login(email, password, demoBypass = false) {
     localStorage.removeItem("isDemoSession");
-    // 🚀 PURE FRONTEND BYPASS: Ensures demos work even if the backend is down or not updated
+    // 🚀 PURE FRONTEND BYPASS
     const normalizedEmail = (email || "").toLowerCase().trim();
     const demoUsers = {
-      "admin@clubhub.com": {
-        id: "demo-admin-id",
-        first_name: "Demo",
-        last_name: "Admin",
-        account_type: "admin",
-        userType: "admin",
-        role: "admin",
-      },
-      "coach@clubhub.com": {
-        id: "demo-coach-id",
-        first_name: "Michael",
-        last_name: "Coach",
-        account_type: "coach",
-        userType: "coach",
-        role: "coach",
-      },
-      "player@clubhub.com": {
-        id: "demo-player-id",
-        first_name: "John",
-        last_name: "Player",
-        account_type: "player",
-        userType: "player",
-        role: "player",
-      },
-      // Added for Test Portal Compatibility
       "superadmin@clubhub.com": {
-        id: "demo-superadmin-id",
+        id: "demo-super-admin-id",
         first_name: "Super",
         last_name: "Admin",
-        account_type: "admin",
+        account_type: "organization",
         is_platform_admin: true,
         userType: "admin",
         role: "superadmin",
+        clubId: "demo-club-id",
       },
-      "admin@proclubdemo.com": {
+      "demo-admin@clubhub.com": {
         id: "demo-pro-admin-id",
-        first_name: "Pro",
-        last_name: "Club Admin",
+        first_name: "John",
+        last_name: "Smith",
         account_type: "organization",
         userType: "organization",
         role: "admin",
         clubId: "demo-club-id",
       },
-      "coach@proclubdemo.com": {
+      "demo-coach@clubhub.com": {
         id: "demo-pro-coach-id",
         first_name: "Michael",
         last_name: "Thompson",
@@ -739,10 +810,37 @@ class ApiService {
         role: "coach",
         clubId: "demo-club-id",
       },
-      "player@proclubdemo.com": {
+      "demo-player@clubhub.com": {
         id: "demo-pro-player-id",
         first_name: "David",
         last_name: "Williams",
+        account_type: "player",
+        userType: "player",
+        role: "player",
+        clubId: "demo-club-id",
+      },
+      "admin@clubhub.com": {
+        id: "demo-admin-id",
+        first_name: "Demo",
+        last_name: "Admin",
+        account_type: "admin",
+        userType: "admin",
+        role: "admin",
+        clubId: "demo-club-id",
+      },
+      "coach@clubhub.com": {
+        id: "demo-coach-id",
+        first_name: "Michael",
+        last_name: "Coach",
+        account_type: "coach",
+        userType: "coach",
+        role: "coach",
+        clubId: "demo-club-id",
+      },
+      "player@clubhub.com": {
+        id: "demo-player-id",
+        first_name: "John",
+        last_name: "Player",
         account_type: "player",
         userType: "player",
         role: "player",
@@ -765,6 +863,8 @@ class ApiService {
           account_type: mockUser.account_type,
           userType: mockUser.userType,
           role: mockUser.role,
+          clubId: mockUser.clubId,
+          currentOrganizationId: mockUser.clubId,
         },
       };
 
@@ -1871,80 +1971,58 @@ class ApiService {
     return {
       clubs: [
         {
-          id: "demo-club-1",
-          name: "Elite Performance Academy",
+          id: "demo-club-id",
+          name: "Pro Club Demo",
           location: "London, UK",
           sport: "Football",
-          member_count: 124,
+          member_count: 142,
           is_primary: true,
           logo_url: "images/logo.png",
-          description:
-            "The leading academy for professional football development.",
-        },
-        {
-          id: "dummy-1",
-          name: "Elite Performance Club",
-          sport: "football",
-          location: "London",
-          description: "A premier test club for testing search functionality.",
-          philosophy: "Excellence in every move.",
-        },
-        {
-          id: "dummy-2",
-          name: "The Tennis Club Specialists",
-          sport: "tennis",
-          location: "Manchester",
-          description: "Test club focused on tennis activities and events.",
-          philosophy: "Play with passion.",
-        },
-        {
-          id: "dummy-3",
-          name: "Global Sport Club United",
-          sport: "basketball",
-          location: "Birmingham",
-          description: "Multi-sport club for all ages.",
-          philosophy: "Unity through sport.",
+          description: "Premier demo football club showcasing ClubHub features",
         },
       ],
       players: [
         {
-          id: "p1",
-          first_name: "Harry",
-          last_name: "Kane",
-          email: "harry@example.com",
+          id: "demo-player-id",
+          first_name: "David",
+          last_name: "Williams",
+          email: "demo-player@clubhub.com",
           position: "Forward",
           payment_status: "paid",
           attendance_rate: 95,
-          date_of_birth: "1993-07-28",
+          date_of_birth: "2006-05-15",
+          monthly_fee: 50.0,
         },
         {
           id: "p2",
-          first_name: "Marcus",
-          last_name: "Rashford",
-          email: "marcus@example.com",
-          position: "Forward",
+          first_name: "Jordan",
+          last_name: "Smith",
+          email: "jordan@example.com",
+          position: "Midfielder",
           payment_status: "pending",
           attendance_rate: 88,
-          date_of_birth: "1997-10-31",
+          date_of_birth: "2007-08-22",
+          monthly_fee: 50.0,
         },
         {
           id: "p3",
-          first_name: "Bukayo",
-          last_name: "Saka",
-          email: "saka@example.com",
-          position: "Winger",
-          payment_status: "overdue",
-          attendance_rate: 92,
-          date_of_birth: "2001-09-05",
+          first_name: "Leo",
+          last_name: "Messi",
+          email: "leo@example.com",
+          position: "Forward",
+          payment_status: "paid",
+          attendance_rate: 100,
+          date_of_birth: "1987-06-24",
+          monthly_fee: 500.0,
         },
       ],
       staff: [
         {
-          id: "s1",
-          first_name: "Jürgen",
-          last_name: "Klopp",
-          role: "Head Coach",
-          email: "klopp@example.com",
+          id: "demo-coach-id",
+          first_name: "Michael",
+          last_name: "Thompson",
+          role: "coach",
+          email: "demo-coach@clubhub.com",
         },
         {
           id: "s2",
@@ -1952,6 +2030,13 @@ class ApiService {
           last_name: "Guardiola",
           role: "Technical Director",
           email: "pep@example.com",
+        },
+        {
+          id: "s3",
+          first_name: "Jürgen",
+          last_name: "Klopp",
+          role: "Lead Coach",
+          email: "klopp@example.com",
         },
       ],
       events: [
@@ -1961,6 +2046,7 @@ class ApiService {
           date: new Date(Date.now() + 86400000 * 7).toISOString(),
           location: "Main Stadium",
           type: "camp",
+          status: "upcoming",
         },
         {
           id: "e2",
@@ -1968,6 +2054,7 @@ class ApiService {
           date: new Date(Date.now() + 86400000 * 2).toISOString(),
           location: "Field A",
           type: "training",
+          status: "upcoming",
         },
       ],
       teams: [
@@ -1991,6 +2078,7 @@ class ApiService {
           status: "paid",
           description: "Monthly Subscription",
           date: new Date().toISOString(),
+          player_name: "David Williams",
         },
         {
           id: "pay2",
@@ -1998,6 +2086,7 @@ class ApiService {
           status: "pending",
           description: "Tournament Fee",
           date: new Date().toISOString(),
+          player_name: "Jordan Smith",
         },
       ],
       products: [
@@ -2037,11 +2126,11 @@ class ApiService {
       ],
       statistics: {
         total_clubs: 1,
-        total_players: 124,
-        total_staff: 8,
+        total_players: 142,
+        total_staff: 12,
         total_events: 5,
-        total_teams: 4,
-        monthly_revenue: 4250,
+        total_teams: 6,
+        monthly_revenue: 7100,
       },
     };
   }

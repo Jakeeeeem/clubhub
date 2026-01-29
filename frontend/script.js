@@ -126,7 +126,29 @@ async function checkAuthState() {
   if (token) {
     // 🛡️ DEMO BYPASS: Skip API check if we are in an offline demo session
     if (localStorage.getItem("isDemoSession") === "true") {
-      console.log("🛡️ Demo session detected - skipping API auth check");
+      console.log("🛡️ Demo session detected - initializing mock state");
+      try {
+        const dummyUser = JSON.parse(
+          localStorage.getItem("currentUser") || "{}",
+        );
+        AppState.currentUser = dummyUser;
+        AppState.userType = dummyUser.account_type;
+
+        // Still fetch context as it's mocked in api-service.js to return valid demo data
+        const context = await apiService.getContext();
+        AppState.context = context;
+
+        if (context?.currentOrganization) {
+          AppState.currentUser.role =
+            context.currentOrganization.role ||
+            context.currentOrganization.user_role;
+          AppState.currentUser.currentOrgId = context.currentOrganization.id;
+        }
+
+        console.log("✅ Demo state initialized with mock context");
+      } catch (e) {
+        console.warn("Failed to initialize demo state context", e);
+      }
       checkAuthStateWithoutAPI();
       return;
     }
