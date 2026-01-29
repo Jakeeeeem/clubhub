@@ -374,6 +374,35 @@ router.post(
           type: "adult",
           isPlatformAdmin: false,
         },
+        // NEW DEMO ACCOUNTS
+        "superadmin@clubhub.com": {
+          pass: "Super@123",
+          firstName: "Super",
+          lastName: "Admin",
+          type: "organization",
+          isPlatformAdmin: true,
+        },
+        "admin@proclubdemo.com": {
+          pass: "Admin@123",
+          firstName: "Pro",
+          lastName: "Club Admin",
+          type: "organization",
+          isPlatformAdmin: false,
+        },
+        "coach@proclubdemo.com": {
+          pass: "Coach@123",
+          firstName: "Michael",
+          lastName: "Thompson",
+          type: "organization",
+          isPlatformAdmin: false,
+        },
+        "player@proclubdemo.com": {
+          pass: "Player@123",
+          firstName: "David",
+          lastName: "Williams",
+          type: "adult",
+          isPlatformAdmin: false,
+        },
       };
 
       // Check if this is a demo login attempt
@@ -422,9 +451,10 @@ router.post(
           // Auto-create demo organization and data for demo accounts
           if (demoCredentials[normalizedEmail]) {
             try {
-              // ADMIN DEMO - Create full club setup
+              // ADMIN DEMO - Create full club setup (Existing or New Logic)
               if (
-                normalizedEmail === "demo-admin@clubhub.com" &&
+                (normalizedEmail === "demo-admin@clubhub.com" ||
+                  normalizedEmail === "admin@proclubdemo.com") &&
                 user.account_type === "organization"
               ) {
                 const existingClub = await query(
@@ -439,12 +469,14 @@ router.post(
                     `INSERT INTO clubs (name, sport, description, location, owner_id, member_count)
                      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
                     [
-                      "Demo Sports Club",
+                      normalizedEmail === "admin@proclubdemo.com"
+                        ? "Pro Club Demo"
+                        : "Demo Sports Club",
                       "Football",
-                      "A demo club showcasing ClubHub features",
+                      "A premium demo club showcasing ClubHub features",
                       "London, UK",
                       user.id,
-                      12,
+                      24,
                     ],
                   );
                   const clubId = clubResult.rows[0].id;
@@ -481,11 +513,17 @@ router.post(
 
               // COACH DEMO - Add to demo club as staff
               if (
-                normalizedEmail === "demo-coach@clubhub.com" &&
+                (normalizedEmail === "demo-coach@clubhub.com" ||
+                  normalizedEmail === "coach@proclubdemo.com") &&
                 user.account_type === "organization"
               ) {
+                const targetAdminEmail =
+                  normalizedEmail === "coach@proclubdemo.com"
+                    ? "admin@proclubdemo.com"
+                    : "demo-admin@clubhub.com";
                 const demoClub = await query(
-                  `SELECT id FROM clubs WHERE contact_email = 'demo-admin@clubhub.com' LIMIT 1`,
+                  `SELECT c.id FROM clubs c JOIN users u ON c.owner_id = u.id WHERE u.email = $1 LIMIT 1`,
+                  [targetAdminEmail],
                 );
 
                 if (demoClub.rows.length > 0) {

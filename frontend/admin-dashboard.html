@@ -1418,6 +1418,134 @@
         </div>
     </div>
 
+    <!-- Create Poll Modal -->
+    <div id="createPollModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🗳️ Create New Poll</h2>
+                <button class="close" onclick="closeModal('createPollModal')">&times;</button>
+            </div>
+            <form id="createPollForm">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="pollTitle">Poll Question *</label>
+                        <input type="text" id="pollTitle" required placeholder="e.g., Player of the Month?">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="pollDescription">Description (Optional)</label>
+                        <textarea id="pollDescription" rows="2" placeholder="Vote for your top performer..."></textarea>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Poll Options *</label>
+                        <div id="pollOptionsContainer">
+                            <div class="input-with-button" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                <input type="text" class="poll-option-input" required placeholder="Option 1">
+                            </div>
+                            <div class="input-with-button" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                <input type="text" class="poll-option-input" required placeholder="Option 2">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="addPollOption()">+ Add
+                            Optimization</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pollExpiresAt">Expires At</label>
+                        <input type="datetime-local" id="pollExpiresAt">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('createPollModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Poll</button>
+                </div>
+
+                <!-- Venue Booking Modal -->
+                <div id="adminVenueBookingModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>🏟️ Book Venue Slot</h2>
+                            <button class="close" onclick="closeModal('adminVenueBookingModal')">&times;</button>
+                        </div>
+                        <div id="adminVenueBookingContent" style="padding: 1rem;">
+                            <h3 id="adminBookingVenueName" style="margin-bottom: 1.5rem;"></h3>
+
+                            <div class="form-group">
+                                <label>Select Date:</label>
+                                <input type="date" id="adminBookingDate" style="width: 100%; margin-bottom: 1rem;"
+                                    onchange="loadAdminVenueAvailability()">
+                            </div>
+
+                            <div id="adminVenueSlots" class="venue-slots-grid"
+                                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 1.5rem;">
+                                <!-- Slots loaded via JS -->
+                                <p style="color: var(--text-muted);">Select a date to view available slots.</p>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>Booking Notes:</label>
+                                <textarea id="adminBookingNotes" rows="2"
+                                    placeholder="e.g. U16 Training Session"></textarea>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeModal('adminVenueBookingModal')">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="confirmAdminBooking()">Confirm
+                                    Booking</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Venue Modal -->
+    <div id="addVenueModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🏟️ Add New Venue</h2>
+                <button class="close" onclick="closeModal('addVenueModal')">&times;</button>
+            </div>
+            <form id="addVenueForm">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="venueName">Venue Name *</label>
+                        <input type="text" id="venueName" required placeholder="e.g., Training Ground A">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="venueLocation">Location *</label>
+                        <input type="text" id="venueLocation" required placeholder="e.g., North London Complex">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="venueHourlyRate">Hourly Rate (£)</label>
+                        <input type="number" id="venueHourlyRate" placeholder="0.00" step="0.01">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="venueCapacity">Capacity</label>
+                        <input type="number" id="venueCapacity" placeholder="e.g. 22">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Description</label>
+                        <textarea id="venueDescription" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('addVenueModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Venue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Add Event Modal -->
     <div id="addEventModal" class="modal">
         <div class="modal-content">
@@ -8043,7 +8171,7 @@
                 }
             }
 
-            async function loadLeagues() {
+            function loadLeagues() {
                 const container = document.getElementById('league-management');
                 if (!container) return;
                 const content = container.querySelector('.card > div:last-child');
@@ -8054,6 +8182,144 @@
                     </div>
                 `;
             }
+
+            // --- POLLS SYSTEM ---
+            async function loadPolls() {
+                const container = document.getElementById('pollsContainer');
+                if (!container) return;
+
+                try {
+                    const orgId = apiService.getContext().orgId;
+                    const polls = await apiService.makeRequest(`/polls?organizationId=${orgId}`);
+
+                    if (polls.length === 0) {
+                        container.innerHTML = '<p class="text-muted" style="grid-column: 1/-1; text-align: center;">No active polls found.</p>';
+                        return;
+                    }
+
+                    container.innerHTML = polls.map(poll => {
+                        const totalVotes = poll.results?.reduce((sum, r) => sum + parseInt(r.count), 0) || 0;
+                        return `
+                        <div class="card" style="background: rgba(255,255,255,0.03);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                                <h3>${poll.title}</h3>
+                                <span class="badge ${poll.status === 'active' ? 'badge-success' : 'badge-secondary'}">${poll.status}</span>
+                            </div>
+                            <p>${poll.description || ''}</p>
+                            
+                            <div class="poll-results" style="margin: 1rem 0;">
+                                ${poll.options.map((opt, i) => {
+                            const count = poll.results?.find(r => r.selection === i.toString())?.count || 0;
+                            const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                            return `
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 2px;">
+                                            <span>${opt}</span>
+                                            <span>${percent}% (${count})</span>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden;">
+                                            <div style="background: var(--primary-color); width: ${percent}%; height: 100%;"></div>
+                                        </div>
+                                    </div>`;
+                        }).join('')}
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); text-align: right;">
+                                Total Votes: ${totalVotes} • Expires: ${poll.expires_at ? new Date(poll.expires_at).toLocaleDateString() : 'Never'}
+                            </div>
+                        </div>`;
+                    }).join('');
+                } catch (error) {
+                    console.error('Load polls error:', error);
+                    container.innerHTML = '<p class="error-text">Failed to load polls.</p>';
+                }
+            }
+
+            function addPollOption() {
+                const container = document.getElementById('pollOptionsContainer');
+                const div = document.createElement('div');
+                div.className = 'input-with-button';
+                div.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px;';
+                div.innerHTML = `
+                    <input type="text" class="poll-option-input" required placeholder="Option ${container.children.length + 1}">
+                    <button type="button" class="btn btn-danger btn-small" onclick="this.parentElement.remove()">×</button>
+                `;
+                container.appendChild(div);
+            }
+
+            async function handleCreatePoll(e) {
+                e.preventDefault();
+                const inputs = document.querySelectorAll('.poll-option-input');
+                const options = Array.from(inputs).map(input => input.value).filter(val => val.trim() !== '');
+
+                if (options.length < 2) {
+                    showNotification('Please provide at least 2 options', 'error');
+                    return;
+                }
+
+                const data = {
+                    organizationId: apiService.getContext().orgId,
+                    title: document.getElementById('pollTitle').value,
+                    description: document.getElementById('pollDescription').value,
+                    expiresAt: document.getElementById('pollExpiresAt').value,
+                    options: options
+                };
+
+                try {
+                    await apiService.makeRequest('/polls', { method: 'POST', body: JSON.stringify(data) });
+                    showNotification('Poll created successfully', 'success');
+                    closeModal('createPollModal');
+                    loadPolls();
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                }
+            }
+
+            // --- VENUE BOOKING SYSTEM ---
+            async function loadVenues() {
+                const container = document.getElementById('adminVenueGrid');
+                if (!container) return;
+
+                try {
+                    container.innerHTML = '<p>Loading venues...</p>';
+                    const orgId = apiService.getContext().orgId;
+                    const venues = await apiService.makeRequest(`/venues?organizationId=${orgId}`);
+
+                    if (venues.length === 0) {
+                        container.innerHTML = `
+                            <div style="grid-column: 1/-1; text-align: center; padding: 2rem;">
+                                <p style="color: var(--text-muted);">No venues found.</p>
+                                <button class="btn btn-primary" onclick="showModal('addVenueModal')">Add Your First Venue</button>
+                            </div>`;
+                        return;
+                    }
+
+                    container.innerHTML = venues.map(venue => `
+                        <div class="card venue-card" style="display: flex; flex-direction: column;">
+                            <img src="${venue.image_url || 'images/pitch-placeholder.jpg'}" 
+                                 style="width: 100%; height: 180px; object-fit: cover; border-radius: 8px 8px 0 0; margin: -1.25rem -1.25rem 1rem -1.25rem;" 
+                                 onerror="this.src='images/pitch-placeholder.jpg'">
+                            <h3 style="margin-bottom: 0.5rem;">${venue.name}</h3>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">📍 ${venue.location}</p>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                                ${(venue.facilities || []).map(f => `<span class="badge badge-secondary">${f}</span>`).join('')}
+                            </div>
+                            <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: bold; color: var(--primary-color);">£${venue.hourly_rate}/hr</span>
+                                <button class="btn btn-primary btn-small" onclick="openAdminBookingModal('${venue.id}', '${venue.name}')">Book Now</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (error) {
+                    console.error('Load venues error:', error);
+                    container.innerHTML = '<p class="error-text">Failed to load venues.</p>';
+                }
+            }
+
+            // Bind Poll Form
+            document.addEventListener('DOMContentLoaded', () => {
+                const pollForm = document.getElementById('createPollForm');
+                if (pollForm) pollForm.addEventListener('submit', handleCreatePoll);
+            });
 
             async function loadCampaigns() {
                 const container = document.getElementById('campaignsContainerFull');
@@ -8092,11 +8358,142 @@
                 } catch (error) { showNotification('Failed to send: ' + error.message, 'error'); } finally { showLoading(false); }
             }
 
+            async function handleAddVenue(e) {
+                e.preventDefault();
+
+                const data = {
+                    organizationId: apiService.getContext().orgId,
+                    name: document.getElementById('venueName').value,
+                    location: document.getElementById('venueLocation').value,
+                    hourlyRate: parseFloat(document.getElementById('venueHourlyRate').value) || 0,
+                    capacity: parseInt(document.getElementById('venueCapacity').value) || 0,
+                    description: document.getElementById('venueDescription').value
+                };
+
+                try {
+                    await apiService.makeRequest('/venues', { method: 'POST', body: JSON.stringify(data) });
+                    showNotification('Venue created successfully!', 'success');
+                    closeModal('addVenueModal');
+                    loadVenues();
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                }
+            }
+
             // Bind the campaign form
             document.addEventListener('DOMContentLoaded', () => {
                 const campaignForm = document.getElementById('createCampaignForm');
                 if (campaignForm) campaignForm.addEventListener('submit', sendCampaign);
+
+                const venueForm = document.getElementById('addVenueForm');
+                if (venueForm) venueForm.addEventListener('submit', handleAddVenue);
+
+                // Load Polls and Venues when their sections are shown
+                // This is handled by showSection() calling the global function, which we need to register
+                window.loadPolls = loadPolls;
+
+                // Add showSection hook for Polls
+                const originalShowSection = window.showSection;
+                window.showSection = function (sectionId) {
+                    originalShowSection(sectionId);
+                    if (sectionId === 'polls-section') loadPolls();
+                    if (sectionId === 'venue-booking') loadVenues();
+                    if (sectionId === 'league-management') loadLeagues();
+                };
             });
+
+            let currentVenueId = null;
+            let selectedTimeSlot = null;
+
+            function showVenueTab(tabId) {
+                document.querySelectorAll('.venue-tab-content').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+                document.getElementById(`venue-${tabId}-tab`).style.display = 'block';
+                // Find and activate the correct button (simplified logic)
+                const buttons = document.querySelectorAll('.tab-btn');
+                if (tabId === 'browse') buttons[0].classList.add('active');
+                if (tabId === 'mybookings') buttons[1].classList.add('active'); // Assumption based on HTML order
+            }
+
+            function openAdminBookingModal(venueId, venueName) {
+                currentVenueId = venueId;
+                document.getElementById('adminVenueBookingModal').style.display = 'block';
+                document.getElementById('adminBookingVenueName').textContent = venueName;
+                document.getElementById('adminBookingDate').value = new Date().toISOString().split('T')[0];
+                loadAdminVenueAvailability();
+            }
+
+            async function loadAdminVenueAvailability() {
+                const date = document.getElementById('adminBookingDate').value;
+                const container = document.getElementById('adminVenueSlots');
+                if (!date || !currentVenueId) return;
+
+                container.innerHTML = '<p>Checking availability...</p>';
+
+                try {
+                    const result = await apiService.makeRequest(`/venues/${currentVenueId}/availability?date=${date}`);
+                    const bookedTimes = result.bookings.map(b => new Date(b.start_time).getHours());
+
+                    let slotsHtml = '';
+                    // Standard 9am - 9pm operating hours
+                    for (let hour = 9; hour < 21; hour++) {
+                        const isBooked = bookedTimes.includes(hour);
+                        const timeString = `${hour}:00`;
+                        const slotClass = isBooked ? 'slot-booked' : (selectedTimeSlot === hour ? 'slot-selected' : 'slot-available');
+                        const style = isBooked ? 'background: #fee2e2; color: #ef4444; border: 1px solid #f87171;' :
+                            (selectedTimeSlot === hour ? 'background: var(--primary-color); color: white;' : 'background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); cursor: pointer;');
+
+                        slotsHtml += `
+                            <div onclick="${isBooked ? '' : `selectAdminSlot(${hour})`}" 
+                                 style="padding: 10px; text-align: center; border-radius: 8px; ${style}">
+                                ${timeString}
+                            </div>
+                        `;
+                    }
+                    container.innerHTML = slotsHtml;
+                } catch (error) {
+                    console.error(error);
+                    container.innerHTML = '<p class="error-text">Failed to load slots.</p>';
+                }
+            }
+
+            function selectAdminSlot(hour) {
+                selectedTimeSlot = hour;
+                loadAdminVenueAvailability(); // Re-render to show selection
+            }
+
+            async function confirmAdminBooking() {
+                if (!selectedTimeSlot || !currentVenueId) {
+                    showNotification('Please select a time slot', 'error');
+                    return;
+                }
+
+                const date = document.getElementById('adminBookingDate').value;
+                const notes = document.getElementById('adminBookingNotes').value;
+
+                // Construct Date Objects
+                const startTime = new Date(`${date}T${selectedTimeSlot.toString().padStart(2, '0')}:00:00`);
+                const endTime = new Date(startTime);
+                endTime.setHours(startTime.getHours() + 1); // 1 hour slots for now
+
+                try {
+                    await apiService.makeRequest(`/venues/${currentVenueId}/book`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            startTime: startTime.toISOString(),
+                            endTime: endTime.toISOString(),
+                            notes: notes
+                        })
+                    });
+
+                    showNotification('Venue booked successfully!', 'success');
+                    closeModal('adminVenueBookingModal');
+                    loadVenues(); // Refresh view
+                } catch (error) {
+                    showNotification(error.message, 'error');
+                }
+            }
 
             // Expose globally
             window.loadVenues = loadVenues;
@@ -8110,6 +8507,9 @@
             window.showTrainingTab = showTrainingTab;
             window.checkInTraining = checkInTraining;
             window.loadLeagues = loadLeagues;
+            window.loadPolls = loadPolls;
+            window.addPollOption = addPollOption;
+            window.handleCreatePoll = handleCreatePoll;
             window.loadCampaigns = loadCampaigns;
             window.sendCampaign = sendCampaign;
             window.openCreateCampaign = openCreateCampaign;
