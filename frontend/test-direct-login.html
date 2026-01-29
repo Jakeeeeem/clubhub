@@ -438,8 +438,8 @@
                     }
 
                     // Force redirect for these specific demo emails
-                    if (data.user.email === 'coach@proclubdemo.com') redirect = 'coach-dashboard.html';
-                    if (data.user.email === 'admin@proclubdemo.com') redirect = 'admin-dashboard.html';
+                    if (data.user.email === 'coach@proclubdemo.com' || data.user.email === 'demo-coach@clubhub.com') redirect = 'coach-dashboard.html';
+                    if (data.user.email === 'admin@proclubdemo.com' || data.user.email === 'demo-admin@clubhub.com') redirect = 'admin-dashboard.html';
                     if (data.user.email === 'superadmin@clubhub.com') redirect = 'super-admin-dashboard.html';
 
                     console.log("Redirecting to:", redirect);
