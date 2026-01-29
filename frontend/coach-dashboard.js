@@ -14,8 +14,9 @@ async function initializeCoachDashboard() {
       const activeClubId =
         AppState.currentUser?.clubId ||
         AppState.currentUser?.currentOrganizationId;
-      const dashboardData =
-        await apiService.getAdminDashboardData(activeClubId);
+      const dashboardData = await apiService.getCoachDashboardData(
+        AppState.currentUser?.id,
+      );
       if (dashboardData) {
         AppState.clubs = dashboardData.clubs || [];
         AppState.players = dashboardData.players || [];
@@ -23,6 +24,8 @@ async function initializeCoachDashboard() {
         AppState.events = dashboardData.events || [];
         AppState.teams = dashboardData.teams || [];
         AppState.payments = dashboardData.payments || [];
+        AppState.statistics =
+          dashboardData.stats || dashboardData.statistics || {};
         console.log("✅ Data loaded into AppState:", {
           staff: AppState.staff.length,
           teams: AppState.teams.length,

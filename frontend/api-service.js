@@ -208,11 +208,176 @@ class ApiService {
             organizationId: newOrgId,
           };
         }
+        if (endpoint.includes("/auth/profile")) {
+          const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+          return {
+            success: true,
+            profile: {
+              id: user.id || "demo-user-id",
+              first_name: user.firstName || user.first_name || "Demo",
+              last_name: user.lastName || user.last_name || "User",
+              email: user.email || "demo@clubhub.com",
+              phone: user.phone || "+44 7700 900000",
+              bio:
+                user.bio ||
+                "Professional sports enthusiast and dedicated ClubHub member.",
+              account_type: user.account_type || "organization",
+            },
+          };
+        }
+        if (endpoint.includes("/auth/settings")) {
+          return {
+            success: true,
+            emailNotifications: true,
+            pushNotifications: true,
+            marketingEmails: false,
+            theme: "dark",
+          };
+        }
         if (endpoint.includes("/dashboard/admin")) {
           return this.getAdminDashboardFallback();
         }
+        if (endpoint.includes("/dashboard/player")) {
+          return this.getPlayerDashboardFallback();
+        }
+        if (endpoint.includes("/dashboard/coach")) {
+          return this.getCoachDashboardFallback();
+        }
+        if (
+          endpoint.includes("/talent-id/events") &&
+          endpoint.includes("/dashboard")
+        ) {
+          return {
+            registrants: [
+              {
+                id: "reg1",
+                first_name: "James",
+                last_name: "Wilson",
+                date_of_birth: "2008-03-12",
+                position: "GK",
+                bib_number: "12",
+                bib_color: "Red",
+                group_name: "Group A",
+                status: "checked_in",
+              },
+              {
+                id: "reg2",
+                first_name: "Thomas",
+                last_name: "Muller",
+                date_of_birth: "2009-09-01",
+                position: "FW",
+                bib_number: "7",
+                bib_color: "Blue",
+                group_name: "Group B",
+                status: "registered",
+              },
+              {
+                id: "reg3",
+                first_name: "Kevin",
+                last_name: "De Bruyne",
+                date_of_birth: "2008-06-28",
+                position: "MF",
+                bib_number: "17",
+                bib_color: "Yellow",
+                group_name: "Group A",
+                status: "checked_in",
+              },
+            ],
+            groups: [
+              { id: "g1", name: "Group A", coach: "Michael Thompson" },
+              { id: "g2", name: "Group B", coach: "Emma Hayes" },
+            ],
+            bibs: [
+              { id: "b1", number: "1", color: "Red", status: "available" },
+              { id: "b2", number: "2", color: "Red", status: "assigned" },
+            ],
+          };
+        }
+        if (endpoint.includes("/venues") && !endpoint.includes("/book")) {
+          if (endpoint.includes("/availability")) {
+            return { bookings: [] };
+          }
+          if (endpoint.includes("/bookings/my")) {
+            return [
+              {
+                id: "vb1",
+                venue_name: "Elite Training Center",
+                start_time: new Date().toISOString(),
+                end_time: new Date(Date.now() + 3600000).toISOString(),
+                status: "confirmed",
+              },
+            ];
+          }
+          return [
+            {
+              id: "v1",
+              name: "Main Stadium",
+              location: "Central London",
+              hourly_rate: 150,
+              facilities: ["Floodlights", "Changing Rooms", "WiFi"],
+              image_url: "images/pitch-placeholder.jpg",
+            },
+            {
+              id: "v2",
+              name: "Training Pitch A",
+              location: "Academy Grounds",
+              hourly_rate: 50,
+              facilities: ["Artificial Grass", "Toilets"],
+              image_url: "images/pitch-placeholder.jpg",
+            },
+          ];
+        }
+        if (endpoint.includes("/notifications")) {
+          return [
+            {
+              id: "n1",
+              title: "Monthly Newsletter",
+              segment: "All Members",
+              created_at: new Date().toISOString(),
+              status: "sent",
+            },
+            {
+              id: "n2",
+              title: "Upcoming Match - First Team",
+              segment: "Parents",
+              created_at: new Date().toISOString(),
+              status: "sent",
+            },
+            {
+              id: "n3",
+              title: "New Training Schedule",
+              segment: "Coaches",
+              created_at: new Date().toISOString(),
+              status: "sent",
+            },
+          ];
+        }
+        if (endpoint.includes("/events")) {
+          return this.getAdminDashboardFallback().events;
+        }
+        if (endpoint.includes("/players")) {
+          return this.getAdminDashboardFallback().players;
+        }
+        if (endpoint.includes("/teams")) {
+          return this.getAdminDashboardFallback().teams;
+        }
         if (endpoint.includes("/payments/plans")) {
-          return []; // Return empty plans for demo
+          return [
+            {
+              id: "p1",
+              name: "Premium Academy Plan",
+              price: 50.0,
+              interval: "month",
+              description: "Full access to all training sessions",
+            },
+            {
+              id: "p2",
+              name: "Basic Development Plan",
+              price: 30.0,
+              interval: "month",
+              description: "Weekend training only",
+            },
+          ];
         }
         if (endpoint.includes("/players")) {
           return this.getAdminDashboardFallback().players;
@@ -2008,6 +2173,22 @@ class ApiService {
     }
   }
 
+  async getCoachDashboardData(coachId = null) {
+    const isDemo = localStorage.getItem("isDemoSession") === "true";
+    try {
+      if (isDemo) return this.getCoachDashboardFallback();
+      const endpoint = coachId
+        ? `/dashboard/coach?coachId=${coachId}`
+        : "/dashboard/coach";
+      return await this.makeRequest(endpoint);
+    } catch (error) {
+      console.warn("❌ Failed to fetch coach dashboard data:", error);
+      if (isDemo) return this.getCoachDashboardFallback();
+      // Fallback to admin data as a last resort
+      return await this.getAdminDashboardData();
+    }
+  }
+
   async getPlayerDashboardData(playerId = null) {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     try {
@@ -2198,6 +2379,8 @@ class ApiService {
           is_primary: true,
           logo_url: "images/logo.png",
           description: "Premier demo football club showcasing ClubHub features",
+          founded_year: 1995,
+          colors: { primary: "#dc2626", secondary: "#ffffff" },
         },
       ],
       players: [
@@ -2211,6 +2394,7 @@ class ApiService {
           attendance_rate: 95,
           date_of_birth: "2006-05-15",
           monthly_fee: 50.0,
+          team_name: "Under 18s Elite",
         },
         {
           id: "p2",
@@ -2222,6 +2406,7 @@ class ApiService {
           attendance_rate: 88,
           date_of_birth: "2007-08-22",
           monthly_fee: 50.0,
+          team_name: "Under 18s Elite",
         },
         {
           id: "p3",
@@ -2233,6 +2418,55 @@ class ApiService {
           attendance_rate: 100,
           date_of_birth: "1987-06-24",
           monthly_fee: 500.0,
+          team_name: "Under 16s Development",
+        },
+        {
+          id: "p4",
+          first_name: "Harry",
+          last_name: "Kane",
+          email: "harry@example.com",
+          position: "Striker",
+          payment_status: "paid",
+          attendance_rate: 98,
+          date_of_birth: "1993-07-28",
+          monthly_fee: 250.0,
+          team_name: "Under 18s Elite",
+        },
+        {
+          id: "p5",
+          first_name: "Marcus",
+          last_name: "Rashford",
+          email: "marcus@example.com",
+          position: "Winger",
+          payment_status: "late",
+          attendance_rate: 92,
+          date_of_birth: "1997-10-31",
+          monthly_fee: 150.0,
+          team_name: "First Team",
+        },
+        {
+          id: "p6",
+          first_name: "Bukayo",
+          last_name: "Saka",
+          email: "saka@example.com",
+          position: "Winger",
+          payment_status: "paid",
+          attendance_rate: 97,
+          date_of_birth: "2001-09-05",
+          monthly_fee: 120.0,
+          team_name: "First Team",
+        },
+        {
+          id: "p7",
+          first_name: "Jude",
+          last_name: "Bellingham",
+          email: "jude@example.com",
+          position: "Midfielder",
+          payment_status: "paid",
+          attendance_rate: 99,
+          date_of_birth: "2003-06-29",
+          monthly_fee: 200.0,
+          team_name: "First Team",
         },
       ],
       staff: [
@@ -2242,6 +2476,8 @@ class ApiService {
           last_name: "Thompson",
           role: "coach",
           email: "demo-coach@clubhub.com",
+          phone: "+44 7700 900111",
+          join_date: "2023-01-10",
         },
         {
           id: "s2",
@@ -2249,6 +2485,8 @@ class ApiService {
           last_name: "Guardiola",
           role: "Technical Director",
           email: "pep@example.com",
+          phone: "+44 7700 900222",
+          join_date: "2022-06-15",
         },
         {
           id: "s3",
@@ -2256,24 +2494,61 @@ class ApiService {
           last_name: "Klopp",
           role: "Lead Coach",
           email: "klopp@example.com",
+          phone: "+44 7700 900333",
+          join_date: "2021-11-20",
+        },
+        {
+          id: "s4",
+          first_name: "Emma",
+          last_name: "Hayes",
+          role: "Head of Women's Football",
+          email: "emma@example.com",
+          phone: "+44 7700 900444",
+          join_date: "2023-03-01",
         },
       ],
       events: [
         {
           id: "e1",
           title: "Summer Talent ID Camp",
-          date: new Date(Date.now() + 86400000 * 7).toISOString(),
+          date: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0],
+          time: "09:00",
           location: "Main Stadium",
           type: "camp",
           status: "upcoming",
+          description: "Our flagship talent identification camp for ages 8-16.",
+          attendees: 45,
         },
         {
           id: "e2",
           title: "Elite Training Session",
-          date: new Date(Date.now() + 86400000 * 2).toISOString(),
+          date: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0],
+          time: "18:30",
           location: "Field A",
           type: "training",
           status: "upcoming",
+          team_name: "Under 18s Elite",
+        },
+        {
+          id: "e3",
+          title: "Monthly Coaches Meeting",
+          date: new Date(Date.now() + 86400000 * 14)
+            .toISOString()
+            .split("T")[0],
+          time: "10:00",
+          location: "Clubhouse Boardroom",
+          type: "meeting",
+          status: "upcoming",
+        },
+        {
+          id: "e4",
+          title: "Pro Club vs City Lions",
+          date: new Date(Date.now() + 86400000 * 4).toISOString().split("T")[0],
+          time: "15:00",
+          location: "Away: City Stadium",
+          type: "match",
+          status: "upcoming",
+          team_name: "First Team",
         },
       ],
       teams: [
@@ -2283,7 +2558,9 @@ class ApiService {
           members: 22,
           coach: "Michael Thompson",
           coachId: "demo-coach-id",
-          players: ["demo-player-id", "p2"],
+          players: ["demo-player-id", "p2", "p4"],
+          sport: "Football",
+          ageGroup: "U18",
         },
         {
           id: "t2",
@@ -2292,6 +2569,18 @@ class ApiService {
           coach: "Michael Thompson",
           coachId: "demo-coach-id",
           players: ["p3"],
+          sport: "Football",
+          ageGroup: "U16",
+        },
+        {
+          id: "t3",
+          name: "First Team",
+          members: 25,
+          coach: "Jürgen Klopp",
+          coachId: "s3",
+          players: ["p5", "p6", "p7"],
+          sport: "Football",
+          ageGroup: "Senior",
         },
       ],
       payments: [
@@ -2299,17 +2588,37 @@ class ApiService {
           id: "pay1",
           amount: 50,
           status: "paid",
-          description: "Monthly Subscription",
+          description: "Monthly Subscription - June",
           date: new Date().toISOString(),
           player_name: "David Williams",
+          method: "Stripe",
         },
         {
           id: "pay2",
           amount: 120,
           status: "pending",
-          description: "Tournament Fee",
+          description: "Tournament Fee - Elite Cup",
           date: new Date().toISOString(),
           player_name: "Jordan Smith",
+          method: "Invoice",
+        },
+        {
+          id: "pay3",
+          amount: 500,
+          status: "paid",
+          description: "Annual Membership",
+          date: new Date().toISOString(),
+          player_name: "Leo Messi",
+          method: "Stripe",
+        },
+        {
+          id: "pay4",
+          amount: 150,
+          status: "overdue",
+          description: "New Kit Bundle",
+          date: new Date(Date.now() - 86400000 * 15).toISOString(),
+          player_name: "Marcus Rashford",
+          method: "Direct Debit",
         },
       ],
       products: [
@@ -2318,23 +2627,42 @@ class ApiService {
           name: "Official Club Jersey",
           price: 45.0,
           stock_quantity: 50,
-          description: "High-quality replica home jersey.",
+          description:
+            "High-quality replica home jersey with breathable fabric.",
         },
         {
           id: "prod2",
           name: "Training Tracksuit",
           price: 65.0,
           stock_quantity: 20,
-          description: "Comfortable tracksuit for training.",
+          description:
+            "Comfortable fleece-lined tracksuit for winter training.",
+        },
+        {
+          id: "prod3",
+          name: "Club Water Bottle",
+          price: 12.5,
+          stock_quantity: 100,
+          description: "BPA-free 750ml bottle with club crest.",
         },
       ],
       campaigns: [
         {
           id: "camp1",
           name: "Summer Camp Early Bird",
-          subject: "Register now and save!",
-          target_group: "all",
+          subject: "Register now and save £20!",
+          target_group: "All Members",
           status: "sent",
+          sent_at: new Date().toISOString(),
+          open_rate: 68,
+          click_rate: 12,
+        },
+        {
+          id: "camp2",
+          name: "Kit Order Reminder",
+          subject: "Last chance to order your new season kit",
+          target_group: "Parents",
+          status: "draft",
           created_at: new Date().toISOString(),
         },
       ],
@@ -2344,7 +2672,19 @@ class ApiService {
           title: "Under 14s Striker Needed",
           listing_type: "recruitment",
           position: "Forward",
-          description: "Looking for a clinical finisher.",
+          description:
+            "We are looking for a clinical finisher to join our U14 Academy squad.",
+          salary: "Scholarship",
+          status: "active",
+        },
+        {
+          id: "list2",
+          title: "U18 Goalkeeper Assistant",
+          listing_type: "job",
+          position: "Coach",
+          description: "Part-time role assisting our lead goalkeeper coach.",
+          salary: "£20/hour",
+          status: "active",
         },
       ],
       statistics: {
@@ -2354,6 +2694,8 @@ class ApiService {
         total_events: 5,
         total_teams: 6,
         monthly_revenue: 7100,
+        pending_payments: 4,
+        attendance_avg: 94,
       },
     };
   }
@@ -2379,25 +2721,45 @@ class ApiService {
 
     return {
       player: {
-        first_name: "John",
-        last_name: "Player",
-        position: "Midfielder",
-        attendance_rate: 94,
+        first_name: "David",
+        last_name: "Williams",
+        position: "Forward",
+        attendance_rate: 95,
+        id: "demo-player-id",
+        email: "demo-player@clubhub.com",
       },
       clubs: [
         {
-          id: "demo-club-1",
-          name: "Elite Performance Academy",
+          id: "demo-club-id",
+          name: "Pro Club Demo",
+          location: "London, UK",
           sport: "Football",
         },
       ],
-      teams: [{ id: "t1", name: "Under 18s Elite", coach: "Jürgen Klopp" }],
+      teams: [
+        {
+          id: "t1",
+          name: "Under 18s Elite",
+          coach: "Michael Thompson",
+          coachId: "demo-coach-id",
+        },
+      ],
       events: [
         {
           id: "e1",
           title: "Summer Talent ID Camp",
           date: new Date(Date.now() + 86400000 * 7).toISOString(),
           location: "Main Stadium",
+          type: "camp",
+          status: "upcoming",
+        },
+        {
+          id: "e2",
+          title: "Elite Training Session",
+          date: new Date(Date.now() + 86400000 * 2).toISOString(),
+          location: "Field A",
+          type: "training",
+          status: "upcoming",
         },
       ],
       payments: [
@@ -2405,19 +2767,70 @@ class ApiService {
           id: "pay1",
           amount: 50,
           status: "paid",
-          description: "Monthly Subscription",
+          description: "Monthly Subscription - June",
           date: new Date().toISOString(),
+        },
+        {
+          id: "pay2",
+          amount: 50,
+          status: "pending",
+          description: "Monthly Subscription - July",
+          date: new Date(Date.now() + 86400000 * 30).toISOString(),
         },
       ],
       bookings: [
         {
           id: "b1",
-          event_title: "Elite Training Session",
-          date: new Date().toISOString(),
+          event_id: "e1",
+          event_title: "Summer Talent ID Camp",
+          date: new Date(Date.now() + 86400000 * 7).toISOString(),
           status: "confirmed",
+          qr_code: "DEMO_QR_CODE_123",
         },
       ],
-      applications: [],
+      applications: [
+        {
+          id: "app1",
+          club_name: "Elite Performance Academy",
+          status: "pending",
+          date: new Date().toISOString(),
+        },
+      ],
+    };
+  }
+
+  getCoachDashboardFallback() {
+    const isDemo = localStorage.getItem("isDemoSession") === "true";
+    console.log("✨ Using Rich Demo Coach Dashboard Data");
+
+    const adminData = this.getAdminDashboardFallback();
+
+    return {
+      stats: {
+        total_players: 24,
+        upcoming_sessions: 3,
+        attendance_average: 92,
+        win_rate: 75,
+      },
+      teams: adminData.teams,
+      players: adminData.players,
+      events: adminData.events,
+      recent_matches: [
+        {
+          id: "m1",
+          opponent: "United FC",
+          score: "2-0",
+          result: "win",
+          date: new Date(Date.now() - 86400000 * 3).toISOString(),
+        },
+        {
+          id: "m2",
+          opponent: "City Lions",
+          score: "1-1",
+          result: "draw",
+          date: new Date(Date.now() - 86400000 * 10).toISOString(),
+        },
+      ],
     };
   }
 
