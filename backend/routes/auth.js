@@ -470,8 +470,8 @@ router.post(
                   console.log("🏢 Creating demo club for admin...");
 
                   const clubResult = await query(
-                    `INSERT INTO clubs (name, sport, description, location, owner_id, member_count)
-                     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                    `INSERT INTO clubs (name, sport, description, location, owner_id, member_count, types)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
                     [
                       normalizedEmail === "admin@proclubdemo.com"
                         ? "Pro Club Demo"
@@ -481,6 +481,7 @@ router.post(
                       "London, UK",
                       user.id,
                       24,
+                      JSON.stringify(["academy", "competitive"]),
                     ],
                   );
                   const clubId = clubResult.rows[0].id;
