@@ -723,8 +723,33 @@ function updateNavigation() {
 }
 
 function redirectToDashboard() {
-  // 0. Ensure we have the user
-  if (!AppState.currentUser) return;
+  // Ensure AppState exists
+  if (!window.AppState) {
+    window.AppState = {};
+  }
+
+  // Initialize currentUser if it doesn't exist
+  if (!AppState.currentUser) {
+    const storedUser = localStorage.getItem("currentUser");
+    if (storedUser) {
+      try {
+        AppState.currentUser = JSON.parse(storedUser);
+      } catch (e) {
+        console.warn("Failed to parse stored user, using empty object");
+        AppState.currentUser = {};
+      }
+    } else {
+      AppState.currentUser = {};
+    }
+  }
+
+  // Initialize userType if it doesn't exist
+  if (!AppState.userType) {
+    AppState.userType =
+      localStorage.getItem("userType") ||
+      AppState.currentUser.account_type ||
+      "organization";
+  }
 
   const userType = AppState.userType; // Global type: 'organization' | 'adult' | ...
   const userRole = AppState.currentUser?.role; // Contextual role from API

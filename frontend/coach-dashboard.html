@@ -226,14 +226,39 @@
                 toggle.addEventListener('change', (e) => {
                     if (e.target.checked) {
                         console.log('🔄 Coach → Player toggle activated');
-                        console.log('Before role change:', AppState.currentUser?.role);
+
+                        // Ensure AppState exists
+                        if (!window.AppState) {
+                            window.AppState = {};
+                        }
+
+                        // Initialize currentUser if it doesn't exist
+                        if (!AppState.currentUser) {
+                            const storedUser = localStorage.getItem('currentUser');
+                            if (storedUser) {
+                                try {
+                                    AppState.currentUser = JSON.parse(storedUser);
+                                } catch (e) {
+                                    AppState.currentUser = {};
+                                }
+                            } else {
+                                AppState.currentUser = {};
+                            }
+                        }
+
+                        // Initialize userType if it doesn't exist
+                        if (!AppState.userType) {
+                            AppState.userType = localStorage.getItem('userType') ||
+                                AppState.currentUser.account_type ||
+                                'organization';
+                        }
+
+                        console.log('Before role change:', AppState.currentUser.role);
+                        console.log('User type:', AppState.userType);
 
                         // Switch to Player mode
-                        if (AppState.currentUser) {
-                            AppState.currentUser.role = 'player';
-                            console.log('After role change:', AppState.currentUser.role);
-                            console.log('User type:', AppState.userType);
-                        }
+                        AppState.currentUser.role = 'player';
+                        console.log('After role change:', AppState.currentUser.role);
 
                         // Redirect will happen immediately, no need to restore role
                         if (typeof redirectToDashboard === 'function') {
