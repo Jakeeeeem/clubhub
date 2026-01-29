@@ -204,16 +204,27 @@ function checkAuthStateWithoutAPI() {
   console.log("🔍 Checking auth state without API (localStorage only)...");
 
   const storedUser = localStorage.getItem("currentUser");
-  const storedUserType = localStorage.getItem("userType");
   const token = localStorage.getItem("authToken");
+  // userType is optional as we can get it from storedUser
+  const storedUserType = localStorage.getItem("userType");
 
-  if (storedUser && storedUserType && token) {
+  if (storedUser && token) {
     try {
-      AppState.currentUser = JSON.parse(storedUser);
-      AppState.userType = storedUserType;
+      const user = JSON.parse(storedUser);
+      AppState.currentUser = user;
+      AppState.userType =
+        storedUserType || user.account_type || user.userType || "organization";
+
+      // Sync it back if missing
+      if (!storedUserType) {
+        localStorage.setItem("userType", AppState.userType);
+      }
+
       console.log(
         "✅ User loaded from localStorage:",
         AppState.currentUser.email,
+        "| Type:",
+        AppState.userType,
       );
     } catch (parseError) {
       console.error("❌ Failed to parse stored user data:", parseError);
@@ -221,7 +232,10 @@ function checkAuthStateWithoutAPI() {
     }
   } else {
     console.log("❌ No valid auth data found in localStorage");
-    clearAuthData();
+    // Only clear if we really don't have a user
+    if (!storedUser || !token) {
+      clearAuthData();
+    }
   }
 
   // Update UI and handle redirects

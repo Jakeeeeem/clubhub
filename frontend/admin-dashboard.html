@@ -8536,11 +8536,14 @@
                                 if (storedUser) {
                                     try {
                                         AppState.currentUser = JSON.parse(storedUser);
+                                        console.log('✅ Loaded user from localStorage:', AppState.currentUser.email);
                                     } catch (e) {
-                                        AppState.currentUser = {};
+                                        console.error('❌ Failed to parse user from localStorage');
+                                        return; // Don't proceed if we can't load user
                                     }
                                 } else {
-                                    AppState.currentUser = {};
+                                    console.error('❌ No user data in localStorage');
+                                    return; // Don't proceed if there's no user
                                 }
                             }
 
@@ -8557,6 +8560,9 @@
                             // Switch to Player mode
                             AppState.currentUser.role = 'player';
                             console.log('After role change:', AppState.currentUser.role);
+
+                            // CRITICAL: Persist to localStorage so the next page loads the correct role
+                            localStorage.setItem('currentUser', JSON.stringify(AppState.currentUser));
 
                             // Redirect will happen immediately, no need to restore role
                             if (typeof redirectToDashboard === 'function') {

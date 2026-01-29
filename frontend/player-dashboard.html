@@ -927,11 +927,14 @@
               if (storedUser) {
                 try {
                   AppState.currentUser = JSON.parse(storedUser);
+                  console.log('✅ Loaded user from localStorage:', AppState.currentUser.email);
                 } catch (e) {
-                  AppState.currentUser = {};
+                  console.error('❌ Failed to parse user from localStorage');
+                  return; // Don't proceed if we can't load user
                 }
               } else {
-                AppState.currentUser = {};
+                console.error('❌ No user data in localStorage');
+                return; // Don't proceed if there's no user
               }
             }
 
@@ -946,15 +949,27 @@
             console.log('User type:', AppState.userType);
 
             // Force AppState to non-player so we redirect out of player dashboard
-            // If original role was player, fallback to admin for the toggle
-            if (AppState.currentUser.role === 'player' && AppState.userType === 'organization') {
-              AppState.currentUser.role = 'admin';
-            } else if (!AppState.currentUser.role && AppState.userType === 'organization') {
-              // If no role set, default to admin for org accounts
-              AppState.currentUser.role = 'admin';
+            if (AppState.currentUser.role === 'player') {
+              if (AppState.userType === 'coach') {
+                AppState.currentUser.role = 'coach';
+              } else if (AppState.userType === 'organization' || AppState.userType === 'admin') {
+                AppState.currentUser.role = 'admin';
+              } else if (AppState.currentUser.is_platform_admin) {
+                AppState.currentUser.role = 'superadmin';
+              } else {
+                // Fallback to admin if we can't determine, or stay player if it's a pure player account (shouldn't happen with the toggle visible)
+                AppState.currentUser.role = 'admin';
+              }
+            } else if (!AppState.currentUser.role) {
+              // Default fallback for org accounts
+              if (AppState.userType === 'organization') AppState.currentUser.role = 'admin';
+              if (AppState.userType === 'coach') AppState.currentUser.role = 'coach';
             }
 
             console.log('After role change:', AppState.currentUser.role);
+
+            // CRITICAL: Persist to localStorage
+            localStorage.setItem('currentUser', JSON.stringify(AppState.currentUser));
 
             if (typeof redirectToDashboard === 'function') {
               console.log('Calling redirectToDashboard()...');

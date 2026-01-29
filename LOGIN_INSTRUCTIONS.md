@@ -40,11 +40,17 @@ Use these pre-configured accounts for testing and demonstrations. No signup requ
 | **Coach** | `demo-coach@clubhub.com` | `password123` | Coach Dashboard |
 | **Player/Parent** | `demo-player@clubhub.com` | `password123` | Player Dashboard |
 
-**Note**: If these accounts do not exist, the system is designed to auto-create them upon the first login attempt with the credentials above (in Development/Test environments).
+## 3. One-Click Demo Portal (Bypass Mode)
+
+For internal testing and presentations, you can use the specialized Test Portal which bypasses the backend requirements for demo accounts.
+
+1.  **Navigate to**: **[`test-direct-login.html`](test-direct-login.html)**
+2.  **Enable Demo Mode**: Ensure the **"Enable Demo / Offline Mode"** checkbox is checked at the bottom.
+3.  **One-Click Login**: Click any role button (Super Admin, Club Owner, Coach, or Player) to instantly log in without typing credentials.
 
 ---
 
-## 3. New User Verification Flow (The "Sign Up" Test)
+## 4. New User Verification Flow (The "Sign Up" Test)
 
 To verify the entire registration pipeline works correctly:
 

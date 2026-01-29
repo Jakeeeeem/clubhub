@@ -347,7 +347,7 @@
     <script src="api-service.js"></script>
     <script>
         let currentStep = 1;
-        const totalSteps = 1; // Only 1 form step (Step 2 is success)
+        const totalSteps = 1; // Only 1 form step. Step 2 is the success screen.
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function () {
@@ -417,14 +417,7 @@
                     return;
                 }
 
-                // Update review
-                // document.getElementById('reviewName').textContent = `${firstName} ${lastName}`; // These elements don't exist in the current HTML
-                // document.getElementById('reviewEmail').textContent = email; // These elements don't exist in the current HTML
-
-                // Move to step 2
-                currentStep = 2;
-                updateUI();
-            } else if (currentStep === 2) {
+                // Call registration
                 registerUser();
             }
         }
@@ -573,13 +566,13 @@
                 console.log('🚀 Redirecting to:', redirectUrl);
 
                 // Show success and redirect
-                currentStep = 3;
+                currentStep = 2;
                 updateUI();
 
 
                 setTimeout(() => {
                     window.location.href = redirectUrl;
-                }, 1500);
+                }, 2000);
 
             } catch (error) {
                 console.error('Registration failed:', error);
