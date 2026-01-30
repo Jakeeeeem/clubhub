@@ -104,7 +104,7 @@ router.get("/context", authenticateToken, async (req, res) => {
     // 1. Get user info and preferences
     const userResult = await pool.query(
       `
-      SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, 
+      SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin,
              up.current_organization_id
       FROM users u
       LEFT JOIN user_preferences up ON u.id = up.user_id
@@ -185,6 +185,7 @@ router.get("/context", authenticateToken, async (req, res) => {
         firstName: userData.first_name,
         lastName: userData.last_name,
         accountType: userData.account_type,
+        is_platform_admin: userData.is_platform_admin,
       },
       organizations: organizations,
       currentOrganization: currentOrg,
