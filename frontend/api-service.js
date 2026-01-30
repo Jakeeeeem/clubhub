@@ -3544,6 +3544,51 @@ class ApiService {
     }
   }
 
+  // =========================== POLLS & VOTING ===========================
+  async getPolls(clubId) {
+    try {
+      const response = await this.makeRequest(
+        `/clubs/${clubId || "demo-club-id"}/polls`,
+      );
+      return Array.isArray(response) ? response : response.polls || [];
+    } catch (error) {
+      console.warn("getPolls failed, returning mock", error);
+      return [];
+    }
+  }
+
+  async createPoll(payload) {
+    return await this.makeRequest("/polls", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async voteOnPoll(pollId, optionId) {
+    return await this.makeRequest(`/polls/${pollId}/vote`, {
+      method: "POST",
+      body: JSON.stringify({ optionId }),
+    });
+  }
+
+  // =========================== TOURNAMENTS ===========================
+  async getTournaments(clubId) {
+    try {
+      // Reuse getEvents if available, filtering by type
+      const events = await this.getEvents(clubId);
+      return (events || []).filter(
+        (e) => e.event_type === "tournament" || e.type === "tournament",
+      );
+    } catch (error) {
+      console.warn("getTournaments failed", error);
+      return [];
+    }
+  }
+
+  async getTournamentDetails(tournamentId) {
+    return { id: tournamentId, name: "Tournament", teams: [], fixtures: [] };
+  }
+
   // =========================== UTILITY METHODS ===========================
 
   calculateAge(dateOfBirth) {

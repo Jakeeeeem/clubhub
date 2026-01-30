@@ -183,8 +183,7 @@
                     <div class="nav-dropdown-menu">
                         <button onclick="showSection('listings')">📋 Recruiting Listings</button>
                         <button onclick="showSection('marketing')">📢 Marketing Hub</button>
-                        <button onclick="showSection('polls-section')" class="closed-feature">🗳️ Polls &
-                            Voting</button>
+                        <button onclick="showSection('polls-section')">🗳️ Polls & Voting</button>
                         <div class="dropdown-divider"></div>
                         <button onclick="showSection('email-campaigns')">📧 Email Campaigns</button>
                     </div>
@@ -5073,93 +5072,86 @@
                 };
 
                 const players = await apiService.getPlayers(filters);
-                console.log('👥 Players Loaded:', players); // Debugging Log
+                console.log('👥 Players Loaded:', players);
 
-                // 👇 attach plan objects & normalize flags so hasPlan() works on reload
+                // Attach plan objects
                 const plansById = Object.fromEntries((AppState.paymentPlans || []).map(pl => [String(pl.id), pl]));
 
                 players.forEach(p => {
-                    const planId =
-                        p.payment_plan_id ??
-                        p.plan_id ??
-                        p.payment_plan?.id ??
-                        p.plan?.id;
-
+                    const planId = p.payment_plan_id ?? p.plan_id ?? p.payment_plan?.id ?? p.plan?.id;
                     if (planId != null && String(planId).trim() !== '' && String(planId) !== '0') {
                         p.payment_plan = p.payment_plan || p.plan || plansById[String(planId)] || undefined;
-                        p.has_payment_plan = true; // normalize truthy flag for hasPlan()
+                        p.has_payment_plan = true;
                     }
                 });
 
                 if (!players || players.length === 0) {
                     container.innerHTML = `
-            < div style = "text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;" >
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
                             <div style="font-size: 3rem; margin-bottom: 1rem;">🏃</div>
                             <h3 style="margin-bottom: 0.5rem;">No players found</h3>
                             <p style="color: var(--text-muted); margin-bottom: 2rem;">Add players to your club manually or invite them via email.</p>
                             <button class="btn btn-primary" onclick="showModal('addPlayerModal')">➕ Add Your First Player</button>
-                        </div >
-                `;
+                        </div>
+                    `;
                     return;
                 }
 
                 container.innerHTML = `
-                < div class= "table-responsive" >
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 30%;">Player</th>
-                            <th>Team / Sport</th>
-                            <th>Position</th>
-                            <th style="text-align: center;">Payment</th>
-                            <th style="text-align: right;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${players.map(player => `
-                                    <tr onclick="editPlayer('${player.id}')" style="cursor: pointer;">
-                                        <td>
-                                            <div class="user-info-cell">
-                                                <div class="user-avatar" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);">
-                                                    ${(player.first_name?.[0] || '?')}${(player.last_name?.[0] || '')}
-                                                </div>
-                                                <div class="user-name-group">
-                                                    <span class="user-name">${player.first_name || 'Unknown'} ${player.last_name || 'Player'}</span>
-                                                    <span class="user-meta">${player.email || 'No email linked'}</span>
-                                                </div>
+                    <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Player</th>
+                                <th>Team / Sport</th>
+                                <th>Position</th>
+                                <th style="text-align: center;">Payment</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${players.map(player => `
+                                <tr onclick="editPlayer('${player.id}')" style="cursor: pointer;">
+                                    <td>
+                                        <div class="user-info-cell">
+                                            <div class="user-avatar" style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);">
+                                                ${(player.first_name?.[0] || '?')}${(player.last_name?.[0] || '')}
                                             </div>
-                                        </td>
-                                        <td>
-                                            <div style="display:flex; flex-direction:column;">
-                                                <span style="font-weight:500;">${player.team_name || 'Unassigned'}</span>
-                                                <span style="font-size:0.75rem; color:var(--text-muted);">${player.team_sport || player.sport || 'Mixed'}</span>
+                                            <div class="user-name-group">
+                                                <span class="user-name">${player.first_name || 'Unknown'} ${player.last_name || 'Player'}</span>
+                                                <span class="user-meta">${player.email || 'No email linked'}</span>
                                             </div>
-                                        </td>
-                                        <td>
-                                            <span class="status-badge" style="background:rgba(255,255,255,0.05); color:var(--text-main); border:1px solid var(--border-color);">
-                                                ${player.position || 'N/A'}
-                                            </span>
-                                        </td>
-                                        <td style="text-align: center;">
-                                            <span class="status-badge status-${(player.payment_status || 'pending').toLowerCase()}">
-                                                ${player.payment_status || 'Pending'}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons" onclick="event.stopPropagation()">
-                                                <button class="btn-icon manage" title="Manage Plans" onclick="assignPaymentPlan('${player.id}')">💳</button>
-                                                <button class="btn-icon edit" title="Edit Player" onclick="editPlayer('${player.id}')">✏️</button>
-                                                <button class="btn-icon delete" title="Remove Player" onclick="removePlayer('${player.id}')">🗑️</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                    </tbody>
-                </table>
-                    </div >
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="display:flex; flex-direction:column;">
+                                            <span style="font-weight:500;">${player.team_name || 'Unassigned'}</span>
+                                            <span style="font-size:0.75rem; color:var(--text-muted);">${player.team_sport || player.sport || 'Mixed'}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" style="background:rgba(255,255,255,0.05); color:var(--text-main); border:1px solid var(--border-color);">
+                                            ${player.position || 'N/A'}
+                                        </span>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="status-badge status-${(player.payment_status || 'pending').toLowerCase()}">
+                                            ${player.payment_status || 'Pending'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons" onclick="event.stopPropagation()">
+                                            <button class="btn-icon manage" title="Manage Plans" onclick="assignPaymentPlan('${player.id}')">💳</button>
+                                            <button class="btn-icon edit" title="Edit Player" onclick="editPlayer('${player.id}')">✏️</button>
+                                            <button class="btn-icon delete" title="Remove Player" onclick="removePlayer('${player.id}')">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    </div>
                 `;
-
-
                 AppState.players = players;
             } catch (error) {
                 console.error('Failed to load players:', error);
@@ -5172,7 +5164,6 @@
         async function loadTeams() {
             const container = document.getElementById('teamsContainer');
             if (!container) return;
-            // Remove grid layout to allow table to expand
             container.classList.remove('card-grid');
 
             try {
@@ -5182,96 +5173,88 @@
 
                 if (teams.length === 0) {
                     container.innerHTML = `
-                < div style = "text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;" >
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
                             <div style="font-size: 3rem; margin-bottom: 1rem;">⚽</div>
                             <h3 style="margin-bottom: 0.5rem;">No teams created yet</h3>
                             <p style="color: var(--text-muted); margin-bottom: 2rem;">Get started by creating your first team to manage players and events.</p>
                             <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create Your First Team</button>
-                        </div >
-                `;
+                        </div>
+                    `;
                     return;
                 }
 
                 container.innerHTML = `
-                < div class= "table-responsive" >
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 30%;">Team Details</th>
-                            <th>Players</th>
-                            <th style="text-align: center;">Performance</th>
-                            <th>Coach</th>
-                            <th style="text-align: right;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${teams.map(team => `
-                                    <tr onclick="openTeamManagement('${team.id}', '${team.name}')" style="cursor: pointer;">
-                                        <td>
-                                            <div class="team-info-cell">
-                                                <div class="team-icon">⚽</div>
-                                                <div class="team-name-group">
-                                                    <span class="team-name">${team.name}</span>
-                                                    <span class="team-meta">${team.sport} • ${team.age_group || 'No Age Group'}</span>
-                                                </div>
+                    <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Team Details</th>
+                                <th>Players</th>
+                                <th style="text-align: center;">Performance</th>
+                                <th>Coach</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${teams.map(team => `
+                                <tr onclick="openTeamManagement('${team.id}', '${team.name}')" style="cursor: pointer;">
+                                    <td>
+                                        <div class="team-info-cell">
+                                            <div class="team-icon">⚽</div>
+                                            <div class="team-name-group">
+                                                <span class="team-name">${team.name}</span>
+                                                <span class="team-meta">${team.sport} • ${team.age_group || 'No Age Group'}</span>
                                             </div>
-                                        </td>
-                                        <td style="text-align: left;">
-                                            <span class="badge" style="background: rgba(255, 255, 255, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">
-                                                👥 ${team.player_count} Players
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="stats-cell">
-                                                <div class="stat-pill">
-                                                    <span class="stat-value win-stat">${team.wins || 0}</span>
-                                                    <span class="stat-label">Wins</span>
-                                                </div>
-                                                <div class="stat-pill">
-                                                    <span class="stat-value loss-stat">${team.losses || 0}</span>
-                                                    <span class="stat-label">Loss</span>
-                                                </div>
-                                                <div class="stat-pill">
-                                                    <span class="stat-value draw-stat">${team.draws || 0}</span>
-                                                    <span class="stat-label">Draw</span>
-                                                </div>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: left;">
+                                        <span class="badge" style="background: rgba(255, 255, 255, 0.1); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">
+                                            👥 ${team.player_count} Players
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="stats-cell">
+                                            <div class="stat-pill">
+                                                <span class="stat-value win-stat">${team.wins || 0}</span>
+                                                <span class="stat-label">Wins</span>
                                             </div>
-                                        </td>
-                                        <td>
-                                            <div class="coach-cell">
-                                                ${team.coach_first_name ?
+                                            <div class="stat-pill">
+                                                <span class="stat-value loss-stat">${team.losses || 0}</span>
+                                                <span class="stat-label">Loss</span>
+                                            </div>
+                                            <div class="stat-pill">
+                                                <span class="stat-value draw-stat">${team.draws || 0}</span>
+                                                <span class="stat-label">Draw</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="coach-cell">
+                                            ${team.coach_first_name ?
                         `<div class="coach-avatar">${team.coach_first_name[0]}${team.coach_last_name[0]}</div>
-                                                     <div style="display:flex; flex-direction:column;">
-                                                        <span style="font-weight:500;">${team.coach_first_name} ${team.coach_last_name}</span>
-                                                        <span style="font-size:0.75rem; color:var(--text-muted);">Head Coach</span>
-                                                     </div>`
-                        : `<span style="color: var(--text-muted); font-style: italic; opacity: 0.6; font-size: 0.9rem;">No Coach Assigned</span>`
-                    }
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons" onclick="event.stopPropagation()">
-                                                <button class="btn-icon manage" title="Manage Team" onclick="openTeamManagement('${team.id}', '${team.name}')">
-                                                    ⚙️
-                                                </button>
-                                                <button class="btn-icon edit" title="Edit Team" onclick="editTeam('${team.id}')">
-                                                    ✏️
-                                                </button>
-                                                <button class="btn-icon delete" title="Delete Team" onclick="deleteTeam('${team.id}')">
-                                                    🗑️
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                    </tbody>
-                </table>
-                    </div >
+                                                <div style="display:flex; flex-direction:column;">
+                                                <span style="font-weight:500;">${team.coach_first_name} ${team.coach_last_name}</span>
+                                                <span style="font-size:0.75rem; color:var(--text-muted);">Head Coach</span>
+                                                </div>`
+                        : `<span style="color: var(--text-muted); font-style: italic; opacity: 0.6; font-size: 0.9rem;">No Coach Assigned</span>`}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons" onclick="event.stopPropagation()">
+                                            <button class="btn-icon manage" title="Manage Team" onclick="openTeamManagement('${team.id}', '${team.name}')">⚙️</button>
+                                            <button class="btn-icon edit" title="Edit Team" onclick="editTeam('${team.id}')">✏️</button>
+                                            <button class="btn-icon delete" title="Delete Team" onclick="deleteTeam('${team.id}')">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    </div>
                 `;
 
                 AppState.teams = teams;
-                populateTeamDropdowns(); // Update all Selects
-
+                populateTeamDropdowns();
             } catch (error) {
                 console.error('Failed to load teams:', error);
                 container.innerHTML = '<p style="color:#dc3545">Failed to load teams</p>';
@@ -5380,7 +5363,7 @@
             container.style.marginTop = '15px';
 
             container.innerHTML = images.map(imgUrl => `
-            < div class= "gallery-item" style = "position: relative; width: 100%; aspect-ratio: 1/1; overflow: visible;" >
+            <div class="gallery-item" style="position: relative; width: 100%; aspect-ratio: 1/1; overflow: visible;">
             <img src="${imgUrl}" style="height: 100%; width: 100%; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color, #444);">
                 <button onclick="deleteClubImage('${imgUrl}')" style="position: absolute; top: -8px; right: -8px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 5;">&times;</button>
             </div>
@@ -5420,6 +5403,99 @@
 
         // Expose new functions
         window.deleteClubImage = deleteClubImage;
+
+        // =========================== POLLS & VOTING ===========================
+        async function loadPolls() {
+            const container = document.getElementById('pollsContainer');
+            if (!container) return;
+
+            try {
+                showLoading(true);
+                const clubId = await getActiveClubId();
+                const polls = await apiService.getPolls(clubId);
+
+                if (!polls || polls.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 2rem; opacity: 0.7;"><h3>No Active Polls</h3><p>Engage your members by creating a poll.</p><button class="btn btn-primary" onclick="showModal(\\'createPollModal\\')">Create Poll</button></div>';
+                    return;
+                }
+
+                container.innerHTML = polls.map(p => `
+                    <div class="card" style="margin-bottom: 1rem; position: relative;">
+                         <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem;">
+                            <h4 style="margin:0;">${p.title}</h4>
+                            <span class="badge">${p.total_votes || 0} Votes</span>
+                         </div>
+                         <p style="color: var(--text-muted); font-size: 0.9rem;">${p.description || ''}</p>
+                         <div class="poll-options" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+                            ${(p.options || []).map(opt => {
+                    const pct = p.total_votes ? Math.round((opt.votes / p.total_votes) * 100) : 0;
+                    return `
+                                <div onclick="voteOnPoll('${p.id}', '${opt.id}')" style="cursor: pointer; position: relative; background: rgba(255,255,255,0.05); border-radius: 4px; padding: 0.75rem; overflow: hidden;">
+                                    <div style="position: absolute; top:0; left:0; bottom:0; width:${pct}%; background: rgba(59,130,246,0.2); transition: width 0.3s ease;"></div>
+                                    <div style="position: relative; display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                        <span>${opt.text}</span>
+                                        <span>${pct}% (${opt.votes})</span>
+                                    </div>
+                                </div>`;
+                }).join('')}
+                         </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.warn('Load polls failed', err);
+                container.innerHTML = '<p>Failed to load polls.</p>';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function voteOnPoll(pollId, optionId) {
+            try {
+                showLoading(true);
+                await apiService.voteOnPoll(pollId, optionId);
+                showNotification('Vote cast successfully!', 'success');
+                loadPolls();
+            } catch (e) {
+                showNotification('Vote failed', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // =========================== TOURNAMENTS ===========================
+        async function loadTournamentsDashboard() {
+            const container = document.getElementById('tournaments');
+            if (!container) return;
+
+            try {
+                const clubId = await getActiveClubId();
+                const tournaments = await apiService.getTournaments(clubId);
+
+                const select = document.getElementById('tournamentSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">Select a tournament...</option>' +
+                        tournaments.map(t => `<option value="${t.id}">${t.title || t.name}</option>`).join('');
+                }
+
+                const list = document.getElementById('tournamentTeamsList');
+                if (list && !list.hasChildNodes()) {
+                    list.innerHTML = '<p style="padding:1rem; opacity:0.6;">Select a tournament to view details.</p>';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function generateFixtures(type) {
+            showNotification(`Generating ${type} fixtures... (Coming Soon)`, 'info');
+        }
+
+        // Export new functions
+        window.loadPolls = loadPolls;
+        window.voteOnPoll = voteOnPoll;
+        window.loadTournamentsDashboard = loadTournamentsDashboard;
+        window.generateFixtures = generateFixtures;
 
 
 
@@ -5485,12 +5561,11 @@
         }
 
         function showNotification(message, type = 'info', duration = 4000) {
-            // Remove existing notifications
             const existingNotifications = document.querySelectorAll('.notification');
             existingNotifications.forEach(notification => notification.remove());
 
             const notification = document.createElement('div');
-            notification.className = `notification notification - ${type}`;
+            notification.className = `notification notification-${type}`;
 
             const colors = {
                 success: '#28a745',
@@ -5507,48 +5582,33 @@
             };
 
             notification.style.cssText = `
-                        position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${colors[type] || colors.info};
-            color: white;
-            padding: 16px 20px;
-            border - radius: 8px;
-            font - weight: 600;
-            font - size: 14px;
-            z - index: 10000;
-            max - width: 400px;
-            box - shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            transform: translateX(100 %);
-            transition: transform 0.3s ease;
-            display: flex;
-            align - items: center;
-            gap: 10px;
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 16px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 14px;
+                z-index: 10000;
+                max-width: 400px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 10px;
             `;
 
             notification.innerHTML = `
-                < span > ${icons[type] || icons.info}</span >
-                        <span>${message}</span>
-                        <button onclick="this.parentElement.remove()" style="
-                    background: none;
-                    border: none;
-                    color: white;
-                    font-size: 18px;
-                    cursor: pointer;
-                    margin-left: auto;
-                    padding: 0;
-                    opacity: 0.8;
-                ">×</button>
+                <span>${icons[type] || icons.info}</span>
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;margin-left:auto;padding:0;opacity:0.8;">×</button>
             `;
 
             document.body.appendChild(notification);
-
-            // Animate in
-            setTimeout(() => {
-                notification.style.transform = 'translateX(0)';
-            }, 10);
-
-            // Auto remove
+            setTimeout(() => notification.style.transform = 'translateX(0)', 10);
             setTimeout(() => {
                 if (notification.parentElement) {
                     notification.style.transform = 'translateX(100%)';
