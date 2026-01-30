@@ -305,8 +305,7 @@ section#benefits {
 
 /* Main Content */
 .main {
-
-    margin-top: 0;
+    margin-top: 80px; /* Fixed header offset */
     min-height: calc(100vh - 80px);
 }
 
