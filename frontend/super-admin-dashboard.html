@@ -338,6 +338,29 @@
                 </div>
             </div>
 
+            <!-- Data Management Section -->
+            <div class="section-card"
+                style="border: 1px solid rgba(220, 67, 67, 0.3); background: rgba(220, 67, 67, 0.05);">
+                <div class="section-header">
+                    <h2 style="color: #ff6b6b;">⚠️ Data Management</h2>
+                </div>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-warning" onclick="confirmResetData()"
+                        style="background: #dc2626; color: white; border: none;">
+                        🗑️ Reset All Data
+                    </button>
+                    <button class="btn btn-primary" onclick="showGenerateMockModal()">
+                        ✨ Generate Mock Data
+                    </button>
+                </div>
+                <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8; max-width: 600px;">
+                    <strong>Reset All Data:</strong> Wipes all organizations, users, events, and bookings. Resets the
+                    database to a clean slate. Only the Super Admin account remains.<br>
+                    <strong>Generate Mock Data:</strong> Populates the database with realistic sample organizations,
+                    players, teams, and events for testing.
+                </p>
+            </div>
+
             <!-- Organizations Section -->
             <div class="section-card">
                 <div class="section-header">
@@ -385,6 +408,53 @@
 
                 <div id="activityFeed">
                     <div class="loading">Loading activity...</div>
+                </div>
+            </div>
+            <!-- Generate Mock Data Modal -->
+            <div id="generateMockModal" class="modal"
+                style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+                <div class="modal-content"
+                    style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; position: relative;">
+                    <h2 style="margin-top: 0;">✨ Generate Mock Data</h2>
+                    <p>Select what kind of data to generate:</p>
+
+                    <div style="margin: 1.5rem 0; display: grid; gap: 1rem;">
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                            <input type="checkbox" id="mockOrgs" checked>
+                            <div>
+                                <strong>Organizations</strong>
+                                <div style="font-size: 0.8rem; opacity: 0.7;">Create 5 sample clubs with logos and
+                                    locations</div>
+                            </div>
+                        </label>
+
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                            <input type="checkbox" id="mockUsers" checked>
+                            <div>
+                                <strong>Users & Players</strong>
+                                <div style="font-size: 0.8rem; opacity: 0.7;">Create ~50 players, parents, and coaches
+                                </div>
+                            </div>
+                        </label>
+
+                        <label
+                            style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                            <input type="checkbox" id="mockEvents" checked>
+                            <div>
+                                <strong>Events & Bookings</strong>
+                                <div style="font-size: 0.8rem; opacity: 0.7;">Schedule matches, trainings, and
+                                    tournament fixtures</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                        <button onclick="document.getElementById('generateMockModal').style.display = 'none'"
+                            class="btn btn-secondary">Cancel</button>
+                        <button onclick="executeMockGeneration()" class="btn btn-primary">🚀 Generate</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -672,6 +742,69 @@
 
         function refreshActivity() {
             loadActivity();
+        }
+
+        async function confirmResetData() {
+            if (confirm('⚠️ DANGER: This will delete ALL organizations, users, and events. \n\nOnly your Super Admin account will remain.\n\nAre you sure you want to proceed?')) {
+                const doubleCheck = prompt('To confirm, type "DELETE ALL" in the box below:');
+                if (doubleCheck === 'DELETE ALL') {
+                    try {
+                        const btn = document.querySelector('.btn-warning');
+                        btn.textContent = 'Deleting...';
+                        btn.disabled = true;
+
+                        await apiService.makeRequest('/platform-admin/reset-data', { method: 'POST' });
+
+                        alert('✅ System has been reset completely.');
+                        location.reload();
+                    } catch (e) {
+                        alert('Failed to reset system: ' + e.message);
+                        document.querySelector('.btn-warning').textContent = '🗑️ Reset All Data';
+                        document.querySelector('.btn-warning').disabled = false;
+                    }
+                }
+            }
+        }
+
+        function showGenerateMockModal() {
+            const modal = document.getElementById('generateMockModal');
+            modal.style.display = 'flex';
+        }
+
+        async function executeMockGeneration() {
+            const orgs = document.getElementById('mockOrgs').checked;
+            const users = document.getElementById('mockUsers').checked;
+            const events = document.getElementById('mockEvents').checked;
+
+            try {
+                const btn = document.querySelector('#generateMockModal .btn-primary');
+                const originalText = btn.textContent;
+                btn.textContent = 'Generating... (this may take 30s)';
+                btn.disabled = true;
+
+                await apiService.makeRequest('/platform-admin/generate-mock-data', {
+                    method: 'POST',
+                    body: JSON.stringify({ orgs, users, events })
+                });
+
+                alert('✅ Mock data generated successfully!');
+                document.getElementById('generateMockModal').style.display = 'none';
+
+                // Refresh all views
+                loadStats();
+                loadOrganizations();
+                loadUsers();
+                loadActivity();
+
+            } catch (e) {
+                alert('Generation failed: ' + e.message);
+            } finally {
+                const btn = document.querySelector('#generateMockModal .btn-primary');
+                if (btn) {
+                    btn.textContent = '🚀 Generate';
+                    btn.disabled = false;
+                }
+            }
         }
 
         // View organization details
