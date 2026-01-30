@@ -23,6 +23,7 @@
             border-radius: 16px;
             margin-bottom: 2rem;
             color: white;
+            margin-top: 85px;
         }
 
         .platform-header h1 {
@@ -216,26 +217,58 @@
         .pagination {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 0.5rem;
-            margin-top: 1.5rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            /* Allow wrapping if many pages */
+            max-width: 100%;
+            overflow-x: auto;
+            /* Fallback for touch scroll if wrapping is too much */
+            padding: 1rem 0;
         }
 
         .pagination button {
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
             color: var(--text-main);
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.9rem;
         }
 
-        .pagination button:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .pagination button:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary);
+            transform: translateY(-2px);
         }
 
         .pagination button.active {
             background: var(--primary);
             border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(220, 67, 67, 0.3);
+            transform: scale(1.05);
+        }
+
+        .pagination .ellipsis {
+            color: var(--text-muted);
+            padding: 0 0.5rem;
+            user-select: none;
+            font-weight: 600;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .loading {
@@ -533,21 +566,61 @@
             }
         }
 
-        // Render pagination
+        // Render pagination with "Smart Window"
         function renderPagination(currentPage, totalPages, type) {
             if (totalPages <= 1) return '';
 
-            let buttons = '';
+            let pages = [];
+            const delta = 2; // Number of pages either side of current
+
+            // Logic to determine which page numbers to show
             for (let i = 1; i <= totalPages; i++) {
-                buttons += `
+                if (
+                    i === 1 || // First
+                    i === totalPages || // Last
+                    (i >= currentPage - delta && i <= currentPage + delta) // Window
+                ) {
+                    pages.push(i);
+                } else if (
+                    i === currentPage - delta - 1 ||
+                    i === currentPage + delta + 1
+                ) {
+                    pages.push('...');
+                }
+            }
+
+            // Remove adjacent duplicates of '...'
+            pages = pages.filter((page, index) => {
+                return page !== '...' || pages[index - 1] !== '...';
+            });
+
+            const buttons = pages.map(i => {
+                if (i === '...') {
+                    return `<span class="ellipsis">...</span>`;
+                }
+                return `
                     <button class="${i === currentPage ? 'active' : ''}" 
                             onclick="changePage${type === 'org' ? 'Org' : 'User'}(${i})">
                         ${i}
                     </button>
                 `;
-            }
+            }).join('');
 
-            return `<div class="pagination">${buttons}</div>`;
+            // Add Prev/Next
+            const prevBtn = `
+                <button ${currentPage === 1 ? 'disabled' : ''} 
+                        onclick="changePage${type === 'org' ? 'Org' : 'User'}(${currentPage - 1})">
+                    &larr;
+                </button>
+            `;
+            const nextBtn = `
+                <button ${currentPage === totalPages ? 'disabled' : ''} 
+                        onclick="changePage${type === 'org' ? 'Org' : 'User'}(${currentPage + 1})">
+                    &rarr;
+                </button>
+            `;
+
+            return `<div class="pagination">${prevBtn} ${buttons} ${nextBtn}</div>`;
         }
 
         // Page navigation
