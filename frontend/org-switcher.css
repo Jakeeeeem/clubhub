@@ -161,6 +161,30 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
+.org-switcher-search {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.org-switcher-search input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: white;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.org-switcher-search input:focus {
+  border-color: var(--primary);
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 10px rgba(220, 67, 67, 0.15);
+}
+
 .org-switcher-list {
   max-height: 320px;
   overflow-y: auto;

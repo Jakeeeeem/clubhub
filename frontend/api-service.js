@@ -163,7 +163,56 @@ class ApiService {
         // Return mock data for specific endpoints during demo session
         if (endpoint.includes("/auth/context")) {
           const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+          const isSuper =
+            user.is_platform_admin === true || user.role === "superadmin";
           const role = user.activePlayerId ? "player" : user.role || "admin";
+
+          let organizations = [
+            {
+              id: "demo-club-id",
+              name: "Pro Club Demo",
+              role: role === "coach" ? "coach" : "admin",
+              user_role: role === "coach" ? "coach" : "admin",
+            },
+            {
+              id: "demo-coach-org-2",
+              name: "Secondary Academy",
+              role: "coach",
+              user_role: "coach",
+            },
+            {
+              id: "demo-player-org",
+              name: "Elite Academy (Player)",
+              role: "player",
+              user_role: "player",
+              player_id: "demo-player-id",
+              player_name: "Jordan Smith",
+            },
+          ];
+
+          // For Super Admin, we add all these to their context automatically
+          if (isSuper) {
+            organizations = organizations.map((org) => ({
+              ...org,
+              user_role: "owner", // Super Admin acts as owner for all orgs
+              role: "owner",
+            }));
+
+            // Also add some additional dummy orgs to show scale
+            organizations.push({
+              id: "org-3",
+              name: "Westside United",
+              role: "owner",
+              user_role: "owner",
+            });
+            organizations.push({
+              id: "org-4",
+              name: "London Lions",
+              role: "owner",
+              user_role: "owner",
+            });
+          }
+
           return {
             success: true,
             user: user,
@@ -171,29 +220,13 @@ class ApiService {
               id: user.clubId || "demo-club-id",
               name: user.activePlayerId
                 ? "Elite Academy (Player)"
-                : "Pro Club Demo",
-              role: role,
-              user_role: role,
+                : user.clubId === "demo-coach-org-2"
+                  ? "Secondary Academy"
+                  : "Pro Club Demo",
+              role: isSuper ? "owner" : role,
+              user_role: isSuper ? "owner" : role,
             },
-            organizations: [
-              {
-                id: "demo-club-id",
-                name: "Pro Club Demo",
-                role: role === "coach" ? "coach" : "admin",
-              },
-              {
-                id: "demo-coach-org-2",
-                name: "Secondary Academy",
-                role: "coach",
-              },
-              {
-                id: "demo-player-org",
-                name: "Elite Academy (Player)",
-                role: "player",
-                player_id: "demo-player-id",
-                player_name: "Jordan Smith",
-              },
-            ],
+            organizations: organizations,
           };
         }
         if (endpoint.includes("/auth/switch-organization")) {

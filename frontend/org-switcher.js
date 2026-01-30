@@ -7,6 +7,8 @@ class OrganizationSwitcher {
   constructor() {
     this.currentOrg = null;
     this.organizations = [];
+    this.allOrganizations = []; // For filtering/searching
+    this.isPlatformAdmin = false;
     this.isOpen = false;
     this.init();
   }
@@ -44,7 +46,16 @@ class OrganizationSwitcher {
         }
 
         this.organizations = organizations;
+        this.allOrganizations = organizations;
         this.currentOrg = response.currentOrganization;
+
+        // Determine if user is Platform Admin
+        const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+        this.isPlatformAdmin =
+          user.is_platform_admin === true ||
+          user.role === "superadmin" ||
+          response.user?.is_platform_admin;
+
         this.render();
       }
     } catch (error) {
@@ -86,13 +97,24 @@ class OrganizationSwitcher {
 
         <div class="org-switcher-dropdown" id="org-switcher-dropdown">
           <div class="org-switcher-header">
-            <span>Switch Organization</span>
+            <span>${this.isPlatformAdmin ? "Search All Clubs" : "Switch Organization"}</span>
           </div>
-          <div class="org-switcher-list">
+          
+          ${
+            this.isPlatformAdmin
+              ? `
+            <div class="org-switcher-search">
+              <input type="text" id="org-search-input" placeholder="Search platform..." autocomplete="off">
+            </div>
+          `
+              : ""
+          }
+
+          <div class="org-switcher-list" id="org-switcher-list">
             ${
               this.organizations.length === 0
                 ? `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-                   No organizations yet.<br>Create your first one below!
+                   No organizations found.
                  </div>`
                 : this.organizations
                     .map((org) => this.renderOrgItem(org))
@@ -201,6 +223,38 @@ class OrganizationSwitcher {
         await this.switchOrganization(orgId, playerId);
       }
     });
+
+    // Handle Search for Platform Admins
+    if (this.isPlatformAdmin) {
+      const searchInput = document.getElementById("org-search-input");
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          const query = e.target.value.toLowerCase();
+          this.organizations = this.allOrganizations.filter(
+            (org) =>
+              org.name.toLowerCase().includes(query) ||
+              (org.sport && org.sport.toLowerCase().includes(query)),
+          );
+          this.updateList();
+        });
+
+        // Prevent dropdown close when clicking search
+        searchInput.addEventListener("click", (e) => e.stopPropagation());
+      }
+    }
+  }
+
+  updateList() {
+    const listContainer = document.getElementById("org-switcher-list");
+    if (!listContainer) return;
+
+    if (this.organizations.length === 0) {
+      listContainer.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No matching organizations.</div>`;
+    } else {
+      listContainer.innerHTML = this.organizations
+        .map((org) => this.renderOrgItem(org))
+        .join("");
+    }
   }
 
   toggleDropdown() {

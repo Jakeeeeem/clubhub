@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Platform Admin - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="org-switcher.css">
     <style>
         .platform-admin-container {
             max-width: 1400px;
@@ -250,6 +251,9 @@
                 <span class="logo-text neon-text">ClubHub</span>
             </div>
 
+            <!-- Organization Switcher for Super Admin -->
+            <div id="org-switcher-container"></div>
+
             <!-- Mode Toggle -->
             <div class="mode-toggle-container">
                 <span class="mode-label active" id="platform-label">Platform</span>
@@ -351,6 +355,7 @@
     </main>
 
     <script src="api-service.js"></script>
+    <script src="org-switcher.js"></script>
     <script>
         let currentOrgPage = 1;
         let currentUserPage = 1;
