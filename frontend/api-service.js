@@ -3574,19 +3574,98 @@ class ApiService {
   // =========================== TOURNAMENTS ===========================
   async getTournaments(clubId) {
     try {
-      // Reuse getEvents if available, filtering by type
       const events = await this.getEvents(clubId);
-      return (events || []).filter(
+      // Mock for development if empty
+      const tournaments = (events || []).filter(
         (e) => e.event_type === "tournament" || e.type === "tournament",
       );
+      if (tournaments.length === 0) {
+        return [
+          {
+            id: "mock_t1",
+            name: "Winter League 2026",
+            type: "league",
+            status: "active",
+            teams_count: 8,
+          },
+          {
+            id: "mock_t2",
+            name: "Knockout Cup",
+            type: "knockout",
+            status: "planned",
+            teams_count: 16,
+          },
+        ];
+      }
+      return tournaments;
     } catch (error) {
       console.warn("getTournaments failed", error);
       return [];
     }
   }
 
+  async createTournament(payload) {
+    return await this.makeRequest("/tournaments", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
   async getTournamentDetails(tournamentId) {
-    return { id: tournamentId, name: "Tournament", teams: [], fixtures: [] };
+    if (tournamentId && tournamentId.startsWith("mock_")) {
+      return {
+        id: tournamentId,
+        name:
+          tournamentId === "mock_t1" ? "Winter League 2026" : "Knockout Cup",
+        participants: [
+          { id: "t1", name: "Red Dragons" },
+          { id: "t2", name: "Blue Sharks" },
+          { id: "t3", name: "Green Giants" },
+          { id: "t4", name: "Yellow Stars" },
+        ],
+        fixtures: [
+          {
+            id: "m1",
+            round: 1,
+            home_team: "Red Dragons",
+            away_team: "Blue Sharks",
+            home_score: 2,
+            away_score: 1,
+            played: true,
+          },
+          {
+            id: "m2",
+            round: 1,
+            home_team: "Green Giants",
+            away_team: "Yellow Stars",
+            home_score: null,
+            away_score: null,
+            played: false,
+          },
+          {
+            id: "m3",
+            round: 2,
+            home_team: "Red Dragons",
+            away_team: "Green Giants",
+            home_score: null,
+            away_score: null,
+            played: false,
+          },
+        ],
+        standings: [
+          { team: "Red Dragons", p: 1, w: 1, d: 0, l: 0, pts: 3 },
+          { team: "Blue Sharks", p: 1, w: 0, d: 0, l: 1, pts: 0 },
+        ],
+      };
+    }
+    return await this.makeRequest(`/tournaments/${tournamentId}`);
+  }
+
+  async updateMatchStats(matchId, payload) {
+    return await this.makeRequest(`/matches/${matchId}/stats`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   }
 
   // =========================== UTILITY METHODS ===========================

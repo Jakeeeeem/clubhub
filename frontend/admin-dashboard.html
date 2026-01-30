@@ -183,7 +183,8 @@
                     <div class="nav-dropdown-menu">
                         <button onclick="showSection('listings')">📋 Recruiting Listings</button>
                         <button onclick="showSection('marketing')">📢 Marketing Hub</button>
-                        <button onclick="showSection('polls-section')">🗳️ Polls & Voting</button>
+                        <button onclick="showSection('polls-section')" class="closed-feature">🗳️ Polls &
+                            Voting</button>
                         <div class="dropdown-divider"></div>
                         <button onclick="showSection('email-campaigns')">📧 Email Campaigns</button>
                     </div>
@@ -998,61 +999,88 @@
 
                 <!-- Tournament Manager Tab -->
                 <div id="tournaments" class="dashboard-section">
-                    <div class="section-header">
-                        <h2>Tournament Manager</h2>
-                        <div class="action-buttons">
-                            <button class="btn btn-secondary" onclick="exportTournamentCSV()">Export CSV</button>
+                    <!-- Tournament List View -->
+                    <div id="tournamentListView">
+                        <div class="section-header">
+                            <h2>🏆 Tournament Manager</h2>
+                            <button class="btn btn-primary" onclick="openCreateTournamentModal()">+ Create
+                                Tournament</button>
                         </div>
-                    </div>
 
-                    <div class="card" style="margin-bottom: 2rem;">
-                        <h3>Tournament Overview</h3>
-                        <div class="form-group">
-                            <label>Select Tournament</label>
-                            <select id="tournamentSelect" onchange="loadTournamentDashboard(this.value)">
-                                <option value="">Select a tournament...</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid-container" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
-                        <!-- Teams Column -->
                         <div class="card">
-                            <h3>Registered Teams</h3>
-                            <div id="tournamentTeamsList" class="item-list"></div>
-                        </div>
-
-                        <!-- Fixtures Column -->
-                        <div class="card">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <h3>Fixtures / Bracket</h3>
-                                <div>
-                                    <button class="btn btn-small btn-secondary"
-                                        onclick="generateFixtures('regular')">League</button>
-                                    <button class="btn btn-small btn-primary"
-                                        onclick="generateFixtures('knockout')">Knockout</button>
-                                </div>
+                            <h3>Active Tournaments</h3>
+                            <div id="tournamentsListContainer"
+                                style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); margin-top: 1rem;">
+                                <!-- Loaded via JS -->
+                                <p style="padding: 1rem; opacity: 0.7;">Loading tournaments...</p>
                             </div>
-                            <div id="tournamentMatchesList" class="item-list"></div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Specialized Polls Section -->
-                <div id="polls-section" class="dashboard-section">
-                    <div class="card">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                            <h3>🗳️ Voting & Polls</h3>
-                            <button class="btn btn-primary" onclick="showModal('createPollModal')">➕ Create
-                                Poll</button>
+                    <!-- Tournament Detail View (Hidden by default) -->
+                    <div id="tournamentDetailView" style="display: none;">
+                        <button class="btn btn-secondary btn-small" onclick="closeTournamentDetail()">← Back to
+                            Tournaments</button>
+
+                        <div class="section-header" style="margin-top: 1rem;">
+                            <h2 id="detailTournamentName">Tournament Name</h2>
+                            <div class="action-buttons">
+                                <button class="btn btn-secondary" onclick="generateFixtures()">Generate Next
+                                    Round</button>
+                            </div>
                         </div>
-                        <div id="pollsContainer" class="card-grid">
-                            <!-- Polls will be loaded here -->
+
+                        <div class="dashboard-nav" style="margin-bottom: 1rem;">
+                            <button class="active" onclick="switchTournamentTab(this, 'fixtures')">Fixtures</button>
+                            <button onclick="switchTournamentTab(this, 'standings')">Standings</button>
+                            <button onclick="switchTournamentTab(this, 'teams')">Teams</button>
+                        </div>
+
+                        <div id="tab-fixtures" class="tournament-tab">
+                            <div class="card">
+                                <h3>Upcoming Matches</h3>
+                                <div id="tournamentFixturesList"></div>
+                            </div>
+                        </div>
+
+                        <div id="tab-standings" class="tournament-tab" style="display: none;">
+                            <div class="card">
+                                <h3>League Table / Bracket</h3>
+                                <div id="tournamentStandingsContainer"></div>
+                            </div>
+                        </div>
+
+                        <div id="tab-teams" class="tournament-tab" style="display: none;">
+                            <div class="card">
+                                <h3>Participating Teams</h3>
+                                <div id="tournamentParticipantsList"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div> <!-- End dashboard-content -->
+                onclick="generateFixtures('regular')">League</button>
+                <button class="btn btn-small btn-primary" onclick="generateFixtures('knockout')">Knockout</button>
+            </div>
+        </div>
+        <div id="tournamentMatchesList" class="item-list"></div>
+        </div>
+        </div>
+        </div>
+
+        <!-- Specialized Polls Section -->
+        <div id="polls-section" class="dashboard-section">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h3>🗳️ Voting & Polls</h3>
+                    <button class="btn btn-primary" onclick="showModal('createPollModal')">➕ Create
+                        Poll</button>
+                </div>
+                <div id="pollsContainer" class="card-grid">
+                    <!-- Polls will be loaded here -->
+                </div>
+            </div>
+        </div>
+        </div> <!-- End dashboard-content -->
         </div>
     </main>
 
@@ -1543,6 +1571,101 @@
                     <button type="submit" class="btn btn-primary">Save Venue</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Create Tournament Modal -->
+    <div id="createTournamentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🏆 Create New Tournament</h2>
+                <button class="close" onclick="closeModal('createTournamentModal')">&times;</button>
+            </div>
+            <form onsubmit="handleCreateTournament(event)">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Tournament Name</label>
+                        <input type="text" id="newTournamentName" required placeholder="e.g. Summer Cup 2026">
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="newTournamentType" required>
+                            <option value="league">League</option>
+                            <option value="knockout">Knockout</option>
+                            <option value="group_knockout">Group + Knockout</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="newTournamentStartDate" required>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Select Participating Teams</label>
+                        <div id="tournamentTeamSelector"
+                            style="max-height: 200px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                            <!-- Checkboxes populated via JS -->
+                            <p style="opacity: 0.6;">Loading teams...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('createTournamentModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Tournament</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Match Stats Modal -->
+    <div id="matchStatsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>⚽ Match Result & Stats</h2>
+                <button class="close" onclick="closeModal('matchStatsModal')">&times;</button>
+            </div>
+            <div style="padding: 1rem;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                    <div style="text-align: center; flex: 1;">
+                        <h3 id="matchHomeTeamName">Home</h3>
+                        <input type="number" id="matchHomeScore" placeholder="0"
+                            style="font-size: 2rem; width: 80px; text-align: center; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px;">
+                    </div>
+                    <div style="font-size: 1.5rem; opacity: 0.5; font-weight: bold;">VS</div>
+                    <div style="text-align: center; flex: 1;">
+                        <h3 id="matchAwayTeamName">Away</h3>
+                        <input type="number" id="matchAwayScore" placeholder="0"
+                            style="font-size: 2rem; width: 80px; text-align: center; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Player Stats (Optional)</label>
+                    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 0.5rem;">Enter goals, assists, or rating
+                        (1-10).</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <h4
+                                style="margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem;">
+                                Home Players</h4>
+                            <div id="matchHomePlayersStats" style="max-height: 300px; overflow-y: auto;"></div>
+                        </div>
+                        <div>
+                            <h4
+                                style="margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.25rem;">
+                                Away Players</h4>
+                            <div id="matchAwayPlayersStats" style="max-height: 300px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="closeModal('matchStatsModal')">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveMatchStats()">💾 Save Result</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -5465,36 +5588,296 @@
 
         // =========================== TOURNAMENTS ===========================
         async function loadTournamentsDashboard() {
-            const container = document.getElementById('tournaments');
+            const container = document.getElementById('tournamentsListContainer');
             if (!container) return;
 
+            // Ensure UI is in List view
+            const listView = document.getElementById('tournamentListView');
+            const detailView = document.getElementById('tournamentDetailView');
+            if (listView) listView.style.display = 'block';
+            if (detailView) detailView.style.display = 'none';
+
             try {
+                showLoading(true);
                 const clubId = await getActiveClubId();
-                const tournaments = await apiService.getTournaments(clubId);
+                const tourneys = await apiService.getTournaments(clubId);
 
-                const select = document.getElementById('tournamentSelect');
-                if (select) {
-                    select.innerHTML = '<option value="">Select a tournament...</option>' +
-                        tournaments.map(t => `<option value="${t.id}">${t.title || t.name}</option>`).join('');
-                }
-
-                const list = document.getElementById('tournamentTeamsList');
-                if (list && !list.hasChildNodes()) {
-                    list.innerHTML = '<p style="padding:1rem; opacity:0.6;">Select a tournament to view details.</p>';
+                if (!tourneys || tourneys.length === 0) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 2rem; opacity: 0.7;">
+                            <h3>No active tournaments</h3>
+                            <button class="btn btn-primary" style="margin-top: 1rem;" onclick="openCreateTournamentModal()">Create Your First Tournament</button>
+                        </div>`;
+                } else {
+                    container.innerHTML = tourneys.map(t => `
+                        <div class="card" onclick="viewTournament('${t.id}')" style="cursor: pointer; transition: transform 0.2s; border: 1px solid transparent;">
+                            <style>.card:hover { border-color: var(--primary-color) !important; transform: translateY(-2px); }</style>
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <span class="badge" style="margin-bottom: 0.5rem; background: rgba(59, 130, 246, 0.2); color: #60a5fa;">${(t.type || 'Tournament').toUpperCase()}</span>
+                                    <h3 style="margin: 0.5rem 0;">${t.name}</h3>
+                                    <p style="font-size: 0.9rem; opacity: 0.7;">${t.teams_count || 0} Teams • ${t.status || 'Active'}</p>
+                                </div>
+                                <span style="font-size: 2rem;">🏆</span>
+                            </div>
+                        </div>
+                    `).join('');
                 }
             } catch (e) {
                 console.error(e);
+                container.innerHTML = '<p>Error loading tournaments.</p>';
+            } finally {
+                showLoading(false);
             }
         }
 
-        function generateFixtures(type) {
-            showNotification(`Generating ${type} fixtures... (Coming Soon)`, 'info');
+        async function viewTournament(id) {
+            currentTournamentId = id;
+            try {
+                showLoading(true);
+                const details = await apiService.getTournamentDetails(id);
+
+                document.getElementById('tournamentListView').style.display = 'none';
+                document.getElementById('tournamentDetailView').style.display = 'block';
+
+                document.getElementById('detailTournamentName').textContent = details.name;
+
+                // Render Fixtures
+                renderFixtures(details.fixtures || []);
+
+                // Render Standings
+                renderStandings(details.standings || [], details.type);
+
+                // Render Teams
+                renderParticipants(details.participants || details.teams || []);
+
+                // Switch to Fixtures tab by default
+                const navBtn = document.querySelector('.dashboard-nav button');
+                if (navBtn) switchTournamentTab(navBtn, 'fixtures');
+
+            } catch (e) {
+                showNotification('Failed to load tournament details: ' + e.message, 'error');
+                closeTournamentDetail();
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function closeTournamentDetail() {
+            document.getElementById('tournamentListView').style.display = 'block';
+            document.getElementById('tournamentDetailView').style.display = 'none';
+            currentTournamentId = null;
+        }
+
+        function switchTournamentTab(btn, tabName) {
+            // Update buttons
+            if (btn && btn.parentElement) {
+                const nav = btn.parentElement;
+                nav.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            // Update tabs
+            document.querySelectorAll('.tournament-tab').forEach(t => t.style.display = 'none');
+            const target = document.getElementById('tab-' + tabName);
+            if (target) target.style.display = 'block';
+        }
+
+        function renderFixtures(fixtures) {
+            const container = document.getElementById('tournamentFixturesList');
+            if (!fixtures || fixtures.length === 0) {
+                container.innerHTML = '<p style="padding: 1rem; opacity: 0.6;">No fixtures scheduled yet.</p>';
+                return;
+            }
+
+            container.innerHTML = fixtures.map(f => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: rgba(255,255,255,0.05); margin-bottom: 0.5rem; border-radius: 8px;">
+                    <div style="flex: 1; text-align: right; font-weight: 600; font-size: 1.1rem;">${f.home_team || 'Home'}</div>
+                    <div style="padding: 0 1.5rem; font-weight: bold; font-size: 1.5rem; text-align: center; min-width: 100px;">
+                        <span style="color: ${f.played ? 'white' : 'gray'};">${f.home_score !== null ? f.home_score : '-'}</span> 
+                        <span style="opacity: 0.5; margin: 0 5px;">:</span> 
+                        <span style="color: ${f.played ? 'white' : 'gray'};">${f.away_score !== null ? f.away_score : '-'}</span>
+                    </div>
+                    <div style="flex: 1; text-align: left; font-weight: 600; font-size: 1.1rem;">${f.away_team || 'Away'}</div>
+                    <div style="margin-left: 1rem;">
+                        <button class="btn btn-small ${f.played ? 'btn-secondary' : 'btn-primary'}" onclick="openMatchStatsModal('${f.id}', '${f.home_team}', '${f.away_team}')">
+                            ${f.played ? 'Edit' : 'Result'}
+                        </button>
+                    </div>
+                </div>
+             `).join('');
+        }
+
+        function renderStandings(standings, type) {
+            const container = document.getElementById('tournamentStandingsContainer');
+            if (!standings || standings.length === 0) {
+                container.innerHTML = '<p style="padding: 1rem; opacity: 0.6;">No standings available.</p>';
+                return;
+            }
+
+            // Simple Table Concept
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Pos</th>
+                                <th>Team</th>
+                                <th style="text-align:center;">P</th>
+                                <th style="text-align:center;">W</th>
+                                <th style="text-align:center;">D</th>
+                                <th style="text-align:center;">L</th>
+                                <th style="text-align:center;">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${standings.map((s, index) => `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${s.team}</td>
+                                    <td style="text-align:center;">${s.p}</td>
+                                    <td style="text-align:center;">${s.w}</td>
+                                    <td style="text-align:center;">${s.d}</td>
+                                    <td style="text-align:center;">${s.l}</td>
+                                    <td style="text-align:center; font-weight: bold;">${s.pts}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderParticipants(teams) {
+            const container = document.getElementById('tournamentParticipantsList');
+            if (!teams || teams.length === 0) return;
+
+            container.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                ${teams.map(t => `<div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;"><b>${t.name}</b></div>`).join('')}
+             </div>`;
+        }
+
+        async function openCreateTournamentModal() {
+            showModal('createTournamentModal');
+            // Populate Teams
+            const container = document.getElementById('tournamentTeamSelector');
+            container.innerHTML = 'Loading...';
+
+            try {
+                const clubId = await getActiveClubId();
+                const teams = await apiService.getTeams(clubId);
+
+                if (teams.length === 0) {
+                    container.innerHTML = '<p>No teams available.</p>';
+                    return;
+                }
+
+                container.innerHTML = teams.map(t => `
+                    <div style="margin-bottom: 5px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" value="${t.id}" name="tournamentTeam" style="margin-right: 10px;">
+                            ${t.name} (${t.age_group || 'Mixed'})
+                        </label>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p>Error loading teams.</p>';
+            }
+        }
+
+        async function handleCreateTournament(e) {
+            e.preventDefault();
+            const name = document.getElementById('newTournamentName').value;
+            const type = document.getElementById('newTournamentType').value;
+            // Get selected teams
+            const checkboxes = document.querySelectorAll('input[name="tournamentTeam"]:checked');
+            const teamIds = Array.from(checkboxes).map(cb => cb.value);
+
+            if (teamIds.length < 2) {
+                showNotification('Please select at least 2 teams.', 'error');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                await apiService.createTournament({ name, type, teams: teamIds });
+                closeModal('createTournamentModal');
+                showNotification('Tournament created!', 'success');
+                loadTournamentsDashboard();
+            } catch (e) {
+                showNotification('Failed to create tournament.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function openMatchStatsModal(matchId, homeName, awayName) {
+            currentMatchId = matchId;
+            document.getElementById('matchHomeTeamName').textContent = homeName;
+            document.getElementById('matchAwayTeamName').textContent = awayName;
+            document.getElementById('matchHomeScore').value = '';
+            document.getElementById('matchAwayScore').value = '';
+
+            // Populate Dummy Players (or fetch real roster if available)
+            const playerListHTML = (prefix) => `
+                <div style="display: flex; align-items: center; margin-bottom: 5px; font-size: 0.9rem;">
+                    <span style="flex: 1;">Player Name</span>
+                    <input type="number" placeholder="G" title="Goals" style="width: 30px; margin-right: 2px; padding: 2px;">
+                    <input type="number" placeholder="A" title="Assists" style="width: 30px; margin-right: 2px; padding: 2px;">
+                    <select title="Rating" style="width: 40px; padding: 0;">
+                        <option value="">-</option>
+                        ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => `<option value="${n}">${n}</option>`).join('')}
+                    </select>
+                </div>
+                <!-- Repeat for demo -->
+                <div style="display: flex; align-items: center; margin-bottom: 5px; font-size: 0.9rem; opacity: 0.5;">
+                    <span style="flex: 1;">(More players...)</span>
+                </div>
+            `;
+
+            document.getElementById('matchHomePlayersStats').innerHTML = playerListHTML();
+            document.getElementById('matchAwayPlayersStats').innerHTML = playerListHTML();
+
+            showModal('matchStatsModal');
+        }
+
+        async function saveMatchStats() {
+            const hScore = document.getElementById('matchHomeScore').value;
+            const aScore = document.getElementById('matchAwayScore').value;
+
+            if (hScore === '' || aScore === '') {
+                showNotification('Please enter the score.', 'warning');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                await apiService.updateMatchStats(currentMatchId, { home_score: hScore, away_score: aScore });
+                showNotification('Match result saved!', 'success');
+                closeModal('matchStatsModal');
+                // Refresh details
+                if (currentTournamentId) viewTournament(currentTournamentId);
+            } catch (e) {
+                showNotification('Failed to save result.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function generateFixtures() {
+            showNotification('Generating next round fixtures... (Coming Soon)', 'info');
         }
 
         // Export new functions
         window.loadPolls = loadPolls;
         window.voteOnPoll = voteOnPoll;
         window.loadTournamentsDashboard = loadTournamentsDashboard;
+        window.openCreateTournamentModal = openCreateTournamentModal;
+        window.handleCreateTournament = handleCreateTournament;
+        window.viewTournament = viewTournament;
+        window.closeTournamentDetail = closeTournamentDetail;
+        window.switchTournamentTab = switchTournamentTab;
+        window.openMatchStatsModal = openMatchStatsModal;
+        window.saveMatchStats = saveMatchStats;
         window.generateFixtures = generateFixtures;
 
 
