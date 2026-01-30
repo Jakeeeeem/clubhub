@@ -1,28 +1,42 @@
-const express = require('express');
-const { query, queries, withTransaction } = require('../config/database');
-const { authenticateToken, requireOrganization, optionalAuth } = require('../middleware/auth');
-const { body, validationResult } = require('express-validator');
+const express = require("express");
+const { query, queries, withTransaction } = require("../config/database");
+const {
+  authenticateToken,
+  requireOrganization,
+  optionalAuth,
+} = require("../middleware/auth");
+const { body, validationResult } = require("express-validator");
 
 const router = express.Router();
 
 // Validation rules
 const clubValidation = [
-  body('name').trim().isLength({ min: 1 }).withMessage('Club name is required'),
-  body('description').optional().trim(),
-  body('location').optional().trim(),
-  body('philosophy').optional().trim(),
-  body('website').optional({ checkFalsy: true }).isURL().withMessage('Please provide a valid website URL'),
-  body('types').optional().isArray().withMessage('Types must be an array'),
-  body('sport').optional().trim(),
-  body('established').optional().trim()
+  body("name").trim().isLength({ min: 1 }).withMessage("Club name is required"),
+  body("description").optional().trim(),
+  body("location").optional().trim(),
+  body("philosophy").optional().trim(),
+  body("website")
+    .optional({ checkFalsy: true })
+    .isURL()
+    .withMessage("Please provide a valid website URL"),
+  body("types").optional().isArray().withMessage("Types must be an array"),
+  body("sport").optional().trim(),
+  body("established").optional().trim(),
 ];
 
 // Get all clubs (public)
 //Changed all instances of '${paramCount}' to '$${paramCount}' | 06.08.25 BM
-router.get('/', optionalAuth, async (req, res) => {
+router.get("/", optionalAuth, async (req, res) => {
   try {
-    const { search, sport, location, types, has_listings, limit = 50 } = req.query;
-    
+    const {
+      search,
+      sport,
+      location,
+      types,
+      has_listings,
+      limit = 50,
+    } = req.query;
+
     // Query organizations table (using an alias 'c' for consistency with below code)
     // Dynamic query construction
     let queryText = `
@@ -31,14 +45,14 @@ router.get('/', optionalAuth, async (req, res) => {
              (SELECT COUNT(*) FROM events e WHERE e.club_id = c.id AND e.event_date >= CURRENT_DATE) as event_count
       FROM organizations c
     `;
-    
+
     // If filtering by active listings, need to join or filter
-    if (has_listings === 'true') {
-        queryText += ` JOIN listings l ON c.id = l.club_id AND l.is_active = true `;
+    if (has_listings === "true") {
+      queryText += ` JOIN listings l ON c.id = l.club_id AND l.is_active = true `;
     }
 
     queryText += ` WHERE 1=1 `;
-    
+
     const queryParams = [];
     let paramCount = 0;
 
@@ -48,7 +62,7 @@ router.get('/', optionalAuth, async (req, res) => {
       // Search across name, location, and sport
       // Using prefix match (%) for broader discovery as requested
       queryText += ` AND (c.name ILIKE $${paramCount} OR c.location ILIKE $${paramCount} OR c.sport ILIKE $${paramCount})`;
-      queryParams.push(`${search}%`); 
+      queryParams.push(`${search}%`);
     }
 
     // Filter by sport
@@ -73,25 +87,24 @@ router.get('/', optionalAuth, async (req, res) => {
     queryParams.push(parseInt(limit));
 
     const result = await query(queryText, queryParams);
-    
+
     // If they wanted listings, let's attach the positions to the response to show in UI
-    if (has_listings === 'true') {
-        for (let club of result.rows) {
-            const listingsRes = await query(
-                `SELECT position, title, listing_type FROM listings WHERE club_id = $1 AND is_active = true`,
-                [club.id]
-            );
-            club.available_positions = listingsRes.rows;
-        }
+    if (has_listings === "true") {
+      for (let club of result.rows) {
+        const listingsRes = await query(
+          `SELECT position, title, listing_type FROM listings WHERE club_id = $1 AND is_active = true`,
+          [club.id],
+        );
+        club.available_positions = listingsRes.rows;
+      }
     }
 
     res.json(result.rows);
-
   } catch (error) {
-    console.error('Get clubs error:', error);
+    console.error("Get clubs error:", error);
     res.status(500).json({
-      error: 'Failed to fetch clubs',
-      message: 'An error occurred while fetching clubs'
+      error: "Failed to fetch clubs",
+      message: "An error occurred while fetching clubs",
     });
   }
 });
@@ -100,23 +113,24 @@ router.get('/', optionalAuth, async (req, res) => {
  * @route GET /api/clubs/:id/public-listings
  * @desc Get active listings for a club (public access for application form)
  */
-router.get('/:id/public-listings', optionalAuth, async (req, res) => {
-    try {
-        const result = await query(
-            `SELECT * FROM listings WHERE club_id = $1 AND is_active = true ORDER BY created_at DESC`,
-            [req.params.id]
-        );
-        res.json(result.rows);
-    } catch (error) {
-        console.error('Get public listings error:', error);
-        res.status(500).json({ error: 'Failed to fetch listings' });
-    }
+router.get("/:id/public-listings", optionalAuth, async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT * FROM listings WHERE club_id = $1 AND is_active = true ORDER BY created_at DESC`,
+      [req.params.id],
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Get public listings error:", error);
+    res.status(500).json({ error: "Failed to fetch listings" });
+  }
 });
 
 // Get specific club
-router.get('/:id', optionalAuth, async (req, res) => {
+router.get("/:id", optionalAuth, async (req, res) => {
   try {
-    const clubResult = await query(`
+    const clubResult = await query(
+      `
       SELECT c.*, 
              u.first_name as owner_first_name,
              u.last_name as owner_last_name,
@@ -126,19 +140,22 @@ router.get('/:id', optionalAuth, async (req, res) => {
       FROM organizations c
       LEFT JOIN users u ON c.owner_id = u.id
       WHERE c.id = $1
-    `, [req.params.id]);
-    
+    `,
+      [req.params.id],
+    );
+
     if (clubResult.rows.length === 0) {
       return res.status(404).json({
-        error: 'Club not found',
-        message: 'Club with this ID does not exist'
+        error: "Club not found",
+        message: "Club with this ID does not exist",
       });
     }
 
     const club = clubResult.rows[0];
 
     // Get club's teams
-    const teamsResult = await query(`
+    const teamsResult = await query(
+      `
       SELECT t.*, 
              s.first_name as coach_first_name,
              s.last_name as coach_last_name,
@@ -149,24 +166,30 @@ router.get('/:id', optionalAuth, async (req, res) => {
       WHERE t.club_id = $1
       GROUP BY t.id, s.first_name, s.last_name
       ORDER BY t.created_at DESC
-    `, [req.params.id]);
+    `,
+      [req.params.id],
+    );
 
     club.teams = teamsResult.rows;
 
     // Get upcoming events
-    const eventsResult = await query(`
+    const eventsResult = await query(
+      `
       SELECT e.*, t.name as team_name
       FROM events e
       LEFT JOIN teams t ON e.team_id = t.id
       WHERE e.club_id = $1 AND e.event_date >= CURRENT_DATE
       ORDER BY e.event_date ASC
       LIMIT 10
-    `, [req.params.id]);
+    `,
+      [req.params.id],
+    );
 
     club.upcoming_events = eventsResult.rows;
 
     // Get staff (public info only)
-    const staffResult = await query(`
+    const staffResult = await query(
+      `
       SELECT first_name, last_name, role
       FROM staff
       WHERE club_id = $1
@@ -178,116 +201,166 @@ router.get('/:id', optionalAuth, async (req, res) => {
           ELSE 4
         END,
         first_name
-    `, [req.params.id]);
+    `,
+      [req.params.id],
+    );
 
     club.staff = staffResult.rows;
 
     // If user is authenticated, check if they've applied to this club
     if (req.user) {
-      const applicationResult = await query(`
+      const applicationResult = await query(
+        `
         SELECT * FROM club_applications
         WHERE club_id = $1 AND user_id = $2
-      `, [req.params.id, req.user.id]);
-      
+      `,
+        [req.params.id, req.user.id],
+      );
+
       club.user_application = applicationResult.rows[0] || null;
     }
 
     res.json(club);
-
   } catch (error) {
-    console.error('Get club error:', error);
+    console.error("Get club error:", error);
     res.status(500).json({
-      error: 'Failed to fetch club',
-      message: 'An error occurred while fetching club details'
+      error: "Failed to fetch club",
+      message: "An error occurred while fetching club details",
     });
+  }
+});
+
+/**
+ * @route GET /api/clubs/:id/teams
+ * @desc Get all teams for a club
+ */
+router.get("/:id/teams", optionalAuth, async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT * FROM teams WHERE club_id = $1 ORDER BY name ASC`,
+      [req.params.id],
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Get club teams error:", error);
+    res.status(500).json({ error: "Failed to fetch teams" });
   }
 });
 
 // Create new club (organization only)
-router.post('/', authenticateToken, requireOrganization, clubValidation, async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: errors.array()
+router.post(
+  "/",
+  authenticateToken,
+  requireOrganization,
+  clubValidation,
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          error: "Validation failed",
+          details: errors.array(),
+        });
+      }
+
+      const {
+        name,
+        description,
+        location,
+        philosophy,
+        website,
+        types,
+        sport,
+        established,
+      } = req.body;
+
+      // Check if club name already exists for this user
+      const existingClub = await query(
+        "SELECT id FROM clubs WHERE name = $1 AND owner_id = $2",
+        [name, req.user.id],
+      );
+
+      if (existingClub.rows.length > 0) {
+        return res.status(409).json({
+          error: "Club already exists",
+          message: "You already have a club with this name",
+        });
+      }
+
+      const result = await query(queries.createClub, [
+        name,
+        description || null,
+        location || null,
+        philosophy || null,
+        website || null,
+        types,
+        sport || null,
+        req.user.id,
+        established || new Date().getFullYear().toString(),
+      ]);
+
+      const newClub = result.rows[0];
+
+      res.status(201).json({
+        message: "Club created successfully",
+        club: newClub,
+      });
+    } catch (error) {
+      console.error("Create club error:", error);
+      res.status(500).json({
+        error: "Failed to create club",
+        message: "An error occurred while creating the club",
       });
     }
-
-    const { name, description, location, philosophy, website, types, sport, established } = req.body;
-
-    // Check if club name already exists for this user
-    const existingClub = await query(
-      'SELECT id FROM clubs WHERE name = $1 AND owner_id = $2',
-      [name, req.user.id]
-    );
-    
-    if (existingClub.rows.length > 0) {
-      return res.status(409).json({
-        error: 'Club already exists',
-        message: 'You already have a club with this name'
-      });
-    }
-
-    const result = await query(queries.createClub, [
-      name,
-      description || null,
-      location || null,
-      philosophy || null,
-      website || null,
-      types,
-      sport || null,
-      req.user.id,
-      established || new Date().getFullYear().toString()
-    ]);
-
-    const newClub = result.rows[0];
-
-    res.status(201).json({
-      message: 'Club created successfully',
-      club: newClub
-    });
-
-  } catch (error) {
-    console.error('Create club error:', error);
-    res.status(500).json({
-      error: 'Failed to create club',
-      message: 'An error occurred while creating the club'
-    });
-  }
-});
+  },
+);
 
 // Update club
-router.put('/:id', authenticateToken, requireOrganization, clubValidation, async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: errors.array()
-      });
-    }
+router.put(
+  "/:id",
+  authenticateToken,
+  requireOrganization,
+  clubValidation,
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          error: "Validation failed",
+          details: errors.array(),
+        });
+      }
 
-    // Check if club exists and user owns it
-    const clubResult = await query(queries.findClubById, [req.params.id]);
-    if (clubResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Club not found',
-        message: 'Club with this ID does not exist'
-      });
-    }
+      // Check if club exists and user owns it
+      const clubResult = await query(queries.findClubById, [req.params.id]);
+      if (clubResult.rows.length === 0) {
+        return res.status(404).json({
+          error: "Club not found",
+          message: "Club with this ID does not exist",
+        });
+      }
 
-    const club = clubResult.rows[0];
-    if (club.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied',
-        message: 'You can only update your own clubs'
-      });
-    }
+      const club = clubResult.rows[0];
+      if (club.owner_id !== req.user.id) {
+        return res.status(403).json({
+          error: "Access denied",
+          message: "You can only update your own clubs",
+        });
+      }
 
-    const { name, description, location, philosophy, website, types, sport, established } = req.body;
+      const {
+        name,
+        description,
+        location,
+        philosophy,
+        website,
+        types,
+        sport,
+        established,
+      } = req.body;
 
-    const result = await query(`
+      const result = await query(
+        `
       UPDATE clubs SET 
         name = $1,
         description = $2,
@@ -300,198 +373,270 @@ router.put('/:id', authenticateToken, requireOrganization, clubValidation, async
         updated_at = NOW()
       WHERE id = $9
       RETURNING *
-    `, [
-      name,
-      description || null,
-      location || null,
-      philosophy || null,
-      website || null,
-      types || ['sports-club'], // Default to sports-club if not provided
-      sport || null,
-      established || club.established,
-      req.params.id
-    ]);
+    `,
+        [
+          name,
+          description || null,
+          location || null,
+          philosophy || null,
+          website || null,
+          types || ["sports-club"], // Default to sports-club if not provided
+          sport || null,
+          established || club.established,
+          req.params.id,
+        ],
+      );
 
-    const updatedClub = result.rows[0];
+      const updatedClub = result.rows[0];
 
-    res.json({
-      message: 'Club updated successfully',
-      club: updatedClub
-    });
-
-  } catch (error) {
-    console.error('Update club error:', error);
-    res.status(500).json({
-      error: 'Failed to update club',
-      message: 'An error occurred while updating the club'
-    });
-  }
-});
+      res.json({
+        message: "Club updated successfully",
+        club: updatedClub,
+      });
+    } catch (error) {
+      console.error("Update club error:", error);
+      res.status(500).json({
+        error: "Failed to update club",
+        message: "An error occurred while updating the club",
+      });
+    }
+  },
+);
 
 // Delete club
-router.delete('/:id', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    // Check if club exists and user owns it
-    const clubResult = await query(queries.findClubById, [req.params.id]);
-    if (clubResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Club not found',
-        message: 'Club with this ID does not exist'
+router.delete(
+  "/:id",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      // Check if club exists and user owns it
+      const clubResult = await query(queries.findClubById, [req.params.id]);
+      if (clubResult.rows.length === 0) {
+        return res.status(404).json({
+          error: "Club not found",
+          message: "Club with this ID does not exist",
+        });
+      }
+
+      const club = clubResult.rows[0];
+      if (club.owner_id !== req.user.id) {
+        return res.status(403).json({
+          error: "Access denied",
+          message: "You can only delete your own clubs",
+        });
+      }
+
+      // Delete club and all related data in transaction
+      await withTransaction(async (client) => {
+        // Delete in correct order to respect foreign key constraints
+        await client.query(
+          "DELETE FROM availability_responses WHERE event_id IN (SELECT id FROM events WHERE club_id = $1)",
+          [req.params.id],
+        );
+        await client.query(
+          "DELETE FROM event_bookings WHERE event_id IN (SELECT id FROM events WHERE club_id = $1)",
+          [req.params.id],
+        );
+        await client.query(
+          "DELETE FROM match_results WHERE event_id IN (SELECT id FROM events WHERE club_id = $1)",
+          [req.params.id],
+        );
+        await client.query(
+          "DELETE FROM player_ratings WHERE match_result_id IN (SELECT id FROM match_results WHERE event_id IN (SELECT id FROM events WHERE club_id = $1))",
+          [req.params.id],
+        );
+        await client.query("DELETE FROM events WHERE club_id = $1", [
+          req.params.id,
+        ]);
+        await client.query("DELETE FROM payments WHERE club_id = $1", [
+          req.params.id,
+        ]);
+        await client.query(
+          "DELETE FROM team_players WHERE team_id IN (SELECT id FROM teams WHERE club_id = $1)",
+          [req.params.id],
+        );
+        await client.query(
+          "DELETE FROM tactical_formations WHERE team_id IN (SELECT id FROM teams WHERE club_id = $1)",
+          [req.params.id],
+        );
+        await client.query("DELETE FROM teams WHERE club_id = $1", [
+          req.params.id,
+        ]);
+        await client.query("DELETE FROM players WHERE club_id = $1", [
+          req.params.id,
+        ]);
+        await client.query("DELETE FROM staff WHERE club_id = $1", [
+          req.params.id,
+        ]);
+        await client.query("DELETE FROM club_applications WHERE club_id = $1", [
+          req.params.id,
+        ]);
+        await client.query("DELETE FROM documents WHERE club_id = $1", [
+          req.params.id,
+        ]);
+        await client.query("DELETE FROM clubs WHERE id = $1", [req.params.id]);
+      });
+
+      res.json({
+        message: "Club deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete club error:", error);
+      res.status(500).json({
+        error: "Failed to delete club",
+        message: "An error occurred while deleting the club",
       });
     }
-
-    const club = clubResult.rows[0];
-    if (club.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied',
-        message: 'You can only delete your own clubs'
-      });
-    }
-
-    // Delete club and all related data in transaction
-    await withTransaction(async (client) => {
-      // Delete in correct order to respect foreign key constraints
-      await client.query('DELETE FROM availability_responses WHERE event_id IN (SELECT id FROM events WHERE club_id = $1)', [req.params.id]);
-      await client.query('DELETE FROM event_bookings WHERE event_id IN (SELECT id FROM events WHERE club_id = $1)', [req.params.id]);
-      await client.query('DELETE FROM match_results WHERE event_id IN (SELECT id FROM events WHERE club_id = $1)', [req.params.id]);
-      await client.query('DELETE FROM player_ratings WHERE match_result_id IN (SELECT id FROM match_results WHERE event_id IN (SELECT id FROM events WHERE club_id = $1))', [req.params.id]);
-      await client.query('DELETE FROM events WHERE club_id = $1', [req.params.id]);
-      await client.query('DELETE FROM payments WHERE club_id = $1', [req.params.id]);
-      await client.query('DELETE FROM team_players WHERE team_id IN (SELECT id FROM teams WHERE club_id = $1)', [req.params.id]);
-      await client.query('DELETE FROM tactical_formations WHERE team_id IN (SELECT id FROM teams WHERE club_id = $1)', [req.params.id]);
-      await client.query('DELETE FROM teams WHERE club_id = $1', [req.params.id]);
-      await client.query('DELETE FROM players WHERE club_id = $1', [req.params.id]);
-      await client.query('DELETE FROM staff WHERE club_id = $1', [req.params.id]);
-      await client.query('DELETE FROM club_applications WHERE club_id = $1', [req.params.id]);
-      await client.query('DELETE FROM documents WHERE club_id = $1', [req.params.id]);
-      await client.query('DELETE FROM clubs WHERE id = $1', [req.params.id]);
-    });
-
-    res.json({
-      message: 'Club deleted successfully'
-    });
-
-  } catch (error) {
-    console.error('Delete club error:', error);
-    res.status(500).json({
-      error: 'Failed to delete club',
-      message: 'An error occurred while deleting the club'
-    });
-  }
-});
+  },
+);
 
 // Apply to join club
-router.post('/:id/apply', authenticateToken, [
-  body('message').trim().isLength({ min: 10 }).withMessage('Message must be at least 10 characters'),
-  body('preferredPosition').optional().trim(),
-  body('experienceLevel').optional().isIn(['beginner', 'intermediate', 'advanced', 'professional']).withMessage('Invalid experience level'),
-  body('availability').optional().isArray().withMessage('Availability must be an array')
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: errors.array()
-      });
-    }
+router.post(
+  "/:id/apply",
+  authenticateToken,
+  [
+    body("message")
+      .trim()
+      .isLength({ min: 10 })
+      .withMessage("Message must be at least 10 characters"),
+    body("preferredPosition").optional().trim(),
+    body("experienceLevel")
+      .optional()
+      .isIn(["beginner", "intermediate", "advanced", "professional"])
+      .withMessage("Invalid experience level"),
+    body("availability")
+      .optional()
+      .isArray()
+      .withMessage("Availability must be an array"),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          error: "Validation failed",
+          details: errors.array(),
+        });
+      }
 
-    const { message, preferredPosition, experienceLevel, availability, listingId } = req.body;
+      const {
+        message,
+        preferredPosition,
+        experienceLevel,
+        availability,
+        listingId,
+      } = req.body;
 
-    // Check if club exists
-    const clubResult = await query(queries.findClubById, [req.params.id]);
-    if (clubResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Club not found'
-      });
-    }
+      // Check if club exists
+      const clubResult = await query(queries.findClubById, [req.params.id]);
+      if (clubResult.rows.length === 0) {
+        return res.status(404).json({
+          error: "Club not found",
+        });
+      }
 
-    let result;
+      let result;
 
-    if (listingId) {
+      if (listingId) {
         // --- Specific Listing Application ---
-        
+
         // Check for existing listing application
         const existingListingApp = await query(
-            `SELECT id FROM listing_applications WHERE listing_id = $1 AND user_id = $2`,
-            [listingId, req.user.id]
+          `SELECT id FROM listing_applications WHERE listing_id = $1 AND user_id = $2`,
+          [listingId, req.user.id],
         );
 
         if (existingListingApp.rows.length > 0) {
-             return res.status(409).json({ error: 'You have already applied to this listing' });
+          return res
+            .status(409)
+            .json({ error: "You have already applied to this listing" });
         }
 
         // Insert into listing_applications
-        result = await query(`
+        result = await query(
+          `
             INSERT INTO listing_applications (listing_id, applicant_id, cover_letter, status)
             VALUES ($1, $2, $3, 'pending')
             RETURNING *
-        `, [listingId, req.user.id, message]);
-        
-    } else {
+        `,
+          [listingId, req.user.id, message],
+        );
+      } else {
         // --- General Club Application (Legacy) ---
-        
+
         // Check if user already applied generally
-        const existingApplication = await query(`
+        const existingApplication = await query(
+          `
           SELECT id FROM club_applications
           WHERE club_id = $1 AND user_id = $2
-        `, [req.params.id, req.user.id]);
-        
+        `,
+          [req.params.id, req.user.id],
+        );
+
         if (existingApplication.rows.length > 0) {
           return res.status(409).json({
-            error: 'Application already exists',
-            message: 'You have already applied to this club'
+            error: "Application already exists",
+            message: "You have already applied to this club",
           });
         }
-    
+
         // Create general application
-        result = await query(`
+        result = await query(
+          `
           INSERT INTO club_applications (club_id, user_id, message, preferred_position, experience_level, availability)
           VALUES ($1, $2, $3, $4, $5, $6)
           RETURNING *
-        `, [
-          req.params.id,
-          req.user.id,
-          message,
-          preferredPosition || null,
-          experienceLevel || null,
-          availability || null
-        ]);
+        `,
+          [
+            req.params.id,
+            req.user.id,
+            message,
+            preferredPosition || null,
+            experienceLevel || null,
+            availability || null,
+          ],
+        );
+      }
+
+      res.status(201).json({
+        message: "Application submitted successfully",
+        application: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Apply to club error:", error);
+      res.status(500).json({
+        error: "Failed to submit application",
+      });
     }
-
-    res.status(201).json({
-      message: 'Application submitted successfully',
-      application: result.rows[0]
-    });
-
-  } catch (error) {
-    console.error('Apply to club error:', error);
-    res.status(500).json({
-      error: 'Failed to submit application'
-    });
-  }
-});
+  },
+);
 
 // Get club applications (club owner only)
-router.get('/:id/applications', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    // Verify club exists and user owns it
-    const clubResult = await query(queries.findClubById, [req.params.id]);
-    if (clubResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Club not found'
-      });
-    }
+router.get(
+  "/:id/applications",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      // Verify club exists and user owns it
+      const clubResult = await query(queries.findClubById, [req.params.id]);
+      if (clubResult.rows.length === 0) {
+        return res.status(404).json({
+          error: "Club not found",
+        });
+      }
 
-    const club = clubResult.rows[0];
-    if (club.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied'
-      });
-    }
+      const club = clubResult.rows[0];
+      if (club.owner_id !== req.user.id) {
+        return res.status(403).json({
+          error: "Access denied",
+        });
+      }
 
-    // Get applications
-    const applicationsResult = await query(`
+      // Get applications
+      const applicationsResult = await query(
+        `
       SELECT ca.*, 
              u.first_name,
              u.last_name,
@@ -500,71 +645,84 @@ router.get('/:id/applications', authenticateToken, requireOrganization, async (r
       JOIN users u ON ca.user_id = u.id
       WHERE ca.club_id = $1
       ORDER BY ca.submitted_at DESC
-    `, [req.params.id]);
+    `,
+        [req.params.id],
+      );
 
-    res.json({
-      club: {
-        id: club.id,
-        name: club.name
-      },
-      applications: applicationsResult.rows
-    });
-
-  } catch (error) {
-    console.error('Get club applications error:', error);
-    res.status(500).json({
-      error: 'Failed to fetch applications'
-    });
-  }
-});
-
-// Review club application
-router.post('/applications/:applicationId/review', authenticateToken, requireOrganization, [
-  body('decision').isIn(['approved', 'rejected']).withMessage('Decision must be approved or rejected'),
-  body('notes').optional().trim()
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        details: errors.array()
+      res.json({
+        club: {
+          id: club.id,
+          name: club.name,
+        },
+        applications: applicationsResult.rows,
+      });
+    } catch (error) {
+      console.error("Get club applications error:", error);
+      res.status(500).json({
+        error: "Failed to fetch applications",
       });
     }
+  },
+);
 
-    const { decision, notes } = req.body;
+// Review club application
+router.post(
+  "/applications/:applicationId/review",
+  authenticateToken,
+  requireOrganization,
+  [
+    body("decision")
+      .isIn(["approved", "rejected"])
+      .withMessage("Decision must be approved or rejected"),
+    body("notes").optional().trim(),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          error: "Validation failed",
+          details: errors.array(),
+        });
+      }
 
-    // Get application and verify permissions
-    const applicationResult = await query(`
+      const { decision, notes } = req.body;
+
+      // Get application and verify permissions
+      const applicationResult = await query(
+        `
       SELECT ca.*, c.owner_id
       FROM club_applications ca
       JOIN clubs c ON ca.club_id = c.id
       WHERE ca.id = $1
-    `, [req.params.applicationId]);
+    `,
+        [req.params.applicationId],
+      );
 
-    if (applicationResult.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Application not found'
-      });
-    }
+      if (applicationResult.rows.length === 0) {
+        return res.status(404).json({
+          error: "Application not found",
+        });
+      }
 
-    const application = applicationResult.rows[0];
+      const application = applicationResult.rows[0];
 
-    if (application.owner_id !== req.user.id) {
-      return res.status(403).json({
-        error: 'Access denied'
-      });
-    }
+      if (application.owner_id !== req.user.id) {
+        return res.status(403).json({
+          error: "Access denied",
+        });
+      }
 
-    if (application.application_status !== 'pending') {
-      return res.status(400).json({
-        error: 'Application already reviewed',
-        message: 'This application has already been processed'
-      });
-    }
+      if (application.application_status !== "pending") {
+        return res.status(400).json({
+          error: "Application already reviewed",
+          message: "This application has already been processed",
+        });
+      }
 
-    // Update application status
-    const result = await query(`
+      // Update application status
+      const result = await query(
+        `
       UPDATE club_applications SET 
         application_status = $1,
         reviewed_by = $2,
@@ -572,106 +730,121 @@ router.post('/applications/:applicationId/review', authenticateToken, requireOrg
         updated_at = NOW()
       WHERE id = $3
       RETURNING *
-    `, [decision, req.user.id, req.params.applicationId]);
+    `,
+        [decision, req.user.id, req.params.applicationId],
+      );
 
-    // If approved, create a player record
-    if (decision === 'approved') {
-      // Get the detailed application with user info
-      const fullAppResult = await query(`
+      // If approved, create a player record
+      if (decision === "approved") {
+        // Get the detailed application with user info
+        const fullAppResult = await query(
+          `
         SELECT ca.*, u.first_name, u.last_name, u.email, u.id as user_id
         FROM club_applications ca
         JOIN users u ON ca.user_id = u.id
         WHERE ca.id = $1
-      `, [req.params.applicationId]);
+      `,
+          [req.params.applicationId],
+        );
 
-      const appData = fullAppResult.rows[0];
+        const appData = fullAppResult.rows[0];
 
-      // Check if player already exists in this club
-      const existingPlayer = await query(
-        'SELECT id FROM players WHERE (user_id = $1 OR email = $2) AND club_id = $3',
-        [appData.user_id, appData.email, appData.club_id]
-      );
+        // Check if player already exists in this club
+        const existingPlayer = await query(
+          "SELECT id FROM players WHERE (user_id = $1 OR email = $2) AND club_id = $3",
+          [appData.user_id, appData.email, appData.club_id],
+        );
 
-      if (existingPlayer.rows.length === 0) {
-        // Create player record
-        await query(`
+        if (existingPlayer.rows.length === 0) {
+          // Create player record
+          await query(
+            `
           INSERT INTO players (
             first_name, last_name, email, club_id, user_id, 
             position, experience_level, created_at, updated_at
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
-        `, [
-          appData.first_name, 
-          appData.last_name, 
-          appData.email, 
-          appData.club_id, 
-          appData.user_id,
-          appData.preferred_position,
-          appData.experience_level
-        ]);
+        `,
+            [
+              appData.first_name,
+              appData.last_name,
+              appData.email,
+              appData.club_id,
+              appData.user_id,
+              appData.preferred_position,
+              appData.experience_level,
+            ],
+          );
 
-        // Update club member count
-        await query(
-          'UPDATE clubs SET member_count = member_count + 1 WHERE id = $1',
-          [appData.club_id]
-        );
+          // Update club member count
+          await query(
+            "UPDATE clubs SET member_count = member_count + 1 WHERE id = $1",
+            [appData.club_id],
+          );
 
-        // Also check if they should be added to organization_members
-        // We look for an organization owned by the same user as the club
-        const orgResult = await query(
-          'SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1',
-          [application.owner_id]
-        );
+          // Also check if they should be added to organization_members
+          // We look for an organization owned by the same user as the club
+          const orgResult = await query(
+            "SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1",
+            [application.owner_id],
+          );
 
-        if (orgResult.rows.length > 0) {
+          if (orgResult.rows.length > 0) {
             const orgId = orgResult.rows[0].id;
             // Add to organization_members if not already there
-            await query(`
+            await query(
+              `
                 INSERT INTO organization_members (organization_id, user_id, role, status)
                 VALUES ($1, $2, 'player', 'active')
                 ON CONFLICT (organization_id, user_id) DO NOTHING
-            `, [orgId, appData.user_id]);
+            `,
+              [orgId, appData.user_id],
+            );
+          }
         }
-      }
 
-      // Create notification for the user
-      await query(`
+        // Create notification for the user
+        await query(
+          `
           INSERT INTO notifications (user_id, title, message, notification_type)
           VALUES ($1, $2, $3, 'application_approved')
-      `, [
-          appData.user_id,
-          'Application Approved!',
-          `Your application to join ${application.name || 'the club'} has been approved.`
-      ]);
+      `,
+          [
+            appData.user_id,
+            "Application Approved!",
+            `Your application to join ${application.name || "the club"} has been approved.`,
+          ],
+        );
+      }
+
+      res.json({
+        message: `Application ${decision} successfully`,
+        application: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Review application error:", error);
+      res.status(500).json({
+        error: "Failed to review application",
+      });
     }
-
-    res.json({
-      message: `Application ${decision} successfully`,
-      application: result.rows[0]
-    });
-
-  } catch (error) {
-    console.error('Review application error:', error);
-    res.status(500).json({
-      error: 'Failed to review application'
-    });
-  }
-});
+  },
+);
 
 // Get club statistics
-router.get('/:id/stats', authenticateToken, async (req, res) => {
+router.get("/:id/stats", authenticateToken, async (req, res) => {
   try {
     // Get basic club info
     const clubResult = await query(queries.findClubById, [req.params.id]);
     if (clubResult.rows.length === 0) {
       return res.status(404).json({
-        error: 'Club not found'
+        error: "Club not found",
       });
     }
 
     const club = clubResult.rows[0];
 
     // Get comprehensive statistics
-    const statsResult = await query(`
+    const statsResult = await query(
+      `
       SELECT 
         (SELECT COUNT(*) FROM players WHERE club_id = $1) as total_players,
         (SELECT COUNT(*) FROM staff WHERE club_id = $1) as total_staff,
@@ -682,12 +855,15 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
         (SELECT COUNT(*) FROM payments WHERE club_id = $1 AND payment_status = 'overdue') as overdue_payments,
         (SELECT SUM(amount) FROM payments WHERE club_id = $1 AND payment_status = 'paid') as total_revenue,
         (SELECT COUNT(*) FROM club_applications WHERE club_id = $1 AND application_status = 'pending') as pending_applications
-    `, [req.params.id]);
+    `,
+      [req.params.id],
+    );
 
     const stats = statsResult.rows[0];
 
     // Get recent activity
-    const recentActivityResult = await query(`
+    const recentActivityResult = await query(
+      `
       (SELECT 'player_joined' as activity_type, first_name || ' ' || last_name as description, created_at as activity_date
        FROM players WHERE club_id = $1 ORDER BY created_at DESC LIMIT 5)
       UNION ALL
@@ -698,133 +874,158 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
        FROM teams WHERE club_id = $1 ORDER BY created_at DESC LIMIT 5)
       ORDER BY activity_date DESC
       LIMIT 10
-    `, [req.params.id]);
+    `,
+      [req.params.id],
+    );
 
     res.json({
       club: {
         id: club.id,
         name: club.name,
-        created_at: club.created_at
+        created_at: club.created_at,
       },
       statistics: {
         ...stats,
-        total_revenue: parseFloat(stats.total_revenue) || 0
+        total_revenue: parseFloat(stats.total_revenue) || 0,
       },
-      recent_activity: recentActivityResult.rows
+      recent_activity: recentActivityResult.rows,
     });
-
   } catch (error) {
-    console.error('Get club stats error:', error);
+    console.error("Get club stats error:", error);
     res.status(500).json({
-      error: 'Failed to fetch club statistics'
+      error: "Failed to fetch club statistics",
     });
   }
 });
 
 // Configure Multer for Club Gallery
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 // Ensure directory exists
-const uploadDir = 'uploads/club-images';
-if (!fs.existsSync(uploadDir)){
-    fs.mkdirSync(uploadDir, { recursive: true });
+const uploadDir = "uploads/club-images";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadDir)
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, 'club-' + uniqueSuffix + path.extname(file.originalname))
-  }
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "club-" + uniqueSuffix + path.extname(file.originalname));
+  },
 });
 
-const upload = multer({ 
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only images are allowed'));
-        }
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only images are allowed"));
     }
+  },
 });
 
 // POST /api/clubs/:id/images - Upload Image
-router.post('/:id/images', authenticateToken, requireOrganization, upload.single('image'), async (req, res) => {
+router.post(
+  "/:id/images",
+  authenticateToken,
+  requireOrganization,
+  upload.single("image"),
+  async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'No image uploaded' });
-        }
+      if (!req.file) {
+        return res.status(400).json({ error: "No image uploaded" });
+      }
 
-        // Verify ownership
-        const clubResult = await query(queries.findClubById, [req.params.id]);
-        if (clubResult.rows.length === 0) return res.status(404).json({ error: 'Club not found' });
-        if (clubResult.rows[0].owner_id !== req.user.id) return res.status(403).json({ error: 'Access denied' });
+      // Verify ownership
+      const clubResult = await query(queries.findClubById, [req.params.id]);
+      if (clubResult.rows.length === 0)
+        return res.status(404).json({ error: "Club not found" });
+      if (clubResult.rows[0].owner_id !== req.user.id)
+        return res.status(403).json({ error: "Access denied" });
 
-        if (clubResult.rows[0].images && clubResult.rows[0].images.length >= 5) {
-            // Optional: Delete the file that was just uploaded since we're rejecting it
-            try { fs.unlinkSync(req.file.path); } catch (e) {}
-            return res.status(400).json({ error: 'Image limit reached (max 5 images)' });
-        }
+      if (clubResult.rows[0].images && clubResult.rows[0].images.length >= 5) {
+        // Optional: Delete the file that was just uploaded since we're rejecting it
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (e) {}
+        return res
+          .status(400)
+          .json({ error: "Image limit reached (max 5 images)" });
+      }
 
-        const imageUrl = `/uploads/club-images/${req.file.filename}`;
+      const imageUrl = `/uploads/club-images/${req.file.filename}`;
 
-        // Append to images array
-        const result = await query(`
+      // Append to images array
+      const result = await query(
+        `
             UPDATE clubs 
             SET images = array_append(COALESCE(images, '{}'), $1), updated_at = NOW()
             WHERE id = $2
             RETURNING images
-        `, [imageUrl, req.params.id]);
+        `,
+        [imageUrl, req.params.id],
+      );
 
-        res.json({ message: 'Image uploaded', images: result.rows[0].images });
-
+      res.json({ message: "Image uploaded", images: result.rows[0].images });
     } catch (err) {
-        console.error('Upload image error:', err);
-        res.status(500).json({ error: 'Failed to upload image' });
+      console.error("Upload image error:", err);
+      res.status(500).json({ error: "Failed to upload image" });
     }
-});
+  },
+);
 
 // DELETE /api/clubs/:id/images - Delete Image (by URL)
-router.delete('/:id/images', authenticateToken, requireOrganization, async (req, res) => {
+router.delete(
+  "/:id/images",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
     try {
-        const { imageUrl } = req.body;
-        if (!imageUrl) return res.status(400).json({ error: 'Image URL required' });
+      const { imageUrl } = req.body;
+      if (!imageUrl)
+        return res.status(400).json({ error: "Image URL required" });
 
-        // Verify ownership
-        const clubResult = await query(queries.findClubById, [req.params.id]);
-        if (clubResult.rows.length === 0) return res.status(404).json({ error: 'Club not found' });
-        if (clubResult.rows[0].owner_id !== req.user.id) return res.status(403).json({ error: 'Access denied' });
+      // Verify ownership
+      const clubResult = await query(queries.findClubById, [req.params.id]);
+      if (clubResult.rows.length === 0)
+        return res.status(404).json({ error: "Club not found" });
+      if (clubResult.rows[0].owner_id !== req.user.id)
+        return res.status(403).json({ error: "Access denied" });
 
-        // Remove from array
-        const result = await query(`
+      // Remove from array
+      const result = await query(
+        `
             UPDATE clubs 
             SET images = array_remove(images, $1), updated_at = NOW()
             WHERE id = $2
             RETURNING images
-        `, [imageUrl, req.params.id]);
+        `,
+        [imageUrl, req.params.id],
+      );
 
-        // Optional: Delete file from disk
-        try {
-            const filePath = path.join(__dirname, '..', imageUrl); // imageUrl starts with /uploads
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-        } catch (e) {
-            console.warn('Failed to delete file from disk:', e);
+      // Optional: Delete file from disk
+      try {
+        const filePath = path.join(__dirname, "..", imageUrl); // imageUrl starts with /uploads
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
         }
+      } catch (e) {
+        console.warn("Failed to delete file from disk:", e);
+      }
 
-        res.json({ message: 'Image removed', images: result.rows[0].images });
-
+      res.json({ message: "Image removed", images: result.rows[0].images });
     } catch (err) {
-        console.error('Delete image error:', err);
-        res.status(500).json({ error: 'Failed to delete image' });
+      console.error("Delete image error:", err);
+      res.status(500).json({ error: "Failed to delete image" });
     }
-});
+  },
+);
 
 module.exports = router;

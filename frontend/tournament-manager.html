@@ -107,21 +107,26 @@
 
             <div class="dashboard-content">
 
-                <!-- Event Selector -->
-                <div class="card" style="margin: 2rem 0;">
-                    <label><strong>Select Tournament:</strong></label>
-                    <select id="tournamentSelect" onchange="loadTournament()"
-                        style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
-                        <option value="">-- Select Tournament --</option>
-                    </select>
+                <!-- Event Selector & Creation -->
+                <div style="display: flex; gap: 1rem; align-items: flex-end; margin: 2rem 0;">
+                    <div style="flex: 1;">
+                        <label><strong>Select Tournament:</strong></label>
+                        <select id="tournamentSelect" onchange="loadTournament()"
+                            style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
+                            <option value="">-- Select Tournament --</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="openCreateTournamentModal()" style="height: 48px;">+ New
+                        Tournament</button>
                 </div>
 
                 <div id="tournamentContent" style="display: none;">
                     <!-- Tabs -->
                     <div class="tabs" style="margin: 2rem 0;">
                         <button class="tab active" onclick="showTab('teams')">Teams</button>
-                        <button class="tab" onclick="showTab('bracket')">Bracket</button>
+                        <button class="tab" onclick="showTab('groups')">Groups</button>
                         <button class="tab" onclick="showTab('matches')">Matches</button>
+                        <button class="tab" onclick="showTab('bracket')">Bracket</button>
                     </div>
 
                     <!-- Teams Tab -->
@@ -144,16 +149,35 @@
                         </div>
                     </div>
 
+                    <!-- Groups Tab -->
+                    <div id="groups-tab" class="tab-content" style="display: none;">
+                        <div class="card" style="margin-bottom: 2rem;">
+                            <h3>Group Management</h3>
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                <input type="text" id="groupNameInput" placeholder="Group Name (e.g. Group A)"
+                                    style="flex: 1; padding: 0.75rem;">
+                                <button class="btn btn-primary" onclick="createGroup()">Add Group</button>
+                            </div>
+                        </div>
+                        <div id="groupsGrid" class="team-grid">
+                            <!-- Groups will be loaded here -->
+                        </div>
+                    </div>
+
                     <!-- Matches Tab -->
                     <div id="matches-tab" class="tab-content" style="display: none;">
-                        <table class="fixtures-table" style="width: 100%;">
+                        <div style="margin-bottom: 1rem; display: flex; gap: 1rem;">
+                            <select id="groupFixtureSelect" style="padding: 0.5rem;"></select>
+                            <button class="btn btn-primary btn-small"
+                                onclick="generateFixtures('league', document.getElementById('groupFixtureSelect').value)">Generate
+                                Group Fixtures</button>
+                        </div>
+                        <table class="data-table" style="width: 100%;">
                             <thead>
                                 <tr>
-                                    <th>Round</th>
-                                    <th>Match #</th>
-                                    <th>Home Team</th>
+                                    <th>Round/Stage</th>
+                                    <th>Matchup</th>
                                     <th>Score</th>
-                                    <th>Away Team</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -169,26 +193,88 @@
 
     <!-- Score Modal -->
     <div id="scoreModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 600px;">
             <span class="close" onclick="closeScoreModal()">&times;</span>
-            <h2>Enter Match Result</h2>
+            <h2 class="neon-text">Enter Match Result</h2>
             <div id="matchDetails" style="margin: 2rem 0;"></div>
+
             <form id="scoreForm" onsubmit="submitScore(event)">
-                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center;">
-                    <div>
-                        <label id="homeLabel">Home</label>
-                        <input type="number" name="homeScore" min="0" required
-                            style="width: 100%; padding: 1rem; font-size: 1.5rem; text-align: center;">
+                <div
+                    style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 2rem; align-items: center; background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                    <div style="text-align: center;">
+                        <label id="homeLabel"
+                            style="font-weight: 800; display: block; margin-bottom: 1rem; color: var(--primary);"></label>
+                        <input type="number" name="homeScore" id="homeScoreInput" min="0" value="0" required
+                            style="width: 80px; padding: 1rem; font-size: 2rem; text-align: center; background: rgba(0,0,0,0.3);">
                     </div>
-                    <div style="font-size: 2rem;">-</div>
-                    <div>
-                        <label id="awayLabel">Away</label>
-                        <input type="number" name="awayScore" min="0" required
-                            style="width: 100%; padding: 1rem; font-size: 1.5rem; text-align: center;">
+                    <div style="font-size: 2rem; color: var(--text-muted);">VS</div>
+                    <div style="text-align: center;">
+                        <label id="awayLabel"
+                            style="font-weight: 800; display: block; margin-bottom: 1rem; color: var(--primary);"></label>
+                        <input type="number" name="awayScore" id="awayScoreInput" min="0" value="0" required
+                            style="width: 80px; padding: 1rem; font-size: 2rem; text-align: center; background: rgba(0,0,0,0.3);">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">Submit
-                    Result</button>
+
+                <!-- Scorers Selection -->
+                <div style="margin-top: 2rem;">
+                    <h3>Match Events (Goals)</h3>
+                    <div id="scorersList" style="margin-top: 1rem; max-height: 200px; overflow-y: auto;">
+                        <!-- Player rows will be added here -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small" style="margin-top: 1rem;"
+                        onclick="addScorerRow()">+ Add Scorer</button>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 3rem;">
+                    <button type="button" class="btn btn-secondary" style="flex: 1;"
+                        onclick="closeScoreModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Result</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Tournament Modal -->
+    <div id="createTournamentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCreateTournamentModal()">&times;</span>
+            <h2 class="neon-text">Create New Tournament</h2>
+            <form id="createTournamentForm" onsubmit="submitTournament(event)" class="premium-form-grid"
+                style="margin-top: 2rem;">
+                <div class="form-group">
+                    <label>Tournament Name</label>
+                    <input type="text" name="title" required placeholder="e.g. Summer Cup 2024">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" name="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" name="eventTime" value="09:00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Location / Venue</label>
+                    <input type="text" name="location" placeholder="Stadium or Park name">
+                </div>
+                <div class="form-group">
+                    <label>Match Format</label>
+                    <select name="format">
+                        <option value="5v5">5-a-side</option>
+                        <option value="7v7">7-a-side</option>
+                        <option value="9v9">9-a-side</option>
+                        <option value="11v11">11-a-side</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Registration Fee</label>
+                    <input type="number" name="price" value="0" min="0">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create
+                    Tournament</button>
             </form>
         </div>
     </div>
@@ -200,7 +286,9 @@
     <script>
         let currentTournamentId = null;
         let tournamentData = null;
-        let currentMatch = null;
+        let currentMatchId = null;
+        let matchLineups = { home: [], away: [] };
+        let clubTeams = [];
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Check auth status
@@ -210,8 +298,19 @@
                 return;
             }
 
+            // Load club teams for linking
+            loadClubTeams();
+
             // Load tournaments
-            loadTournaments();
+            await loadTournaments();
+
+            // Auto-load if ID in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const tournamentId = urlParams.get('id');
+            if (tournamentId) {
+                document.getElementById('tournamentSelect').value = tournamentId;
+                loadTournament();
+            }
 
             // Initialize user display
             if (document.getElementById('adminNameDisplay')) {
@@ -222,16 +321,72 @@
             }
         });
 
+        async function loadClubTeams() {
+            try {
+                const orgId = localStorage.getItem('currentOrganizationId');
+                const data = await apiService.makeRequest(`/clubs/${orgId}/teams`);
+                clubTeams = data;
+            } catch (error) {
+                console.error('Failed to load club teams', error);
+            }
+        }
+
+        async function linkInternalTeam(tournamentTeamId, internalTeamId) {
+            try {
+                await apiService.makeRequest(`/tournaments/teams/${tournamentTeamId}/link`, {
+                    method: 'POST',
+                    body: JSON.stringify({ internalTeamId })
+                });
+                loadTournament();
+            } catch (error) {
+                alert('Failed to link team');
+            }
+        }
+
         async function loadTournaments() {
             try {
                 const orgId = localStorage.getItem('currentOrganizationId');
-                const data = await apiService.makeRequest(`/events?organizationId=${orgId}&eventType=tournament`);
+                const data = await apiService.makeRequest(`/events?clubId=${orgId}&eventType=tournament`);
 
                 const select = document.getElementById('tournamentSelect');
                 select.innerHTML = '<option value="">-- Select Tournament --</option>' +
-                    data.map(event => `<option value="${event.id}">${event.title} - ${new Date(event.event_date).toLocaleDateString()}</option>`).join('');
+                    data.map(event => `<option value="${event.id}">${event.title} (${new Date(event.event_date).toLocaleDateString()})</option>`).join('');
             } catch (error) {
                 console.error('Load tournaments error:', error);
+            }
+        }
+
+        function openCreateTournamentModal() {
+            document.getElementById('createTournamentModal').style.display = 'block';
+        }
+
+        function closeCreateTournamentModal() {
+            document.getElementById('createTournamentModal').style.display = 'none';
+        }
+
+        async function submitTournament(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const orgId = localStorage.getItem('currentOrganizationId');
+                const response = await apiService.makeRequest('/events', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        ...data,
+                        eventType: 'tournament',
+                        clubId: orgId
+                    })
+                });
+
+                alert('Tournament created successfully!');
+                closeCreateTournamentModal();
+                await loadTournaments();
+                document.getElementById('tournamentSelect').value = response.event.id;
+                loadTournament();
+            } catch (error) {
+                alert('Creation failed: ' + error.message);
             }
         }
 
@@ -249,8 +404,14 @@
                 tournamentData = data;
 
                 displayTeams(data.teams);
+                displayGroups(data.groups, data.teams);
                 displayMatches(data.matches);
                 renderBracket(data.matches, data.teams);
+
+                // Update group filter select
+                const groupSelect = document.getElementById('groupFixtureSelect');
+                groupSelect.innerHTML = '<option value="">Entire Tournament</option>' +
+                    data.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
 
                 document.getElementById('tournamentContent').style.display = 'block';
             } catch (error) {
@@ -263,68 +424,292 @@
             const grid = document.getElementById('teamsGrid');
 
             if (teams.length === 0) {
-                grid.innerHTML = '<p>No teams registered yet</p>';
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); background: rgba(0,0,0,0.2); border-radius: 12px;">No teams registered yet. Teams can register via the public event page.</p>';
                 return;
             }
 
             grid.innerHTML = teams.map(team => `
-                <div class="card">
-                    <h3>${team.team_name}</h3>
-                    <p><strong>Contact:</strong> ${team.contact_email}</p>
-                    <p><strong>Status:</strong> 
-                        <span class="badge" style="background: ${getStatusColor(team.status)}">
-                            ${team.status}
-                        </span>
+                <div class="card" style="position: relative;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="width: 48px; height: 48px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">⚽</div>
+                        <div>
+                            <h3 style="margin:0">${team.team_name}</h3>
+                            <span class="badge" style="background: ${getStatusColor(team.status)}">${team.status}</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0.25rem 0;"><strong>📧 Contact:</strong> ${team.contact_email}</p>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0.5rem 0;">
+                        <strong>📍 Group:</strong> ${team.current_group_id ? tournamentData.groups.find(g => g.id === team.current_group_id)?.name : 'Unassigned'}
                     </p>
+                    
+                    <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 1rem; padding-top: 1rem;">
+                        <label style="font-size: 0.8rem; display: block; margin-bottom: 0.5rem;">Link to Club Team:</label>
+                        <select onchange="linkInternalTeam('${team.id}', this.value)" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: white; border-radius: 4px;">
+                            <option value="">-- No Link --</option>
+                            ${clubTeams.map(ct => `<option value="${ct.id}" ${team.internal_team_id === ct.id ? 'selected' : ''}>${ct.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    
                     ${team.status === 'pending' ? `
-                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                            <button class="btn btn-sm btn-primary" onclick="updateTeamStatus('${team.id}', 'approved')">Approve</button>
-                            <button class="btn btn-sm" onclick="updateTeamStatus('${team.id}', 'rejected')">Reject</button>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1.5rem;">
+                            <button class="btn btn-primary btn-small" onclick="updateTeamStatus('${team.id}', 'approved')">Approve</button>
+                            <button class="btn btn-secondary btn-small" onclick="updateTeamStatus('${team.id}', 'rejected')">Reject</button>
                         </div>
                     ` : ''}
                 </div>
             `).join('');
         }
 
+        function displayGroups(groups, teams) {
+            const grid = document.getElementById('groupsGrid');
+            if (groups.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No groups created yet.</p>';
+                return;
+            }
+
+            grid.innerHTML = groups.map(group => {
+                const groupTeams = teams.filter(t => t.current_group_id === group.id);
+                const unassignedTeams = teams.filter(t => !t.current_group_id && t.status === 'approved');
+
+                return `
+                    <div class="card">
+                        <h3>${group.name}</h3>
+                        <div style="margin: 1rem 0; min-height: 100px;">
+                            ${groupTeams.length === 0 ? '<p style="font-size: 0.8rem; color: var(--text-muted);">No teams assigned.</p>' :
+                        groupTeams.map(t => `<div style="padding: 0.5rem; background: rgba(255,255,255,0.05); margin: 2px 0; border-radius: 4px; display: flex; justify-content: space-between;">
+                                    <span>${t.team_name}</span>
+                                    <button onclick="unassignTeam('${t.id}')" style="background:none; border:none; cursor:pointer;">❌</button>
+                                </div>`).join('')
+                    }
+                        </div>
+                        <select onchange="assignTeamToGroup(this.value, '${group.id}')" style="width: 100%; padding: 0.5rem;">
+                            <option value="">+ Add Team to Group</option>
+                            ${unassignedTeams.map(t => `<option value="${t.id}">${t.team_name}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function createGroup() {
+            const name = document.getElementById('groupNameInput').value;
+            if (!name) return;
+
+            // First ensure we have a stage
+            let stageId = tournamentData.stages[0]?.id;
+            if (!stageId) {
+                const res = await apiService.makeRequest(`/tournaments/${currentTournamentId}/generate-fixtures`, {
+                    method: 'POST',
+                    body: JSON.stringify({ stageName: 'Group Stage', type: 'league' })
+                });
+                await loadTournament();
+                stageId = tournamentData.stages[0].id;
+            }
+
+            try {
+                await apiService.makeRequest(`/tournaments/${currentTournamentId}/groups`, {
+                    method: 'POST',
+                    body: JSON.stringify({ stageId, groupNames: [name] })
+                });
+                document.getElementById('groupNameInput').value = '';
+                loadTournament();
+            } catch (error) {
+                alert('Failed to create group');
+            }
+        }
+
+        async function assignTeamToGroup(teamId, groupId) {
+            if (!teamId || !groupId) return;
+            try {
+                await apiService.makeRequest(`/tournaments/${currentTournamentId}/groups/assign`, {
+                    method: 'POST',
+                    body: JSON.stringify({ teamId, groupId })
+                });
+                loadTournament();
+            } catch (error) {
+                alert('Assignment failed');
+            }
+        }
+
+        async function unassignTeam(teamId) {
+            try {
+                await apiService.makeRequest(`/tournaments/${currentTournamentId}/groups/assign`, {
+                    method: 'POST',
+                    body: JSON.stringify({ teamId, groupId: null })
+                });
+                loadTournament();
+            } catch (error) {
+                alert('Failed to unassign');
+            }
+        }
+
         function displayMatches(matches) {
             const tbody = document.getElementById('matchesBody');
 
             if (matches.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7">No matches yet. Generate fixtures to get started!</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">No matches scheduled. Assign teams to groups and generate fixtures!</td></tr>';
                 return;
             }
 
             tbody.innerHTML = matches.map(match => `
-                <tr>
-                    <td>Round ${match.round_number || 1}</td>
-                    <td>#${match.match_number || '-'}</td>
-                    <td>${match.home_team_name || 'TBD'}</td>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 1.5rem;">
+                        <div style="font-weight: 800; color: var(--primary);">Stage 1</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">${match.start_time ? new Date(match.start_time).toLocaleDateString() : 'TBD'}</div>
+                    </td>
                     <td>
+                        <div style="display: flex; align-items: center; gap: 1rem; font-size: 1.1rem;">
+                            <span style="flex: 1; text-align: right;">${match.home_team_name || 'TBD'}</span>
+                            <span style="color: var(--text-muted); font-size: 0.8rem;">VS</span>
+                            <span style="flex: 1;">${match.away_team_name || 'TBD'}</span>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
                         ${match.status === 'completed'
-                    ? `<strong>${match.home_score} - ${match.away_score}</strong>`
-                    : match.status === 'scheduled'
-                        ? '<button class="btn btn-sm" onclick="openScoreModal(\'' + match.id + '\', \'' + match.home_team_name + '\', \'' + match.away_team_name + '\')">Enter Score</button>'
-                        : 'TBD'
+                    ? `<div style="font-size: 1.5rem; font-weight: 800; color: #22c55e;">${match.home_score} - ${match.away_score}</div>`
+                    : `<span style="color: var(--text-muted);">--</span>`
                 }
                     </td>
-                    <td>${match.away_team_name || 'TBD'}</td>
-                    <td><span class="badge">${match.status}</span></td>
                     <td>
-                        ${match.start_time ? new Date(match.start_time).toLocaleString() : 'Not scheduled'}
+                        <span class="badge" style="background: ${match.status === 'completed' ? '#22c55e' : '#3b82f6'}">${match.status}</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="openScoreModal('${match.id}', '${match.home_team_name}', '${match.away_team_name}')">
+                            ${match.status === 'completed' ? 'Edit Result' : 'Post Score'}
+                        </button>
                     </td>
                 </tr>
             `).join('');
         }
 
+        async function openScoreModal(matchId, homeTeam, awayTeam) {
+            currentMatchId = matchId;
+            document.getElementById('homeLabel').textContent = homeTeam;
+            document.getElementById('awayLabel').textContent = awayTeam;
+            document.getElementById('scorersList').innerHTML = '';
+
+            // Fetch lineups
+            try {
+                const data = await apiService.makeRequest(`/tournaments/matches/${matchId}/lineups`);
+                matchLineups = data;
+            } catch (err) {
+                console.error('Failed to load lineups', err);
+            }
+
+            document.getElementById('scoreModal').style.display = 'block';
+        }
+
+        function addScorerRow() {
+            const list = document.getElementById('scorersList');
+            const row = document.createElement('div');
+            row.style.display = 'grid';
+            row.style.gridTemplateColumns = '1fr 2fr auto';
+            row.style.gap = '0.5rem';
+            row.style.marginBottom = '0.5rem';
+            row.className = 'scorer-row';
+
+            const teamSelect = `
+                <select class="scorer-team" onchange="updatePlayerSelect(this)" style="padding: 0.5rem;">
+                    <option value="">Select Team</option>
+                    <option value="home">${document.getElementById('homeLabel').textContent}</option>
+                    <option value="away">${document.getElementById('awayLabel').textContent}</option>
+                </select>
+            `;
+
+            const playerSelect = `<select class="scorer-player" style="padding: 0.5rem;"><option value="">Select Player</option></select>`;
+            const removeBtn = `<button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer;">🗑️</button>`;
+
+            row.innerHTML = teamSelect + playerSelect + removeBtn;
+            list.appendChild(row);
+        }
+
+        function updatePlayerSelect(select) {
+            const team = select.value;
+            const playerSelect = select.parentElement.querySelector('.scorer-player');
+            const players = team === 'home' ? matchLineups.home : matchLineups.away;
+
+            playerSelect.innerHTML = '<option value="">Select Player</option>' +
+                players.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
+        }
+
+        async function submitScore(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+
+            const scorers = [];
+            document.querySelectorAll('.scorer-row').forEach(row => {
+                const playerId = row.querySelector('.scorer-player').value;
+                const teamType = row.querySelector('.scorer-team').value;
+                if (playerId) {
+                    scorers.push({
+                        playerId,
+                        teamId: teamType === 'home' ? tournamentData.matches.find(m => m.id === currentMatchId).home_team_id : tournamentData.matches.find(m => m.id === currentMatchId).away_team_id,
+                        type: 'goal'
+                    });
+                }
+            });
+
+            try {
+                await apiService.makeRequest(`/tournaments/matches/${currentMatchId}/result`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        homeScore: parseInt(formData.get('homeScore')),
+                        awayScore: parseInt(formData.get('awayScore')),
+                        scorers
+                    })
+                });
+
+                alert('Match result and player stats updated!');
+                closeScoreModal();
+                loadTournament();
+            } catch (error) {
+                alert('Failed to save: ' + error.message);
+            }
+        }
+
+
+        function closeScoreModal() {
+            document.getElementById('scoreModal').style.display = 'none';
+            currentMatchId = null;
+        }
+
+        async function updateTeamStatus(teamId, status) {
+            try {
+                await apiService.makeRequest(`/tournaments/teams/${teamId}/status`, {
+                    method: 'POST',
+                    body: JSON.stringify({ status })
+                });
+                loadTournament();
+            } catch (error) {
+                alert('Failed: ' + error.message);
+            }
+        }
+
+        async function generateFixtures(type, groupId = null) {
+            if (!currentTournamentId) return;
+            try {
+                await apiService.makeRequest(`/tournaments/${currentTournamentId}/generate-fixtures`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        stageName: groupId ? 'Group Stage' : (type === 'knockout' ? 'Knockout Stage' : 'League Stage'),
+                        type,
+                        groupId
+                    })
+                });
+                alert('Fixtures generated!');
+                loadTournament();
+            } catch (error) {
+                alert('Failed: ' + error.message);
+            }
+        }
+
         function renderBracket(matches, teams) {
             const container = document.getElementById('bracketContainer');
-
             if (matches.length === 0) {
-                container.innerHTML = '<p style="padding: 2rem;">No bracket yet. Generate fixtures first!</p>';
+                container.innerHTML = '<p style="padding: 2rem;">No bracket yet.</p>';
                 return;
             }
 
-            // Group by round
             const rounds = matches.reduce((acc, match) => {
                 const round = match.round_number || 1;
                 if (!acc[round]) acc[round] = [];
@@ -351,79 +736,6 @@
                         `).join('')}
                     </div>
                 `).join('');
-        }
-
-        async function generateFixtures(type) {
-            if (!currentTournamentId) return;
-            if (!confirm(`Generate ${type} fixtures for this tournament?`)) return;
-
-            try {
-                await apiService.makeRequest(`/tournaments/${currentTournamentId}/generate-fixtures`, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        stageName: type === 'knockout' ? 'Knockout Stage' : 'League Stage',
-                        type
-                    })
-                });
-
-                alert('Fixtures generated!');
-                loadTournament();
-            } catch (error) {
-                alert('Failed to generate fixtures: ' + error.message);
-            }
-        }
-
-        async function updateTeamStatus(teamId, status) {
-            try {
-                await apiService.makeRequest(`/tournaments/teams/${teamId}/status`, {
-                    method: 'POST',
-                    body: JSON.stringify({ status })
-                });
-
-                loadTournament();
-            } catch (error) {
-                alert('Failed to update status: ' + error.message);
-            }
-        }
-
-        function openScoreModal(matchId, homeTeam, awayTeam) {
-            currentMatch = matchId;
-            document.getElementById('homeLabel').textContent = homeTeam;
-            document.getElementById('awayLabel').textContent = awayTeam;
-            document.getElementById('matchDetails').innerHTML = `
-                <p style="text-align: center; font-size: 1.2rem;">
-                    <strong>${homeTeam}</strong> vs <strong>${awayTeam}</strong>
-                </p>
-            `;
-            document.getElementById('scoreModal').style.display = 'block';
-        }
-
-        function closeScoreModal() {
-            document.getElementById('scoreModal').style.display = 'none';
-            currentMatch = null;
-        }
-
-        async function submitScore(event) {
-            event.preventDefault();
-            if (!currentMatch) return;
-
-            const formData = new FormData(event.target);
-
-            try {
-                await apiService.makeRequest(`/tournaments/matches/${currentMatch}/result`, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        homeScore: parseInt(formData.get('homeScore')),
-                        awayScore: parseInt(formData.get('awayScore'))
-                    })
-                });
-
-                alert('Result submitted! Bracket updated.');
-                closeScoreModal();
-                loadTournament();
-            } catch (error) {
-                alert('Failed to submit result: ' + error.message);
-            }
         }
 
         function showTab(tabName) {
