@@ -179,7 +179,12 @@ class ApiService {
               {
                 id: "demo-club-id",
                 name: "Pro Club Demo",
-                role: "admin",
+                role: role === "coach" ? "coach" : "admin",
+              },
+              {
+                id: "demo-coach-org-2",
+                name: "Secondary Academy",
+                role: "coach",
               },
               {
                 id: "demo-player-org",
@@ -206,6 +211,14 @@ class ApiService {
             success: true,
             message: "Organization switched successfully (Demo Mode)",
             organizationId: newOrgId,
+            currentOrganization: {
+              id: newOrgId,
+              name:
+                newOrgId === "demo-coach-org-2"
+                  ? "Secondary Academy"
+                  : "Pro Club Demo",
+              role: user.role || "admin",
+            },
           };
         }
         if (endpoint.includes("/auth/profile")) {
@@ -242,6 +255,148 @@ class ApiService {
         }
         if (endpoint.includes("/dashboard/coach")) {
           return this.getCoachDashboardFallback();
+        }
+        if (endpoint.includes("/platform-admin/stats")) {
+          return {
+            success: true,
+            stats: {
+              total_users: 1284,
+              total_organizations: 92,
+              active_plans: 78,
+              pending_invitations: 15,
+            },
+            recentSignups: 42,
+          };
+        }
+        if (endpoint.includes("/platform-admin/organizations")) {
+          return {
+            success: true,
+            total: 92,
+            page: 1,
+            organizations: [
+              {
+                id: "org1",
+                name: "Elite Performance Academy",
+                sport: "Football",
+                owner_email: "owner@elite.com",
+                member_count: 145,
+                created_at: "2023-01-15",
+              },
+              {
+                id: "org2",
+                name: "London Lions SC",
+                sport: "Basketball",
+                owner_email: "admin@lions.com",
+                member_count: 82,
+                created_at: "2023-03-22",
+              },
+              {
+                id: "org3",
+                name: "Westside United",
+                sport: "Football",
+                owner_email: "mitch@westside.com",
+                member_count: 210,
+                created_at: "2021-11-05",
+              },
+              {
+                id: "org4",
+                name: "Grassroots FC",
+                sport: "Football",
+                owner_email: "info@grassroots.com",
+                member_count: 45,
+                created_at: "2024-05-10",
+              },
+              {
+                id: "org5",
+                name: "Pro Tennis Academy",
+                sport: "Tennis",
+                owner_email: "coach@protennis.com",
+                member_count: 32,
+                created_at: "2023-08-12",
+              },
+            ],
+          };
+        }
+        if (endpoint.includes("/platform-admin/users")) {
+          return {
+            success: true,
+            total: 1284,
+            page: 1,
+            users: [
+              {
+                id: "u1",
+                first_name: "John",
+                last_name: "Doe",
+                email: "john@example.com",
+                account_type: "organization",
+                org_count: 2,
+                created_at: "2023-01-15",
+                is_platform_admin: false,
+              },
+              {
+                id: "u2",
+                first_name: "Sarah",
+                last_name: "Smith",
+                email: "sarah@example.com",
+                account_type: "adult",
+                org_count: 1,
+                created_at: "2023-04-10",
+                is_platform_admin: false,
+              },
+              {
+                id: "u3",
+                first_name: "Platform",
+                last_name: "Admin",
+                email: "super@clubhub.com",
+                account_type: "organization",
+                org_count: 5,
+                created_at: "2021-01-01",
+                is_platform_admin: true,
+              },
+            ],
+          };
+        }
+        if (endpoint.includes("/platform-admin/activity")) {
+          return {
+            success: true,
+            activity: [
+              {
+                type: "organization_registered",
+                title: "New organization: Elite Academy",
+                user_email: "admin@elite.com",
+                timestamp: new Date().toISOString(),
+              },
+              {
+                type: "user_joined",
+                title: "New user: Michael Jordan",
+                user_email: "mj@bulls.com",
+                timestamp: new Date(Date.now() - 3600000).toISOString(),
+              },
+              {
+                type: "invite_sent",
+                title: "Invite sent to kobe@lakers.com",
+                user_email: "super@clubhub.com",
+                timestamp: new Date(Date.now() - 7200000).toISOString(),
+              },
+            ],
+          };
+        }
+        if (endpoint.includes("/organizations/super/")) {
+          return {
+            success: true,
+            organization: {
+              id: "demo-org",
+              name: "Elite Performance Academy",
+              sport: "Football",
+              owner_name: "John Owner",
+              owner_email: "admin@elite.com",
+              status: "Active",
+              created_at: "2023-01-15",
+              subscription_plan: "Pro Plus",
+              location: "Manchester, UK",
+              member_count: 145,
+            },
+          };
         }
         if (
           endpoint.includes("/talent-id/events") &&

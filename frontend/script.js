@@ -793,7 +793,7 @@ function redirectToDashboard() {
     return;
   }
 
-  if (userRole === "superadmin") {
+  if (userRole === "superadmin" || AppState.currentUser?.is_platform_admin) {
     window.location.href = "super-admin-dashboard.html";
     return;
   }

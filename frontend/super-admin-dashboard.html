@@ -249,9 +249,20 @@
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
                 <span class="logo-text neon-text">ClubHub</span>
             </div>
+
+            <!-- Mode Toggle -->
+            <div class="mode-toggle-container">
+                <span class="mode-label active" id="platform-label">Platform</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="mode-toggle" />
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="mode-label" id="player-label">Player</span>
+            </div>
+
             <div class="user-info">
                 <span id="adminName">Platform Admin</span>
-                <div class="user-avatar">PA</div>
+                <div class="user-avatar" id="adminAvatar">PA</div>
                 <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
             </div>
         </nav>
@@ -606,12 +617,6 @@ Location: ${org.location || 'N/A'}
             }
         }
 
-        // Logout
-        function logout() {
-            localStorage.clear();
-            window.location.href = 'index.html';
-        }
-
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             const isAdmin = await checkPlatformAdmin();
@@ -621,7 +626,26 @@ Location: ${org.location || 'N/A'}
                 loadUsers();
                 loadActivity();
             }
+
+            // Mode Toggle Handler
+            const toggle = document.getElementById('mode-toggle');
+            if (toggle) {
+                toggle.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        console.log('🔄 Super Admin → Player toggle activated');
+                        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                        user.role = 'player';
+                        localStorage.setItem('currentUser', JSON.stringify(user));
+                        window.location.href = 'player-dashboard.html';
+                    }
+                });
+            }
         });
+
+        async function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
     </script>
 </body>
 

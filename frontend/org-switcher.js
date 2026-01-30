@@ -24,12 +24,22 @@ class OrganizationSwitcher {
         let organizations = response.organizations || [];
 
         // Filter: If on Admin Dashboard, only show management roles
-        if (window.location.pathname.includes("admin-dashboard.html")) {
+        // Filter: If on Management Dashboards, only show relevant roles
+        const path = window.location.pathname;
+        if (
+          path.includes("admin-dashboard.html") ||
+          path.includes("coach-dashboard.html")
+        ) {
           organizations = organizations.filter((org) => {
             const role = (org.user_role || org.role || "").toLowerCase();
-            return ["owner", "admin", "manager", "coach", "staff"].includes(
-              role,
-            );
+            return [
+              "owner",
+              "admin",
+              "manager",
+              "coach",
+              "staff",
+              "assistant_coach",
+            ].includes(role);
           });
         }
 
