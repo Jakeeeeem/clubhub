@@ -163,6 +163,14 @@ class ApiService {
         // Return mock data for specific endpoints during demo session
         if (endpoint.includes("/auth/context")) {
           const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+
+          // Ensure user is treated as active in demo mode unless flagged otherwise
+          if (user.is_active === false) {
+            console.warn("🛡️ Blocked inactive user in demo mode");
+            throw new Error("Account deactivated");
+          }
+          user.is_active = true; // Default to true for demo
+
           const isSuper =
             user.is_platform_admin === true || user.role === "superadmin";
           const role = user.activePlayerId ? "player" : user.role || "admin";
@@ -351,6 +359,43 @@ class ApiService {
           };
         }
         if (endpoint.includes("/platform-admin/users")) {
+          // Handle POST requests (Create, Status Update)
+          if (options.method === "POST") {
+            // Status Update
+            if (endpoint.includes("/status")) {
+              return {
+                success: true,
+                message: "User status updated successfully (Demo Mode)",
+              };
+            }
+            // Create User
+            const body = JSON.parse(options.body || "{}");
+            return {
+              success: true,
+              message: "User created successfully (Demo Mode)",
+              user: {
+                id: "new-user-" + Date.now(),
+                first_name: body.firstName,
+                last_name: body.lastName,
+                email: body.email,
+                account_type: body.accountType,
+                org_count: 0,
+                is_platform_admin: false,
+                is_active: true,
+                created_at: new Date().toISOString(),
+              },
+            };
+          }
+
+          // Handle DELETE requests
+          if (options.method === "DELETE") {
+            return {
+              success: true,
+              message: "User deleted successfully (Demo Mode)",
+            };
+          }
+
+          // Handle GET requests (List Users)
           return {
             success: true,
             total: 1284,
@@ -365,6 +410,7 @@ class ApiService {
                 org_count: 2,
                 created_at: "2023-01-15",
                 is_platform_admin: false,
+                is_active: true,
               },
               {
                 id: "u2",
@@ -375,6 +421,7 @@ class ApiService {
                 org_count: 1,
                 created_at: "2023-04-10",
                 is_platform_admin: false,
+                is_active: true,
               },
               {
                 id: "u3",
@@ -385,6 +432,7 @@ class ApiService {
                 org_count: 5,
                 created_at: "2021-01-01",
                 is_platform_admin: true,
+                is_active: true,
               },
             ],
           };

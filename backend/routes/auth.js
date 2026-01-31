@@ -650,6 +650,15 @@ router.post(
       }
 
       const user = userResult.rows[0];
+
+      // Check if user is active
+      if (user.is_active === false) {
+        return res.status(403).json({
+          error: "Account deactivated",
+          message: "Your account has been deactivated. Please contact support.",
+        });
+      }
+
       const isMatch = await bcrypt.compare(password, user.password_hash);
       if (!isMatch)
         return res.status(401).json({ error: "Invalid email or password" });

@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 class EmailService {
   constructor() {
@@ -11,63 +11,74 @@ class EmailService {
   }
 
   getEmailConfig() {
-    // Priority: 
+    // Priority:
     // 1. SendPulse (Specific SMTP)
     // 2. Mailgun (SMTP)
     // 3. Gmail (Less secure apps or App Password)
     // 4. Generic SMTP
     // 5. Ethereal (Dev fallback)
 
-    if (process.env.EMAIL_SERVICE === 'sendpulse' || (process.env.SENDPULSE_SMTP_USER && process.env.SENDPULSE_SMTP_PASS)) {
-      console.log('📧 Using SendPulse SMTP Service');
+    if (
+      process.env.EMAIL_SERVICE === "sendpulse" ||
+      (process.env.SENDPULSE_SMTP_USER && process.env.SENDPULSE_SMTP_PASS)
+    ) {
+      console.log("📧 Using SendPulse SMTP Service");
       return {
-        host: 'smtp-pulse.com',
+        host: "smtp-pulse.com",
         port: process.env.SENDPULSE_SMTP_PORT || 587,
-        secure: process.env.SENDPULSE_SMTP_SECURE === 'true',
+        secure: process.env.SENDPULSE_SMTP_SECURE === "true",
         auth: {
           user: process.env.SENDPULSE_SMTP_USER,
-          pass: process.env.SENDPULSE_SMTP_PASS
-        }
+          pass: process.env.SENDPULSE_SMTP_PASS,
+        },
       };
-    } else if (process.env.EMAIL_SERVICE === 'mailgun' && process.env.MAILGUN_SMTP_SERVER) {
+    } else if (
+      process.env.EMAIL_SERVICE === "mailgun" &&
+      process.env.MAILGUN_SMTP_SERVER
+    ) {
       return {
         host: process.env.MAILGUN_SMTP_SERVER,
         port: process.env.MAILGUN_SMTP_PORT || 587,
         secure: false,
         auth: {
           user: process.env.MAILGUN_SMTP_LOGIN,
-          pass: process.env.MAILGUN_SMTP_PASSWORD
-        }
+          pass: process.env.MAILGUN_SMTP_PASSWORD,
+        },
       };
-    } else if (process.env.EMAIL_SERVICE === 'gmail' && process.env.GMAIL_USER) {
+    } else if (
+      process.env.EMAIL_SERVICE === "gmail" &&
+      process.env.GMAIL_USER
+    ) {
       return {
-        service: 'gmail',
+        service: "gmail",
         auth: {
           user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_PASS
-        }
+          pass: process.env.GMAIL_PASS,
+        },
       };
     } else if (process.env.SMTP_HOST) {
       return {
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT || 587,
-        secure: process.env.SMTP_SECURE === 'true',
+        secure: process.env.SMTP_SECURE === "true",
         auth: {
           user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        }
+          pass: process.env.SMTP_PASS,
+        },
       };
     } else {
       // Create a test account on-the-fly for development if no config is present
-      console.log('ℹ️ No email configuration found. Using Ethereal for development...');
+      console.log(
+        "ℹ️ No email configuration found. Using Ethereal for development...",
+      );
       return {
-        host: 'smtp.ethereal.email',
+        host: "smtp.ethereal.email",
         port: 587,
         secure: false,
         auth: {
-          user: process.env.ETHEREAL_USER || 'test@ethereal.email',
-          pass: process.env.ETHEREAL_PASS || 'password'
-        }
+          user: process.env.ETHEREAL_USER || "test@ethereal.email",
+          pass: process.env.ETHEREAL_PASS || "password",
+        },
       };
     }
   }
@@ -76,10 +87,10 @@ class EmailService {
   async verifyConnection() {
     try {
       await this.transporter.verify();
-      console.log('✅ Email server connection verified');
+      console.log("✅ Email server connection verified");
       return true;
     } catch (error) {
-      console.error('❌ Email server connection failed:', error);
+      console.error("❌ Email server connection failed:", error);
       return false;
     }
   }
@@ -88,9 +99,11 @@ class EmailService {
 
   // Base Premium Template Wrapper
   getBaseHtmlTemplate(content, clubInfo = {}) {
-    const clubHubLogo = process.env.CLUBHUB_LOGO_URL || 'https://clubhubsports.net/images/logo.png'; 
+    const clubHubLogo =
+      process.env.CLUBHUB_LOGO_URL ||
+      "https://clubhubsports.net/images/logo.png";
     // User requested only ClubHub logo, ignoring specific club logos for header consistency
-    
+
     return `
       <!DOCTYPE html>
       <html>
@@ -227,24 +240,28 @@ class EmailService {
       inviterName,
       inviteLink,
       personalMessage,
-      clubRole
+      clubRole,
     } = inviteData;
 
     try {
       const subject = `You're Invited to Join ${clubName}`;
-      
+
       const content = `
         <h2>Official Club Invitation</h2>
         <p>Hello,</p>
-        <p>You have been officially invited to join <strong>${clubName}</strong> on the ClubHub platform. This invitation was sent by <span class="accent">${inviterName}</span> for the role of <strong>${clubRole || 'Member'}</strong>.</p>
+        <p>You have been officially invited to join <strong>${clubName}</strong> on the ClubHub platform. This invitation was sent by <span class="accent">${inviterName}</span> for the role of <strong>${clubRole || "Member"}</strong>.</p>
         
         <p>ClubHub is our central hub for all team operations, scheduling, payments, and communications. Joining will give you immediate access to your team's dashboard.</p>
 
-        ${personalMessage ? `
+        ${
+          personalMessage
+            ? `
           <div class="card">
             <p style="margin: 0; font-style: italic; color: #a1a1aa;">&ldquo;${personalMessage}&rdquo;</p>
           </div>
-        ` : ''}
+        `
+            : ""
+        }
 
         <div style="text-align: center;">
           <a href="${inviteLink}" class="btn">Accept Invitation</a>
@@ -258,17 +275,17 @@ class EmailService {
       const html = this.getBaseHtmlTemplate(content); // No club logo passed
 
       const mailOptions = {
-        from: `"${clubName} • ClubHub" <${process.env.EMAIL_FROM || 'invite@clubhub.app'}>`,
+        from: `"${clubName} • ClubHub" <${process.env.EMAIL_FROM || "invite@clubhub.app"}>`,
         to: email,
         subject,
         html,
         text: `You've been invited to join ${clubName} on ClubHub. Join here: ${inviteLink}`,
-        replyTo: process.env.EMAIL_REPLY_TO
+        replyTo: process.env.EMAIL_REPLY_TO,
       };
 
       return await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('❌ Failed to send club invite email:', error);
+      console.error("❌ Failed to send club invite email:", error);
       throw error;
     }
   }
@@ -279,7 +296,7 @@ class EmailService {
 
     try {
       const subject = `Welcome to the ClubHub Experience`;
-      
+
       const content = `
         <h2>Welcome Aboard, ${firstName}!</h2>
         <p>We are absolutely thrilled to have you with us. Your account is now fully active, giving you access to the world's most advanced sports management platform.</p>
@@ -289,15 +306,19 @@ class EmailService {
         <div class="card">
           <h3 style="margin-bottom: 20px; font-size: 20px;">Your Next Steps</h3>
           <ul>
-            ${accountType === 'organization' ? `
+            ${
+              accountType === "organization"
+                ? `
               <li><strong>Complete Your Profile:</strong> comprehensive profiles attract more talent.</li>
               <li><strong>Invite Staff & Players:</strong> Build your roster in seconds.</li>
               <li><strong>Schedule Events:</strong> Set up your season calendar.</li>
-            ` : `
+            `
+                : `
               <li><strong>Build Your CV:</strong> Update stats and experience.</li>
               <li><strong>Find a Club:</strong> Browse elite academies and local teams.</li>
               <li><strong>Get Scouting:</strong> Opt-in to be seen by recruiters.</li>
-            `}
+            `
+            }
           </ul>
         </div>
 
@@ -311,16 +332,57 @@ class EmailService {
       const html = this.getBaseHtmlTemplate(content);
 
       const mailOptions = {
-        from: `"ClubHub Team" <${process.env.EMAIL_FROM || 'welcome@clubhub.app'}>`,
+        from: `"ClubHub Team" <${process.env.EMAIL_FROM || "welcome@clubhub.app"}>`,
         to: email,
         subject,
         html,
-        text: `Welcome to ClubHub, ${firstName}! Access your dashboard: ${dashboardLink}`
+        text: `Welcome to ClubHub, ${firstName}! Access your dashboard: ${dashboardLink}`,
       };
 
       return await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('❌ Failed to send welcome email:', error);
+      console.error("❌ Failed to send welcome email:", error);
+      throw error;
+    }
+  }
+
+  // Send welcome email for admin-created accounts
+  async sendAdminWelcomeEmail(userData) {
+    const { email, firstName, accountType, setPasswordLink } = userData;
+
+    try {
+      const subject = `Welcome to ClubHub - Set Your Password`;
+
+      const content = `
+        <h2>Welcome to ClubHub!</h2>
+        <p>Hello ${firstName},</p>
+        <p>An account has been created for you by the Platform Administrator.</p>
+        <p>To get started, please click the button below to set your secure password and access your account.</p>
+        
+        <div style="text-align: center;">
+          <a href="${setPasswordLink}" class="btn">Set Password & Login</a>
+        </div>
+
+        <div class="card">
+          <p style="margin: 0; color: #94a3b8; font-size: 14px;">
+            <strong>Note:</strong> This link is valid for 24 hours. If it expires, you can request a new one from the login page using "Forgot Password".
+          </p>
+        </div>
+      `;
+
+      const html = this.getBaseHtmlTemplate(content);
+
+      const mailOptions = {
+        from: `"ClubHub Admin" <${process.env.EMAIL_FROM || "admin@clubhub.app"}>`,
+        to: email,
+        subject,
+        html,
+        text: `Welcome to ClubHub! Set your password here: ${setPasswordLink}`,
+      };
+
+      return await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error("❌ Failed to send admin welcome email:", error);
       throw error;
     }
   }
@@ -329,7 +391,7 @@ class EmailService {
   async sendPasswordResetEmail(email, firstName, resetUrl) {
     try {
       const subject = `Secure Password Reset Request`;
-      
+
       const content = `
         <h2>Reset Your Password</h2>
         <p>Hello ${firstName},</p>
@@ -349,16 +411,16 @@ class EmailService {
       const html = this.getBaseHtmlTemplate(content);
 
       const mailOptions = {
-        from: `"ClubHub Security" <${process.env.EMAIL_FROM || 'security@clubhub.app'}>`,
+        from: `"ClubHub Security" <${process.env.EMAIL_FROM || "security@clubhub.app"}>`,
         to: email,
         subject,
         html,
-        text: `Reset your ClubHub password here: ${resetUrl}`
+        text: `Reset your ClubHub password here: ${resetUrl}`,
       };
 
       return await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('❌ Failed to send reset email:', error);
+      console.error("❌ Failed to send reset email:", error);
       throw error;
     }
   }
@@ -367,7 +429,7 @@ class EmailService {
   async sendPasswordResetConfirmationEmail(email, firstName) {
     try {
       const subject = `Password Successfully Updated`;
-      
+
       const content = `
         <h2>Account Security Updated</h2>
         <p>Hello ${firstName},</p>
@@ -375,23 +437,23 @@ class EmailService {
         <p>You may now log in using your new credentials.</p>
         
         <div style="text-align: center;">
-          <a href="${process.env.FRONTEND_URL || 'http://localhost:8000'}/login.html" class="btn">Login to Account</a>
+          <a href="${process.env.FRONTEND_URL || "http://localhost:8000"}/login.html" class="btn">Login to Account</a>
         </div>
       `;
 
       const html = this.getBaseHtmlTemplate(content);
 
       const mailOptions = {
-        from: `"ClubHub Security" <${process.env.EMAIL_FROM || 'security@clubhub.app'}>`,
+        from: `"ClubHub Security" <${process.env.EMAIL_FROM || "security@clubhub.app"}>`,
         to: email,
         subject,
         html,
-        text: `Your ClubHub password was updated successfully.`
+        text: `Your ClubHub password was updated successfully.`,
       };
 
       return await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('❌ Failed to send confirmation email:', error);
+      console.error("❌ Failed to send confirmation email:", error);
       throw error;
     }
   }
@@ -405,17 +467,17 @@ class EmailService {
       amount,
       dueDate,
       description,
-      paymentLink
+      paymentLink,
     } = paymentData;
 
     try {
-      const formattedAmount = new Intl.NumberFormat('en-GB', {
-        style: 'currency',
-        currency: 'GBP'
+      const formattedAmount = new Intl.NumberFormat("en-GB", {
+        style: "currency",
+        currency: "GBP",
       }).format(amount);
 
       const subject = `Payment Due: ${formattedAmount} - ${clubName}`;
-      
+
       const content = `
         <h2>Payment Reminder</h2>
         <p>Hello ${firstName},</p>
@@ -446,16 +508,16 @@ class EmailService {
       const html = this.getBaseHtmlTemplate(content);
 
       const mailOptions = {
-        from: `"${clubName} • Billing" <${process.env.EMAIL_FROM || 'billing@clubhub.app'}>`,
+        from: `"${clubName} • Billing" <${process.env.EMAIL_FROM || "billing@clubhub.app"}>`,
         to: email,
         subject,
         html,
-        text: `Payment of ${formattedAmount} due for ${clubName}. Pay here: ${paymentLink}`
+        text: `Payment of ${formattedAmount} due for ${clubName}. Pay here: ${paymentLink}`,
       };
 
       return await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('❌ Failed to send payment reminder:', error);
+      console.error("❌ Failed to send payment reminder:", error);
       throw error;
     }
   }
@@ -464,25 +526,29 @@ class EmailService {
   async sendEmail({ to, subject, html, text, from, replyTo }) {
     try {
       const mailOptions = {
-        from: from || `"ClubHub" <${process.env.EMAIL_FROM || 'noreply@clubhub.app'}>`,
+        from:
+          from ||
+          `"ClubHub" <${process.env.EMAIL_FROM || "noreply@clubhub.app"}>`,
         to,
         subject,
         html,
         text,
-        replyTo: replyTo || process.env.EMAIL_REPLY_TO
+        replyTo: replyTo || process.env.EMAIL_REPLY_TO,
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Email sent successfully:', result.messageId);
+      console.log("✅ Email sent successfully:", result.messageId);
 
       return {
         success: true,
         messageId: result.messageId,
-        previewUrl: process.env.NODE_ENV !== 'production' ? nodemailer.getTestMessageUrl(result) : null
+        previewUrl:
+          process.env.NODE_ENV !== "production"
+            ? nodemailer.getTestMessageUrl(result)
+            : null,
       };
-
     } catch (error) {
-      console.error('❌ Failed to send email:', error);
+      console.error("❌ Failed to send email:", error);
       throw new Error(`Failed to send email: ${error.message}`);
     }
   }
@@ -492,22 +558,22 @@ class EmailService {
     try {
       const result = await this.sendEmail({
         to: email,
-        subject: 'Configuration Verified: ClubHub Email System',
+        subject: "Configuration Verified: ClubHub Email System",
         html: this.getBaseHtmlTemplate(`
           <h2>System Configuration Verified</h2>
           <p>This is a confirmation that your ClubHub email infrastructure is correctly configured and operational.</p>
           <div class="card">
             <p><strong>Status:</strong> <span style="color:#4ade80;">Operational</span></p>
-            <p><strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}</p>
+            <p><strong>Environment:</strong> ${process.env.NODE_ENV || "development"}</p>
             <p><strong>Timestamp:</strong> ${new Date().toUTCString()}</p>
           </div>
         `),
-        text: `ClubHub Email System Verified. ${new Date().toISOString()}`
+        text: `ClubHub Email System Verified. ${new Date().toISOString()}`,
       });
 
       return result;
     } catch (error) {
-      console.error('❌ Test email failed:', error);
+      console.error("❌ Test email failed:", error);
       throw error;
     }
   }

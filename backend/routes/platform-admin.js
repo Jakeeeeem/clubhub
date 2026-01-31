@@ -1,6 +1,9 @@
 const express = require("express");
 const { query } = require("../config/database");
 const { authenticateToken } = require("../middleware/auth");
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const emailService = require("../services/email-service");
 
 const router = express.Router();
 
@@ -389,6 +392,167 @@ router.get(
     } catch (error) {
       console.error("Get platform activity error:", error);
       res.status(500).json({ error: "Failed to fetch activity" });
+    }
+  },
+);
+
+// POST /api/platform-admin/users - Create new user
+router.post(
+  "/users",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      const { email, firstName, lastName, accountType } = req.body;
+
+      // Basic validation
+      if (!email || !firstName || !lastName || !accountType) {
+        return res.status(400).json({ error: "All fields are required" });
+      }
+
+      // Check if user exists
+      const existingUser = await query(
+        "SELECT id FROM users WHERE email = $1",
+        [email],
+      );
+      if (existingUser.rows.length > 0) {
+        return res
+          .status(409)
+          .json({ error: "User with this email already exists" });
+      }
+
+      // Generate random temporary password
+      const tempPassword = crypto.randomBytes(8).toString("hex");
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+      // Generate reset token for "Set Password" link
+      const resetToken = crypto.randomBytes(32).toString("hex");
+      const resetExpires = new Date(Date.now() + 24 * 3600000); // 24 hours
+
+      // Create User
+      const newUser = await query(
+        `
+            INSERT INTO users (
+                email, password_hash, first_name, last_name, account_type, 
+                reset_token, reset_expires, created_at, updated_at, is_active
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), true)
+            RETURNING id, email, first_name, last_name, account_type
+        `,
+        [
+          email,
+          hashedPassword,
+          firstName,
+          lastName,
+          accountType,
+          resetToken,
+          resetExpires,
+        ],
+      );
+
+      // Send Welcome Email
+      const setPasswordLink = `${
+        process.env.FRONTEND_URL || "http://localhost:8080"
+      }/forgot-password.html?token=${resetToken}`; // Reusing forgot password flow for setting password
+
+      try {
+        await emailService.sendAdminWelcomeEmail({
+          email,
+          firstName,
+          accountType,
+          setPasswordLink,
+        });
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Don't fail the request, just log it
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "User created successfully",
+        user: newUser.rows[0],
+      });
+    } catch (error) {
+      console.error("Create user error:", error);
+      res.status(500).json({ error: "Failed to create user" });
+    }
+  },
+);
+
+// POST /api/platform-admin/users/:userId/status - Deactivate/Activate user
+router.post(
+  "/users/:userId/status",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { isActive } = req.body;
+
+      if (typeof isActive !== "boolean") {
+        return res
+          .status(400)
+          .json({ error: "isActive boolean value is required" });
+      }
+
+      // Don't allow deactivating self
+      if (parseInt(userId) === req.user.id) {
+        return res.status(400).json({ error: "Cannot deactivate yourself" });
+      }
+
+      await query(
+        `
+            UPDATE users 
+            SET is_active = $1, updated_at = NOW()
+            WHERE id = $2
+        `,
+        [isActive, userId],
+      );
+
+      res.json({
+        success: true,
+        message: `User ${isActive ? "activated" : "deactivated"} successfully`,
+      });
+    } catch (error) {
+      console.error("Update user status error:", error);
+      res.status(500).json({ error: "Failed to update user status" });
+    }
+  },
+);
+
+// DELETE /api/platform-admin/users/:userId - Delete user
+router.delete(
+  "/users/:userId",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      // Don't allow deleting self
+      if (parseInt(userId) === req.user.id) {
+        return res.status(400).json({ error: "Cannot delete yourself" });
+      }
+
+      // Check if user exists
+      const userCheck = await query("SELECT id FROM users WHERE id = $1", [
+        userId,
+      ]);
+      if (userCheck.rows.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // HARD DELETE (Cascading due to foreign keys typically, or we might need manual cleanup if not set to CASCADE)
+      // Assuming foreign keys are set to ON DELETE CASCADE for simplicity based on request "delete accounts"
+      await query("DELETE FROM users WHERE id = $1", [userId]);
+
+      res.json({
+        success: true,
+        message: "User deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Failed to delete user" });
     }
   },
 );

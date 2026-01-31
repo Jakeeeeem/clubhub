@@ -276,6 +276,90 @@
             padding: 3rem;
             color: var(--text-muted);
         }
+
+        /* TOAST NOTIFICATION STYLES */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #1e293b;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            transform: translateX(100%);
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            pointer-events: auto;
+        }
+
+        .toast.success {
+            border-left-color: #22c55e;
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+
+        .toast.info {
+            border-left-color: #3b82f6;
+        }
+
+        .toast-icon {
+            font-size: 1.25rem;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .toast-message {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 
@@ -382,7 +466,10 @@
             <div class="section-card">
                 <div class="section-header">
                     <h2>Users</h2>
-                    <button class="btn btn-primary btn-small" onclick="refreshUsers()">Refresh</button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary btn-small" onclick="showCreateUserModal()">+ New User</button>
+                        <button class="btn btn-primary btn-small" onclick="refreshUsers()">Refresh</button>
+                    </div>
                 </div>
 
                 <div class="search-bar">
@@ -457,8 +544,54 @@
                     </div>
                 </div>
             </div>
+            <!-- Create User Modal -->
+            <div id="createUserModal" class="modal"
+                style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+                <div class="modal-content"
+                    style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; position: relative;">
+                    <h2 style="margin-top: 0;">👤 Create New User</h2>
+                    <p>Enter the details below. The user will receive an email to set their password.</p>
+
+                    <form id="createUserForm" onsubmit="handleCreateUser(event)">
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem;">First Name</label>
+                            <input type="text" name="firstName" required
+                                style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem;">Last Name</label>
+                            <input type="text" name="lastName" required
+                                style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem;">Email</label>
+                            <input type="email" name="email" required
+                                style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                        </div>
+                        <div style="margin-bottom: 1.5rem;">
+                            <label style="display: block; margin-bottom: 0.5rem;">Account Type</label>
+                            <select name="accountType" required
+                                style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                                <option value="adult">Player/Adult</option>
+                                <option value="organization">Organization</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                            <button type="button"
+                                onclick="document.getElementById('createUserModal').style.display = 'none'"
+                                class="btn btn-secondary">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Create User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
         </div>
     </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <script src="api-service.js"></script>
     <script src="org-switcher.js"></script>
@@ -481,6 +614,33 @@
             return true;
         }
 
+        // --- TOAST FUNCTIONALITY ---
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '❌';
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            // Remove after 3s
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
         // Load platform stats
         async function loadStats() {
             try {
@@ -497,7 +657,7 @@
             } catch (error) {
                 console.error('Error loading stats:', error);
                 if (error.message.includes('Forbidden')) {
-                    alert('You do not have platform admin access');
+                    showToast('Access Denied', 'You do not have platform admin access', 'error');
                     window.location.href = 'index.html';
                 }
             }
@@ -566,10 +726,10 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
-                                <th>Account Type</th>
-                                <th>Organizations</th>
-                                <th>Created</th>
+                                <th>Type</th>
+                                <th>Status</th>
                                 <th>Admin</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -578,13 +738,35 @@
                                     <td><strong>${user.first_name} ${user.last_name}</strong></td>
                                     <td>${user.email}</td>
                                     <td>${user.account_type}</td>
-                                    <td>${user.org_count}</td>
-                                    <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                                    <td>
+                                        <span class="badge ${user.is_active !== false ? 'badge-coach' : 'badge-owner'}">
+                                            ${user.is_active !== false ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </td>
                                     <td>
                                         ${user.is_platform_admin ?
-                        '<span class="badge badge-owner">Platform Admin</span>' :
+                        '<span class="badge badge-owner">Admin</span>' :
                         '-'
                     }
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            ${user.is_platform_admin ?
+                        '<span style="opacity:0.5; font-size: 0.8rem;">Protected</span>' :
+                        `
+                                                <button class="btn btn-small btn-secondary" 
+                                                    style="background: ${user.is_active !== false ? '#ef4444' : '#22c55e'}; color: white; border: none;"
+                                                    onclick="toggleUserStatus('${user.id}', ${user.is_active !== false})">
+                                                    ${user.is_active !== false ? 'Deactivate' : 'Activate'}
+                                                </button>
+                                                <button class="btn btn-small btn-secondary" 
+                                                    style="background: #7f1d1d; color: white; border: none;"
+                                                    onclick="deleteUser('${user.id}')">
+                                                    🗑️
+                                                </button>
+                                                `
+                    }
+                                        </div>
                                     </td>
                                 </tr>
                             `).join('')}
@@ -600,6 +782,76 @@
                 console.error('Error loading users:', error);
                 document.getElementById('usersTable').innerHTML =
                     '<div class="loading">Error loading users</div>';
+            }
+        }
+
+        // --- User Actions ---
+
+        function showCreateUserModal() {
+            document.getElementById('createUserModal').style.display = 'flex';
+        }
+
+        async function handleCreateUser(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const btn = form.querySelector('button[type="submit"]');
+                const originalText = btn.textContent;
+                btn.textContent = 'Creating...';
+                btn.disabled = true;
+
+                await apiService.makeRequest('/platform-admin/users', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+
+                showToast('Success', 'User created successfully! Welcome email sent.', 'success');
+                document.getElementById('createUserModal').style.display = 'none';
+                form.reset();
+                refreshUsers();
+
+            } catch (error) {
+                showToast('Error', 'Failed to create user: ' + error.message, 'error');
+            } finally {
+                const btn = form.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.textContent = 'Create User';
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        async function toggleUserStatus(userId, currentStatus) {
+            // Optional: Use a custom modal for confirmation instead of confirm()
+            if (!confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this user?`)) return;
+
+            try {
+                await apiService.makeRequest(`/platform-admin/users/${userId}/status`, {
+                    method: 'POST',
+                    body: JSON.stringify({ isActive: !currentStatus })
+                });
+
+                showToast('Status Updated', `User has been ${!currentStatus ? 'activated' : 'deactivated'}.`, 'success');
+                refreshUsers();
+            } catch (error) {
+                showToast('Error', 'Failed to update status: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('⚠️ Are you sure you want to PERMANENTLY delete this user? This cannot be undone.')) return;
+
+            try {
+                await apiService.makeRequest(`/platform-admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                showToast('User Deleted', 'The user account has been permanently removed.', 'success');
+                refreshUsers();
+            } catch (error) {
+                showToast('Error', 'Failed to delete user: ' + error.message, 'error');
             }
         }
 
