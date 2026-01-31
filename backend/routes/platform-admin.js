@@ -557,4 +557,28 @@ router.delete(
   },
 );
 
+// POST /api/platform-admin/generate-mock-data - Generate mock data for demo
+router.post(
+  "/generate-mock-data",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      console.log("🛠️ Generating mock data requested by", req.user.email);
+      const { seedDemoUsers } = require("../scripts/seed-demo-users");
+
+      // Run the seeder
+      await seedDemoUsers();
+
+      res.json({
+        success: true,
+        message: "Mock data generated successfully",
+      });
+    } catch (error) {
+      console.error("Generate mock data error:", error);
+      res.status(500).json({ error: "Failed to generate mock data" });
+    }
+  },
+);
+
 module.exports = router;

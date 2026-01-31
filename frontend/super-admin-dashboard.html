@@ -593,6 +593,23 @@
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
 
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-content"
+            style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 400px; width: 90%; position: relative; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;" id="confirmIcon">⚠️</div>
+            <h2 style="margin-top: 0;" id="confirmTitle">Are you sure?</h2>
+            <p id="confirmMessage" style="color: #94a3b8; margin-bottom: 2rem;">This action cannot be undone.</p>
+
+            <div style="display: flex; justify-content: center; gap: 1rem;">
+                <button onclick="closeConfirmModal()" class="btn btn-secondary">Cancel</button>
+                <button id="confirmBtn" class="btn btn-primary"
+                    style="background: #ef4444; border-color: #ef4444;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <script src="api-service.js"></script>
     <script src="org-switcher.js"></script>
     <script>
@@ -824,35 +841,86 @@
             }
         }
 
-        async function toggleUserStatus(userId, currentStatus) {
-            // Optional: Use a custom modal for confirmation instead of confirm()
-            if (!confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this user?`)) return;
+        let pendingAction = null;
 
-            try {
-                await apiService.makeRequest(`/platform-admin/users/${userId}/status`, {
-                    method: 'POST',
-                    body: JSON.stringify({ isActive: !currentStatus })
-                });
+        function showConfirmModal(title, message, icon, action, isDestructive = false) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            document.getElementById('confirmIcon').textContent = icon;
 
-                showToast('Status Updated', `User has been ${!currentStatus ? 'activated' : 'deactivated'}.`, 'success');
-                refreshUsers();
-            } catch (error) {
-                showToast('Error', 'Failed to update status: ' + error.message, 'error');
+            const btn = document.getElementById('confirmBtn');
+            btn.textContent = title.includes('Delete') ? 'Delete' : 'Confirm';
+            btn.style.background = isDestructive ? '#ef4444' : '#3b82f6';
+            btn.style.borderColor = isDestructive ? '#ef4444' : '#3b82f6';
+
+            pendingAction = action;
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            pendingAction = null;
+        }
+
+        // Attach event listener for generic confirm button
+        document.getElementById('confirmBtn').addEventListener('click', async () => {
+            if (pendingAction) {
+                const btn = document.getElementById('confirmBtn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Processing...';
+                btn.disabled = true;
+
+                await pendingAction();
+
+                btn.textContent = originalText;
+                btn.disabled = false;
+                closeConfirmModal();
             }
+        });
+
+        async function toggleUserStatus(userId, currentStatus) {
+            const actionType = currentStatus ? 'Deactivate' : 'Activate';
+            const icon = currentStatus ? '⏸️' : '▶️';
+
+            showConfirmModal(
+                `${actionType} User`,
+                `Are you sure you want to ${actionType.toLowerCase()} this user? They will ${currentStatus ? 'lose' : 'regain'} access to the platform immediately.`,
+                icon,
+                async () => {
+                    try {
+                        await apiService.makeRequest(`/platform-admin/users/${userId}/status`, {
+                            method: 'POST',
+                            body: JSON.stringify({ isActive: !currentStatus })
+                        });
+
+                        showToast('Status Updated', `User has been ${!currentStatus ? 'activated' : 'deactivated'}.`, 'success');
+                        refreshUsers();
+                    } catch (error) {
+                        showToast('Error', 'Failed to update status: ' + error.message, 'error');
+                    }
+                },
+                currentStatus // Destructive if deactivating
+            );
         }
 
         async function deleteUser(userId) {
-            if (!confirm('⚠️ Are you sure you want to PERMANENTLY delete this user? This cannot be undone.')) return;
-
-            try {
-                await apiService.makeRequest(`/platform-admin/users/${userId}`, {
-                    method: 'DELETE'
-                });
-                showToast('User Deleted', 'The user account has been permanently removed.', 'success');
-                refreshUsers();
-            } catch (error) {
-                showToast('Error', 'Failed to delete user: ' + error.message, 'error');
-            }
+            showConfirmModal(
+                'Delete User',
+                'Are you sure you want to PERMANENTLY delete this user? This action cannot be undone and all associated data will be removed.',
+                '🗑️',
+                async () => {
+                    try {
+                        await apiService.makeRequest(`/platform-admin/users/${userId}`, {
+                            method: 'DELETE'
+                        });
+                        showToast('User Deleted', 'The user account has been permanently removed.', 'success');
+                        refreshUsers();
+                    } catch (error) {
+                        showToast('Error', 'Failed to delete user: ' + error.message, 'error');
+                    }
+                },
+                true // Destructive
+            );
         }
 
         // Load activity
@@ -1031,7 +1099,7 @@
             try {
                 const btn = document.querySelector('#generateMockModal .btn-primary');
                 const originalText = btn.textContent;
-                btn.textContent = 'Generating... (this may take 30s)';
+                btn.textContent = 'Generating...';
                 btn.disabled = true;
 
                 await apiService.makeRequest('/platform-admin/generate-mock-data', {
@@ -1039,23 +1107,23 @@
                     body: JSON.stringify({ orgs, users, events })
                 });
 
-                alert('✅ Mock data generated successfully!');
+                showToast('Success', 'Mock data generated successfully!', 'success');
                 document.getElementById('generateMockModal').style.display = 'none';
 
-                // Refresh all views
+                // Refresh all data
+                refreshOrganizations();
+                refreshUsers();
+                refreshActivity();
                 loadStats();
-                loadOrganizations();
-                loadUsers();
-                loadActivity();
+
+                btn.textContent = originalText;
+                btn.disabled = false;
 
             } catch (e) {
-                alert('Generation failed: ' + e.message);
-            } finally {
+                showToast('Error', 'Failed to generate mock data: ' + e.message, 'error');
                 const btn = document.querySelector('#generateMockModal .btn-primary');
-                if (btn) {
-                    btn.textContent = '🚀 Generate';
-                    btn.disabled = false;
-                }
+                btn.textContent = '🚀 Generate';
+                btn.disabled = false;
             }
         }
 

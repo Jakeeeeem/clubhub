@@ -438,6 +438,16 @@ class ApiService {
           };
         }
         if (endpoint.includes("/platform-admin/activity")) {
+          if (
+            endpoint.includes("/generate-mock-data") &&
+            options.method === "POST"
+          ) {
+            return {
+              success: true,
+              message: "Mock data generated successfully (Demo Mode)",
+            };
+          }
+
           return {
             success: true,
             activity: [
