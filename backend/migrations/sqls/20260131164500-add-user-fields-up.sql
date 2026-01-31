@@ -1,0 +1,7 @@
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS phone VARCHAR(20),
+ADD COLUMN IF NOT EXISTS date_of_birth DATE,
+ADD COLUMN IF NOT EXISTS email_recovery_enabled BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS auto_payments_enabled BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS payment_reminders_enabled BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS receipt_emails_enabled BOOLEAN DEFAULT true;
