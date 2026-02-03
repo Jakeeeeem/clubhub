@@ -1,0 +1,1540 @@
+
+> clubhub-backend@1.0.0 test
+> jest --detectOpenHandles tests/feature-super-admin-sync.test.js
+
+  console.log
+    📧 Using SendPulse SMTP Service
+
+      at EmailService.log [as getEmailConfig] (services/email-service.js:25:15)
+
+  console.log
+    📍 Route: *
+
+      at log (server.js:415:13)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: /api/test-now
+
+      at log (server.js:415:13)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: /health
+
+      at log (server.js:415:13)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: /api/health
+
+      at log (server.js:415:13)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: /api/public-debug/:id
+
+      at log (server.js:415:13)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/register
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/login
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/logout
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/seed-demo-users
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/me
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/find-user
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/add-child
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/children
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/children/:childId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/organizations
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/context
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/switch-organization
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/profile
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/profile
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/gdpr/export
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/gdpr/delete
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/forgot-password
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/reset-password
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/profile
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/change-password
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/settings
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/settings
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/account
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/switch-organization
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/context
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/auth\/?(?=\/|$)/me
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/super/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/:id/members
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/:id/images
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/:id/logo
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/organizations\/?(?=\/|$)/:id/images
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invitations\/?(?=\/|$)/:orgId/invite
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invitations\/?(?=\/|$)/:token
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invitations\/?(?=\/|$)/:token/accept
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invitations\/?(?=\/|$)/:token/decline
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invitations\/?(?=\/|$)/:orgId/invitations
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/stats
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/organizations
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/users
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/organization/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/set-admin/:userId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/activity
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/users
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/users/:userId/status
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/users/:userId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/generate-mock-data
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/platform-admin\/?(?=\/|$)/onboard-club
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id/public-listings
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id/teams
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id/apply
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id/applications
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/applications/:applicationId/review
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id/stats
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id/images
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/clubs\/?(?=\/|$)/:id/images
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/family
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/filtered/:filter
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/scout
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/filtered/:filter
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id/stats
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id/payment-status
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/child
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/child/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id/history
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id/history
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/history/:historyId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id/history
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id/history
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/players\/?(?=\/|$)/:id/history/:historyId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id/performance
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id/role
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id/schedule
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/club/:clubId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id/permissions
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id/dashboard
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id/performance
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id/role
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/staff\/?(?=\/|$)/:id/schedule
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/player/:userId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/:id/players
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/:id/players/:playerId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/:id/stats
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/teams\/?(?=\/|$)/:id/availability
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id/book
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/bookings/:bookingId/cancel
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id/bookings
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/bookings/my-bookings
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id/availability
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id/availability
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id/notify
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id/checkin
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/events\/?(?=\/|$)/:id/checkins
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/config
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/stripe/connect/status
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/stripe/connect/onboard
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/stripe/connect/manage
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/health
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/plans
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/plans/import
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/plans
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/plans/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/plans/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/plan/current
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/plan/assign
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/bulk-assign-plan
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/create-intent
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/confirm-payment
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/public/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/:id/payment-link
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/book-event
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/payments\/?(?=\/|$)/cleanup
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/stripe-payouts\/?(?=\/|$)/configure-payout/:accountId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/stripe-payouts\/?(?=\/|$)/payout-schedule/:accountId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/stripe-payouts\/?(?=\/|$)/configure-all-payouts
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/stripe-payouts\/?(?=\/|$)/manual-payout/:accountId
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/dashboard\/?(?=\/|$)/admin
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/dashboard\/?(?=\/|$)/player
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invites\/?(?=\/|$)/generate
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invites\/?(?=\/|$)/details/:token
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invites\/?(?=\/|$)/accept/:token
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invites\/?(?=\/|$)/decline/:token
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/invites\/?(?=\/|$)/sent
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/products\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/products\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/products\/?(?=\/|$)/purchase
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/products\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/products\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/campaigns\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/campaigns\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/campaigns\/?(?=\/|$)/:id/send
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/listings\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/listings\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/listings\/?(?=\/|$)/:id/applications
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/listings\/?(?=\/|$)/applications/:id/status
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/listings\/?(?=\/|$)/applications/:id/invite
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/listings\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/notifications\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/notifications\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/notifications\/?(?=\/|$)/:id/read
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/notifications\/?(?=\/|$)/read-all
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/debug\/?(?=\/|$)/check-org/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/talent-id\/?(?=\/|$)/register
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/talent-id\/?(?=\/|$)/events/:id/dashboard
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/talent-id\/?(?=\/|$)/events/:id/schedule
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/talent-id\/?(?=\/|$)/bibs/batch
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/talent-id\/?(?=\/|$)/events/:id/groups
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/talent-id\/?(?=\/|$)/events/:id/auto-assign
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/talent-id\/?(?=\/|$)/registrations/:id/checkin
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/venues\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/venues\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/venues\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/venues\/?(?=\/|$)/:id/availability
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/venues\/?(?=\/|$)/:id/documents
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/venues\/?(?=\/|$)/:id/book
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/venues\/?(?=\/|$)/bookings/my
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/venues\/?(?=\/|$)/bookings/:id/status
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/leagues\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/leagues\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/leagues\/?(?=\/|$)/:id
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/leagues\/?(?=\/|$)/:id/standings
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/leagues\/?(?=\/|$)/:id/teams
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/leagues\/?(?=\/|$)/:id/fixtures/generate
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/leagues\/?(?=\/|$)/:id/fixtures
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/leagues\/?(?=\/|$)/fixtures/:id/score
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/leagues\/?(?=\/|$)/fixtures/:id/assign-referee
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/polls\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/polls\/?(?=\/|$)/
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/polls\/?(?=\/|$)/:id/vote
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/email\/?(?=\/|$)/send
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    📍 Route: ^\/api\/email\/?(?=\/|$)/send-invite
+
+      at log (server.js:419:17)
+          at Array.forEach (<anonymous>)
+          at Array.forEach (<anonymous>)
+
+  console.log
+    2026-02-03T15:35:15.047Z - POST /api/platform-admin/onboard-club - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.log
+    ✅ Token verified for user: super@test.com
+
+      at log (middleware/auth.js:55:13)
+
+  console.log
+    2026-02-03T15:35:19.976Z - POST /api/payments/plans/import - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.log
+    ✅ Token verified for user: owner@test.com
+
+      at log (middleware/auth.js:55:13)
+
+  console.log
+    📥 Starting Plan Import from Stripe...
+
+      at log (routes/payments.js:284:15)
+
+  console.log
+    Found 1 products and 1 prices in Stripe.
+
+      at log (routes/payments.js:318:15)
+
+FAIL tests/feature-super-admin-sync.test.js (6.224 s)
+  Super Admin & Sync Features (Unit Tests)
+    × 1. POST /api/platform-admin/onboard-club - Success (5014 ms)
+    √ 2. POST /api/payments/plans/import - Success (68 ms)
+
+  ● Super Admin & Sync Features (Unit Tests) › 1. POST /api/platform-admin/onboard-club - Success
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+    [0m [90m 131 |[39m   })[33m;[39m
+     [90m 132 |[39m
+    [31m[1m>[22m[39m[90m 133 |[39m   test([32m"1. POST /api/platform-admin/onboard-club - Success"[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m     |[39m   [31m[1m^[22m[39m
+     [90m 134 |[39m     [36mconst[39m res [33m=[39m [36mawait[39m request(app)
+     [90m 135 |[39m       [33m.[39mpost([32m"/api/platform-admin/onboard-club"[39m)
+     [90m 136 |[39m       [33m.[39m[36mset[39m([32m"Authorization"[39m[33m,[39m [32m`Bearer ${superAdminToken}`[39m)[0m
+
+      at test (tests/feature-super-admin-sync.test.js:133:3)
+      at Object.describe (tests/feature-super-admin-sync.test.js:100:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 passed, 2 total
+Snapshots:   0 total
+Time:        6.313 s, estimated 8 s
+Ran all test suites matching tests/feature-super-admin-sync.test.js.
+
+Jest has detected the following 1 open handle potentially keeping Jest from exiting:
+
+  ●  TCPSERVERWRAP
+
+    [0m [90m 133 |[39m   test([32m"1. POST /api/platform-admin/onboard-club - Success"[39m[33m,[39m [36masync[39m () [33m=>[39m {
+     [90m 134 |[39m     [36mconst[39m res [33m=[39m [36mawait[39m request(app)
+    [31m[1m>[22m[39m[90m 135 |[39m       [33m.[39mpost([32m"/api/platform-admin/onboard-club"[39m)
+     [90m     |[39m        [31m[1m^[22m[39m
+     [90m 136 |[39m       [33m.[39m[36mset[39m([32m"Authorization"[39m[33m,[39m [32m`Bearer ${superAdminToken}`[39m)
+     [90m 137 |[39m       [33m.[39msend({
+     [90m 138 |[39m         firstName[33m:[39m [32m"Club"[39m[33m,[39m[0m
+
+      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
+      at new Test (node_modules/supertest/lib/test.js:49:14)
+      at Object.obj.<computed> [as post] (node_modules/supertest/index.js:39:18)
+      at Object.post (tests/feature-super-admin-sync.test.js:135:8)
+
+(node:29236) [JEST-01] DeprecationWarning: 'matchers' property was accessed on [Object] after it was soft deleted
+  Jest deletes objects that were set on the global scope between test files to reduce memory leaks.
+  Currently it only "soft" deletes them and emits this warning if those objects were accessed after their deletion.
+  In future versions of Jest, this behavior will change to "on", which will likely fail tests.
+  You can change the behavior in your test configuration now to reduce memory usage.
+(Use `node --trace-deprecation ...` to show where the warning was created)

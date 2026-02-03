@@ -607,6 +607,7 @@ router.post(
       // 1. Create User (or get if exists)
       // Check if user exists
       let userId;
+      let stripeAccountId = null;
       const existingUser = await query(
         "SELECT id FROM users WHERE email = $1",
         [email],
@@ -617,6 +618,21 @@ router.post(
         // For now, let's attach to the existing user but warn if they are already an owner elsewhere?
         userId = existingUser.rows[0].id;
         console.log(`Onboarding: Found existing user ${userId} for ${email}`);
+
+        // Fetch Stripe Account ID if they have one
+        const userStripeRes = await query(
+          "SELECT stripe_account_id FROM users WHERE id = $1",
+          [userId],
+        );
+        if (
+          userStripeRes.rows.length > 0 &&
+          userStripeRes.rows[0].stripe_account_id
+        ) {
+          stripeAccountId = userStripeRes.rows[0].stripe_account_id;
+          console.log(
+            `Onboarding: Found existing Stripe Account ${stripeAccountId}`,
+          );
+        }
       } else {
         // Create New User
         const tempPassword = crypto.randomBytes(8).toString("hex");
@@ -677,11 +693,11 @@ router.post(
       const newOrg = await query(
         `
                 INSERT INTO organizations (
-                    name, slug, sport, location, owner_id, status, created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, 'active', NOW(), NOW())
+                    name, slug, sport, location, owner_id, status, stripe_account_id, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, 'active', $6, NOW(), NOW())
                 RETURNING id, name
             `,
-        [clubName, slug, sport, location, userId],
+        [clubName, slug, sport, location, userId, stripeAccountId || null],
       );
 
       const orgId = newOrg.rows[0].id;

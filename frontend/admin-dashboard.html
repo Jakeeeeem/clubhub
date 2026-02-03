@@ -2608,6 +2608,13 @@
                         await apiService.makeRequest(`/stripe-payouts/configure-payout/${status.stripeAccountId}`, {
                             method: 'POST'
                         });
+
+                        // If we are connected but have no plans, the backend might have just auto-synced them.
+                        // Reload plans to ensure they show up immediately.
+                        if (!AppState.paymentPlans || AppState.paymentPlans.length === 0) {
+                            console.log('🔄 Checking for auto-synced plans...');
+                            await loadPaymentPlans();
+                        }
                     } catch (e) {
                         console.log('Schedule sync skipped');
                     }
