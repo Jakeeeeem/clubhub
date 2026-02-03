@@ -6,7 +6,22 @@ ALTER TABLE organizations ADD COLUMN IF NOT EXISTS types TEXT[];
 -- This constraint was a relic of the one-user-one-club system
 DROP INDEX IF EXISTS idx_clubs_owner_id;
 
--- 3. Update all foreign keys to reference organizations instead of clubs
+-- 3. Sync any missing data from clubs to organizations
+INSERT INTO organizations (id, name, description, location, sport, owner_id, created_at, updated_at, slug, is_active, stripe_account_id)
+SELECT 
+    id, name, description, location, sport, owner_id, created_at, updated_at,
+    LOWER(REGEXP_REPLACE(REGEXP_REPLACE(name, '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g')),
+    true, stripe_account_id
+FROM clubs
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    location = EXCLUDED.location,
+    sport = EXCLUDED.sport,
+    stripe_account_id = COALESCE(organizations.stripe_account_id, EXCLUDED.stripe_account_id),
+    updated_at = EXCLUDED.updated_at;
+
+-- 4. Update all foreign keys to reference organizations instead of clubs
 -- Players
 ALTER TABLE players DROP CONSTRAINT IF EXISTS players_club_id_fkey;
 ALTER TABLE players ADD CONSTRAINT players_club_id_fkey FOREIGN KEY (club_id) REFERENCES organizations(id) ON DELETE CASCADE;
@@ -26,17 +41,6 @@ ALTER TABLE staff ADD CONSTRAINT staff_club_id_fkey FOREIGN KEY (club_id) REFERE
 -- Club Applications
 ALTER TABLE club_applications DROP CONSTRAINT IF EXISTS club_applications_club_id_fkey;
 ALTER TABLE club_applications ADD CONSTRAINT club_applications_club_id_fkey FOREIGN KEY (club_id) REFERENCES organizations(id) ON DELETE CASCADE;
-
--- 4. Sync any missing data from clubs to organizations
-INSERT INTO organizations (id, name, description, location, sport, owner_id, created_at, updated_at)
-SELECT id, name, description, location, sport, owner_id, created_at, updated_at
-FROM clubs
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    location = EXCLUDED.location,
-    sport = EXCLUDED.sport,
-    updated_at = EXCLUDED.updated_at;
 
 -- 5. Create a trigger to keep the legacy clubs table in sync for any remaining legacy queries
 CREATE OR REPLACE FUNCTION sync_org_to_club() RETURNS TRIGGER AS $$
