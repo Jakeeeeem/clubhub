@@ -581,4 +581,143 @@ router.post(
   },
 );
 
+// POST /api/platform-admin/onboard-club - Full onboard: Create User + Org + Link
+router.post(
+  "/onboard-club",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      const {
+        email,
+        firstName,
+        lastName, // User details
+        clubName,
+        sport,
+        location, // Club details
+      } = req.body;
+
+      // Basic validation
+      if (!email || !firstName || !lastName || !clubName) {
+        return res
+          .status(400)
+          .json({ error: "Email, Name, and Club Name are required" });
+      }
+
+      // 1. Create User (or get if exists)
+      // Check if user exists
+      let userId;
+      const existingUser = await query(
+        "SELECT id FROM users WHERE email = $1",
+        [email],
+      );
+
+      if (existingUser.rows.length > 0) {
+        // Determine if we should fail or attach?
+        // For now, let's attach to the existing user but warn if they are already an owner elsewhere?
+        userId = existingUser.rows[0].id;
+        console.log(`Onboarding: Found existing user ${userId} for ${email}`);
+      } else {
+        // Create New User
+        const tempPassword = crypto.randomBytes(8).toString("hex");
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        const resetExpires = new Date(Date.now() + 24 * 3600000); // 24 hours
+
+        const newUser = await query(
+          `
+                    INSERT INTO users (
+                        email, password_hash, first_name, last_name, account_type, 
+                        reset_token, reset_expires, created_at, updated_at, is_active
+                    )
+                    VALUES ($1, $2, $3, $4, 'organization', $5, $6, NOW(), NOW(), true)
+                    RETURNING id
+                `,
+          [
+            email,
+            hashedPassword,
+            firstName,
+            lastName,
+            resetToken,
+            resetExpires,
+          ],
+        );
+        userId = newUser.rows[0].id;
+
+        // Send Welcome Email
+        const setPasswordLink = `${
+          process.env.FRONTEND_URL || "http://localhost:8080"
+        }/forgot-password.html?token=${resetToken}`;
+
+        try {
+          // Using the existing email service function
+          await emailService.sendAdminWelcomeEmail({
+            email,
+            firstName,
+            accountType: "organization",
+            setPasswordLink,
+            clubName: clubName, // Pass club name for context
+          });
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+        }
+      }
+
+      // 2. Create Organization
+      // Generate slug
+      const slug =
+        clubName
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .substring(0, 255) +
+        "-" +
+        Date.now(); // Ensure uniqueness
+
+      const newOrg = await query(
+        `
+                INSERT INTO organizations (
+                    name, slug, sport, location, owner_id, status, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, 'active', NOW(), NOW())
+                RETURNING id, name
+            `,
+        [clubName, slug, sport, location, userId],
+      );
+
+      const orgId = newOrg.rows[0].id;
+
+      // 3. Link User to Organization (as Owner)
+      await query(
+        `
+                INSERT INTO organization_members (
+                    organization_id, user_id, role, status, joined_at
+                ) VALUES ($1, $2, 'owner', 'active', NOW())
+                ON CONFLICT (organization_id, user_id) DO UPDATE SET role = 'owner', status = 'active'
+            `,
+        [orgId, userId],
+      );
+
+      // 4. Set User Preference
+      await query(
+        `
+                INSERT INTO user_preferences (user_id, current_organization_id)
+                VALUES ($1, $2)
+                ON CONFLICT (user_id) DO UPDATE SET current_organization_id = $2
+            `,
+        [userId, orgId],
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Club onboarded successfully",
+        organization: newOrg.rows[0],
+        user_id: userId,
+      });
+    } catch (error) {
+      console.error("Onboard club error:", error);
+      res.status(500).json({ error: "Failed to onboard club" });
+    }
+  },
+);
+
 module.exports = router;

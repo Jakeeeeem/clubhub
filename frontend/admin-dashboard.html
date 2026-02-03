@@ -534,6 +534,10 @@
                                     Stripe</button>
                                 <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')">➕ Create
                                     Payment Plan</button>
+                                <button class="btn btn-secondary" onclick="syncStripePlans()" id="btnSyncStripe"
+                                    style="display: flex; align-items: center; gap: 0.5rem;">
+                                    🔄 Sync Plans
+                                </button>
                             </div>
                         </div>
 
@@ -9019,6 +9023,37 @@
                     });
                 }
             });
+            async function syncStripePlans() {
+                try {
+                    const btn = document.getElementById('btnSyncStripe');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '🔄 Syncing...';
+                    btn.disabled = true;
+
+                    const response = await apiService.makeRequest('/payments/plans/import', { method: 'POST' });
+
+                    btn.innerHTML = '✅ Done';
+                    showToast('Sync Complete', response.message, 'success');
+
+                    // Reload plans
+                    loadPaymentPlans();
+
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('Sync failed:', error);
+                    showToast('Sync Failed', error.message || 'Could not sync plans', 'error');
+                    const btn = document.getElementById('btnSyncStripe');
+                    btn.innerHTML = '❌ Error';
+                    setTimeout(() => {
+                        btn.innerHTML = '🔄 Sync Plans';
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            }
         </script>
 </body>
 

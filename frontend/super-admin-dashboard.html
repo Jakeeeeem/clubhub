@@ -467,6 +467,8 @@
                 <div class="section-header">
                     <h2>Users</h2>
                     <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary btn-small" onclick="showOnboardClubModal()">🚀 Fast Onboard
+                            Club</button>
                         <button class="btn btn-primary btn-small" onclick="showCreateUserModal()">+ New User</button>
                         <button class="btn btn-primary btn-small" onclick="refreshUsers()">Refresh</button>
                     </div>
@@ -582,6 +584,83 @@
                                 onclick="document.getElementById('createUserModal').style.display = 'none'"
                                 class="btn btn-secondary">Cancel</button>
                             <button type="submit" class="btn btn-primary">Create User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Onboard Club Modal -->
+            <div id="onboardClubModal" class="modal"
+                style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; overflow-y: auto;">
+                <div class="modal-content"
+                    style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; position: relative; margin: 2rem auto;">
+                    <h2 style="margin-top: 0;">🚀 Fast Onboard Club</h2>
+                    <p>Create a User account AND their Organization in one step.</p>
+
+                    <form id="onboardClubForm" onsubmit="handleOnboardClub(event)">
+                        <!-- User Details -->
+                        <div
+                            style="margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+                            <h3 style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem;">👤 Club Owner Details</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">First
+                                        Name</label>
+                                    <input type="text" name="firstName" required placeholder="John"
+                                        style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Last
+                                        Name</label>
+                                    <input type="text" name="lastName" required placeholder="Doe"
+                                        style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Email
+                                    Address</label>
+                                <input type="email" name="email" required placeholder="john@example.com"
+                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                            </div>
+                        </div>
+
+                        <!-- Club Details -->
+                        <div style="margin-bottom: 1.5rem;">
+                            <h3 style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem;">🏢 Club Information</h3>
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Club
+                                    Name</label>
+                                <input type="text" name="clubName" required placeholder="Elite FC"
+                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <label
+                                        style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Sport</label>
+                                    <select name="sport" required
+                                        style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                                        <option value="Football">Football</option>
+                                        <option value="Basketball">Basketball</option>
+                                        <option value="Rugby">Rugby</option>
+                                        <option value="Cricket">Cricket</option>
+                                        <option value="Tennis">Tennis</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Location</label>
+                                    <input type="text" name="location" required placeholder="London, UK"
+                                        style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                            <button type="button"
+                                onclick="document.getElementById('onboardClubModal').style.display = 'none'"
+                                class="btn btn-secondary">Cancel</button>
+                            <button type="submit" class="btn btn-primary">🚀 Create Club & User</button>
                         </div>
                     </form>
                 </div>
@@ -1175,6 +1254,44 @@ Location: ${org.location || 'N/A'}
                 });
             }
         });
+
+        async function handleOnboardClub(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const btn = form.querySelector('button[type="submit"]');
+                const originalText = btn.textContent;
+                btn.textContent = 'Processing...';
+                btn.disabled = true;
+
+                await apiService.makeRequest('/platform-admin/onboard-club', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+
+                showToast('Success', 'Club and Owner created successfully! Welcome email sent.', 'success');
+                document.getElementById('onboardClubModal').style.display = 'none';
+                form.reset();
+                refreshOrganizations();
+                refreshUsers();
+
+            } catch (error) {
+                showToast('Error', 'Failed to onboard club: ' + error.message, 'error');
+            } finally {
+                const btn = form.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.textContent = '🚀 Create Club & User';
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function showOnboardClubModal() {
+            document.getElementById('onboardClubModal').style.display = 'flex';
+        }
 
         async function logout() {
             localStorage.clear();

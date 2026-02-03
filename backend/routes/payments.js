@@ -225,6 +225,7 @@ router.get("/health", (req, res) => {
   });
 });
 
+// GET /api/payments/plans - Get all plans
 router.get("/plans", async (req, res) => {
   try {
     // Ensure plans table exists with club_id
@@ -237,6 +238,8 @@ router.get("/plans", async (req, res) => {
         interval VARCHAR(50) DEFAULT 'month',
         active BOOLEAN DEFAULT true,
         description TEXT,
+        stripe_product_id VARCHAR(255),
+        stripe_price_id VARCHAR(255),
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
@@ -251,13 +254,16 @@ router.get("/plans", async (req, res) => {
     if (clubId) {
       queryText += " AND club_id = $1";
       params.push(clubId);
+    } else if (req.user && req.user.currentOrganizationId) {
+      // Auto-scope to current org if logged in and no clubId param
+      queryText += " AND club_id = $1";
+      params.push(req.user.currentOrganizationId);
     }
 
     queryText += " ORDER BY price ASC";
 
     const result = await query(queryText, params);
 
-    console.log("Plans loaded:", result.rows.length);
     res.json(result.rows);
   } catch (err) {
     console.error("Get plans error:", err);
@@ -267,6 +273,127 @@ router.get("/plans", async (req, res) => {
     });
   }
 });
+
+// POST /api/payments/plans/import - Import plans from Stripe
+router.post(
+  "/plans/import",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      console.log("📥 Starting Plan Import from Stripe...");
+      // 1. Get the organization's Stripe Account ID
+      const orgId = req.user.currentOrganizationId;
+
+      const orgResult = await query(
+        "SELECT stripe_account_id, id FROM organizations WHERE id = $1",
+        [orgId],
+      );
+
+      if (orgResult.rows.length === 0) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      const stripeAccountId = orgResult.rows[0].stripe_account_id;
+      const organizationId = orgResult.rows[0].id; // This is the UUID from organizations table
+
+      if (!stripeAccountId) {
+        return res.status(400).json({
+          error: "Stripe not connected",
+          message: "Please connect your Stripe account first to import plans.",
+        });
+      }
+
+      // 2. Fetch Products and Prices from Stripe Connected Account
+      const products = await stripe.products.list(
+        { active: true, limit: 100 },
+        { stripeAccount: stripeAccountId },
+      );
+
+      const prices = await stripe.prices.list(
+        { active: true, limit: 100 },
+        { stripeAccount: stripeAccountId },
+      );
+
+      console.log(
+        `Found ${products.data.length} products and ${prices.data.length} prices in Stripe.`,
+      );
+
+      let importedCount = 0;
+      let updatedCount = 0;
+
+      // 3. Loop and Upsert into Local Database
+      for (const product of products.data) {
+        // Find price for this product
+        const price = prices.data.find((p) => p.product === product.id);
+
+        // Skip if no price or not recurring (optional check, depends if you want one-time payments as "plans")
+        if (!price) {
+          console.log(`Skipping product ${product.name} - no price found.`);
+          continue;
+        }
+
+        const interval = price.recurring
+          ? price.recurring.interval
+          : "one_time";
+        const amount = price.unit_amount / 100; // Convert cents to currency units (e.g. GBP)
+
+        // Check if plan exists by stripe_product_id
+        const existingPlan = await query(
+          "SELECT id FROM plans WHERE stripe_product_id = $1 OR stripe_price_id = $2",
+          [product.id, price.id],
+        );
+
+        if (existingPlan.rows.length > 0) {
+          // Update existing
+          await query(
+            `
+                    UPDATE plans 
+                    SET name = $1, price = $2, interval = $3, active = true, updated_at = NOW()
+                    WHERE id = $4
+                `,
+            [product.name, amount, interval, existingPlan.rows[0].id],
+          );
+          updatedCount++;
+        } else {
+          // Insert new
+          await query(
+            `
+                    INSERT INTO plans (
+                        club_id, name, price, interval, description, 
+                        stripe_product_id, stripe_price_id, active, created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW(), NOW())
+                `,
+            [
+              organizationId, // Use the correct foreign key for your schema. NOTE: Schema uses 'club_id' which references 'clubs(id)'.
+              // Make sure 'organizations' and 'clubs' are compatible or mapped correctly.
+              // If 'plans.club_id' refers to 'organizations.id', this is correct.
+              product.name,
+              amount,
+              interval,
+              product.description || "",
+              product.id,
+              price.id,
+            ],
+          );
+          importedCount++;
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Sync complete. Imported ${importedCount} new plans, updated ${updatedCount} existing plans.`,
+        stats: { imported: importedCount, updated: updatedCount },
+      });
+    } catch (error) {
+      console.error("Import plans error:", error);
+      res.status(500).json({
+        error: "Failed to import plans",
+        message: error.message,
+      });
+    }
+  },
+);
 
 // POST /api/payments/plans - Create payment plan
 router.post(
