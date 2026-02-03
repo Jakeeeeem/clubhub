@@ -4,16 +4,16 @@
 
   console.log
     🔌 DB CONFIG DEBUG: {
-      env_db_host: 'localhost',
+      env_db_host: 'db',
       env_pghost: undefined,
       env_database_url: undefined,
-      config_host: 'localhost'
+      config_host: 'db'
     }
 
       at Object.log (config/database.js:4:9)
 
   console.log
-    🔗 Connection String (masked): postgresql://clubhub_dev_db_user:****@localhost:5432/clubhub_dev_db
+    🔗 Connection String (masked): postgresql://clubhub_dev_db_user:****@db:5432/clubhub_dev_db
 
       at Object.log (config/database.js:14:9)
 
@@ -1469,14 +1469,14 @@
           at Array.forEach (<anonymous>)
 
   console.log
-    2026-02-03T16:47:03.863Z - POST /api/auth/register - ::ffff:127.0.0.1
+    2026-02-03T16:46:06.603Z - POST /api/auth/register - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
   console.error
     ❌ Query failed: {
       text: 'SELECT * FROM users WHERE email = $1...',
-      error: 'password authentication failed for user "clubhub_dev_db_user"'
+      error: 'getaddrinfo ENOTFOUND db'
     }
 
     [0m [90m 81 |[39m     [36mreturn[39m res[33m;[39m
@@ -1491,28 +1491,15 @@
       at routes/auth.js:166:26
 
   console.error
-    ❌ Registration error: error: password authentication failed for user "clubhub_dev_db_user"
+    ❌ Registration error: Error: getaddrinfo ENOTFOUND db
         at C:\Users\Dell\Documents\elitepro\clubhub\backend\node_modules\pg-pool\index.js:45:11
         at processTicksAndRejections (node:internal/process/task_queues:95:5)
         at query (C:\Users\Dell\Documents\elitepro\clubhub\backend\config\database.js:74:17)
         at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\auth.js:166:26 {
-      length: 115,
-      severity: 'FATAL',
-      code: '28P01',
-      detail: undefined,
-      hint: undefined,
-      position: undefined,
-      internalPosition: undefined,
-      internalQuery: undefined,
-      where: undefined,
-      schema: undefined,
-      table: undefined,
-      column: undefined,
-      dataType: undefined,
-      constraint: undefined,
-      file: 'auth.c',
-      line: '320',
-      routine: 'auth_failed'
+      errno: -3008,
+      code: 'ENOTFOUND',
+      syscall: 'getaddrinfo',
+      hostname: 'db'
     }
 
     [0m [90m 319 |[39m     })[33m;[39m
@@ -1527,8 +1514,8 @@
 
   console.error
     Error details: {
-      message: 'password authentication failed for user "clubhub_dev_db_user"',
-      code: '28P01',
+      message: 'getaddrinfo ENOTFOUND db',
+      code: 'ENOTFOUND',
       detail: undefined,
       table: undefined,
       column: undefined
@@ -1545,14 +1532,14 @@
       at error (routes/auth.js:322:13)
 
   console.log
-    2026-02-03T16:47:04.160Z - POST /api/auth/register - ::ffff:127.0.0.1
+    2026-02-03T16:46:09.377Z - POST /api/auth/register - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
   console.error
     ❌ Query failed: {
       text: 'SELECT * FROM users WHERE email = $1...',
-      error: 'password authentication failed for user "clubhub_dev_db_user"'
+      error: 'getaddrinfo ENOTFOUND db'
     }
 
     [0m [90m 81 |[39m     [36mreturn[39m res[33m;[39m
@@ -1567,28 +1554,15 @@
       at routes/auth.js:166:26
 
   console.error
-    ❌ Registration error: error: password authentication failed for user "clubhub_dev_db_user"
+    ❌ Registration error: Error: getaddrinfo ENOTFOUND db
         at C:\Users\Dell\Documents\elitepro\clubhub\backend\node_modules\pg-pool\index.js:45:11
         at processTicksAndRejections (node:internal/process/task_queues:95:5)
         at query (C:\Users\Dell\Documents\elitepro\clubhub\backend\config\database.js:74:17)
         at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\auth.js:166:26 {
-      length: 115,
-      severity: 'FATAL',
-      code: '28P01',
-      detail: undefined,
-      hint: undefined,
-      position: undefined,
-      internalPosition: undefined,
-      internalQuery: undefined,
-      where: undefined,
-      schema: undefined,
-      table: undefined,
-      column: undefined,
-      dataType: undefined,
-      constraint: undefined,
-      file: 'auth.c',
-      line: '320',
-      routine: 'auth_failed'
+      errno: -3008,
+      code: 'ENOTFOUND',
+      syscall: 'getaddrinfo',
+      hostname: 'db'
     }
 
     [0m [90m 319 |[39m     })[33m;[39m
@@ -1603,8 +1577,8 @@
 
   console.error
     Error details: {
-      message: 'password authentication failed for user "clubhub_dev_db_user"',
-      code: '28P01',
+      message: 'getaddrinfo ENOTFOUND db',
+      code: 'ENOTFOUND',
       detail: undefined,
       table: undefined,
       column: undefined
@@ -1621,19 +1595,19 @@
       at error (routes/auth.js:322:13)
 
   console.log
-    2026-02-03T16:47:04.219Z - POST /api/auth/login - ::ffff:127.0.0.1
+    2026-02-03T16:46:12.102Z - POST /api/auth/login - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
   console.log
-    🔑 Login Attempt: parent_1770137223764@test.com
+    🔑 Login Attempt: parent_1770137166553@test.com
 
       at log (routes/auth.js:352:15)
 
   console.error
     ❌ Query failed: {
       text: 'SELECT * FROM users WHERE email = $1...',
-      error: 'password authentication failed for user "clubhub_dev_db_user"'
+      error: 'getaddrinfo ENOTFOUND db'
     }
 
     [0m [90m 81 |[39m     [36mreturn[39m res[33m;[39m
@@ -1648,28 +1622,15 @@
       at routes/auth.js:647:26
 
   console.error
-    Login error: error: password authentication failed for user "clubhub_dev_db_user"
+    Login error: Error: getaddrinfo ENOTFOUND db
         at C:\Users\Dell\Documents\elitepro\clubhub\backend\node_modules\pg-pool\index.js:45:11
         at processTicksAndRejections (node:internal/process/task_queues:95:5)
         at query (C:\Users\Dell\Documents\elitepro\clubhub\backend\config\database.js:74:17)
         at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\auth.js:647:26 {
-      length: 115,
-      severity: 'FATAL',
-      code: '28P01',
-      detail: undefined,
-      hint: undefined,
-      position: undefined,
-      internalPosition: undefined,
-      internalQuery: undefined,
-      where: undefined,
-      schema: undefined,
-      table: undefined,
-      column: undefined,
-      dataType: undefined,
-      constraint: undefined,
-      file: 'auth.c',
-      line: '320',
-      routine: 'auth_failed'
+      errno: -3008,
+      code: 'ENOTFOUND',
+      syscall: 'getaddrinfo',
+      hostname: 'db'
     }
 
     [0m [90m 683 |[39m       })[33m;[39m
@@ -1683,14 +1644,14 @@
       at error (routes/auth.js:685:15)
 
   console.log
-    2026-02-03T16:47:04.269Z - POST /api/auth/register - ::ffff:127.0.0.1
+    2026-02-03T16:46:14.843Z - POST /api/auth/register - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
   console.error
     ❌ Query failed: {
       text: 'SELECT * FROM users WHERE email = $1...',
-      error: 'password authentication failed for user "clubhub_dev_db_user"'
+      error: 'getaddrinfo ENOTFOUND db'
     }
 
     [0m [90m 81 |[39m     [36mreturn[39m res[33m;[39m
@@ -1705,28 +1666,15 @@
       at routes/auth.js:166:26
 
   console.error
-    ❌ Registration error: error: password authentication failed for user "clubhub_dev_db_user"
+    ❌ Registration error: Error: getaddrinfo ENOTFOUND db
         at C:\Users\Dell\Documents\elitepro\clubhub\backend\node_modules\pg-pool\index.js:45:11
         at processTicksAndRejections (node:internal/process/task_queues:95:5)
         at query (C:\Users\Dell\Documents\elitepro\clubhub\backend\config\database.js:74:17)
         at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\auth.js:166:26 {
-      length: 115,
-      severity: 'FATAL',
-      code: '28P01',
-      detail: undefined,
-      hint: undefined,
-      position: undefined,
-      internalPosition: undefined,
-      internalQuery: undefined,
-      where: undefined,
-      schema: undefined,
-      table: undefined,
-      column: undefined,
-      dataType: undefined,
-      constraint: undefined,
-      file: 'auth.c',
-      line: '320',
-      routine: 'auth_failed'
+      errno: -3008,
+      code: 'ENOTFOUND',
+      syscall: 'getaddrinfo',
+      hostname: 'db'
     }
 
     [0m [90m 319 |[39m     })[33m;[39m
@@ -1741,8 +1689,8 @@
 
   console.error
     Error details: {
-      message: 'password authentication failed for user "clubhub_dev_db_user"',
-      code: '28P01',
+      message: 'getaddrinfo ENOTFOUND db',
+      code: 'ENOTFOUND',
       detail: undefined,
       table: undefined,
       column: undefined
@@ -1761,7 +1709,7 @@
   console.error
     ❌ Query failed: {
       text: 'DELETE FROM users WHERE email IN ($1, $2)...',
-      error: 'password authentication failed for user "clubhub_dev_db_user"'
+      error: 'getaddrinfo ENOTFOUND db'
     }
 
     [0m [90m 81 |[39m     [36mreturn[39m res[33m;[39m
@@ -1775,7 +1723,7 @@
       at error (config/database.js:83:13)
       at Object.<anonymous> (tests/feature-public-signup.test.js:24:5)
 
-FAIL tests/feature-public-signup.test.js
+FAIL tests/feature-public-signup.test.js (14.628 s)
   ● Public Registration Flow › 1. Parent Registration Success
 
     expect(received).toBe(expected) // Object.is equality
@@ -1847,7 +1795,7 @@ FAIL tests/feature-public-signup.test.js
 
   ● Test suite failed to run
 
-    error: password authentication failed for user "clubhub_dev_db_user"
+    getaddrinfo ENOTFOUND db
 
     [0m [90m 72 |[39m   [36mconst[39m start [33m=[39m [33mDate[39m[33m.[39mnow()[33m;[39m
      [90m 73 |[39m   [36mtry[39m {
@@ -1864,5 +1812,5 @@ FAIL tests/feature-public-signup.test.js
 Test Suites: 1 failed, 1 total
 Tests:       4 failed, 4 total
 Snapshots:   0 total
-Time:        1.73 s, estimated 15 s
+Time:        14.713 s, estimated 16 s
 Ran all test suites matching tests/feature-public-signup.test.js.

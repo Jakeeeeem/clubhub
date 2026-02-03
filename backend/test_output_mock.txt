@@ -1,11 +1,6 @@
 
 > clubhub-backend@1.0.0 test
-> jest --detectOpenHandles tests/feature-super-admin-sync.test.js
-
-  console.log
-    📧 Using SendPulse SMTP Service
-
-      at EmailService.log [as getEmailConfig] (services/email-service.js:25:15)
+> jest --detectOpenHandles tests/feature-public-signup.test.js
 
   console.log
     📍 Route: *
@@ -1459,95 +1454,108 @@
           at Array.forEach (<anonymous>)
 
   console.log
-    2026-02-03T15:30:20.614Z - POST /api/platform-admin/onboard-club - ::ffff:127.0.0.1
+    2026-02-03T16:51:22.465Z - POST /api/auth/register - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
   console.log
-    ✅ Token verified for user: super@test.com
+    ✅ Welcome email sent to: parent@test.com
 
-      at log (middleware/auth.js:55:13)
+      at log (routes/auth.js:102:13)
 
   console.log
-    2026-02-03T15:30:25.598Z - POST /api/payments/plans/import - ::ffff:127.0.0.1
+    2026-02-03T16:51:22.506Z - POST /api/auth/register - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
   console.log
-    ✅ Token verified for user: owner@test.com
+    ✅ Welcome email sent to: org@test.com
 
-      at log (middleware/auth.js:55:13)
-
-  console.log
-    📥 Starting Plan Import from Stripe...
-
-      at log (routes/payments.js:284:15)
+      at log (routes/auth.js:102:13)
 
   console.log
-    Found 1 products and 1 prices in Stripe.
+    2026-02-03T16:51:22.533Z - POST /api/auth/login - ::ffff:127.0.0.1
 
-      at log (routes/payments.js:318:15)
+      at log (server.js:186:11)
 
-FAIL tests/feature-super-admin-sync.test.js (6.008 s)
-  Super Admin & Sync Features (Unit Tests)
-    × 1. POST /api/platform-admin/onboard-club - Success (5009 ms)
-    √ 2. POST /api/payments/plans/import - Success (42 ms)
+  console.log
+    🔑 Login Attempt: parent@test.com
 
-  ● Super Admin & Sync Features (Unit Tests) › 1. POST /api/platform-admin/onboard-club - Success
+      at log (routes/auth.js:352:15)
 
-    thrown: "Exceeded timeout of 5000 ms for a test.
-    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+  console.log
+    2026-02-03T16:51:22.564Z - POST /api/auth/register - ::ffff:127.0.0.1
 
-    [0m [90m 78 |[39m   })[33m;[39m
-     [90m 79 |[39m
-    [31m[1m>[22m[39m[90m 80 |[39m   test([32m"1. POST /api/platform-admin/onboard-club - Success"[39m[33m,[39m [36masync[39m () [33m=>[39m {
-     [90m    |[39m   [31m[1m^[22m[39m
-     [90m 81 |[39m     [90m// Mocks for:[39m
-     [90m 82 |[39m     [90m// 1. authenticateToken (User lookup if implementation does it, usually verify token is enough but sometimes it checks DB)[39m
-     [90m 83 |[39m     [90m// 2. requirePlatformAdmin (User lookup)[39m[0m
+      at log (server.js:186:11)
 
-      at test (tests/feature-super-admin-sync.test.js:80:3)
-      at Object.describe (tests/feature-super-admin-sync.test.js:46:1)
+  console.log
+    ✅ Welcome email sent to: dupe@test.com
+
+      at log (routes/auth.js:102:13)
+
+FAIL tests/feature-public-signup.test.js
+  Public Registration Flow (Mocked)
+    √ 1. Parent Registration Success (79 ms)
+    × 2. Organization Registration Success & Auto-Setup (19 ms)
+    × 3. Login Success for User (25 ms)
+    × 4. Duplicate Email Fails (34 ms)
+
+  ● Public Registration Flow (Mocked) › 2. Organization Registration Success & Auto-Setup
+
+    expect(received).toHaveProperty(path, value)
+
+    Expected path: "account_type"
+    Received path: []
+
+    Expected value: "organization"
+    Received value: {"club": {"id": 100, "name": "Club Owner's Football", "slug": "club-owners-football-1770137482509"}, "email": "org@test.com", "firstName": "Club", "id": 1, "lastName": "Owner", "organization": {"id": 100, "name": "Club Owner's Football", "slug": "club-owners-football-1770137482509"}, "userType": "organization"}
+
+    [0m [90m 133 |[39m
+     [90m 134 |[39m     expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m201[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 135 |[39m     expect(res[33m.[39mbody[33m.[39muser)[33m.[39mtoHaveProperty([32m"account_type"[39m[33m,[39m [32m"organization"[39m)[33m;[39m
+     [90m     |[39m                           [31m[1m^[22m[39m
+     [90m 136 |[39m
+     [90m 137 |[39m     [90m// Verify Org Creation logic was called[39m
+     [90m 138 |[39m     expect(mockClient[33m.[39mquery)[33m.[39mtoHaveBeenCalledWith([0m
+
+      at Object.toHaveProperty (tests/feature-public-signup.test.js:135:27)
+
+  ● Public Registration Flow (Mocked) › 3. Login Success for User
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 401
+
+    [0m [90m 151 |[39m     })[33m;[39m
+     [90m 152 |[39m
+    [31m[1m>[22m[39m[90m 153 |[39m     expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                            [31m[1m^[22m[39m
+     [90m 154 |[39m     expect(res[33m.[39mbody)[33m.[39mtoHaveProperty([32m"token"[39m)[33m;[39m
+     [90m 155 |[39m   })[33m;[39m
+     [90m 156 |[39m[0m
+
+      at Object.toBe (tests/feature-public-signup.test.js:153:28)
+
+  ● Public Registration Flow (Mocked) › 4. Duplicate Email Fails
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 409
+    Received: 201
+
+    [0m [90m 164 |[39m     })[33m;[39m
+     [90m 165 |[39m
+    [31m[1m>[22m[39m[90m 166 |[39m     expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m409[39m)[33m;[39m
+     [90m     |[39m                            [31m[1m^[22m[39m
+     [90m 167 |[39m   })[33m;[39m
+     [90m 168 |[39m })[33m;[39m
+     [90m 169 |[39m[0m
+
+      at Object.toBe (tests/feature-public-signup.test.js:166:28)
 
 Test Suites: 1 failed, 1 total
-Tests:       1 failed, 1 passed, 2 total
+Tests:       3 failed, 1 passed, 4 total
 Snapshots:   0 total
-Time:        6.073 s, estimated 7 s
-Ran all test suites matching tests/feature-super-admin-sync.test.js.
-
-Jest has detected the following 1 open handle potentially keeping Jest from exiting:
-
-  ●  TCPSERVERWRAP
-
-    [0m [90m 103 |[39m
-     [90m 104 |[39m     [36mconst[39m res [33m=[39m [36mawait[39m request(app)
-    [31m[1m>[22m[39m[90m 105 |[39m       [33m.[39mpost([32m"/api/platform-admin/onboard-club"[39m)
-     [90m     |[39m        [31m[1m^[22m[39m
-     [90m 106 |[39m       [33m.[39m[36mset[39m([32m"Authorization"[39m[33m,[39m [32m`Bearer ${superAdminToken}`[39m)
-     [90m 107 |[39m       [33m.[39msend({
-     [90m 108 |[39m         firstName[33m:[39m [32m"Club"[39m[33m,[39m[0m
-
-      at Test.serverAddress (node_modules/supertest/lib/test.js:63:35)
-      at new Test (node_modules/supertest/lib/test.js:49:14)
-      at Object.obj.<computed> [as post] (node_modules/supertest/index.js:39:18)
-      at Object.post (tests/feature-super-admin-sync.test.js:105:8)
-
-  console.error
-    Onboard club error: [TypeError: Cannot read properties of undefined (reading 'rows')]
-
-    [0m [90m 715 |[39m       })[33m;[39m
-     [90m 716 |[39m     } [36mcatch[39m (error) {
-    [31m[1m>[22m[39m[90m 717 |[39m       console[33m.[39merror([32m"Onboard club error:"[39m[33m,[39m error)[33m;[39m
-     [90m     |[39m               [31m[1m^[22m[39m
-     [90m 718 |[39m       res[33m.[39mstatus([35m500[39m)[33m.[39mjson({ error[33m:[39m [32m"Failed to onboard club"[39m })[33m;[39m
-     [90m 719 |[39m     }
-     [90m 720 |[39m   }[33m,[39m[0m
-
-      at error (routes/platform-admin.js:717:15)
-
-(node:6072) [JEST-01] DeprecationWarning: 'matchers' property was accessed on [Object] after it was soft deleted
-  Jest deletes objects that were set on the global scope between test files to reduce memory leaks.
-  Currently it only "soft" deletes them and emits this warning if those objects were accessed after their deletion.
-  In future versions of Jest, this behavior will change to "on", which will likely fail tests.
-  You can change the behavior in your test configuration now to reduce memory usage.
-(Use `node --trace-deprecation ...` to show where the warning was created)
+Time:        1.153 s, estimated 2 s
+Ran all test suites matching tests/feature-public-signup.test.js.
