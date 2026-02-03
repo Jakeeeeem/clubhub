@@ -1454,27 +1454,17 @@
           at Array.forEach (<anonymous>)
 
   console.log
-    2026-02-03T17:00:34.192Z - POST /api/auth/register - ::ffff:127.0.0.1
+    2026-02-03T17:01:48.662Z - POST /api/auth/register - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
   console.log
-    ✅ Welcome email sent to: parent@test.com
-
-      at log (routes/auth.js:102:13)
-
-  console.log
-    2026-02-03T17:00:34.229Z - POST /api/auth/register - ::ffff:127.0.0.1
+    2026-02-03T17:01:48.696Z - POST /api/auth/register - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
   console.log
-    ✅ Welcome email sent to: org@test.com
-
-      at log (routes/auth.js:102:13)
-
-  console.log
-    2026-02-03T17:00:34.250Z - POST /api/auth/login - ::ffff:127.0.0.1
+    2026-02-03T17:01:48.714Z - POST /api/auth/login - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
@@ -1484,36 +1474,53 @@
       at log (routes/auth.js:352:15)
 
   console.log
-    2026-02-03T17:00:34.264Z - POST /api/auth/register - ::ffff:127.0.0.1
+    2026-02-03T17:01:48.734Z - POST /api/auth/register - ::ffff:127.0.0.1
 
       at log (server.js:186:11)
 
 FAIL tests/feature-public-signup.test.js
-  Public Registration Flow (Enhanced Mocks)
-    √ 1. Parent Registration Success (77 ms)
-    √ 2. Organization Registration Success & Auto-Setup (17 ms)
-    × 3. Login Success for User (19 ms)
-    √ 4. Duplicate Email Fails (10 ms)
+  Public Registration Flow (Fixed Login Mock)
+    × 1. Parent Registration Success (62 ms)
+    × 2. Organization Registration Success & Auto-Setup (17 ms)
+    √ 3. Login Success for User (22 ms)
+    √ 4. Duplicate Email Fails (14 ms)
 
-  ● Public Registration Flow (Enhanced Mocks) › 3. Login Success for User
+  ● Public Registration Flow (Fixed Login Mock) › 1. Parent Registration Success
 
     expect(received).toBe(expected) // Object.is equality
 
-    Expected: 200
-    Received: 401
+    Expected: 201
+    Received: 409
 
-    [0m [90m 150 |[39m     })[33m;[39m
-     [90m 151 |[39m
-    [31m[1m>[22m[39m[90m 152 |[39m     expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [0m [90m 126 |[39m     })[33m;[39m
+     [90m 127 |[39m
+    [31m[1m>[22m[39m[90m 128 |[39m     expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m201[39m)[33m;[39m
      [90m     |[39m                            [31m[1m^[22m[39m
-     [90m 153 |[39m     expect(res[33m.[39mbody)[33m.[39mtoHaveProperty([32m"token"[39m)[33m;[39m
-     [90m 154 |[39m     expect(res[33m.[39mbody[33m.[39muser)[33m.[39mtoHaveProperty([32m"email"[39m[33m,[39m parentEmail)[33m;[39m
-     [90m 155 |[39m   })[33m;[39m[0m
+     [90m 129 |[39m     expect(res[33m.[39mbody[33m.[39muser)[33m.[39mtoHaveProperty([32m"userType"[39m[33m,[39m [32m"adult"[39m)[33m;[39m
+     [90m 130 |[39m   })[33m;[39m
+     [90m 131 |[39m[0m
 
-      at Object.toBe (tests/feature-public-signup.test.js:152:28)
+      at Object.toBe (tests/feature-public-signup.test.js:128:28)
+
+  ● Public Registration Flow (Fixed Login Mock) › 2. Organization Registration Success & Auto-Setup
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 409
+
+    [0m [90m 142 |[39m       })[33m;[39m
+     [90m 143 |[39m
+    [31m[1m>[22m[39m[90m 144 |[39m     expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m201[39m)[33m;[39m
+     [90m     |[39m                            [31m[1m^[22m[39m
+     [90m 145 |[39m     expect(res[33m.[39mbody[33m.[39muser)[33m.[39mtoHaveProperty([32m"userType"[39m[33m,[39m [32m"organization"[39m)[33m;[39m
+     [90m 146 |[39m     expect(mockClient[33m.[39mquery)[33m.[39mtoHaveBeenCalledWith(
+     [90m 147 |[39m       expect[33m.[39mstringContaining([32m"INSERT INTO organizations"[39m)[33m,[39m[0m
+
+      at Object.toBe (tests/feature-public-signup.test.js:144:28)
 
 Test Suites: 1 failed, 1 total
-Tests:       1 failed, 3 passed, 4 total
+Tests:       2 failed, 2 passed, 4 total
 Snapshots:   0 total
-Time:        0.956 s, estimated 2 s
+Time:        1.346 s, estimated 6 s
 Ran all test suites matching tests/feature-public-signup.test.js.

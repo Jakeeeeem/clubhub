@@ -615,53 +615,52 @@ router.post(
       );
 
       if (existingUser.rows.length > 0) {
-        // Determine if we should fail or attach?
-        // For now, let's attach to the existing user but warn if they are already an owner elsewhere?
         userId = existingUser.rows[0].id;
         console.log(`Onboarding: Found existing user ${userId} for ${email}`);
 
-        // Fetch Stripe Account ID if they have one
-        const userStripeRes = await query(
-          "SELECT stripe_account_id FROM users WHERE id = $1",
+        // OPTIONAL: Check if they ALREADY have an organization with a Stripe account
+        const existingOrgStripe = await query(
+          "SELECT stripe_account_id FROM organizations WHERE owner_id = $1 AND stripe_account_id IS NOT NULL LIMIT 1",
           [userId],
         );
-        if (
-          userStripeRes.rows.length > 0 &&
-          userStripeRes.rows[0].stripe_account_id
-        ) {
-          stripeAccountId = userStripeRes.rows[0].stripe_account_id;
+        if (existingOrgStripe.rows.length > 0) {
+          stripeAccountId = existingOrgStripe.rows[0].stripe_account_id;
           console.log(
-            `Onboarding: Found existing Stripe Account ${stripeAccountId}`,
+            `Onboarding: Found existing Stripe Account through user's other organization: ${stripeAccountId}`,
           );
         }
-      } else {
-        // Create New User
+      }
 
-        // Check if this email already exists in Stripe Connected Accounts (Platform-wide)
-        if (!stripeAccountId) {
-          try {
+      // Check if this email already exists in Stripe Connected Accounts (Platform-wide)
+      // Only if we haven't found it via existing organsations
+      if (!stripeAccountId) {
+        try {
+          console.log(
+            `Onboarding: Searching Stripe for account with email ${email}...`,
+          );
+          // Stripe search query needs double quotes for specific matches usually
+          const search = await stripe.accounts.search({
+            query: `email:"${email}"`,
+            limit: 1,
+          });
+
+          if (search.data && search.data.length > 0) {
+            stripeAccountId = search.data[0].id;
             console.log(
-              `Onboarding: Searching Stripe for account with email ${email}...`,
+              `Onboarding: Found MATCHING Stripe Account on Platform: ${stripeAccountId}`,
             );
-            const search = await stripe.accounts.search({
-              query: `email:'${email}'`,
-              limit: 1,
-            });
-
-            if (search.data && search.data.length > 0) {
-              stripeAccountId = search.data[0].id;
-              console.log(
-                `Onboarding: Found MATCHING Stripe Account on Platform: ${stripeAccountId}`,
-              );
-            }
-          } catch (stripeErr) {
-            console.warn(
-              "Onboarding: Failed to search Stripe for existing account:",
-              stripeErr.message,
-            );
-            // Continue without linking - they can connect manually later
           }
+        } catch (stripeErr) {
+          console.warn(
+            "Onboarding: Failed to search Stripe for existing account:",
+            stripeErr.message,
+          );
+          // Continue without linking - they can connect manually later
         }
+      }
+
+      if (existingUser.rows.length === 0) {
+        // Create New User
 
         const tempPassword = crypto.randomBytes(8).toString("hex");
         const hashedPassword = await bcrypt.hash(tempPassword, 10);
@@ -758,8 +757,12 @@ router.post(
         user_id: userId,
       });
     } catch (error) {
-      console.error("Onboard club error:", error);
-      res.status(500).json({ error: "Failed to onboard club" });
+      console.error("❌ Onboard club error:", error);
+      res.status(500).json({
+        error: "Failed to onboard club",
+        details: error.message,
+        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      });
     }
   },
 );
