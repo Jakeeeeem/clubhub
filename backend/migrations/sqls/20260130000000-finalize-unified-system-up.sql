@@ -23,8 +23,19 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- 3a. Recover Orphans: Ensure all club_ids used in other tables exist in organizations
 -- This handles dirty data where a team/player points to a club ID that no longer exists in 'clubs'
-INSERT INTO organizations (id, name, slug, is_active, created_at, updated_at)
-SELECT DISTINCT club_id, 'Legacy Recovered Organization', 'recovered-' || club_id::text, true, NOW(), NOW()
+-- We need to assign a valid owner_id, so we'll use the first available user as a fallback
+INSERT INTO organizations (id, name, slug, is_active, owner_id, created_at, updated_at)
+SELECT DISTINCT 
+    orphan_ids.club_id, 
+    'Legacy Recovered Organization', 
+    'recovered-' || orphan_ids.club_id::text, 
+    true,
+    COALESCE(
+        (SELECT owner_id FROM clubs WHERE id = orphan_ids.club_id LIMIT 1),
+        (SELECT id FROM users ORDER BY created_at ASC LIMIT 1)
+    ),
+    NOW(), 
+    NOW()
 FROM (
     SELECT club_id FROM players WHERE club_id IS NOT NULL
     UNION
@@ -35,8 +46,8 @@ FROM (
     SELECT club_id FROM staff WHERE club_id IS NOT NULL
     UNION
     SELECT club_id FROM club_applications WHERE club_id IS NOT NULL
-) all_referenced_ids
-WHERE club_id NOT IN (SELECT id FROM organizations)
+) orphan_ids
+WHERE orphan_ids.club_id NOT IN (SELECT id FROM organizations)
 ON CONFLICT (id) DO NOTHING;
 
 -- 4. Update all foreign keys to reference organizations instead of clubs
