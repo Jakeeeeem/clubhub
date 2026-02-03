@@ -21,6 +21,24 @@ ON CONFLICT (id) DO UPDATE SET
     stripe_account_id = COALESCE(organizations.stripe_account_id, EXCLUDED.stripe_account_id),
     updated_at = EXCLUDED.updated_at;
 
+-- 3a. Recover Orphans: Ensure all club_ids used in other tables exist in organizations
+-- This handles dirty data where a team/player points to a club ID that no longer exists in 'clubs'
+INSERT INTO organizations (id, name, slug, is_active, created_at, updated_at)
+SELECT DISTINCT club_id, 'Legacy Recovered Organization', 'recovered-' || club_id::text, true, NOW(), NOW()
+FROM (
+    SELECT club_id FROM players WHERE club_id IS NOT NULL
+    UNION
+    SELECT club_id FROM teams WHERE club_id IS NOT NULL
+    UNION
+    SELECT club_id FROM events WHERE club_id IS NOT NULL
+    UNION
+    SELECT club_id FROM staff WHERE club_id IS NOT NULL
+    UNION
+    SELECT club_id FROM club_applications WHERE club_id IS NOT NULL
+) all_referenced_ids
+WHERE club_id NOT IN (SELECT id FROM organizations)
+ON CONFLICT (id) DO NOTHING;
+
 -- 4. Update all foreign keys to reference organizations instead of clubs
 -- Players
 ALTER TABLE players DROP CONSTRAINT IF EXISTS players_club_id_fkey;
@@ -29,7 +47,6 @@ ALTER TABLE players ADD CONSTRAINT players_club_id_fkey FOREIGN KEY (club_id) RE
 -- Teams
 ALTER TABLE teams DROP CONSTRAINT IF EXISTS teams_club_id_fkey;
 ALTER TABLE teams ADD CONSTRAINT teams_club_id_fkey FOREIGN KEY (club_id) REFERENCES organizations(id) ON DELETE CASCADE;
-
 -- Events
 ALTER TABLE events DROP CONSTRAINT IF EXISTS events_club_id_fkey;
 ALTER TABLE events ADD CONSTRAINT events_club_id_fkey FOREIGN KEY (club_id) REFERENCES organizations(id) ON DELETE CASCADE;
