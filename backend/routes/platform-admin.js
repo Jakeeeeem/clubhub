@@ -729,6 +729,7 @@ router.post(
 
       if (existingUser.rows.length === 0) {
         // Create New User
+        console.log("📝 Creating new user for:", email);
 
         const tempPassword = crypto.randomBytes(8).toString("hex");
         const hashedPassword = await bcrypt.hash(tempPassword, 10);
@@ -754,6 +755,7 @@ router.post(
           ],
         );
         userId = newUser.rows[0].id;
+        console.log("✅ User created with ID:", userId);
 
         // Send Welcome Email
         const setPasswordLink = `${
@@ -761,6 +763,7 @@ router.post(
         }/forgot-password.html?token=${resetToken}`;
 
         try {
+          console.log("📧 Sending welcome email to:", email);
           // Using the existing email service function
           await emailService.sendAdminWelcomeEmail({
             email,
@@ -769,13 +772,17 @@ router.post(
             setPasswordLink,
             clubName: clubName, // Pass club name for context
           });
+          console.log("✅ Welcome email sent successfully");
         } catch (emailError) {
-          console.error("Failed to send welcome email:", emailError);
+          console.error("❌ Failed to send welcome email:", emailError);
         }
+      } else {
+        console.log("✅ Using existing user:", existingUser.rows[0].id);
       }
 
       // 2. Create Organization
       // Generate slug
+      console.log("🏢 Creating organization:", clubName);
       const slug =
         clubName
           .toLowerCase()
@@ -796,8 +803,10 @@ router.post(
       );
 
       const orgId = newOrg.rows[0].id;
+      console.log("✅ Organization created with ID:", orgId);
 
       // 3. Link User to Organization (as Owner)
+      console.log("🔗 Linking user to organization...");
       await query(
         `
                 INSERT INTO organization_members (
@@ -817,6 +826,7 @@ router.post(
             `,
         [userId, orgId],
       );
+      console.log("✅ Onboarding completed successfully");
 
       res.status(201).json({
         success: true,
@@ -826,9 +836,16 @@ router.post(
       });
     } catch (error) {
       console.error("❌ Onboard club error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        stack: error.stack,
+      });
       res.status(500).json({
         error: "Failed to onboard club",
         details: error.message,
+        code: error.code,
         stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       });
     }

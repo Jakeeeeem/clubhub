@@ -73,13 +73,14 @@ ALTER TABLE club_applications ADD CONSTRAINT club_applications_club_id_fkey FORE
 -- 5. Create a trigger to keep the legacy clubs table in sync for any remaining legacy queries
 CREATE OR REPLACE FUNCTION sync_org_to_club() RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO clubs (id, name, description, location, sport, owner_id, created_at, updated_at)
-    VALUES (NEW.id, NEW.name, NEW.description, NEW.location, NEW.sport, NEW.owner_id, NEW.created_at, NEW.updated_at)
+    INSERT INTO clubs (id, name, description, location, sport, owner_id, created_at, updated_at, types)
+    VALUES (NEW.id, NEW.name, NEW.description, NEW.location, NEW.sport, NEW.owner_id, NEW.created_at, NEW.updated_at, COALESCE(NEW.types, ARRAY[]::TEXT[]))
     ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
         location = EXCLUDED.location,
         sport = EXCLUDED.sport,
+        types = COALESCE(EXCLUDED.types, ARRAY[]::TEXT[]),
         updated_at = EXCLUDED.updated_at;
     RETURN NEW;
 END;
@@ -89,3 +90,4 @@ DROP TRIGGER IF EXISTS trigger_sync_org_to_club ON organizations;
 CREATE TRIGGER trigger_sync_org_to_club
 AFTER INSERT OR UPDATE ON organizations
 FOR EACH ROW EXECUTE FUNCTION sync_org_to_club();
+
