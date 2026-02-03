@@ -140,13 +140,13 @@ const queries = {
     RETURNING id, email, first_name, last_name, account_type, org_types, created_at
   `,
 
-  // Club queries
+  // Organization queries (formerly Clubs)
   findClubsByOwner:
-    "SELECT * FROM clubs WHERE owner_id = $1 ORDER BY created_at DESC",
-  findAllClubs: "SELECT * FROM clubs ORDER BY created_at DESC",
-  findClubById: "SELECT * FROM clubs WHERE id = $1",
+    "SELECT * FROM organizations WHERE owner_id = $1 ORDER BY created_at DESC",
+  findAllClubs: "SELECT * FROM organizations ORDER BY created_at DESC",
+  findClubById: "SELECT * FROM organizations WHERE id = $1",
   createClub: `
-    INSERT INTO clubs (name, description, location, philosophy, website, types, sport, owner_id, established)
+    INSERT INTO organizations (name, slug, description, location, philosophy, website, sport, owner_id, established)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *
   `,

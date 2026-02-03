@@ -98,9 +98,9 @@ router.get("/", authenticateToken, async (req, res) => {
       queryText += ` AND p.club_id IN (
             SELECT club_id FROM staff WHERE user_id = $${paramCount}
             UNION 
-            SELECT id FROM clubs WHERE owner_id = $${paramCount}
+            SELECT id FROM organizations WHERE owner_id = $${paramCount}
             UNION
-            SELECT id FROM clubs WHERE id IN (SELECT club_id FROM players WHERE user_id = $${paramCount})
+            SELECT id FROM organizations WHERE id IN (SELECT club_id FROM players WHERE user_id = $${paramCount})
         )`;
       queryParams.push(req.user.id);
     }
@@ -274,7 +274,7 @@ router.get("/scout", async (req, res) => {
       SELECT p.id, p.first_name, p.last_name, p.position, p.attendance_rate, p.date_of_birth,
              c.name as club_name, c.sport
       FROM players p
-      LEFT JOIN clubs c ON p.club_id = c.id
+      LEFT JOIN organizations c ON p.club_id = c.id
       WHERE p.scouting_opt_in = true
     `;
     const queryParams = [];
@@ -526,7 +526,7 @@ router.post(
 
       // Update club member count
       await query(
-        "UPDATE clubs SET member_count = member_count + 1 WHERE id = $1",
+        "UPDATE organizations SET member_count = member_count + 1 WHERE id = $1",
         [clubId],
       );
 
@@ -716,7 +716,7 @@ router.delete(
 
         // Update club member count
         await client.query(
-          "UPDATE clubs SET member_count = member_count - 1 WHERE id = $1",
+          "UPDATE organizations SET member_count = member_count - 1 WHERE id = $1",
           [player.club_id],
         );
       });

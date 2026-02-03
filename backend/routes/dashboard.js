@@ -18,9 +18,9 @@ router.get(
 
       const { clubId } = req.query;
 
-      // Get user's clubs
+      // Get user's organizations
       const clubsResult = await query(
-        "SELECT * FROM clubs WHERE owner_id = $1 ORDER BY created_at DESC",
+        "SELECT * FROM organizations WHERE owner_id = $1 ORDER BY created_at DESC",
         [userId],
       );
       let clubs = clubsResult.rows;
@@ -219,7 +219,7 @@ router.get("/player", authenticateToken, async (req, res) => {
         `
         SELECT p.*, c.name as club_name, c.id as club_id
         FROM players p
-        LEFT JOIN clubs c ON p.club_id = c.id
+        LEFT JOIN organizations c ON p.club_id = c.id
         WHERE p.id = $1
       `,
         [playerId],
@@ -245,7 +245,7 @@ router.get("/player", authenticateToken, async (req, res) => {
         `
             SELECT p.*, c.name as club_name, c.id as club_id
             FROM players p
-            LEFT JOIN clubs c ON p.club_id = c.id
+            LEFT JOIN organizations c ON p.club_id = c.id
             WHERE p.user_id = $1 AND p.club_id = $2
             ORDER BY p.created_at DESC LIMIT 1
         `,
@@ -270,7 +270,7 @@ router.get("/player", authenticateToken, async (req, res) => {
         `
         SELECT p.*, c.name as club_name, c.id as club_id
         FROM players p
-        LEFT JOIN clubs c ON p.club_id = c.id
+        LEFT JOIN organizations c ON p.club_id = c.id
         WHERE p.user_id = $1
         ORDER BY (CASE WHEN p.email = $2 THEN 0 ELSE 1 END), p.created_at DESC 
         LIMIT 1
@@ -308,7 +308,7 @@ router.get("/player", authenticateToken, async (req, res) => {
     if (clubIds.length > 0) {
       const clubsResult = await query(
         `
-        SELECT * FROM clubs WHERE id = ANY($1)
+        SELECT * FROM organizations WHERE id = ANY($1)
       `,
         [clubIds],
       );
@@ -344,7 +344,7 @@ router.get("/player", authenticateToken, async (req, res) => {
     let eventsQuery = `
       SELECT e.*, c.name as club_name
       FROM events e
-      LEFT JOIN clubs c ON e.club_id = c.id
+      LEFT JOIN organizations c ON e.club_id = c.id
       WHERE e.event_date >= CURRENT_DATE
     `;
 
@@ -433,7 +433,7 @@ router.get("/player", authenticateToken, async (req, res) => {
       `
       SELECT ca.*, c.name as club_name
       FROM club_applications ca
-      JOIN clubs c ON ca.club_id = c.id
+      JOIN organizations c ON ca.club_id = c.id
       WHERE ca.user_id = $1
       ORDER BY ca.submitted_at DESC
 `,

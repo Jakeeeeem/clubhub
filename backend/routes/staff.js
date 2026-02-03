@@ -58,7 +58,7 @@ router.get("/", authenticateToken, async (req, res) => {
       // Enforce Isolation: If no clubId, limit to user's clubs
       paramCount++;
       queryText += ` AND club_id IN (
-           SELECT id FROM clubs WHERE owner_id = $${paramCount}
+           SELECT id FROM organizations WHERE owner_id = $${paramCount}
            UNION
            SELECT club_id FROM staff WHERE user_id = $${paramCount}
        )`;
