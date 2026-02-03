@@ -4,6 +4,7 @@ const { authenticateToken } = require("../middleware/auth");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const emailService = require("../services/email-service");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const router = express.Router();
 
@@ -635,6 +636,33 @@ router.post(
         }
       } else {
         // Create New User
+
+        // Check if this email already exists in Stripe Connected Accounts (Platform-wide)
+        if (!stripeAccountId) {
+          try {
+            console.log(
+              `Onboarding: Searching Stripe for account with email ${email}...`,
+            );
+            const search = await stripe.accounts.search({
+              query: `email:'${email}'`,
+              limit: 1,
+            });
+
+            if (search.data && search.data.length > 0) {
+              stripeAccountId = search.data[0].id;
+              console.log(
+                `Onboarding: Found MATCHING Stripe Account on Platform: ${stripeAccountId}`,
+              );
+            }
+          } catch (stripeErr) {
+            console.warn(
+              "Onboarding: Failed to search Stripe for existing account:",
+              stripeErr.message,
+            );
+            // Continue without linking - they can connect manually later
+          }
+        }
+
         const tempPassword = crypto.randomBytes(8).toString("hex");
         const hashedPassword = await bcrypt.hash(tempPassword, 10);
         const resetToken = crypto.randomBytes(32).toString("hex");
