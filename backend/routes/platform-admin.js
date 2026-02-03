@@ -161,6 +161,7 @@ router.get(
                 u.last_name,
                 u.account_type,
                 u.created_at,
+                u.is_active,
                 u.is_platform_admin,
                 (SELECT COUNT(*) FROM organization_members WHERE user_id = u.id) as org_count
             FROM users u
@@ -288,6 +289,73 @@ router.get(
     } catch (error) {
       console.error("Get organization details error:", error);
       res.status(500).json({ error: "Failed to fetch organization details" });
+    }
+  },
+);
+
+// POST /api/platform-admin/organizations/:id/status - Deactivate/Activate organization
+router.post(
+  "/organizations/:id/status",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { isActive } = req.body;
+
+      if (typeof isActive !== "boolean") {
+        return res
+          .status(400)
+          .json({ error: "isActive boolean value is required" });
+      }
+
+      await query(
+        `
+            UPDATE organizations 
+            SET is_active = $1, updated_at = NOW()
+            WHERE id = $2
+        `,
+        [isActive, id],
+      );
+
+      res.json({
+        success: true,
+        message: `Organization ${isActive ? "activated" : "deactivated"} successfully`,
+      });
+    } catch (error) {
+      console.error("Update organization status error:", error);
+      res.status(500).json({ error: "Failed to update organization status" });
+    }
+  },
+);
+
+// DELETE /api/platform-admin/organizations/:id - Delete organization
+router.delete(
+  "/organizations/:id",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Check if org exists
+      const orgCheck = await query(
+        "SELECT id FROM organizations WHERE id = $1",
+        [id],
+      );
+      if (orgCheck.rows.length === 0) {
+        return res.status(404).json({ error: "Organization not found" });
+      }
+
+      await query("DELETE FROM organizations WHERE id = $1", [id]);
+
+      res.json({
+        success: true,
+        message: "Organization deleted successfully",
+      });
+    } catch (error) {
+      console.error("Delete organization error:", error);
+      res.status(500).json({ error: "Failed to delete organization" });
     }
   },
 );
@@ -497,7 +565,7 @@ router.post(
       }
 
       // Don't allow deactivating self
-      if (parseInt(userId) === req.user.id) {
+      if (userId === req.user.id) {
         return res.status(400).json({ error: "Cannot deactivate yourself" });
       }
 
@@ -531,7 +599,7 @@ router.delete(
       const { userId } = req.params;
 
       // Don't allow deleting self
-      if (parseInt(userId) === req.user.id) {
+      if (userId === req.user.id) {
         return res.status(400).json({ error: "Cannot delete yourself" });
       }
 
@@ -638,9 +706,9 @@ router.post(
           console.log(
             `Onboarding: Searching Stripe for account with email ${email}...`,
           );
-          // Stripe search query needs double quotes for specific matches usually
-          const search = await stripe.accounts.search({
-            query: `email:"${email}"`,
+          // Stripe accounts can be found by email using list
+          const search = await stripe.accounts.list({
+            email: email,
             limit: 1,
           });
 
@@ -720,8 +788,8 @@ router.post(
       const newOrg = await query(
         `
                 INSERT INTO organizations (
-                    name, slug, sport, location, owner_id, status, stripe_account_id, created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, 'active', $6, NOW(), NOW())
+                    name, slug, sport, location, owner_id, is_active, stripe_account_id, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, true, $6, NOW(), NOW())
                 RETURNING id, name
             `,
         [clubName, slug, sport, location, userId, stripeAccountId || null],
