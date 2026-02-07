@@ -20,6 +20,7 @@ build/
 # Project specific
 clubhub_utf8.sql
 playground/
+backend/scripts/
 
 # IDE files
 .vscode/
