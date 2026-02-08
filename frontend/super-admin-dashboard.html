@@ -8,6 +8,14 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="org-switcher.css">
     <style>
+        .dashboard-section {
+            display: none !important;
+        }
+
+        .dashboard-section.active {
+            display: block !important;
+        }
+
         .platform-admin-container {
             max-width: 1400px;
             margin: 0 auto;
@@ -400,271 +408,345 @@
                 <p>System-wide overview and management</p>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="stats-grid" id="statsGrid">
-                <div class="stat-card">
-                    <h3>Total Users</h3>
-                    <div class="value" id="totalUsers">-</div>
-                    <div class="change" id="userChange">Loading...</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Organizations</h3>
-                    <div class="value" id="totalOrgs">-</div>
-                    <div class="change" id="orgChange">Loading...</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Active Plans</h3>
-                    <div class="value" id="activePlans">-</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Pending Invites</h3>
-                    <div class="value" id="pendingInvites">-</div>
-                </div>
-            </div>
-
-            <!-- Data Management Section -->
-            <div class="section-card"
-                style="border: 1px solid rgba(220, 67, 67, 0.3); background: rgba(220, 67, 67, 0.05);">
-                <div class="section-header">
-                    <h2 style="color: #ff6b6b;">⚠️ Data Management</h2>
-                </div>
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <button class="btn btn-warning" onclick="confirmResetData()"
-                        style="background: #dc2626; color: white; border: none;">
-                        🗑️ Reset All Data
+            <!-- Dashboard Navigation -->
+            <div class="dashboard-nav-grouped" style="margin-bottom: 2rem;">
+                <button class="nav-item active" onclick="showSection('overview')">
+                    📊 Overview
+                </button>
+                <button class="nav-item" onclick="showSection('organizations')">
+                    🏢 Organizations
+                </button>
+                <button class="nav-item" onclick="showSection('users')">
+                    👥 Users
+                </button>
+                <button class="nav-item" onclick="showSection('stripe')">
+                    💰 Stripe & Finance
+                </button>
+                <button class="nav-item" onclick="showSection('activity')">
+                    📜 Activity
+                </button>
+                <button class="nav-item" onclick="showSection('system')">
+                    ⚙️ System
+                </button>
+                <!-- Grouped TBA -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        ✨ Future Features ▾
                     </button>
-                    <button class="btn btn-primary" onclick="showGenerateMockModal()">
-                        ✨ Generate Mock Data
-                    </button>
-                </div>
-                <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8; max-width: 600px;">
-                    <strong>Reset All Data:</strong> Wipes all organizations, users, events, and bookings. Resets the
-                    database to a clean slate. Only the Super Admin account remains.<br>
-                    <strong>Generate Mock Data:</strong> Populates the database with realistic sample organizations,
-                    players, teams, and events for testing.
-                </p>
-            </div>
-
-            <!-- Organizations Section -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2>Organizations</h2>
-                    <button class="btn btn-primary btn-small" onclick="refreshOrganizations()">Refresh</button>
-                </div>
-
-                <div class="search-bar">
-                    <input type="text" id="orgSearch" placeholder="Search organizations..."
-                        onkeyup="searchOrganizations()">
-                </div>
-
-                <div id="organizationsTable">
-                    <div class="loading">Loading organizations...</div>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showSection('tba')">📅 Tournament TBA</button>
+                        <button onclick="showSection('tba')">📊 Advanced Analytics</button>
+                        <button onclick="showSection('tba')">🛡️ Security Logs</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Users Section -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2>Users</h2>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn-primary btn-small" onclick="showOnboardClubModal()">🚀 Fast Onboard
-                            Club</button>
-                        <button class="btn btn-primary btn-small" onclick="showCreateUserModal()">+ New User</button>
-                        <button class="btn btn-primary btn-small" onclick="refreshUsers()">Refresh</button>
+            <!-- Overview Section -->
+            <div id="section-overview" class="dashboard-section active">
+
+                <!-- Stats Grid -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <div class="value" id="totalUsers">-</div>
+                        <div class="change" id="userChange">Loading...</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Organizations</h3>
+                        <div class="value" id="totalOrgs">-</div>
+                        <div class="change" id="orgChange">Loading...</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Plans</h3>
+                        <div class="value" id="activePlans">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending Invites</h3>
+                        <div class="value" id="pendingInvites">-</div>
                     </div>
                 </div>
 
-                <div class="search-bar">
-                    <input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()">
-                    <select id="accountTypeFilter" onchange="filterUsers()">
-                        <option value="">All Account Types</option>
-                        <option value="adult">Player/Adult</option>
-                        <option value="organization">Organization</option>
-                    </select>
-                </div>
+            </div>
+        </div>
 
-                <div id="usersTable">
-                    <div class="loading">Loading users...</div>
+        <!-- System Section -->
+        <div id="section-system" class="dashboard-section section-card">
+            <div class="section-header">
+                <h2 style="color: #ff6b6b;">⚠️ Data Management & System</h2>
+            </div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn btn-warning" onclick="confirmResetData()"
+                    style="background: #dc2626; color: white; border: none;">
+                    🗑️ Reset All Data
+                </button>
+                <button class="btn btn-primary" onclick="showGenerateMockModal()">
+                    ✨ Generate Mock Data
+                </button>
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8; max-width: 600px;">
+                <strong>Reset All Data:</strong> Wipes all organizations, users, events, and bookings. Resets the
+                database to a clean slate. Only the Super Admin account remains.<br>
+                <strong>Generate Mock Data:</strong> Populates the database with realistic sample organizations,
+                players, teams, and events for testing.
+            </p>
+        </div>
+
+        <!-- Organizations Section -->
+        <div id="section-organizations" class="dashboard-section section-card">
+            <div class="section-header">
+                <h2>Organizations</h2>
+                <button class="btn btn-primary btn-small" onclick="refreshOrganizations()">Refresh</button>
+            </div>
+
+            <div class="search-bar">
+                <input type="text" id="orgSearch" placeholder="Search organizations..." onkeyup="searchOrganizations()">
+            </div>
+
+            <div id="organizationsTable">
+                <div class="loading">Loading organizations...</div>
+            </div>
+        </div>
+
+        <!-- Users Section -->
+        <div id="section-users" class="dashboard-section section-card">
+            <div class="section-header">
+                <h2>Users</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-primary btn-small" onclick="showOnboardClubModal()">🚀 Fast Onboard
+                        Club</button>
+                    <button class="btn btn-primary btn-small" onclick="showCreateUserModal()">+ New User</button>
+                    <button class="btn btn-primary btn-small" onclick="refreshUsers()">Refresh</button>
                 </div>
             </div>
 
-            <!-- Recent Activity -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h2>Recent Activity</h2>
-                    <button class="btn btn-primary btn-small" onclick="refreshActivity()">Refresh</button>
-                </div>
+            <div class="search-bar">
+                <input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()">
+                <select id="accountTypeFilter" onchange="filterUsers()">
+                    <option value="">All Account Types</option>
+                    <option value="adult">Player/Adult</option>
+                    <option value="organization">Organization</option>
+                </select>
+            </div>
 
-                <div id="activityFeed">
-                    <div class="loading">Loading activity...</div>
+            <div id="usersTable">
+                <div class="loading">Loading users...</div>
+            </div>
+        </div>
+
+        <!-- Stripe Section -->
+        <div id="section-stripe" class="dashboard-section section-card">
+            <div class="section-header">
+                <h2>Platform Stripe Overview</h2>
+                <button class="btn btn-primary btn-small" onclick="loadStripeData()">Refresh Stripe Data</button>
+            </div>
+
+            <div class="stats-grid" id="stripeStatsGrid">
+                <div class="stat-card">
+                    <h3>Connected Clubs</h3>
+                    <div class="value" id="connectedOrgsCount">-</div>
+                    <div class="change" id="connectedOrgsPercent">Loading...</div>
                 </div>
             </div>
-            <!-- Generate Mock Data Modal -->
-            <div id="generateMockModal" class="modal"
-                style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-                <div class="modal-content"
-                    style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; position: relative;">
-                    <h2 style="margin-top: 0;">✨ Generate Mock Data</h2>
-                    <p>Select what kind of data to generate:</p>
 
-                    <div style="margin: 1.5rem 0; display: grid; gap: 1rem;">
-                        <label
-                            style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
-                            <input type="checkbox" id="mockOrgs" checked>
-                            <div>
-                                <strong>Organizations</strong>
-                                <div style="font-size: 0.8rem; opacity: 0.7;">Create 5 sample clubs with logos and
-                                    locations</div>
-                            </div>
-                        </label>
+            <h3 style="margin: 2rem 0 1rem 0;">Global Payment Plans</h3>
+            <div id="globalPlansTable">
+                <div class="loading">Loading plans...</div>
+            </div>
 
-                        <label
-                            style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
-                            <input type="checkbox" id="mockUsers" checked>
-                            <div>
-                                <strong>Users & Players</strong>
-                                <div style="font-size: 0.8rem; opacity: 0.7;">Create ~50 players, parents, and coaches
-                                </div>
-                            </div>
-                        </label>
+            <h3 style="margin: 2rem 0 1rem 0;">Recent Platform Payments</h3>
+            <div id="recentPaymentsTable">
+                <div class="loading">Loading payments...</div>
+            </div>
+        </div>
 
-                        <label
-                            style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
-                            <input type="checkbox" id="mockEvents" checked>
-                            <div>
-                                <strong>Events & Bookings</strong>
-                                <div style="font-size: 0.8rem; opacity: 0.7;">Schedule matches, trainings, and
-                                    tournament fixtures</div>
+        <!-- Activity Section -->
+        <div id="section-activity" class="dashboard-section section-card">
+            <div class="section-header">
+                <h2>Recent Activity Feed</h2>
+                <button class="btn btn-primary btn-small" onclick="refreshActivity()">Refresh</button>
+            </div>
+
+            <div id="activityFeed">
+                <div class="loading">Loading activity...</div>
+            </div>
+        </div>
+
+        <!-- TBA Section -->
+        <div id="section-tba" class="dashboard-section section-card" style="text-align: center; padding: 5rem 2rem;">
+            <div style="font-size: 4rem; margin-bottom: 2rem;">⏳</div>
+            <h2 class="neon-text">Coming Soon</h2>
+            <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto;">
+                We are currently building this section to provide even more powerful tools for platform
+                administration. Stay tuned for updates!
+            </p>
+            <button class="btn btn-primary" style="margin-top: 2rem;" onclick="showSection('overview')">Back to
+                Overview</button>
+        </div>
+        <!-- Generate Mock Data Modal -->
+        <div id="generateMockModal" class="modal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+            <div class="modal-content"
+                style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; position: relative;">
+                <h2 style="margin-top: 0;">✨ Generate Mock Data</h2>
+                <p>Select what kind of data to generate:</p>
+
+                <div style="margin: 1.5rem 0; display: grid; gap: 1rem;">
+                    <label
+                        style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                        <input type="checkbox" id="mockOrgs" checked>
+                        <div>
+                            <strong>Organizations</strong>
+                            <div style="font-size: 0.8rem; opacity: 0.7;">Create 5 sample clubs with logos and
+                                locations</div>
+                        </div>
+                    </label>
+
+                    <label
+                        style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                        <input type="checkbox" id="mockUsers" checked>
+                        <div>
+                            <strong>Users & Players</strong>
+                            <div style="font-size: 0.8rem; opacity: 0.7;">Create ~50 players, parents, and coaches
                             </div>
-                        </label>
+                        </div>
+                    </label>
+
+                    <label
+                        style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+                        <input type="checkbox" id="mockEvents" checked>
+                        <div>
+                            <strong>Events & Bookings</strong>
+                            <div style="font-size: 0.8rem; opacity: 0.7;">Schedule matches, trainings, and
+                                tournament fixtures</div>
+                        </div>
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button onclick="document.getElementById('generateMockModal').style.display = 'none'"
+                        class="btn btn-secondary">Cancel</button>
+                    <button onclick="executeMockGeneration()" class="btn btn-primary">🚀 Generate</button>
+                </div>
+            </div>
+        </div>
+        <!-- Create User Modal -->
+        <div id="createUserModal" class="modal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+            <div class="modal-content"
+                style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; position: relative;">
+                <h2 style="margin-top: 0;">👤 Create New User</h2>
+                <p>Enter the details below. The user will receive an email to set their password.</p>
+
+                <form id="createUserForm" onsubmit="handleCreateUser(event)">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">First Name</label>
+                        <input type="text" name="firstName" required
+                            style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">Last Name</label>
+                        <input type="text" name="lastName" required
+                            style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">Email</label>
+                        <input type="email" name="email" required
+                            style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem;">Account Type</label>
+                        <select name="accountType" required
+                            style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                            <option value="adult">Player/Adult</option>
+                            <option value="organization">Organization</option>
+                        </select>
                     </div>
 
                     <div style="display: flex; justify-content: flex-end; gap: 1rem;">
-                        <button onclick="document.getElementById('generateMockModal').style.display = 'none'"
+                        <button type="button"
+                            onclick="document.getElementById('createUserModal').style.display = 'none'"
                             class="btn btn-secondary">Cancel</button>
-                        <button onclick="executeMockGeneration()" class="btn btn-primary">🚀 Generate</button>
+                        <button type="submit" class="btn btn-primary">Create User</button>
                     </div>
-                </div>
+                </form>
             </div>
-            <!-- Create User Modal -->
-            <div id="createUserModal" class="modal"
-                style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
-                <div class="modal-content"
-                    style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; position: relative;">
-                    <h2 style="margin-top: 0;">👤 Create New User</h2>
-                    <p>Enter the details below. The user will receive an email to set their password.</p>
+        </div>
 
-                    <form id="createUserForm" onsubmit="handleCreateUser(event)">
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; margin-bottom: 0.5rem;">First Name</label>
-                            <input type="text" name="firstName" required
-                                style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; margin-bottom: 0.5rem;">Last Name</label>
-                            <input type="text" name="lastName" required
-                                style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            <label style="display: block; margin-bottom: 0.5rem;">Email</label>
-                            <input type="email" name="email" required
-                                style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
-                        </div>
-                        <div style="margin-bottom: 1.5rem;">
-                            <label style="display: block; margin-bottom: 0.5rem;">Account Type</label>
-                            <select name="accountType" required
-                                style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
-                                <option value="adult">Player/Adult</option>
-                                <option value="organization">Organization</option>
-                            </select>
-                        </div>
+        <!-- Onboard Club Modal -->
+        <div id="onboardClubModal" class="modal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; overflow-y: auto;">
+            <div class="modal-content"
+                style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; position: relative; margin: 2rem auto;">
+                <h2 style="margin-top: 0;">🚀 Fast Onboard Club</h2>
+                <p>Create a User account AND their Organization in one step.</p>
 
-                        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
-                            <button type="button"
-                                onclick="document.getElementById('createUserModal').style.display = 'none'"
-                                class="btn btn-secondary">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Create User</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Onboard Club Modal -->
-            <div id="onboardClubModal" class="modal"
-                style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; overflow-y: auto;">
-                <div class="modal-content"
-                    style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 600px; width: 90%; position: relative; margin: 2rem auto;">
-                    <h2 style="margin-top: 0;">🚀 Fast Onboard Club</h2>
-                    <p>Create a User account AND their Organization in one step.</p>
-
-                    <form id="onboardClubForm" onsubmit="handleOnboardClub(event)">
-                        <!-- User Details -->
-                        <div
-                            style="margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
-                            <h3 style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem;">👤 Club Owner Details</h3>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                                <div>
-                                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">First
-                                        Name</label>
-                                    <input type="text" name="firstName" required placeholder="John"
-                                        style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Last
-                                        Name</label>
-                                    <input type="text" name="lastName" required placeholder="Doe"
-                                        style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 1rem;">
-                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Email
-                                    Address</label>
-                                <input type="email" name="email" required placeholder="john@example.com"
-                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
-                            </div>
-                        </div>
-
-                        <!-- Club Details -->
-                        <div style="margin-bottom: 1.5rem;">
-                            <h3 style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem;">🏢 Club Information</h3>
-                            <div style="margin-bottom: 1rem;">
-                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Club
+                <form id="onboardClubForm" onsubmit="handleOnboardClub(event)">
+                    <!-- User Details -->
+                    <div
+                        style="margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+                        <h3 style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem;">👤 Club Owner Details</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">First
                                     Name</label>
-                                <input type="text" name="clubName" required placeholder="Elite FC"
+                                <input type="text" name="firstName" required placeholder="John"
                                     style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                <div>
-                                    <label
-                                        style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Sport</label>
-                                    <select name="sport" required
-                                        style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
-                                        <option value="Football">Football</option>
-                                        <option value="Basketball">Basketball</option>
-                                        <option value="Rugby">Rugby</option>
-                                        <option value="Cricket">Cricket</option>
-                                        <option value="Tennis">Tennis</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label
-                                        style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Location</label>
-                                    <input type="text" name="location" required placeholder="London, UK"
-                                        style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
-                                </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Last
+                                    Name</label>
+                                <input type="text" name="lastName" required placeholder="Doe"
+                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
                             </div>
                         </div>
-
-                        <div style="display: flex; justify-content: flex-end; gap: 1rem;">
-                            <button type="button"
-                                onclick="document.getElementById('onboardClubModal').style.display = 'none'"
-                                class="btn btn-secondary">Cancel</button>
-                            <button type="submit" class="btn btn-primary">🚀 Create Club & User</button>
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Email
+                                Address</label>
+                            <input type="email" name="email" required placeholder="john@example.com"
+                                style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <!-- Club Details -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem;">🏢 Club Information</h3>
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Club
+                                Name</label>
+                            <input type="text" name="clubName" required placeholder="Elite FC"
+                                style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Sport</label>
+                                <select name="sport" required
+                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                                    <option value="Football">Football</option>
+                                    <option value="Basketball">Basketball</option>
+                                    <option value="Rugby">Rugby</option>
+                                    <option value="Cricket">Cricket</option>
+                                    <option value="Tennis">Tennis</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Location</label>
+                                <input type="text" name="location" required placeholder="London, UK"
+                                    style="width: 100%; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                        <button type="button"
+                            onclick="document.getElementById('onboardClubModal').style.display = 'none'"
+                            class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary">🚀 Create Club & User</button>
+                    </div>
+                </form>
             </div>
+        </div>
         </div>
         </div>
     </main>
@@ -709,6 +791,131 @@
 
             return true;
         }
+
+        // --- NAVIGATION & SECTIONS ---
+        function showSection(sectionId) {
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Find the button that was clicked and set it active
+            const event = window.event;
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+
+            // Update sections
+            document.querySelectorAll('.dashboard-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            const targetSection = document.getElementById(`section-${sectionId}`);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+
+            // Special handling for Stripe section
+            if (sectionId === 'stripe') {
+                loadStripeData();
+            }
+        }
+
+        async function loadStripeData() {
+            try {
+                const globalPlansTable = document.getElementById('globalPlansTable');
+                const recentPaymentsTable = document.getElementById('recentPaymentsTable');
+
+                globalPlansTable.innerHTML = '<div class="loading">Fetching plans...</div>';
+                recentPaymentsTable.innerHTML = '<div class="loading">Fetching payments...</div>';
+
+                const data = await apiService.makeRequest('/platform-admin/stripe/overview');
+
+                // Update Stats
+                document.getElementById('connectedOrgsCount').textContent = data.stats.connected_orgs;
+                const total = parseInt(data.stats.total_orgs) || 1;
+                const connected = parseInt(data.stats.connected_orgs) || 0;
+                const percent = Math.round((connected / total) * 100);
+                document.getElementById('connectedOrgsPercent').textContent = `${percent}% of total organizations connected`;
+
+                // Render Plans
+                if (data.plans.length === 0) {
+                    globalPlansTable.innerHTML = '<div class="loading">No plans found in system.</div>';
+                } else {
+                    globalPlansTable.innerHTML = `
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Organization</th>
+                                        <th>Plan Name</th>
+                                        <th>Price</th>
+                                        <th>Interval</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.plans.map(plan => `
+                                        <tr>
+                                            <td><strong>${plan.organization_name}</strong></td>
+                                            <td>${plan.name}</td>
+                                            <td>£${plan.price}</td>
+                                            <td>${plan.interval}</td>
+                                            <td>
+                                                <span class="badge ${plan.active ? 'badge-coach' : 'badge-owner'}">
+                                                    ${plan.active ? 'Active' : 'Inactive'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // Render Payments
+                if (data.payments.length === 0) {
+                    recentPaymentsTable.innerHTML = '<div class="loading">No payments found in system.</div>';
+                } else {
+                    recentPaymentsTable.innerHTML = `
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Organization</th>
+                                        <th>Player</th>
+                                        <th>Amount</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.payments.map(pay => `
+                                        <tr>
+                                            <td><strong>${pay.organization_name}</strong></td>
+                                            <td>${pay.first_name || 'N/A'} ${pay.last_name || ''}</td>
+                                            <td>£${pay.amount}</td>
+                                            <td>${new Date(pay.created_at).toLocaleDateString()}</td>
+                                            <td>
+                                                <span class="badge ${pay.payment_status === 'paid' ? 'badge-coach' : 'badge-owner'}">
+                                                    ${pay.payment_status.toUpperCase()}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('Error loading Stripe data:', error);
+                showToast('Error', 'Failed to load Stripe overview', 'error');
+            }
+        }
+
 
         // --- TOAST FUNCTIONALITY ---
         function showToast(title, message, type = 'info') {

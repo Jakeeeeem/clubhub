@@ -220,6 +220,52 @@ router.get(
   },
 );
 
+// GET /api/platform-admin/stripe/overview - Platform-wide Stripe data
+router.get(
+  "/stripe/overview",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      // 1. Get all plans with organization names
+      const plansResult = await query(`
+            SELECT p.*, o.name as organization_name
+            FROM plans p
+            JOIN organizations o ON p.club_id = o.id
+            ORDER BY p.created_at DESC
+        `);
+
+      // 2. Get recent payments across all organizations
+      const paymentsResult = await query(`
+            SELECT p.*, o.name as organization_name, u.first_name, u.last_name
+            FROM payments p
+            JOIN organizations o ON p.club_id = o.id
+            LEFT JOIN players pl ON p.player_id = pl.id
+            LEFT JOIN users u ON pl.user_id = u.id
+            ORDER BY p.created_at DESC
+            LIMIT 50
+        `);
+
+      // 3. Get connected account stats
+      const stripeStats = await query(`
+            SELECT 
+                COUNT(*) filter (where stripe_account_id IS NOT NULL) as connected_orgs,
+                COUNT(*) as total_orgs
+            FROM organizations
+        `);
+
+      res.json({
+        plans: plansResult.rows,
+        payments: paymentsResult.rows,
+        stats: stripeStats.rows[0],
+      });
+    } catch (error) {
+      console.error("Get Stripe overview error:", error);
+      res.status(500).json({ error: "Failed to fetch Stripe overview" });
+    }
+  },
+);
+
 // GET /api/platform-admin/organization/:id - Single organization details
 router.get(
   "/organization/:id",
