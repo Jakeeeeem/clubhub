@@ -1,25 +1,72 @@
 const { Pool } = require("pg");
 
-// Use DATABASE_URL from environment (set by Render)
-const DATABASE_URL = process.env.DATABASE_URL;
+// Check multiple possible environment variable names
+const DATABASE_URL =
+  process.env.DATABASE_URL ||
+  process.env.DB_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRESQL_URL;
 
+console.log("🔍 Checking environment variables...");
+console.log(
+  "DATABASE_URL:",
+  process.env.DATABASE_URL ? "✅ Set" : "❌ Not set",
+);
+console.log("DB_URL:", process.env.DB_URL ? "✅ Set" : "❌ Not set");
+console.log(
+  "POSTGRES_URL:",
+  process.env.POSTGRES_URL ? "✅ Set" : "❌ Not set",
+);
+
+// If still no URL, try building from individual components
 if (!DATABASE_URL) {
-  console.error("❌ DATABASE_URL environment variable not set!");
-  process.exit(1);
+  const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME } = process.env;
+
+  console.log("\n🔧 Trying to build connection string from components:");
+  console.log("DB_HOST:", DB_HOST || "❌ Not set");
+  console.log("DB_PORT:", DB_PORT || "❌ Not set");
+  console.log("DB_USER:", DB_USER || "❌ Not set");
+  console.log("DB_PASSWORD:", DB_PASSWORD ? "✅ Set" : "❌ Not set");
+  console.log("DB_NAME:", DB_NAME || "❌ Not set");
+
+  if (DB_HOST && DB_USER && DB_PASSWORD && DB_NAME) {
+    const port = DB_PORT || "5432";
+    const connectionString = `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${port}/${DB_NAME}`;
+    console.log("\n✅ Built connection string from components");
+
+    const pool = new Pool({
+      connectionString,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    runMigration(pool);
+  } else {
+    console.error(
+      "\n❌ Cannot connect to database - missing environment variables!",
+    );
+    console.error(
+      "Please set either DATABASE_URL or DB_HOST, DB_USER, DB_PASSWORD, DB_NAME",
+    );
+    process.exit(1);
+  }
+} else {
+  console.log(`\n🔗 Connecting to database...`);
+
+  const pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
+
+  runMigration(pool);
 }
 
-console.log(`🔗 Connecting to database...`);
-
-const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
-async function markMockData() {
+async function runMigration(pool) {
   try {
-    console.log("🧹 Marking existing test/mock data in production...\n");
+    console.log("\n🧹 Marking existing test/mock data in production...\n");
 
     // 1. Mark test organizations
     const orgs = await pool.query(`
@@ -104,5 +151,3 @@ async function markMockData() {
     await pool.end();
   }
 }
-
-markMockData();
