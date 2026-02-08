@@ -23,38 +23,60 @@ class OrganizationSwitcher {
     try {
       const response = await apiService.makeRequest("/auth/context");
       if (response.success) {
-        let organizations = response.organizations || [];
-
-        // Filter: If on Admin Dashboard, only show management roles
-        // Filter: If on Management Dashboards, only show relevant roles
-        const path = window.location.pathname;
-        if (
-          path.includes("admin-dashboard.html") ||
-          path.includes("coach-dashboard.html")
-        ) {
-          organizations = organizations.filter((org) => {
-            const role = (org.user_role || org.role || "").toLowerCase();
-            return [
-              "owner",
-              "admin",
-              "manager",
-              "coach",
-              "staff",
-              "assistant_coach",
-            ].includes(role);
-          });
-        }
-
-        this.organizations = organizations;
-        this.allOrganizations = organizations;
-        this.currentOrg = response.currentOrganization;
-
-        // Determine if user is Platform Admin
+        // Determine if user is Platform Admin FIRST
         const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
         this.isPlatformAdmin =
           user.is_platform_admin === true ||
           user.role === "superadmin" ||
           response.user?.is_platform_admin;
+
+        let organizations = response.organizations || [];
+
+        // If Platform Admin, fetch ALL organizations from platform-admin endpoint
+        if (this.isPlatformAdmin) {
+          try {
+            const allOrgsResponse = await apiService.makeRequest(
+              "/platform-admin/organizations?limit=1000",
+            );
+            if (allOrgsResponse.organizations) {
+              // Map to match the format from /auth/context
+              organizations = allOrgsResponse.organizations.map((org) => ({
+                id: org.id,
+                name: org.name,
+                sport: org.sport,
+                location: org.location,
+                logo_url: org.logo_url,
+                user_role: "Platform Admin",
+                role: "Platform Admin",
+              }));
+            }
+          } catch (error) {
+            console.warn("Failed to load all organizations:", error);
+          }
+        } else {
+          // For non-admins, filter based on dashboard type
+          const path = window.location.pathname;
+          if (
+            path.includes("admin-dashboard.html") ||
+            path.includes("coach-dashboard.html")
+          ) {
+            organizations = organizations.filter((org) => {
+              const role = (org.user_role || org.role || "").toLowerCase();
+              return [
+                "owner",
+                "admin",
+                "manager",
+                "coach",
+                "staff",
+                "assistant_coach",
+              ].includes(role);
+            });
+          }
+        }
+
+        this.organizations = organizations;
+        this.allOrganizations = organizations;
+        this.currentOrg = response.currentOrganization;
 
         this.render();
       }
