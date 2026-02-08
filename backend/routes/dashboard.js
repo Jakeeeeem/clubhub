@@ -305,12 +305,13 @@ router.get("/player", authenticateToken, async (req, res) => {
       console.log("attendance is:", attendance);
     }
 
-    // Get player's clubs (either from player record or empty)
     let clubs = [];
     if (clubIds.length > 0) {
       const clubsResult = await query(
         `
-        SELECT * FROM organizations WHERE id = ANY($1)
+        SELECT o.*,
+               (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id AND role = 'player') as member_count
+        FROM organizations o WHERE o.id = ANY($1)
       `,
         [clubIds],
       );

@@ -41,7 +41,7 @@ router.get("/", optionalAuth, async (req, res) => {
     // Dynamic query construction
     let queryText = `
       SELECT DISTINCT c.*, 
-             (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = c.id AND om.role != 'owner') as member_count,
+             (SELECT COUNT(*) FROM organization_members om WHERE om.organization_id = c.id AND om.role = 'player') as member_count,
              (SELECT COUNT(*) FROM events e WHERE e.club_id = c.id AND e.event_date >= CURRENT_DATE) as event_count
       FROM organizations c
     `;

@@ -346,16 +346,8 @@ async function startServer() {
         const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
         stripe.balance
           .retrieve()
-          .then((balance) => {
+          .then(() => {
             console.log("✅ Stripe connection successful");
-            console.log(
-              `💰 Stripe mode: ${process.env.STRIPE_SECRET_KEY.startsWith("sk_live") ? "LIVE" : "TEST"}`,
-            );
-            if (balance.available && balance.available.length > 0) {
-              console.log(
-                `💰 Available balance: ${balance.available[0].amount / 100} ${balance.available[0].currency.toUpperCase()}`,
-              );
-            }
           })
           .catch((err) => {
             console.error("❌ Stripe connection failed:", err.message);

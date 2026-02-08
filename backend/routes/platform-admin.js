@@ -106,7 +106,7 @@ router.get(
                 u.email as owner_email,
                 u.first_name as owner_first_name,
                 u.last_name as owner_last_name,
-                (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id) as member_count
+                (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id AND role = 'player') as member_count
             FROM organizations o
             LEFT JOIN users u ON o.owner_id = u.id
         `;
