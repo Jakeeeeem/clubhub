@@ -1490,7 +1490,7 @@ router.post(
       const hashedPassword = await bcrypt.hash(password, 10);
 
       await query(
-        "UPDATE users SET password = $1, reset_token = NULL, reset_expires = NULL WHERE id = $2",
+        "UPDATE users SET password_hash = $1, reset_token = NULL, reset_expires = NULL WHERE id = $2",
         [hashedPassword, user.id],
       );
 
