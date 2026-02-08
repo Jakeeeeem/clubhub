@@ -363,13 +363,22 @@
             // HANDLE INVITATION PARAMETERS
             // ============================================================================
             const urlParams = new URLSearchParams(window.location.search);
-            const inviteToken = urlParams.get('invite');
+            let inviteToken = urlParams.get('invite');
             const inviteEmail = urlParams.get('email');
+
+            // IMPORTANT: Also check localStorage for pending invite token
+            // This handles the case where user clicked "Create Account" from invite page
+            if (!inviteToken) {
+                inviteToken = localStorage.getItem('pendingInviteToken');
+                if (inviteToken) {
+                    console.log('📧 Found pending invite token in localStorage');
+                }
+            }
 
             if (inviteToken) {
                 console.log('📧 Invitation detected, pre-filling email');
 
-                // Store the invite token for later
+                // Store the invite token for later (in case it came from URL)
                 localStorage.setItem('pendingInviteToken', inviteToken);
 
                 // Pre-fill email if provided
