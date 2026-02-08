@@ -286,15 +286,17 @@ router.get("/player", authenticateToken, async (req, res) => {
       }
     }
     // 3. If we still have no clubIds but the user has some, use them as fallback
+    // IMPORTANT: Only show clubs where the player has an actual player record (has been added to the club)
+    // NOT just organization_members entries (which might be pending invitations)
     if (clubIds.length === 0) {
       const userClubs = await query(
         `
-         SELECT organization_id FROM organization_members 
-         WHERE user_id = $1 AND role = 'player' AND status = 'active'
+         SELECT DISTINCT club_id FROM players 
+         WHERE user_id = $1
        `,
         [userId],
       );
-      clubIds = userClubs.rows.map((r) => r.organization_id);
+      clubIds = userClubs.rows.map((r) => r.club_id);
     }
 
     let attendance = null;
