@@ -1,14 +1,20 @@
 const { Pool } = require("pg");
-const dotenv = require("dotenv");
 
-dotenv.config();
+// Use DATABASE_URL from environment (set by Render)
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  console.error("❌ DATABASE_URL environment variable not set!");
+  process.exit(1);
+}
+
+console.log(`🔗 Connecting to database...`);
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : false,
+  connectionString: DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 async function markMockData() {
