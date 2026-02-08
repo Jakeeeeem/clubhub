@@ -1,34 +1,56 @@
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
-const emailService = require('./services/email-service');
+const emailService = require("./services/email-service");
 
 async function testEmail() {
-    console.log('📧 Testing Email Configuration...');
-    console.log('Configured Service:', process.env.EMAIL_SERVICE || 'None/Ethereal');
-    console.log('SMTP Host:', process.env.SENDPULSE_SMTP_USER ? 'Present' : 'Missing User');
-    console.log('SMTP Port:', process.env.SENDPULSE_SMTP_PORT || 'Default');
+  console.log("📧 Testing email configuration...\n");
 
-    try {
-        const isConnected = await emailService.verifyConnection();
-        if (isConnected) {
-            console.log('✅ Connection Verified!');
-            // Try sending a real email if an argument is provided, otherwise just verify
-            const testRecipient = process.argv[2];
-            if (testRecipient) {
-                console.log(`Attempting to send test email to ${testRecipient}...`);
-                await emailService.sendTestEmail(testRecipient);
-                console.log('✅ Test email sent!');
-            } else {
-                console.log('ℹ️ No recipient provided, skipping send test. Pass email as argument to test sending.');
-            }
-        } else {
-            console.error('❌ Connection Verification Failed.');
-            process.exit(1);
-        }
-    } catch (error) {
-        console.error('❌ Error:', error);
-        process.exit(1);
+  try {
+    // Verify connection first
+    console.log("🔍 Verifying SMTP connection...");
+    const isConnected = await emailService.verifyConnection();
+
+    if (!isConnected) {
+      console.error("❌ SMTP connection failed. Check your credentials.");
+      process.exit(1);
     }
+
+    console.log("✅ SMTP connection verified!\n");
+
+    // Send test email
+    console.log("📤 Sending test email to: instantonlinesuccess@gmail.com");
+    const result = await emailService.sendTestEmail(
+      "instantonlinesuccess@gmail.com",
+    );
+
+    console.log("\n✅ Test email sent successfully!");
+    console.log("Message ID:", result.messageId);
+
+    if (result.previewUrl) {
+      console.log("Preview URL (dev only):", result.previewUrl);
+    }
+
+    console.log("\n📬 Check your inbox at instantonlinesuccess@gmail.com");
+  } catch (error) {
+    console.error("\n❌ Email test failed:");
+    console.error("Error:", error.message);
+
+    if (error.code) {
+      console.error("Error Code:", error.code);
+    }
+
+    if (error.response) {
+      console.error("SMTP Response:", error.response);
+    }
+
+    process.exit(1);
+  }
 }
 
-testEmail();
+testEmail()
+  .then(() => {
+    console.log("\n✅ Email test completed!");
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error("\n❌ Unexpected error:", error);
+    process.exit(1);
+  });

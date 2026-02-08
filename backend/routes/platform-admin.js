@@ -611,8 +611,72 @@ router.delete(
         return res.status(404).json({ error: "User not found" });
       }
 
-      // HARD DELETE (Cascading due to foreign keys typically, or we might need manual cleanup if not set to CASCADE)
-      // Assuming foreign keys are set to ON DELETE CASCADE for simplicity based on request "delete accounts"
+      // HARD DELETE with manual cascading cleanup
+      console.log(`🗑️ Deleting user and related data...`);
+
+      // 1. User preferences
+      await query("DELETE FROM user_preferences WHERE user_id = $1", [userId]);
+
+      // 2. Organization memberships
+      await query("DELETE FROM organization_members WHERE user_id = $1", [
+        userId,
+      ]);
+
+      // 3. Player plans
+      await query("DELETE FROM player_plans WHERE user_id = $1", [userId]);
+
+      // 4. Invitations
+      await query("DELETE FROM invitations WHERE invited_by = $1", [userId]);
+
+      // 5. Players and their data
+      const players = await query("SELECT id FROM players WHERE user_id = $1", [
+        userId,
+      ]);
+      if (players.rows.length > 0) {
+        const playerIds = players.rows.map((p) => p.id);
+        await query("DELETE FROM player_stats WHERE player_id = ANY($1)", [
+          playerIds,
+        ]);
+        await query("DELETE FROM payments WHERE player_id = ANY($1)", [
+          playerIds,
+        ]);
+        await query("DELETE FROM team_players WHERE player_id = ANY($1)", [
+          playerIds,
+        ]);
+        await query("DELETE FROM players WHERE user_id = $1", [userId]);
+      }
+
+      // 6. Staff
+      await query("DELETE FROM staff WHERE user_id = $1", [userId]);
+
+      // 7. User profile
+      await query("DELETE FROM user_profiles WHERE user_id = $1", [userId]);
+
+      // 8. Owned organizations
+      const ownedOrgs = await query(
+        "SELECT id FROM organizations WHERE owner_id = $1",
+        [userId],
+      );
+      if (ownedOrgs.rows.length > 0) {
+        const orgIds = ownedOrgs.rows.map((o) => o.id);
+        await query("DELETE FROM events WHERE club_id = ANY($1)", [orgIds]);
+        await query("DELETE FROM teams WHERE club_id = ANY($1)", [orgIds]);
+        await query("DELETE FROM plans WHERE organization_id = ANY($1)", [
+          orgIds,
+        ]);
+        await query(
+          "DELETE FROM subscriptions WHERE organization_id = ANY($1)",
+          [orgIds],
+        );
+        await query(
+          "DELETE FROM organization_members WHERE organization_id = ANY($1)",
+          [orgIds],
+        );
+        await query("DELETE FROM organizations WHERE id = ANY($1)", [orgIds]);
+        await query("DELETE FROM clubs WHERE id = ANY($1)", [orgIds]);
+      }
+
+      // 9. Finally, delete the user
       await query("DELETE FROM users WHERE id = $1", [userId]);
 
       res.json({
