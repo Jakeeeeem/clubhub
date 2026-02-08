@@ -9,6 +9,7 @@ let PlayerDashboardState = {
   payments: [],
   bookings: [],
   applications: [],
+  invitations: [],
   documents: [],
   players: [],
   plans: [],
@@ -496,6 +497,7 @@ async function loadPlayerDataWithFallback() {
       PlayerDashboardState.payments = dashboardData.payments || [];
       PlayerDashboardState.bookings = dashboardData.bookings || [];
       PlayerDashboardState.applications = dashboardData.applications || [];
+      PlayerDashboardState.invitations = dashboardData.invitations || [];
       return;
     } catch (e) {
       console.warn("Unified dashboard failed, trying individual calls:", e);
@@ -670,7 +672,47 @@ function loadPlayerClubs() {
   const grid = byId("playerClubsContainer");
   if (!grid) return;
 
-  if (!PlayerDashboardState.clubs.length) {
+  let invitationsHTML = "";
+  if (
+    PlayerDashboardState.invitations &&
+    PlayerDashboardState.invitations.length > 0
+  ) {
+    invitationsHTML = `
+      <div class="invitations-section" style="margin-bottom: 2.5rem; background: rgba(220, 38, 38, 0.03); border: 1px solid rgba(220, 38, 38, 0.15); border-radius: 16px; padding: 1.5rem;">
+        <h3 style="margin-bottom: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 0.75rem; font-size: 1.1rem;">
+          <span style="font-size: 1.3rem;">✉️</span> Pending Invitations
+          <span style="background: var(--primary); color: white; border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700;">${PlayerDashboardState.invitations.length}</span>
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+          ${PlayerDashboardState.invitations
+            .map(
+              (inv) => `
+            <div class="card" style="margin: 0; border: 1px dashed var(--primary); background: rgba(220, 38, 38, 0.05); box-shadow: none;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem; overflow: hidden;">
+                  <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; flex-shrink: 0;">
+                    ${(inv.club_name || "C").charAt(0).toUpperCase()}
+                  </div>
+                  <div style="overflow: hidden;">
+                    <h4 style="margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem;">${escapeHTML(inv.club_name)}</h4>
+                    <p style="margin: 2px 0 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Invitation Received</p>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                  <button class="btn btn-small btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;" onclick="acceptInvitation('${inv.organization_id}')">Accept</button>
+                  <button class="btn btn-small btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.1);" onclick="declineInvitation('${inv.organization_id}')">No</button>
+                </div>
+              </div>
+            </div>
+          `,
+            )
+            .join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  if (!PlayerDashboardState.clubs.length && !invitationsHTML) {
     grid.innerHTML =
       '<div class="empty-state">' +
       "<h4>No clubs joined yet</h4>" +
@@ -686,6 +728,17 @@ function loadPlayerClubs() {
 
   // Clear grid class
   grid.classList.remove("card-grid");
+
+  let clubsHeader =
+    PlayerDashboardState.clubs.length > 0
+      ? `<h3 style="margin-bottom: 1.2rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.75rem;">
+      <span style="font-size: 1.3rem;">🏰</span> Your Active Clubs
+    </h3>`
+      : "";
+
+  grid.innerHTML = invitationsHTML + clubsHeader;
+
+  if (!PlayerDashboardState.clubs.length) return;
 
   const clubsHTML = `
     <div class="table-responsive">
@@ -739,7 +792,7 @@ function loadPlayerClubs() {
     </div>
   `;
 
-  grid.innerHTML = clubsHTML;
+  grid.innerHTML += clubsHTML;
 
   const staffBody = byId("clubStaffTableBody");
   if (staffBody) {
@@ -3970,3 +4023,56 @@ function calculateAge(dateOfBirth) {
   return age;
 }
 window.calculateAge = calculateAge;
+
+/**
+ * Handle accepting a club invitation
+ */
+async function acceptInvitation(orgId) {
+  if (!confirm("Are you sure you want to accept this invitation?")) return;
+  try {
+    showLoading(true);
+    const res = await apiService.makeRequest(`/dashboard/invitations/${orgId}/accept`, {
+      method: "POST",
+    });
+    showNotification(res.message || "Invitation accepted!", "success");
+    
+    // Reload everything to reflect new membership
+    await loadPlayerDataWithFallback();
+    loadPlayerClubs();
+    loadPlayerOverview();
+    
+  } catch (err) {
+    console.error("Failed to accept invitation:", err);
+    showNotification(err.message || "Failed to accept invitation", "error");
+  } finally {
+    showLoading(false);
+  }
+}
+
+/**
+ * Handle declining a club invitation
+ */
+async function declineInvitation(orgId) {
+  if (!confirm("Are you sure you want to decline this invitation?")) return;
+  try {
+    showLoading(true);
+    const res = await apiService.makeRequest(`/dashboard/invitations/${orgId}/decline`, {
+      method: "POST",
+    });
+    showNotification(res.message || "Invitation declined", "info");
+    
+    // Reload state
+    await loadPlayerDataWithFallback();
+    loadPlayerClubs();
+    
+  } catch (err) {
+    console.error("Failed to decline invitation:", err);
+    showNotification(err.message || "Failed to decline invitation", "error");
+  } finally {
+    showLoading(false);
+  }
+}
+
+// Export to window
+window.acceptInvitation = acceptInvitation;
+window.declineInvitation = declineInvitation;

@@ -438,7 +438,19 @@ router.get("/player", authenticateToken, async (req, res) => {
       JOIN organizations c ON ca.club_id = c.id
       WHERE ca.user_id = $1
       ORDER BY ca.submitted_at DESC
-`,
+    `,
+      [userId],
+    );
+
+    // Get pending invitations
+    const invitationsResult = await query(
+      `
+      SELECT om.*, c.name as club_name, c.logo_url
+      FROM organization_members om
+      JOIN organizations c ON om.organization_id = c.id
+      WHERE om.user_id = $1 AND om.status = 'pending'
+      ORDER BY om.created_at DESC
+    `,
       [userId],
     );
 
@@ -448,6 +460,8 @@ router.get("/player", authenticateToken, async (req, res) => {
       teamsCount: teams.length,
       eventsCount: eventsResult.rows.length,
       paymentsCount: payments.length,
+      invitationsCount: invitationsResult.rows.length,
+      applicationsCount: applicationsResult.rows.length,
     });
 
     if (player) {
@@ -463,6 +477,7 @@ router.get("/player", authenticateToken, async (req, res) => {
       payments,
       bookings,
       applications: applicationsResult.rows,
+      invitations: invitationsResult.rows,
     });
   } catch (error) {
     console.error("Get player dashboard error:", error);
@@ -491,5 +506,63 @@ function calculateAge(dateOfBirth) {
 
   return age;
 }
+
+// Accept an invitation
+router.post(
+  "/invitations/:orgId/accept",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { orgId } = req.params;
+
+      // Check if there is a pending invitation
+      const inviteCheck = await query(
+        `SELECT * FROM organization_members WHERE organization_id = $1 AND user_id = $2 AND status = 'pending'`,
+        [orgId, userId],
+      );
+
+      if (inviteCheck.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "No pending invitation found for this club" });
+      }
+
+      // Update status to active
+      await query(
+        `UPDATE organization_members SET status = 'active' WHERE organization_id = $1 AND user_id = $2`,
+        [orgId, userId],
+      );
+
+      res.json({ success: true, message: "Invitation accepted successfully!" });
+    } catch (error) {
+      console.error("Accept invitation error:", error);
+      res.status(500).json({ error: "Failed to accept invitation" });
+    }
+  },
+);
+
+// Decline an invitation
+router.post(
+  "/invitations/:orgId/decline",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { orgId } = req.params;
+
+      // Delete the pending membership
+      await query(
+        `DELETE FROM organization_members WHERE organization_id = $1 AND user_id = $2 AND status = 'pending'`,
+        [orgId, userId],
+      );
+
+      res.json({ success: true, message: "Invitation declined" });
+    } catch (error) {
+      console.error("Decline invitation error:", error);
+      res.status(500).json({ error: "Failed to decline invitation" });
+    }
+  },
+);
 
 module.exports = router;
