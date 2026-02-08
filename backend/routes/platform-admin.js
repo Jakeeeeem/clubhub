@@ -42,17 +42,35 @@ router.get(
   async (req, res) => {
     try {
       const { includeMock = "false" } = req.query;
+
+      // Check if is_mock column exists
+      const columnCheck = await query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'organizations' AND column_name = 'is_mock'
+      `);
+      const hasMockColumn = columnCheck.rows.length > 0;
+
+      // Build conditions based on column existence
       const mockCondition =
-        includeMock === "true" ? "" : " WHERE is_mock = false";
+        !hasMockColumn || includeMock === "true"
+          ? ""
+          : " WHERE is_mock = false OR is_mock IS NULL";
       const mockConditionAnd =
-        includeMock === "true" ? "" : " AND is_mock = false";
+        !hasMockColumn || includeMock === "true"
+          ? ""
+          : " AND (is_mock = false OR is_mock IS NULL)";
+      const mockConditionJoin =
+        !hasMockColumn || includeMock === "true"
+          ? ""
+          : " AND (o.is_mock = false OR o.is_mock IS NULL)";
 
       // Get total counts
       const stats = await query(`
             SELECT 
                 (SELECT COUNT(*) FROM users ${mockCondition}) as total_users,
                 (SELECT COUNT(*) FROM organizations ${mockCondition}) as total_organizations,
-                (SELECT COUNT(*) FROM organization_members om JOIN organizations o ON om.organization_id = o.id WHERE o.is_mock = ${includeMock === "true"}) as total_memberships,
+                (SELECT COUNT(*) FROM organization_members om JOIN organizations o ON om.organization_id = o.id WHERE 1=1 ${mockConditionJoin}) as total_memberships,
                 (SELECT COUNT(*) FROM invitations WHERE status = 'pending') as pending_invitations,
                 (SELECT COUNT(*) FROM plans WHERE active = true ${mockConditionAnd}) as active_plans
         `);
@@ -111,8 +129,19 @@ router.get(
         includeMock = "false",
       } = req.query;
       const offset = (page - 1) * limit;
+
+      // Check if is_mock column exists
+      const columnCheck = await query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'organizations' AND column_name = 'is_mock'
+      `);
+      const hasMockColumn = columnCheck.rows.length > 0;
+
       const mockCondition =
-        includeMock === "true" ? "" : " AND o.is_mock = false";
+        !hasMockColumn || includeMock === "true"
+          ? ""
+          : " AND (o.is_mock = false OR o.is_mock IS NULL)";
 
       let queryText = `
             SELECT 
