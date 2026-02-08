@@ -79,6 +79,7 @@ function generateToken(user) {
       id: user.id,
       email: user.email,
       accountType: user.account_type,
+      isPlatformAdmin: user.is_platform_admin || false,
     },
     JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
@@ -441,7 +442,12 @@ router.post(
 
         if (isMatch) {
           const token = jwt.sign(
-            { id: user.id, email: user.email, accountType: user.account_type },
+            {
+              id: user.id,
+              email: user.email,
+              accountType: user.account_type,
+              isPlatformAdmin: user.is_platform_admin || false,
+            },
             JWT_SECRET,
             { expiresIn: "7d" },
           );
@@ -664,7 +670,12 @@ router.post(
         return res.status(401).json({ error: "Invalid email or password" });
 
       const token = jwt.sign(
-        { id: user.id, email: user.email, accountType: user.account_type },
+        {
+          id: user.id,
+          email: user.email,
+          accountType: user.account_type,
+          isPlatformAdmin: user.is_platform_admin || false,
+        },
         JWT_SECRET,
         { expiresIn: "7d" },
       );

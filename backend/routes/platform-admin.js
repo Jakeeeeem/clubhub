@@ -41,27 +41,34 @@ router.get(
   requirePlatformAdmin,
   async (req, res) => {
     try {
+      const { includeMock = "false" } = req.query;
+      const mockCondition =
+        includeMock === "true" ? "" : " WHERE is_mock = false";
+      const mockConditionAnd =
+        includeMock === "true" ? "" : " AND is_mock = false";
+
       // Get total counts
       const stats = await query(`
             SELECT 
-                (SELECT COUNT(*) FROM users) as total_users,
-                (SELECT COUNT(*) FROM organizations) as total_organizations,
-                (SELECT COUNT(*) FROM organization_members) as total_memberships,
+                (SELECT COUNT(*) FROM users ${mockCondition}) as total_users,
+                (SELECT COUNT(*) FROM organizations ${mockCondition}) as total_organizations,
+                (SELECT COUNT(*) FROM organization_members om JOIN organizations o ON om.organization_id = o.id WHERE o.is_mock = ${includeMock === "true"}) as total_memberships,
                 (SELECT COUNT(*) FROM invitations WHERE status = 'pending') as pending_invitations,
-                (SELECT COUNT(*) FROM plans WHERE active = true) as active_plans
+                (SELECT COUNT(*) FROM plans WHERE active = true ${mockConditionAnd}) as active_plans
         `);
 
       // Get recent signups (last 30 days)
       const recentSignups = await query(`
             SELECT COUNT(*) as count
             FROM users
-            WHERE created_at >= NOW() - INTERVAL '30 days'
+            WHERE created_at >= NOW() - INTERVAL '30 days' ${mockConditionAnd}
         `);
 
       // Get organizations by sport
       const orgsBySport = await query(`
             SELECT sport, COUNT(*) as count
             FROM organizations
+            ${mockCondition}
             GROUP BY sport
             ORDER BY count DESC
         `);
@@ -72,7 +79,7 @@ router.get(
                 DATE(created_at) as date,
                 COUNT(*) as count
             FROM users
-            WHERE created_at >= NOW() - INTERVAL '7 days'
+            WHERE created_at >= NOW() - INTERVAL '7 days' ${mockConditionAnd}
             GROUP BY DATE(created_at)
             ORDER BY date DESC
         `);
@@ -97,8 +104,15 @@ router.get(
   requirePlatformAdmin,
   async (req, res) => {
     try {
-      const { page = 1, limit = 20, search = "" } = req.query;
+      const {
+        page = 1,
+        limit = 20,
+        search = "",
+        includeMock = "false",
+      } = req.query;
       const offset = (page - 1) * limit;
+      const mockCondition =
+        includeMock === "true" ? "" : " AND o.is_mock = false";
 
       let queryText = `
             SELECT 
@@ -109,12 +123,13 @@ router.get(
                 (SELECT COUNT(*) FROM organization_members WHERE organization_id = o.id AND role = 'player') as member_count
             FROM organizations o
             LEFT JOIN users u ON o.owner_id = u.id
+            WHERE 1=1 ${mockCondition}
         `;
 
       const params = [];
 
       if (search) {
-        queryText += ` WHERE o.name ILIKE $1 OR o.slug ILIKE $1`;
+        queryText += ` AND (o.name ILIKE $1 OR o.slug ILIKE $1)`;
         params.push(`%${search}%`);
       }
 
@@ -124,9 +139,9 @@ router.get(
       const organizations = await query(queryText, params);
 
       // Get total count
-      let countQuery = "SELECT COUNT(*) FROM organizations";
+      let countQuery = `SELECT COUNT(*) FROM organizations o WHERE 1=1 ${mockCondition}`;
       if (search) {
-        countQuery += ` WHERE name ILIKE $1 OR slug ILIKE $1`;
+        countQuery += ` AND (o.name ILIKE $1 OR o.slug ILIKE $1)`;
       }
       const totalCount = await query(countQuery, search ? [`%${search}%`] : []);
 
@@ -227,21 +242,30 @@ router.get(
   requirePlatformAdmin,
   async (req, res) => {
     try {
-      // 1. Get all plans with organization names
+      const { includeMock = "false" } = req.query;
+      const mockCondition =
+        includeMock === "true" ? "" : " WHERE o.is_mock = false";
+      const mockConditionPayments =
+        includeMock === "true" ? "" : " WHERE o.is_mock = false";
+
+      // 1. Get all plans with organization names and stripe status
       const plansResult = await query(`
-            SELECT p.*, o.name as organization_name
+            SELECT p.*, o.name as organization_name, o.stripe_account_id
             FROM plans p
             JOIN organizations o ON p.club_id = o.id
+            ${mockCondition}
             ORDER BY p.created_at DESC
         `);
 
       // 2. Get recent payments across all organizations
       const paymentsResult = await query(`
-            SELECT p.*, o.name as organization_name, u.first_name, u.last_name
+            SELECT p.*, o.name as organization_name, o.stripe_account_id as org_stripe_account_id,
+                   u.first_name, u.last_name, u.email as user_email
             FROM payments p
             JOIN organizations o ON p.club_id = o.id
             LEFT JOIN players pl ON p.player_id = pl.id
             LEFT JOIN users u ON pl.user_id = u.id
+            ${mockConditionPayments}
             ORDER BY p.created_at DESC
             LIMIT 50
         `);
@@ -251,7 +275,8 @@ router.get(
             SELECT 
                 COUNT(*) filter (where stripe_account_id IS NOT NULL) as connected_orgs,
                 COUNT(*) as total_orgs
-            FROM organizations
+            FROM organizations o
+            ${mockCondition}
         `);
 
       res.json({
@@ -443,7 +468,11 @@ router.get(
   requirePlatformAdmin,
   async (req, res) => {
     try {
-      const { limit = 50 } = req.query;
+      const { limit = 50, includeMock = "false" } = req.query;
+      const mockCondition =
+        includeMock === "true" ? "" : " WHERE o.is_mock = false";
+      const mockConditionUsers =
+        includeMock === "true" ? "" : " WHERE u.is_mock = false";
 
       // Get recent organizations
       const recentOrgs = await query(
@@ -455,6 +484,7 @@ router.get(
                 u.email as user_email
             FROM organizations o
             LEFT JOIN users u ON o.owner_id = u.id
+            ${mockCondition}
             ORDER BY o.created_at DESC
             LIMIT $1
         `,
@@ -466,11 +496,12 @@ router.get(
         `
             SELECT 
                 'user_registered' as type,
-                CONCAT(first_name, ' ', last_name) as title,
-                created_at as timestamp,
-                email as user_email
-            FROM users
-            ORDER BY created_at DESC
+                CONCAT(u.first_name, ' ', u.last_name) as title,
+                u.created_at as timestamp,
+                u.email as user_email
+            FROM users u
+            ${mockConditionUsers}
+            ORDER BY u.created_at DESC
             LIMIT $1
         `,
         [limit],
@@ -486,6 +517,7 @@ router.get(
                 i.email as user_email
             FROM invitations i
             LEFT JOIN organizations o ON i.organization_id = o.id
+            ${mockCondition}
             ORDER BY i.created_at DESC
             LIMIT $1
         `,

@@ -233,6 +233,11 @@
             <input type="checkbox" id="demoModeToggle" onchange="toggleDemoMode()" style="width: 18px; height: 18px;">
             <span style="color: #cbd5e1; font-weight: 500;">Enable Demo / Offline Mode</span>
         </label>
+        <label id="mockDataToggleLabel"
+            style="display: none; align-items: center; gap: 8px; cursor: pointer; user-select: none; margin-left: 20px;">
+            <input type="checkbox" id="mockDataToggle" style="width: 18px; height: 18px;">
+            <span style="color: #fbbf24; font-weight: 500;">✨ Generate Mock Data on Login</span>
+        </label>
         <div style="width: 1px; height: 24px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
         <button class="btn btn-secondary" onclick="clearStorage()">🗑️ Clear LocalStorage</button>
         <button class="btn btn-secondary" onclick="checkContext()">🔍 Check Auth State</button>
@@ -288,6 +293,13 @@
         function toggleDemoMode() {
             const isChecked = document.getElementById('demoModeToggle').checked;
             localStorage.setItem('isDemoSession', isChecked);
+
+            // Show/hide mock data checkbox
+            const mockDataLabel = document.getElementById('mockDataToggleLabel');
+            if (mockDataLabel) {
+                mockDataLabel.style.display = isChecked ? 'flex' : 'none';
+            }
+
             updateSubtitle();
             showStatus(isChecked ? 'Demo Mode Enabled' : 'Demo Mode Disabled', 'success');
         }
@@ -382,12 +394,38 @@
             }
         }
 
-        function handleDemoLogin(email) {
+        async function handleDemoLogin(email) {
             showStatus('Processing Demo Login...', 'success');
 
-            setTimeout(() => {
+            const shouldGenerateMock = document.getElementById('mockDataToggle').checked;
+
+            setTimeout(async () => {
                 const user = MOCK_USERS[email];
                 if (user) {
+                    // If mock data generation is requested, trigger it via API
+                    if (shouldGenerateMock && user.is_platform_admin) {
+                        try {
+                            showStatus('Generating mock data...', 'success');
+                            const token = 'demo-bypass-token-' + Date.now();
+                            localStorage.setItem('authToken', token);
+
+                            const response = await fetch(`${API_BASE}/platform-admin/generate-mock-data`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ orgs: true, users: true, events: true })
+                            });
+
+                            if (response.ok) {
+                                showStatus('Mock data generated!', 'success');
+                            }
+                        } catch (err) {
+                            console.warn('Mock data generation skipped (demo mode):', err);
+                        }
+                    }
+
                     handleLoginSuccess({
                         token: 'demo-bypass-token-' + Date.now(),
                         user: user

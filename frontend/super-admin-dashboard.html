@@ -467,120 +467,122 @@
                 </div>
 
             </div>
-        </div>
 
-        <!-- System Section -->
-        <div id="section-system" class="dashboard-section section-card">
-            <div class="section-header">
-                <h2 style="color: #ff6b6b;">⚠️ Data Management & System</h2>
-            </div>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button class="btn btn-warning" onclick="confirmResetData()"
-                    style="background: #dc2626; color: white; border: none;">
-                    🗑️ Reset All Data
-                </button>
-                <button class="btn btn-primary" onclick="showGenerateMockModal()">
-                    ✨ Generate Mock Data
-                </button>
-            </div>
-            <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8; max-width: 600px;">
-                <strong>Reset All Data:</strong> Wipes all organizations, users, events, and bookings. Resets the
-                database to a clean slate. Only the Super Admin account remains.<br>
-                <strong>Generate Mock Data:</strong> Populates the database with realistic sample organizations,
-                players, teams, and events for testing.
-            </p>
-        </div>
-
-        <!-- Organizations Section -->
-        <div id="section-organizations" class="dashboard-section section-card">
-            <div class="section-header">
-                <h2>Organizations</h2>
-                <button class="btn btn-primary btn-small" onclick="refreshOrganizations()">Refresh</button>
+            <!-- System Section -->
+            <div id="section-system" class="dashboard-section section-card">
+                <div class="section-header">
+                    <h2 style="color: #ff6b6b;">⚠️ Data Management & System</h2>
+                </div>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-warning" onclick="confirmResetData()"
+                        style="background: #dc2626; color: white; border: none;">
+                        🗑️ Reset All Data
+                    </button>
+                    <button class="btn btn-primary" onclick="showGenerateMockModal()">
+                        ✨ Generate Mock Data
+                    </button>
+                </div>
+                <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8; max-width: 600px;">
+                    <strong>Reset All Data:</strong> Wipes all organizations, users, events, and bookings. Resets the
+                    database to a clean slate. Only the Super Admin account remains.<br>
+                    <strong>Generate Mock Data:</strong> Populates the database with realistic sample organizations,
+                    players, teams, and events for testing.
+                </p>
             </div>
 
-            <div class="search-bar">
-                <input type="text" id="orgSearch" placeholder="Search organizations..." onkeyup="searchOrganizations()">
-            </div>
+            <!-- Organizations Section -->
+            <div id="section-organizations" class="dashboard-section section-card">
+                <div class="section-header">
+                    <h2>Organizations</h2>
+                    <button class="btn btn-primary btn-small" onclick="refreshOrganizations()">Refresh</button>
+                </div>
 
-            <div id="organizationsTable">
-                <div class="loading">Loading organizations...</div>
-            </div>
-        </div>
+                <div class="search-bar">
+                    <input type="text" id="orgSearch" placeholder="Search organizations..."
+                        onkeyup="searchOrganizations()">
+                </div>
 
-        <!-- Users Section -->
-        <div id="section-users" class="dashboard-section section-card">
-            <div class="section-header">
-                <h2>Users</h2>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="btn btn-primary btn-small" onclick="showOnboardClubModal()">🚀 Fast Onboard
-                        Club</button>
-                    <button class="btn btn-primary btn-small" onclick="showCreateUserModal()">+ New User</button>
-                    <button class="btn btn-primary btn-small" onclick="refreshUsers()">Refresh</button>
+                <div id="organizationsTable">
+                    <div class="loading">Loading organizations...</div>
                 </div>
             </div>
 
-            <div class="search-bar">
-                <input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()">
-                <select id="accountTypeFilter" onchange="filterUsers()">
-                    <option value="">All Account Types</option>
-                    <option value="adult">Player/Adult</option>
-                    <option value="organization">Organization</option>
-                </select>
-            </div>
+            <!-- Users Section -->
+            <div id="section-users" class="dashboard-section section-card">
+                <div class="section-header">
+                    <h2>Users</h2>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-primary btn-small" onclick="showOnboardClubModal()">🚀 Fast Onboard
+                            Club</button>
+                        <button class="btn btn-primary btn-small" onclick="showCreateUserModal()">+ New User</button>
+                        <button class="btn btn-primary btn-small" onclick="refreshUsers()">Refresh</button>
+                    </div>
+                </div>
 
-            <div id="usersTable">
-                <div class="loading">Loading users...</div>
-            </div>
-        </div>
+                <div class="search-bar">
+                    <input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()">
+                    <select id="accountTypeFilter" onchange="filterUsers()">
+                        <option value="">All Account Types</option>
+                        <option value="adult">Player/Adult</option>
+                        <option value="organization">Organization</option>
+                    </select>
+                </div>
 
-        <!-- Stripe Section -->
-        <div id="section-stripe" class="dashboard-section section-card">
-            <div class="section-header">
-                <h2>Platform Stripe Overview</h2>
-                <button class="btn btn-primary btn-small" onclick="loadStripeData()">Refresh Stripe Data</button>
-            </div>
-
-            <div class="stats-grid" id="stripeStatsGrid">
-                <div class="stat-card">
-                    <h3>Connected Clubs</h3>
-                    <div class="value" id="connectedOrgsCount">-</div>
-                    <div class="change" id="connectedOrgsPercent">Loading...</div>
+                <div id="usersTable">
+                    <div class="loading">Loading users...</div>
                 </div>
             </div>
 
-            <h3 style="margin: 2rem 0 1rem 0;">Global Payment Plans</h3>
-            <div id="globalPlansTable">
-                <div class="loading">Loading plans...</div>
+            <!-- Stripe Section -->
+            <div id="section-stripe" class="dashboard-section section-card">
+                <div class="section-header">
+                    <h2>Platform Stripe Overview</h2>
+                    <button class="btn btn-primary btn-small" onclick="loadStripeData()">Refresh Stripe Data</button>
+                </div>
+
+                <div class="stats-grid" id="stripeStatsGrid">
+                    <div class="stat-card">
+                        <h3>Connected Clubs</h3>
+                        <div class="value" id="connectedOrgsCount">-</div>
+                        <div class="change" id="connectedOrgsPercent">Loading...</div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem 0;">Global Payment Plans</h3>
+                <div id="globalPlansTable">
+                    <div class="loading">Loading plans...</div>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem 0;">Recent Platform Payments</h3>
+                <div id="recentPaymentsTable">
+                    <div class="loading">Loading payments...</div>
+                </div>
             </div>
 
-            <h3 style="margin: 2rem 0 1rem 0;">Recent Platform Payments</h3>
-            <div id="recentPaymentsTable">
-                <div class="loading">Loading payments...</div>
-            </div>
-        </div>
+            <!-- Activity Section -->
+            <div id="section-activity" class="dashboard-section section-card">
+                <div class="section-header">
+                    <h2>Recent Activity Feed</h2>
+                    <button class="btn btn-primary btn-small" onclick="refreshActivity()">Refresh</button>
+                </div>
 
-        <!-- Activity Section -->
-        <div id="section-activity" class="dashboard-section section-card">
-            <div class="section-header">
-                <h2>Recent Activity Feed</h2>
-                <button class="btn btn-primary btn-small" onclick="refreshActivity()">Refresh</button>
+                <div id="activityFeed">
+                    <div class="loading">Loading activity...</div>
+                </div>
             </div>
 
-            <div id="activityFeed">
-                <div class="loading">Loading activity...</div>
+            <!-- TBA Section -->
+            <div id="section-tba" class="dashboard-section section-card"
+                style="text-align: center; padding: 5rem 2rem;">
+                <div style="font-size: 4rem; margin-bottom: 2rem;">⏳</div>
+                <h2 class="neon-text">Coming Soon</h2>
+                <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto;">
+                    We are currently building this section to provide even more powerful tools for platform
+                    administration. Stay tuned for updates!
+                </p>
+                <button class="btn btn-primary" style="margin-top: 2rem;" onclick="showSection('overview')">Back to
+                    Overview</button>
             </div>
-        </div>
-
-        <!-- TBA Section -->
-        <div id="section-tba" class="dashboard-section section-card" style="text-align: center; padding: 5rem 2rem;">
-            <div style="font-size: 4rem; margin-bottom: 2rem;">⏳</div>
-            <h2 class="neon-text">Coming Soon</h2>
-            <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto;">
-                We are currently building this section to provide even more powerful tools for platform
-                administration. Stay tuned for updates!
-            </p>
-            <button class="btn btn-primary" style="margin-top: 2rem;" onclick="showSection('overview')">Back to
-                Overview</button>
         </div>
         <!-- Generate Mock Data Modal -->
         <div id="generateMockModal" class="modal"
@@ -829,7 +831,8 @@
                 globalPlansTable.innerHTML = '<div class="loading">Fetching plans...</div>';
                 recentPaymentsTable.innerHTML = '<div class="loading">Fetching payments...</div>';
 
-                const data = await apiService.makeRequest('/platform-admin/stripe/overview');
+                const includeMock = localStorage.getItem('includeMockData') === 'true' ? 'true' : 'false';
+                const data = await apiService.makeRequest(`/platform-admin/stripe/overview?includeMock=${includeMock}`);
 
                 // Update Stats
                 document.getElementById('connectedOrgsCount').textContent = data.stats.connected_orgs;
@@ -848,9 +851,9 @@
                                 <thead>
                                     <tr>
                                         <th>Organization</th>
+                                        <th>Stripe Account</th>
                                         <th>Plan Name</th>
                                         <th>Price</th>
-                                        <th>Interval</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -858,9 +861,9 @@
                                     ${data.plans.map(plan => `
                                         <tr>
                                             <td><strong>${plan.organization_name}</strong></td>
+                                            <td><code style="font-size: 0.75rem;">${plan.stripe_account_id || 'Not Connected'}</code></td>
                                             <td>${plan.name}</td>
                                             <td>£${plan.price}</td>
-                                            <td>${plan.interval}</td>
                                             <td>
                                                 <span class="badge ${plan.active ? 'badge-coach' : 'badge-owner'}">
                                                     ${plan.active ? 'Active' : 'Inactive'}
@@ -886,17 +889,32 @@
                                         <th>Organization</th>
                                         <th>Player</th>
                                         <th>Amount</th>
-                                        <th>Date</th>
+                                        <th>Source / ID</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${data.payments.map(pay => `
                                         <tr>
-                                            <td><strong>${pay.organization_name}</strong></td>
-                                            <td>${pay.first_name || 'N/A'} ${pay.last_name || ''}</td>
+                                            <td>
+                                                <strong>${pay.organization_name}</strong><br>
+                                                <span style="font-size: 0.7rem; opacity: 0.6;">${pay.org_stripe_account_id || 'manual entry'}</span>
+                                            </td>
+                                            <td>
+                                                ${pay.first_name || 'N/A'} ${pay.last_name || ''}<br>
+                                                <span style="font-size: 0.7rem; opacity: 0.6;">${pay.user_email || ''}</span>
+                                            </td>
                                             <td>£${pay.amount}</td>
-                                            <td>${new Date(pay.created_at).toLocaleDateString()}</td>
+                                            <td>
+                                                <div style="font-size: 0.75rem;">
+                                                    ${pay.stripe_payment_intent_id ? `
+                                                        <a href="https://dashboard.stripe.com/${pay.org_stripe_account_id}/payments/${pay.stripe_payment_intent_id}" 
+                                                           target="_blank" style="color: #60a5fa; text-decoration: underline;">
+                                                            Stripe Intent &rarr;
+                                                        </a>
+                                                    ` : '<span style="color: #94a3b8;">Manual / No ID</span>'}
+                                                </div>
+                                            </td>
                                             <td>
                                                 <span class="badge ${pay.payment_status === 'paid' ? 'badge-coach' : 'badge-owner'}">
                                                     ${pay.payment_status.toUpperCase()}
@@ -947,7 +965,8 @@
         // Load platform stats
         async function loadStats() {
             try {
-                const stats = await apiService.makeRequest('/platform-admin/stats');
+                const includeMock = localStorage.getItem('includeMockData') === 'true' ? 'true' : 'false';
+                const stats = await apiService.makeRequest(`/platform-admin/stats?includeMock=${includeMock}`);
 
                 document.getElementById('totalUsers').textContent = stats.stats.total_users;
                 document.getElementById('totalOrgs').textContent = stats.stats.total_organizations;
@@ -969,8 +988,9 @@
         // Load organizations
         async function loadOrganizations(page = 1, search = '') {
             try {
+                const includeMock = localStorage.getItem('includeMockData') === 'true' ? 'true' : 'false';
                 const data = await apiService.makeRequest(
-                    `/platform-admin/organizations?page=${page}&limit=10&search=${search}`
+                    `/platform-admin/organizations?page=${page}&limit=10&search=${search}&includeMock=${includeMock}`
                 );
 
                 const table = `
@@ -1021,8 +1041,9 @@
         // Load users
         async function loadUsers(page = 1, search = '', accountType = '') {
             try {
+                const includeMock = localStorage.getItem('includeMockData') === 'true' ? 'true' : 'false';
                 const data = await apiService.makeRequest(
-                    `/platform-admin/users?page=${page}&limit=10&search=${search}&accountType=${accountType}`
+                    `/platform-admin/users?page=${page}&limit=10&search=${search}&accountType=${accountType}&includeMock=${includeMock}`
                 );
 
                 const table = `
@@ -1216,7 +1237,8 @@
         // Load activity
         async function loadActivity() {
             try {
-                const data = await apiService.makeRequest('/platform-admin/activity?limit=20');
+                const includeMock = localStorage.getItem('includeMockData') === 'true' ? 'true' : 'false';
+                const data = await apiService.makeRequest(`/platform-admin/activity?limit=20&includeMock=${includeMock}`);
 
                 const activityHTML = data.activity.map(item => {
                     const iconClass = item.type.includes('organization') ? 'org' :

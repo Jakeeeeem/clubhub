@@ -38,8 +38,8 @@ async function seedDemoUsers() {
 
     const superAdminResult = await client.query(
       `
-      INSERT INTO users (email, password_hash, first_name, last_name, account_type, is_platform_admin, email_verified)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO users (email, password_hash, first_name, last_name, account_type, is_platform_admin, email_verified, is_mock)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, true)
       ON CONFLICT (email) 
       DO UPDATE SET 
         password_hash = EXCLUDED.password_hash,
@@ -66,8 +66,8 @@ async function seedDemoUsers() {
 
     const adminResult = await client.query(
       `
-      INSERT INTO users (email, password_hash, first_name, last_name, account_type, email_verified)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO users (email, password_hash, first_name, last_name, account_type, email_verified, is_mock)
+      VALUES ($1, $2, $3, $4, $5, $6, true)
       ON CONFLICT (email) 
       DO UPDATE SET 
         password_hash = EXCLUDED.password_hash,
@@ -92,9 +92,9 @@ async function seedDemoUsers() {
       `
       INSERT INTO clubs (
         name, sport, description, location, contact_email, 
-        contact_phone, owner_id, member_count, stripe_account_id, types
+        contact_phone, owner_id, member_count, stripe_account_id, types, is_mock
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
       ON CONFLICT (owner_id) 
       DO UPDATE SET 
         name = EXCLUDED.name,
@@ -150,8 +150,8 @@ async function seedDemoUsers() {
 
     const coachResult = await client.query(
       `
-      INSERT INTO users (email, password_hash, first_name, last_name, account_type, email_verified)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO users (email, password_hash, first_name, last_name, account_type, email_verified, is_mock)
+      VALUES ($1, $2, $3, $4, $5, $6, true)
       ON CONFLICT (email) 
       DO UPDATE SET 
         password_hash = EXCLUDED.password_hash,
@@ -211,8 +211,8 @@ async function seedDemoUsers() {
 
     const playerResult = await client.query(
       `
-      INSERT INTO users (email, password_hash, first_name, last_name, account_type, email_verified)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO users (email, password_hash, first_name, last_name, account_type, email_verified, is_mock)
+      VALUES ($1, $2, $3, $4, $5, $6, true)
       ON CONFLICT (email) 
       DO UPDATE SET 
         password_hash = EXCLUDED.password_hash,
