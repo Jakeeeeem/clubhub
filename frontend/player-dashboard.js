@@ -16,6 +16,7 @@ let PlayerDashboardState = {
   notifications: [],
   family: [], // Added from instruction
   upcomingEvents: [], // Added from instruction
+  availableClubs: [],
   stripe: {
     linked: false,
     payouts_enabled: false,
@@ -1362,7 +1363,17 @@ function renderPlayersList(filterKey = "all") {
 function loadClubFinder() {
   const container = byId("availableClubsContainer");
   if (!container) return;
-  displayClubs(PlayerDashboardState.clubs);
+
+  // If we already have clubs loaded, just display them
+  if (
+    PlayerDashboardState.availableClubs &&
+    PlayerDashboardState.availableClubs.length > 0
+  ) {
+    displayClubs(PlayerDashboardState.availableClubs);
+  } else {
+    // Initial fetch if empty
+    refreshClubData();
+  }
 }
 
 function displayClubs(clubs) {
@@ -2183,7 +2194,9 @@ function filterClubs() {
 }
 
 function viewClubDetails(clubId) {
-  const club = (PlayerDashboardState.clubs || []).find((c) => c.id === clubId);
+  const club =
+    (PlayerDashboardState.clubs || []).find((c) => c.id === clubId) ||
+    (PlayerDashboardState.availableClubs || []).find((c) => c.id === clubId);
   if (!club) return showNotification("Club not found", "error");
 
   removeIfExists("clubDetailsModal");
@@ -2420,8 +2433,8 @@ async function refreshClubData() {
   try {
     showLoading(true);
     const clubs = await apiService.getClubs();
-    PlayerDashboardState.clubs = clubs || [];
-    displayClubs(PlayerDashboardState.clubs);
+    PlayerDashboardState.availableClubs = clubs || [];
+    displayClubs(PlayerDashboardState.availableClubs);
     showNotification("Clubs refreshed successfully!", "success");
   } catch (e) {
     showNotification("Failed to refresh clubs: " + e.message, "error");
