@@ -591,9 +591,9 @@
                 console.log('📌 Stored pending invite token for signup');
             }
 
-            // Redirect to homepage with returnUrl so they come back after signup
+            // Redirect to registration page with returnUrl so they come back after signup
             const currentUrl = encodeURIComponent(window.location.href);
-            window.location.href = `index.html?returnUrl=${currentUrl}`;
+            window.location.href = `register.html?returnUrl=${currentUrl}`;
         }
 
         // Load invite details from URL parameters
