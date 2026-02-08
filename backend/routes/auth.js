@@ -1044,7 +1044,7 @@ router.get("/context", authenticateToken, async (req, res) => {
     // Get user info and current org preference
     const userResult = await query(
       `
-      SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, up.current_organization_id
+      SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, up.current_organization_id
       FROM users u
       LEFT JOIN user_preferences up ON u.id = up.user_id
       WHERE u.id = $1
@@ -1092,6 +1092,25 @@ router.get("/context", authenticateToken, async (req, res) => {
       currentOrg = organizations.find(
         (o) => o.id === user.current_organization_id,
       );
+
+      // CRITICAL FIX FOR PLATFORM ADMINS:
+      // If we are a platform admin and the org isn't in our membership list,
+      // we still need to fetch it to maintain context.
+      if (!currentOrg && user.is_platform_admin) {
+        const platformOrgResult = await query(
+          "SELECT id, name, sport, location, logo_url FROM organizations WHERE id = $1",
+          [user.current_organization_id],
+        );
+        if (platformOrgResult.rows.length > 0) {
+          currentOrg = {
+            ...platformOrgResult.rows[0],
+            role: "Platform Admin",
+            status: "active",
+          };
+          console.log("🛠️ Platform Admin context injection:", currentOrg.name);
+        }
+      }
+
       if (currentOrg) {
         console.log("📌 Using saved preference:", {
           id: currentOrg.id,
@@ -1168,6 +1187,7 @@ router.get("/context", authenticateToken, async (req, res) => {
         firstName: user.first_name,
         lastName: user.last_name,
         userType: user.account_type,
+        isPlatformAdmin: user.is_platform_admin || false,
       },
       currentOrganization: currentOrg,
       organizations: organizations,
@@ -1193,20 +1213,28 @@ router.post("/switch-organization", authenticateToken, async (req, res) => {
         .json({ success: false, error: "Organization ID is required" });
     }
 
-    // Verify membership
-    const memberCheck = await query(
-      `
-      SELECT 1 FROM organization_members 
-      WHERE user_id = $1 AND organization_id = $2 AND status = 'active'
-    `,
-      [userId, organizationId],
+    // Verify membership OR check if user is platform admin
+    const userCheck = await query(
+      "SELECT is_platform_admin FROM users WHERE id = $1",
+      [userId],
     );
+    const isPlatformAdmin = userCheck.rows[0]?.is_platform_admin;
 
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({
-        success: false,
-        error: "Organization not found or access denied",
-      });
+    if (!isPlatformAdmin) {
+      const memberCheck = await query(
+        `
+        SELECT 1 FROM organization_members 
+        WHERE user_id = $1 AND organization_id = $2 AND status = 'active'
+      `,
+        [userId, organizationId],
+      );
+
+      if (memberCheck.rows.length === 0) {
+        return res.status(403).json({
+          success: false,
+          error: "Organization not found or access denied",
+        });
+      }
     }
 
     // Update preference

@@ -767,35 +767,37 @@
                 );
 
                 const table = `
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Sport</th>
-                                <th>Owner</th>
-                                <th>Members</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.organizations.map(org => `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
                                 <tr>
-                                    <td><strong>${org.name}</strong></td>
-                                    <td>${org.sport || '-'}</td>
-                                    <td>${org.owner_email || '-'}</td>
-                                    <td>${org.member_count}</td>
-                                    <td>${new Date(org.created_at).toLocaleDateString()}</td>
-                                    <td>
-                                        <button class="btn btn-small btn-secondary" 
-                                                onclick="viewOrganization('${org.id}')">
-                                            View
-                                        </button>
-                                    </td>
+                                    <th>Name</th>
+                                    <th>Sport</th>
+                                    <th>Owner</th>
+                                    <th>Members</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                ${data.organizations.map(org => `
+                                    <tr>
+                                        <td><strong>${org.name}</strong></td>
+                                        <td>${org.sport || '-'}</td>
+                                        <td>${org.owner_email || '-'}</td>
+                                        <td>${org.member_count}</td>
+                                        <td>${new Date(org.created_at).toLocaleDateString()}</td>
+                                        <td>
+                                            <button class="btn btn-small btn-secondary" 
+                                                    onclick="viewOrganization('${org.id}')">
+                                                View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
                     ${renderPagination(data.page, Math.ceil(data.total / 10), 'org')}
                 `;
 
@@ -817,57 +819,59 @@
                 );
 
                 const table = `
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Admin</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.users.map(user => `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
                                 <tr>
-                                    <td><strong>${user.first_name} ${user.last_name}</strong></td>
-                                    <td>${user.email}</td>
-                                    <td>${user.account_type}</td>
-                                    <td>
-                                        <span class="badge ${user.is_active !== false ? 'badge-coach' : 'badge-owner'}">
-                                            ${user.is_active !== false ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        ${user.is_platform_admin ?
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Admin</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.users.map(user => `
+                                    <tr>
+                                        <td><strong>${user.first_name} ${user.last_name}</strong></td>
+                                        <td>${user.email}</td>
+                                        <td>${user.account_type}</td>
+                                        <td>
+                                            <span class="badge ${user.is_active !== false ? 'badge-coach' : 'badge-owner'}">
+                                                ${user.is_active !== false ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            ${user.is_platform_admin ?
                         '<span class="badge badge-owner">Admin</span>' :
                         '-'
                     }
-                                    </td>
-                                    <td>
-                                        <div style="display: flex; gap: 0.5rem;">
-                                            ${user.is_platform_admin ?
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; gap: 0.5rem;">
+                                                ${user.is_platform_admin ?
                         '<span style="opacity:0.5; font-size: 0.8rem;">Protected</span>' :
                         `
-                                                <button class="btn btn-small btn-secondary" 
-                                                    style="background: ${user.is_active !== false ? '#ef4444' : '#22c55e'}; color: white; border: none;"
-                                                    onclick="toggleUserStatus('${user.id}', ${user.is_active !== false})">
-                                                    ${user.is_active !== false ? 'Deactivate' : 'Activate'}
-                                                </button>
-                                                <button class="btn btn-small btn-secondary" 
-                                                    style="background: #7f1d1d; color: white; border: none;"
-                                                    onclick="deleteUser('${user.id}')">
-                                                    🗑️
-                                                </button>
-                                                `
+                                                    <button class="btn btn-small btn-secondary" 
+                                                        style="background: ${user.is_active !== false ? '#ef4444' : '#22c55e'}; color: white; border: none;"
+                                                        onclick="toggleUserStatus('${user.id}', ${user.is_active !== false})">
+                                                        ${user.is_active !== false ? 'Deactivate' : 'Activate'}
+                                                    </button>
+                                                    <button class="btn btn-small btn-secondary" 
+                                                        style="background: #7f1d1d; color: white; border: none;"
+                                                        onclick="deleteUser('${user.id}')">
+                                                        🗑️
+                                                    </button>
+                                                    `
                     }
-                                        </div>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
                     ${renderPagination(data.page, Math.ceil(data.total / 10), 'user')}
                 `;
 

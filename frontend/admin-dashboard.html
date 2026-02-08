@@ -113,12 +113,13 @@
 
     <main class="main">
         <div class="dashboard container dashboard-container">
-            <div class="dashboard-header">
+            <div class="dashboard-header"
+                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
                 <div>
                     <h1 class="neon-text display-org-name">Admin Dashboard</h1>
                     <p style="color: var(--text-muted);">Manage your organization with complete control and insights</p>
                 </div>
-                <div class="stripe-access" style="display: flex; gap: 1.5rem; align-items: center;">
+                <div class="stripe-access" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <button id="stripeAccessBtn" class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe
                         Dashboard</button>
                     <button class="btn btn-primary" onclick="generateShareableInviteLink()">🔗 Generate Invite
@@ -569,21 +570,23 @@
                         </div>
 
                         <div class="card">
-                            <h3>📊 Recent Transactions</h3>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Player</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="paymentsTableBody">
-                                    <!-- Payments will be loaded from database -->
-                                </tbody>
-                            </table>
+                            <h3>Recent Bookings</h3>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Player</th>
+                                            <th>Plan/Item</th>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentBookings">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -863,208 +866,211 @@
 
                         <!-- Roster Tab -->
                         <div id="team-tab-roster" class="team-tab-content active">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                                <h4>Players</h4>
-                                <button class="btn btn-primary btn-small" onclick="openAddTeamPlayerModal()">➕ Add
-                                    Player</button>
-                            </div>
-                            <div class="table-container">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Player</th>
-                                            <th>Position</th>
-                                            <th>Age</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="teamRosterBody">
-                                        <!-- Populated via JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Events Tab -->
-                        <div id="team-tab-events" class="team-tab-content" style="display: none;">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                                <h4>Team Events</h4>
-                                <button class="btn btn-primary btn-small" onclick="showModal('addEventModal')">➕ Plan
-                                    Event</button>
-                            </div>
-                            <div id="teamEventsContainer" class="card-grid">
-                                <!-- Populated via JS -->
-                            </div>
-                        </div>
-
-                        <!-- Availability Tab (Spond-like) -->
-                        <div id="team-tab-availability" class="team-tab-content" style="display: none;">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                                <h4>Availability Tracker</h4>
-                                <div class="legend" style="display: flex; gap: 1rem; font-size: 0.9rem;">
-                                    <span style="color: var(--success-color);">✅ Going</span>
-                                    <span style="color: var(--danger-color);">❌ No</span>
-                                    <span style="color: var(--warning-color);">❓ Maybe</span>
-                                    <span style="opacity: 0.5;">⚪ No Response</span>
+                            <div <div class="card">
+                                <div class="section-header">
+                                    <h3>Upcoming Events</h3>
+                                    <button class="btn btn-primary btn-small" onclick="showCreateEventModal()">+ Create
+                                        Event</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Event Name</th>
+                                                <th>Date & Time</th>
+                                                <th>Location</th>
+                                                <th>Status</th>
+                                                <th>Bookings</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="eventsListBody">
+                                            <!-- Populated via admin-dashboard.js -->
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                            <div class="availability-grid" id="availabilityGrid"
-                                style="overflow-x: auto; background: var(--bg-secondary); border-radius: 8px; padding: 1rem;">
-                                <!-- Spond-like grid -->
-                                <p style="text-align: center; opacity: 0.7;">Select an upcoming event to view
-                                    availability.</p>
+                        </div>
+                    </div>
+
+                    <!-- Events Tab -->
+                    <div id="team-tab-events" class="team-tab-content" style="display: none;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                            <h4>Team Events</h4>
+                            <button class="btn btn-primary btn-small" onclick="showModal('addEventModal')">➕ Plan
+                                Event</button>
+                        </div>
+                        <div id="teamEventsContainer" class="card-grid">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Availability Tab (Spond-like) -->
+                    <div id="team-tab-availability" class="team-tab-content" style="display: none;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                            <h4>Availability Tracker</h4>
+                            <div class="legend" style="display: flex; gap: 1rem; font-size: 0.9rem;">
+                                <span style="color: var(--success-color);">✅ Going</span>
+                                <span style="color: var(--danger-color);">❌ No</span>
+                                <span style="color: var(--warning-color);">❓ Maybe</span>
+                                <span style="opacity: 0.5;">⚪ No Response</span>
                             </div>
                         </div>
-
+                        <div class="availability-grid" id="availabilityGrid"
+                            style="overflow-x: auto; background: var(--bg-secondary); border-radius: 8px; padding: 1rem;">
+                            <!-- Spond-like grid -->
+                            <p style="text-align: center; opacity: 0.7;">Select an upcoming event to view
+                                availability.</p>
+                        </div>
                     </div>
+
                 </div>
-
-                <!-- Talent ID Manager Tab -->
-                <div id="talent-id" class="dashboard-section">
-                    <div class="section-header">
-                        <h2>Talent ID Manager</h2>
-                        <div class="action-buttons">
-                            <button class="btn btn-secondary" onclick="exportTalentCSV()">Export CSV</button>
-                            <button class="btn btn-primary" onclick="showGenerateBibsModal()">+ Generate Bibs</button>
-                        </div>
-                    </div>
-
-                    <div class="card" style="margin-bottom: 2rem;">
-                        <h3>Active Event Dashboard</h3>
-                        <div class="form-group">
-                            <label>Select Event</label>
-                            <select id="talentEventSelect" onchange="loadTalentDashboard(this.value)">
-                                <option value="">Select an event...</option>
-                                <!-- Populated via JS -->
-                            </select>
-                        </div>
-
-                        <div class="stats-grid" id="talentStats">
-                            <div class="stat-card">
-                                <h3>Registrants</h3>
-                                <p class="stat-number" id="totalRegistrants">0</p>
-                            </div>
-                            <div class="stat-card">
-                                <h3>Bibs Available</h3>
-                                <p class="stat-number" id="bibsAvailable">0</p>
-                            </div>
-                            <div class="stat-card">
-                                <h3>Groups</h3>
-                                <p class="stat-number" id="totalGroups">0</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 2rem;">
-                        <!-- Left Col: Schedule & Bibs -->
-                        <div>
-                            <div class="card">
-                                <h3>Day Schedule</h3>
-                                <div id="scheduleList" class="item-list">
-                                    <p class="empty-state">No schedule items yet.</p>
-                                </div>
-                                <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
-                                    onclick="showAddScheduleModal()">+ Add Activity</button>
-                            </div>
-
-                            <div class="card" style="margin-top: 2rem;">
-                                <h3>Bib Inventory</h3>
-                                <div id="bibsList" class="item-list">
-                                    <!-- Bib ranges -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Col: Groups & Auto Assign -->
-                        <div>
-                            <div class="card">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <h3>Groups</h3>
-                                    <button class="btn btn-primary btn-small" onclick="autoAssignBibs()">✨ Auto-Assign
-                                        Bibs</button>
-                                </div>
-                                <p style="font-size:0.9rem; opacity:0.7; margin-bottom:1rem;">Automatically assign bibs
-                                    to unassigned players.</p>
-
-                                <div id="groupsList">
-                                    <!-- Groups rendered here -->
-                                </div>
-
-                                <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
-                                    onclick="showCreateGroupModal()">+ Create Group</button>
-                            </div>
-                        </div>
-                    </div>
-                </div> <!-- End talent-id -->
-
-                <!-- Tournament Manager Tab -->
-                <div id="tournaments" class="dashboard-section">
-                    <!-- Tournament List View -->
-                    <div id="tournamentListView">
-                        <div class="section-header">
-                            <h2>🏆 Tournament Manager</h2>
-                            <button class="btn btn-primary" onclick="openCreateTournamentModal()">+ Create
-                                Tournament</button>
-                        </div>
-
-                        <div class="card">
-                            <h3>Active Tournaments</h3>
-                            <div id="tournamentsListContainer"
-                                style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); margin-top: 1rem;">
-                                <!-- Loaded via JS -->
-                                <p style="padding: 1rem; opacity: 0.7;">Loading tournaments...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tournament Detail View (Hidden by default) -->
-                    <div id="tournamentDetailView" style="display: none;">
-                        <button class="btn btn-secondary btn-small" onclick="closeTournamentDetail()">← Back to
-                            Tournaments</button>
-
-                        <div class="section-header" style="margin-top: 1rem;">
-                            <h2 id="detailTournamentName">Tournament Name</h2>
-                            <div class="action-buttons">
-                                <button class="btn btn-secondary" onclick="generateFixtures()">Generate Next
-                                    Round</button>
-                            </div>
-                        </div>
-
-                        <div class="dashboard-nav" style="margin-bottom: 1rem;">
-                            <button class="active" onclick="switchTournamentTab(this, 'fixtures')">Fixtures</button>
-                            <button onclick="switchTournamentTab(this, 'standings')">Standings</button>
-                            <button onclick="switchTournamentTab(this, 'teams')">Teams</button>
-                        </div>
-
-                        <div id="tab-fixtures" class="tournament-tab">
-                            <div class="card">
-                                <h3>Upcoming Matches</h3>
-                                <div id="tournamentFixturesList"></div>
-                            </div>
-                        </div>
-
-                        <div id="tab-standings" class="tournament-tab" style="display: none;">
-                            <div class="card">
-                                <h3>League Table / Bracket</h3>
-                                <div id="tournamentStandingsContainer"></div>
-                            </div>
-                        </div>
-
-                        <div id="tab-teams" class="tournament-tab" style="display: none;">
-                            <div class="card">
-                                <h3>Participating Teams</h3>
-                                <div id="tournamentParticipantsList"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                onclick="generateFixtures('regular')">League</button>
-                <button class="btn btn-small btn-primary" onclick="generateFixtures('knockout')">Knockout</button>
             </div>
+
+            <!-- Talent ID Manager Tab -->
+            <div id="talent-id" class="dashboard-section">
+                <div class="section-header">
+                    <h2>Talent ID Manager</h2>
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="exportTalentCSV()">Export CSV</button>
+                        <button class="btn btn-primary" onclick="showGenerateBibsModal()">+ Generate Bibs</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3>Active Event Dashboard</h3>
+                    <div class="form-group">
+                        <label>Select Event</label>
+                        <select id="talentEventSelect" onchange="loadTalentDashboard(this.value)">
+                            <option value="">Select an event...</option>
+                            <!-- Populated via JS -->
+                        </select>
+                    </div>
+
+                    <div class="stats-grid" id="talentStats">
+                        <div class="stat-card">
+                            <h3>Registrants</h3>
+                            <p class="stat-number" id="totalRegistrants">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Bibs Available</h3>
+                            <p class="stat-number" id="bibsAvailable">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Groups</h3>
+                            <p class="stat-number" id="totalGroups">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <!-- Left Col: Schedule & Bibs -->
+                    <div>
+                        <div class="card">
+                            <h3>Day Schedule</h3>
+                            <div id="scheduleList" class="item-list">
+                                <p class="empty-state">No schedule items yet.</p>
+                            </div>
+                            <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
+                                onclick="showAddScheduleModal()">+ Add Activity</button>
+                        </div>
+
+                        <div class="card" style="margin-top: 2rem;">
+                            <h3>Bib Inventory</h3>
+                            <div id="bibsList" class="item-list">
+                                <!-- Bib ranges -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Col: Groups & Auto Assign -->
+                    <div>
+                        <div class="card">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h3>Groups</h3>
+                                <button class="btn btn-primary btn-small" onclick="autoAssignBibs()">✨ Auto-Assign
+                                    Bibs</button>
+                            </div>
+                            <p style="font-size:0.9rem; opacity:0.7; margin-bottom:1rem;">Automatically assign bibs
+                                to unassigned players.</p>
+
+                            <div id="groupsList">
+                                <!-- Groups rendered here -->
+                            </div>
+
+                            <button class="btn btn-secondary btn-small" style="width:100%; margin-top:1rem;"
+                                onclick="showCreateGroupModal()">+ Create Group</button>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End talent-id -->
+
+            <!-- Tournament Manager Tab -->
+            <div id="tournaments" class="dashboard-section">
+                <!-- Tournament List View -->
+                <div id="tournamentListView">
+                    <div class="section-header">
+                        <h2>🏆 Tournament Manager</h2>
+                        <button class="btn btn-primary" onclick="openCreateTournamentModal()">+ Create
+                            Tournament</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Active Tournaments</h3>
+                        <div id="tournamentsListContainer"
+                            style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); margin-top: 1rem;">
+                            <!-- Loaded via JS -->
+                            <p style="padding: 1rem; opacity: 0.7;">Loading tournaments...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tournament Detail View (Hidden by default) -->
+                <div id="tournamentDetailView" style="display: none;">
+                    <button class="btn btn-secondary btn-small" onclick="closeTournamentDetail()">← Back to
+                        Tournaments</button>
+
+                    <div class="section-header" style="margin-top: 1rem;">
+                        <h2 id="detailTournamentName">Tournament Name</h2>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="generateFixtures()">Generate Next
+                                Round</button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-nav" style="margin-bottom: 1rem;">
+                        <button class="active" onclick="switchTournamentTab(this, 'fixtures')">Fixtures</button>
+                        <button onclick="switchTournamentTab(this, 'standings')">Standings</button>
+                        <button onclick="switchTournamentTab(this, 'teams')">Teams</button>
+                    </div>
+
+                    <div id="tab-fixtures" class="tournament-tab">
+                        <div class="card">
+                            <h3>Upcoming Matches</h3>
+                            <div id="tournamentFixturesList"></div>
+                        </div>
+                    </div>
+
+                    <div id="tab-standings" class="tournament-tab" style="display: none;">
+                        <div class="card">
+                            <h3>League Table / Bracket</h3>
+                            <div id="tournamentStandingsContainer"></div>
+                        </div>
+                    </div>
+
+                    <div id="tab-teams" class="tournament-tab" style="display: none;">
+                        <div class="card">
+                            <h3>Participating Teams</h3>
+                            <div id="tournamentParticipantsList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            onclick="generateFixtures('regular')">League</button>
+            <button class="btn btn-small btn-primary" onclick="generateFixtures('knockout')">Knockout</button>
+        </div>
         </div>
         <div id="tournamentMatchesList" class="item-list"></div>
         </div>

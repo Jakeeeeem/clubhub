@@ -23,22 +23,44 @@ class OrganizationSwitcher {
     try {
       const response = await apiService.makeRequest("/auth/context");
       if (response.success) {
-        // Determine if user is Platform Admin FIRST
+        // Determine if user is Platform Admin
         const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
         this.isPlatformAdmin =
           user.is_platform_admin === true ||
+          user.isPlatformAdmin === true ||
           user.role === "superadmin" ||
+          response.user?.isPlatformAdmin ||
           response.user?.is_platform_admin;
 
-        let organizations = response.organizations || [];
+        // Sync back to localStorage if we found out they are admin from response
+        if (
+          response.user?.isPlatformAdmin ||
+          response.user?.is_platform_admin
+        ) {
+          if (!user.isPlatformAdmin) {
+            user.isPlatformAdmin = true;
+            localStorage.setItem("currentUser", JSON.stringify(user));
+          }
+        }
 
-        // If Platform Admin, fetch ALL organizations from platform-admin endpoint
+        let organizations = response.organizations || [];
+        console.log(
+          `Switcher: Found ${organizations.length} member organizations. Admin: ${this.isPlatformAdmin}`,
+        );
+
+        // If Platform Admin, fetch ALL organizations
         if (this.isPlatformAdmin) {
           try {
+            console.log(
+              "Switcher: Platform Admin detected, fetching all platform clubs...",
+            );
             const allOrgsResponse = await apiService.makeRequest(
               "/platform-admin/organizations?limit=1000",
             );
-            if (allOrgsResponse.organizations) {
+            if (allOrgsResponse && allOrgsResponse.organizations) {
+              console.log(
+                `Switcher: Loaded ${allOrgsResponse.organizations.length} platform clubs.`,
+              );
               // Map to match the format from /auth/context
               organizations = allOrgsResponse.organizations.map((org) => ({
                 id: org.id,
@@ -51,7 +73,7 @@ class OrganizationSwitcher {
               }));
             }
           } catch (error) {
-            console.warn("Failed to load all organizations:", error);
+            console.warn("Switcher: Failed to load all organizations:", error);
           }
         } else {
           // For non-admins, filter based on dashboard type
