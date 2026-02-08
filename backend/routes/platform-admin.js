@@ -662,10 +662,7 @@ router.delete(
         await query("DELETE FROM events WHERE club_id = ANY($1)", [orgIds]);
         await query("DELETE FROM teams WHERE club_id = ANY($1)", [orgIds]);
         await query("DELETE FROM plans WHERE club_id = ANY($1)", [orgIds]);
-        await query(
-          "DELETE FROM subscriptions WHERE organization_id = ANY($1)",
-          [orgIds],
-        );
+
         await query(
           "DELETE FROM organization_members WHERE organization_id = ANY($1)",
           [orgIds],
