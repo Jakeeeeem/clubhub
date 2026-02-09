@@ -167,8 +167,6 @@ router.get("/", authenticateToken, async (req, res) => {
     }));
 
     res.json(mappedRows);
-
-    res.json(mappedRows);
   } catch (error) {
     console.error("Get players error:", error);
     res.status(500).json({
