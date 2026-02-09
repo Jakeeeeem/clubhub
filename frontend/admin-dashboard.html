@@ -60,6 +60,61 @@
         .closed-feature {
             display: none !important;
         }
+
+        /* Tournament Card Refinements */
+        .tournament-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tournament-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .tournament-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tournament-trophy {
+            font-size: 1.5rem;
+        }
+
+        .tournament-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-success {
+            background-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+
+        .dot-warning {
+            background-color: #f59e0b;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
     </style>
     <script>
         // Immediate Environment Check to prevent flash of content
@@ -1001,18 +1056,20 @@
             <div id="tournaments" class="dashboard-section">
                 <!-- Tournament List View -->
                 <div id="tournamentListView">
-                    <div class="section-header">
-                        <h2>🏆 Tournament Manager</h2>
-                        <button class="btn btn-primary" onclick="openCreateTournamentModal()">+ Create
-                            Tournament</button>
-                    </div>
-
                     <div class="card">
-                        <h3>Active Tournaments</h3>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="margin: 0;">🏆 Tournament Manager</h3>
+                            <button class="btn btn-primary" onclick="openCreateTournamentModal()">+ Create
+                                Tournament</button>
+                        </div>
+
                         <div id="tournamentsListContainer"
-                            style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); margin-top: 1rem;">
+                            style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
                             <!-- Loaded via JS -->
-                            <p style="padding: 1rem; opacity: 0.7;">Loading tournaments...</p>
+                            <div style="text-align: center; padding: 3rem; opacity: 0.5;">
+                                <p>Loading tournaments...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -5804,9 +5861,11 @@
 
                 if (!tourneys || tourneys.length === 0) {
                     container.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 2rem; opacity: 0.7;">
-                            <h3>No active tournaments</h3>
-                            <button class="btn btn-primary" style="margin-top: 1rem;" onclick="openCreateTournamentModal()">Create Your First Tournament</button>
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">🏆</div>
+                            <h3 style="margin-bottom: 0.5rem;">No active tournaments</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Host leagues, knockouts, and cup competitions for your club.</p>
+                            <button class="btn btn-primary" onclick="openCreateTournamentModal()">➕ Create Your First Tournament</button>
                         </div>`;
                 } else {
                     container.innerHTML = tourneys.map(t => `
