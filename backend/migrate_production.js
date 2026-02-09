@@ -65,4 +65,29 @@ async function applyMigration() {
   }
 }
 
-applyMigration();
+async function fixInvitationsTable() {
+  try {
+    console.log(
+      "🚀 Applying invitations table fix to PRODUCTION database...\n",
+    );
+
+    await pool.query(`
+      ALTER TABLE invitations 
+      ADD COLUMN IF NOT EXISTS first_name VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS last_name VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS date_of_birth DATE,
+      ADD COLUMN IF NOT EXISTS team_id UUID,
+      ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS declined_at TIMESTAMP WITH TIME ZONE,
+      ADD COLUMN IF NOT EXISTS decline_reason TEXT,
+      ADD COLUMN IF NOT EXISTS personal_message TEXT;
+    `);
+
+    console.log("✅ Added missing columns to invitations table");
+  } catch (error) {
+    console.error("❌ Fix invitations failed:", error);
+  }
+}
+
+// Run both
+applyMigration().then(() => fixInvitationsTable());
