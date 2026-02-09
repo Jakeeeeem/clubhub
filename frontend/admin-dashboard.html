@@ -875,6 +875,8 @@
                                     <h3>Team Roster</h3>
                                     <button class="btn btn-primary btn-small" onclick="showAddPlayerToTeamModal()">+ Add
                                         Player</button>
+                                    <button class="btn btn-secondary btn-small"
+                                        onclick="inviteCoachToTeam(currentTeamId)">✉️ Invite Coach</button>
                                 </div>
                                 <div class="table-responsive">
                                     <table class="table">
@@ -1167,13 +1169,20 @@
                     </div>
                     <div class="form-group full-width">
                         <label for="staffInviteRole">Access Role *</label>
-                        <select id="staffInviteRole" required>
+                        <select id="staffInviteRole" required onchange="toggleStaffTeamSelect(this.value)">
                             <option value="">Select Role</option>
                             <option value="admin">Administrator (Full Access)</option>
                             <option value="coach">Coach (Team Management)</option>
                             <option value="assistant_coach">Assistant Coach</option>
                             <option value="staff">Staff Member (Finances & Shop)</option>
                             <option value="viewer">Viewer (Read-only)</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width" id="staffTeamSelectGroup" style="display: none;">
+                        <label for="staffInviteTeam">Assign to Team (Optional)</label>
+                        <select id="staffInviteTeam">
+                            <option value="">Select Team</option>
+                            <!-- Populated via JS -->
                         </select>
                     </div>
                     <div class="form-group full-width">
@@ -7839,21 +7848,60 @@
             /**
              * Handle new role-based invitation
              */
+            async function toggleStaffTeamSelect(role) {
+                const teamGroup = document.getElementById('staffTeamSelectGroup');
+                const teamSelect = document.getElementById('staffInviteTeam');
+                if (!teamGroup || !teamSelect) return;
+
+                if (role === 'coach' || role === 'assistant_coach') {
+                    teamGroup.style.display = 'block';
+                    // Populate if empty
+                    if (teamSelect.options.length <= 1) {
+                        try {
+                            const context = await apiService.getContext();
+                            const orgId = context?.currentOrganization?.id;
+                            if (orgId) {
+                                const teams = await apiService.makeRequest(`/teams?organizationId=${orgId}`);
+                                if (Array.isArray(teams)) {
+                                    teams.forEach(team => {
+                                        const option = document.createElement('option');
+                                        option.value = team.id;
+                                        option.textContent = team.name;
+                                        teamSelect.appendChild(option);
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Failed to load teams for staff invite', e);
+                        }
+                    }
+                } else {
+                    teamGroup.style.display = 'none';
+                    teamSelect.value = "";
+                }
+            }
+
             async function handleNewInvite(e) {
                 e.preventDefault();
 
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳ Sending...';
+                btn.disabled = true;
+
                 const email = document.getElementById('staffInviteEmail').value.trim();
                 const role = document.getElementById('staffInviteRole').value;
-                const message = document.getElementById('inviteMessage').value.trim();
+                const message = document.getElementById('staffInviteMessage').value.trim();
+                const teamId = document.getElementById('staffInviteTeam')?.value || null;
 
                 if (!email || !role) {
                     showNotification('Please fill in all required fields', 'error');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                     return;
                 }
 
                 try {
-                    showLoading(true);
-
                     // Get current organization ID
                     const context = await apiService.getContext();
                     const orgId = context?.currentOrganization?.id;
@@ -7862,29 +7910,31 @@
                         throw new Error('No organization context found');
                     }
 
-                    // Send invitation via new API
-                    const response = await apiService.sendInvitation(orgId, {
+                    // Use generateClubInvite (from invites.js) which supports teamId
+                    // Mapping checks: invites.js expects 'clubRole', 'teamId'
+                    const inviteData = {
                         email,
-                        role,
-                        message: message || `You've been invited to join our organization as a ${role}.`
-                    });
+                        clubRole: role,
+                        message: message || `You've been invited to join our organization as a ${role}.`,
+                        teamId: teamId, // Optional, null if not selected
+                        organizationId: orgId,
+                        clubId: orgId, // Ensure clubId is passed for backend compatibility
+                        isPublic: false
+                    };
+
+                    console.log('Sending Invite Data:', inviteData);
+
+                    // We use generateClubInvite which calls /invites/generate
+                    const response = await apiService.generateClubInvite(inviteData);
 
                     if (response.success) {
                         showNotification(`✅ Invitation sent to ${email}!`, 'success');
                         closeModal('inviteStaffModal');
-                        document.getElementById('inviteStaffForm').reset();
+                        e.target.reset();
 
-                        // Show invite link for manual sharing
+                        // Shareable link logic (if returned)
                         if (response.inviteLink) {
-                            const fullLink = `${window.location.origin}${response.inviteLink}`;
-                            console.log('📧 Invitation link:', fullLink);
-
-                            // Optional: Show copy link dialog
-                            if (confirm('Invitation sent! Would you like to copy the invite link to share manually?')) {
-                                navigator.clipboard.writeText(fullLink).then(() => {
-                                    showNotification('Invite link copied to clipboard!', 'success');
-                                });
-                            }
+                            // ... existing logic if needed ...
                         }
                     } else {
                         throw new Error(response.error || 'Failed to send invitation');
@@ -7893,20 +7943,84 @@
                     console.error('Failed to send invitation:', error);
                     showNotification(`Failed to send invitation: ${error.message}`, 'error');
                 } finally {
-                    showLoading(false);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
             }
 
             // Expose globally
             window.handleNewInvite = handleNewInvite;
+            window.toggleStaffTeamSelect = toggleStaffTeamSelect;
 
             /**
              * Quick invite helpers - Pre-fill modal with specific role
              */
-            function invitePlayerRBAC() {
-                document.getElementById('staffInviteRole').value = 'player';
-                showModal('inviteStaffModal');
+            async function invitePlayerRBAC() {
+                // 1. Populate Team Select if needed
+                const teamSelect = document.getElementById('inviteTeam');
+                if (teamSelect && teamSelect.options.length <= 1) {
+                    try {
+                        const context = await apiService.getContext();
+                        const orgId = context?.currentOrganization?.id;
+                        const teams = await apiService.makeRequest(`/teams?organizationId=${orgId}`);
+                        if (Array.isArray(teams)) {
+                            teams.forEach(team => {
+                                const option = document.createElement('option');
+                                option.value = team.id;
+                                option.textContent = team.name;
+                                teamSelect.appendChild(option);
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Failed to load teams for invite modal', e);
+                    }
+                }
+
+                // 2. Open Correct Modal
+                showModal('invitePlayerModal');
             }
+
+            async function handlePlayerInvite(e) {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳ Sending...';
+                btn.disabled = true;
+
+                try {
+                    const context = await apiService.getContext();
+                    const orgId = context?.currentOrganization?.id;
+
+                    const data = {
+                        firstName: document.getElementById('inviteFirstName').value,
+                        lastName: document.getElementById('inviteLastName').value,
+                        email: document.getElementById('inviteEmail').value,
+                        clubRole: document.getElementById('inviteRole').value,
+                        teamId: document.getElementById('inviteTeam').value || null,
+                        message: document.getElementById('inviteMessage').value,
+                        isPublic: false, // Specific invite via email
+                        organizationId: orgId
+                    };
+
+                    await apiService.generateClubInvite(data);
+
+                    showNotification('Invite sent successfully! 📧', 'success');
+                    closeModal('invitePlayerModal');
+                    e.target.reset();
+                } catch (error) {
+                    console.error('Invite Error:', error);
+                    showNotification(error.message || 'Failed to send invite', 'error');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
+
+            // Bind Invite Player Form
+            document.addEventListener('DOMContentLoaded', () => {
+                const invitePlayerForm = document.getElementById('invitePlayerForm');
+                if (invitePlayerForm) invitePlayerForm.addEventListener('submit', handlePlayerInvite);
+            });
 
             function quickInvite(role) {
                 document.getElementById('staffInviteRole').value = role;
@@ -7916,6 +8030,34 @@
             // Expose globally
             window.invitePlayerRBAC = invitePlayerRBAC;
             window.quickInvite = quickInvite;
+
+            async function inviteCoachToTeam(teamId) {
+                // 1. Set Role
+                const roleSelect = document.getElementById('staffInviteRole');
+                if (roleSelect) roleSelect.value = 'coach';
+
+                // 2. Trigger toggle to show/populate team select
+                await toggleStaffTeamSelect('coach');
+
+                // 3. Set Team
+                const teamSelect = document.getElementById('staffInviteTeam');
+                if (teamSelect && teamId) {
+                    let attempts = 0;
+                    const checkOptions = setInterval(() => {
+                        attempts++;
+                        if (teamSelect.options.length > 1) {
+                            teamSelect.value = teamId;
+                            clearInterval(checkOptions);
+                        } else if (attempts > 50) { // 5 seconds timeout
+                            clearInterval(checkOptions);
+                        }
+                    }, 100);
+                }
+
+                // 4. Show Modal
+                showModal('inviteStaffModal');
+            }
+            window.inviteCoachToTeam = inviteCoachToTeam;
 
             // ============================================================================
             // CLUB PROFILE MANAGEMENT
