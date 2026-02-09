@@ -365,6 +365,57 @@ router.post(
         message: "Event created successfully",
         event: newEvent,
       });
+
+      // 📧 Automatic Notification for Team Events
+      if (newEvent.team_id) {
+        try {
+          const clubResult = await query(
+            "SELECT name FROM organizations WHERE id = $1",
+            [newEvent.club_id],
+          );
+          const teamResult = await query(
+            "SELECT name FROM teams WHERE id = $1",
+            [newEvent.team_id],
+          );
+          const clubName = clubResult.rows[0]?.name || "Your Club";
+          const teamName = teamResult.rows[0]?.name || "Your Team";
+
+          // Fetch all players in the team with their emails
+          const playersResult = await query(
+            `
+            SELECT DISTINCT u.email, u.first_name
+            FROM players p
+            JOIN team_players tp ON p.id = tp.player_id
+            JOIN users u ON p.user_id = u.id
+            WHERE tp.team_id = $1 AND u.email IS NOT NULL
+          `,
+            [newEvent.team_id],
+          );
+
+          const players = playersResult.rows;
+
+          // Send emails asynchronously
+          players.forEach((player) => {
+            emailService
+              .sendEventCreatedEmail({
+                email: player.email,
+                firstName: player.first_name,
+                eventTitle: newEvent.title,
+                eventDate: newEvent.event_date,
+                eventTime: newEvent.event_time,
+                location: newEvent.location,
+                teamName: teamName,
+                clubName: clubName,
+              })
+              .catch((e) => console.error("Email send fail:", e.message));
+          });
+        } catch (err) {
+          console.error(
+            "Failed to trigger automatic event emails:",
+            err.message,
+          );
+        }
+      }
     } catch (error) {
       console.error("Create event error:", error);
       res.status(500).json({

@@ -5,6 +5,7 @@ const {
   requireOrganization,
 } = require("../middleware/auth");
 const { body, validationResult } = require("express-validator");
+const emailService = require("../services/email-service");
 
 const router = express.Router();
 
@@ -630,6 +631,28 @@ router.post(
           email: player.email,
         },
       });
+
+      // 📧 Send Notification Email
+      if (player.email) {
+        try {
+          const orgResult = await query(
+            "SELECT name FROM organizations WHERE id = $1",
+            [team.club_id],
+          );
+          const clubName = orgResult.rows[0]?.name || "Your Club";
+
+          await emailService.sendTeamAssignmentEmail({
+            email: player.email,
+            firstName: player.first_name,
+            teamName: team.name,
+            clubName: clubName,
+            position: position,
+            jerseyNumber: jerseyNumber,
+          });
+        } catch (emailErr) {
+          console.error("Non-blocking email failure:", emailErr.message);
+        }
+      }
     } catch (error) {
       console.error("Add player to team error:", error);
       res.status(500).json({

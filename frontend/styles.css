@@ -3245,7 +3245,21 @@ input:focus + .toggle-slider {
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
+    z-index: 1001;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
 }
 
 .nav-dropdown-container:hover .nav-dropdown-menu {

@@ -522,6 +522,161 @@ class EmailService {
     }
   }
 
+  // Send team assignment email
+  async sendTeamAssignmentEmail(assignmentData) {
+    const { email, firstName, teamName, clubName, position, jerseyNumber } =
+      assignmentData;
+
+    try {
+      const subject = `Welcome to the Team: ${teamName}`;
+      const content = `
+        <h2>You've been added to ${teamName}</h2>
+        <p>Hello ${firstName},</p>
+        <p>Great news! You have been officially added to the roster for <strong>${teamName}</strong> at <strong>${clubName}</strong>.</p>
+        
+        <div class="card">
+          <h3 style="margin-bottom: 15px;">Your Team Details</h3>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="color:#94a3b8;">Position</span>
+            <span style="font-weight:600;">${position || "Not Assigned"}</span>
+          </div>
+          ${
+            jerseyNumber
+              ? `
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#94a3b8;">Jersey Number</span>
+            <span class="accent" style="font-size: 20px;">#${jerseyNumber}</span>
+          </div>`
+              : ""
+          }
+        </div>
+
+        <p>You can now view your team schedule, teammates, and track your statistics directly through the ClubHub dashboard.</p>
+
+        <div style="text-align: center;">
+          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">View My Team</a>
+        </div>
+      `;
+
+      const html = this.getBaseHtmlTemplate(content);
+      return await this.sendEmail({
+        to: email,
+        subject,
+        html,
+        text: `You have been added to ${teamName}! Login to view: ${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
+      });
+    } catch (error) {
+      console.error("❌ Failed to send team assignment email:", error);
+      // We don't throw - we want the assignment to succeed even if email fails
+    }
+  }
+
+  // Send event creation email (Team specific)
+  async sendEventCreatedEmail(eventData) {
+    const {
+      email,
+      firstName,
+      eventTitle,
+      eventDate,
+      eventTime,
+      location,
+      teamName,
+      clubName,
+    } = eventData;
+
+    try {
+      const subject = `New Event Scheduled: ${eventTitle}`;
+      const content = `
+        <h2>New Team Event</h2>
+        <p>Hello ${firstName},</p>
+        <p>A new event has been scheduled for <strong>${teamName}</strong>.</p>
+        
+        <div class="card">
+          <h3 style="margin-bottom: 20px;">${eventTitle}</h3>
+          <p><strong>Date:</strong> ${new Date(eventDate).toLocaleDateString()}</p>
+          <p><strong>Time:</strong> ${eventTime || "TBA"}</p>
+          <p><strong>Location:</strong> ${location || "TBA"}</p>
+        </div>
+
+        <p>Please update your availability as soon as possible to help the coaching staff plan ahead.</p>
+
+        <div style="text-align: center;">
+          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">Confirm Availability</a>
+        </div>
+      `;
+
+      const html = this.getBaseHtmlTemplate(content);
+      return await this.sendEmail({
+        to: email,
+        subject,
+        html,
+        text: `New event scheduled: ${eventTitle} on ${eventDate}. Confirm availability at ${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
+      });
+    } catch (error) {
+      console.error("❌ Failed to send event creation email:", error);
+    }
+  }
+
+  // Send application status update email
+  async sendApplicationUpdateEmail(appData) {
+    const { email, firstName, clubName, status, listingTitle } = appData;
+
+    try {
+      const subject = `Update on your application to ${clubName}`;
+
+      const statusTitle =
+        {
+          shortlisted: "You've been Shortlisted!",
+          accepted: "Application Accepted",
+          rejected: "Application Update",
+          invited: "Team Invitation",
+        }[status] || "Application Update";
+
+      const statusMessage =
+        {
+          shortlisted: `Great news! Your application for <strong>${listingTitle}</strong> has been shortlisted. the coaching staff will be in touch shortly regarding next steps.`,
+          accepted: `Congratulations! Your application for <strong>${listingTitle}</strong> has been accepted. We are excited to have you join us.`,
+          rejected: `Thank you for your interest in <strong>${listingTitle}</strong>. Unfortunately, the club has decided not to proceed with your application at this time.`,
+          invited: `You have been officially invited to join the team for <strong>${listingTitle}</strong>!`,
+        }[status] ||
+        `There has been an update to your application status for ${listingTitle}.`;
+
+      const content = `
+        <h2>${statusTitle}</h2>
+        <p>Hello ${firstName},</p>
+        <p>${statusMessage}</p>
+        
+        <div class="card">
+          <p style="margin-bottom: 5px; color: #94a3b8;">Organization</p>
+          <p style="font-weight: 600; font-size: 18px; margin-bottom: 15px;">${clubName}</p>
+          <p style="margin-bottom: 5px; color: #94a3b8;">Position/Listing</p>
+          <p style="font-weight: 600;">${listingTitle}</p>
+        </div>
+
+        ${
+          status !== "rejected"
+            ? `
+        <div style="text-align: center;">
+          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">View Dashboard</a>
+        </div>`
+            : ""
+        }
+
+        <p>Thank you for using ClubHub.</p>
+      `;
+
+      const html = this.getBaseHtmlTemplate(content);
+      return await this.sendEmail({
+        to: email,
+        subject,
+        html,
+        text: `Update on your application for ${listingTitle} at ${clubName}: ${statusTitle}`,
+      });
+    } catch (error) {
+      console.error("❌ Failed to send application update email:", error);
+    }
+  }
+
   // Generic email sending method
   async sendEmail({ to, subject, html, text, from, replyTo }) {
     try {
