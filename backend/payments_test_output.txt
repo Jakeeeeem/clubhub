@@ -1,6 +1,31 @@
 
 > clubhub-backend@1.0.0 test
-> jest --detectOpenHandles tests/feature-onboard-search-stripe.test.js
+> jest --detectOpenHandles tests/payments.test.js
+
+  console.log
+    🔌 DB CONFIG DEBUG: {
+      env_db_host: 'localhost',
+      env_pghost: undefined,
+      env_database_url: undefined,
+      config_host: 'localhost'
+    }
+
+      at Object.log (config/database.js:4:9)
+
+  console.log
+    🔗 Connection String (masked): postgresql://clubhub_dev_db_user:****@localhost:5432/clubhub_dev_db
+
+      at Object.log (config/database.js:14:9)
+
+  console.log
+    📧 Using SendPulse SMTP Service
+
+      at EmailService.log [as getEmailConfig] (services/email-service.js:25:15)
+
+  console.log
+    ⚠️  Payment processing is DISABLED. Set ENABLE_PAYMENT_PROCESSING=true in .env to enable.
+
+      at Object.log (middleware/payment-guard.js:20:11)
 
   console.log
     📍 Route: *
@@ -1495,26 +1520,282 @@
           at Array.forEach (<anonymous>)
           at Array.forEach (<anonymous>)
 
-FAIL tests/feature-onboard-search-stripe.test.js
-  Platform Admin - Search Stripe Link
-    × Onboard NEW Club but EXISTING Stripe Account links automatically via Search (2 ms)
+  console.log
+    2026-02-09T21:06:14.906Z - POST /api/auth/register - ::ffff:127.0.0.1
 
-  ● Platform Admin - Search Stripe Link › Onboard NEW Club but EXISTING Stripe Account links automatically via Search
+      at log (server.js:186:11)
 
-    TypeError: Cannot read properties of undefined (reading 'mockClear')
+  console.error
+    ❌ Query failed: {
+      text: 'SELECT * FROM users WHERE email = $1...',
+      error: 'password authentication failed for user "clubhub_dev_db_user"'
+    }
 
-    [0m [90m 85 |[39m   beforeEach(() [33m=>[39m {
-     [90m 86 |[39m     mockQuery[33m.[39mmockClear()[33m;[39m
-    [31m[1m>[22m[39m[90m 87 |[39m     mockStripe[33m.[39maccounts[33m.[39msearch[33m.[39mmockClear()[33m;[39m
-     [90m    |[39m                                [31m[1m^[22m[39m
-     [90m 88 |[39m   })[33m;[39m
-     [90m 89 |[39m
-     [90m 90 |[39m   test([32m"Onboard NEW Club but EXISTING Stripe Account links automatically via Search"[39m[33m,[39m [36masync[39m () [33m=>[39m {[0m
+    [0m [90m 81 |[39m     [36mreturn[39m res[33m;[39m
+     [90m 82 |[39m   } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 83 |[39m     console[33m.[39merror([32m"❌ Query failed:"[39m[33m,[39m {
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 84 |[39m       text[33m:[39m text[33m.[39msubstring([35m0[39m[33m,[39m [35m50[39m) [33m+[39m [32m"..."[39m[33m,[39m
+     [90m 85 |[39m       error[33m:[39m error[33m.[39mmessage[33m,[39m
+     [90m 86 |[39m     })[33m;[39m[0m
 
-      at Object.mockClear (tests/feature-onboard-search-stripe.test.js:87:32)
+      at error (config/database.js:83:13)
+      at routes/auth.js:167:26
+
+  console.error
+    ❌ Registration error: error: password authentication failed for user "clubhub_dev_db_user"
+        at C:\Users\Dell\Documents\elitepro\clubhub\backend\node_modules\pg-pool\index.js:45:11
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at query (C:\Users\Dell\Documents\elitepro\clubhub\backend\config\database.js:74:17)
+        at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\auth.js:167:26 {
+      length: 115,
+      severity: 'FATAL',
+      code: '28P01',
+      detail: undefined,
+      hint: undefined,
+      position: undefined,
+      internalPosition: undefined,
+      internalQuery: undefined,
+      where: undefined,
+      schema: undefined,
+      table: undefined,
+      column: undefined,
+      dataType: undefined,
+      constraint: undefined,
+      file: 'auth.c',
+      line: '320',
+      routine: 'auth_failed'
+    }
+
+    [0m [90m 320 |[39m     })[33m;[39m
+     [90m 321 |[39m   } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 322 |[39m     console[33m.[39merror([32m"❌ Registration error:"[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 323 |[39m     console[33m.[39merror([32m"Error details:"[39m[33m,[39m {
+     [90m 324 |[39m       message[33m:[39m error[33m.[39mmessage[33m,[39m
+     [90m 325 |[39m       code[33m:[39m error[33m.[39mcode[33m,[39m[0m
+
+      at error (routes/auth.js:322:13)
+
+  console.error
+    Error details: {
+      message: 'password authentication failed for user "clubhub_dev_db_user"',
+      code: '28P01',
+      detail: undefined,
+      table: undefined,
+      column: undefined
+    }
+
+    [0m [90m 321 |[39m   } [36mcatch[39m (error) {
+     [90m 322 |[39m     console[33m.[39merror([32m"❌ Registration error:"[39m[33m,[39m error)[33m;[39m
+    [31m[1m>[22m[39m[90m 323 |[39m     console[33m.[39merror([32m"Error details:"[39m[33m,[39m {
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 324 |[39m       message[33m:[39m error[33m.[39mmessage[33m,[39m
+     [90m 325 |[39m       code[33m:[39m error[33m.[39mcode[33m,[39m
+     [90m 326 |[39m       detail[33m:[39m error[33m.[39mdetail[33m,[39m[0m
+
+      at error (routes/auth.js:323:13)
+
+  console.log
+    2026-02-09T21:06:15.018Z - GET /api/payments/health - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.log
+    ✅ Stripe is configured and active.
+
+      at Object.log (tests/payments.test.js:85:15)
+
+  console.log
+    2026-02-09T21:06:15.032Z - GET /api/payments/health - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.log
+    2026-02-09T21:06:15.046Z - POST /api/payments/plans - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.error
+    ❌ Token verification failed: {
+      error: 'jwt malformed',
+      name: 'JsonWebTokenError',
+      token: 'undefined...'
+    }
+
+    [0m [90m 28 |[39m   jwt[33m.[39mverify(token[33m,[39m [33mJWT_SECRET[39m[33m,[39m (err[33m,[39m decoded) [33m=>[39m {
+     [90m 29 |[39m     [36mif[39m (err) {
+    [31m[1m>[22m[39m[90m 30 |[39m       console[33m.[39merror([32m"❌ Token verification failed:"[39m[33m,[39m {
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 31 |[39m         error[33m:[39m err[33m.[39mmessage[33m,[39m
+     [90m 32 |[39m         name[33m:[39m err[33m.[39mname[33m,[39m
+     [90m 33 |[39m         token[33m:[39m token[33m.[39msubstring([35m0[39m[33m,[39m [35m20[39m) [33m+[39m [32m"..."[39m[33m,[39m[0m
+
+      at error (middleware/auth.js:30:15)
+      at Object.module.exports [as verify] (node_modules/jsonwebtoken/verify.js:70:12)
+      at verify (middleware/auth.js:28:7)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at next (node_modules/express/lib/router/route.js:149:13)
+      at Route.dispatch (node_modules/express/lib/router/route.js:119:3)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at node_modules/express/lib/router/index.js:284:15
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at Function.handle (node_modules/express/lib/router/index.js:175:3)
+      at router (node_modules/express/lib/router/index.js:47:12)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at next (server.js:187:3)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at urlencodedParser (node_modules/body-parser/lib/types/urlencoded.js:85:7)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at jsonParser (node_modules/body-parser/lib/types/json.js:104:7)
+      at Layer.handle [as handle_request] (node_modules/express/lib/router/layer.js:95:5)
+      at trim_prefix (node_modules/express/lib/router/index.js:328:13)
+      at node_modules/express/lib/router/index.js:286:9
+      at Function.process_params (node_modules/express/lib/router/index.js:346:12)
+      at next (node_modules/express/lib/router/index.js:280:10)
+      at node_modules/express-rate-limit/dist/index.cjs:822:7
+      at node_modules/express-rate-limit/dist/index.cjs:704:5
+
+  console.log
+    2026-02-09T21:06:15.070Z - GET /api/payments/plans - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.error
+    ❌ Query failed: {
+      text: '\n      CREATE TABLE IF NOT EXISTS plans (\n        ...',
+      error: 'password authentication failed for user "clubhub_dev_db_user"'
+    }
+
+    [0m [90m 81 |[39m     [36mreturn[39m res[33m;[39m
+     [90m 82 |[39m   } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 83 |[39m     console[33m.[39merror([32m"❌ Query failed:"[39m[33m,[39m {
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 84 |[39m       text[33m:[39m text[33m.[39msubstring([35m0[39m[33m,[39m [35m50[39m) [33m+[39m [32m"..."[39m[33m,[39m
+     [90m 85 |[39m       error[33m:[39m error[33m.[39mmessage[33m,[39m
+     [90m 86 |[39m     })[33m;[39m[0m
+
+      at error (config/database.js:83:13)
+      at routes/payments.js:304:5
+
+  console.error
+    Get plans error: error: password authentication failed for user "clubhub_dev_db_user"
+        at C:\Users\Dell\Documents\elitepro\clubhub\backend\node_modules\pg-pool\index.js:45:11
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at query (C:\Users\Dell\Documents\elitepro\clubhub\backend\config\database.js:74:17)
+        at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\payments.js:304:5 {
+      length: 115,
+      severity: 'FATAL',
+      code: '28P01',
+      detail: undefined,
+      hint: undefined,
+      position: undefined,
+      internalPosition: undefined,
+      internalQuery: undefined,
+      where: undefined,
+      schema: undefined,
+      table: undefined,
+      column: undefined,
+      dataType: undefined,
+      constraint: undefined,
+      file: 'auth.c',
+      line: '320',
+      routine: 'auth_failed'
+    }
+
+    [0m [90m 339 |[39m     res[33m.[39mjson(result[33m.[39mrows)[33m;[39m
+     [90m 340 |[39m   } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 341 |[39m     console[33m.[39merror([32m"Get plans error:"[39m[33m,[39m err)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 342 |[39m     res[33m.[39mstatus([35m500[39m)[33m.[39mjson({
+     [90m 343 |[39m       error[33m:[39m [32m"Failed to load plans"[39m[33m,[39m
+     [90m 344 |[39m       message[33m:[39m err[33m.[39mmessage[33m,[39m[0m
+
+      at error (routes/payments.js:341:13)
+
+FAIL tests/payments.test.js
+  ● Payments API Integration Tests › should register a user and create an organization
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: 201
+    Received: 500
+
+    [0m [90m 62 |[39m       })[33m;[39m
+     [90m 63 |[39m
+    [31m[1m>[22m[39m[90m 64 |[39m     expect(res[33m.[39mstatusCode)[33m.[39mtoEqual([35m201[39m)[33m;[39m
+     [90m    |[39m                            [31m[1m^[22m[39m
+     [90m 65 |[39m     authToken [33m=[39m res[33m.[39mbody[33m.[39mtoken[33m;[39m
+     [90m 66 |[39m     expect(authToken)[33m.[39mtoBeDefined()[33m;[39m
+     [90m 67 |[39m[0m
+
+      at Object.toEqual (tests/payments.test.js:64:28)
+
+  ● Payments API Integration Tests › should create a payment plan
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: 201
+    Received: 403
+
+    [0m [90m 118 |[39m       )[33m;[39m
+     [90m 119 |[39m     } [36melse[39m {
+    [31m[1m>[22m[39m[90m 120 |[39m       expect(res[33m.[39mstatusCode)[33m.[39mtoEqual([35m201[39m)[33m;[39m
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 121 |[39m       expect(res[33m.[39mbody[33m.[39mplan)[33m.[39mtoHaveProperty([32m"name"[39m[33m,[39m [32m"Test Annual Membership"[39m)[33m;[39m
+     [90m 122 |[39m       console[33m.[39mlog([32m"✅ Plan created successfully in Stripe."[39m)[33m;[39m
+     [90m 123 |[39m     }[0m
+
+      at Object.toEqual (tests/payments.test.js:120:30)
+
+  ● Payments API Integration Tests › should fetch plans
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: 200
+    Received: 500
+
+    [0m [90m 130 |[39m       [33m.[39m[36mset[39m([32m"Authorization"[39m[33m,[39m [32m`Bearer ${authToken}`[39m)[33m;[39m [90m// Authentication might be optional depending on implementation[39m
+     [90m 131 |[39m
+    [31m[1m>[22m[39m[90m 132 |[39m     expect(res[33m.[39mstatusCode)[33m.[39mtoEqual([35m200[39m)[33m;[39m
+     [90m     |[39m                            [31m[1m^[22m[39m
+     [90m 133 |[39m     expect([33mArray[39m[33m.[39misArray(res[33m.[39mbody))[33m.[39mtoBe([36mtrue[39m)[33m;[39m
+     [90m 134 |[39m   })[33m;[39m
+     [90m 135 |[39m })[33m;[39m[0m
+
+      at Object.toEqual (tests/payments.test.js:132:28)
+
+
+  ● Test suite failed to run
+
+    error: password authentication failed for user "clubhub_dev_db_user"
+
+    [0m [90m 38 |[39m     }
+     [90m 39 |[39m     [36mif[39m (createdUserEmail) {
+    [31m[1m>[22m[39m[90m 40 |[39m       [36mawait[39m pool[33m.[39mquery([32m"DELETE FROM users WHERE email = $1"[39m[33m,[39m [
+     [90m    |[39m       [31m[1m^[22m[39m
+     [90m 41 |[39m         createdUserEmail[33m,[39m
+     [90m 42 |[39m       ])[33m;[39m
+     [90m 43 |[39m     }[0m
+
+      at node_modules/pg-pool/index.js:45:11
+      at Object.<anonymous> (tests/payments.test.js:40:7)
 
 Test Suites: 1 failed, 1 total
-Tests:       1 failed, 1 total
+Tests:       3 failed, 1 passed, 4 total
 Snapshots:   0 total
-Time:        1.281 s
-Ran all test suites matching tests/feature-onboard-search-stripe.test.js.
+Time:        1.54 s, estimated 3 s
+Ran all test suites matching tests/payments.test.js.

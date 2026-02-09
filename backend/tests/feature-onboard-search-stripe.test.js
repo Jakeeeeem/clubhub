@@ -10,7 +10,7 @@ const mockStripe = {
       details_submitted: true,
       payouts_enabled: true,
     }),
-    search: jest.fn().mockResolvedValue({
+    list: jest.fn().mockResolvedValue({
       data: [{ id: "acct_found_via_search", email: "ardwick@example.com" }],
     }),
     create: jest.fn().mockResolvedValue({ id: "acct_new" }), // fallback
@@ -45,7 +45,7 @@ const mockQuery = jest.fn((text, params) => {
   // Create Organization
   if (text.includes("INSERT INTO organizations")) {
     return Promise.resolve({
-      rows: [{ id: 501, name: params[0], stripe_account_id: params[6] }],
+      rows: [{ id: 501, name: params[0], stripe_account_id: params[5] }],
     });
   }
 
@@ -84,7 +84,7 @@ describe("Platform Admin - Search Stripe Link", () => {
 
   beforeEach(() => {
     mockQuery.mockClear();
-    mockStripe.accounts.search.mockClear();
+    mockStripe.accounts.list.mockClear();
   });
 
   test("Onboard NEW Club but EXISTING Stripe Account links automatically via Search", async () => {
@@ -101,10 +101,10 @@ describe("Platform Admin - Search Stripe Link", () => {
 
     expect(res.statusCode).toBe(201);
 
-    // Verify Stripe Search was called
-    expect(mockStripe.accounts.search).toHaveBeenCalledWith(
+    // Verify Stripe List was called
+    expect(mockStripe.accounts.list).toHaveBeenCalledWith(
       expect.objectContaining({
-        query: expect.stringContaining("ardwick@example.com"),
+        email: "ardwick@example.com",
       }),
     );
 

@@ -8,6 +8,7 @@ const {
 const { body, validationResult } = require("express-validator");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors");
+const { requirePaymentProcessing } = require("../middleware/payment-guard");
 
 const router = express.Router();
 
@@ -1083,7 +1084,7 @@ router.get("/", authenticateToken, async (req, res) => {
 });
 
 // CREATE STRIPE PAYMENT INTENT - ENHANCED
-router.post("/create-intent", async (req, res) => {
+router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
   try {
     console.log("Creating payment intent with data:", req.body);
 

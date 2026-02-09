@@ -1,6 +1,11 @@
 
 > clubhub-backend@1.0.0 test
-> jest --detectOpenHandles tests/feature-onboard-search-stripe.test.js
+> jest --detectOpenHandles tests/stripe-connect-safety.test.js
+
+  console.log
+    📧 Using SendPulse SMTP Service
+
+      at EmailService.log [as getEmailConfig] (services/email-service.js:25:15)
 
   console.log
     📍 Route: *
@@ -1495,26 +1500,238 @@
           at Array.forEach (<anonymous>)
           at Array.forEach (<anonymous>)
 
-FAIL tests/feature-onboard-search-stripe.test.js
-  Platform Admin - Search Stripe Link
-    × Onboard NEW Club but EXISTING Stripe Account links automatically via Search (2 ms)
+  console.log
+    2026-02-09T21:04:45.061Z - GET /api/payments/stripe/connect/status - ::ffff:127.0.0.1
 
-  ● Platform Admin - Search Stripe Link › Onboard NEW Club but EXISTING Stripe Account links automatically via Search
+      at log (server.js:186:11)
 
-    TypeError: Cannot read properties of undefined (reading 'mockClear')
+  console.log
+    ✅ Token verified for user: super@test.com
 
-    [0m [90m 85 |[39m   beforeEach(() [33m=>[39m {
-     [90m 86 |[39m     mockQuery[33m.[39mmockClear()[33m;[39m
-    [31m[1m>[22m[39m[90m 87 |[39m     mockStripe[33m.[39maccounts[33m.[39msearch[33m.[39mmockClear()[33m;[39m
-     [90m    |[39m                                [31m[1m^[22m[39m
-     [90m 88 |[39m   })[33m;[39m
-     [90m 89 |[39m
-     [90m 90 |[39m   test([32m"Onboard NEW Club but EXISTING Stripe Account links automatically via Search"[39m[33m,[39m [36masync[39m () [33m=>[39m {[0m
+      at log (middleware/auth.js:56:13)
 
-      at Object.mockClear (tests/feature-onboard-search-stripe.test.js:87:32)
+  console.error
+    Stripe Connect account error: Error: User not found
+        at getOrCreateStripeConnectAccount (C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\payments.js:52:45)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\payments.js:130:21
+
+    [0m [90m 110 |[39m     [36mreturn[39m account[33m;[39m
+     [90m 111 |[39m   } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 112 |[39m     console[33m.[39merror([32m"Stripe Connect account error:"[39m[33m,[39m err)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 113 |[39m
+     [90m 114 |[39m     [90m// Handle specific Stripe errors[39m
+     [90m 115 |[39m     [36mif[39m (err[33m.[39mtype [33m===[39m [32m"StripeInvalidRequestError"[39m) {[0m
+
+      at error (routes/payments.js:112:13)
+      at routes/payments.js:130:21
+
+  console.error
+    Stripe connect status error: Error: User not found
+        at getOrCreateStripeConnectAccount (C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\payments.js:52:45)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\payments.js:130:21
+
+    [0m [90m 208 |[39m     res[33m.[39mjson(response)[33m;[39m
+     [90m 209 |[39m   } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 210 |[39m     console[33m.[39merror([32m"Stripe connect status error:"[39m[33m,[39m err)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 211 |[39m     [36mif[39m ([33mString[39m(err[33m.[39mmessage)[33m.[39mincludes([32m"User not found"[39m)) {
+     [90m 212 |[39m       [36mreturn[39m res[33m.[39mstatus([35m404[39m)[33m.[39mjson({ error[33m:[39m [32m"User not found"[39m })[33m;[39m
+     [90m 213 |[39m     }[0m
+
+      at error (routes/payments.js:210:13)
+
+  console.log
+    2026-02-09T21:04:45.160Z - POST /api/payments/create-intent - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.log
+    Creating payment intent with data: { amount: 100 }
+
+      at log (routes/payments.js:1088:13)
+
+  console.log
+    Creating Stripe PaymentIntent with data: {
+      amount: 10000,
+      currency: 'gbp',
+      description: 'ClubHub Payment of £100'
+    }
+
+      at log (routes/payments.js:1205:15)
+
+  console.log
+    Stripe Payment Intent created: pi_test for £100
+
+      at log (routes/payments.js:1214:15)
+
+  console.log
+    2026-02-09T21:04:45.179Z - POST /api/payments/plans - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.log
+    ✅ Token verified for user: super@test.com
+
+      at log (middleware/auth.js:56:13)
+
+  console.log
+    2026-02-09T21:04:45.201Z - POST /api/payments/create-intent - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.log
+    Creating payment intent with data: { amount: 50, paymentId: 'test-payment-123' }
+
+      at log (routes/payments.js:1088:13)
+
+  console.warn
+    Payment record not found for ID: test-payment-123
+
+    [0m [90m 1161 |[39m           }
+     [90m 1162 |[39m         } [36melse[39m {
+    [31m[1m>[22m[39m[90m 1163 |[39m           console[33m.[39mwarn([32m`Payment record not found for ID: ${paymentId}`[39m)[33m;[39m
+     [90m      |[39m                   [31m[1m^[22m[39m
+     [90m 1164 |[39m         }
+     [90m 1165 |[39m       } [36mcatch[39m (dbError) {
+     [90m 1166 |[39m         console[33m.[39merror([32m"Database error fetching payment:"[39m[33m,[39m dbError)[33m;[39m[0m
+
+      at warn (routes/payments.js:1163:19)
+
+  console.log
+    Creating Stripe PaymentIntent with data: {
+      amount: 5000,
+      currency: 'gbp',
+      description: 'ClubHub Payment of £50'
+    }
+
+      at log (routes/payments.js:1205:15)
+
+  console.log
+    Stripe Payment Intent created: pi_test for £50
+
+      at log (routes/payments.js:1214:15)
+
+  console.log
+    2026-02-09T21:04:45.224Z - GET /api/payments/stripe/connect/status - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.log
+    ✅ Token verified for user: super@test.com
+
+      at log (middleware/auth.js:56:13)
+
+  console.error
+    Stripe Connect account error: Error: User not found
+        at getOrCreateStripeConnectAccount (C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\payments.js:52:45)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\payments.js:130:21
+
+    [0m [90m 110 |[39m     [36mreturn[39m account[33m;[39m
+     [90m 111 |[39m   } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 112 |[39m     console[33m.[39merror([32m"Stripe Connect account error:"[39m[33m,[39m err)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 113 |[39m
+     [90m 114 |[39m     [90m// Handle specific Stripe errors[39m
+     [90m 115 |[39m     [36mif[39m (err[33m.[39mtype [33m===[39m [32m"StripeInvalidRequestError"[39m) {[0m
+
+      at error (routes/payments.js:112:13)
+      at routes/payments.js:130:21
+
+  console.error
+    Stripe connect status error: Error: User not found
+        at getOrCreateStripeConnectAccount (C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\payments.js:52:45)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+        at C:\Users\Dell\Documents\elitepro\clubhub\backend\routes\payments.js:130:21
+
+    [0m [90m 208 |[39m     res[33m.[39mjson(response)[33m;[39m
+     [90m 209 |[39m   } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 210 |[39m     console[33m.[39merror([32m"Stripe connect status error:"[39m[33m,[39m err)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 211 |[39m     [36mif[39m ([33mString[39m(err[33m.[39mmessage)[33m.[39mincludes([32m"User not found"[39m)) {
+     [90m 212 |[39m       [36mreturn[39m res[33m.[39mstatus([35m404[39m)[33m.[39mjson({ error[33m:[39m [32m"User not found"[39m })[33m;[39m
+     [90m 213 |[39m     }[0m
+
+      at error (routes/payments.js:210:13)
+
+  console.log
+    2026-02-09T21:04:45.253Z - POST /api/payments/plans - ::ffff:127.0.0.1
+
+      at log (server.js:186:11)
+
+  console.log
+    ✅ Token verified for user: super@test.com
+
+      at log (middleware/auth.js:56:13)
+
+FAIL tests/stripe-connect-safety.test.js
+  🛡️ STRIPE CONNECT SAFETY TESTS
+    ✅ Stripe Connect Account Linking
+      × should fetch connect status WITHOUT charging (107 ms)
+      × should NOT expose payment processing endpoints (Safety Check) (30 ms)
+    ✅ Payment Plan Management (No Charging)
+      √ should create payment plan WITHOUT charging cards (22 ms)
+    🔴 CRITICAL: Payment Processing Blocked
+      × should block payment intent creation when flag is false (23 ms)
+    🔍 Stripe API Call Verification
+      √ should NEVER call stripe.paymentIntents.create during normal operations (47 ms)
+
+  ● 🛡️ STRIPE CONNECT SAFETY TESTS › ✅ Stripe Connect Account Linking › should fetch connect status WITHOUT charging
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+    [0m [90m 126 |[39m         [33m.[39m[36mset[39m([32m"Authorization"[39m[33m,[39m [32m`Bearer ${token}`[39m)[33m;[39m
+     [90m 127 |[39m
+    [31m[1m>[22m[39m[90m 128 |[39m       expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 129 |[39m       [90m// Verify NO payment methods were called[39m
+     [90m 130 |[39m       expect(mockStripe[33m.[39mpaymentIntents[33m.[39mcreate)[33m.[39mnot[33m.[39mtoHaveBeenCalled()[33m;[39m
+     [90m 131 |[39m       expect(mockStripe[33m.[39mcharges[33m.[39mcreate)[33m.[39mnot[33m.[39mtoHaveBeenCalled()[33m;[39m[0m
+
+      at Object.toBe (tests/stripe-connect-safety.test.js:128:30)
+
+  ● 🛡️ STRIPE CONNECT SAFETY TESTS › ✅ Stripe Connect Account Linking › should NOT expose payment processing endpoints (Safety Check)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 200
+
+    [0m [90m 141 |[39m         [33m.[39msend({ amount[33m:[39m [35m100[39m })[33m;[39m
+     [90m 142 |[39m
+    [31m[1m>[22m[39m[90m 143 |[39m       expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m403[39m)[33m;[39m
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 144 |[39m       expect(mockStripe[33m.[39mpaymentIntents[33m.[39mcreate)[33m.[39mnot[33m.[39mtoHaveBeenCalled()[33m;[39m
+     [90m 145 |[39m     })[33m;[39m
+     [90m 146 |[39m   })[33m;[39m[0m
+
+      at Object.toBe (tests/stripe-connect-safety.test.js:143:30)
+
+  ● 🛡️ STRIPE CONNECT SAFETY TESTS › 🔴 CRITICAL: Payment Processing Blocked › should block payment intent creation when flag is false
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 200
+
+    [0m [90m 181 |[39m         })[33m;[39m
+     [90m 182 |[39m
+    [31m[1m>[22m[39m[90m 183 |[39m       expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m403[39m)[33m;[39m
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 184 |[39m       expect(mockStripe[33m.[39mpaymentIntents[33m.[39mcreate)[33m.[39mnot[33m.[39mtoHaveBeenCalled()[33m;[39m
+     [90m 185 |[39m     })[33m;[39m
+     [90m 186 |[39m   })[33m;[39m[0m
+
+      at Object.toBe (tests/stripe-connect-safety.test.js:183:30)
 
 Test Suites: 1 failed, 1 total
-Tests:       1 failed, 1 total
+Tests:       3 failed, 2 passed, 5 total
 Snapshots:   0 total
-Time:        1.281 s
-Ran all test suites matching tests/feature-onboard-search-stripe.test.js.
+Time:        1.271 s, estimated 2 s
+Ran all test suites matching tests/stripe-connect-safety.test.js.

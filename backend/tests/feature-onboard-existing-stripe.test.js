@@ -30,7 +30,7 @@ const mockQuery = jest.fn((text, params) => {
   }
 
   // Check for users stripe account
-  if (text.includes("SELECT stripe_account_id FROM users")) {
+  if (text.includes("SELECT stripe_account_id FROM organizations")) {
     return Promise.resolve({
       rows: [{ stripe_account_id: "acct_existing_linked" }],
     });
@@ -108,7 +108,7 @@ describe("Platform Admin - Existing Stripe Link", () => {
 
     // Verify we checked for the existing user's Stripe ID
     expect(mockQuery).toHaveBeenCalledWith(
-      expect.stringContaining("SELECT stripe_account_id FROM users"),
+      expect.stringContaining("SELECT stripe_account_id FROM organizations"),
       [999],
     );
 
