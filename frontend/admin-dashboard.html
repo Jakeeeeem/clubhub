@@ -1353,7 +1353,11 @@
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                    <button type="submit" class="btn btn-primary" id="savePlayerChangesBtn">💾 Save Changes</button>
+                    <button type="button" class="btn btn-success" id="acceptMemberBtn" style="display: none;"
+                        onclick="handleAcceptMember()">✅ Accept Member</button>
+                    <button type="button" class="btn btn-warning" id="resendInviteBtn" style="display: none;"
+                        onclick="handleResendInvite()">📧 Resend Invite</button>
                     <button type="button" class="btn btn-secondary"
                         onclick="closeModal('editPlayerModal')">Cancel</button>
                 </div>
@@ -5806,15 +5810,18 @@
                         </div>`;
                 } else {
                     container.innerHTML = tourneys.map(t => `
-                        <div class="card" onclick="viewTournament('${t.id}')" style="cursor: pointer; transition: transform 0.2s; border: 1px solid transparent;">
-                            <style>.card:hover { border-color: var(--primary-color) !important; transform: translateY(-2px); }</style>
-                            <div style="display: flex; justify-content: space-between; align-items: start;">
-                                <div>
-                                    <span class="badge" style="margin-bottom: 0.5rem; background: rgba(59, 130, 246, 0.2); color: #60a5fa;">${(t.type || 'Tournament').toUpperCase()}</span>
-                                    <h3 style="margin: 0.5rem 0;">${t.name}</h3>
-                                    <p style="font-size: 0.9rem; opacity: 0.7;">${t.teams_count || 0} Teams • ${t.status || 'Active'}</p>
+                        <div class="card tournament-card" onclick="viewTournament('${t.id}')">
+                            <div class="tournament-card-header">
+                                <span class="badge badge-primary">${(t.type || 'Tournament').toUpperCase()}</span>
+                                <span class="tournament-trophy">🏆</span>
+                            </div>
+                            <div class="tournament-card-body">
+                                <h3>${t.name}</h3>
+                                <div class="tournament-meta">
+                                    <span>👥 ${t.teams_count || 0} Teams</span>
+                                    <span class="status-dot ${t.status === 'active' ? 'dot-success' : 'dot-warning'}"></span>
+                                    <span>${t.status || 'Active'}</span>
                                 </div>
-                                <span style="font-size: 2rem;">🏆</span>
                             </div>
                         </div>
                     `).join('');
@@ -6371,6 +6378,8 @@
         window.loadDashboardStats = loadDashboardStats;
         window.updateDashboardStats = updateDashboardStats;
         window.showSection = showSection;
+        window.handleAcceptMember = handleAcceptMember;
+        window.handleResendInvite = handleResendInvite;
 
         // Team Management Functions
         let currentTeamId = null;
@@ -7619,9 +7628,12 @@
                     showLoading(true);
                     const player = await apiService.getPlayerById(playerId);
 
+                    // Store current player object for context
+                    AppState.editingPlayer = player;
+
                     document.getElementById('editPlayerId').value = player.id;
-                    document.getElementById('editPlayerFirstName').value = player.first_name;
-                    document.getElementById('editPlayerLastName').value = player.last_name;
+                    document.getElementById('editPlayerFirstName').value = player.first_name || '';
+                    document.getElementById('editPlayerLastName').value = player.last_name || '';
                     document.getElementById('editPlayerEmail').value = player.email || '';
                     document.getElementById('editPlayerPhone').value = player.phone || '';
                     document.getElementById('editPlayerDOB').value = player.date_of_birth ? player.date_of_birth.split('T')[0] : '';
@@ -7634,10 +7646,71 @@
                     document.getElementById('editPlayerPosition').value = player.position || '';
                     document.getElementById('editPlayerPaymentStatus').value = player.payment_status || 'pending';
 
+                    // Toggle "Accept Member" button if it's an invited member
+                    const acceptBtn = document.getElementById('acceptMemberBtn');
+                    const resendBtn = document.getElementById('resendInviteBtn');
+
+                    if (player.join_status === 'invited') {
+                        if (acceptBtn) acceptBtn.style.display = 'inline-block';
+                        if (resendBtn) resendBtn.style.display = 'inline-block';
+                    } else {
+                        if (acceptBtn) acceptBtn.style.display = 'none';
+                        if (resendBtn) resendBtn.style.display = 'none';
+                    }
+
                     showModal('editPlayerModal');
                 } catch (error) {
                     console.error('Fetch player error:', error);
                     showNotification('Failed to load player data', 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function handleAcceptMember() {
+                const playerId = document.getElementById('editPlayerId').value;
+                if (!confirm('Are you sure you want to manually accept this member? They will be promoted to a full player.')) return;
+
+                try {
+                    showLoading(true);
+                    const result = await apiService.acceptMember(playerId);
+                    showNotification(result.message || 'Member accepted successfully', 'success');
+                    closeModal('editPlayerModal');
+                    loadPlayers();
+                    loadDashboardStats();
+                } catch (error) {
+                    console.error('Accept member error:', error);
+                    showNotification('Failed to accept member: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function handleResendInvite() {
+                const player = AppState.editingPlayer;
+                if (!player || !player.email) return;
+
+                try {
+                    showLoading(true);
+                    // Re-trigger invite via generateClubInvite logic
+                    const inviteData = {
+                        email: player.email,
+                        clubRole: player.role || 'player',
+                        message: `Reminder: You've been invited to join our organization.`,
+                        organizationId: AppState.currentOrganization?.id,
+                        clubId: AppState.currentOrganization?.id,
+                        isPublic: false
+                    };
+
+                    const response = await apiService.generateClubInvite(inviteData);
+                    if (response.success) {
+                        showNotification('Invitation resent successfully!', 'success');
+                    } else {
+                        throw new Error(response.error || 'Failed to resend invitation');
+                    }
+                } catch (error) {
+                    console.error('Resend invite error:', error);
+                    showNotification('Failed to resend invite: ' + error.message, 'error');
                 } finally {
                     showLoading(false);
                 }
