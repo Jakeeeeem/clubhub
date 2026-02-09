@@ -21,15 +21,27 @@ const inviteValidation = [
   body("firstName").optional().trim(),
   body("lastName").optional().trim(),
   body("dateOfBirth")
-    .optional()
+    .optional({ checkFalsy: true })
     .isISO8601()
     .withMessage("Please provide a valid date of birth"), // 🔥 NEW
   body("message").optional().trim(),
   body("clubRole")
     .optional()
-    .isIn(["player", "coach", "staff"])
+    .isIn([
+      "player",
+      "parent",
+      "coach",
+      "assistant_coach",
+      "staff",
+      "admin",
+      "viewer",
+      "manager",
+    ])
     .withMessage("Invalid club role"),
-  body("teamId").optional().isUUID().withMessage("Invalid team ID"), // 🔥 NEW
+  body("teamId")
+    .optional({ checkFalsy: true }) // Allow empty string, null, undefined
+    .isUUID()
+    .withMessage("Invalid team ID"),
 ];
 
 // 🔥 GENERATE SHAREABLE CLUB INVITE LINK
@@ -64,7 +76,7 @@ router.post(
       let userClubId = clubId;
       if (!userClubId) {
         const clubResult = await query(
-          "SELECT id, name FROM clubs WHERE owner_id = $1 LIMIT 1",
+          "SELECT id, name FROM organizations WHERE owner_id = $1 LIMIT 1",
           [req.user.id],
         );
         if (clubResult.rows.length === 0) {
@@ -80,7 +92,7 @@ router.post(
       const permissionResult = await query(
         `
       SELECT c.*, om.role as requester_role
-      FROM clubs c
+      FROM organizations c
       JOIN organization_members om ON c.id = om.organization_id
       WHERE c.id = $1 AND om.user_id = $2 AND om.status = 'active'
     `,

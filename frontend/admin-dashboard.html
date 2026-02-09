@@ -7999,7 +7999,8 @@
                         teamId: document.getElementById('inviteTeam').value || null,
                         message: document.getElementById('inviteMessage').value,
                         isPublic: false, // Specific invite via email
-                        organizationId: orgId
+                        organizationId: orgId,
+                        clubId: orgId
                     };
 
                     await apiService.generateClubInvite(data);
