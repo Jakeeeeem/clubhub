@@ -104,55 +104,69 @@ router.get("/", authenticateToken, async (req, res) => {
         WHERE i.status = 'pending' AND i.role IN ('player', 'parent')
     `;
 
+    // Unified filters
     const queryParams = [];
-    let paramCount = 0;
+    const activeClubId = clubId || req.query.clubId;
 
-    // Filters for both
-    let filterString = "";
-    if (clubId) {
-      paramCount++;
-      filterString += ` AND club_id = $${paramCount}`;
-      queryParams.push(clubId);
+    let targetClubIds = [];
+    if (activeClubId) {
+      targetClubIds = [activeClubId];
+      queryParams.push(targetClubIds);
     } else {
-      paramCount++;
-      filterString += ` AND club_id IN (
-            SELECT club_id FROM staff WHERE user_id = $${paramCount}
-            UNION 
-            SELECT id FROM organizations WHERE owner_id = $${paramCount}
-        )`;
-      queryParams.push(req.user.id);
+      // Find all clubs owned or coached by this user
+      const clubsResult = await query(
+        `SELECT id FROM organizations WHERE owner_id = $1 
+         UNION 
+         SELECT club_id FROM staff WHERE user_id = $1`,
+        [req.user.id],
+      );
+      targetClubIds = clubsResult.rows.map((c) => c.id);
+      queryParams.push(targetClubIds);
     }
 
-    if (search) {
-      paramCount++;
-      filterString += ` AND (first_name ILIKE $${paramCount} OR last_name ILIKE $${paramCount} OR email ILIKE $${paramCount})`;
-      queryParams.push(`%${search}%`);
+    if (targetClubIds.length === 0) {
+      return res.json([]);
     }
 
-    // Combine them
+    // Base queries with ANY($1) for efficiency and consistency with stats
     const finalQuery = `
       SELECT * FROM (
-        SELECT id, first_name, last_name, email, phone, date_of_birth, position, club_id, monthly_fee, user_id, created_at, age, join_status, team_name, team_sport, 'player' as role
-        FROM (${playersQuery.replace("WHERE 1=1", "WHERE 1=1" + filterString)}) p_inner
+        SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.date_of_birth, p.position, p.club_id, p.monthly_fee, p.user_id, p.created_at,
+        EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) as age,
+        'registered' as join_status,
+        (SELECT name FROM teams WHERE id = (SELECT team_id FROM team_players WHERE player_id = p.id LIMIT 1)) as team_name,
+        (SELECT sport FROM teams WHERE id = (SELECT team_id FROM team_players WHERE player_id = p.id LIMIT 1)) as team_sport,
+        'player' as role
+        FROM players p 
+        WHERE p.club_id = ANY($1)
+        
         UNION ALL
-        SELECT id, first_name, last_name, email, phone, date_of_birth, position, club_id, monthly_fee, user_id, created_at, age, join_status, team_name, team_sport, role
-        FROM (${invitesQuery + filterString.replace(/club_id/g, "organization_id")}) i_inner
+        
+        SELECT i.id, i.first_name, i.last_name, i.email, NULL as phone, i.date_of_birth, NULL as position, i.organization_id as club_id, 0 as monthly_fee, NULL as user_id, i.created_at,
+        EXTRACT(YEAR FROM age(CURRENT_DATE, i.date_of_birth)) as age,
+        'invited' as join_status,
+        (SELECT name FROM teams WHERE id = i.team_id LIMIT 1) as team_name,
+        NULL as team_sport,
+        i.role as role
+        FROM invitations i
+        WHERE i.organization_id = ANY($1) AND i.status = 'pending' AND i.role IN ('player', 'parent')
       ) combined
       ORDER BY created_at DESC
     `;
 
-    const result = await query(finalQuery, queryParams);
+    console.log(`📋 Fetching members for clubs: ${targetClubIds.join(", ")}`);
+    const result = await query(finalQuery, [targetClubIds]);
 
-    // Map rows to match expected frontend structure if needed
     const mappedRows = result.rows.map((row) => ({
       ...row,
-      // If name is missing, use email as fallback
       display_name:
         row.first_name || row.last_name
           ? `${row.first_name || ""} ${row.last_name || ""}`.trim()
-          : row.email || "Unknown Player",
+          : row.email || "Unknown Member",
       account_status: row.join_status === "invited" ? "Invited" : "Active",
     }));
+
+    res.json(mappedRows);
 
     res.json(mappedRows);
   } catch (error) {
