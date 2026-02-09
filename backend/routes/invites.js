@@ -148,8 +148,8 @@ router.post(
       if (!isPublic && email) {
         const existingInvite = await query(
           `
-        SELECT id, invite_status FROM club_invites 
-        WHERE email = $1 AND club_id = $2 AND invite_status = 'pending'
+        SELECT id, status as invite_status FROM invitations 
+        WHERE email = $1 AND organization_id = $2 AND status = 'pending'
       `,
           [email, userClubId],
         );
@@ -184,23 +184,23 @@ router.post(
       // Create invite record
       const inviteResult = await query(
         `
-      INSERT INTO club_invites (
+      INSERT INTO invitations (
         email, 
         first_name, 
         last_name, 
         date_of_birth,
-        club_id, 
+        organization_id, 
         invited_by, 
-        club_role, 
-        invite_token, 
+        role, 
+        token, 
         expires_at, 
-        personal_message,
+        message,
         team_id,
         is_public,
-        invite_status
+        status
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending')
-      RETURNING *
+      RETURNING *, token as invite_token, role as club_role
     `,
         [
           inviteEmail,
