@@ -229,6 +229,26 @@ router.post(
       );
       console.log(`🔗 Invite link: ${inviteLink}`);
 
+      // 🔥 SEND EMAIL INVITE IF NOT PUBLIC
+      if (!isPublic && email) {
+        try {
+          await emailService.sendClubInviteEmail({
+            email: email,
+            clubName: club.name,
+            inviterName:
+              `${req.user.first_name || "Club Admin"} ${req.user.last_name || ""}`.trim(),
+            inviteLink: inviteLink,
+            personalMessage: message,
+            clubRole: clubRole,
+          });
+          console.log(`✅ Email sent to ${email}`);
+        } catch (emailError) {
+          console.error("❌ Failed to send invite email:", emailError);
+          // Don't fail the request if email fails, but return a warning?
+          // For now, we just log it. The invite is created/token generated regardless.
+        }
+      }
+
       res.status(201).json({
         message: "Club invite generated successfully",
         invite: {
@@ -272,12 +292,14 @@ router.get("/details/:token", async (req, res) => {
       SELECT ci.*, c.name as club_name, c.description as club_description, 
        c.location as club_location, c.sport as club_sport,
        u.first_name as inviter_first_name, u.last_name as inviter_last_name,
-       t.name as team_name
-FROM club_invites ci
-JOIN clubs c ON ci.club_id::text = c.id::text
+       t.name as team_name,
+       ci.token as invite_token, ci.status as invite_status, ci.organization_id as club_id,
+       ci.message as personal_message
+FROM invitations ci
+JOIN organizations c ON ci.organization_id::text = c.id::text
 JOIN users u ON ci.invited_by::text = u.id::text
 LEFT JOIN teams t ON ci.team_id::text = t.id::text
-WHERE ci.invite_token = $1;
+WHERE ci.token = $1;
     `,
       [token],
     );
@@ -365,11 +387,12 @@ router.post("/accept/:token", authenticateToken, async (req, res) => {
     console.log("🔍 Looking up invite for acceptance...");
     const inviteResult = await query(
       `
-      SELECT ci.*, c.name as club_name, c.id as club_id, t.name as team_name
-      FROM club_invites ci
-      JOIN clubs c ON ci.club_id::text = c.id::text
+      SELECT ci.*, c.name as club_name, c.id as club_id, t.name as team_name,
+             ci.status as invite_status, ci.organization_id as club_id, ci.token as invite_token
+      FROM invitations ci
+      JOIN organizations c ON ci.organization_id::text = c.id::text
       LEFT JOIN teams t ON ci.team_id::text = t.id::text
-      WHERE ci.invite_token = $1
+      WHERE ci.token = $1
     `,
       [token],
     );
@@ -536,11 +559,10 @@ router.post("/accept/:token", authenticateToken, async (req, res) => {
         if (!invite.is_public) {
           await client.query(
             `
-            UPDATE club_invites SET 
-              invite_status = 'accepted',
+            UPDATE invitations SET 
+              status = 'accepted',
               accepted_at = NOW(),
-              accepted_by = $1,
-              updated_at = NOW()
+              accepted_by = $1
             WHERE id = $2
           `,
             [req.user.id, invite.id],
@@ -619,7 +641,7 @@ router.post("/decline/:token", optionalAuth, async (req, res) => {
     // Get invite details
     const inviteResult = await query(
       `
-      SELECT * FROM club_invites WHERE invite_token = $1
+      SELECT *, status as invite_status, organization_id as club_id FROM invitations WHERE token = $1
     `,
       [token],
     );
@@ -651,11 +673,10 @@ router.post("/decline/:token", optionalAuth, async (req, res) => {
     // Update invite status
     await query(
       `
-      UPDATE club_invites SET 
-        invite_status = 'declined',
+      UPDATE invitations SET 
+        status = 'declined',
         declined_at = NOW(),
-        decline_reason = $1,
-        updated_at = NOW()
+        decline_reason = $1
       WHERE id = $2
     `,
       [reason || null, invite.id],
@@ -699,15 +720,16 @@ router.get(
       const clubId = clubResult.rows[0].id;
 
       let queryText = `
-      SELECT ci.*, u.first_name as inviter_first_name, u.last_name as inviter_last_name
-      FROM club_invites ci
+      SELECT ci.*, u.first_name as inviter_first_name, u.last_name as inviter_last_name,
+             ci.status as invite_status, ci.token as invite_token, ci.message as personal_message
+      FROM invitations ci
       JOIN users u ON ci.invited_by = u.id
-      WHERE ci.club_id = $1
+      WHERE ci.organization_id = $1
     `;
       const queryParams = [clubId];
 
       if (status) {
-        queryText += ` AND ci.invite_status = $2`;
+        queryText += ` AND ci.status = $2`;
         queryParams.push(status);
       }
 
