@@ -163,8 +163,15 @@ router.get(
         [targetClubIds],
       );
 
+      // Get invitations count
+      const invitesResult = await query(
+        "SELECT COUNT(*) as count FROM invitations WHERE organization_id = ANY($1) AND status = 'pending'",
+        [targetClubIds],
+      );
+      const pendingInvitesCount = parseInt(invitesResult.rows[0].count) || 0;
+
       // Calculate statistics
-      const totalPlayers = playersResult.rows.length;
+      const totalPlayers = playersResult.rows.length + pendingInvitesCount;
       const totalStaff = staffResult.rows.length;
       const totalEvents = eventsResult.rows.length;
       const totalTeams = teamsResult.rows.length;
@@ -183,6 +190,7 @@ router.get(
         statistics: {
           total_clubs: clubs.length,
           total_players: totalPlayers,
+          pending_invites: pendingInvitesCount,
           total_staff: totalStaff,
           total_events: totalEvents,
           total_teams: totalTeams,

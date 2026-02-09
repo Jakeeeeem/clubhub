@@ -8391,33 +8391,7 @@
             // Bind club profile form
             document.getElementById('clubProfileForm')?.addEventListener('submit', saveClubProfile);
 
-            // Load players function (placeholder - loads from API)
-            async function loadPlayers() {
-                try {
-                    const clubId = await getActiveClubId();
-                    const response = await apiService.makeRequest(`/players?clubId=${clubId}`);
-                    return response.players || [];
-                } catch (error) {
-                    console.error('Failed to load players:', error);
-                    return [];
-                }
-            }
 
-            // Access Stripe Account function
-            async function accessStripeAccount() {
-                try {
-                    const clubId = await getActiveClubId();
-                    const response = await apiService.makeRequest(`/payments/stripe-dashboard-link?clubId=${clubId}`);
-                    if (response.url) {
-                        window.open(response.url, '_blank');
-                    } else {
-                        showNotification('Please connect your Stripe account first', 'warning');
-                    }
-                } catch (error) {
-                    console.error('Failed to access Stripe:', error);
-                    showNotification('Failed to access Stripe dashboard', 'error');
-                }
-            }
 
 
             // Expose globally

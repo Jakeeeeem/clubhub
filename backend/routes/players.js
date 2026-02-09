@@ -69,9 +69,11 @@ router.get("/", authenticateToken, async (req, res) => {
     const { clubId, search, position, sport, location, minAge, maxAge } =
       req.query;
 
-    let queryText = `
-        SELECT p.*, 
+    // Base players query
+    let playersQuery = `
+        SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.date_of_birth, p.position, p.club_id, p.monthly_fee, p.user_id, p.created_at,
         EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) as age,
+        'registered' as join_status,
         (
             SELECT t.name 
             FROM team_players tp
@@ -89,85 +91,62 @@ router.get("/", authenticateToken, async (req, res) => {
         FROM players p 
         WHERE 1=1
     `;
+
+    // Base invitations query for union
+    let invitesQuery = `
+        SELECT i.id, i.first_name, i.last_name, i.email, NULL as phone, i.date_of_birth, NULL as position, i.organization_id as club_id, 0 as monthly_fee, NULL as user_id, i.created_at,
+        EXTRACT(YEAR FROM age(CURRENT_DATE, i.date_of_birth)) as age,
+        'invited' as join_status,
+        (SELECT name FROM teams WHERE id = i.team_id LIMIT 1) as team_name,
+        NULL as team_sport
+        FROM invitations i
+        WHERE i.status = 'pending' AND i.role = 'player'
+    `;
+
     const queryParams = [];
     let paramCount = 0;
 
-    // Enforce Isolation: If no clubId, limit to user's clubs
-    if (!clubId) {
+    // Filters for both
+    let filterString = "";
+    if (clubId) {
       paramCount++;
-      queryText += ` AND p.club_id IN (
+      filterString += ` AND club_id = $${paramCount}`;
+      queryParams.push(clubId);
+    } else {
+      paramCount++;
+      filterString += ` AND club_id IN (
             SELECT club_id FROM staff WHERE user_id = $${paramCount}
             UNION 
             SELECT id FROM organizations WHERE owner_id = $${paramCount}
-            UNION
-            SELECT id FROM organizations WHERE id IN (SELECT club_id FROM players WHERE user_id = $${paramCount})
         )`;
       queryParams.push(req.user.id);
     }
 
-    if (clubId) {
-      paramCount++;
-      queryText += ` AND p.club_id = $${paramCount}`;
-      queryParams.push(clubId);
-
-      // Coach Team Scoping: If user is staff/coach, limit to their teams
-      const staffCheck = await query(
-        "SELECT id, role FROM staff WHERE user_id = $1 AND club_id = $2",
-        [req.user.id, clubId],
-      );
-
-      if (staffCheck.rows.length > 0 && staffCheck.rows[0].role === "coach") {
-        const coachId = staffCheck.rows[0].id;
-        paramCount++;
-        queryText += ` AND p.id IN (
-          SELECT player_id FROM team_players tp
-          JOIN teams t ON tp.team_id = t.id
-          WHERE t.coach_id = $${paramCount}
-        )`;
-        queryParams.push(coachId);
-      }
-    }
-
     if (search) {
       paramCount++;
-      queryText += ` AND (p.first_name ILIKE $${paramCount} OR p.last_name ILIKE $${paramCount})`;
+      filterString += ` AND (first_name ILIKE $${paramCount} OR last_name ILIKE $${paramCount} OR email ILIKE $${paramCount})`;
       queryParams.push(`%${search}%`);
     }
 
-    if (position) {
-      paramCount++;
-      queryText += ` AND p.position ILIKE $${paramCount}`;
-      queryParams.push(`%${position}%`);
-    }
+    // Combine them
+    const finalQuery = `
+      SELECT * FROM (
+        ${playersQuery.replace("WHERE 1=1", "WHERE 1=1" + filterString)}
+        UNION ALL
+        ${invitesQuery + filterString.replace(/club_id/g, "organization_id")}
+      ) combined
+      ORDER BY created_at DESC
+    `;
 
-    if (sport) {
-      paramCount++;
-      queryText += ` AND p.sport ILIKE $${paramCount}`;
-      queryParams.push(`%${sport}%`);
-    }
+    const result = await query(finalQuery, queryParams);
 
-    if (location) {
-      paramCount++;
-      queryText += ` AND p.location ILIKE $${paramCount}`;
-      queryParams.push(`%${location}%`);
-    }
+    // Map rows to match expected frontend structure if needed
+    const mappedRows = result.rows.map((row) => ({
+      ...row,
+      account_status: row.join_status === "invited" ? "Invited" : "Active",
+    }));
 
-    if (minAge) {
-      paramCount++;
-      queryText += ` AND EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) >= $${paramCount}`;
-      queryParams.push(parseInt(minAge));
-    }
-
-    if (maxAge) {
-      paramCount++;
-      queryText += ` AND EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) <= $${paramCount}`;
-      queryParams.push(parseInt(maxAge));
-    }
-
-    queryText += " ORDER BY p.created_at DESC";
-
-    const result = await query(queryText, queryParams);
-    res.json(result.rows);
+    res.json(mappedRows);
   } catch (error) {
     console.error("Get players error:", error);
     res.status(500).json({
