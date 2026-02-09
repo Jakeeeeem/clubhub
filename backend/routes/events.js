@@ -989,6 +989,80 @@ router.post(
   },
 );
 
+// Admin/Coach override availability for any player
+router.post(
+  "/:id/availability/override",
+  authenticateToken,
+  requireOrganization,
+  [
+    body("playerId").isUUID().withMessage("Valid player ID required"),
+    body("availability")
+      .isIn(["yes", "no", "maybe", "none"])
+      .withMessage("Invalid availability"),
+    body("notes").optional().trim(),
+  ],
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { playerId, availability, notes } = req.body;
+
+      // Verify event exists
+      const eventResult = await query("SELECT * FROM events WHERE id = $1", [
+        id,
+      ]);
+      if (eventResult.rows.length === 0) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      const event = eventResult.rows[0];
+
+      // Check if user has permission (must own the club)
+      const clubResult = await query(
+        "SELECT owner_id FROM organizations WHERE id = $1",
+        [event.club_id],
+      );
+      if (
+        clubResult.rows.length === 0 ||
+        clubResult.rows[0].owner_id !== req.user.id
+      ) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      if (availability === "none") {
+        // Delete response if it exists
+        await query(
+          "DELETE FROM availability_responses WHERE event_id = $1 AND player_id = $2",
+          [id, playerId],
+        );
+        return res.json({ message: "Availability reset successfully" });
+      }
+
+      // Upsert availability
+      const result = await query(
+        `
+        INSERT INTO availability_responses (event_id, player_id, availability, notes)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (event_id, player_id)
+        DO UPDATE SET 
+          availability = EXCLUDED.availability,
+          notes = EXCLUDED.notes,
+          updated_at = NOW()
+        RETURNING *
+      `,
+        [id, playerId, availability, notes || null],
+      );
+
+      res.json({
+        message: "Availability overridden successfully",
+        response: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Override availability error:", error);
+      res.status(500).json({ error: "Failed to override availability" });
+    }
+  },
+);
+
 // Get event availability responses (for coaches/organizers)
 router.get("/:id/availability", authenticateToken, async (req, res) => {
   try {

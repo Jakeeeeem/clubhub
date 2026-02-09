@@ -2027,6 +2027,13 @@ class ApiService {
     }
   }
 
+  async overrideAvailability(eventId, playerId, availability, notes = null) {
+    return await this.makeRequest(`/events/${eventId}/availability/override`, {
+      method: "POST",
+      body: JSON.stringify({ playerId, availability, notes }),
+    });
+  }
+
   async getTeamAvailabilityVotes(teamId, eventId = null) {
     try {
       const endpoint = eventId

@@ -6590,19 +6590,25 @@
 
         async function toggleAvailability(eventId, playerId, currentStatus) {
             // Admin override logic (simple cycle: yes -> no -> maybe -> none)
-            // Ideally should be a modal, but cycling is faster for admin
             const newStatus = {
                 'yes': 'no',
                 'no': 'maybe',
-                'maybe': 'yes', // Skip 'none' for override, keep people accounted for? Or maybe -> yes
+                'maybe': 'yes', // Skip 'none' for easier cycling, but available if needed
                 'none': 'yes'
             }[currentStatus] || 'yes';
 
-            // For now, we only have player-facing endpoint. 
-            // We probably need an Admin Override endpoint in Backend.
-            // Using placeholder logic since we didn't add the POST override endpoint yet.
-            console.log(`Toggling availability for P:${playerId} E:${eventId} to ${newStatus}`);
-            showNotification('Admin override coming soon', 'info');
+            try {
+                showLoading(true);
+                await apiService.overrideAvailability(eventId, playerId, newStatus);
+                showNotification('Availability updated', 'success');
+                // Refresh grid
+                await loadTeamAvailability(currentTeamId);
+            } catch (error) {
+                console.error('Failed to update availability:', error);
+                showNotification('Update failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
         }
 
         async function viewEventAvailability(eventId) {
