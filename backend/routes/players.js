@@ -314,45 +314,79 @@ router.get("/scout", async (req, res) => {
 // Get specific player
 router.get("/:id", authenticateToken, async (req, res) => {
   try {
-    const result = await query(queries.findPlayerById, [req.params.id]);
+    // 1. First search in players table (Active)
+    let result = await query(queries.findPlayerById, [req.params.id]);
+    let player = null;
+    let isInvited = false;
 
-    if (result.rows.length === 0) {
+    if (result.rows.length > 0) {
+      player = result.rows[0];
+    } else {
+      // 2. Search in invitations table (Invited)
+      result = await query(
+        "SELECT * FROM invitations WHERE id = $1 AND status = 'pending'",
+        [req.params.id],
+      );
+
+      if (result.rows.length > 0) {
+        const invite = result.rows[0];
+        isInvited = true;
+        player = {
+          id: invite.id,
+          first_name: invite.first_name,
+          last_name: invite.last_name,
+          email: invite.email,
+          date_of_birth: invite.date_of_birth,
+          club_id: invite.organization_id,
+          role: invite.role,
+          join_status: "invited",
+          // Fallback fields for the UI
+          phone: "",
+          position: "",
+          monthly_fee: 0,
+        };
+      }
+    }
+
+    if (!player) {
       return res.status(404).json({
         error: "Player not found",
         message: "Player with this ID does not exist",
       });
     }
 
-    const player = result.rows[0];
-
     // Add calculated fields
     player.age = calculateAge(player.date_of_birth);
 
-    // Get player's teams
-    const teamsResult = await query(
-      `
-      SELECT t.*, tp.position as team_position, tp.jersey_number
-      FROM teams t
-      JOIN team_players tp ON t.id = tp.team_id
-      WHERE tp.player_id = $1
-    `,
-      [req.params.id],
-    );
+    if (!isInvited) {
+      // Get player's teams
+      const teamsResult = await query(
+        `
+        SELECT t.*, tp.position as team_position, tp.jersey_number
+        FROM teams t
+        JOIN team_players tp ON t.id = tp.team_id
+        WHERE tp.player_id = $1
+      `,
+        [req.params.id],
+      );
+      player.teams = teamsResult.rows;
 
-    player.teams = teamsResult.rows;
-
-    // Get recent payments
-    const paymentsResult = await query(
-      `
-      SELECT * FROM payments 
-      WHERE player_id = $1 
-      ORDER BY created_at DESC 
-      LIMIT 5
-    `,
-      [req.params.id],
-    );
-
-    player.recent_payments = paymentsResult.rows;
+      // Get recent payments
+      const paymentsResult = await query(
+        `
+        SELECT * FROM payments 
+        WHERE player_id = $1 
+        ORDER BY created_at DESC 
+        LIMIT 5
+      `,
+        [req.params.id],
+      );
+      player.recent_payments = paymentsResult.rows;
+    } else {
+      // Invited members don't have teams/payments yet, but return empty arrays for compatibility
+      player.teams = [];
+      player.recent_payments = [];
+    }
 
     res.json(player);
   } catch (error) {
