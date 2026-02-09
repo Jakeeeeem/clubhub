@@ -1,20 +1,38 @@
 const { Pool } = require("pg");
 
-// PRODUCTION DATABASE URL
-// Replace this with your actual production DATABASE_URL
-// Prioritize standard DATABASE_URL (Render default), then custom, then fallback
-const CONNECTION_STRING =
-  process.env.DATABASE_URL ||
-  process.env.PRODUCTION_DATABASE_URL ||
-  "postgresql://user:password@host:port/database";
+// Helper to build connection string from components
+function buildConnectionString() {
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  if (process.env.PRODUCTION_DATABASE_URL)
+    return process.env.PRODUCTION_DATABASE_URL;
+
+  // Fallback to individual variables (Standard for this project)
+  const user = process.env.DB_USER;
+  const password = process.env.DB_PASSWORD;
+  const host = process.env.DB_HOST;
+  const port = process.env.DB_PORT || 5432;
+  const database = process.env.DB_NAME;
+
+  if (user && host && database) {
+    return `postgresql://${user}:${password}@${host}:${port}/${database}`;
+  }
+
+  return "postgresql://user:password@host:port/database"; // Final dummy fallback
+}
+
+const CONNECTION_STRING = buildConnectionString();
 
 // Log which type we are using (masking secrets)
 const isFallback = CONNECTION_STRING.includes("user:password@host");
-console.log(
-  `🔌 Connecting to database using: ${
-    isFallback ? "FALLBACK (Dummy)" : "ENV Variable"
-  }`,
-);
+const source = process.env.DATABASE_URL
+  ? "DATABASE_URL"
+  : process.env.PRODUCTION_DATABASE_URL
+    ? "PRODUCTION_DATABASE_URL"
+    : process.env.DB_HOST
+      ? "Individual ENV Vars"
+      : "FALLBACK (Dummy)";
+
+console.log(`🔌 Connecting to database using: ${source}`);
 
 const pool = new Pool({
   connectionString: CONNECTION_STRING,
