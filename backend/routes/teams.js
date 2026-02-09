@@ -1,4 +1,5 @@
 const express = require("express");
+const crypto = require("crypto");
 const { query, queries, withTransaction } = require("../config/database");
 const {
   authenticateToken,
@@ -513,6 +514,8 @@ router.post(
       .optional()
       .isUUID()
       .withMessage("Valid player ID required"),
+    body("firstName").optional().trim(),
+    body("lastName").optional().trim(),
     body("playerEmail")
       .optional()
       .isEmail()
@@ -533,12 +536,19 @@ router.post(
         });
       }
 
-      const { playerId, playerEmail, position, jerseyNumber } = req.body;
+      const {
+        playerId,
+        playerEmail,
+        firstName,
+        lastName,
+        position,
+        jerseyNumber,
+      } = req.body;
 
       // Verify team exists and user has permission
       const teamResult = await query(
         `
-      SELECT t.*, c.owner_id 
+      SELECT t.*, c.owner_id, c.name as club_name 
       FROM teams t
       JOIN organizations c ON t.club_id = c.id
       WHERE t.id = $1
@@ -560,7 +570,7 @@ router.post(
         });
       }
 
-      // 🔥 FIX: Find player by ID or email
+      // 🔥 FIND PLAYER OR INVITE
       let player = null;
 
       if (playerId) {
@@ -577,10 +587,63 @@ router.post(
         player = playerResult.rows[0];
       }
 
+      // 🔄 AUTO-INVITE IF PLAYER NOT FOUND
+      if (!player && playerEmail) {
+        console.log(`🆕 Creating auto-invite for new player: ${playerEmail}`);
+
+        const inviteToken = crypto.randomBytes(32).toString("hex");
+        const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+        const inviteResult = await query(
+          `
+          INSERT INTO invitations (
+            email, first_name, last_name, organization_id, 
+            invited_by, role, token, expires_at, team_id, status
+          )
+          VALUES ($1, $2, $3, $4, $5, 'player', $6, $7, $8, 'pending')
+          RETURNING *
+        `,
+          [
+            playerEmail,
+            firstName || null,
+            lastName || null,
+            team.club_id,
+            req.user.id,
+            inviteToken,
+            expiresAt,
+            team.id,
+          ],
+        );
+
+        const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+        const inviteLink = `${baseUrl}/invite.html?token=${inviteToken}`;
+
+        // Send Email
+        try {
+          await emailService.sendClubInviteEmail({
+            email: playerEmail,
+            clubName: team.club_name,
+            inviterName: `${req.user.first_name || "Club Admin"}`,
+            inviteLink: inviteLink,
+            personalMessage: `You've been added to the ${team.name} roster!`,
+            clubRole: "player",
+          });
+        } catch (e) {
+          console.error("Auto-invite email failed:", e.message);
+        }
+
+        return res.status(201).json({
+          message: "Player invited and added to roster!",
+          status: "invited",
+          email: playerEmail,
+        });
+      }
+
       if (!player) {
         return res.status(404).json({
           error: "Player not found",
-          message: "Player does not exist in this club",
+          message:
+            "Please provide an email address to invite this player to the club.",
         });
       }
 

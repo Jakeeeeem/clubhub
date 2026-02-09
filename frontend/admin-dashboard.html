@@ -5446,8 +5446,14 @@
                                                 ${(player.first_name?.[0] || '?')}${(player.last_name?.[0] || '')}
                                             </div>
                                             <div class="user-name-group">
-                                                <span class="user-name">${player.first_name || 'Unknown'} ${player.last_name || 'Player'}</span>
-                                                <span class="user-meta">${player.email || 'No email linked'}</span>
+                                                <span class="user-name">${player.display_name}</span>
+                                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                                    <span class="user-meta">${player.email || 'No email linked'}</span>
+                                                    <span class="badge ${player.account_status === 'Active' ? 'badge-success' : 'badge-warning'}" style="font-size: 0.65rem; padding: 2px 6px;">
+                                                        ${player.account_status}
+                                                    </span>
+                                                    ${player.role === 'parent' ? '<span class="badge badge-secondary" style="font-size: 0.65rem; padding: 2px 6px;">Parent</span>' : ''}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -6810,6 +6816,8 @@
                 e.preventDefault();
                 if (!currentTeamId) return;
 
+                const firstName = document.getElementById('newTeamPlayerFirstName')?.value;
+                const lastName = document.getElementById('newTeamPlayerLastName')?.value;
                 const email = document.getElementById('newTeamPlayerEmail').value;
                 const position = document.getElementById('newTeamPlayerPosition').value;
                 const number = document.getElementById('newTeamPlayerNumber').value;
@@ -6818,7 +6826,13 @@
                     showLoading(true);
                     await apiService.makeRequest(`/teams/${currentTeamId}/players`, {
                         method: 'POST',
-                        body: JSON.stringify({ playerEmail: email, position, jerseyNumber: number ? parseInt(number) : null })
+                        body: JSON.stringify({
+                            firstName,
+                            lastName,
+                            playerEmail: email,
+                            position,
+                            jerseyNumber: number ? parseInt(number) : null
+                        })
                     });
                     showNotification('Player added/invited to team!', 'success');
                     closeModal('addTeamPlayerModal');
@@ -7305,6 +7319,16 @@
                 <div class="card">
                     <h3>Or Quick Add New Player</h3>
                     <form id="addTeamPlayerForm">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label for="newTeamPlayerFirstName">First Name</label>
+                                <input type="text" id="newTeamPlayerFirstName" placeholder="John" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newTeamPlayerLastName">Last Name</label>
+                                <input type="text" id="newTeamPlayerLastName" placeholder="Doe" required>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label for="newTeamPlayerEmail">Email Address</label>
                             <input type="email" id="newTeamPlayerEmail" placeholder="Player's email" required>

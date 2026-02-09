@@ -98,9 +98,10 @@ router.get("/", authenticateToken, async (req, res) => {
         EXTRACT(YEAR FROM age(CURRENT_DATE, i.date_of_birth)) as age,
         'invited' as join_status,
         (SELECT name FROM teams WHERE id = i.team_id LIMIT 1) as team_name,
-        NULL as team_sport
+        NULL as team_sport,
+        i.role as role
         FROM invitations i
-        WHERE i.status = 'pending' AND i.role = 'player'
+        WHERE i.status = 'pending' AND i.role IN ('player', 'parent')
     `;
 
     const queryParams = [];
@@ -131,9 +132,11 @@ router.get("/", authenticateToken, async (req, res) => {
     // Combine them
     const finalQuery = `
       SELECT * FROM (
-        ${playersQuery.replace("WHERE 1=1", "WHERE 1=1" + filterString)}
+        SELECT id, first_name, last_name, email, phone, date_of_birth, position, club_id, monthly_fee, user_id, created_at, age, join_status, team_name, team_sport, 'player' as role
+        FROM (${playersQuery.replace("WHERE 1=1", "WHERE 1=1" + filterString)}) p_inner
         UNION ALL
-        ${invitesQuery + filterString.replace(/club_id/g, "organization_id")}
+        SELECT id, first_name, last_name, email, phone, date_of_birth, position, club_id, monthly_fee, user_id, created_at, age, join_status, team_name, team_sport, role
+        FROM (${invitesQuery + filterString.replace(/club_id/g, "organization_id")}) i_inner
       ) combined
       ORDER BY created_at DESC
     `;
@@ -143,6 +146,11 @@ router.get("/", authenticateToken, async (req, res) => {
     // Map rows to match expected frontend structure if needed
     const mappedRows = result.rows.map((row) => ({
       ...row,
+      // If name is missing, use email as fallback
+      display_name:
+        row.first_name || row.last_name
+          ? `${row.first_name || ""} ${row.last_name || ""}`.trim()
+          : row.email || "Unknown Player",
       account_status: row.join_status === "invited" ? "Invited" : "Active",
     }));
 

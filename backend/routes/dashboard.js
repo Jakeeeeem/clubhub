@@ -163,22 +163,35 @@ router.get(
         [targetClubIds],
       );
 
-      // Get invitations count
+      // Get invitations count (only players for this stat)
       const invitesResult = await query(
-        "SELECT COUNT(*) as count FROM invitations WHERE organization_id = ANY($1) AND status = 'pending'",
+        "SELECT COUNT(*) as count FROM invitations WHERE organization_id = ANY($1) AND status = 'pending' AND role = 'player'",
         [targetClubIds],
       );
-      const pendingInvitesCount = parseInt(invitesResult.rows[0].count) || 0;
+      const pendingPlayersCount = parseInt(invitesResult.rows[0].count) || 0;
+
+      // Also get parents count for non-player stats if needed
+      const parentInvitesResult = await query(
+        "SELECT COUNT(*) as count FROM invitations WHERE organization_id = ANY($1) AND status = 'pending' AND role = 'parent'",
+        [targetClubIds],
+      );
+      const pendingParentsCount =
+        parseInt(parentInvitesResult.rows[0].count) || 0;
 
       // Calculate statistics
-      const totalPlayers = playersResult.rows.length + pendingInvitesCount;
+      const totalPlayers = playersResult.rows.length + pendingPlayersCount;
       const totalStaff = staffResult.rows.length;
       const totalEvents = eventsResult.rows.length;
       const totalTeams = teamsResult.rows.length;
-      const monthlyRevenue = playersResult.rows.reduce(
-        (sum, player) => sum + (parseFloat(player.monthly_fee) || 0),
-        0,
-      );
+
+      // Only count revenue if club has stripe connected
+      const hasStripe = clubs.some((c) => c.stripe_account_id);
+      const monthlyRevenue = hasStripe
+        ? playersResult.rows.reduce(
+            (sum, player) => sum + (parseFloat(player.monthly_fee) || 0),
+            0,
+          )
+        : 0;
 
       res.json({
         clubs,
@@ -190,11 +203,13 @@ router.get(
         statistics: {
           total_clubs: clubs.length,
           total_players: totalPlayers,
-          pending_invites: pendingInvitesCount,
+          pending_invites: pendingPlayersCount,
           total_staff: totalStaff,
           total_events: totalEvents,
           total_teams: totalTeams,
+          total_parents: pendingParentsCount,
           monthly_revenue: monthlyRevenue,
+          has_stripe: hasStripe,
         },
       });
     } catch (error) {
