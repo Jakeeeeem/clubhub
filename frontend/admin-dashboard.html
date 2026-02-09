@@ -1035,8 +1035,11 @@
                     <div class="section-header" style="margin-top: 1rem;">
                         <h2 id="detailTournamentName">Tournament Name</h2>
                         <div class="action-buttons">
-                            <button class="btn btn-secondary" onclick="generateFixtures()">Generate Next
-                                Round</button>
+                            <button class="btn btn-secondary" onclick="generateFixtures()">Generate Next Round</button>
+                            <button class="btn btn-small btn-primary"
+                                onclick="generateFixtures('regular')">League</button>
+                            <button class="btn btn-small btn-primary"
+                                onclick="generateFixtures('knockout')">Knockout</button>
                         </div>
                     </div>
 
@@ -1068,8 +1071,7 @@
                     </div>
                 </div>
             </div>
-            <button class="btn btn-small btn-primary" onclick="generateFixtures('regular')">League</button>
-            <button class="btn btn-small btn-primary" onclick="generateFixtures('knockout')">Knockout</button>
+
         </div>
         </div>
         <div id="tournamentMatchesList" class="item-list"></div>
