@@ -593,16 +593,36 @@ router.put(
         });
       }
 
-      // Check if player exists and user has permission
-      const playerResult = await query(queries.findPlayerById, [req.params.id]);
-      if (playerResult.rows.length === 0) {
+      // Check if player exists or if it's an invited member
+      let playerResult = await query(queries.findPlayerById, [req.params.id]);
+      let player = null;
+      let isInvited = false;
+
+      if (playerResult.rows.length > 0) {
+        player = playerResult.rows[0];
+      } else {
+        // Search in invitations table
+        playerResult = await query(
+          "SELECT * FROM invitations WHERE id = $1 AND status = 'pending'",
+          [req.params.id],
+        );
+        if (playerResult.rows.length > 0) {
+          const invite = playerResult.rows[0];
+          isInvited = true;
+          player = {
+            id: invite.id,
+            club_id: invite.organization_id,
+            email: invite.email,
+          };
+        }
+      }
+
+      if (!player) {
         return res.status(404).json({
           error: "Player not found",
           message: "Player with this ID does not exist",
         });
       }
-
-      const player = playerResult.rows[0];
 
       // Verify user owns the club
       const clubResult = await query(queries.findClubById, [player.club_id]);
@@ -628,7 +648,22 @@ router.put(
         userId,
       } = req.body;
 
-      // 🔥 NEW: Handle user_id linking
+      // 🔥 UPDATE LOGIC
+      if (isInvited) {
+        // Update invitations table
+        const result = await query(
+          `UPDATE invitations SET 
+           first_name = $1, last_name = $2, email = $3, date_of_birth = $4
+           WHERE id = $5 RETURNING *`,
+          [firstName, lastName, email, dateOfBirth, req.params.id],
+        );
+        return res.json({
+          message: "Invited member updated successfully",
+          player: result.rows[0],
+        });
+      }
+
+      // 🔥 NEW: Handle user_id linking (for actual players)
       let playerUserId = userId || player.user_id;
 
       if (!playerUserId && email) {
