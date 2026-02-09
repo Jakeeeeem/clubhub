@@ -1797,6 +1797,12 @@ class ApiService {
     }
   }
 
+  async acceptMember(id) {
+    return await this.makeRequest(`/players/${id}/accept`, {
+      method: "POST",
+    });
+  }
+
   async getPlayerById(id) {
     // 1. Explicit dummy ID check (mock IDs usually like 'p1', 'p2')
     if (id && id.toString().startsWith("p") && id.toString().length < 5) {
@@ -3640,29 +3646,9 @@ class ApiService {
   async getTournaments(clubId) {
     try {
       const events = await this.getEvents(clubId);
-      // Mock for development if empty
-      const tournaments = (events || []).filter(
+      return (events || []).filter(
         (e) => e.event_type === "tournament" || e.type === "tournament",
       );
-      if (tournaments.length === 0) {
-        return [
-          {
-            id: "mock_t1",
-            name: "Winter League 2026",
-            type: "league",
-            status: "active",
-            teams_count: 8,
-          },
-          {
-            id: "mock_t2",
-            name: "Knockout Cup",
-            type: "knockout",
-            status: "planned",
-            teams_count: 16,
-          },
-        ];
-      }
-      return tournaments;
     } catch (error) {
       console.warn("getTournaments failed", error);
       return [];
