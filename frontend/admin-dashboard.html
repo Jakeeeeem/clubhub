@@ -3327,10 +3327,10 @@
 
                 if (!plans || plans.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 2rem; opacity: 0.8;">
-                            <p>No payment plans created yet</p>
-                            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Create your first payment plan to start managing player subscriptions</p>
-                            <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')" style="margin-top: 1rem;">Create Your First Plan</button>
+                        <div style="text-align: left; padding: 2rem 0; opacity: 0.8;">
+                            <p style="font-weight: 600;">No payment plans created yet</p>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-muted);">Create your first payment plan to start managing player subscriptions</p>
+                            <button class="btn btn-primary" onclick="showModal('createPaymentPlanModal')" style="margin-top: 1.5rem;">➕ Create Your First Plan</button>
                         </div>
                     `;
                     AppState.paymentPlans = [];
@@ -3525,10 +3525,10 @@
 
                 if ((!listings || listings.length === 0) && (!clubApplications || clubApplications.length === 0)) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
-                            <h3 style="margin-bottom: 0.5rem;">No active listings or applications</h3>
-                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Create a listing to start reaching new players and staff.</p>
+                        <div style="text-align: left; padding: 3rem 0; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 2.5rem; margin-bottom: 1rem;">📝</div>
+                            <h3 style="margin-bottom: 0.5rem; font-weight: 700;">No active listings or applications</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Create a listing to start reaching new players and staff.</p>
                             <button class="btn btn-primary" onclick="showModal('createListingModal')">➕ Create Your First Listing</button>
                         </div>
                     `;
@@ -3989,10 +3989,10 @@
 
                 if (!staff || staff.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">👔</div>
-                            <h3 style="margin-bottom: 0.5rem;">No staff members yet</h3>
-                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Invite coaches and assistants to help manage your club.</p>
+                        <div style="text-align: left; padding: 3rem 0; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 2.5rem; margin-bottom: 1rem;">👔</div>
+                            <h3 style="margin-bottom: 0.5rem; font-weight: 700;">No staff members yet</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Invite coaches and assistants to help manage your club.</p>
                             <button class="btn btn-primary" onclick="showModal('inviteStaffModal')">➕ Invite Staff Member</button>
                         </div>
                     `;
@@ -5861,10 +5861,10 @@
 
                 if (!tourneys || tourneys.length === 0) {
                     container.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
-                            <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">🏆</div>
-                            <h3 style="margin-bottom: 0.5rem;">No active tournaments</h3>
-                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Host leagues, knockouts, and cup competitions for your club.</p>
+                        <div style="grid-column: 1/-1; text-align: left; padding: 3rem 0; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
+                            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏆</div>
+                            <h3 style="margin-bottom: 0.5rem; font-weight: 700;">No active tournaments</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Host leagues, knockouts, and cup competitions for your club.</p>
                             <button class="btn btn-primary" onclick="openCreateTournamentModal()">➕ Create Your First Tournament</button>
                         </div>`;
                 } else {
@@ -6034,10 +6034,13 @@
                 }
 
                 container.innerHTML = teams.map(t => `
-                    <div style="margin-bottom: 5px;">
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" value="${t.id}" name="tournamentTeam" style="margin-right: 10px;">
-                            ${t.name} (${t.age_group || 'Mixed'})
+                    <div style="margin-bottom: 8px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label style="display: flex; align-items: center; padding: 0.75rem; cursor: pointer; width: 100%; gap: 12px; margin: 0;">
+                            <input type="checkbox" value="${t.id}" name="tournamentTeam" style="width: 18px; height: 18px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05);">
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <span style="font-weight: 600; font-size: 0.95rem;">${t.name}</span>
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">${t.age_group || 'Mixed Age Group'}</span>
+                            </div>
                         </label>
                     </div>
                 `).join('');
