@@ -179,7 +179,8 @@ router.get(
         parseInt(parentInvitesResult.rows[0].count) || 0;
 
       // Calculate statistics
-      const totalPlayers = playersResult.rows.length + pendingPlayersCount;
+      const totalPlayers =
+        playersResult.rows.length + pendingPlayersCount + pendingParentsCount;
       const totalStaff = staffResult.rows.length;
       const totalEvents = eventsResult.rows.length;
       const totalTeams = teamsResult.rows.length;

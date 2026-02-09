@@ -6836,7 +6836,9 @@
                     });
                     showNotification('Player added/invited to team!', 'success');
                     closeModal('addTeamPlayerModal');
-                    loadTeamDetails(currentTeamId); // Refresh
+                    if (typeof loadTeamDetails === 'function') loadTeamDetails(currentTeamId);
+                    if (typeof loadPlayers === 'function') loadPlayers();
+                    if (typeof loadDashboardStats === 'function') loadDashboardStats();
                 } catch (error) {
                     showNotification('Failed to add player: ' + error.message, 'error');
                 } finally {
@@ -8032,6 +8034,10 @@
                     showNotification('Invite sent successfully! 📧', 'success');
                     closeModal('invitePlayerModal');
                     e.target.reset();
+
+                    // Auto-refresh data
+                    if (typeof loadPlayers === 'function') loadPlayers();
+                    if (typeof loadDashboardStats === 'function') loadDashboardStats();
                 } catch (error) {
                     console.error('Invite Error:', error);
                     showNotification(error.message || 'Failed to send invite', 'error');
