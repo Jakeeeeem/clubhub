@@ -852,8 +852,12 @@
                                     Teams</button>
                                 <h3 style="margin: 0;" id="teamDetailName">Team Name</h3>
                             </div>
-                            <div class="team-meta-badges" id="teamDetailStats">
-                                <!-- Populated dynamically -->
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <div class="team-meta-badges" id="teamDetailStats">
+                                    <!-- Populated dynamically -->
+                                </div>
+                                <button class="btn btn-secondary btn-small" onclick="editTeam(currentTeamId)">⚙️ Manage
+                                    Team</button>
                             </div>
                         </div>
 
@@ -866,66 +870,65 @@
 
                         <!-- Roster Tab -->
                         <div id="team-tab-roster" class="team-tab-content active">
-                            <div <div class="card">
+                            <div class="card">
                                 <div class="section-header">
-                                    <h3>Upcoming Events</h3>
-                                    <button class="btn btn-primary btn-small" onclick="showCreateEventModal()">+ Create
-                                        Event</button>
+                                    <h3>Team Roster</h3>
+                                    <button class="btn btn-primary btn-small" onclick="showAddPlayerToTeamModal()">+ Add
+                                        Player</button>
                                 </div>
                                 <div class="table-responsive">
                                     <table class="table">
                                         <thead>
                                             <tr>
-                                                <th>Event Name</th>
-                                                <th>Date & Time</th>
-                                                <th>Location</th>
+                                                <th>Player</th>
+                                                <th>Position</th>
+                                                <th>Age</th>
                                                 <th>Status</th>
-                                                <th>Bookings</th>
-                                                <th>Actions</th>
+                                                <th style="text-align: right;">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="eventsListBody">
-                                            <!-- Populated via admin-dashboard.js -->
+                                        <tbody id="teamRosterBody">
+                                            <!-- Populated via JS -->
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Events Tab -->
-                    <div id="team-tab-events" class="team-tab-content" style="display: none;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                            <h4>Team Events</h4>
-                            <button class="btn btn-primary btn-small" onclick="showModal('addEventModal')">➕ Plan
-                                Event</button>
-                        </div>
-                        <div id="teamEventsContainer" class="card-grid">
-                            <!-- Populated via JS -->
-                        </div>
-                    </div>
-
-                    <!-- Availability Tab (Spond-like) -->
-                    <div id="team-tab-availability" class="team-tab-content" style="display: none;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
-                            <h4>Availability Tracker</h4>
-                            <div class="legend" style="display: flex; gap: 1rem; font-size: 0.9rem;">
-                                <span style="color: var(--success-color);">✅ Going</span>
-                                <span style="color: var(--danger-color);">❌ No</span>
-                                <span style="color: var(--warning-color);">❓ Maybe</span>
-                                <span style="opacity: 0.5;">⚪ No Response</span>
+                        <!-- Events Tab -->
+                        <div id="team-tab-events" class="team-tab-content" style="display: none;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                                <h4>Team Events</h4>
+                                <button class="btn btn-primary btn-small" onclick="showModal('addEventModal')">➕ Plan
+                                    Event</button>
+                            </div>
+                            <div id="teamEventsContainer" class="card-grid">
+                                <!-- Populated via JS -->
                             </div>
                         </div>
-                        <div class="availability-grid" id="availabilityGrid"
-                            style="overflow-x: auto; background: var(--bg-secondary); border-radius: 8px; padding: 1rem;">
-                            <!-- Spond-like grid -->
-                            <p style="text-align: center; opacity: 0.7;">Select an upcoming event to view
-                                availability.</p>
-                        </div>
-                    </div>
 
+                        <!-- Availability Tab (Spond-like) -->
+                        <div id="team-tab-availability" class="team-tab-content" style="display: none;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0;">
+                                <h4>Availability Tracker</h4>
+                                <div class="legend" style="display: flex; gap: 1rem; font-size: 0.9rem;">
+                                    <span style="color: var(--success-color);">✅ Going</span>
+                                    <span style="color: var(--danger-color);">❌ No</span>
+                                    <span style="color: var(--warning-color);">❓ Maybe</span>
+                                    <span style="opacity: 0.5;">⚪ No Response</span>
+                                </div>
+                            </div>
+                            <div class="availability-grid" id="availabilityGrid"
+                                style="overflow-x: auto; background: var(--bg-secondary); border-radius: 8px; padding: 1rem;">
+                                <!-- Spond-like grid -->
+                                <p style="text-align: center; opacity: 0.7;">Select an upcoming event to view
+                                    availability.</p>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
 
@@ -1453,6 +1456,96 @@
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('addTeamModal')">Cancel</button>
                     <button type="submit" class="btn btn-primary">⚽ Create Team</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Team Modal -->
+    <div id="editTeamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Edit Team Details</h2>
+                <button class="close" onclick="closeModal('editTeamModal')">&times;</button>
+            </div>
+            <form id="editTeamForm">
+                <input type="hidden" id="editTeamId">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="editTeamName">Team Name *</label>
+                        <input type="text" id="editTeamName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTeamSport">Sport *</label>
+                        <select id="editTeamSport" required>
+                            <option value="Football">Football</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="Rugby">Rugby</option>
+                            <option value="Cricket">Cricket</option>
+                            <option value="Hockey">Hockey</option>
+                            <option value="Volleyball">Volleyball</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTeamAgeGroup">Age Group</label>
+                        <select id="editTeamAgeGroup">
+                            <option value="">Select age group...</option>
+                            <option value="Under 8">Under 8</option>
+                            <option value="Under 10">Under 10</option>
+                            <option value="Under 12">Under 12</option>
+                            <option value="Under 14">Under 14</option>
+                            <option value="Under 16">Under 16</option>
+                            <option value="Under 18">Under 18</option>
+                            <option value="Adult">Adult</option>
+                            <option value="Veterans">Veterans</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="editTeamDescription">Description</label>
+                        <textarea id="editTeamDescription" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('editTeamModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Player to Team Modal -->
+    <div id="addPlayerToTeamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>👥 Add Player to Team</h2>
+                <button class="close" onclick="closeModal('addPlayerToTeamModal')">&times;</button>
+            </div>
+            <form id="addPlayerToTeamForm">
+                <div class="form-group">
+                    <label for="playerSelect">Select Player from Organization</label>
+                    <select id="playerSelect" required>
+                        <option value="">Loading players...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="playerTeamPosition">Position (Optional)</label>
+                    <input type="text" id="playerTeamPosition" placeholder="e.g. striker, defender">
+                </div>
+                <div class="form-group">
+                    <label for="playerJerseyNumber">Jersey Number (Optional)</label>
+                    <input type="number" id="playerJerseyNumber">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('addPlayerToTeamModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">✅ Add to Team</button>
                 </div>
             </form>
         </div>
@@ -2705,6 +2798,16 @@
                 inviteStaffForm.addEventListener('submit', handleStaffInvite);
             }
 
+            // New Team Management Forms
+            const editTeamForm = document.getElementById('editTeamForm');
+            if (editTeamForm) {
+                editTeamForm.addEventListener('submit', handleUpdateTeam);
+            }
+
+            const addPlayerToTeamForm = document.getElementById('addPlayerToTeamForm');
+            if (addPlayerToTeamForm) {
+                addPlayerToTeamForm.addEventListener('submit', handleAddPlayerToTeam);
+            }
             // Club profile form
             const clubProfileForm = document.getElementById('clubProfileForm');
             if (clubProfileForm) {
@@ -2837,41 +2940,7 @@
             }
         }
         // Enhanced Team Management Functions
-        async function openTeamManagement(teamId, teamName) {
-            const modal = document.getElementById('teamManagementModal');
-            if (modal) modal.remove();
 
-            const newModal = document.createElement('div');
-            newModal.id = 'teamManagementModal';
-            newModal.className = 'modal';
-            newModal.style.display = 'block';
-
-            newModal.innerHTML = `
-        <div class="modal-content" style="max-width: 1000px;">
-            <div class="modal-header">
-                <h2>⚽ ${teamName} Management</h2>
-                <button class="close" onclick="closeModal('teamManagementModal')">&times;</button>
-            </div>
-            <div class="team-management-tabs">
-                <button class="active" onclick="showTeamTab('games', '${teamId}', event)">🏟️ Games</button>
-                <button onclick="showTeamTab('trainings', '${teamId}', event)">🏋️ Trainings</button>
-                <button onclick="showTeamTab('players', '${teamId}', event)">👥 Players</button>
-                <button onclick="showTeamTab('votes', '${teamId}', event)">📊 Votes</button>
-                <button onclick="showTeamTab('tactical', '${teamId}', event)">📋 Tactical Board</button>
-            </div>
-                
-                <div id="teamTabContent">
-                    <div class="spinner"></div> Loading team data...
-                </div>
-            </div>
-        </div>
-    `;
-
-            document.body.appendChild(newModal);
-
-            // Load initial tab
-            showTeamTab('games', teamId);
-        }
 
         async function showTeamTab(tabName, teamId, ev) {
             const tabButtons = document.querySelectorAll('.team-management-tabs button');
@@ -3744,7 +3813,7 @@
             if (!content) return;
             showModal('applicationDetailsModal');
             content.innerHTML = `
-                < div class="application-detail" >
+                <div class="application-detail">
                     <h4>👤 Applicant Details</h4>
                     <p><strong>Application ID:</strong> ${applicationId}</p>
                     <p>Status: Under Review</p>
@@ -4372,8 +4441,8 @@
                 modal.style.display = 'block';
 
                 modal.innerHTML = `
-                    <div class="modal-content">
-                        <div class="modal-header">
+                    <div class="application-detail">
+                        <div class="detail-header">
                             <h2>Assign to Team</h2>
                             <button class="close" onclick="closeModal('assignTeamModal')">&times;</button>
                         </div>
@@ -4451,7 +4520,115 @@
 
         async function editTeam(teamId) {
             console.log('Editing team:', teamId);
-            showNotification('Team editing coming soon!', 'info');
+            try {
+                showLoading(true);
+                const team = await apiService.getTeamById(teamId);
+
+                document.getElementById('editTeamId').value = team.id;
+                document.getElementById('editTeamName').value = team.name;
+                document.getElementById('editTeamSport').value = team.sport || '';
+                document.getElementById('editTeamAgeGroup').value = team.age_group || '';
+                document.getElementById('editTeamDescription').value = team.description || '';
+
+                showModal('editTeamModal');
+            } catch (error) {
+                console.error('Failed to load team for editing:', error);
+                showNotification('Failed to load team details', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleUpdateTeam(e) {
+            if (e) e.preventDefault();
+            const id = document.getElementById('editTeamId').value;
+            const data = {
+                name: document.getElementById('editTeamName').value,
+                sport: document.getElementById('editTeamSport').value,
+                ageGroup: document.getElementById('editTeamAgeGroup').value,
+                description: document.getElementById('editTeamDescription').value
+            };
+
+            try {
+                showLoading(true);
+                await apiService.updateTeam(id, data);
+                showNotification('Team updated successfully!', 'success');
+                closeModal('editTeamModal');
+
+                // Refresh views
+                if (currentSection === 'team-details') {
+                    await loadTeamDetails(id);
+                } else {
+                    loadTeams();
+                }
+            } catch (error) {
+                console.error('Update team failed:', error);
+                showNotification('Update failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function showAddPlayerToTeamModal() {
+            const select = document.getElementById('playerSelect');
+            select.innerHTML = '<option value="">Loading players...</option>';
+            showModal('addPlayerToTeamModal');
+
+            try {
+                const clubId = await getActiveClubId();
+                const players = await apiService.getPlayers(clubId);
+
+                if (players.length === 0) {
+                    select.innerHTML = '<option value="">No players found in organization</option>';
+                    return;
+                }
+
+                // Filter out players already in the team if we have the list
+                const currentRosterIds = new Set(AppState.currentTeamRoster?.map(p => p.id) || []);
+
+                select.innerHTML = '<option value="">-- Select Player --</option>' +
+                    players.map(p => `
+                        <option value="${p.id}" ${currentRosterIds.has(p.id) ? 'disabled' : ''}>
+                            ${p.first_name} ${p.last_name} ${currentRosterIds.has(p.id) ? '(Already in team)' : ''}
+                        </option>
+                    `).join('');
+            } catch (error) {
+                console.error('Failed to load players for selection:', error);
+                select.innerHTML = '<option value="">Error loading players</option>';
+            }
+        }
+
+        async function handleAddPlayerToTeam(e) {
+            if (e) e.preventDefault();
+            const playerId = document.getElementById('playerSelect').value;
+            const position = document.getElementById('playerTeamPosition').value;
+            const jerseyNumber = document.getElementById('playerJerseyNumber').value;
+
+            if (!playerId) {
+                showNotification('Please select a player', 'error');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                await apiService.assignPlayerToTeam(currentTeamId, {
+                    playerId,
+                    position,
+                    jerseyNumber
+                });
+
+                showNotification('Player added to team!', 'success');
+                closeModal('addPlayerToTeamModal');
+                document.getElementById('addPlayerToTeamForm').reset();
+
+                // Refresh roster
+                await loadTeamDetails(currentTeamId);
+            } catch (error) {
+                console.error('Assign player failed:', error);
+                showNotification('Failed to add player: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
         }
 
         async function deleteTeam(teamId) {
@@ -5034,18 +5211,18 @@
 
                 if (events.length === 0) {
                     container.innerHTML = `
-                < div style = "text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;" >
+                        <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
                             <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
                             <h3 style="margin-bottom: 0.5rem;">No events scheduled</h3>
                             <p style="color: var(--text-muted); margin-bottom: 2rem;">Plan matches, training sessions, and club events.</p>
                             <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create Event</button>
-                        </div >
+                        </div>
                 `;
                     return;
                 }
 
                 container.innerHTML = `
-                < div class= "table-responsive" >
+                <div class="table-responsive">
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -6207,28 +6384,29 @@
         }
 
         async function loadTeamDetails(teamId) {
+            console.log('DEBUG: RUNNING NEW VERSION 4765');
             try {
                 showLoading(true);
-                // In demo mode or if API fails, try to find in AppState or use a placeholder
-                team = await apiService.getTeamById(teamId);
+                const team = await apiService.getTeamById(teamId);
 
                 console.log('Team Details Loaded:', team);
+                AppState.currentTeamRoster = team.players || [];
 
                 // Populate Stats
                 const statsContainer = document.getElementById('teamDetailStats');
                 if (statsContainer) {
                     statsContainer.innerHTML = `
-                < span class="status-badge" style = "background:#4caf50; color:white;" > ${team.wins || 0} Wins</span >
+                        <span class="status-badge" style="background:#4caf50; color:white;">${team.wins || 0} Wins</span>
                         <span class="status-badge" style="background:#f44336; color:white;">${team.losses || 0} Losses</span>
                         <span class="status-badge" style="background:#ff9800; color:white;">${team.draws || 0} Draws</span>
-            `;
+                    `;
                 }
 
                 // Populate Roster
-                renderRoster(team.players || []);
+                renderRoster(AppState.currentTeamRoster);
 
                 // Populate Events
-                renderTeamEvents(team.upcoming_events || []);
+                renderTeamEvents(team.upcoming_events || team.events || []);
 
                 // Initialize Availability (Placeholder for now)
 
@@ -6250,7 +6428,7 @@
             }
 
             tbody.innerHTML = players.map(p => `
-                < tr >
+                <tr>
                     <td>
                         <div style="display:flex; flex-direction:column;">
                             <span style="font-weight:bold;">${p.first_name} ${p.last_name}</span>
@@ -6269,7 +6447,7 @@
                             ❌ Remove
                         </button>
                     </td>
-                </tr >
+                </tr>
                 `).join('');
         }
 
@@ -6283,29 +6461,35 @@
             }
 
             container.innerHTML = events.map(e => `
-                < div class="card event-card" style = "border-left: 4px solid var(--accent-color);" >
+                <div class="card event-card" style="border-left: 4px solid var(--accent-color);">
                     <h4>${e.title}</h4>
                     <p>📅 ${new Date(e.event_date).toLocaleDateString()} at ${e.event_time}</p>
                     <p>📍 ${e.location || 'TBA'}</p>
                     <button class="btn btn-small btn-secondary_outline" onclick="viewEventAvailability('${e.id}')">View Availability</button>
-                </div >
+                </div>
                 `).join('');
         }
 
         // Feature: Switch Tabs
         window.switchTeamTab = function (tabName) {
             document.querySelectorAll('.team-tab-content').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
 
-            document.getElementById(`team - tab - ${tabName} `).style.display = 'block';
+            const targetSection = document.getElementById(`team-tab-${tabName}`);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            } else {
+                console.error('Target tab content not found:', `team-tab-${tabName}`);
+            }
 
-            // Find the button (hacky way or add IDs to buttons)
-            const buttons = document.querySelectorAll('.tab-btn');
-            // assuming text content matches or order matches... 
-            // Better: update the onclicks to pass 'this'
+            // Highlighting tab button
+            const buttons = document.querySelectorAll('.tabs .tab-btn');
             if (tabName === 'roster') buttons[0].classList.add('active');
             if (tabName === 'events') buttons[1].classList.add('active');
-            if (tabName === 'availability') buttons[2].classList.add('active');
+            if (tabName === 'availability') {
+                buttons[2].classList.add('active');
+                if (typeof loadTeamAvailability === 'function') loadTeamAvailability(currentTeamId);
+            }
         };
 
         // Feature: Remove Player from Team (Fixing the reported broken X)
@@ -6314,8 +6498,7 @@
 
             try {
                 showLoading(true);
-                // Call the new backend endpoint we verified
-                await apiService.makeRequest(`/ teams / ${teamId} /players/${playerId} `, {
+                await apiService.makeRequest(`/teams/${teamId}/players/${playerId}`, {
                     method: 'DELETE'
                 });
 
@@ -6333,7 +6516,7 @@
 
         async function loadTeamAvailability(teamId) {
             try {
-                const data = await apiService.makeRequest(`/ teams / ${teamId}/availability`);
+                const data = await apiService.makeRequest(`/teams/${teamId}/availability`);
                 renderAvailabilityGrid(data);
             } catch (error) {
                 console.error('Failed to load availability:', error);
