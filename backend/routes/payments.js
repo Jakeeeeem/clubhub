@@ -272,10 +272,10 @@ router.post("/stripe/connect/onboard", authenticateToken, async (req, res) => {
 
     const refresh_url =
       (process.env.FRONTEND_URL || "https://clubhubsports.net") +
-      "/player-dashboard.html";
+      "/admin-dashboard.html";
     const return_url =
       (process.env.FRONTEND_URL || "https://clubhubsports.net") +
-      "/player-dashboard.html";
+      "/admin-dashboard.html";
 
     const link = await stripe.accountLinks.create({
       account: account.id,
