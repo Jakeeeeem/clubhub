@@ -4651,11 +4651,21 @@
         async function assignPaymentPlan(playerId) {
             try {
                 // Find player to check current plan
-                const player = AppState.players?.find(p => p.id === playerId);
-                const currentPlanId = player?.payment_plan_id ?? player?.plan_id;
+                let player = AppState.players?.find(p => p.id === playerId);
+                if (!player) {
+                    // Try to fetch fresh if not found? Or just rely on list. 
+                    // Usually list is identifying the player.
+                    console.error('Player not found in AppState', playerId);
+                    return;
+                }
+                console.log('Open Modal for Player:', player);
+                const currentPlanId = player.payment_plan_id ?? player.plan_id ?? player.payment_plan?.id;
 
-                // Load available payment plans
-                const plans = await apiService.listPaymentPlans();
+                // Ensure plans are loaded
+                if (!AppState.paymentPlans || AppState.paymentPlans.length === 0) {
+                    await loadPaymentPlans();
+                }
+                const plans = AppState.paymentPlans;
 
                 if (!plans || plans.length === 0) {
                     showNotification('No payment plans available. Create a payment plan first.', 'error');
@@ -4683,7 +4693,7 @@
           <div style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
             <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.5rem;">Player Information</div>
             <div style="font-weight: 600; color: white;">${player.display_name}</div>
-            <div style="font-size: 0.85rem; color: var(--text-muted);">Current Plan: <span style="color: ${player.payment_plan ? 'var(--primary-color)' : 'inherit'}">${player.payment_plan ? player.payment_plan.name : 'None'}</span></div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Current Plan: <span style="color: ${currentPlanId ? 'var(--primary-color)' : 'inherit'}">${player.payment_plan?.name || plans.find(p => String(p.id) === String(currentPlanId))?.name || 'None'}</span></div>
           </div>
           ` : ''}
           <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -5342,14 +5352,29 @@
                 const players = await apiService.getPlayers(filters);
                 console.log('👥 Players Loaded:', players);
 
+                if (!AppState.paymentPlans || AppState.paymentPlans.length === 0) {
+                    console.log('🔄 Payment plans empty. Fetching before processing players...');
+                    await loadPaymentPlans();
+                }
+
                 // Attach plan objects
                 const plansById = Object.fromEntries((AppState.paymentPlans || []).map(pl => [String(pl.id), pl]));
+                console.log('📦 Plans Map:', plansById);
 
                 players.forEach(p => {
                     const planId = p.payment_plan_id ?? p.plan_id ?? p.payment_plan?.id ?? p.plan?.id;
                     if (planId != null && String(planId).trim() !== '' && String(planId) !== '0') {
                         // Always use the latest plan object from our global state
-                        p.payment_plan = plansById[String(planId)] || p.payment_plan || p.plan || undefined;
+                        const foundPlan = plansById[String(planId)];
+                        if (foundPlan) {
+                            p.payment_plan = foundPlan;
+                        } else {
+                            // Fallback if plan not found in loaded plans (e.g. inactive)
+                            console.warn(`⚠️ Plan ID ${planId} not found in AppState.paymentPlans for player ${p.id}`);
+                            if (!p.payment_plan) {
+                                p.payment_plan = { id: planId, name: 'Unknown Plan', price: p.plan_price };
+                            }
+                        }
                         p.has_payment_plan = !!p.payment_plan;
                     }
                 });
