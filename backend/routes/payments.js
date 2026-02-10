@@ -1844,6 +1844,62 @@ async function assignPlayersCore({
     }
   }
 
+  // Ensure Plan has a Stripe Price ID (Create if missing)
+  let stripePriceId = null;
+  // If custom price, we need a new ad-hoc price or just use the plan's default if matches
+  // BUT for subscriptions, we need a Price object.
+  // If no custom price, try to use existing plan's stripe_price_id
+  if (customPrice == null && planRow.stripe_price_id) {
+    stripePriceId = planRow.stripe_price_id;
+  } else {
+    // Create a new Price object in Stripe for this subscription
+    try {
+      const priceData = {
+        unit_amount: Math.round(priceToApply * 100),
+        currency: "gbp",
+        recurring: {
+          interval: planRow.interval || "month",
+        },
+        product: planRow.stripe_product_id, // Ensure product exists!
+      };
+
+      // If product ID is missing, we must create a product too (rare edge case here if data is clean)
+      if (!planRow.stripe_product_id) {
+        const product = await stripe.products.create(
+          {
+            name: planRow.name,
+            type: "service",
+          },
+          stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+        );
+        priceData.product = product.id;
+
+        // Save back to plan for future use
+        await query("UPDATE plans SET stripe_product_id = $1 WHERE id = $2", [
+          product.id,
+          planId,
+        ]);
+      }
+
+      const price = await stripe.prices.create(
+        priceData,
+        stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+      );
+      stripePriceId = price.id;
+
+      // If this was a standard plan update (no custom price), save it
+      if (customPrice == null) {
+        await query("UPDATE plans SET stripe_price_id = $1 WHERE id = $2", [
+          stripePriceId,
+          planId,
+        ]);
+      }
+    } catch (err) {
+      console.error("Failed to create Stripe Price:", err);
+      // Fallback: Don't block assignment, but subscription creation will fail
+    }
+  }
+
   // Optional: validate player/club relationship here if needed, using clubId.
 
   // Update each player
@@ -1876,7 +1932,7 @@ async function assignPlayersCore({
         continue;
       }
 
-      // 2. Sync with Stripe if needed
+      // 2. Sync with Stripe Customer if needed
       let stripeCustomerId = member.stripe_customer_id;
       if (!stripeCustomerId && member.email) {
         stripeCustomerId = await getOrCreateStripeCustomer(
@@ -1888,14 +1944,51 @@ async function assignPlayersCore({
         );
       }
 
-      // 3. Update the record
+      // 3. Create Stripe Checkout Session (The "Stripe Window")
+      let checkoutUrl = null;
+
+      if (stripeCustomerId && stripePriceId) {
+        try {
+          const sessionConfig = {
+            customer: stripeCustomerId,
+            line_items: [{ price: stripePriceId, quantity: 1 }],
+            mode: "subscription",
+            payment_method_collection: "if_required",
+            success_url: `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
+            metadata: {
+              club_id: clubId,
+              player_id: pid,
+              plan_id: planId,
+            },
+          };
+
+          const session = await stripe.checkout.sessions.create(
+            sessionConfig,
+            stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+          );
+
+          checkoutUrl = session.url;
+          console.log(
+            `✅ Created Stripe Checkout Session for Player ${pid}: ${checkoutUrl}`,
+          );
+        } catch (subError) {
+          console.error(
+            "❌ Failed to create Stripe Checkout Session:",
+            subError,
+          );
+        }
+      }
+
+      // 4. Update the record (subscription ID is null until webhook confirms, but we record the assignment)
       const updateRes = await query(
         `UPDATE ${table} SET 
           payment_plan_id = $2, 
           plan_price = $3, 
           plan_start_date = $4, 
           stripe_customer_id = $5,
-          ${table === "players" ? "updated_at = NOW()" : "created_at = created_at"} -- trick for invitations
+          -- stripe_subscription_id is not set yet, handled via webhook or future sync
+          ${table === "players" ? "updated_at = NOW()" : "created_at = created_at"} 
           WHERE id = $1 RETURNING id`,
         [pid, planId, priceToApply, startDate, stripeCustomerId],
       );
@@ -1913,6 +2006,8 @@ async function assignPlayersCore({
             amount: priceToApply,
             interval: planRow.interval || "month",
             startDate: startDate,
+            checkoutUrl: checkoutUrl,
+            stripeAccountId: stripeAccountId,
           });
         } catch (mailErr) {
           console.error(`📧 Mail failed for ${member.email}:`, mailErr);

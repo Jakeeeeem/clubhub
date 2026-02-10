@@ -743,6 +743,9 @@ class EmailService {
       amount,
       interval,
       startDate,
+      subscriptionId,
+      stripeAccountId,
+      checkoutUrl,
     } = data;
 
     try {
@@ -752,6 +755,18 @@ class EmailService {
       }).format(amount);
 
       const subject = `Your New Payment Plan: ${planName}`;
+
+      // Determine the call to action
+      // If we have a checkoutUrl, we link directly to Stripe.
+      // Otherwise, we link to the dashboard.
+      const actionLink =
+        checkoutUrl ||
+        `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`;
+      const buttonText = checkoutUrl
+        ? "Set Up Payment via Stripe"
+        : subscriptionId
+          ? "Confirm Payment Details"
+          : "View My Subscriptions";
 
       const content = `
         <h2>Payment Plan Assigned</h2>
@@ -771,12 +786,24 @@ class EmailService {
             <span style="color:#94a3b8;">Start Date</span>
             <span>${new Date(startDate).toLocaleDateString()}</span>
           </div>
+           ${
+             checkoutUrl || subscriptionId
+               ? `
+          <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px; font-size: 0.9em; color: #fbbf24;">
+            <p style="margin:0;">⚠ Verification Required</p>
+            <p style="margin:5px 0 0 0; color: rgba(255,255,255,0.7);">Please click the button below to validte your payment method.</p>
+          </div>
+          `
+               : ""
+           }
         </div>
 
         <p>You can manage your subscription and view payment history in your player dashboard.</p>
 
         <div style="text-align: center;">
-          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">View My Subscriptions</a>
+          <a href="${actionLink}" class="btn">
+            ${buttonText}
+          </a>
         </div>
       `;
 
@@ -786,7 +813,7 @@ class EmailService {
         to: email,
         subject,
         html,
-        text: `You have been assigned the ${planName} plan at ${clubName}. Manage it here: ${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
+        text: `You have been assigned the ${planName} plan at ${clubName}. Please login to confirm details: ${actionLink}`,
       });
     } catch (error) {
       console.error("❌ Failed to send plan assignment email:", error);
