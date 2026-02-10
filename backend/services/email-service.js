@@ -732,6 +732,66 @@ class EmailService {
       throw error;
     }
   }
+
+  // Send plan assignment email
+  async sendPlanAssignedEmail(data) {
+    const {
+      email,
+      firstName,
+      planName,
+      clubName,
+      amount,
+      interval,
+      startDate,
+    } = data;
+
+    try {
+      const formattedAmount = new Intl.NumberFormat("en-GB", {
+        style: "currency",
+        currency: "GBP",
+      }).format(amount);
+
+      const subject = `Your New Payment Plan: ${planName}`;
+
+      const content = `
+        <h2>Payment Plan Assigned</h2>
+        <p>Hello ${firstName},</p>
+        <p>You have been assigned to a new payment plan for <strong>${clubName}</strong>.</p>
+        
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+            <span style="color:#94a3b8;">Plan Name</span>
+            <span style="font-weight:600;">${planName}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="color:#94a3b8;">Price</span>
+            <span>${formattedAmount} (${interval})</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#94a3b8;">Start Date</span>
+            <span>${new Date(startDate).toLocaleDateString()}</span>
+          </div>
+        </div>
+
+        <p>You can manage your subscription and view payment history in your player dashboard.</p>
+
+        <div style="text-align: center;">
+          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">View My Subscriptions</a>
+        </div>
+      `;
+
+      const html = this.getBaseHtmlTemplate(content);
+
+      return await this.sendEmail({
+        to: email,
+        subject,
+        html,
+        text: `You have been assigned the ${planName} plan at ${clubName}. Manage it here: ${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
+      });
+    } catch (error) {
+      console.error("❌ Failed to send plan assignment email:", error);
+    }
+  }
 }
 
 // Create singleton instance

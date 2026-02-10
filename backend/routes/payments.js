@@ -9,8 +9,34 @@ const { body, validationResult } = require("express-validator");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const cors = require("cors");
 const { requirePaymentProcessing } = require("../middleware/payment-guard");
+const emailService = require("../services/email-service");
 
 const router = express.Router();
+
+/**
+ * Helper to calculate next billing date based on plan settings
+ */
+function calculateNextBilling(plan, startStr) {
+  const start = startStr ? new Date(startStr) : new Date();
+  let next = new Date(start);
+
+  if (plan.billing_anchor_type === "fixed_date" && plan.billing_anchor_day) {
+    // Set to the target day
+    next.setDate(plan.billing_anchor_day);
+
+    // If that day is today or in the past this month, move to next month
+    if (next <= start) {
+      next.setMonth(next.getMonth() + 1);
+    }
+  } else {
+    // Default signup_date logic
+    if (plan.interval === "month") next.setMonth(next.getMonth() + 1);
+    else if (plan.interval === "week") next.setDate(next.getDate() + 7);
+    else if (plan.interval === "year") next.setFullYear(next.getFullYear() + 1);
+  }
+
+  return next.toISOString().slice(0, 10);
+}
 
 // Basic routes follow below
 // ---------- STRIPE CONFIG ENDPOINT ----------
@@ -132,6 +158,7 @@ router.get("/stripe/connect/status", authenticateToken, async (req, res) => {
     const response = {
       linked: true,
       account_id: account.id,
+      stripeAccountId: account.id, // For frontend compatibility
       payouts_enabled: !!account.payouts_enabled,
       details_submitted: !!account.details_submitted,
       requirements: account.requirements?.currently_due || [],
@@ -140,7 +167,20 @@ router.get("/stripe/connect/status", authenticateToken, async (req, res) => {
     // Auto-Sync Plans if connected but no plans exist locally
     if (account.details_submitted) {
       // removed payouts_enabled check for broader compat
-      const orgId = req.user.currentOrganizationId;
+      let orgId = req.user.currentOrganizationId;
+
+      if (!orgId) {
+        const userOrgs = await query(
+          "SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1",
+          [req.user.id],
+        );
+        orgId = userOrgs.rows[0]?.id;
+      }
+
+      if (!orgId) {
+        console.log("No organization context found for auto-sync skipping...");
+        return res.json(response);
+      }
       const result = await query(
         "SELECT COUNT(*) FROM plans WHERE club_id = $1",
         [orgId],
@@ -183,8 +223,12 @@ router.get("/stripe/connect/status", authenticateToken, async (req, res) => {
 
                 // Using orgId as club_id based on schema
                 await query(
-                  `INSERT INTO plans (club_id, name, price, interval, description, stripe_product_id, stripe_price_id, active, created_at, updated_at)
-                              VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW(), NOW())`,
+                  `INSERT INTO plans (
+                    club_id, name, price, interval, description, 
+                    stripe_product_id, stripe_price_id, active, 
+                    billing_anchor_type, billing_anchor_day,
+                    created_at, updated_at
+                  ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, NOW(), NOW())`,
                   [
                     orgId,
                     product.name,
@@ -193,6 +237,8 @@ router.get("/stripe/connect/status", authenticateToken, async (req, res) => {
                     product.description || "",
                     product.id,
                     price.id,
+                    "signup_date", // Default for auto-sync
+                    null,
                   ],
                 );
               }
@@ -355,7 +401,18 @@ router.post(
     try {
       console.log("📥 Starting Plan Import from Stripe...");
       // 1. Get the organization's Stripe Account ID
-      const orgId = req.user.currentOrganizationId;
+      let orgId = req.user.currentOrganizationId;
+
+      if (!orgId) {
+        console.log(
+          "No organization ID in token, searching for user's owned clubs...",
+        );
+        const userOrgs = await query(
+          "SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1",
+          [req.user.id],
+        );
+        orgId = userOrgs.rows[0]?.id;
+      }
 
       const orgResult = await query(
         "SELECT stripe_account_id, id FROM organizations WHERE id = $1",
@@ -433,19 +490,21 @@ router.post(
             `
                     INSERT INTO plans (
                         club_id, name, price, interval, description, 
-                        stripe_product_id, stripe_price_id, active, created_at, updated_at
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW(), NOW())
+                        stripe_product_id, stripe_price_id, active, 
+                        billing_anchor_type, billing_anchor_day,
+                        created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, NOW(), NOW())
                 `,
             [
-              organizationId, // Use the correct foreign key for your schema. NOTE: Schema uses 'club_id' which references 'clubs(id)'.
-              // Make sure 'organizations' and 'clubs' are compatible or mapped correctly.
-              // If 'plans.club_id' refers to 'organizations.id', this is correct.
+              organizationId,
               product.name,
               amount,
               interval,
               product.description || "",
               product.id,
               price.id,
+              req.body.billingAnchorType || "signup_date",
+              req.body.billingAnchorDay || null,
             ],
           );
           importedCount++;
@@ -598,9 +657,11 @@ router.post(
         `
       INSERT INTO plans (
         club_id, name, price, interval, description, 
-        stripe_product_id, stripe_price_id, active, created_at, updated_at
+        stripe_product_id, stripe_price_id, active, 
+        billing_anchor_type, billing_anchor_day,
+        created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, NOW(), NOW())
       RETURNING *
     `,
         [
@@ -611,6 +672,8 @@ router.post(
           description || null,
           stripeProduct.id,
           stripePrice.id,
+          req.body.billingAnchorType || "signup_date",
+          req.body.billingAnchorDay || null,
         ],
       );
 
@@ -847,13 +910,7 @@ router.post("/plan/assign", authenticateToken, async (req, res) => {
     const plan = planResult.rows[0];
 
     const start = startDate || new Date().toISOString().slice(0, 10);
-    const nextBilling = new Date(start);
-    if (plan.interval === "month")
-      nextBilling.setMonth(nextBilling.getMonth() + 1);
-    else if (plan.interval === "week")
-      nextBilling.setDate(nextBilling.getDate() + 7);
-    else if (plan.interval === "year")
-      nextBilling.setFullYear(nextBilling.getFullYear() + 1);
+    const nextBillingStr = calculateNextBilling(plan, start);
 
     await withTransaction(async (client) => {
       await client.query(
@@ -865,8 +922,23 @@ router.post("/plan/assign", authenticateToken, async (req, res) => {
         INSERT INTO player_plans (user_id, plan_id, start_date, next_billing_date, is_active)
         VALUES ($1, $2, $3, $4, true)
       `,
-        [req.user.id, planId, start, nextBilling.toISOString().slice(0, 10)],
+        [req.user.id, planId, start, nextBillingStr],
       );
+
+      // Send confirmation email
+      try {
+        await emailService.sendPlanAssignedEmail({
+          email: req.user.email,
+          firstName: req.user.firstName || req.user.first_name || "there",
+          planName: plan.name,
+          clubName: "Your Club", // We should ideally get the club name
+          amount: plan.price,
+          interval: plan.interval,
+          startDate: start,
+        });
+      } catch (err) {
+        console.error("Email failed on single assign:", err);
+      }
     });
 
     res.json({ success: true, message: "Plan assigned" });
@@ -897,15 +969,7 @@ router.post("/bulk-assign-plan", authenticateToken, async (req, res) => {
     const clubId = plan.club_id;
 
     const start = startDate || new Date().toISOString().slice(0, 10);
-
-    // Calculate next billing date
-    const nextBilling = new Date(start);
-    if (plan.interval === "month")
-      nextBilling.setMonth(nextBilling.getMonth() + 1);
-    else if (plan.interval === "week")
-      nextBilling.setDate(nextBilling.getDate() + 7);
-    else if (plan.interval === "year")
-      nextBilling.setFullYear(nextBilling.getFullYear() + 1);
+    const nextBillingStr = calculateNextBilling(plan, start);
 
     const results = await withTransaction(async (client) => {
       const out = [];
@@ -952,8 +1016,38 @@ router.post("/bulk-assign-plan", authenticateToken, async (req, res) => {
           VALUES ($1, $2, $3, $4, true)
           RETURNING *
           `,
-          [userId, planId, start, nextBilling.toISOString().slice(0, 10)],
+          [userId, planId, start, nextBillingStr],
         );
+
+        // Send confirmation email
+        try {
+          // Fetch user details for email
+          const userRes = await client.query(
+            "SELECT email, first_name FROM users WHERE id = $1",
+            [userId],
+          );
+          const orgRes = await client.query(
+            "SELECT name FROM organizations WHERE id = $1",
+            [clubId],
+          );
+
+          if (userRes.rows.length > 0 && orgRes.rows.length > 0) {
+            await emailService.sendPlanAssignedEmail({
+              email: userRes.rows[0].email,
+              firstName: userRes.rows[0].first_name,
+              planName: plan.name,
+              clubName: orgRes.rows[0].name,
+              amount: plan.price,
+              interval: plan.interval,
+              startDate: start,
+            });
+          }
+        } catch (emailErr) {
+          console.error(
+            `Failed to send plan email to user ${userId}:`,
+            emailErr,
+          );
+        }
 
         out.push(rows[0]);
       }
@@ -969,6 +1063,40 @@ router.post("/bulk-assign-plan", authenticateToken, async (req, res) => {
     return res.status(500).json({ error: "Failed to assign plan" });
   }
 });
+
+// POST /api/payments/plan/cancel - Deactivate current active plan for a user
+router.post(
+  "/plan/cancel",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      const { playerId } = req.body;
+      if (!playerId)
+        return res.status(400).json({ error: "playerId is required" });
+
+      // Find user_id and club context
+      const playerRes = await query(
+        "SELECT user_id, club_id FROM players WHERE id = $1",
+        [playerId],
+      );
+      if (playerRes.rows.length === 0)
+        return res.status(404).json({ error: "Player not found" });
+
+      const { user_id } = playerRes.rows[0];
+
+      await query(
+        `UPDATE player_plans SET is_active = false, updated_at = NOW() WHERE user_id = $1 AND is_active = true`,
+        [user_id],
+      );
+
+      res.json({ message: "Plan successfully deactivated" });
+    } catch (err) {
+      console.error("Cancel plan error:", err);
+      res.status(500).json({ error: "Failed to cancel plan" });
+    }
+  },
+);
 
 // Validation rules
 const paymentValidation = [

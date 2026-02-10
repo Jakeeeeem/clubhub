@@ -185,14 +185,19 @@ router.get(
       const totalEvents = eventsResult.rows.length;
       const totalTeams = teamsResult.rows.length;
 
-      // Only count revenue if club has stripe connected
-      const hasStripe = clubs.some((c) => c.stripe_account_id);
-      const monthlyRevenue = hasStripe
-        ? playersResult.rows.reduce(
-            (sum, player) => sum + (parseFloat(player.monthly_fee) || 0),
-            0,
-          )
-        : 0;
+      // Calculate revenue from succeeded payments in the last 30 days
+      const revenueResult = await query(
+        `
+        SELECT SUM(amount) as total 
+        FROM payments 
+        WHERE club_id = ANY($1) 
+        AND payment_status = 'succeeded'
+        AND created_at >= NOW() - INTERVAL '30 days'
+        `,
+        [targetClubIds],
+      );
+      const monthlyRevenue = parseFloat(revenueResult.rows[0].total) || 0;
+      const hasStripe = clubs.some((c) => !!c.stripe_account_id);
 
       res.json({
         clubs,
