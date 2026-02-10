@@ -1987,6 +1987,28 @@ async function assignPlayersCore({
 
         // Save if standard
         if (customPrice == null) {
+          // Archive old price if it differs from the new one to keep Stripe clean
+          if (
+            planRow.stripe_price_id &&
+            planRow.stripe_price_id !== stripePriceId
+          ) {
+            try {
+              await stripe.prices.update(
+                planRow.stripe_price_id,
+                { active: false },
+                stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+              );
+              console.log(
+                `🗑 Archived old Stripe Price: ${planRow.stripe_price_id}`,
+              );
+            } catch (archiveErr) {
+              console.warn(
+                `Failed to archive old price ${planRow.stripe_price_id}:`,
+                archiveErr.message,
+              );
+            }
+          }
+
           await query("UPDATE plans SET stripe_price_id = $1 WHERE id = $2", [
             stripePriceId,
             planId,
