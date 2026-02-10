@@ -1750,31 +1750,53 @@ async function bulkAssignPlanHandler(req, res, next) {
 /**
  * Helper: Find or create a Stripe customer by email
  */
-async function getOrCreateStripeCustomer(email, firstName, lastName, clubId) {
+async function getOrCreateStripeCustomer(
+  email,
+  firstName,
+  lastName,
+  clubId,
+  stripeAccountId = null,
+) {
   if (!email) return null;
+
+  const options = stripeAccountId ? { stripeAccount: stripeAccountId } : {};
+  console.log(
+    `🔍 Syncing customer ${email} for club ${clubId} ${stripeAccountId ? `(Connect: ${stripeAccountId})` : "(Platform)"}`,
+  );
 
   try {
     // 1. Search existing customers by email
-    const customers = await stripe.customers.list({
-      email: email,
-      limit: 1,
-    });
+    const customers = await stripe.customers.list(
+      {
+        email: email,
+        limit: 1,
+      },
+      options,
+    );
 
     if (customers.data.length > 0) {
+      console.log(
+        `✅ Found existing Stripe customer: ${customers.data[0].id} ${stripeAccountId ? `on ${stripeAccountId}` : ""}`,
+      );
       return customers.data[0].id;
     }
 
     // 2. Create new if not found
-    const customer = await stripe.customers.create({
-      email: email,
-      name: `${firstName} ${lastName}`.trim(),
-      metadata: {
-        club_id: clubId,
-        source: "clubhub_assignment",
+    const customer = await stripe.customers.create(
+      {
+        email: email,
+        name: `${firstName} ${lastName}`.trim(),
+        metadata: {
+          club_id: clubId,
+          source: "clubhub_assignment",
+        },
       },
-    });
+      options,
+    );
 
-    console.log(`🆕 Created Stripe customer for ${email}: ${customer.id}`);
+    console.log(
+      `🆕 Created Stripe customer for ${email}: ${customer.id} ${stripeAccountId ? `on ${stripeAccountId}` : ""}`,
+    );
     return customer.id;
   } catch (err) {
     console.error("Stripe customer sync error:", err);
@@ -1809,6 +1831,18 @@ async function assignPlayersCore({
   }
   const planRow = planRes.rows[0];
   const priceToApply = customPrice == null ? planRow.price : customPrice;
+
+  // Fetch Club's Stripe Account ID if available
+  let stripeAccountId = null;
+  if (clubId) {
+    const clubRes = await query(
+      "SELECT stripe_account_id FROM organizations WHERE id = $1",
+      [clubId],
+    );
+    if (clubRes.rowCount > 0 && clubRes.rows[0].stripe_account_id) {
+      stripeAccountId = clubRes.rows[0].stripe_account_id;
+    }
+  }
 
   // Optional: validate player/club relationship here if needed, using clubId.
 
@@ -1850,6 +1884,7 @@ async function assignPlayersCore({
           member.first_name,
           member.last_name,
           clubId,
+          stripeAccountId,
         );
       }
 
