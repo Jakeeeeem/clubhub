@@ -133,6 +133,7 @@ router.get("/", authenticateToken, async (req, res) => {
       SELECT * FROM (
         SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.date_of_birth, p.position, p.club_id, p.monthly_fee, p.user_id, p.created_at,
         p.payment_plan_id, p.plan_price, p.plan_start_date, p.payment_status,
+        p.sport, p.gender, p.location, p.bio,
         EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) as age,
         'registered' as join_status,
         (SELECT name FROM teams WHERE id = (SELECT team_id FROM team_players WHERE player_id = p.id LIMIT 1)) as team_name,
@@ -143,8 +144,9 @@ router.get("/", authenticateToken, async (req, res) => {
         
         UNION ALL
         
-        SELECT i.id, i.first_name, i.last_name, i.email, NULL as phone, i.date_of_birth, NULL as position, i.organization_id as club_id, 0 as monthly_fee, NULL as user_id, i.created_at,
+        SELECT i.id, i.first_name, i.last_name, i.email, i.phone as phone, i.date_of_birth, i.position as position, i.organization_id as club_id, 0 as monthly_fee, NULL as user_id, i.created_at,
         NULL as payment_plan_id, NULL as plan_price, NULL as plan_start_date, 'Pending' as payment_status,
+        i.sport, i.gender, i.location, i.bio,
         EXTRACT(YEAR FROM age(CURRENT_DATE, i.date_of_birth)) as age,
         'invited' as join_status,
         (SELECT name FROM teams WHERE id = i.team_id LIMIT 1) as team_name,
@@ -648,20 +650,41 @@ router.put(
         paymentStatus,
         attendanceRate,
         userId,
+        sport,
+        gender,
+        location,
+        bio,
       } = req.body;
 
       // 🔥 UPDATE LOGIC
       if (isInvited) {
-        // Update invitations table
+        // Update invitations table with all fields including CV info
         const result = await query(
           `UPDATE invitations SET 
-           first_name = $1, last_name = $2, email = $3, date_of_birth = $4
-           WHERE id = $5 RETURNING *`,
-          [firstName, lastName, email, dateOfBirth, req.params.id],
+           first_name = $1, last_name = $2, email = $3, date_of_birth = $4,
+           phone = $5, position = $6, sport = $7, gender = $8, location = $9, bio = $10
+           WHERE id = $11 RETURNING *`,
+          [
+            firstName,
+            lastName,
+            email,
+            dateOfBirth,
+            phone || player.phone,
+            position || player.position,
+            sport || player.sport,
+            gender || player.gender,
+            location || player.location,
+            bio || player.bio,
+            req.params.id,
+          ],
         );
         return res.json({
           message: "Invited member updated successfully",
-          player: result.rows[0],
+          player: {
+            ...result.rows[0],
+            join_status: "invited",
+            account_status: "Invited",
+          },
         });
       }
 
@@ -766,8 +789,12 @@ router.put(
         payment_status = $8,
         attendance_rate = $9,
         user_id = $10,
+        sport = $11,
+        gender = $12,
+        location = $13,
+        bio = $14,
         updated_at = NOW()
-      WHERE id = $11
+      WHERE id = $15
       RETURNING *
     `,
         [
@@ -777,10 +804,16 @@ router.put(
           phone || null,
           dateOfBirth,
           position || null,
-          monthlyFee || player.monthly_fee,
-          paymentStatus || player.payment_status,
-          attendanceRate || player.attendance_rate,
+          monthlyFee !== undefined ? monthlyFee : player.monthly_fee,
+          paymentStatus !== undefined ? paymentStatus : player.payment_status,
+          attendanceRate !== undefined
+            ? attendanceRate
+            : player.attendance_rate,
           playerUserId,
+          sport !== undefined ? sport : player.sport,
+          gender !== undefined ? gender : player.gender,
+          location !== undefined ? location : player.location,
+          bio !== undefined ? bio : player.bio,
           req.params.id,
         ],
       );

@@ -4754,12 +4754,12 @@
                     delete p.monthly_fee;
                 }
 
-                closeModal('assignPlanModal');
                 showNotification('Payment plan assigned successfully!', 'success');
+                if (typeof closeModal === 'function') closeModal('assignPlanModal');
 
-                // 🔁 Force a fresh fetch so it persists after refresh/new filters
-                await loadPaymentPlans();   // ensure we have latest plans
-                await loadPlayers();        // re-fetch players so server’s saved state is reflected
+                await loadPaymentPlans();
+                await loadPlayers();
+                if (typeof loadDashboardStats === 'function') loadDashboardStats();
             } catch (error) {
                 console.error('Failed to assign payment plan:', error);
                 showNotification('Failed to assign payment plan: ' + error.message, 'error');
@@ -5348,8 +5348,9 @@
                 players.forEach(p => {
                     const planId = p.payment_plan_id ?? p.plan_id ?? p.payment_plan?.id ?? p.plan?.id;
                     if (planId != null && String(planId).trim() !== '' && String(planId) !== '0') {
-                        p.payment_plan = p.payment_plan || p.plan || plansById[String(planId)] || undefined;
-                        p.has_payment_plan = true;
+                        // Always use the latest plan object from our global state
+                        p.payment_plan = plansById[String(planId)] || p.payment_plan || p.plan || undefined;
+                        p.has_payment_plan = !!p.payment_plan;
                     }
                 });
 

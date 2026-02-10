@@ -31,6 +31,24 @@ async function runMigrations() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='team_id') THEN
           ALTER TABLE invitations ADD COLUMN team_id UUID REFERENCES teams(id) ON DELETE SET NULL;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='phone') THEN
+          ALTER TABLE invitations ADD COLUMN phone VARCHAR(50);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='position') THEN
+          ALTER TABLE invitations ADD COLUMN position VARCHAR(100);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='sport') THEN
+          ALTER TABLE invitations ADD COLUMN sport VARCHAR(100);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='gender') THEN
+          ALTER TABLE invitations ADD COLUMN gender VARCHAR(20);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='location') THEN
+          ALTER TABLE invitations ADD COLUMN location VARCHAR(255);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='bio') THEN
+          ALTER TABLE invitations ADD COLUMN bio TEXT;
+        END IF;
       END $$;
     `);
     console.log("✅ Database schema is up to date.");
