@@ -358,6 +358,8 @@ router.get("/plans", async (req, res) => {
         description TEXT,
         stripe_product_id VARCHAR(255),
         stripe_price_id VARCHAR(255),
+        billing_anchor_type VARCHAR(50) DEFAULT 'signup_date',
+        billing_anchor_day INTEGER,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
@@ -474,14 +476,23 @@ router.post(
         );
 
         if (existingPlan.rows.length > 0) {
-          // Update existing
           await query(
             `
-                    UPDATE plans 
-                    SET name = $1, price = $2, interval = $3, active = true, updated_at = NOW()
-                    WHERE id = $4
-                `,
-            [product.name, amount, interval, existingPlan.rows[0].id],
+            UPDATE plans 
+            SET name = $1, price = $2, interval = $3, active = true, 
+                billing_anchor_type = COALESCE($5, billing_anchor_type),
+                billing_anchor_day = COALESCE($6, billing_anchor_day),
+                updated_at = NOW()
+            WHERE id = $4
+        `,
+            [
+              product.name,
+              amount,
+              interval,
+              existingPlan.rows[0].id,
+              req.body.billingAnchorType,
+              req.body.billingAnchorDay,
+            ],
           );
           updatedCount++;
         } else {
@@ -783,11 +794,22 @@ router.put(
           interval = COALESCE($3, interval), 
           description = COALESCE($4, description),
           active = COALESCE($5, active),
+          billing_anchor_type = COALESCE($6, billing_anchor_type),
+          billing_anchor_day = COALESCE($7, billing_anchor_day),
           updated_at = NOW()
-        WHERE id = $6
+        WHERE id = $8
         RETURNING *
       `,
-        [name, amount, interval, description || null, active, id],
+        [
+          name,
+          amount,
+          interval,
+          description || null,
+          active,
+          req.body.billingAnchorType,
+          req.body.billingAnchorDay,
+          id,
+        ],
       );
 
       res.json({

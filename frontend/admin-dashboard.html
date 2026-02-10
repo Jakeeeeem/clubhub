@@ -1982,6 +1982,21 @@
                         <textarea id="editPlanDescription" rows="3"></textarea>
                     </div>
                 </div>
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="editPlanBillingAnchor">Billing Cycle Start</label>
+                        <select id="editPlanBillingAnchor"
+                            onchange="document.getElementById('editBillingDayContainer').style.display = (this.value === 'fixed_date' ? 'block' : 'none')">
+                            <option value="signup_date">Starts on Sign Up</option>
+                            <option value="fixed_date">Starts on Specific Day</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="editBillingDayContainer" style="display: none; margin-bottom: 0;">
+                        <label for="editPlanBillingDay">Day of Month (1-28)</label>
+                        <input type="number" id="editPlanBillingDay" min="1" max="28" value="1">
+                    </div>
+                </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">💾 Save Changes</button>
                     <button type="button" class="btn btn-secondary"
@@ -3463,41 +3478,7 @@
             }
         }
 
-        async function bulkAssignPlan(planId) {
-            try {
-                // Get all players not on plans
-                const playersWithoutPlans = AppState.players.filter(p => !hasPlan(p));
 
-                if (playersWithoutPlans.length === 0) {
-                    showNotification('All players already have payment plans assigned', 'info');
-                    return;
-                }
-
-                const confirmed = confirm(`Assign this payment plan to ${playersWithoutPlans.length} players without plans ? `);
-                if (!confirmed) return;
-
-                showLoading(true);
-
-                const playerIds = playersWithoutPlans.map(p => p.id);
-                await apiService.makeRequest('/payments/bulk-assign-plan', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        playerIds,
-                        planId,
-                        startDate: new Date().toISOString().split('T')[0]
-                    })
-                });
-
-                showNotification(`Payment plan assigned to ${playerIds.length} players!`, 'success');
-                loadPlayers(); // Reload to show updated status
-
-            } catch (error) {
-                console.error('Failed to bulk assign plans:', error);
-                showNotification('Failed to assign payment plans: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
 
         function showLoading(show) {
             const existingLoader = document.querySelector('.global-loader');
@@ -4695,65 +4676,7 @@
             }
         }
 
-        // Finances & Payment Plans Logic
 
-        async function editPaymentPlan(planId) {
-            const plan = AppState.paymentPlans?.find(p => p.id === planId);
-            if (!plan) return;
-
-            document.getElementById('editPlanId').value = plan.id;
-            document.getElementById('editPlanName').value = plan.name;
-            document.getElementById('editPlanAmount').value = Number(plan.amount ?? plan.price ?? 0);
-            document.getElementById('editPlanFrequency').value = plan.interval ?? plan.frequency ?? 'month';
-            document.getElementById('editPlanDescription').value = plan.description || '';
-
-            showModal('editPaymentPlanModal');
-        }
-
-        async function handleUpdatePaymentPlan(e) {
-            if (e) e.preventDefault();
-
-            const planId = document.getElementById('editPlanId').value;
-            const name = document.getElementById('editPlanName').value.trim();
-            const amount = parseFloat(document.getElementById('editPlanAmount').value);
-            const interval = document.getElementById('editPlanFrequency').value;
-            const description = document.getElementById('editPlanDescription').value.trim();
-
-            if (!name || isNaN(amount)) {
-                showNotification('Name and amount are required', 'error');
-                return;
-            }
-
-            try {
-                showLoading(true);
-                await apiService.updatePaymentPlan(planId, { name, amount, frequency: interval, description });
-                showNotification('Payment plan updated successfully!', 'success');
-                closeModal('editPaymentPlanModal');
-                await loadPaymentPlans();
-                hydrateAddPlayerPlanSelect();
-            } catch (error) {
-                console.error('Failed to update payment plan:', error);
-                showNotification('Failed to update plan: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        async function deletePaymentPlan(planId) {
-            if (confirm('Are you sure you want to delete this payment plan?')) {
-                try {
-                    showLoading(true);
-                    await apiService.deletePaymentPlan(planId);
-                    showNotification('Payment plan deleted successfully!', 'success');
-                    loadPaymentPlans();
-                } catch (error) {
-                    console.error('Failed to delete payment plan:', error);
-                    showNotification('Failed to delete payment plan: ' + error.message, 'error');
-                } finally {
-                    showLoading(false);
-                }
-            }
-        }
         async function assignPaymentPlan(playerId) {
             try {
                 // Load available payment plans
@@ -4875,7 +4798,7 @@
                 const plan = AppState.paymentPlans?.find(p => p.id === planId);
                 const planName = plan ? plan.name : 'Selected Plan';
 
-                // Remove existing
+                // Remove existing modal if any
                 if (document.getElementById('bulkAssignModal')) document.getElementById('bulkAssignModal').remove();
 
                 const modal = document.createElement('div');
@@ -4884,46 +4807,80 @@
                 modal.style.display = 'block';
 
                 modal.innerHTML = `
-                    <div class="modal-content" style="max-width: 600px;">
-                        <div class="modal-header">
-                            <h2>Bulk Assign: ${planName}</h2>
-                            <button class="close" onclick="closeModal('bulkAssignModal')">&times;</button>
+                    <div class="modal-content" style="max-width: 650px; background: rgba(18, 18, 22, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                        <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem 2rem;">
+                            <h2 style="font-size: 1.5rem; background: linear-gradient(135deg, #fff 0%, #aaa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Bulk Assign: ${planName}</h2>
+                            <button class="close" onclick="closeModal('bulkAssignModal')" style="background: rgba(255,255,255,0.05); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">&times;</button>
                         </div>
-                        <div class="modal-body">
-                            <p style="margin-bottom: 1rem; color: var(--text-muted);">Select players to assign this plan to:</p>
-                            
-                            <div style="max-height: 300px; overflow-y: auto; background: var(--bg-dark); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color);">
-                                    <input type="checkbox" id="selectAllPlayers" onchange="toggleSelectAllDocs(this, 'player-select-check')">
-                                    <label for="selectAllPlayers" style="cursor: pointer; font-weight: 600;">Select All</label>
+                        <div class="modal-body" style="padding: 2rem;">
+                            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div style="flex: 1; display: flex; align-items: center; gap: 0.75rem;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <input type="text" id="playerModalFilter" placeholder="Search players..." style="background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 0.95rem;">
                                 </div>
-                                
+                            </div>
+
+                            <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                                <label style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Select players to assign plan to:</label>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none;" onclick="document.getElementById('selectAllPlayers').click()">
+                                    <input type="checkbox" id="selectAllPlayers" onchange="toggleSelectAllDocs(this, 'player-select-check')" style="cursor: pointer; width: 16px; height: 16px;">
+                                    <span style="font-size: 0.85rem; color: white; font-weight: 600;">Select All</span>
+                                </div>
+                            </div>
+                            
+                            <div id="modalPlayerList" style="max-height: 280px; overflow-y: auto; background: rgba(0, 0, 0, 0.2); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); padding: 0.5rem;" class="custom-scrollbar">
                                 ${players.map(p => `
-                                    <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0;">
-                                        <input type="checkbox" class="player-select-check" value="${p.id}" id="chk_${p.id}">
-                                        <label for="chk_${p.id}" style="cursor: pointer; display: flex; flex-direction: column;">
-                                            <span style="font-weight: 500; color: white;">${p.first_name} ${p.last_name}</span>
-                                            <span style="font-size: 0.8rem; color: var(--text-muted);">${p.email || 'No email'}</span>
+                                    <div class="modal-player-row" data-name="${p.first_name} ${p.last_name}" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); transform: translateZ(0); transition: all 0.2s;">
+                                        <input type="checkbox" class="player-select-check" value="${p.id}" id="chk_${p.id}" style="width: 18px; height: 18px; cursor: pointer;">
+                                        <label for="chk_${p.id}" style="cursor: pointer; display: flex; align-items: center; gap: 1rem; flex: 1;">
+                                            <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color) 0%, #833ab4 100%); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 0.85rem;">
+                                                ${(p.first_name?.charAt(0) || '') + (p.last_name?.charAt(0) || '')}
+                                            </div>
+                                            <div style="display: flex; flex-direction: column;">
+                                                <span style="font-weight: 600; color: white; font-size: 0.95rem;">${p.first_name} ${p.last_name}</span>
+                                                <span style="font-size: 0.8rem; color: var(--text-muted);">${p.email || 'No email'}</span>
+                                            </div>
                                         </label>
                                     </div>
                                 `).join('')}
                                 
-                                ${players.length === 0 ? '<p style="text-align: center; color: var(--text-muted);">No players found.</p>' : ''}
+                                ${players.length === 0 ? '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">No players available for assignment.</div>' : ''}
                             </div>
                             
-                            <div class="form-group" style="margin-top: 1.5rem;">
-                                <label>Start Date</label>
-                                <input type="date" id="bulkStartDate" value="${new Date().toISOString().split('T')[0]}" class="form-control" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-dark); color: white;">
+                            <style>
+                                .modal-player-row:hover { background: rgba(255,255,255,0.05); }
+                                .modal-player-row:last-child { border-bottom: none; }
+                                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+                                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+                            </style>
+
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                                <div class="form-group">
+                                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Start Date</label>
+                                    <input type="date" id="bulkStartDate" value="${new Date().toISOString().split('T')[0]}" style="width: 100%; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 0.75rem 1rem; font-size: 1rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                                </div>
                             </div>
 
-                            <div class="form-actions" style="margin-top: 2rem; text-align: right; display: flex; justify-content: flex-end; gap: 1rem;">
-                                <button class="btn btn-secondary" onclick="closeModal('bulkAssignModal')">Cancel</button>
-                                <button class="btn btn-primary" onclick="confirmBulkAssign('${planId}')">Assign Plan</button>
+                            <div class="form-actions" style="margin-top: 2.5rem; display: flex; gap: 1rem;">
+                                <button class="btn btn-secondary" onclick="closeModal('bulkAssignModal')" style="flex: 1; height: 50px; border-radius: 12px; font-weight: 600; font-size: 1rem; border: 1px solid rgba(255,255,255,0.1);">Cancel</button>
+                                <button class="btn btn-primary" onclick="confirmBulkAssign('${planId}')" style="flex: 1.5; height: 50px; border-radius: 12px; font-weight: 600; font-size: 1rem; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%); box-shadow: 0 10px 15px -3px rgba(255, 78, 80, 0.3);">Assign Plan</button>
                             </div>
                         </div>
                     </div>
                 `;
                 document.body.appendChild(modal);
+
+                // Add filter logic
+                document.getElementById('playerModalFilter').addEventListener('input', (e) => {
+                    const val = e.target.value.toLowerCase();
+                    const rows = document.querySelectorAll('.modal-player-row');
+                    rows.forEach(row => {
+                        const name = row.getAttribute('data-name').toLowerCase();
+                        row.style.display = name.includes(val) ? 'flex' : 'none';
+                    });
+                });
 
             } catch (error) {
                 console.error('Failed to load players for bulk assign:', error);
@@ -5178,57 +5135,6 @@
             }
         }
 
-        async function handleCreatePaymentPlan(e) {
-            if (e) e.preventDefault();
-
-            const name = document.getElementById('planName')?.value?.trim();
-            const amount = Number(document.getElementById('planAmount')?.value);   // ← use amount
-            const interval = document.getElementById('planFrequency')?.value;      // ← interval stays interval
-            const description = document.getElementById('planDescription')?.value?.trim();
-            const clubId = AppState.activeClubId || AppState.clubs?.[0]?.id || null;
-
-            if (!name || !interval || !Number.isFinite(amount)) {
-                showNotification('Please fill in all required fields.', 'error');
-                return;
-            }
-            if (amount < 0.30) {
-                showNotification('Minimum amount is £0.30', 'error');
-                return;
-            }
-
-            try {
-                showLoading(true);
-
-                const billingAnchorType = document.getElementById('planBillingAnchor')?.value || 'signup_date';
-                const billingAnchorDay = document.getElementById('planBillingDay')?.value || null;
-
-                const payload = {
-                    name,
-                    amount,
-                    interval,
-                    description,
-                    clubId,
-                    billingAnchorType,
-                    billingAnchorDay: billingAnchorDay ? parseInt(billingAnchorDay) : null
-                };
-                const created = await apiService.createPaymentPlan(payload);
-
-                showNotification('Payment plan created successfully!', 'success');
-                closeModal('createPaymentPlanModal');
-                document.getElementById('createPaymentPlanForm')?.reset();
-
-                if (!AppState.paymentPlans) AppState.paymentPlans = [];
-                AppState.paymentPlans.push(created.plan || created);
-
-                await loadPaymentPlans();
-                hydrateAddPlayerPlanSelect();
-            } catch (err) {
-                console.error('Failed to create payment plan:', err);
-                showNotification('Failed to create payment plan: ' + (err.message || err), 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
 
 
 
@@ -6912,6 +6818,30 @@
             }
         }
 
+        async function editPaymentPlan(planId) {
+            const plan = AppState.paymentPlans?.find(p => p.id === planId);
+            if (!plan) return;
+
+            document.getElementById('editPlanId').value = plan.id;
+            document.getElementById('editPlanName').value = plan.name;
+            document.getElementById('editPlanAmount').value = Number(plan.amount ?? plan.price ?? 0);
+            document.getElementById('editPlanFrequency').value = plan.interval ?? plan.frequency ?? 'month';
+            document.getElementById('editPlanDescription').value = plan.description || '';
+
+            // Billing Anchor fields
+            const anchorSelect = document.getElementById('editPlanBillingAnchor');
+            const anchorDay = document.getElementById('editPlanBillingDay');
+            const dayContainer = document.getElementById('editBillingDayContainer');
+
+            if (anchorSelect) {
+                anchorSelect.value = plan.billing_anchor_type || 'signup_date';
+                if (dayContainer) dayContainer.style.display = (anchorSelect.value === 'fixed_date' ? 'block' : 'none');
+            }
+            if (anchorDay) anchorDay.value = plan.billing_anchor_day || 1;
+
+            showModal('editPaymentPlanModal');
+        }
+
         async function handleCreatePaymentPlan(e) {
             e.preventDefault();
 
@@ -6960,6 +6890,8 @@
             const amount = document.getElementById('editPlanAmount').value;
             const interval = document.getElementById('editPlanFrequency').value;
             const description = document.getElementById('editPlanDescription').value;
+            const billingAnchorType = document.getElementById('editPlanBillingAnchor')?.value || 'signup_date';
+            const billingAnchorDay = document.getElementById('editPlanBillingDay')?.value || null;
 
             try {
                 showLoading(true);
@@ -6967,11 +6899,14 @@
                     name,
                     amount,
                     interval,
-                    description
+                    description,
+                    billingAnchorType,
+                    billingAnchorDay: billingAnchorDay ? parseInt(billingAnchorDay) : null
                 });
                 showNotification('Payment Plan updated successfully!', 'success');
                 closeModal('editPaymentPlanModal');
                 loadPaymentPlans();
+                if (typeof hydrateAddPlayerPlanSelect === 'function') hydrateAddPlayerPlanSelect();
             } catch (error) {
                 console.error('Update Plan Error:', error);
                 showNotification('Failed to update plan: ' + error.message, 'error');
@@ -9437,9 +9372,10 @@
                 loadCampaigns, sendCampaign, editProduct, loadStaff,
                 loadTalentIdDashboard, loadTournamentsDashboard, loadClubApplications,
                 approveApplication, rejectApplication, viewApplicationDetails,
-                loadDashboardStats, updateDashboardStats, handleAcceptMember,
                 handleResendInvite, resetPlayerFilters, exportPlayers,
-                removePlayer, editPlayer, filterPlayersByTeam, filterPlayersByPayment
+                removePlayer, editPlayer, filterPlayersByTeam, filterPlayersByPayment,
+                handleCreatePaymentPlan, handleUpdatePaymentPlan, editPaymentPlan, deletePaymentPlan,
+                loadPaymentPlans, accessStripeAccount, syncStripePlans, bulkAssignPlan, confirmBulkAssign, filterPlayersByView
             };
 
             Object.entries(globalFuncs).forEach(([name, func]) => {
