@@ -144,6 +144,7 @@ router.get("/", authenticateToken, async (req, res) => {
         UNION ALL
         
         SELECT i.id, i.first_name, i.last_name, i.email, NULL as phone, i.date_of_birth, NULL as position, i.organization_id as club_id, 0 as monthly_fee, NULL as user_id, i.created_at,
+        NULL as payment_plan_id, NULL as plan_price, NULL as plan_start_date, 'Pending' as payment_status,
         EXTRACT(YEAR FROM age(CURRENT_DATE, i.date_of_birth)) as age,
         'invited' as join_status,
         (SELECT name FROM teams WHERE id = i.team_id LIMIT 1) as team_name,
