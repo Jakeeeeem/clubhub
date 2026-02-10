@@ -1915,8 +1915,8 @@
                         <input type="number" id="planAmount" step="0.01" min="0" required placeholder="0.00">
                     </div>
                     <div class="form-group">
-                        <label for="planFrequency">Frequency *</label>
-                        <select id="planFrequency" required>
+                        <label for="planInterval">Frequency *</label>
+                        <select id="planInterval" required>
                             <option value="">Select Frequency</option>
                             <option value="month">Monthly</option>
                             <option value="week">Weekly</option>
@@ -1930,15 +1930,15 @@
                     </div>
                     <div class="form-group" style="grid-column: span 1;">
                         <label>Billing Cycle Start</label>
-                        <select id="planBillingAnchorTop"
-                            onchange="const el = document.getElementById('billingDayContainerTop'); if(el) el.style.display = (this.value === 'fixed_date' ? 'block' : 'none')">
+                        <select id="planBillingAnchor"
+                            onchange="document.getElementById('billingDayContainer').style.display = (this.value === 'fixed_date' ? 'block' : 'none')">
                             <option value="signup_date">Starts on Sign Up</option>
                             <option value="fixed_date">Starts on Specific Day</option>
                         </select>
                     </div>
-                    <div class="form-group" id="billingDayContainerTop" style="display: none; grid-column: span 1;">
+                    <div class="form-group" id="billingDayContainer" style="display: none; grid-column: span 1;">
                         <label>Day of Month (1-28)</label>
-                        <input type="number" id="planBillingDayTop" min="1" max="28" value="1">
+                        <input type="number" id="planBillingDay" min="1" max="28" value="1">
                     </div>
                 </div>
                 <div class="form-actions">
@@ -4470,26 +4470,7 @@
             }
         }
 
-        async function editPlayer(playerId) {
-            console.log('Editing player:', playerId);
-            showNotification('Player editing coming soon!', 'info');
-        }
 
-        async function removePlayer(playerId) {
-            if (confirm('Are you sure you want to remove this player?')) {
-                try {
-                    showLoading(true);
-                    await apiService.deletePlayer(playerId);
-                    showNotification('Player removed successfully!', 'success');
-                    loadPlayers();
-                } catch (error) {
-                    console.error('Failed to remove player:', error);
-                    showNotification('Failed to remove player: ' + error.message, 'error');
-                } finally {
-                    showLoading(false);
-                }
-            }
-        }
 
         async function showPlayerTeamAssignment(playerId) {
             try {
@@ -6447,35 +6428,7 @@
         window.accessStripeAccount = accessStripeAccount;
         window.handlePictureUpload = handlePictureUpload;
         window.filterPlayersByView = filterPlayersByView;
-        window.filterPlayersByTeam = filterPlayersByTeam;
-        window.filterPlayersByPayment = filterPlayersByPayment;
-        window.resetPlayerFilters = resetPlayerFilters;
-        window.exportPlayers = exportPlayers;
-        window.logout = logout;
-        window.loadListings = loadListings;
-        window.viewListingApplications = viewListingApplications;
-        window.removePlayer = removePlayer;
-        window.editPlayer = editPlayer;
-        window.assignPaymentPlan = assignPaymentPlan;
-        window.showPlayerTeamAssignment = showPlayerTeamAssignment;
-        window.editTeam = editTeam;
-        window.deleteTeam = deleteTeam;
-        window.loadProducts = loadProducts;
-        window.loadCampaigns = loadCampaigns;
-        window.sendCampaign = sendCampaign;
-        window.editProduct = editProduct;
-        window.loadStaff = loadStaff;
-        window.loadTalentIdDashboard = loadTalentIdDashboard;
-        window.loadTournamentsDashboard = loadTournamentsDashboard;
-        window.loadClubApplications = loadClubApplications;
-        window.approveApplication = approveApplication;
-        window.rejectApplication = rejectApplication;
-        window.viewApplicationDetails = viewApplicationDetails;
-        window.loadDashboardStats = loadDashboardStats;
-        window.updateDashboardStats = updateDashboardStats;
-        window.showSection = showSection;
-        window.handleAcceptMember = handleAcceptMember;
-        window.handleResendInvite = handleResendInvite;
+
 
         // Team Management Functions
         let currentTeamId = null;
@@ -6975,8 +6928,8 @@
 
             try {
                 showLoading(true);
-                const billingAnchorType = document.getElementById('planBillingAnchor')?.value || document.getElementById('planBillingAnchorTop')?.value || 'signup_date';
-                const billingAnchorDay = document.getElementById('planBillingDay')?.value || document.getElementById('planBillingDayTop')?.value || null;
+                const billingAnchorType = document.getElementById('planBillingAnchor')?.value || 'signup_date';
+                const billingAnchorDay = document.getElementById('planBillingDay')?.value || null;
 
                 await apiService.createPaymentPlan({
                     name,
@@ -7353,6 +7306,15 @@
         const addProdForm = document.getElementById('addProductForm');
         if (addProdForm) addProdForm.addEventListener('submit', handleAddProduct);
 
+        window.filterPlayersByTeam = typeof filterPlayersByTeam !== 'undefined' ? filterPlayersByTeam : null;
+        window.filterPlayersByPayment = typeof filterPlayersByPayment !== 'undefined' ? filterPlayersByPayment : null;
+        window.resetPlayerFilters = typeof resetPlayerFilters !== 'undefined' ? resetPlayerFilters : null;
+        window.handleAcceptMember = typeof handleAcceptMember !== 'undefined' ? handleAcceptMember : null;
+        window.handleResendInvite = typeof handleResendInvite !== 'undefined' ? handleResendInvite : null;
+        window.editPlayer = typeof editPlayer !== 'undefined' ? editPlayer : null;
+        window.removePlayer = typeof removePlayer !== 'undefined' ? removePlayer : null;
+        window.exportPlayers = typeof exportPlayers !== 'undefined' ? exportPlayers : null;
+
         const createEventForm = document.getElementById('createEventForm');
         if (createEventForm) createEventForm.addEventListener('submit', handleCreateEvent);
     </script>
@@ -7446,56 +7408,7 @@
                 </div>
             </div>
         </div>
-        <!-- Create Payment Plan Modal -->
-        <div id="createPaymentPlanModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>➕ Create Payment Plan</h2>
-                    <button class="close" onclick="closeModal('createPaymentPlanModal')">&times;</button>
-                </div>
-                <form id="createPaymentPlanForm">
-                    <div class="form-group">
-                        <label for="planName">Plan Name *</label>
-                        <input type="text" id="planName" required placeholder="e.g. Annual Membership 2025">
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label for="planAmount">Amount (£) *</label>
-                            <input type="number" id="planAmount" step="0.01" min="0" required placeholder="0.00">
-                        </div>
-                        <div class="form-group">
-                            <label for="planInterval">Billing Frequency *</label>
-                            <select id="planInterval" required>
-                                <option value="month">Monthly</option>
-                                <option value="year">Yearly</option>
-                                <option value="week">Weekly</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="planDescription">Description</label>
-                        <textarea id="planDescription" rows="2" placeholder="What does this plan cover?"></textarea>
-                    </div>
-                    <div
-                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="planBillingAnchor">Billing Cycle Start</label>
-                            <select id="planBillingAnchor"
-                                onchange="const el = document.getElementById('billingDayContainer'); if(el) el.style.display = (this.value === 'fixed_date' ? 'block' : 'none')">
-                                <option value="signup_date">Starts on Sign Up</option>
-                                <option value="fixed_date">Starts on Specific Day</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="billingDayContainer" style="display: none; margin-bottom: 0;">
-                            <label for="planBillingDay">Day of Month (1-28)</label>
-                            <input type="number" id="planBillingDay" min="1" max="28" value="1">
-                        </div>
-                    </div>
-                    <!-- Future: Plan benefits / duration -->
-                    <button type="submit" class="btn btn-primary">💾 Create Plan</button>
-                </form>
-            </div>
-        </div>
+
         <!-- Add Product Modal with Custom Fields -->
         <div id="addProductModal" class="modal">
             <div class="modal-content">
@@ -9516,6 +9429,24 @@
             window.loadCampaigns = loadCampaigns;
             window.sendCampaign = sendCampaign;
             window.openCreateCampaign = openCreateCampaign;
+
+            // All-in-one exposure to ensure no ReferenceErrors
+            const globalFuncs = {
+                logout, loadListings, viewListingApplications, assignPaymentPlan,
+                showPlayerTeamAssignment, editTeam, deleteTeam, loadProducts,
+                loadCampaigns, sendCampaign, editProduct, loadStaff,
+                loadTalentIdDashboard, loadTournamentsDashboard, loadClubApplications,
+                approveApplication, rejectApplication, viewApplicationDetails,
+                loadDashboardStats, updateDashboardStats, handleAcceptMember,
+                handleResendInvite, resetPlayerFilters, exportPlayers,
+                removePlayer, editPlayer, filterPlayersByTeam, filterPlayersByPayment
+            };
+
+            Object.entries(globalFuncs).forEach(([name, func]) => {
+                if (typeof func !== 'undefined') {
+                    window[name] = func;
+                }
+            });
         </script>
 
         <!-- Mode Toggle Handler -->

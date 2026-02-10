@@ -1273,6 +1273,8 @@ class ApiService {
     interval,
     frequency,
     description,
+    billingAnchorType,
+    billingAnchorDay,
     clubId,
   }) {
     try {
@@ -1283,12 +1285,13 @@ class ApiService {
           : Number(price), // map price→amount if needed
         interval: interval || frequency, // map frequency→interval if needed
         description,
+        billingAnchorType,
+        billingAnchorDay,
         clubId,
       };
 
       console.log("📝 Creating payment plan:", payload);
       return await this.makeRequest("/payments/plans", {
-        // ← keep your existing URL if different
         method: "POST",
         body: JSON.stringify(payload),
       });
