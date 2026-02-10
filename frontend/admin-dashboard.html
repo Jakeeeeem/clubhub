@@ -2966,36 +2966,7 @@
 
 
 
-        async function assignPaymentPlan(userId) {
-            console.log('Assigning plan to user:', userId);
 
-            // Populate hidden userId
-            document.getElementById('assignPlanUserId').value = userId;
-
-            // Load plans into select
-            const select = document.getElementById('assignPlanSelect');
-            select.innerHTML = '<option value="">Select a plan...</option>';
-
-            try {
-                // Use cached plans or fetch
-                let plans = AppState.paymentPlans;
-                if (!plans) {
-                    plans = await apiService.getPaymentPlans(await getActiveClubId());
-                    AppState.paymentPlans = plans;
-                }
-
-                plans.forEach(plan => {
-                    const price = plan.price || plan.amount || 0;
-                    select.innerHTML += `<option value="${plan.id}">${plan.name} (£${Number(price).toFixed(2)})</option>`;
-                });
-
-                showModal('assignPlanModal');
-
-            } catch (error) {
-                console.error('Failed to load plans for assignment:', error);
-                showNotification('Failed to load payment plans', 'error');
-            }
-        }
 
         async function handleAssignPlanSubmit(e) {
             e.preventDefault();
@@ -4679,6 +4650,10 @@
 
         async function assignPaymentPlan(playerId) {
             try {
+                // Find player to check current plan
+                const player = AppState.players?.find(p => p.id === playerId);
+                const currentPlanId = player?.payment_plan_id ?? player?.plan_id;
+
                 // Load available payment plans
                 const plans = await apiService.listPaymentPlans();
 
@@ -4698,22 +4673,30 @@
                 modal.id = 'assignPlanModal';
 
                 modal.innerHTML = `
-                <div class="modal-content">
-        <div class="modal-header">
-          <h2>Assign Payment Plan</h2>
-          <button class="close" onclick="closeModal('assignPlanModal')">&times;</button>
+                <div class="modal-content" style="max-width: 500px; background: rgba(18, 18, 22, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px;">
+        <div class="modal-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 1.5rem 2rem;">
+          <h2 style="font-size: 1.5rem; background: linear-gradient(135deg, #fff 0%, #aaa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Assign Payment Plan</h2>
+          <button class="close" onclick="closeModal('assignPlanModal')" style="background: rgba(255,255,255,0.05); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">&times;</button>
         </div>
         <div class="modal-body" style="padding: 2rem;">
-          <div class="form-group">
-            <label for="selectPlan">Choose Payment Plan</label>
-            <select id="selectPlan" required>
-  <option value="">Select a plan...</option>
-  ${plans.map(plan => {
+          ${player ? `
+          <div style="margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.5rem;">Player Information</div>
+            <div style="font-weight: 600; color: white;">${player.display_name}</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Current Plan: <span style="color: ${player.payment_plan ? 'var(--primary-color)' : 'inherit'}">${player.payment_plan ? player.payment_plan.name : 'None'}</span></div>
+          </div>
+          ` : ''}
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="selectPlan" style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Choose Payment Plan</label>
+            <select id="selectPlan" required style="width: 100%; background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 0.75rem 1rem; font-size: 1rem; outline: none;">
+                <option value="">Select a plan...</option>
+                ${plans.map(plan => {
                     const amt = Number(plan.amount ?? plan.price ?? 0).toFixed(2);
                     const intv = (plan.interval ?? plan.frequency ?? '').toString();
-                    return `<option value="${plan.id}">${plan.name} - £${amt}/${intv}</option>`;
+                    const isSelected = String(plan.id) === String(currentPlanId);
+                    return `<option value="${plan.id}" ${isSelected ? 'selected' : ''}>${plan.name} - £${amt}/${intv} ${isSelected ? '(Current)' : ''}</option>`;
                 }).join('')}
-</select>
+            </select>
           </div>
           <div class="form-group">
   <label for="planCustomPrice">Custom Price (£) (optional)</label>
@@ -5426,9 +5409,12 @@
                                         </span>
                                     </td>
                                     <td style="text-align: center;">
-                                        <span class="status-badge status-${(player.payment_status || 'pending').toLowerCase()}">
-                                            ${player.payment_status || 'Pending'}
-                                        </span>
+                                        <div style="display:flex; flex-direction:column; align-items:center;">
+                                            <span class="status-badge status-${(player.payment_status || 'pending').toLowerCase()}" style="margin-bottom: 4px;">
+                                                ${player.payment_status || 'Pending'}
+                                            </span>
+                                            ${player.payment_plan ? `<span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">${player.payment_plan.name}</span>` : '<span style="font-size: 0.7rem; color: var(--text-muted); opacity: 0.5;">No Plan</span>'}
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="action-buttons" onclick="event.stopPropagation()">

@@ -132,6 +132,7 @@ router.get("/", authenticateToken, async (req, res) => {
     const finalQuery = `
       SELECT * FROM (
         SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.date_of_birth, p.position, p.club_id, p.monthly_fee, p.user_id, p.created_at,
+        p.payment_plan_id, p.plan_price, p.plan_start_date, p.payment_status,
         EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) as age,
         'registered' as join_status,
         (SELECT name FROM teams WHERE id = (SELECT team_id FROM team_players WHERE player_id = p.id LIMIT 1)) as team_name,
