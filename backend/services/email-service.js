@@ -774,33 +774,36 @@ class EmailService {
         <p>You have been assigned to a new payment plan for <strong>${clubName}</strong>.</p>
         
         <div class="card">
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
-            <span style="color:#94a3b8;">Plan Name</span>
-            <span style="font-weight:600;">${planName}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <span style="color:#94a3b8;">Price</span>
-            <span>${formattedAmount} (${interval})</span>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#94a3b8;">Start Date</span>
-            <span>${new Date(startDate).toLocaleDateString()}</span>
-          </div>
+          <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+            <tr>
+              <td style="padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #94a3b8; width: 40%; vertical-align: top;">Plan Name</td>
+              <td style="padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right; font-weight: 600; vertical-align: top;">${planName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); color: #94a3b8; vertical-align: top;">Price</td>
+              <td style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: right; vertical-align: top;">${formattedAmount} <span style="font-size: 0.85em; opacity: 0.8;">(${interval})</span></td>
+            </tr>
+            <tr>
+              <td style="padding-top: 12px; color: #94a3b8; vertical-align: top;">Start Date</td>
+              <td style="padding-top: 12px; text-align: right; vertical-align: top;">${new Date(startDate).toLocaleDateString()}</td>
+            </tr>
+          </table>
+
            ${
              checkoutUrl || subscriptionId
                ? `
-          <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px; font-size: 0.9em; color: #fbbf24;">
-            <p style="margin:0;">⚠ Verification Required</p>
-            <p style="margin:5px 0 0 0; color: rgba(255,255,255,0.7);">Please click the button below to validte your payment method.</p>
+          <div style="margin-top: 20px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 6px; padding: 12px; font-size: 0.9em; color: #fbbf24;">
+            <p style="margin:0 0 5px 0; font-weight: 600;">⚠️ Verification Required</p>
+            <p style="margin:0; opacity: 0.9;">Please click the button below to validate your payment method.</p>
           </div>
           `
                : ""
            }
         </div>
 
-        <p>You can manage your subscription and view payment history in your player dashboard.</p>
+        <p style="margin-top: 20px;">You can manage your subscription and view payment history in your player dashboard.</p>
 
-        <div style="text-align: center;">
+        <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
           <a href="${actionLink}" class="btn">
             ${buttonText}
           </a>
