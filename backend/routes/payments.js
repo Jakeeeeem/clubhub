@@ -1863,40 +1863,139 @@ async function assignPlayersCore({
         product: planRow.stripe_product_id, // Ensure product exists!
       };
 
-      // If product ID is missing, we must create a product too (rare edge case here if data is clean)
-      if (!planRow.stripe_product_id) {
-        const product = await stripe.products.create(
+      // 1. Resolve Product ID
+      let productId = planRow.stripe_product_id;
+
+      // Validate if this Product ID exists on the current account
+      if (productId) {
+        try {
+          await stripe.products.retrieve(
+            productId,
+            stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+          );
+        } catch (e) {
+          console.warn(
+            `Stored Product ID ${productId} not found on account ${stripeAccountId || "Platform"}. Clearing to resolve...`,
+          );
+          productId = null;
+        }
+      }
+
+      // If missing or invalid, search Stripe first
+      if (!productId) {
+        const queryStr = `name:'${planRow.name.replace(/'/g, "\\'")}' AND active:'true'`;
+        try {
+          const existingProducts = await stripe.products.search(
+            {
+              query: queryStr,
+              limit: 1,
+            },
+            stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+          );
+
+          if (existingProducts.data.length > 0) {
+            productId = existingProducts.data[0].id;
+            // Sync back to DB
+            await query(
+              "UPDATE plans SET stripe_product_id = $1 WHERE id = $2",
+              [productId, planId],
+            );
+            console.log(`🔗 Linked to existing Stripe Product: ${productId}`);
+          } else {
+            // Create new if truly missing
+            const product = await stripe.products.create(
+              {
+                name: planRow.name,
+                type: "service",
+              },
+              stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+            );
+            productId = product.id;
+            await query(
+              "UPDATE plans SET stripe_product_id = $1 WHERE id = $2",
+              [productId, planId],
+            );
+            console.log(`🆕 Created new Stripe Product: ${productId}`);
+          }
+        } catch (searchErr) {
+          console.error("Product search/create failed:", searchErr);
+          // One last ditch: Create it without search if search failed (e.g. syntax)
+          if (!productId) {
+            const product = await stripe.products.create(
+              {
+                name: planRow.name,
+                type: "service",
+              },
+              stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+            );
+            productId = product.id;
+            await query(
+              "UPDATE plans SET stripe_product_id = $1 WHERE id = $2",
+              [productId, planId],
+            );
+          }
+        }
+      }
+
+      priceData.product = productId;
+
+      // 2. Resolve Price ID
+      // If we have a stored price ID, try to retrieve it to ensure it exists on THIS account
+      if (planRow.stripe_price_id && customPrice == null) {
+        try {
+          const existingPrice = await stripe.prices.retrieve(
+            planRow.stripe_price_id,
+            stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+          );
+          stripePriceId = existingPrice.id;
+        } catch (e) {
+          console.warn(
+            "Stored price ID invalid or not found on this account, searching/creating new...",
+          );
+        }
+      }
+
+      // If still no valid price ID, search for matching price
+      if (!stripePriceId) {
+        const prices = await stripe.prices.list(
           {
-            name: planRow.name,
-            type: "service",
+            product: productId,
+            active: true,
+            limit: 100,
           },
           stripeAccountId ? { stripeAccount: stripeAccountId } : {},
         );
-        priceData.product = product.id;
 
-        // Save back to plan for future use
-        await query("UPDATE plans SET stripe_product_id = $1 WHERE id = $2", [
-          product.id,
-          planId,
-        ]);
-      }
+        const matchingPrice = prices.data.find(
+          (p) =>
+            p.unit_amount === priceData.unit_amount &&
+            p.currency === priceData.currency &&
+            p.recurring?.interval === priceData.recurring.interval,
+        );
 
-      const price = await stripe.prices.create(
-        priceData,
-        stripeAccountId ? { stripeAccount: stripeAccountId } : {},
-      );
-      stripePriceId = price.id;
+        if (matchingPrice) {
+          stripePriceId = matchingPrice.id;
+          console.log(`🔗 Found existing matching Price: ${stripePriceId}`);
+        } else {
+          const price = await stripe.prices.create(
+            priceData,
+            stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+          );
+          stripePriceId = price.id;
+          console.log(`🆕 Created new Stripe Price: ${stripePriceId}`);
+        }
 
-      // If this was a standard plan update (no custom price), save it
-      if (customPrice == null) {
-        await query("UPDATE plans SET stripe_price_id = $1 WHERE id = $2", [
-          stripePriceId,
-          planId,
-        ]);
+        // Save if standard
+        if (customPrice == null) {
+          await query("UPDATE plans SET stripe_price_id = $1 WHERE id = $2", [
+            stripePriceId,
+            planId,
+          ]);
+        }
       }
     } catch (err) {
-      console.error("Failed to create Stripe Price:", err);
-      // Fallback: Don't block assignment, but subscription creation will fail
+      console.error("Failed to resolve/create Stripe Price/Product:", err);
+      // Fallback: don't crash, but subscription step will fail
     }
   }
 
@@ -1933,15 +2032,23 @@ async function assignPlayersCore({
       }
 
       // 2. Sync with Stripe Customer if needed
-      let stripeCustomerId = member.stripe_customer_id;
-      if (!stripeCustomerId && member.email) {
-        stripeCustomerId = await getOrCreateStripeCustomer(
-          member.email,
-          member.first_name,
-          member.last_name,
-          clubId,
-          stripeAccountId,
-        );
+      // 2. Sync with Stripe Customer
+      // We ALWAYS call this to ensure the returned Customer ID belongs to the correct Stripe Account (Connect vs Platform).
+      // If the email exists on the target account, it returns that ID. If not, it creates a new one.
+      const stripeCustomerId = await getOrCreateStripeCustomer(
+        member.email,
+        member.first_name,
+        member.last_name,
+        clubId,
+        stripeAccountId,
+      );
+
+      if (!stripeCustomerId) {
+        failures.push({
+          playerId: pid,
+          error: "Failed to create/fetch Stripe Customer",
+        });
+        continue;
       }
 
       // 3. Create Stripe Checkout Session (The "Stripe Window")
