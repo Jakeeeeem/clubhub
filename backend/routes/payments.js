@@ -1846,12 +1846,10 @@ async function assignPlayersCore({
 
   // Ensure Plan has a Stripe Price ID (Create if missing)
   let stripePriceId = null;
-  // If custom price, we need a new ad-hoc price or just use the plan's default if matches
-  // BUT for subscriptions, we need a Price object.
-  // If no custom price, try to use existing plan's stripe_price_id
-  if (customPrice == null && planRow.stripe_price_id) {
-    stripePriceId = planRow.stripe_price_id;
-  } else {
+
+  // We always enter this block to validate/resolve the Price ID against the current account
+  // (Previously we blindly used the DB ID which caused issues with Connect vs Platform mismatches)
+  {
     // Create a new Price object in Stripe for this subscription
     try {
       const priceData = {
