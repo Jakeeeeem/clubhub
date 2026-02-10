@@ -145,7 +145,7 @@ router.get("/", authenticateToken, async (req, res) => {
         UNION ALL
         
         SELECT i.id, i.first_name, i.last_name, i.email, i.phone as phone, i.date_of_birth, i.position as position, i.organization_id as club_id, 0 as monthly_fee, NULL as user_id, i.created_at,
-        NULL as payment_plan_id, NULL as plan_price, NULL as plan_start_date, 'Pending' as payment_status,
+        i.payment_plan_id, i.plan_price, i.plan_start_date, 'Pending' as payment_status,
         i.sport, i.gender, i.location, i.bio,
         EXTRACT(YEAR FROM age(CURRENT_DATE, i.date_of_birth)) as age,
         'invited' as join_status,

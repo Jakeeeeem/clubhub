@@ -49,6 +49,15 @@ async function runMigrations() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='bio') THEN
           ALTER TABLE invitations ADD COLUMN bio TEXT;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='payment_plan_id') THEN
+          ALTER TABLE invitations ADD COLUMN payment_plan_id UUID REFERENCES plans(id) ON DELETE SET NULL;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='plan_price') THEN
+          ALTER TABLE invitations ADD COLUMN plan_price DECIMAL(10,2);
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='plan_start_date') THEN
+          ALTER TABLE invitations ADD COLUMN plan_start_date DATE;
+        END IF;
       END $$;
     `);
     console.log("✅ Database schema is up to date.");

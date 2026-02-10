@@ -970,8 +970,8 @@ router.post("/plan/assign", authenticateToken, async (req, res) => {
   }
 });
 
-// POST /api/payments/bulk-assign-plan
-router.post("/bulk-assign-plan", authenticateToken, async (req, res) => {
+// OLD /api/payments/bulk-assign-plan (Legacy)
+router.post("/bulk-assign-plan-legacy", authenticateToken, async (req, res) => {
   try {
     const { playerIds, planId, startDate } = req.body;
     if (!Array.isArray(playerIds) || playerIds.length === 0 || !planId) {
@@ -1780,23 +1780,31 @@ async function assignPlayersCore({
   // Update each player
   for (const pid of playerIds) {
     try {
-      const updateRes = await query(
-        `
-        UPDATE players
-           SET payment_plan_id = $2,
-               plan_price       = $3,
-               plan_start_date  = $4,
-               updated_at       = NOW()
-         WHERE id = $1
-         RETURNING id
-        `,
+      // 1. Try updating players table first
+      let updateRes = await query(
+        `UPDATE players SET payment_plan_id = $2, plan_price = $3, plan_start_date = $4, updated_at = NOW() WHERE id = $1 RETURNING id`,
         [pid, planId, priceToApply, startDate],
       );
 
-      if (updateRes.rowCount === 0) {
-        failures.push({ playerId: pid, error: "Player not found" });
-      } else {
+      if (updateRes.rowCount > 0) {
         assigned.push(pid);
+        continue;
+      }
+
+      // 2. If not in players, it might be in invitations (invited members)
+      // Note: We already added columns to invitations in the auto-migration earlier
+      updateRes = await query(
+        `UPDATE invitations SET payment_plan_id = $2, plan_price = $3, plan_start_date = $4 WHERE id = $1 RETURNING id`,
+        [pid, planId, priceToApply, startDate],
+      );
+
+      if (updateRes.rowCount > 0) {
+        assigned.push(pid);
+      } else {
+        failures.push({
+          playerId: pid,
+          error: "Member not found in players or invitations",
+        });
       }
     } catch (e) {
       failures.push({ playerId: pid, error: e.message });
@@ -2135,6 +2143,14 @@ router.post(
     }
   },
 );
+
+// NEW DASHBOARD ASSIGNMENT ROUTES
+router.post(
+  "/assign-player-plan",
+  authenticateToken,
+  assignPlayerToPaymentPlanHandler,
+);
+router.post("/bulk-assign-plan", authenticateToken, bulkAssignPlanHandler);
 
 // Error handling middleware
 router.use((error, req, res, next) => {
