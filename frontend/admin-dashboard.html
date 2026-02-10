@@ -3401,7 +3401,7 @@
                                         <td style="text-align: right;">
                                             <div class="action-buttons" style="justify-content: flex-end;">
                                                 <button class="btn-icon edit" title="Edit Plan" onclick="editPaymentPlan('${plan.id}')">✏️</button>
-                                                <button class="btn-icon" title="Bulk Assign" onclick="bulkAssignPlan('${plan.id}')" style="background: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);">👥</button>
+                                                <button class="btn-icon" title="Bulk Assign" onclick="premiumBulkAssignPlan('${plan.id}')" style="background: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);">👥</button>
                                                 <button class="btn-icon delete" title="Delete Plan" onclick="deletePaymentPlan('${plan.id}')">🗑️</button>
                                             </div>
                                         </td>
@@ -4790,7 +4790,8 @@
             checkboxes.forEach(cb => cb.checked = source.checked);
         }
 
-        async function bulkAssignPlan(planId) {
+        async function premiumBulkAssignPlan(planId) {
+            console.log('🚀 Opening Premium Bulk Assign Modal for plan:', planId);
             try {
                 showLoading(true);
                 const clubId = await getActiveClubId();
@@ -9375,7 +9376,7 @@
                 handleResendInvite, resetPlayerFilters, exportPlayers,
                 removePlayer, editPlayer, filterPlayersByTeam, filterPlayersByPayment,
                 handleCreatePaymentPlan, handleUpdatePaymentPlan, editPaymentPlan, deletePaymentPlan,
-                loadPaymentPlans, accessStripeAccount, syncStripePlans, bulkAssignPlan, confirmBulkAssign, filterPlayersByView
+                loadPaymentPlans, accessStripeAccount, syncStripePlans, premiumBulkAssignPlan, confirmBulkAssign, filterPlayersByView
             };
 
             Object.entries(globalFuncs).forEach(([name, func]) => {
