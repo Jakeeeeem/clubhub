@@ -2051,39 +2051,44 @@ async function assignPlayersCore({
         continue;
       }
 
-      // 3. Create Stripe Checkout Session (The "Stripe Window")
+      // 3. Create Stripe Subscription (Visible immediately, Pay via Invoice URL)
+      let stripeSubscriptionId = null;
       let checkoutUrl = null;
 
       if (stripeCustomerId && stripePriceId) {
         try {
-          const sessionConfig = {
-            customer: stripeCustomerId,
-            line_items: [{ price: stripePriceId, quantity: 1 }],
-            mode: "subscription",
-            payment_method_collection: "if_required",
-            success_url: `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
-            metadata: {
-              club_id: clubId,
-              player_id: pid,
-              plan_id: planId,
+          const subscription = await stripe.subscriptions.create(
+            {
+              customer: stripeCustomerId,
+              items: [{ price: stripePriceId }],
+              payment_behavior: "default_incomplete",
+              collection_method: "send_invoice", // Crucial for hosted invoice link
+              days_until_due: 7,
+              expand: ["latest_invoice"],
+              metadata: {
+                club_id: clubId,
+                player_id: pid,
+                plan_id: planId,
+              },
             },
-          };
-
-          const session = await stripe.checkout.sessions.create(
-            sessionConfig,
             stripeAccountId ? { stripeAccount: stripeAccountId } : {},
           );
 
-          checkoutUrl = session.url;
+          stripeSubscriptionId = subscription.id;
+
+          // Get the Hosted Invoice URL - serves as our "Checkout Window"
+          if (
+            subscription.latest_invoice &&
+            subscription.latest_invoice.hosted_invoice_url
+          ) {
+            checkoutUrl = subscription.latest_invoice.hosted_invoice_url;
+          }
+
           console.log(
-            `✅ Created Stripe Checkout Session for Player ${pid}: ${checkoutUrl}`,
+            `✅ Created Subscription ${stripeSubscriptionId} with Invoice URL: ${checkoutUrl}`,
           );
         } catch (subError) {
-          console.error(
-            "❌ Failed to create Stripe Checkout Session:",
-            subError,
-          );
+          console.error("❌ Failed to create Stripe Subscription:", subError);
         }
       }
 
@@ -2094,10 +2099,17 @@ async function assignPlayersCore({
           plan_price = $3, 
           plan_start_date = $4, 
           stripe_customer_id = $5,
-          -- stripe_subscription_id is not set yet, handled via webhook or future sync
+          stripe_subscription_id = $6,
           ${table === "players" ? "updated_at = NOW()" : "created_at = created_at"} 
           WHERE id = $1 RETURNING id`,
-        [pid, planId, priceToApply, startDate, stripeCustomerId],
+        [
+          pid,
+          planId,
+          priceToApply,
+          startDate,
+          stripeCustomerId,
+          stripeSubscriptionId,
+        ],
       );
 
       if (updateRes.rowCount > 0) {
@@ -2114,6 +2126,7 @@ async function assignPlayersCore({
             interval: planRow.interval || "month",
             startDate: startDate,
             checkoutUrl: checkoutUrl,
+            subscriptionId: stripeSubscriptionId,
             stripeAccountId: stripeAccountId,
           });
         } catch (mailErr) {
