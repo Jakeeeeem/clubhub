@@ -17,6 +17,9 @@ async function runMigrations() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='players' AND column_name='plan_start_date') THEN
           ALTER TABLE players ADD COLUMN plan_start_date DATE;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='players' AND column_name='stripe_customer_id') THEN
+          ALTER TABLE players ADD COLUMN stripe_customer_id VARCHAR(255);
+        END IF;
 
         -- Invitations table updates
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='first_name') THEN
@@ -57,6 +60,9 @@ async function runMigrations() {
         END IF;
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='plan_start_date') THEN
           ALTER TABLE invitations ADD COLUMN plan_start_date DATE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='invitations' AND column_name='stripe_customer_id') THEN
+          ALTER TABLE invitations ADD COLUMN stripe_customer_id VARCHAR(255);
         END IF;
       END $$;
     `);

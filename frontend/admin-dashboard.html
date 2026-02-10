@@ -4889,7 +4889,7 @@
             try {
                 showLoading(true);
                 if (apiService.bulkAssignPaymentPlan) {
-                    await apiService.bulkAssignPaymentPlan(playerIds, planId, startDate);
+                    await apiService.bulkAssignPaymentPlan(playerIds, planId, startDate, AppState.activeClubId);
                 } else {
                     // Fallback
                     const clubId = AppState.activeClubId;
@@ -5411,9 +5411,16 @@
                                     </td>
                                     <td style="text-align: center;">
                                         <div style="display:flex; flex-direction:column; align-items:center;">
-                                            <span class="status-badge status-${(player.payment_status || 'pending').toLowerCase()}" style="margin-bottom: 4px;">
-                                                ${player.payment_status || 'Pending'}
-                                            </span>
+                                            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                                                <span class="status-badge status-${(player.payment_status || 'pending').toLowerCase()}">
+                                                    ${player.payment_status || 'Pending'}
+                                                </span>
+                                                ${player.stripe_customer_id ? `
+                                                    <span title="Synced with Stripe" style="color: #6366f1; font-size: 0.9rem; cursor: help;">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                    </span>
+                                                ` : ''}
+                                            </div>
                                             ${player.payment_plan ? `<span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">${player.payment_plan.name}</span>` : '<span style="font-size: 0.7rem; color: var(--text-muted); opacity: 0.5;">No Plan</span>'}
                                         </div>
                                     </td>

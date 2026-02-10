@@ -1344,10 +1344,10 @@ class ApiService {
     }
   }
 
-  async bulkAssignPaymentPlan(playerIds, planId, startDate) {
+  async bulkAssignPaymentPlan(playerIds, planId, startDate, clubId = null) {
     return await this.makeRequest("/payments/bulk-assign-plan", {
       method: "POST",
-      body: JSON.stringify({ playerIds, planId, startDate }),
+      body: JSON.stringify({ playerIds, planId, startDate, clubId }),
     });
   }
 

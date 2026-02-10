@@ -132,7 +132,7 @@ router.get("/", authenticateToken, async (req, res) => {
     const finalQuery = `
       SELECT * FROM (
         SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.date_of_birth, p.position, p.club_id, p.monthly_fee, p.user_id, p.created_at,
-        p.payment_plan_id, p.plan_price, p.plan_start_date, p.payment_status,
+        p.payment_plan_id, p.plan_price, p.plan_start_date, p.payment_status, p.stripe_customer_id,
         p.sport, p.gender, p.location, p.bio,
         EXTRACT(YEAR FROM age(CURRENT_DATE, p.date_of_birth)) as age,
         'registered' as join_status,
@@ -145,7 +145,7 @@ router.get("/", authenticateToken, async (req, res) => {
         UNION ALL
         
         SELECT i.id, i.first_name, i.last_name, i.email, i.phone as phone, i.date_of_birth, i.position as position, i.organization_id as club_id, 0 as monthly_fee, NULL as user_id, i.created_at,
-        i.payment_plan_id, i.plan_price, i.plan_start_date, 'Pending' as payment_status,
+        i.payment_plan_id, i.plan_price, i.plan_start_date, 'Pending' as payment_status, i.stripe_customer_id,
         i.sport, i.gender, i.location, i.bio,
         EXTRACT(YEAR FROM age(CURRENT_DATE, i.date_of_birth)) as age,
         'invited' as join_status,
@@ -736,15 +736,22 @@ router.put(
 
             // Begin promotion to player
             const newPlayerResult = await query(
-              `INSERT INTO players (first_name, last_name, email, date_of_birth, club_id, join_date)
-       VALUES ($1, $2, $3, $4, $5, CURRENT_DATE)
-       RETURNING id`,
+              `INSERT INTO players (
+                first_name, last_name, email, date_of_birth, club_id, join_date, 
+                payment_plan_id, plan_price, plan_start_date, stripe_customer_id
+              )
+              VALUES ($1, $2, $3, $4, $5, CURRENT_DATE, $6, $7, $8, $9)
+              RETURNING id`,
               [
                 invite.first_name,
                 invite.last_name,
                 invite.email,
                 invite.date_of_birth,
                 invite.organization_id,
+                invite.payment_plan_id,
+                invite.plan_price,
+                invite.plan_start_date,
+                invite.stripe_customer_id,
               ],
             );
 

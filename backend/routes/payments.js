@@ -1748,6 +1748,41 @@ async function bulkAssignPlanHandler(req, res, next) {
 }
 
 /**
+ * Helper: Find or create a Stripe customer by email
+ */
+async function getOrCreateStripeCustomer(email, firstName, lastName, clubId) {
+  if (!email) return null;
+
+  try {
+    // 1. Search existing customers by email
+    const customers = await stripe.customers.list({
+      email: email,
+      limit: 1,
+    });
+
+    if (customers.data.length > 0) {
+      return customers.data[0].id;
+    }
+
+    // 2. Create new if not found
+    const customer = await stripe.customers.create({
+      email: email,
+      name: `${firstName} ${lastName}`.trim(),
+      metadata: {
+        club_id: clubId,
+        source: "clubhub_assignment",
+      },
+    });
+
+    console.log(`🆕 Created Stripe customer for ${email}: ${customer.id}`);
+    return customer.id;
+  } catch (err) {
+    console.error("Stripe customer sync error:", err);
+    return null; // Don't crash the whole process if Stripe is down
+  }
+}
+
+/**
  * Writes the assignment onto players(payment_plan_id, plan_price, plan_start_date).
  * If customPrice is null/undefined, we use the plan price from `plans`.
  */
@@ -1763,7 +1798,7 @@ async function assignPlayersCore({
 
   // Get the plan (for default price) – also ensures the plan exists
   const planRes = await query(
-    "SELECT id, price FROM plans WHERE id = $1 AND (active IS TRUE OR active IS NULL)",
+    "SELECT id, name, price, interval FROM plans WHERE id = $1 AND (active IS TRUE OR active IS NULL)",
     [planId],
   );
   if (planRes.rowCount === 0) {
@@ -1780,33 +1815,78 @@ async function assignPlayersCore({
   // Update each player
   for (const pid of playerIds) {
     try {
-      // 1. Try updating players table first
-      let updateRes = await query(
-        `UPDATE players SET payment_plan_id = $2, plan_price = $3, plan_start_date = $4, updated_at = NOW() WHERE id = $1 RETURNING id`,
-        [pid, planId, priceToApply, startDate],
-      );
+      // 1. Fetch current info (we need email)
+      let member = null;
+      let table = null;
 
-      if (updateRes.rowCount > 0) {
-        assigned.push(pid);
+      const pRes = await query(
+        "SELECT email, first_name, last_name, stripe_customer_id FROM players WHERE id = $1",
+        [pid],
+      );
+      if (pRes.rowCount > 0) {
+        member = pRes.rows[0];
+        table = "players";
+      } else {
+        const iRes = await query(
+          "SELECT email, first_name, last_name, stripe_customer_id FROM invitations WHERE id = $1",
+          [pid],
+        );
+        if (iRes.rowCount > 0) {
+          member = iRes.rows[0];
+          table = "invitations";
+        }
+      }
+
+      if (!member) {
+        failures.push({ playerId: pid, error: "Member not found" });
         continue;
       }
 
-      // 2. If not in players, it might be in invitations (invited members)
-      // Note: We already added columns to invitations in the auto-migration earlier
-      updateRes = await query(
-        `UPDATE invitations SET payment_plan_id = $2, plan_price = $3, plan_start_date = $4 WHERE id = $1 RETURNING id`,
-        [pid, planId, priceToApply, startDate],
+      // 2. Sync with Stripe if needed
+      let stripeCustomerId = member.stripe_customer_id;
+      if (!stripeCustomerId && member.email) {
+        stripeCustomerId = await getOrCreateStripeCustomer(
+          member.email,
+          member.first_name,
+          member.last_name,
+          clubId,
+        );
+      }
+
+      // 3. Update the record
+      const updateRes = await query(
+        `UPDATE ${table} SET 
+          payment_plan_id = $2, 
+          plan_price = $3, 
+          plan_start_date = $4, 
+          stripe_customer_id = $5,
+          ${table === "players" ? "updated_at = NOW()" : "created_at = created_at"} -- trick for invitations
+          WHERE id = $1 RETURNING id`,
+        [pid, planId, priceToApply, startDate, stripeCustomerId],
       );
 
       if (updateRes.rowCount > 0) {
         assigned.push(pid);
+
+        // 4. Send Notification Email
+        try {
+          await emailService.sendPlanAssignedEmail({
+            email: member.email,
+            firstName: member.first_name || "there",
+            planName: planRow.name,
+            clubName: "Your Club", // Ideally fetch club name from clubId
+            amount: priceToApply,
+            interval: planRow.interval || "month",
+            startDate: startDate,
+          });
+        } catch (mailErr) {
+          console.error(`📧 Mail failed for ${member.email}:`, mailErr);
+        }
       } else {
-        failures.push({
-          playerId: pid,
-          error: "Member not found in players or invitations",
-        });
+        failures.push({ playerId: pid, error: `Failed to update ${table}` });
       }
     } catch (e) {
+      console.error(`Assignment error for ${pid}:`, e);
       failures.push({ playerId: pid, error: e.message });
     }
   }

@@ -494,9 +494,10 @@ router.post("/accept/:token", authenticateToken, async (req, res) => {
             `
               INSERT INTO players (
                 first_name, last_name, email, user_id, club_id, 
-                position, monthly_fee, payment_status, date_of_birth, created_at
+                position, monthly_fee, payment_status, date_of_birth, created_at,
+                payment_plan_id, plan_price, plan_start_date, stripe_customer_id
               )
-              VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW())
+              VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW(), $9, $10, $11, $12)
               RETURNING *
             `,
             [
@@ -506,8 +507,12 @@ router.post("/accept/:token", authenticateToken, async (req, res) => {
               req.user.id,
               invite.club_id,
               invite.club_role === "player" ? null : invite.club_role, // Position
-              50, // Default fee
+              invite.plan_price || 50, // Use plan price or default fee
               invite.date_of_birth || "1990-01-01",
+              invite.payment_plan_id || null,
+              invite.plan_price || null,
+              invite.plan_start_date || null,
+              invite.stripe_customer_id || null,
             ],
           );
           newPlayer = playerResult.rows[0];
