@@ -216,18 +216,12 @@ router.get("/filtered/:filter", authenticateToken, async (req, res) => {
 
     switch (filter) {
       case "on-plan":
-        // Players with an active payment plan (requires linked user account)
-        queryText += ` AND p.user_id IS NOT NULL AND EXISTS (
-                    SELECT 1 FROM player_plans pp 
-                    WHERE pp.user_id = p.user_id AND pp.is_active = true
-                )`;
+        // Players with an active payment plan
+        queryText += ` AND p.payment_plan_id IS NOT NULL`;
         break;
       case "not-on-plan":
         // Players without an active payment plan
-        queryText += ` AND (p.user_id IS NULL OR NOT EXISTS (
-                    SELECT 1 FROM player_plans pp 
-                    WHERE pp.user_id = p.user_id AND pp.is_active = true
-                ))`;
+        queryText += ` AND p.payment_plan_id IS NULL`;
         break;
       case "assigned":
         // Players assigned to at least one team

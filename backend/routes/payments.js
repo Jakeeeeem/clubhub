@@ -2163,6 +2163,7 @@ async function assignPlayersCore({
       }
 
       // 4. Update the record (subscription ID is null until webhook confirms, but we record the assignment)
+      console.log(`📝 Updating ${table} for ${pid} with plan ${planId}...`);
       const updateRes = await query(
         `UPDATE ${table} SET 
           payment_plan_id = $2, 
@@ -2170,7 +2171,7 @@ async function assignPlayersCore({
           plan_start_date = $4, 
           stripe_customer_id = $5,
           stripe_subscription_id = $6,
-          ${table === "players" ? "updated_at = NOW()" : "created_at = created_at"} 
+          updated_at = NOW()
           WHERE id = $1 RETURNING id`,
         [
           pid,
