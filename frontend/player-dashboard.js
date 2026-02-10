@@ -1782,8 +1782,12 @@ function renderPlanSelector() {
 
 async function loadCurrentPlan() {
   try {
+    const pid = PlayerDashboardState.activePlayerId;
+    const url = pid
+      ? `/payments/plan/current?playerId=${pid}`
+      : "/payments/plan/current";
     const res = await apiService
-      .makeRequest("/payments/plan/current", { method: "GET" })
+      .makeRequest(url, { method: "GET" })
       .catch(() => null);
     PlayerDashboardState.currentPlan = res?.plan || res || null;
   } catch {
@@ -4031,16 +4035,18 @@ async function acceptInvitation(orgId) {
   if (!confirm("Are you sure you want to accept this invitation?")) return;
   try {
     showLoading(true);
-    const res = await apiService.makeRequest(`/dashboard/invitations/${orgId}/accept`, {
-      method: "POST",
-    });
+    const res = await apiService.makeRequest(
+      `/dashboard/invitations/${orgId}/accept`,
+      {
+        method: "POST",
+      },
+    );
     showNotification(res.message || "Invitation accepted!", "success");
-    
+
     // Reload everything to reflect new membership
     await loadPlayerDataWithFallback();
     loadPlayerClubs();
     loadPlayerOverview();
-    
   } catch (err) {
     console.error("Failed to accept invitation:", err);
     showNotification(err.message || "Failed to accept invitation", "error");
@@ -4056,15 +4062,17 @@ async function declineInvitation(orgId) {
   if (!confirm("Are you sure you want to decline this invitation?")) return;
   try {
     showLoading(true);
-    const res = await apiService.makeRequest(`/dashboard/invitations/${orgId}/decline`, {
-      method: "POST",
-    });
+    const res = await apiService.makeRequest(
+      `/dashboard/invitations/${orgId}/decline`,
+      {
+        method: "POST",
+      },
+    );
     showNotification(res.message || "Invitation declined", "info");
-    
+
     // Reload state
     await loadPlayerDataWithFallback();
     loadPlayerClubs();
-    
   } catch (err) {
     console.error("Failed to decline invitation:", err);
     showNotification(err.message || "Failed to decline invitation", "error");

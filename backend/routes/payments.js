@@ -897,21 +897,71 @@ router.delete(
 );
 
 // GET /api/payments/plan/current - Get current user's plan
+// GET /api/payments/plan/current - Get current user's plan (from players table)
 router.get("/plan/current", authenticateToken, async (req, res) => {
   try {
-    const result = await query(
-      `
-      SELECT pp.*, p.name as plan_name, p.price, p.interval
-      FROM player_plans pp
-      JOIN plans p ON pp.plan_id = p.id
-      WHERE pp.user_id = $1 AND pp.is_active = true
-      ORDER BY pp.created_at DESC
-      LIMIT 1
-    `,
-      [req.user.id],
-    );
+    const userId = req.user.id;
+    const { playerId } = req.query;
 
-    res.json(result.rows[0] || null);
+    let queryStr;
+    let params;
+
+    if (playerId) {
+      // Fetch for specific player (verify ownership/family)
+      // We check if the player belongs to the user OR is a family member (parent_user_id)
+      queryStr = `
+            SELECT 
+              p.payment_plan_id as id, 
+              pl.name, 
+              COALESCE(p.plan_price, pl.price) as amount, 
+              pl.interval, 
+              p.plan_start_date as start_date, 
+              p.payment_status as status,
+              p.stripe_subscription_id, 
+              p.stripe_customer_id,
+              pl.description
+            FROM players p
+            LEFT JOIN plans pl ON p.payment_plan_id = pl.id
+            WHERE p.id = $1 
+              AND (
+                p.user_id = $2 
+                OR p.id IN (SELECT player_id FROM family_members WHERE parent_user_id = $2)
+                OR p.email = (SELECT email FROM users WHERE id = $2) -- Fallback email match
+              )
+        `;
+      params = [playerId, userId];
+    } else {
+      // Fetch for main user profile (most recently updated active player record)
+      queryStr = `
+            SELECT 
+              p.payment_plan_id as id, 
+              pl.name, 
+              COALESCE(p.plan_price, pl.price) as amount, 
+              pl.interval, 
+              p.plan_start_date as start_date, 
+              p.payment_status as status,
+              p.stripe_subscription_id, 
+              p.stripe_customer_id,
+              pl.description
+            FROM players p
+            LEFT JOIN plans pl ON p.payment_plan_id = pl.id
+            WHERE p.user_id = $1
+            ORDER BY p.updated_at DESC
+            LIMIT 1
+        `;
+      params = [userId];
+    }
+
+    const result = await query(queryStr, params);
+
+    if (result.rows.length > 0) {
+      const row = result.rows[0];
+      // If no plan assigned (payment_plan_id is null), return null or empty object
+      if (!row.id) return res.json(null);
+      return res.json(row);
+    }
+
+    res.json(null);
   } catch (err) {
     console.error("Get current plan error:", err);
     res.status(500).json({ error: "Failed to fetch current plan" });
@@ -2137,6 +2187,9 @@ async function assignPlayersCore({
 
         // 4. Send Notification Email
         try {
+          console.log(
+            `📧 Sending Plan Assignment Email to ${member.email}. Checkout URL: ${checkoutUrl}`,
+          );
           await emailService.sendPlanAssignedEmail({
             email: member.email,
             firstName: member.first_name || "there",
