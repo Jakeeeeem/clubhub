@@ -26,7 +26,7 @@ const registerValidation = [
   body("accountType")
     .custom((value, { req }) => {
       const v = value || req.body.userType;
-      return ["adult", "organization"].includes(v);
+      return ["adult", "organization", "coach", "parent"].includes(v);
     })
     .withMessage("Invalid account type"),
   body("email")

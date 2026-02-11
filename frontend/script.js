@@ -788,7 +788,10 @@ function redirectToDashboard() {
     return;
   }
 
-  if (["coach", "assistant-coach", "coaching-supervisor"].includes(userRole)) {
+  if (
+    ["coach", "assistant-coach", "coaching-supervisor"].includes(userRole) ||
+    userType === "coach"
+  ) {
     window.location.href = "coach-dashboard.html";
     return;
   }
