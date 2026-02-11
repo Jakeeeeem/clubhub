@@ -1180,6 +1180,18 @@
                             <!-- Populated from database -->
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label for="invitePaymentPlan">Payment Plan (optional)</label>
+                        <select id="invitePaymentPlan">
+                            <option value="">No payment plan / Skip</option>
+                            <!-- Populated from database -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="invitePlanPrice">Custom Plan Price (£) (optional)</label>
+                        <input type="number" id="invitePlanPrice" step="0.01" min="0" placeholder="Select a plan first"
+                            disabled>
+                    </div>
                     <div class="form-group full-width">
                         <label for="inviteMessage">Personal Message</label>
                         <textarea id="inviteMessage" rows="3"
@@ -2339,14 +2351,14 @@
         })();
 
         function hydrateAddPlayerPlanSelect() {
-            const sel = document.getElementById('playerPaymentPlan');
-            if (!sel) return;
+            // Add Player Modal
+            const selAdd = document.getElementById('playerPaymentPlan');
+            // Invite Player Modal
+            const selInvite = document.getElementById('invitePaymentPlan');
 
-            const current = sel.value;
             const plans = AppState.paymentPlans || [];
-
-            sel.innerHTML = `
-                <option value="">No payment plan</option>
+            const planOptionsHtml = `
+                <option value="">No payment plan / Skip</option>
                 ${plans.map(plan => {
                 const priceNum = Number(plan.price ?? plan.amount ?? 0);
                 const interval = (plan.interval ?? plan.frequency ?? '').toString();
@@ -2354,37 +2366,50 @@
             }).join('')}
             `;
 
-            // Keep previous selection if it still exists
-            if ([...sel.options].some(o => o.value === current)) {
-                sel.value = current;
-            } else {
-                sel.value = '';
+            if (selAdd) {
+                const current = selAdd.value;
+                selAdd.innerHTML = planOptionsHtml;
+                if ([...selAdd.options].some(o => o.value === current)) selAdd.value = current;
+                else selAdd.value = '';
+            }
+
+            if (selInvite) {
+                const current = selInvite.value;
+                selInvite.innerHTML = planOptionsHtml;
+                if ([...selInvite.options].some(o => o.value === current)) selInvite.value = current;
+                else selInvite.value = '';
             }
         }
 
         function initAddPlayerFeeField() {
             const planSelect = document.getElementById('playerPaymentPlan');
             const feeInput = document.getElementById('playerFee');
-            const feeLabel = document.querySelector('label[for="playerFee"]');
-            if (!planSelect || !feeInput) return;
 
-            if (feeLabel) feeLabel.textContent = 'Custom Plan Price (£) (optional)';
+            const invitePlanSelect = document.getElementById('invitePaymentPlan');
+            const invitePlanPriceInput = document.getElementById('invitePlanPrice');
 
-            function syncFeeInputState() {
-                const hasPlan = !!planSelect.value;
-                feeInput.disabled = !hasPlan;
+            const syncFeeInputState = (select, input) => {
+                if (!select || !input) return;
+                const hasPlan = !!select.value;
+                input.disabled = !hasPlan;
                 if (!hasPlan) {
-                    feeInput.value = '';
-                    feeInput.placeholder = 'Select a plan first';
+                    input.value = '';
+                    input.placeholder = 'Select a plan first';
                 } else {
-                    feeInput.placeholder = 'Leave blank to use plan default';
+                    input.placeholder = 'Leave blank to use plan default';
                 }
+            };
+
+            if (planSelect && feeInput) {
+                planSelect.addEventListener('change', () => syncFeeInputState(planSelect, feeInput));
+                syncFeeInputState(planSelect, feeInput);
             }
 
-            syncFeeInputState();
-            planSelect.addEventListener('change', syncFeeInputState);
+            if (invitePlanSelect && invitePlanPriceInput) {
+                invitePlanSelect.addEventListener('change', () => syncFeeInputState(invitePlanSelect, invitePlanPriceInput));
+                syncFeeInputState(invitePlanSelect, invitePlanPriceInput);
+            }
         }
-
         function initAddPlayerModalControls() {
             hydrateAddPlayerPlanSelect();
             initAddPlayerFeeField();
@@ -8067,9 +8092,11 @@
                         clubRole: document.getElementById('inviteRole').value,
                         teamId: document.getElementById('inviteTeam').value || null,
                         message: document.getElementById('inviteMessage').value,
-                        isPublic: false, // Specific invite via email
+                        isPublic: false,
                         organizationId: orgId,
-                        clubId: orgId
+                        clubId: orgId,
+                        paymentPlanId: document.getElementById('invitePaymentPlan').value || null,
+                        planPrice: document.getElementById('invitePlanPrice').value ? Number(document.getElementById('invitePlanPrice').value) : null
                     };
 
                     await apiService.generateClubInvite(data);

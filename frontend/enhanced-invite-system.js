@@ -133,6 +133,27 @@ async function enhancedInvitePlayer() {
                               </select>
                           </div>
                       </div>
+
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                          <div class="form-group">
+                              <label for="invitePaymentPlan" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Payment Plan (optional)</label>
+                              <select id="invitePaymentPlan" style="width: 100%; padding: 0.875rem; background: var(--background-base); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-size: 1rem;">
+                                  <option value="">No payment plan / Skip</option>
+                                  ${(AppState.paymentPlans || [])
+                                    .map(
+                                      (plan) => `
+                                      <option value="${plan.id}">${plan.name} - £${Number(plan.price || 0).toFixed(2)}</option>
+                                  `,
+                                    )
+                                    .join("")}
+                              </select>
+                          </div>
+                          <div class="form-group">
+                              <label for="invitePlanPrice" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Custom Price (optional)</label>
+                              <input type="number" id="invitePlanPrice" step="0.01" min="0" placeholder="Select a plan first" disabled
+                                     style="width: 100%; padding: 0.875rem; background: var(--background-base); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-size: 1rem;">
+                          </div>
+                      </div>
                       
                       <div class="form-group" style="margin-bottom: 2rem;">
                           <label for="inviteMessage" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Personal Message</label>
@@ -152,9 +173,24 @@ async function enhancedInvitePlayer() {
   document.body.appendChild(modal);
 
   // Add form submission handler
-  document
-    .getElementById("emailInviteFormElement")
-    .addEventListener("submit", handleEmailInviteSubmission);
+  const formElement = document.getElementById("emailInviteFormElement");
+  formElement.addEventListener("submit", handleEmailInviteSubmission);
+
+  // Add plan sync logic
+  const planSelect = document.getElementById("invitePaymentPlan");
+  const priceInput = document.getElementById("invitePlanPrice");
+  if (planSelect && priceInput) {
+    planSelect.addEventListener("change", function () {
+      const hasPlan = !!this.value;
+      priceInput.disabled = !hasPlan;
+      if (!hasPlan) {
+        priceInput.value = "";
+        priceInput.placeholder = "Select a plan first";
+      } else {
+        priceInput.placeholder = "Leave blank to use plan default";
+      }
+    });
+  }
 }
 
 function showEmailInviteForm() {
@@ -185,6 +221,10 @@ async function handleEmailInviteSubmission(e) {
       clubId: InviteSystemState.currentClub?.id || AppState.clubs?.[0]?.id,
       isPublic: false,
       sendEmail: true,
+      paymentPlanId: document.getElementById("invitePaymentPlan").value || null,
+      planPrice: document.getElementById("invitePlanPrice").value
+        ? Number(document.getElementById("invitePlanPrice").value)
+        : null,
     };
 
     console.log("📧 Sending enhanced email invite:", inviteData);
