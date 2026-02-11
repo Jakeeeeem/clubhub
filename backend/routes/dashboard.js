@@ -289,28 +289,61 @@ router.get("/player", authenticateToken, async (req, res) => {
     // 3. Absolute Fallback: If still no player found, pick the most recent player record for this user
     if (!player) {
       console.log("🔍 Fallback: Fetching player record for user:", userId);
-      const userRes = await query("SELECT email FROM users WHERE id = $1", [
-        userId,
-      ]);
-      const userEmail = userRes.rows[0]?.email;
+      const userRes = await query(
+        "SELECT email, first_name, last_name FROM users WHERE id = $1",
+        [userId],
+      );
+      const userRow = userRes.rows[0] || {};
+      const userEmail = userRow.email || null;
+      const userFirstName = userRow.first_name || null;
+      const userLastName = userRow.last_name || null;
 
-      // Try to find a player record that matches the user's email (indicates it's the Adult's OWN record)
+      // Try to find a player record that matches the user's email AND name (indicates it's the Adult's OWN record)
       const playerRes = await query(
         `
         SELECT p.*, c.name as club_name, c.id as club_id
         FROM players p
         LEFT JOIN organizations c ON p.club_id = c.id
         WHERE p.user_id = $1
-        ORDER BY (CASE WHEN p.email = $2 THEN 0 ELSE 1 END), p.created_at DESC 
+        ORDER BY 
+          (CASE WHEN p.email = $2 THEN 0 ELSE 1 END), 
+          (CASE WHEN LOWER(p.first_name) = LOWER($3) AND LOWER(p.last_name) = LOWER($4) THEN 0 ELSE 1 END),
+          p.created_at DESC 
         LIMIT 1
       `,
-        [userId, userEmail],
+        [userId, userEmail, userFirstName, userLastName],
       );
 
       if (playerRes.rows.length > 0) {
-        player = playerRes.rows[0];
-        if (clubIds.length === 0 && player.club_id) {
-          clubIds = [player.club_id];
+        const potentialPlayer = playerRes.rows[0];
+
+        // Validation: Verify this is actually the user (not a child with same User ID)
+        const nameMatch =
+          userFirstName &&
+          potentialPlayer.first_name &&
+          userFirstName.toLowerCase() ===
+            potentialPlayer.first_name.toLowerCase();
+        const emailMatch =
+          userEmail &&
+          potentialPlayer.email &&
+          userEmail.toLowerCase() === potentialPlayer.email.toLowerCase();
+
+        if (nameMatch || emailMatch) {
+          player = potentialPlayer;
+          if (clubIds.length === 0 && player.club_id) {
+            clubIds = [player.club_id];
+          }
+        } else {
+          console.log(
+            "⚠️ Player record found but ignored due to mismatch (likely family member):",
+            {
+              required: { name: userFirstName, email: userEmail },
+              found: {
+                name: potentialPlayer.first_name,
+                email: potentialPlayer.email,
+              },
+            },
+          );
         }
       }
     }
@@ -347,9 +380,10 @@ router.get("/player", authenticateToken, async (req, res) => {
       clubs = clubsResult.rows;
     }
 
-    // Get player's teams (only if player exists)
+    // Get player's teams
     let teams = [];
     if (player) {
+      // Single player view
       const teamsResult = await query(
         `
         SELECT t.*, 
@@ -365,6 +399,27 @@ router.get("/player", authenticateToken, async (req, res) => {
         ORDER BY t.name
       `,
         [player.id, clubIds],
+      );
+      teams = teamsResult.rows;
+    } else {
+      // Parent View: Fetch teams for ALL family members (players linked to this user)
+      const teamsResult = await query(
+        `
+        SELECT DISTINCT t.*, 
+               tp.position as player_position,
+               tp.jersey_number,
+               s.first_name as coach_first_name,
+               s.last_name as coach_last_name,
+               s.email as coach_email,
+               p.first_name as child_name -- Add child name to distinguish
+        FROM teams t
+        JOIN team_players tp ON t.id = tp.team_id
+        JOIN players p ON tp.player_id = p.id
+        LEFT JOIN staff s ON t.coach_id = s.id
+        WHERE p.user_id = $1
+        ORDER BY t.name
+        `,
+        [userId],
       );
       teams = teamsResult.rows;
     }
@@ -415,7 +470,7 @@ router.get("/player", authenticateToken, async (req, res) => {
 
     const eventsResult = await query(eventsQuery, queryParams);
 
-    // Get player's payments (only if player exists)
+    // Get player's payments
     let payments = [];
     if (player) {
       const paymentsResult = await query(
@@ -425,6 +480,19 @@ router.get("/player", authenticateToken, async (req, res) => {
         ORDER BY due_date DESC
       `,
         [player.id, clubIds],
+      );
+      payments = paymentsResult.rows;
+    } else {
+      // Parent View: Fetch payments for ALL family members OR the user directly
+      const paymentsResult = await query(
+        `
+        SELECT p.*, pl.first_name as player_first_name 
+        FROM payments p
+        LEFT JOIN players pl ON p.player_id = pl.id
+        WHERE (p.player_id IN (SELECT id FROM players WHERE user_id = $1) OR p.user_id = $1)
+        ORDER BY p.due_date DESC
+        `,
+        [userId],
       );
       payments = paymentsResult.rows;
     }
@@ -498,6 +566,33 @@ router.get("/player", authenticateToken, async (req, res) => {
       player.age = calculateAge(player.date_of_birth);
     }
 
+    // Calculate statistics for the dashboard
+    const stats = {
+      totalFamilyMembers: 0,
+      totalClubs: clubs.length,
+      totalTeams: teams.length,
+      totalEvents: eventsResult.rows.length,
+      openPayments: payments.filter(
+        (p) => p.payment_status !== "paid" && p.payment_status !== "succeeded",
+      ).length,
+    };
+
+    // If Parent View (no specific player), count actual family members managed
+    if (!player) {
+      const famRes = await query(
+        "SELECT COUNT(*) as count FROM players WHERE user_id = $1",
+        [userId],
+      );
+      stats.totalFamilyMembers = parseInt(famRes.rows[0].count) || 0;
+
+      // Distinct clubs for family
+      const distinctClubs = await query(
+        "SELECT COUNT(DISTINCT club_id) as count FROM players WHERE user_id = $1",
+        [userId],
+      );
+      stats.totalClubs = parseInt(distinctClubs.rows[0].count) || 0;
+    }
+
     res.json({
       player,
       attendance,
@@ -508,6 +603,7 @@ router.get("/player", authenticateToken, async (req, res) => {
       bookings,
       applications: applicationsResult.rows,
       invitations: invitationsResult.rows,
+      statistics: stats,
     });
   } catch (error) {
     console.error("Get player dashboard error:", error);

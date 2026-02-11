@@ -498,6 +498,7 @@ async function loadPlayerDataWithFallback() {
       PlayerDashboardState.bookings = dashboardData.bookings || [];
       PlayerDashboardState.applications = dashboardData.applications || [];
       PlayerDashboardState.invitations = dashboardData.invitations || [];
+      PlayerDashboardState.statistics = dashboardData.statistics || {};
       return;
     } catch (e) {
       console.warn("Unified dashboard failed, trying individual calls:", e);
@@ -547,20 +548,48 @@ async function loadPlayerDataWithFallback() {
 }
 
 function loadPlayerOverview() {
-  updateText("playerClubs", PlayerDashboardState.clubs.length);
-  updateText("playerTeams", PlayerDashboardState.teams.length);
+  const stats = PlayerDashboardState.statistics || {};
+  const isMainProfile = !PlayerDashboardState.activePlayerId;
 
-  const upcomingCount = PlayerDashboardState.events.filter(
-    (e) => e.event_date && new Date(e.event_date) > new Date(),
-  ).length;
-  updateText("playerEvents", upcomingCount);
+  if (isMainProfile && stats.totalFamilyMembers !== undefined) {
+    // Show Family Stats
+    updateText("playerClubs", stats.totalClubs || 0);
+    updateText("playerTeams", stats.totalTeams || 0);
+    updateText("playerEvents", stats.totalEvents || 0);
 
-  updateText(
-    "playerAttendance",
-    PlayerDashboardState.attendance != null
-      ? PlayerDashboardState.attendance + "%"
-      : "0",
-  );
+    // For attendance slot, maybe show family member count?
+    // Or we can dynamically change the label in DOM if we want,
+    // but for now let's just show family member count in the attendance box
+    // (User asked for "how many family memebr")
+    const attendanceEl = byId("playerAttendance");
+    const attendanceLabel = attendanceEl?.previousElementSibling; // "Attendance" label
+    if (attendanceLabel) attendanceLabel.textContent = "Family Members";
+    updateText("playerAttendance", stats.totalFamilyMembers || 0);
+
+    const eventsLabel = byId("playerEvents")?.previousElementSibling;
+    if (eventsLabel) eventsLabel.textContent = "Family Events";
+  } else {
+    // Show Individual Player Stats
+    updateText("playerClubs", PlayerDashboardState.clubs.length);
+    updateText("playerTeams", PlayerDashboardState.teams.length);
+
+    const upcomingCount = PlayerDashboardState.events.filter(
+      (e) => e.event_date && new Date(e.event_date) > new Date(),
+    ).length;
+
+    const eventsLabel = byId("playerEvents")?.previousElementSibling;
+    if (eventsLabel) eventsLabel.textContent = "Upcoming Events";
+    updateText("playerEvents", upcomingCount);
+
+    const attendanceLabel = byId("playerAttendance")?.previousElementSibling;
+    if (attendanceLabel) attendanceLabel.textContent = "Attendance";
+    updateText(
+      "playerAttendance",
+      PlayerDashboardState.attendance != null
+        ? PlayerDashboardState.attendance + "%"
+        : "0",
+    );
+  }
 
   loadUpcomingEvents();
   loadRecentActivity();
