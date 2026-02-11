@@ -566,16 +566,13 @@ function loadPlayerOverview() {
     updateText("playerTeams", stats.totalTeams || 0);
     updateText("playerEvents", stats.totalEvents || 0);
 
-    // For attendance slot, maybe show family member count?
-    // Or we can dynamically change the label in DOM if we want,
-    // but for now let's just show family member count in the attendance box
-    // (User asked for "how many family memebr")
+    // Update labels for parent view
     const attendanceEl = byId("playerAttendance");
-    const attendanceLabel = attendanceEl?.previousElementSibling; // "Attendance" label
+    const attendanceLabel = attendanceEl?.nextElementSibling;
     if (attendanceLabel) attendanceLabel.textContent = "Family Members";
     updateText("playerAttendance", stats.totalFamilyMembers || 0);
 
-    const eventsLabel = byId("playerEvents")?.previousElementSibling;
+    const eventsLabel = byId("playerEvents")?.nextElementSibling;
     if (eventsLabel) eventsLabel.textContent = "Family Events";
   } else {
     // Show Individual Player Stats
@@ -586,17 +583,17 @@ function loadPlayerOverview() {
       (e) => e.event_date && new Date(e.event_date) > new Date(),
     ).length;
 
-    const eventsLabel = byId("playerEvents")?.previousElementSibling;
+    const eventsLabel = byId("playerEvents")?.nextElementSibling;
     if (eventsLabel) eventsLabel.textContent = "Upcoming Events";
     updateText("playerEvents", upcomingCount);
 
-    const attendanceLabel = byId("playerAttendance")?.previousElementSibling;
+    const attendanceLabel = byId("playerAttendance")?.nextElementSibling;
     if (attendanceLabel) attendanceLabel.textContent = "Attendance";
     updateText(
       "playerAttendance",
       PlayerDashboardState.attendance != null
         ? PlayerDashboardState.attendance + "%"
-        : "0",
+        : "0%",
     );
   }
 
