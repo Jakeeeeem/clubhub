@@ -2079,7 +2079,7 @@ async function assignPlayersCore({
       let table = null;
 
       const pRes = await query(
-        "SELECT email, first_name, last_name, stripe_customer_id FROM players WHERE id = $1",
+        "SELECT email, first_name, last_name, stripe_customer_id, stripe_subscription_id FROM players WHERE id = $1",
         [pid],
       );
       if (pRes.rowCount > 0) {
@@ -2087,7 +2087,7 @@ async function assignPlayersCore({
         table = "players";
       } else {
         const iRes = await query(
-          "SELECT email, first_name, last_name, stripe_customer_id FROM invitations WHERE id = $1",
+          "SELECT email, first_name, last_name, stripe_customer_id, stripe_subscription_id FROM invitations WHERE id = $1",
           [pid],
         );
         if (iRes.rowCount > 0) {
@@ -2127,6 +2127,24 @@ async function assignPlayersCore({
 
       if (stripeCustomerId && stripePriceId) {
         try {
+          // Cancel previous subscription if it exists
+          if (member.stripe_subscription_id) {
+            try {
+              await stripe.subscriptions.cancel(
+                member.stripe_subscription_id,
+                stripeAccountId ? { stripeAccount: stripeAccountId } : {},
+              );
+              console.log(
+                `🗑 Cancelled previous subscription: ${member.stripe_subscription_id}`,
+              );
+            } catch (cancelErr) {
+              console.warn(
+                `Failed to cancel old subscription ${member.stripe_subscription_id}:`,
+                cancelErr.message,
+              );
+            }
+          }
+
           const subscription = await stripe.subscriptions.create(
             {
               customer: stripeCustomerId,
