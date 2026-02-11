@@ -237,12 +237,14 @@
             <div class="settings-grid">
                 <!-- Sidebar Navigation -->
                 <aside class="settings-sidebar">
-                    <button class="settings-nav-item active" onclick="showTab('profile')">👤 Profile
+                    <button class="settings-nav-item active" onclick="showTab('profile', this)">👤 Profile
                         Information</button>
-                    <button class="settings-nav-item" onclick="showTab('security')">🔒 Security & Password</button>
-                    <button class="settings-nav-item" onclick="showTab('notifications')">🔔 Notifications</button>
-                    <button class="settings-nav-item" onclick="showTab('privacy')">🛡️ Privacy & Marketing</button>
-                    <button class="settings-nav-item" onclick="showTab('danger')"
+                    <button class="settings-nav-item" onclick="showTab('security', this)">🔒 Security &
+                        Password</button>
+                    <button class="settings-nav-item" onclick="showTab('notifications', this)">🔔 Notifications</button>
+                    <button class="settings-nav-item" onclick="showTab('privacy', this)">🛡️ Privacy &
+                        Marketing</button>
+                    <button class="settings-nav-item" onclick="showTab('danger', this)"
                         style="margin-top: 2rem; color: #ef4444;">⚠️ Danger Zone</button>
                 </aside>
 
@@ -407,12 +409,26 @@
         // Detect user type to set back button
         const user = JSON.parse(localStorage.getItem('currentUser'));
         const backBtn = document.getElementById('backBtn');
-        if (user) {
-            if (user.accountType === 'organization') {
+        const lastDashboard = localStorage.getItem('lastDashboard');
+
+        if (lastDashboard) {
+            backBtn.onclick = () => window.location.href = lastDashboard;
+            if (lastDashboard.includes('admin')) backBtn.innerText = '← Back to Admin Panel';
+            else if (lastDashboard.includes('coach')) backBtn.innerText = '← Back to Coach Dashboard';
+            else backBtn.innerText = '← Back to Dashboard';
+        } else if (user) {
+            if (document.referrer.includes('admin-dashboard')) {
+                backBtn.onclick = () => window.location.href = 'admin-dashboard.html';
+                backBtn.innerText = '← Back to Admin Panel';
+            } else if (document.referrer.includes('coach-dashboard')) {
+                backBtn.onclick = () => window.location.href = 'coach-dashboard.html';
+                backBtn.innerText = '← Back to Coach Dashboard';
+            } else if (user.accountType === 'organization') {
                 backBtn.onclick = () => window.location.href = 'admin-dashboard.html';
                 backBtn.innerText = '← Back to Admin Panel';
             } else {
                 backBtn.onclick = () => window.location.href = 'player-dashboard.html';
+                backBtn.innerText = '← Back to Dashboard';
             }
         }
 
@@ -442,12 +458,16 @@
             }
         }
 
-        function showTab(tabId) {
+        function showTab(tabId, element) {
             document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
 
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            event.currentTarget.classList.add('active');
+            const section = document.getElementById(`tab-${tabId}`);
+            if (section) section.classList.add('active');
+
+            if (element) {
+                element.classList.add('active');
+            }
         }
 
         async function saveSettings() {
@@ -482,7 +502,7 @@
                     phone: document.getElementById('settingPhone').value
                 };
 
-                await apiService.makeRequest('/auth/profile', {
+                await apiService.makeRequest('/auth/profile-personal', {
                     method: 'PUT',
                     body: JSON.stringify(payload)
                 });

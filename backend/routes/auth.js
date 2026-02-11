@@ -1550,7 +1550,7 @@ router.post(
 // ACCOUNT SETTINGS
 // ========================================
 
-router.put("/profile", authenticateToken, async (req, res) => {
+router.put("/profile-personal", authenticateToken, async (req, res) => {
   try {
     const { firstName, lastName, phone } = req.body;
 

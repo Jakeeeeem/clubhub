@@ -92,7 +92,9 @@
             <button onclick="showPlayerSection('profile')">👤 My Profile</button>
             <button onclick="showPlayerSection('family')">👨‍👩‍👧‍👦 My Family</button>
             <div class="dropdown-divider"></div>
-            <button onclick="window.location.href='player-settings.html'">⚙️ Settings</button>
+            <button
+              onclick="localStorage.setItem('lastDashboard', 'player-dashboard.html'); window.location.href='player-settings.html'">⚙️
+              Settings</button>
           </div>
         </div>
 

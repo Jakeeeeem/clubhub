@@ -84,7 +84,8 @@
                     </button>
                     <div class="nav-dropdown-menu">
                         <button onclick="showCoachSection('profile')">My Profile</button>
-                        <button onclick="window.location.href='coach-settings.html'">Settings</button>
+                        <button
+                            onclick="localStorage.setItem('lastDashboard', 'coach-dashboard.html'); window.location.href='player-settings.html'">Settings</button>
                     </div>
                 </div>
 

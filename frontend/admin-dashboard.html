@@ -201,7 +201,9 @@
                         <div class="dropdown-divider"></div>
                         <button onclick="showSection('talent-id')">🌟 Talent ID</button>
                         <button onclick="showSection('club-profile')">🏢 Club Profile</button>
-                        <button onclick="window.location.href='player-settings.html'">⚙️ Account Settings</button>
+                        <button
+                            onclick="localStorage.setItem('lastDashboard', 'admin-dashboard.html'); window.location.href='player-settings.html'">⚙️
+                            Account Settings</button>
                     </div>
                 </div>
 
