@@ -505,7 +505,7 @@ router.get("/player", authenticateToken, async (req, res) => {
         SELECT p.*, pl.first_name as player_first_name 
         FROM payments p
         LEFT JOIN players pl ON p.player_id = pl.id
-        WHERE (p.player_id IN (SELECT id FROM players WHERE user_id = $1) OR p.user_id = $1)
+        WHERE p.player_id IN (SELECT id FROM players WHERE user_id = $1)
         ORDER BY p.due_date DESC
         `,
         [userId],
