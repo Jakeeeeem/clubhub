@@ -1069,14 +1069,21 @@ router.get("/context", authenticateToken, async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // Get all organizations user belongs to (direct memberships only)
+    // Get all organizations user belongs to (Unified: Direct Memberships + Player Profiles)
     const orgsResult = await query(
       `
-      SELECT o.id, o.name, o.sport, o.location, o.logo_url, om.role, om.status
+      SELECT DISTINCT ON (o.id, player_id) 
+        o.id, o.name, o.sport, o.location, o.logo_url, 
+        COALESCE(om.role, 'player') as role, 
+        COALESCE(om.status, 'active') as status,
+        p.id as player_id,
+        (CASE WHEN p.id IS NOT NULL THEN (p.first_name || ' ' || p.last_name) ELSE NULL END) as player_name
       FROM organizations o
-      INNER JOIN organization_members om ON o.id = om.organization_id
-      WHERE om.user_id = $1 AND om.status = 'active'
-      ORDER BY o.name
+      LEFT JOIN organization_members om ON o.id = om.organization_id AND om.user_id = $1
+      LEFT JOIN players p ON o.id = p.club_id AND p.user_id = $1
+      WHERE (om.user_id = $1 AND om.status = 'active')
+         OR (p.user_id = $1)
+      ORDER BY o.id, p.id, o.name
     `,
       [userId],
     );
@@ -1236,6 +1243,9 @@ router.post("/switch-organization", authenticateToken, async (req, res) => {
         `
         SELECT 1 FROM organization_members 
         WHERE user_id = $1 AND organization_id = $2 AND status = 'active'
+        UNION
+        SELECT 1 FROM players
+        WHERE user_id = $1 AND club_id = $2
       `,
         [userId, organizationId],
       );

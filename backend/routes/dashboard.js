@@ -264,6 +264,26 @@ router.get("/player", authenticateToken, async (req, res) => {
           );
           clubIds = [player.club_id];
         }
+
+        // Also check for clubs via team membership as well (handles cases where player.club_id is stale)
+        const teamClubsRes = await query(
+          `SELECT DISTINCT t.club_id 
+             FROM team_players tp 
+             JOIN teams t ON tp.team_id = t.id 
+             WHERE tp.player_id = $1`,
+          [playerId],
+        );
+
+        if (teamClubsRes.rows.length > 0) {
+          teamClubsRes.rows.forEach((row) => {
+            if (row.club_id && !clubIds.includes(row.club_id)) {
+              console.log(
+                `🎯 Found additional club via team membership: ${row.club_id}`,
+              );
+              clubIds.push(row.club_id);
+            }
+          });
+        }
       }
     }
 
@@ -353,12 +373,16 @@ router.get("/player", authenticateToken, async (req, res) => {
     if (clubIds.length === 0) {
       const userClubs = await query(
         `
-         SELECT DISTINCT club_id FROM players 
-         WHERE user_id = $1
+         SELECT DISTINCT club_id FROM (
+           SELECT club_id FROM players WHERE user_id = $1
+           UNION
+           SELECT organization_id as club_id FROM organization_members 
+           WHERE user_id = $1 AND status = 'active'
+         ) m
        `,
         [userId],
       );
-      clubIds = userClubs.rows.map((r) => r.club_id);
+      clubIds = userClubs.rows.map((r) => r.club_id).filter((id) => id);
     }
 
     let attendance = null;
@@ -613,12 +637,7 @@ router.get("/player", authenticateToken, async (req, res) => {
       );
       stats.totalFamilyMembers = parseInt(famRes.rows[0].count) || 0;
 
-      // Distinct clubs for family
-      const distinctClubs = await query(
-        "SELECT COUNT(DISTINCT club_id) as count FROM players WHERE user_id = $1",
-        [userId],
-      );
-      stats.totalClubs = parseInt(distinctClubs.rows[0].count) || 0;
+      stats.totalClubs = clubs.length;
     }
 
     // 4. Get Player Activities (New Feature)

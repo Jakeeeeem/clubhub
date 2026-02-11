@@ -135,9 +135,9 @@ function setupNavButtons() {
 
               return `
             <button class="profile-item ${isActive ? "active" : ""}" 
-                    onclick="${hasClub ? `switchToChildProfile('${child.id}', '${child.club_id}')` : ""}" 
-                    style="width: 100%; display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; background: ${isActive ? "rgba(220,67,67,0.1)" : "transparent"}; border: none; color: ${hasClub ? "white" : "rgba(255,255,255,0.4)"}; cursor: ${hasClub ? "pointer" : "not-allowed"}; transition: background 0.2s; text-align: left; opacity: ${hasClub ? "1" : "0.6"};"
-                    ${hasClub ? "" : "disabled"}>
+                    onclick="switchToChildProfile('${child.id}', '${child.club_id || ""}')" 
+                    style="width: 100%; display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; background: ${isActive ? "rgba(220,67,67,0.1)" : "transparent"}; border: none; color: white; cursor: pointer; transition: background 0.2s; text-align: left;"
+                    >
               <div style="width: 36px; height: 36px; border-radius: 50%; background: ${hasClub ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "rgba(255,255,255,0.1)"}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; flex-shrink: 0;">
                 ${child.first_name.charAt(0)}
               </div>
