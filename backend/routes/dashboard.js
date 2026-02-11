@@ -422,6 +422,18 @@ router.get("/player", authenticateToken, async (req, res) => {
         [userId],
       );
       teams = teamsResult.rows;
+
+      // Also fetch all club IDs for family members to show club events
+      const familyClubsRes = await query(
+        "SELECT DISTINCT club_id FROM players WHERE user_id = $1",
+        [userId],
+      );
+      const familyClubIds = familyClubsRes.rows.map((r) => r.club_id);
+
+      // Merge into clubIds
+      familyClubIds.forEach((id) => {
+        if (!clubIds.includes(id)) clubIds.push(id);
+      });
     }
 
     // Get player's team IDs

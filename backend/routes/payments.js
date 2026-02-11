@@ -925,7 +925,6 @@ router.get("/plan/current", authenticateToken, async (req, res) => {
             WHERE p.id = $1 
               AND (
                 p.user_id = $2 
-                OR p.id IN (SELECT player_id FROM family_members WHERE parent_user_id = $2)
                 OR p.email = (SELECT email FROM users WHERE id = $2) -- Fallback email match
               )
         `;
