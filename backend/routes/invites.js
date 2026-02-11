@@ -70,6 +70,9 @@ router.post(
         clubId,
         teamId = null,
         isPublic = true,
+        paymentPlanId = null, // 🔥 NEW
+        planPrice = null, // 🔥 NEW
+        planStartDate = null, // 🔥 NEW
       } = req.body;
 
       // Get user's club
@@ -197,9 +200,12 @@ router.post(
         message,
         team_id,
         is_public,
-        status
+        status,
+        payment_plan_id,
+        plan_price,
+        plan_start_date
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending')
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14, $15)
       RETURNING *, token as invite_token, role as club_role
     `,
         [
@@ -215,6 +221,9 @@ router.post(
           message || `Join ${club.name} - a great sports club!`,
           teamId || null,
           isPublic,
+          paymentPlanId || null,
+          planPrice || null,
+          planStartDate || null,
         ],
       );
 
@@ -294,7 +303,8 @@ router.get("/details/:token", async (req, res) => {
        u.first_name as inviter_first_name, u.last_name as inviter_last_name,
        t.name as team_name,
        ci.token as invite_token, ci.status as invite_status, ci.organization_id as club_id,
-       ci.message as personal_message
+       ci.message as personal_message,
+       ci.payment_plan_id, ci.plan_price, ci.plan_start_date
 FROM invitations ci
 JOIN organizations c ON ci.organization_id::text = c.id::text
 JOIN users u ON ci.invited_by::text = u.id::text
@@ -340,6 +350,9 @@ WHERE ci.token = $1;
         expiresAt: invite.expires_at,
         isPublic: invite.is_public,
         teamName: invite.team_name,
+        paymentPlanId: invite.payment_plan_id,
+        planPrice: invite.plan_price,
+        planStartDate: invite.plan_start_date,
       },
       club: {
         id: invite.club_id,
