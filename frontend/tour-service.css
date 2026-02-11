@@ -1,0 +1,171 @@
+/* Walkthrough Service Styles */
+
+:root {
+    --tour-primary: #ff3333;
+    --tour-bg: #1e1e1e;
+    --tour-text: #ffffff;
+    --tour-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    --tour-overlay: rgba(0, 0, 0, 0.7);
+}
+
+.tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--tour-overlay);
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    clip-path: polygon(0% 0%, 0% 100%, 0% 100%, 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 100%, 100% 100%, 100% 0%);
+}
+
+.tour-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tour-card {
+    position: fixed;
+    z-index: 10001;
+    width: 320px;
+    background: var(--tour-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--tour-shadow);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    color: var(--tour-text);
+}
+
+.tour-card.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.tour-card::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--tour-bg);
+    transform: rotate(45deg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: -1;
+}
+
+/* Arrow placements */
+.tour-card.arrow-top::before { top: -6px; left: 50%; border-right: none; border-bottom: none; }
+.tour-card.arrow-bottom::before { bottom: -6px; left: 50%; border-left: none; border-top: none; }
+.tour-card.arrow-left::before { left: -6px; top: 50%; border-right: none; border-top: none; }
+.tour-card.arrow-right::before { right: -6px; top: 50%; border-left: none; border-bottom: none; }
+
+.tour-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.tour-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    color: var(--tour-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tour-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.tour-close:hover {
+    color: white;
+}
+
+.tour-body {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.5rem;
+}
+
+.tour-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tour-progress {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+}
+
+.tour-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tour-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tour-btn-skip {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.tour-btn-skip:hover {
+    border-color: white;
+    color: white;
+}
+
+.tour-btn-next {
+    background: var(--tour-primary);
+    border: none;
+    color: white;
+    min-width: 80px;
+}
+
+.tour-btn-next:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 51, 51, 0.3);
+}
+
+.tour-highlight {
+    position: relative;
+    z-index: 10002 !important;
+    pointer-events: none !important;
+    box-shadow: 0 0 0 4px var(--tour-primary), 0 0 20px var(--tour-primary) !important;
+    border-radius: 4px;
+    transition: box-shadow 0.3s ease;
+}
+
+@keyframes pulse-tour {
+    0% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 51, 51, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0); }
+}

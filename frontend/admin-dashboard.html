@@ -135,6 +135,8 @@
     <script src="api-service.js"></script>
     <script src="dialog-service.js"></script>
     <script src="workspace-manager.js"></script>
+    <link rel="stylesheet" href="tour-service.css">
+    <script src="tour-service.js"></script>
 </head>
 
 <body>
@@ -2804,6 +2806,36 @@
             } finally {
                 // Always hide loading, even if there's an error
                 hideAllLoading();
+
+                // Start Admin Tour
+                setTimeout(() => {
+                    tourService.start('admin_main', [
+                        {
+                            target: '#org-switcher-container',
+                            title: 'Club Switcher',
+                            text: 'Manage multiple organizations? Use this dropdown to quickly switch between your different clubs.',
+                            position: 'bottom'
+                        },
+                        {
+                            target: '.mode-toggle-container',
+                            title: 'View Modes',
+                            text: 'Toggle between managing your club and viewing your own personal player activities.',
+                            position: 'bottom'
+                        },
+                        {
+                            target: '#stripeAccessBtn',
+                            title: 'Finance & Payouts',
+                            text: 'Access your Stripe dashboard to monitor transactions and manage payouts for your organization.',
+                            position: 'bottom'
+                        },
+                        {
+                            target: '.dashboard-nav-grouped',
+                            title: 'Deep Management',
+                            text: 'Access all aspects of your club from players and teams to league standings and tournaments.',
+                            position: 'bottom'
+                        }
+                    ]);
+                }, 1000);
             }
 
             setupEnhancedEventListeners();

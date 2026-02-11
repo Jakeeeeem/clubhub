@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tour-service.css">
 </head>
 
 <body>
@@ -200,12 +201,44 @@
     <script src="script.js"></script>
     <script src="org-switcher.js"></script>
     <script src="dialog-service.js"></script>
+    <script src="tour-service.js"></script>
     <script src="coach-dashboard.js"></script>
 
     <script>
-        window.addEventListener('load', () => {
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if AppState is ready
+            const initTour = () => {
+                if (typeof tourService !== 'undefined') {
+                    setTimeout(() => {
+                        tourService.start('coach_main', [
+                            {
+                                target: '#org-switcher-container',
+                                title: 'Club Context',
+                                text: 'View your coaching assignments and staff details for different organizations.',
+                                position: 'bottom'
+                            },
+                            {
+                                target: '.mode-toggle-container',
+                                title: 'Admin & Player Modes',
+                                text: 'Toggle back to your player view or manage different club perspectives easily.',
+                                position: 'bottom'
+                            },
+                            {
+                                target: '.dashboard-nav-grouped',
+                                title: 'Coaching Toolkit',
+                                text: 'Access your teams, session calendars, and tactics board from this menu.',
+                                position: 'bottom'
+                            }
+                        ]);
+                    }, 2000);
+                }
+            };
+
+            // Call init dashboard from js file if needed, but we rely on current logic
             if (typeof initializeCoachDashboard === 'function') {
-                initializeCoachDashboard();
+                initializeCoachDashboard().then(initTour);
+            } else {
+                initTour();
             }
 
             // Set name display

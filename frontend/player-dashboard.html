@@ -11,6 +11,8 @@
   <script src="api-service.js"></script>
   <script src="org-switcher.js"></script>
   <script src="workspace-manager.js"></script>
+  <link rel="stylesheet" href="tour-service.css">
+  <script src="tour-service.js"></script>
 </head>
 
 <body>
@@ -1007,6 +1009,42 @@
           <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
         `;
       }
+
+      // Start Player Tour
+      setTimeout(() => {
+        tourService.start('player_main', [
+          {
+            target: '#org-switcher-container',
+            title: 'Club Switcher',
+            text: 'Are you part of multiple teams or clubs? Switch your club context here with one click.',
+            position: 'bottom'
+          },
+          {
+            target: '.mode-toggle-container',
+            title: 'Admin Access',
+            text: 'If you manage a club, use this toggle to switch back to your Admin/Club dashboard.',
+            position: 'bottom'
+          },
+          {
+            target: '#profile-switcher-trigger',
+            title: 'Manage Your Family',
+            text: '<strong>The most important tool!</strong> Use this dropdown to switch between your profile and your children\'s profiles to manage their sessions and progress.',
+            position: 'bottom'
+          },
+          {
+            target: 'button[onclick*="family"]',
+            title: 'Add Family Members',
+            text: 'Want to add your children? Go to the Family section here to create and manage their profiles.',
+            position: 'bottom'
+          },
+          {
+            target: '.dashboard-nav-grouped',
+            title: 'Explore Tools',
+            text: 'Discover clubs, book venues, manage tournaments, and track your career history right here.',
+            position: 'bottom'
+          }
+        ]);
+      }, 1500);
     });
 
     function logout() {
