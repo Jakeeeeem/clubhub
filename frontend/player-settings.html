@@ -297,16 +297,18 @@
                             <form id="changePasswordForm" style="max-width: 500px;">
                                 <div class="form-group">
                                     <label>Current Password</label>
-                                    <input type="password" id="currentPassword" required>
+                                    <input type="password" id="currentPassword" required
+                                        autocomplete="current-password">
                                 </div>
                                 <div class="form-group" style="margin-top: 1.5rem;">
                                     <label>New Password</label>
-                                    <input type="password" id="newPassword" required minlength="8">
+                                    <input type="password" id="newPassword" required minlength="8"
+                                        autocomplete="new-password">
                                     <small style="color: var(--text-muted);">At least 8 characters long.</small>
                                 </div>
                                 <div class="form-group" style="margin-top: 1.5rem;">
                                     <label>Confirm New Password</label>
-                                    <input type="password" id="confirmNewPassword" required>
+                                    <input type="password" id="confirmNewPassword" required autocomplete="new-password">
                                 </div>
                                 <div style="margin-top: 2rem;">
                                     <button type="submit" class="btn btn-primary">🔐 Update Password</button>
@@ -404,7 +406,7 @@
 
     <script src="api-service.js"></script>
     <script>
-        const apiService = new ApiService();
+        // apiService is already initialized globally by api-service.js
 
         // Detect user type to set back button
         const user = JSON.parse(localStorage.getItem('currentUser'));

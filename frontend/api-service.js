@@ -3772,10 +3772,10 @@ class ApiService {
 }
 
 // Create and export a singleton instance
-const apiService = new ApiService();
-
-// Export for use in other files
-window.apiService = apiService;
+// Use window.apiService to avoid redeclaration errors if script is loaded twice
+if (!window.apiService) {
+  window.apiService = new ApiService();
+}
 
 // Enhanced error handling and logging
 window.addEventListener("error", function (event) {
