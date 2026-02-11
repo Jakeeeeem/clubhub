@@ -2759,6 +2759,15 @@
                 if (dashboardData) {
                     AppState.clubs = dashboardData.clubs || [];
 
+                    // If no clubs found and not platform admin, redirect to create-org
+                    if (AppState.clubs.length === 0 && !user?.is_platform_admin) {
+                        console.log('⚠️ No organizations found for user, redirecting...');
+                        setTimeout(() => {
+                            window.location.href = 'create-organization.html';
+                        }, 500);
+                        return;
+                    }
+
                     // Priority: activeClubId from user > first club in list
                     AppState.activeClubId = activeClubId || (AppState.clubs[0]?.id);
 

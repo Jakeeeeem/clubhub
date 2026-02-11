@@ -297,6 +297,7 @@
     </div>
 
     <script src="api-service.js"></script>
+    <script src="dialog-service.js"></script>
     <script>
         let selectedLogoFile = null;
 
@@ -449,8 +450,14 @@
                 }
             } catch (error) {
                 console.error('Error creating organization:', error);
-                errorMessage.textContent = `❌ ${error.message || 'Failed to create organization'}`;
-                errorMessage.style.display = 'block';
+
+                // Use premium showAlert
+                if (typeof showAlert === 'function') {
+                    showAlert(error.message || 'Failed to create organization', 'Error', 'error');
+                } else {
+                    errorMessage.textContent = `❌ ${error.message || 'Failed to create organization'}`;
+                    errorMessage.style.display = 'block';
+                }
 
                 // Re-enable submit button
                 submitBtn.disabled = false;

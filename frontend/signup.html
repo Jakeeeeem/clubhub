@@ -265,14 +265,48 @@
         <!-- Step Indicator -->
         <div class="step-indicator">
             <div class="step active" data-step="1">1</div>
-            <div class="step" data-step="2">✓</div>
+            <div class="step" data-step="2">2</div>
+            <div class="step" data-step="3">✓</div>
         </div>
 
-        <!-- Step 1: Personal Information -->
+        <!-- Step 1: Pick Your Path -->
         <div class="form-step active" data-step="1">
-            <h2 style="text-align: center; margin-bottom: 1rem; font-family: 'Outfit';">Create Your Account</h2>
+            <h2 style="text-align: center; margin-bottom: 1rem; font-family: 'Outfit';">Choose Your Path</h2>
             <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">
-                Join ClubHub to manage your sports organization or join existing clubs
+                How would you like to use ClubHub today?
+            </p>
+
+            <div class="account-types-grid"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="checkbox-card account-type-card" id="type-player" onclick="selectSignupType('adult')">
+                    <div class="type-icon"
+                        style="font-size: 2rem; margin-bottom: 0.5rem; display: block; width: 100%; text-align: center;">
+                        ⚽</div>
+                    <div style="text-align: center; width: 100%;">
+                        <strong style="display: block; margin-bottom: 0.25rem;">Player / Fan</strong>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.2;">Join clubs, find
+                            events, and track your career.</span>
+                    </div>
+                </div>
+                <div class="checkbox-card account-type-card" id="type-org" onclick="selectSignupType('organization')">
+                    <div class="type-icon"
+                        style="font-size: 2rem; margin-bottom: 0.5rem; display: block; width: 100%; text-align: center;">
+                        🏢</div>
+                    <div style="text-align: center; width: 100%;">
+                        <strong style="display: block; margin-bottom: 0.25rem;">Club / Org</strong>
+                        <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.2;">Manage teams, take
+                            payments, and grow your club.</span>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" id="selectedAccountType" value="adult">
+        </div>
+
+        <!-- Step 2: Personal Information -->
+        <div class="form-step" data-step="2">
+            <h2 style="text-align: center; margin-bottom: 1rem; font-family: 'Outfit';">Account Details</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">
+                Set up your login credentials
             </p>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
@@ -327,7 +361,7 @@
         </div>
 
         <!-- Success Step -->
-        <div class="form-step" data-step="2">
+        <div class="form-step" data-step="3">
             <div style="text-align: center; padding: 3rem 0;">
                 <div
                     style="width: 90px; height: 90px; background: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; margin: 0 auto 2rem; border: 2px solid #10b981;">
@@ -356,7 +390,7 @@
     <script src="dialog-service.js"></script>
     <script>
         let currentStep = 1;
-        const totalSteps = 1; // Only 1 form step. Step 2 is the success screen.
+        const totalSteps = 2; // Step 1: Type, Step 2: Info. Step 3 is success.
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function () {
@@ -374,6 +408,17 @@
                 if (inviteToken) {
                     console.log('📧 Found pending invite token in localStorage');
                 }
+            }
+
+            // GET TYPE FROM URL
+            const typeParam = urlParams.get('type');
+            if (typeParam) {
+                console.log('📋 Type from URL detected:', typeParam);
+                const type = typeParam === 'organization' ? 'organization' : 'adult';
+                document.getElementById('selectedAccountType').value = type;
+
+                // We'll update UI in a moment once selectSignupType is defined or manually
+                // But for now just set the value.
             }
 
             if (inviteToken) {
@@ -411,9 +456,30 @@
             }
         });
 
+        function selectSignupType(type) {
+            document.getElementById('selectedAccountType').value = type;
+            document.querySelectorAll('.account-type-card').forEach(card => card.classList.remove('selected'));
+            const selectedCard = document.getElementById(type === 'organization' ? 'type-org' : 'type-player');
+            if (selectedCard) selectedCard.classList.add('selected');
+
+            // Auto-advance to next step
+            setTimeout(() => nextStep(), 300);
+        }
+
+        // Initialize Step 1 cards
+        window.addEventListener('load', () => {
+            const currentType = document.getElementById('selectedAccountType').value;
+            const selectedCard = document.getElementById(currentType === 'organization' ? 'type-org' : 'type-player');
+            if (selectedCard) selectedCard.classList.add('selected');
+        });
+
         function nextStep() {
             if (currentStep === 1) {
-                // Validate Step 1
+                // Type already selected or defaulted
+                currentStep++;
+                updateUI();
+            } else if (currentStep === 2) {
+                // Validate Step 2
                 const firstName = document.getElementById('firstName').value.trim();
                 const lastName = document.getElementById('lastName').value.trim();
                 const email = document.getElementById('email').value.trim();
@@ -495,9 +561,7 @@
                 nextBtn.textContent = 'Creating Account...';
 
                 const urlParams = new URLSearchParams(window.location.search);
-                const roleParam = urlParams.get('type');
-
-                // Default to 'adult' (player/parent) for unified flow.
+                const roleParam = document.getElementById('selectedAccountType').value || urlParams.get('type') || 'adult';
                 // If they create an organization later, they will get the 'owner' role.
                 const userType = roleParam || 'adult';
 
@@ -564,11 +628,13 @@
                 if (response.user.is_platform_admin) {
                     redirectUrl = 'super-admin-dashboard.html';
                 }
-                // 2. Uninvited User -> ALWAYS go to Create Organization (which now has a Skip option)
+                // 2. Uninvited User -> Decide based on chosen type
                 else if (!pendingInviteToken) {
-                    // As per user request: "just signing up would be great but on create org have skip"
-                    // This unifies the flow. Everyone gets the option to create a club or skip to player.
-                    redirectUrl = 'create-organization.html';
+                    if (userType === 'organization') {
+                        redirectUrl = 'create-organization.html';
+                    } else {
+                        redirectUrl = 'player-dashboard.html';
+                    }
                 }
                 // 3. Invited User -> Dashboard based on Role
                 else if (invitationAccepted) {
@@ -584,7 +650,7 @@
                 console.log('🚀 Redirecting to:', redirectUrl);
 
                 // Show success and redirect
-                currentStep = 2;
+                currentStep = 3;
                 updateUI();
 
 
