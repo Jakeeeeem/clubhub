@@ -726,46 +726,69 @@ function assignPlayerToPosition(playerEl) {
     tacticalBoardData.players[selectedPosition].playerId = playerId;
 
     // Update visual representation
+    const positionEl =
+      document.querySelectorAll(".player-position")[selectedPosition];
+    positionEl.textContent =
+      (player.firstName || player.first_name).charAt(0) +
+      (player.lastName || player.last_name).charAt(0);
+    positionEl.title = `${player.firstName} ${player.lastName}`;
+
+    // Mark player as assigned
+    playerEl.classList.add("assigned");
+
+    // Clear selection
+    positionEl.classList.remove("selected");
+    selectedPosition = null;
+
+    showNotification(
+      `${player.firstName} ${player.lastName} assigned to position`,
+      "success",
+    );
+  }
+}
+
 // Match Result & Stats Management
 function recordMatchResult(eventId) {
-    const event = AppState.events.find(e => e.id === eventId);
-    if (!event) return;
+  const event = AppState.events.find((e) => e.id === eventId);
+  if (!event) return;
 
-    // Set basic info
-    document.getElementById('resultEventId').value = eventId;
-    document.getElementById('homeScore').value = event.home_score || 0;
-    document.getElementById('awayScore').value = event.away_score || 0;
-    document.getElementById('matchNotes').value = event.match_notes || '';
-    
-    // Find relevant team to get players
-    // Events usually have team_id. If not, try to find team by name or context
-    const teamId = event.team_id || event.teamId;
-    const team = currentTeams.find(t => t.id === teamId);
-    
-    const tbody = document.getElementById('playerStatsTableBody');
-    tbody.innerHTML = '';
+  // Set basic info
+  document.getElementById("resultEventId").value = eventId;
+  document.getElementById("homeScore").value = event.home_score || 0;
+  document.getElementById("awayScore").value = event.away_score || 0;
+  document.getElementById("matchNotes").value = event.match_notes || "";
 
-    if (team) {
-        // Get players for this team
-        const teamPlayers = AppState.players.filter(p => 
-            p.team_id === teamId || 
-            (p.team_assignments && p.team_assignments.some(a => a.team_id === teamId))
-        );
+  // Find relevant team to get players
+  // Events usually have team_id. If not, try to find team by name or context
+  const teamId = event.team_id || event.teamId;
+  const team = currentTeams.find((t) => t.id === teamId);
 
-        if (teamPlayers.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center">No players found for this team. Add players to team first.</td></tr>`;
-        } else {
-            teamPlayers.forEach(player => {
-                const row = document.createElement('tr');
-                row.className = 'player-stat-row';
-                row.dataset.playerId = player.id;
-                
-                // Try to find existing stats if editing (not implemented fully in backend yet, but good for future)
-                row.innerHTML = `
+  const tbody = document.getElementById("playerStatsTableBody");
+  tbody.innerHTML = "";
+
+  if (team) {
+    // Get players for this team
+    const teamPlayers = AppState.players.filter(
+      (p) =>
+        p.team_id === teamId ||
+        (p.team_assignments &&
+          p.team_assignments.some((a) => a.team_id === teamId)),
+    );
+
+    if (teamPlayers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center">No players found for this team. Add players to team first.</td></tr>`;
+    } else {
+      teamPlayers.forEach((player) => {
+        const row = document.createElement("tr");
+        row.className = "player-stat-row";
+        row.dataset.playerId = player.id;
+
+        // Try to find existing stats if editing (not implemented fully in backend yet, but good for future)
+        row.innerHTML = `
                     <td>
                         <div class="player-info">
                             <span class="player-name">${player.first_name} ${player.last_name}</span>
-                            <small class="text-muted" style="display:block; font-size:0.75em;">${player.position || 'N/A'}</small>
+                            <small class="text-muted" style="display:block; font-size:0.75em;">${player.position || "N/A"}</small>
                         </div>
                     </td>
                     <td><input type="number" class="stat-input" name="rating" min="1" max="10" placeholder="-" style="width: 50px;"></td>
@@ -781,72 +804,79 @@ function recordMatchResult(eventId) {
                     </td>
                     <td><input type="number" class="stat-input" name="minutes" min="0" max="120" value="90" style="width: 60px;"></td>
                 `;
-                tbody.appendChild(row);
-            });
-        }
-    } else {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center">Team information missing for this event.</td></tr>`;
+        tbody.appendChild(row);
+      });
     }
+  } else {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center">Team information missing for this event.</td></tr>`;
+  }
 
-    // Show modal
-    document.getElementById('resultModal').style.display = 'block';
+  // Show modal
+  document.getElementById("resultModal").style.display = "block";
 }
 
 async function submitMatchResult(e) {
-    e.preventDefault();
-    const eventId = document.getElementById('resultEventId').value;
-    const homeScore = parseInt(document.getElementById('homeScore').value) || 0;
-    const awayScore = parseInt(document.getElementById('awayScore').value) || 0;
-    const notes = document.getElementById('matchNotes').value;
+  e.preventDefault();
+  const eventId = document.getElementById("resultEventId").value;
+  const homeScore = parseInt(document.getElementById("homeScore").value) || 0;
+  const awayScore = parseInt(document.getElementById("awayScore").value) || 0;
+  const notes = document.getElementById("matchNotes").value;
 
-    const result = homeScore > awayScore ? 'win' : (homeScore < awayScore ? 'loss' : 'draw');
+  const result =
+    homeScore > awayScore ? "win" : homeScore < awayScore ? "loss" : "draw";
 
-    // Gather player stats
-    const playerStats = [];
-    document.querySelectorAll('.player-stat-row').forEach(row => {
-        const playerId = row.dataset.playerId;
-        const rating = row.querySelector('[name="rating"]').value;
-        const goals = parseInt(row.querySelector('[name="goals"]').value) || 0;
-        const assists = parseInt(row.querySelector('[name="assists"]').value) || 0;
-        const cardVal = row.querySelector('[name="cards"]').value;
-        const minutes = parseInt(row.querySelector('[name="minutes"]').value) || 0;
+  // Gather player stats
+  const playerStats = [];
+  document.querySelectorAll(".player-stat-row").forEach((row) => {
+    const playerId = row.dataset.playerId;
+    const rating = row.querySelector('[name="rating"]').value;
+    const goals = parseInt(row.querySelector('[name="goals"]').value) || 0;
+    const assists = parseInt(row.querySelector('[name="assists"]').value) || 0;
+    const cardVal = row.querySelector('[name="cards"]').value;
+    const minutes = parseInt(row.querySelector('[name="minutes"]').value) || 0;
 
-        // Only include if they played or have stats
-        if (rating || goals > 0 || assists > 0 || cardVal !== 'none' || minutes > 0) {
-            playerStats.push({
-                playerId,
-                rating: rating ? parseInt(rating) : null,
-                goals,
-                assists,
-                yellowCards: (cardVal === 'yellow' || cardVal === 'both') ? 1 : 0,
-                redCards: (cardVal === 'red' || cardVal === 'both') ? 1 : 0,
-                minutesPlayed: minutes
-            });
-        }
+    // Only include if they played or have stats
+    if (
+      rating ||
+      goals > 0 ||
+      assists > 0 ||
+      cardVal !== "none" ||
+      minutes > 0
+    ) {
+      playerStats.push({
+        playerId,
+        rating: rating ? parseInt(rating) : null,
+        goals,
+        assists,
+        yellowCards: cardVal === "yellow" || cardVal === "both" ? 1 : 0,
+        redCards: cardVal === "red" || cardVal === "both" ? 1 : 0,
+        minutesPlayed: minutes,
+      });
+    }
+  });
+
+  try {
+    showLoading(true);
+    await apiService.makeRequest(`/events/${eventId}/result`, {
+      method: "POST",
+      body: JSON.stringify({
+        home_score: homeScore,
+        away_score: awayScore,
+        result,
+        notes,
+        playerStats,
+      }),
     });
 
-    try {
-        showLoading(true);
-        await apiService.makeRequest(`/events/${eventId}/result`, {
-            method: 'POST',
-            body: JSON.stringify({
-                home_score: homeScore,
-                away_score: awayScore,
-                result,
-                notes,
-                playerStats
-            })
-        });
-
-        showNotification("Match result and stats saved successfully!", "success");
-        closeModal('resultModal');
-        initializeCoachDashboard(); // Refresh data
-    } catch (error) {
-        console.error("Failed to save match result:", error);
-        showNotification("Error saving result: " + error.message, "error");
-    } finally {
-        showLoading(false);
-    }
+    showNotification("Match result and stats saved successfully!", "success");
+    closeModal("resultModal");
+    initializeCoachDashboard(); // Refresh data
+  } catch (error) {
+    console.error("Failed to save match result:", error);
+    showNotification("Error saving result: " + error.message, "error");
+  } finally {
+    showLoading(false);
+  }
 }
 
 function formatDate(date) {
