@@ -945,7 +945,7 @@ router.get("/plan/current", authenticateToken, async (req, res) => {
             FROM players p
             LEFT JOIN plans pl ON p.payment_plan_id = pl.id
             WHERE p.user_id = $1
-            ORDER BY p.updated_at DESC
+            ORDER BY p.created_at DESC
             LIMIT 1
         `;
       params = [userId];

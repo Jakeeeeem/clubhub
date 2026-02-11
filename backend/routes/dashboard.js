@@ -428,12 +428,16 @@ router.get("/player", authenticateToken, async (req, res) => {
         "SELECT DISTINCT club_id FROM players WHERE user_id = $1",
         [userId],
       );
-      const familyClubIds = familyClubsRes.rows.map((r) => r.club_id);
+      if (familyClubsRes && familyClubsRes.rows) {
+        const familyClubIds = familyClubsRes.rows
+          .map((r) => r.club_id)
+          .filter((id) => id); // filter out nulls
 
-      // Merge into clubIds
-      familyClubIds.forEach((id) => {
-        if (!clubIds.includes(id)) clubIds.push(id);
-      });
+        // Merge into clubIds
+        familyClubIds.forEach((id) => {
+          if (!clubIds.includes(id)) clubIds.push(id);
+        });
+      }
     }
 
     // Get player's team IDs
