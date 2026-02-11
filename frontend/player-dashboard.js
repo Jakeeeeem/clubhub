@@ -3686,33 +3686,59 @@ function renderFamilyGrid() {
 
   if (headerBtn) headerBtn.style.display = "block";
 
-  grid.innerHTML = PlayerDashboardState.family
-    .map((child) => {
-      const age = child.age || calculateAge(child.date_of_birth);
-      return `
-            <div class="stat-card" style="position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                    <div>
-                        <h4 style="margin: 0;">${escapeHTML(child.first_name)} ${escapeHTML(child.last_name)}</h4>
-                        <p style="color: var(--text-muted); margin: 0.25rem 0;">Age ${age}</p>
-                    </div>
-                    <button class="btn btn-small btn-secondary" onclick="switchProfile('${child.id}')">
-                        View
-                    </button>
-                </div>
-                <div style="font-size: 0.875rem; color: var(--text-muted);">
-                    <p style="margin: 0.25rem 0;">📍 ${escapeHTML(child.location || "No location")}</p>
-                    <p style="margin: 0.25rem 0;">⚽ ${escapeHTML(child.sport || "No sport")}</p>
-                    <p style="margin: 0.25rem 0;">🎯 ${escapeHTML(child.position || "No position")}</p>
-                </div>
-                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                    <button class="btn btn-small btn-secondary" onclick="editChildProfile('${child.id}')" style="flex: 1;">Edit</button>
-                    <button class="btn btn-small btn-danger" onclick="deleteChildProfile('${child.id}')" style="flex: 1;">Delete</button>
-                </div>
-            </div>
-        `;
-    })
-    .join("");
+  grid.innerHTML = `
+    <div class="table-responsive">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="padding: 1rem; text-align: left; color: var(--text-muted);">Name</th>
+                    <th style="padding: 1rem; text-align: left; color: var(--text-muted);">Age</th>
+                    <th style="padding: 1rem; text-align: left; color: var(--text-muted);">Sport</th>
+                    <th style="padding: 1rem; text-align: left; color: var(--text-muted);">Level</th>
+                    <th style="padding: 1rem; text-align: right; color: var(--text-muted);">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${PlayerDashboardState.family
+                  .map((child) => {
+                    const age = child.age || calculateAge(child.date_of_birth);
+                    const initials =
+                      (child.first_name || "U").charAt(0).toUpperCase() +
+                      (child.last_name || "").charAt(0).toUpperCase();
+                    return `
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div style="width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; color: white;">
+                                        ${initials}
+                                    </div>
+                                    <span style="font-weight: 500; color: var(--text-main);">${escapeHTML(child.first_name)} ${escapeHTML(child.last_name)}</span>
+                                </div>
+                            </td>
+                            <td style="padding: 1rem; color: var(--text-muted);">${age}</td>
+                            <td style="padding: 1rem; color: var(--text-muted);">${escapeHTML(child.sport || "N/A")}</td>
+                            <td style="padding: 1rem; color: var(--text-muted);">${escapeHTML(child.position || "N/A")}</td>
+                            <td style="padding: 1rem; text-align: right;">
+                                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                    <button class="btn btn-small btn-secondary" onclick="switchProfile('${child.id}')" title="View Dashboard">
+                                        View
+                                    </button>
+                                    <button class="btn btn-small btn-secondary" onclick="editChildProfile('${child.id}')" title="Edit Profile">
+                                        Edit
+                                    </button>
+                                    <button class="btn btn-small btn-danger" onclick="deleteChildProfile('${child.id}')" title="Delete Profile">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                  })
+                  .join("")}
+            </tbody>
+        </table>
+    </div>
+  `;
 }
 
 function openAddChildModal() {
@@ -4215,3 +4241,10 @@ async function declineInvitation(orgId) {
 // Export to window
 window.acceptInvitation = acceptInvitation;
 window.declineInvitation = declineInvitation;
+
+// Family Management Exports
+window.openAddChildModal = openAddChildModal;
+window.closeAddChildModal = closeAddChildModal;
+window.handleAddChild = handleAddChild;
+window.editChildProfile = editChildProfile;
+window.deleteChildProfile = deleteChildProfile;
