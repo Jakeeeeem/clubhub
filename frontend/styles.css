@@ -609,6 +609,12 @@ section#benefits {
     transition: var(--transition);
 }
 
+#addChildHeaderBtn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
 .testimonial-card:hover {
     border-color: var(--primary);
     transform: translateY(-5px);

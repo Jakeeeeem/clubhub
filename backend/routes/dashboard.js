@@ -621,7 +621,71 @@ router.get("/player", authenticateToken, async (req, res) => {
       stats.totalClubs = parseInt(distinctClubs.rows[0].count) || 0;
     }
 
+    // 4. Get Player Activities (New Feature)
+    let activities = [];
+    try {
+      if (player) {
+        const activitiesRes = await query(
+          `SELECT pa.* 
+             FROM player_activities pa 
+             WHERE pa.player_id = $1 
+             ORDER BY pa.created_at DESC LIMIT 10`,
+          [player.id],
+        );
+        activities = activitiesRes.rows;
+      } else {
+        // Parent view: get activities for all children
+        // Join with players to get names if needed
+        const activitiesRes = await query(
+          `SELECT pa.* 
+                 FROM player_activities pa
+                 JOIN players p ON pa.player_id = p.id
+                 WHERE p.user_id = $1
+                 ORDER BY pa.created_at DESC LIMIT 10`,
+          [userId],
+        );
+        activities = activitiesRes.rows;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch player activities:", e);
+    }
+
+    // 5. Get Detailed Performance Stats
+    const performance = {
+      goals: 0,
+      assists: 0,
+      matchesPlayed: 0,
+      minutesPlayed: 0,
+    };
+
+    try {
+      if (player) {
+        const statsRes = await query(
+          `SELECT 
+                    COUNT(DISTINCT match_result_id) as matches,
+                    SUM(goals) as goals,
+                    SUM(assists) as assists,
+                    SUM(minutes_played) as minutes
+                 FROM player_ratings 
+                 WHERE player_id = $1`,
+          [player.id],
+        );
+
+        if (statsRes.rows.length > 0) {
+          const s = statsRes.rows[0];
+          performance.matchesPlayed = parseInt(s.matches) || 0;
+          performance.goals = parseInt(s.goals) || 0;
+          performance.assists = parseInt(s.assists) || 0;
+          performance.minutesPlayed = parseInt(s.minutes) || 0;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch player stats:", e);
+    }
+
     res.json({
+      activities,
+      performance,
       player,
       attendance,
       clubs,

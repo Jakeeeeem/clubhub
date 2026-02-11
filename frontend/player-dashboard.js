@@ -499,6 +499,15 @@ async function loadPlayerDataWithFallback() {
       PlayerDashboardState.applications = dashboardData.applications || [];
       PlayerDashboardState.invitations = dashboardData.invitations || [];
       PlayerDashboardState.statistics = dashboardData.statistics || {};
+
+      // New Data Fields
+      PlayerDashboardState.activities = dashboardData.activities || [];
+      PlayerDashboardState.performance = dashboardData.performance || {
+        goals: 0,
+        assists: 0,
+        matchesPlayed: 0,
+      };
+
       return;
     } catch (e) {
       console.warn("Unified dashboard failed, trying individual calls:", e);
@@ -647,14 +656,68 @@ function loadRecentActivity() {
   const el = byId("playerRecentActivity");
   if (!el) return;
 
-  const list = (PlayerDashboardState.bookings || []).slice(0, 3);
+  const activities = PlayerDashboardState.activities || [];
 
+  if (activities.length > 0) {
+    el.innerHTML = activities
+      .slice(0, 5)
+      .map((act) => {
+        let icon = "📋";
+        let color = "var(--text-muted)";
+        let title = "Activity";
+
+        switch (act.activity_type) {
+          case "goal":
+            icon = "⚽";
+            color = "var(--neon-green)";
+            title = "Goal Scored";
+            break;
+          case "assist":
+            icon = "👟";
+            color = "var(--neon-blue)";
+            title = "Assist";
+            break;
+          case "match":
+            icon = "🏟️";
+            color = "white";
+            title = "Match Played";
+            break;
+          case "card":
+            icon = "🟨";
+            color = "var(--warning)";
+            title = "Card Received";
+            break;
+          case "training":
+            icon = "🏃";
+            color = "var(--primary)";
+            title = "Training";
+            break;
+        }
+
+        return `
+            <div class="item-list-item">
+                <div class="item-info">
+                    <h4 style="display:flex; align-items:center; gap:0.5rem;">
+                        <span style="font-size:1.2rem;">${icon}</span> 
+                        ${escapeHTML(act.description || title)}
+                    </h4>
+                    <p>${formatDate(act.created_at)}</p>
+                </div>
+            </div>
+          `;
+      })
+      .join("");
+    return;
+  }
+
+  // Fallback to bookings if no detailed activities
+  const list = (PlayerDashboardState.bookings || []).slice(0, 3);
   if (list.length === 0) {
     el.innerHTML = "<p>No recent activity</p>";
     return;
   }
 
-  const activitiesHTML = list
+  el.innerHTML = list
     .map(
       (b) =>
         '<div class="item-list-item">' +
@@ -676,21 +739,55 @@ function loadRecentActivity() {
         "</div>",
     )
     .join("");
-
-  el.innerHTML = activitiesHTML;
 }
 
 function loadPerformanceSummary() {
-  const bookings = PlayerDashboardState.bookings || [];
-  const matches = bookings.filter((b) => b.event_type === "match").length;
-  const trainings = bookings.filter((b) => b.event_type === "training").length;
+  const perf = PlayerDashboardState.performance || {
+    goals: 0,
+    assists: 0,
+    matchesPlayed: 0,
+  };
+  const stats = PlayerDashboardState.statistics || {};
 
-  // Real average rating would come from PlayerDashboardState.player_rating or similar
-  const avgRating = PlayerDashboardState.statistics?.averageRating || "0.0";
+  // If we have real performance data (from coach records), use that.
+  // Otherwise fall back to booking counts if matchesPlayed is 0 (legacy support)
+
+  let matches = perf.matchesPlayed;
+  // Fallback logic
+  if (matches === 0 && (PlayerDashboardState.bookings || []).length > 0) {
+    matches = (PlayerDashboardState.bookings || []).filter(
+      (b) => b.event_type === "match",
+    ).length;
+  }
+
+  // Update DOM elements using existing IDs or new ones we might need to add to HTML
+  // For now, repurposing existing slots where possible
 
   updateText("playerMatchesPlayed", matches);
-  updateText("playerAverageRating", avgRating);
-  updateText("playerTrainingSessions", trainings);
+  updateText(
+    "playerAverageRating",
+    perf.averageRating || stats.averageRating || "0.0",
+  );
+
+  // We might want to show Goals/Assists instead of "Training Sessions" if available
+  // Checking if elements exist for goals/assists, if not, hijack the training one or add dynamic injection
+
+  const trainingEl = byId("playerTrainingSessions");
+  if (trainingEl && perf.goals > 0) {
+    // Hijack "Training Sessions" slot for "Goals" if we have goals
+    const label = trainingEl.previousElementSibling;
+    if (label) label.textContent = "Goals Scored";
+    trainingEl.textContent = perf.goals;
+  } else if (trainingEl) {
+    // Default behavior
+    const trainings = (PlayerDashboardState.bookings || []).filter(
+      (b) => b.event_type === "training",
+    ).length;
+    const label = trainingEl.previousElementSibling;
+    if (label) label.textContent = "Training Sessions"; // Reset label in case it was changed
+    trainingEl.textContent = trainings;
+  }
+
   updateText(
     "playerPosition",
     PlayerDashboardState.player?.position || "Not Set",
@@ -3571,9 +3668,12 @@ async function loadFamilyMembers() {
 
 function renderFamilyGrid() {
   const grid = document.getElementById("familyGrid");
+  const headerBtn = document.getElementById("addChildHeaderBtn");
+
   if (!grid) return;
 
   if (PlayerDashboardState.family.length === 0) {
+    if (headerBtn) headerBtn.style.display = "none";
     grid.innerHTML = `
             <div class="stat-card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
                 <h4>No child profiles yet</h4>
@@ -3583,6 +3683,8 @@ function renderFamilyGrid() {
         `;
     return;
   }
+
+  if (headerBtn) headerBtn.style.display = "block";
 
   grid.innerHTML = PlayerDashboardState.family
     .map((child) => {
