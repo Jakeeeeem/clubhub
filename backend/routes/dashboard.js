@@ -588,10 +588,22 @@ router.get("/player", authenticateToken, async (req, res) => {
       totalClubs: clubs.length,
       totalTeams: teams.length,
       totalEvents: eventsResult.rows.length,
+      averageRating: "0.0",
       openPayments: payments.filter(
         (p) => p.payment_status !== "paid" && p.payment_status !== "succeeded",
       ).length,
     };
+
+    // If viewing a specific player, fetch their average rating
+    if (player) {
+      const ratingRes = await query(
+        "SELECT AVG(rating) as avg FROM player_ratings WHERE player_id = $1",
+        [player.id],
+      );
+      if (ratingRes.rows[0]?.avg) {
+        stats.averageRating = parseFloat(ratingRes.rows[0].avg).toFixed(1);
+      }
+    }
 
     // If Parent View (no specific player), count actual family members managed
     if (!player) {

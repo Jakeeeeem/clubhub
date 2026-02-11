@@ -681,15 +681,15 @@ function loadRecentActivity() {
 }
 
 function loadPerformanceSummary() {
-  const matches = (PlayerDashboardState.bookings || []).filter(
-    (b) => b.event_type === "match",
-  ).length;
-  const trainings = (PlayerDashboardState.bookings || []).filter(
-    (b) => b.event_type === "training",
-  ).length;
+  const bookings = PlayerDashboardState.bookings || [];
+  const matches = bookings.filter((b) => b.event_type === "match").length;
+  const trainings = bookings.filter((b) => b.event_type === "training").length;
+
+  // Real average rating would come from PlayerDashboardState.player_rating or similar
+  const avgRating = PlayerDashboardState.statistics?.averageRating || "0.0";
 
   updateText("playerMatchesPlayed", matches);
-  updateText("playerAverageRating", "4.2");
+  updateText("playerAverageRating", avgRating);
   updateText("playerTrainingSessions", trainings);
   updateText(
     "playerPosition",
