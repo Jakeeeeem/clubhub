@@ -1,0 +1,2 @@
+ALTER TABLE players 
+ALTER COLUMN attendance_rate SET DEFAULT 85;

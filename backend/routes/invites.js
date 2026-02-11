@@ -507,8 +507,8 @@ router.post("/accept/:token", authenticateToken, async (req, res) => {
               req.user.id,
               invite.club_id,
               invite.club_role === "player" ? null : invite.club_role, // Position
-              invite.plan_price || 50, // Use plan price or default fee
-              invite.date_of_birth || "1990-01-01",
+              invite.plan_price || 0, // Use plan price or 0 (was hardcoded 50)
+              invite.date_of_birth || "2000-01-01", // Default if not provided
               invite.payment_plan_id || null,
               invite.plan_price || null,
               invite.plan_start_date || null,
