@@ -353,6 +353,7 @@
 
 
     <script src="api-service.js"></script>
+    <script src="dialog-service.js"></script>
     <script>
         let currentStep = 1;
         const totalSteps = 1; // Only 1 form step. Step 2 is the success screen.
@@ -420,17 +421,17 @@
                 const confirmPassword = document.getElementById('confirmPassword').value;
 
                 if (!firstName || !lastName || !email || !password || !confirmPassword) {
-                    alert('Please fill in all required fields');
+                    showAlert('Please fill in all required fields', 'Missing Info', 'warning');
                     return;
                 }
 
                 if (password !== confirmPassword) {
-                    alert('Passwords do not match');
+                    showAlert('Passwords do not match', 'Error', 'error');
                     return;
                 }
 
                 if (password.length < 8) {
-                    alert('Password must be at least 8 characters');
+                    showAlert('Password must be at least 8 characters', 'Weak Password', 'warning');
                     return;
                 }
 
@@ -593,7 +594,7 @@
 
             } catch (error) {
                 console.error('Registration failed:', error);
-                alert(error.message || 'Registration failed. Please try again.');
+                showAlert(error.message || 'Registration failed. Please try again.', 'Error', 'error');
 
                 const nextBtn = document.getElementById('nextBtn');
                 nextBtn.disabled = false;

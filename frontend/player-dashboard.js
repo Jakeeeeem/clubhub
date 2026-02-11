@@ -1422,10 +1422,12 @@ function renderPlayersList(filterKey = "all") {
         }
       }
 
-      if (
-        !confirm(`Confirm purchase of ${product.name} for £${product.price}?`)
-      )
-        return;
+      const confirmed = await showConfirm(
+        `Confirm purchase of ${product.name} for £${product.price}?`,
+        "Purchase Confirmation",
+        "confirm",
+      );
+      if (!confirmed) return;
 
       showLoading(true);
 
@@ -3933,13 +3935,13 @@ async function deleteChildProfile(childId) {
   const child = PlayerDashboardState.family.find((c) => c.id === childId);
   if (!child) return;
 
-  if (
-    !confirm(
-      `Are you sure you want to delete ${child.first_name}'s profile? This cannot be undone.`,
-    )
-  ) {
-    return;
-  }
+  const confirmed = await showConfirm(
+    `Are you sure you want to delete ${child.first_name}'s profile? This cannot be undone.`,
+    "Delete Profile",
+    "warning",
+  );
+
+  if (!confirmed) return;
 
   try {
     showLoading(true);
@@ -4035,7 +4037,7 @@ async function loadPlayerVenues() {
                     <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">${v.location || "No location set"}</p>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
                         <span style="font-weight: 600; color: var(--primary);">£${v.hourly_rate}/hr</span>
-                        <button class="btn btn-primary btn-small" onclick="alert('Booking feature coming soon for players!')">Book</button>
+                        <button class="btn btn-primary btn-small" onclick="showAlert('Booking feature coming soon for players!', 'Coming Soon', 'info')">Book</button>
                     </div>
                 </div>
             `,
@@ -4216,7 +4218,12 @@ async function acceptInvitation(orgId) {
  * Handle declining a club invitation
  */
 async function declineInvitation(orgId) {
-  if (!confirm("Are you sure you want to decline this invitation?")) return;
+  const confirmed = await showConfirm(
+    "Are you sure you want to decline this invitation?",
+    "Decline Invitation",
+    "warning",
+  );
+  if (!confirmed) return;
   try {
     showLoading(true);
     const res = await apiService.makeRequest(

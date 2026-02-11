@@ -235,12 +235,12 @@ async function loadCoachProducts() {
 }
 
 async function buyCoachProduct(productId, price, name) {
-  if (
-    !confirm(
-      `Do you want to purchase ${name} for £${parseFloat(price).toFixed(2)}?`,
-    )
-  )
-    return;
+  const confirmed = await showConfirm(
+    `Do you want to purchase ${name} for £${parseFloat(price).toFixed(2)}?`,
+    "Purchase Confirmation",
+    "confirm",
+  );
+  if (!confirmed) return;
 
   try {
     await apiService.purchaseProduct(productId, {
