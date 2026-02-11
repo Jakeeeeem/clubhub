@@ -281,6 +281,60 @@
             }
         });
     </script>
+    <!-- Match Result Modal -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="neon-text">Record Match Result</h2>
+                <span class="close" onclick="closeModal('resultModal')">&times;</span>
+            </div>
+            <form id="matchResultForm" onsubmit="submitMatchResult(event)">
+                <input type="hidden" id="resultEventId">
+                <div class="stats-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
+                    <div class="form-group">
+                        <label>Home Score (Our Team)</label>
+                        <input type="number" id="homeScore" min="0" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Away Score (Opponent)</label>
+                        <input type="number" id="awayScore" min="0" value="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Match Notes</label>
+                    <textarea id="matchNotes" placeholder="General match summary..."></textarea>
+                </div>
+
+                <div class="player-stats-section" style="margin-top: 2rem;">
+                    <h3 style="margin-bottom: 1rem; color: var(--primary);">Player Statistics</h3>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Rating</th>
+                                    <th>Goals</th>
+                                    <th>Assists</th>
+                                    <th>Cards</th>
+                                    <th>Mins</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playerStatsTableBody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer"
+                    style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('resultModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Results</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 
 </html>

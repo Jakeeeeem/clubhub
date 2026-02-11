@@ -67,7 +67,9 @@ function loadCoachData() {
   );
   if (coachStaff) {
     currentTeams =
-      AppState.teams?.filter((t) => t.coachId === coachStaff.id) || [];
+      AppState.teams?.filter(
+        (t) => t.coach_id === coachStaff.id || t.coachId === coachStaff.id,
+      ) || [];
   }
 }
 
@@ -254,34 +256,21 @@ async function buyCoachProduct(productId, price, name) {
 
 // Coach Statistics
 function loadCoachStats() {
-  const coachStaff = AppState.staff.find(
-    (s) => s.email === AppState.currentUser.email,
-  );
-  if (!coachStaff) return;
+  const stats = AppState.statistics || {};
+  const teams = currentTeams || [];
 
-  const teams = currentTeams;
-  const totalPlayers = teams.reduce(
-    (total, team) => total + (team.players?.length || 0),
-    0,
-  );
-
-  // Calculate upcoming events
-  const now = new Date();
-  const upcomingEvents = AppState.events.filter(
-    (e) => new Date(e.date) > now && teams.some((t) => t.id === e.teamId),
-  ).length;
-
-  // Calculate win rate (mock data for now)
-  const winRate = Math.floor(Math.random() * 40) + 60; // 60-100%
+  const teamsCount = teams.length;
+  const totalPlayers = AppState.players?.length || 0;
+  const upcomingSessions = stats.upcomingSessions ?? 0;
 
   // Update stats
   const teamsCountEl = document.getElementById("managedTeamsCount");
   const playersCountEl = document.getElementById("totalPlayersCount");
   const eventsCountEl = document.getElementById("upcomingSessionsCount");
 
-  if (teamsCountEl) teamsCountEl.textContent = teams.length;
+  if (teamsCountEl) teamsCountEl.textContent = teamsCount;
   if (playersCountEl) playersCountEl.textContent = totalPlayers;
-  if (eventsCountEl) eventsCountEl.textContent = upcomingEvents;
+  if (eventsCountEl) eventsCountEl.textContent = upcomingSessions;
 
   // Some versions use different IDs - check for those too
   if (document.getElementById("coachTotalTeams"))
@@ -294,11 +283,9 @@ function loadCoachStats() {
 }
 
 function loadRecentMatches() {
-  const recentMatches = [
-    { opponent: "City Lions", score: "3-1", result: "win", date: "2025-06-15" },
-    { opponent: "United FC", score: "2-2", result: "draw", date: "2025-06-10" },
-    { opponent: "Rangers", score: "1-2", result: "loss", date: "2025-06-05" },
-  ];
+  const recentMatches = (AppState.events || [])
+    .filter((e) => e.event_type === "match" && e.match_result)
+    .slice(0, 5);
 
   // Check for correct container ID based on HTML
   const container =
@@ -310,11 +297,11 @@ function loadRecentMatches() {
       (match) => `
         <div class="item-list-item">
             <div class="item-info">
-                <h4>vs ${match.opponent}</h4>
-                <p>${formatDate(match.date)} - Score: ${match.score}</p>
+                <h4>vs ${match.opponent || "TBD"}</h4>
+                <p>${formatDate(match.event_date || match.date)} - Score: ${match.home_score}-${match.away_score}</p>
             </div>
-            <span class="status-badge status-${match.result === "win" ? "paid" : match.result === "draw" ? "pending" : "overdue"}">
-                ${match.result.toUpperCase()}
+            <span class="status-badge status-${match.match_result === "win" ? "paid" : match.match_result === "draw" ? "pending" : "overdue"}">
+                ${(match.match_result || "N/A").toUpperCase()}
             </span>
         </div>
     `,
@@ -363,12 +350,12 @@ function loadCoachTeams() {
       (team) => `
         <div class="team-card">
             <h4>${team.name}</h4>
-            <p><strong>Age Group:</strong> ${team.ageGroup}</p>
+            <p><strong>Age Group:</strong> ${team.age_group || team.ageGroup || "N/A"}</p>
             <p><strong>Sport:</strong> ${team.sport}</p>
             
             <div class="team-stats">
                 <div class="team-stat">
-                    <span class="team-stat-number">${team.players?.length || 0}</span>
+                    <span class="team-stat-number">${team.player_count ?? (team.players?.length || 0)}</span>
                     <span class="team-stat-label">Players</span>
                 </div>
                 <div class="team-stat">
@@ -392,47 +379,50 @@ function loadCoachTeams() {
     .join("");
 }
 
-function handleCreateTeam(e) {
+async function handleCreateTeam(e) {
   e.preventDefault();
 
   const coachStaff = AppState.staff.find(
     (s) => s.email === AppState.currentUser.email,
   );
-  if (!coachStaff) return;
-
-  const newTeam = {
-    id: generateId(),
-    name: document.getElementById("teamName").value,
-    ageGroup: document.getElementById("teamAgeGroup").value,
-    sport: document.getElementById("teamSport").value,
-    description: document.getElementById("teamDescription").value,
-    coachId: coachStaff.id,
-    clubId: coachStaff.clubId,
-    players: [],
-    events: [],
-    wins: 0,
-    losses: 0,
-    draws: 0,
-    createdDate: new Date().toISOString(),
-  };
-
-  // Initialize teams array if it doesn't exist
-  if (!AppState.teams) {
-    AppState.teams = [];
+  if (!coachStaff) {
+    showNotification("You must be linked as staff to create teams", "error");
+    return;
   }
 
-  AppState.teams.push(newTeam);
-  currentTeams.push(newTeam);
-  saveToStorage();
+  const teamData = {
+    name: document.getElementById("teamName").value,
+    age_group: document.getElementById("teamAgeGroup").value,
+    sport: document.getElementById("teamSport").value,
+    description: document.getElementById("teamDescription").value,
+    coach_id: coachStaff.id,
+    club_id: coachStaff.club_id || coachStaff.clubId,
+  };
 
-  closeModal("createTeamModal");
-  loadCoachTeams();
-  loadCoachStats();
+  try {
+    showLoading(true);
+    const result = await apiService.makeRequest("/teams", {
+      method: "POST",
+      body: JSON.stringify(teamData),
+    });
 
-  // Reset form
-  document.getElementById("createTeamForm").reset();
+    if (result) {
+      if (!AppState.teams) AppState.teams = [];
+      AppState.teams.push(result);
+      currentTeams.push(result);
 
-  showNotification("Team created successfully!", "success");
+      closeModal("createTeamModal");
+      loadCoachTeams();
+      loadCoachStats();
+      document.getElementById("createTeamForm").reset();
+      showNotification("Team created successfully!", "success");
+    }
+  } catch (error) {
+    console.error("Failed to create team:", error);
+    showNotification("Failed to create team: " + error.message, "error");
+  } finally {
+    showLoading(false);
+  }
 }
 
 // Players Management
@@ -455,24 +445,29 @@ function filterCoachPlayers() {
     .getElementById("playerSearchCoach")
     .value.toLowerCase();
 
-  let players = [];
+  const teamIds = currentTeams.map((t) => t.id);
+  let players = AppState.players || [];
 
-  // Get players from selected teams or all teams
   if (teamFilter) {
-    const team = currentTeams.find((t) => t.id === teamFilter);
-    if (team && team.players) {
-      players = AppState.players.filter((p) => team.players.includes(p.id));
-    }
+    players = players.filter(
+      (p) =>
+        p.team_id === teamFilter ||
+        (p.team_assignments &&
+          p.team_assignments.some((a) => a.team_id === teamFilter)),
+    );
   } else {
-    // Get all players from coach's teams
-    const allPlayerIds = currentTeams.flatMap((t) => t.players || []);
-    players = AppState.players.filter((p) => allPlayerIds.includes(p.id));
+    players = players.filter(
+      (p) =>
+        teamIds.includes(p.team_id) ||
+        (p.team_assignments &&
+          p.team_assignments.some((a) => teamIds.includes(a.team_id))),
+    );
   }
 
   // Apply search filter
   if (searchTerm) {
     players = players.filter((player) =>
-      `${player.firstName} ${player.lastName}`
+      `${player.first_name || player.firstName} ${player.last_name || player.lastName}`
         .toLowerCase()
         .includes(searchTerm),
     );
@@ -487,19 +482,22 @@ function filterCoachPlayers() {
 
   tableBody.innerHTML = players
     .map((player) => {
-      const team = currentTeams.find((t) => t.players?.includes(player.id));
-      const age =
-        new Date().getFullYear() - new Date(player.dateOfBirth).getFullYear();
+      const pFirstName = player.first_name || player.firstName || "";
+      const pLastName = player.last_name || player.lastName || "";
+      const pDOB = player.date_of_birth || player.dateOfBirth;
+      const age = pDOB
+        ? new Date().getFullYear() - new Date(pDOB).getFullYear()
+        : "N/A";
 
       return `
             <tr>
-                <td>${player.firstName} ${player.lastName}</td>
-                <td>${team ? team.name : "Unassigned"}</td>
-                <td>${player.position || "Not set"}</td>
+                <td>${pFirstName} ${pLastName}</td>
+                <td>${player.team_name || "Assigned"}</td>
+                <td>${player.position || player.team_position || "Not set"}</td>
                 <td>${age}</td>
                 <td>
-                    <span class="status-badge status-${player.attendance > 80 ? "paid" : player.attendance > 60 ? "pending" : "overdue"}">
-                        ${player.attendance || 85}%
+                    <span class="status-badge status-${(player.attendance_rate || player.attendance || 85) > 80 ? "paid" : (player.attendance_rate || player.attendance || 85) > 60 ? "pending" : "overdue"}">
+                        ${player.attendance_rate || player.attendance || 85}%
                     </span>
                 </td>
                 <td>
@@ -515,7 +513,7 @@ function filterCoachPlayers() {
 // Events Management
 function loadCoachEvents() {
   const teamEvents = AppState.events.filter((e) =>
-    currentTeams.some((t) => t.id === e.teamId),
+    currentTeams.some((t) => t.id === e.team_id || t.id === e.teamId),
   );
 
   // Populate team selector for new events
@@ -728,53 +726,171 @@ function assignPlayerToPosition(playerEl) {
     tacticalBoardData.players[selectedPosition].playerId = playerId;
 
     // Update visual representation
-    const positionEl =
-      document.querySelectorAll(".player-position")[selectedPosition];
-    positionEl.textContent =
-      player.firstName.charAt(0) + player.lastName.charAt(0);
-    positionEl.title = `${player.firstName} ${player.lastName}`;
+// Match Result & Stats Management
+function recordMatchResult(eventId) {
+    const event = AppState.events.find(e => e.id === eventId);
+    if (!event) return;
 
-    // Mark player as assigned
-    playerEl.classList.add("assigned");
+    // Set basic info
+    document.getElementById('resultEventId').value = eventId;
+    document.getElementById('homeScore').value = event.home_score || 0;
+    document.getElementById('awayScore').value = event.away_score || 0;
+    document.getElementById('matchNotes').value = event.match_notes || '';
+    
+    // Find relevant team to get players
+    // Events usually have team_id. If not, try to find team by name or context
+    const teamId = event.team_id || event.teamId;
+    const team = currentTeams.find(t => t.id === teamId);
+    
+    const tbody = document.getElementById('playerStatsTableBody');
+    tbody.innerHTML = '';
 
-    // Clear selection
-    positionEl.classList.remove("selected");
-    selectedPosition = null;
+    if (team) {
+        // Get players for this team
+        const teamPlayers = AppState.players.filter(p => 
+            p.team_id === teamId || 
+            (p.team_assignments && p.team_assignments.some(a => a.team_id === teamId))
+        );
 
-    showNotification(
-      `${player.firstName} ${player.lastName} assigned to position`,
-      "success",
-    );
-  }
+        if (teamPlayers.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center">No players found for this team. Add players to team first.</td></tr>`;
+        } else {
+            teamPlayers.forEach(player => {
+                const row = document.createElement('tr');
+                row.className = 'player-stat-row';
+                row.dataset.playerId = player.id;
+                
+                // Try to find existing stats if editing (not implemented fully in backend yet, but good for future)
+                row.innerHTML = `
+                    <td>
+                        <div class="player-info">
+                            <span class="player-name">${player.first_name} ${player.last_name}</span>
+                            <small class="text-muted" style="display:block; font-size:0.75em;">${player.position || 'N/A'}</small>
+                        </div>
+                    </td>
+                    <td><input type="number" class="stat-input" name="rating" min="1" max="10" placeholder="-" style="width: 50px;"></td>
+                    <td><input type="number" class="stat-input" name="goals" min="0" placeholder="0" style="width: 50px;"></td>
+                    <td><input type="number" class="stat-input" name="assists" min="0" placeholder="0" style="width: 50px;"></td>
+                    <td>
+                        <select class="stat-input" name="cards" style="width: 80px; padding: 5px;">
+                            <option value="none">-</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="red">Red</option>
+                             <option value="both">Y + R</option>
+                        </select>
+                    </td>
+                    <td><input type="number" class="stat-input" name="minutes" min="0" max="120" value="90" style="width: 60px;"></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    } else {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center">Team information missing for this event.</td></tr>`;
+    }
+
+    // Show modal
+    document.getElementById('resultModal').style.display = 'block';
 }
 
-function clearBoard() {
-  tacticalBoardData.players.forEach((p) => (p.playerId = null));
+async function submitMatchResult(e) {
+    e.preventDefault();
+    const eventId = document.getElementById('resultEventId').value;
+    const homeScore = parseInt(document.getElementById('homeScore').value) || 0;
+    const awayScore = parseInt(document.getElementById('awayScore').value) || 0;
+    const notes = document.getElementById('matchNotes').value;
 
-  document.querySelectorAll(".player-position").forEach((pos, index) => {
-    pos.textContent = index + 1;
-    pos.title = "";
-    pos.classList.remove("selected");
-  });
+    const result = homeScore > awayScore ? 'win' : (homeScore < awayScore ? 'loss' : 'draw');
 
-  document.querySelectorAll(".available-player").forEach((p) => {
-    p.classList.remove("assigned");
-  });
+    // Gather player stats
+    const playerStats = [];
+    document.querySelectorAll('.player-stat-row').forEach(row => {
+        const playerId = row.dataset.playerId;
+        const rating = row.querySelector('[name="rating"]').value;
+        const goals = parseInt(row.querySelector('[name="goals"]').value) || 0;
+        const assists = parseInt(row.querySelector('[name="assists"]').value) || 0;
+        const cardVal = row.querySelector('[name="cards"]').value;
+        const minutes = parseInt(row.querySelector('[name="minutes"]').value) || 0;
 
-  selectedPosition = null;
-  showNotification("Board cleared", "success");
-}
+        // Only include if they played or have stats
+        if (rating || goals > 0 || assists > 0 || cardVal !== 'none' || minutes > 0) {
+            playerStats.push({
+                playerId,
+                rating: rating ? parseInt(rating) : null,
+                goals,
+                assists,
+                yellowCards: (cardVal === 'yellow' || cardVal === 'both') ? 1 : 0,
+                redCards: (cardVal === 'red' || cardVal === 'both') ? 1 : 0,
+                minutesPlayed: minutes
+            });
+        }
+    });
 
-function saveFormation() {
-  showNotification("Formation saved successfully!", "success");
-}
+    try {
+        showLoading(true);
+        await apiService.makeRequest(`/events/${eventId}/result`, {
+            method: 'POST',
+            body: JSON.stringify({
+                home_score: homeScore,
+                away_score: awayScore,
+                result,
+                notes,
+                playerStats
+            })
+        });
 
-function generateId() {
-  return Math.random().toString(36).substr(2, 9);
+        showNotification("Match result and stats saved successfully!", "success");
+        closeModal('resultModal');
+        initializeCoachDashboard(); // Refresh data
+    } catch (error) {
+        console.error("Failed to save match result:", error);
+        showNotification("Error saving result: " + error.message, "error");
+    } finally {
+        showLoading(false);
+    }
 }
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString();
+}
+
+// Coach Management Functions
+function manageTeam(teamId) {
+  showCoachSection("players");
+  const filter = document.getElementById("teamFilter");
+  if (filter) {
+    filter.value = teamId;
+    filterCoachPlayers();
+  }
+}
+
+function viewTeamStats(teamId) {
+  showNotification("Detailed team statistics coming soon!", "info");
+}
+
+function assignPlayers(teamId) {
+  showNotification("Player assignment feature coming soon!", "info");
+}
+
+function viewPlayerStats(playerId) {
+  showNotification("Player performance analytics coming soon!", "info");
+}
+
+function editPlayerPosition(playerId) {
+  showNotification("Edit player position feature coming soon!", "info");
+}
+
+// function recordMatchResult(eventId) - DUPLICATE REMOVED
+
+function manageEventPlayers(eventId) {
+  showNotification("Event attendance management coming soon!", "info");
+}
+
+function editEvent(eventId) {
+  showNotification("Edit event feature coming soon!", "info");
+}
+
+function filterEvents() {
+  loadCoachEvents();
 }
 
 // Make functions globally available
@@ -795,4 +911,5 @@ window.buyCoachProduct = buyCoachProduct;
 window.filterCoachPlayers = filterCoachPlayers;
 window.filterEvents = filterEvents;
 window.handleMatchResult = handleMatchResult;
+window.submitMatchResult = submitMatchResult;
 window.initializeCoachDashboard = initializeCoachDashboard;

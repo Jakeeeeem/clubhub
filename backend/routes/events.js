@@ -1487,4 +1487,195 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+// Record match result with player stats
+router.post("/:id/result", authenticateToken, async (req, res) => {
+  try {
+    const {
+      home_score,
+      away_score,
+      result,
+      notes,
+      playerStats = [],
+    } = req.body;
+    const eventId = req.params.id;
+
+    // Check if event exists
+    const eventCheck = await query("SELECT * FROM events WHERE id = $1", [
+      eventId,
+    ]);
+    if (eventCheck.rows.length === 0) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    const event = eventCheck.rows[0];
+
+    // Use transaction to ensure data integrity
+    await withTransaction(async (client) => {
+      // 1. Upsert match result
+      let matchResultId;
+      const existingRes = await client.query(
+        "SELECT id FROM match_results WHERE event_id = $1",
+        [eventId],
+      );
+
+      if (existingRes.rows.length > 0) {
+        matchResultId = existingRes.rows[0].id;
+        // If updating, we might want to adjust team stats by subtracting old result first
+        // For simplicity, we'll just update the result record
+        await client.query(
+          `UPDATE match_results 
+           SET home_score = $1, away_score = $2, result = $3, match_notes = $4, updated_at = NOW() 
+           WHERE id = $5`,
+          [home_score, away_score, result, notes || null, matchResultId],
+        );
+      } else {
+        const insertRes = await client.query(
+          `INSERT INTO match_results (event_id, home_score, away_score, result, match_notes, recorded_by)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          [eventId, home_score, away_score, result, notes || null, req.user.id],
+        );
+        matchResultId = insertRes.rows[0].id;
+
+        // Update team records ONLY on first record to avoid duplication errors
+        // (Real system should track totals more robustly)
+        if (event.team_id) {
+          if (result === "win") {
+            await client.query(
+              "UPDATE teams SET wins = wins + 1 WHERE id = $1",
+              [event.team_id],
+            );
+          } else if (result === "loss") {
+            await client.query(
+              "UPDATE teams SET losses = losses + 1 WHERE id = $1",
+              [event.team_id],
+            );
+          } else if (result === "draw") {
+            await client.query(
+              "UPDATE teams SET draws = draws + 1 WHERE id = $1",
+              [event.team_id],
+            );
+          }
+        }
+      }
+
+      // 2. Clear old stats for this match if any (for clean update)
+      // Activities are harder to clean without specific link, so we'll just log new ones
+      // In a production app, we'd delete activities with this eventId first.
+      await client.query("DELETE FROM player_activities WHERE event_id = $1", [
+        eventId,
+      ]);
+
+      // 3. Process player statistics
+      if (playerStats && Array.isArray(playerStats)) {
+        for (const stat of playerStats) {
+          const {
+            playerId,
+            rating = 7,
+            goals = 0,
+            assists = 0,
+            yellowCards = 0,
+            redCards = 0,
+            minutesPlayed = 0,
+            notes: playerNotes = "",
+          } = stat;
+
+          // Upsert rating & performance data
+          await client.query(
+            `INSERT INTO player_ratings (
+              match_result_id, player_id, rating, notes, 
+              goals, assists, yellow_cards, red_cards, minutes_played
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (match_result_id, player_id) DO UPDATE SET
+              rating = EXCLUDED.rating,
+              notes = EXCLUDED.notes,
+              goals = EXCLUDED.goals,
+              assists = EXCLUDED.assists,
+              yellow_cards = EXCLUDED.yellow_cards,
+              red_cards = EXCLUDED.red_cards,
+              minutes_played = EXCLUDED.minutes_played,
+              created_at = NOW()`,
+            [
+              matchResultId,
+              playerId,
+              rating,
+              playerNotes,
+              goals,
+              assists,
+              yellowCards,
+              redCards,
+              minutesPlayed,
+            ],
+          );
+
+          // 4. Create activity logs
+          // Generic Match Activity
+          await client.query(
+            `INSERT INTO player_activities (player_id, activity_type, description, event_id, metadata)
+             VALUES ($1, 'match', $2, $3, $4)`,
+            [
+              playerId,
+              `Played in match: ${event.title}`,
+              eventId,
+              JSON.stringify({
+                result,
+                home_score,
+                away_score,
+                goals,
+                assists,
+              }),
+            ],
+          );
+
+          if (goals > 0) {
+            await client.query(
+              `INSERT INTO player_activities (player_id, activity_type, description, event_id, metadata)
+               VALUES ($1, 'goal', $2, $3, $4)`,
+              [
+                playerId,
+                `Scored ${goals} goal(s) vs ${event.opponent || "TBD"}`,
+                eventId,
+                JSON.stringify({ count: goals }),
+              ],
+            );
+          }
+
+          if (assists > 0) {
+            await client.query(
+              `INSERT INTO player_activities (player_id, activity_type, description, event_id, metadata)
+               VALUES ($1, 'assist', $2, $3, $4)`,
+              [
+                playerId,
+                `Provided ${assists} assist(s) vs ${event.opponent || "TBD"}`,
+                eventId,
+                JSON.stringify({ count: assists }),
+              ],
+            );
+          }
+
+          if (yellowCards > 0 || redCards > 0) {
+            await client.query(
+              `INSERT INTO player_activities (player_id, activity_type, description, event_id, metadata)
+               VALUES ($1, 'card', $2, $3, $4)`,
+              [
+                playerId,
+                `${yellowCards ? "Yellow" : ""}${yellowCards && redCards ? " and " : ""}${redCards ? "Red" : ""} card received`,
+                eventId,
+                JSON.stringify({ yellow: yellowCards, red: redCards }),
+              ],
+            );
+          }
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      message: "Match result and player statistics recorded successfully!",
+    });
+  } catch (error) {
+    console.error("Detailed match record error:", error);
+    res.status(500).json({ error: "Failed to record match data" });
+  }
+});
+
 module.exports = router;
