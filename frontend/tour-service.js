@@ -12,11 +12,11 @@ class TourService {
     this.activeElement = null;
     this.tourId = null;
 
-    this.init();
+    // Don't init immediately as document.body might not be ready
   }
 
   init() {
-    if (document.getElementById("tour-overlay")) {
+    if (this.overlay || document.getElementById("tour-overlay")) {
       this.overlay = document.getElementById("tour-overlay");
       this.card = document.getElementById("tour-card");
       return;
@@ -55,6 +55,7 @@ class TourService {
     }
 
     console.log(`🚀 Starting Tour: ${tourId}`);
+    this.init();
     this.tourId = tourId;
     this.steps = steps;
     this.currentStepIndex = 0;
@@ -202,5 +203,6 @@ class TourService {
   }
 }
 
-// Global instance
-window.tourService = new TourService();
+// Initialize and export to window
+const tourService = new TourService();
+window.tourService = tourService;

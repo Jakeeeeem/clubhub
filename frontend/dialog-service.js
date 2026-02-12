@@ -6,11 +6,11 @@
 class DialogService {
   constructor() {
     this.overlay = null;
-    this.init();
+    // Don't init immediately as document.body might not be ready
   }
 
   init() {
-    if (document.getElementById("dialog-overlay")) return;
+    if (this.overlay || document.getElementById("dialog-overlay")) return;
 
     this.overlay = document.createElement("div");
     this.overlay.id = "dialog-overlay";
@@ -21,7 +21,7 @@ class DialogService {
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 </div>
                 <h3 class="dialog-title" id="dialog-title">Confirm Action</h3>
-                <p class="dialog-message" id="dialog-message text-muted"></p>
+                <p class="dialog-message text-muted" id="dialog-message"></p>
                 <div class="dialog-actions">
                     <button class="btn btn-secondary" id="dialog-cancel">Cancel</button>
                     <button class="btn btn-primary" id="dialog-confirm">Confirm</button>
@@ -31,7 +31,7 @@ class DialogService {
     document.body.appendChild(this.overlay);
 
     this.titleEl = document.getElementById("dialog-title");
-    this.messageEl = document.getElementById("dialog-message text-muted");
+    this.messageEl = document.getElementById("dialog-message");
     this.iconEl = document.getElementById("dialog-icon");
     this.cancelBtn = document.getElementById("dialog-cancel");
     this.confirmBtn = document.getElementById("dialog-confirm");
@@ -45,6 +45,7 @@ class DialogService {
    * @returns {Promise<boolean>}
    */
   confirm(message, title = "Are you sure?", type = "confirm") {
+    this.init();
     return new Promise((resolve) => {
       this.titleEl.textContent = title;
       this.messageEl.textContent = message;
@@ -86,6 +87,7 @@ class DialogService {
    * @returns {Promise<void>}
    */
   alert(message, title = "Notification", type = "info") {
+    this.init();
     return new Promise((resolve) => {
       this.titleEl.textContent = title;
       this.messageEl.textContent = message;
@@ -120,8 +122,6 @@ window.showAlert = (message, title, type) =>
   dialogService.alert(message, title, type);
 
 // Global Overrides
-// Note: alert and confirm are normally synchronous (block execution).
-// These overrides are async-compatible for modern code and will show the premium UI.
 window.alert = (message) => {
   dialogService.alert(message, "Notification", "info");
 };
@@ -131,5 +131,5 @@ window.confirm = (message) => {
     "Sync confirm() called. Standard browser confirm returns true/false immediately. Custom dialogs are async. Showing premium UI but this may not block execution as expected.",
   );
   dialogService.confirm(message, "Confirmation", "confirm");
-  return true; // Fallback to avoid breaking logic that expects a boolean
+  return true;
 };
