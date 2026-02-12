@@ -3232,6 +3232,7 @@ async function refreshFamilyData() {
 
 function loadFamilyMembers() {
   const grid = document.getElementById("familyGrid");
+  const headerBtn = document.getElementById("addChildHeaderBtn");
   if (!grid) return;
 
   // Show loading state
@@ -3241,11 +3242,13 @@ function loadFamilyMembers() {
   refreshFamilyData()
     .then((family) => {
       if (!family || !family.length) {
+        if (headerBtn) headerBtn.style.display = "none";
         grid.innerHTML =
-          '<div class="stat-card" style="text-align: center; padding: 3rem;"><h3>No children added yet</h3><p>Click "+ Add Child" to create a profile for your child.</p></div>';
+          '<div class="stat-card" style="text-align: center; padding: 3rem;"><h3>No children added yet</h3><p>Click "+ Add Child" to create a profile for your child.</p><button class="btn btn-primary" onclick="openAddChildModal()" style="margin-top: 1rem;">+ Add Child</button></div>';
         return;
       }
 
+      if (headerBtn) headerBtn.style.display = "block";
       grid.innerHTML = `
         <div class="table-container" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; overflow: hidden;">
           <table class="data-table">
