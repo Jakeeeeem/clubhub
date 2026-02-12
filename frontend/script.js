@@ -775,16 +775,41 @@ function redirectToDashboard() {
     userRole,
   );
 
-  // Priority 1: Contextual Player Role (allows Org accounts to view as Player)
+  // Priority 1: Player/Parent Roles
   if (userRole === "player" || userRole === "parent") {
     window.location.href = "player-dashboard.html";
     return;
   }
 
-  // Priority 2: Global Account Type (organization account = admin dashboard)
+  // Priority 2: Staff/Admin Roles (Allows players to view as admins if they have permission)
+  if (["owner", "admin", "manager", "staff"].includes(userRole)) {
+    // Proactive check: if we have context and no managed organizations, go straight to creation
+    const organizations = AppState.context?.organizations || [];
+    const hasManagedOrg = organizations.some((org) => {
+      const role = (org.user_role || org.role || "").toLowerCase();
+      return ["owner", "admin", "manager", "staff"].includes(role);
+    });
+
+    if (!hasManagedOrg && !AppState.currentUser?.is_platform_admin) {
+      console.log("👋 No managed organizations found, heading to creation...");
+      window.location.href = "create-organization.html";
+    } else {
+      window.location.href = "admin-dashboard.html";
+    }
+    return;
+  }
+
+  // Priority 3: Global Account Type (organization account = admin dashboard)
   if (userType === "organization") {
-    // Only redirect to admin if not already handled above
-    window.location.href = "admin-dashboard.html";
+    const organizations = AppState.context?.organizations || [];
+    if (
+      organizations.length === 0 &&
+      !AppState.currentUser?.is_platform_admin
+    ) {
+      window.location.href = "create-organization.html";
+    } else {
+      window.location.href = "admin-dashboard.html";
+    }
     return;
   }
 

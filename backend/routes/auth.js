@@ -1053,15 +1053,41 @@ router.get("/context", authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     // Get user info and current org preference
-    const userResult = await query(
-      `
-      SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, u.completed_tours, up.current_organization_id
-      FROM users u
-      LEFT JOIN user_preferences up ON u.id = up.user_id
-      WHERE u.id = $1
-    `,
-      [userId],
-    );
+    let userResult;
+    try {
+      userResult = await query(
+        `
+        SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, u.completed_tours, up.current_organization_id
+        FROM users u
+        LEFT JOIN user_preferences up ON u.id = up.user_id
+        WHERE u.id = $1
+      `,
+        [userId],
+      );
+    } catch (dbError) {
+      if (
+        dbError.message.includes("completed_tours") ||
+        dbError.code === "42703"
+      ) {
+        console.warn(
+          "⚠️ Column 'completed_tours' missing, falling back to basic query.",
+        );
+        userResult = await query(
+          `
+          SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, up.current_organization_id
+          FROM users u
+          LEFT JOIN user_preferences up ON u.id = up.user_id
+          WHERE u.id = $1
+        `,
+          [userId],
+        );
+        if (userResult.rows.length > 0) {
+          userResult.rows[0].completed_tours = [];
+        }
+      } else {
+        throw dbError;
+      }
+    }
 
     if (userResult.rows.length === 0) {
       return res.status(404).json({ success: false, error: "User not found" });
@@ -1728,18 +1754,27 @@ router.post("/tours/complete", authenticateToken, async (req, res) => {
     }
 
     // Get current completed tours
-    const userResult = await query(
-      "SELECT completed_tours FROM users WHERE id = $1",
-      [userId],
-    );
-    const completedTours = userResult.rows[0].completed_tours || [];
+    let completedTours = [];
+    try {
+      const userResult = await query(
+        "SELECT completed_tours FROM users WHERE id = $1",
+        [userId],
+      );
+      completedTours = userResult.rows[0].completed_tours || [];
 
-    if (!completedTours.includes(tourId)) {
-      completedTours.push(tourId);
-      await query("UPDATE users SET completed_tours = $1 WHERE id = $2", [
-        JSON.stringify(completedTours),
-        userId,
-      ]);
+      if (!completedTours.includes(tourId)) {
+        completedTours.push(tourId);
+        await query("UPDATE users SET completed_tours = $1 WHERE id = $2", [
+          JSON.stringify(completedTours),
+          userId,
+        ]);
+      }
+    } catch (dbError) {
+      console.warn(
+        "⚠️ Failed to update completed tours (likely missing column):",
+        dbError.message,
+      );
+      // Non-fatal error for this specific feature
     }
 
     res.json({ success: true, completedTours });
