@@ -576,8 +576,8 @@ function loadPlayerOverview() {
     if (eventsLabel) eventsLabel.textContent = "Family Events";
   } else {
     // Show Individual Player Stats
-    updateText("playerClubs", PlayerDashboardState.clubs.length);
-    updateText("playerTeams", PlayerDashboardState.teams.length);
+    updateText("playerClubs", PlayerDashboardState.clubs.length || 0);
+    updateText("playerTeams", PlayerDashboardState.teams.length || 0);
 
     const upcomingCount = PlayerDashboardState.events.filter(
       (e) => e.event_date && new Date(e.event_date) > new Date(),
@@ -585,7 +585,7 @@ function loadPlayerOverview() {
 
     const eventsLabel = byId("playerEvents")?.nextElementSibling;
     if (eventsLabel) eventsLabel.textContent = "Upcoming Events";
-    updateText("playerEvents", upcomingCount);
+    updateText("playerEvents", upcomingCount || 0);
 
     const attendanceLabel = byId("playerAttendance")?.nextElementSibling;
     if (attendanceLabel) attendanceLabel.textContent = "Attendance";
@@ -748,41 +748,37 @@ function loadPerformanceSummary() {
 
   // If we have real performance data (from coach records), use that.
   // Otherwise fall back to booking counts if matchesPlayed is 0 (legacy support)
-
   let matches = perf.matchesPlayed;
-  // Fallback logic
-  if (matches === 0 && (PlayerDashboardState.bookings || []).length > 0) {
+  // Use real match count from performance object or fallback to booking records
+  if (matches === 0) {
     matches = (PlayerDashboardState.bookings || []).filter(
       (b) => b.event_type === "match",
     ).length;
   }
 
-  // Update DOM elements using existing IDs or new ones we might need to add to HTML
-  // For now, repurposing existing slots where possible
-
   updateText("playerMatchesPlayed", matches);
+
+  // Use real average rating or 0.0
   updateText(
     "playerAverageRating",
     perf.averageRating || stats.averageRating || "0.0",
   );
 
-  // We might want to show Goals/Assists instead of "Training Sessions" if available
-  // Checking if elements exist for goals/assists, if not, hijack the training one or add dynamic injection
-
+  // Handle Goals/Training Sessions
   const trainingEl = byId("playerTrainingSessions");
-  if (trainingEl && perf.goals > 0) {
-    // Hijack "Training Sessions" slot for "Goals" if we have goals
-    const label = trainingEl.previousElementSibling;
-    if (label) label.textContent = "Goals Scored";
-    trainingEl.textContent = perf.goals;
-  } else if (trainingEl) {
-    // Default behavior
-    const trainings = (PlayerDashboardState.bookings || []).filter(
-      (b) => b.event_type === "training",
-    ).length;
-    const label = trainingEl.previousElementSibling;
-    if (label) label.textContent = "Training Sessions"; // Reset label in case it was changed
-    trainingEl.textContent = trainings;
+  if (trainingEl) {
+    const label = trainingEl.nextElementSibling;
+    if (perf.goals > 0) {
+      if (label) label.textContent = "Goals Scored";
+      trainingEl.textContent = perf.goals;
+    } else {
+      // Default: Show Training Sessions count
+      const trainings = (PlayerDashboardState.bookings || []).filter(
+        (b) => b.event_type === "training",
+      ).length;
+      if (label) label.textContent = "Training Sessions";
+      trainingEl.textContent = trainings || 0;
+    }
   }
 
   updateText(
