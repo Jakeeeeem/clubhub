@@ -73,7 +73,7 @@
         </button>
 
         <!-- Career Group -->
-        <div class="nav-dropdown-container">
+        <div class="nav-dropdown-container" id="nav-group-career">
           <button class="nav-item dropdown-trigger">
             🏅 My Career ▾
           </button>
@@ -86,7 +86,7 @@
         </div>
 
         <!-- Family & Profile -->
-        <div class="nav-dropdown-container">
+        <div class="nav-dropdown-container" id="nav-group-family">
           <button class="nav-item dropdown-trigger">
             👥 Profile & Family ▾
           </button>
@@ -101,7 +101,7 @@
         </div>
 
         <!-- Finance & Shop -->
-        <div class="nav-dropdown-container">
+        <div class="nav-dropdown-container" id="nav-group-finance">
           <button class="nav-item dropdown-trigger">
             💳 Shop & Finance ▾
           </button>
@@ -115,7 +115,7 @@
         </div>
 
         <!-- Discovery -->
-        <div class="nav-dropdown-container">
+        <div class="nav-dropdown-container" id="nav-group-discover">
           <button class="nav-item dropdown-trigger">
             🌍 Discover ▾
           </button>
@@ -1032,13 +1032,13 @@
             position: 'bottom'
           },
           {
-            target: 'button[onclick*="family"]',
+            target: '#nav-group-family',
             title: 'Add Family Members',
             text: 'Want to add your children? Go to the Family section here to create and manage their profiles.',
             position: 'bottom'
           },
           {
-            target: '.dashboard-nav-grouped',
+            target: '#nav-group-discover',
             title: 'Explore Tools',
             text: 'Discover clubs, book venues, manage tournaments, and track your career history right here.',
             position: 'bottom'

@@ -48,9 +48,20 @@ class TourService {
    * @param {Array} steps - Array of step objects { target, title, text, position }
    */
   start(tourId, steps) {
-    // Check if already completed
+    // 1. Check database-synced state first (highest priority)
+    const dbCompletedTours =
+      window.AppState?.currentUser?.completed_tours || [];
+    if (dbCompletedTours.includes(tourId)) {
+      console.log(`🚀 Tour ${tourId} already completed in DB. Skip.`);
+      return;
+    }
+
+    // 2. Fallback to localStorage (for guest/session consistency)
     if (localStorage.getItem(`tour_completed_${tourId}`)) {
-      console.log(`🚀 Tour ${tourId} already completed. Skip.`);
+      console.log(`🚀 Tour ${tourId} already completed in LocalStorage. Skip.`);
+
+      // Sync it to DB if AppState is available but doesn't have it
+      this.syncTourToDB(tourId);
       return;
     }
 
@@ -187,18 +198,45 @@ class TourService {
     }
   }
 
-  end(completed = false) {
-    if (completed && this.tourId) {
+  end(didComplete = true) {
+    if (didComplete && this.tourId) {
       localStorage.setItem(`tour_completed_${this.tourId}`, "true");
+      this.syncTourToDB(this.tourId);
     }
 
-    this.overlay.classList.remove("active");
-    this.card.classList.remove("active");
+    if (this.overlay) this.overlay.classList.remove("active");
+    if (this.card) this.card.classList.remove("active");
     this.currentStepIndex = -1;
 
     if (this.activeElement) {
       this.activeElement.classList.remove("tour-highlight");
       this.activeElement = null;
+    }
+  }
+
+  /**
+   * Proactively sync tour completion to the database
+   */
+  async syncTourToDB(tourId) {
+    try {
+      // Only sync if apiService is available and user is logged in
+      if (window.apiService && window.AppState?.isLoggedIn) {
+        await window.apiService.makeRequest("/auth/tours/complete", {
+          method: "POST",
+          body: JSON.stringify({ tourId }),
+        });
+        console.log(`✅ Tour ${tourId} synced to database.`);
+
+        // Update local app state to reflect DB change immediately
+        if (!window.AppState.currentUser.completed_tours) {
+          window.AppState.currentUser.completed_tours = [];
+        }
+        if (!window.AppState.currentUser.completed_tours.includes(tourId)) {
+          window.AppState.currentUser.completed_tours.push(tourId);
+        }
+      }
+    } catch (err) {
+      console.warn("⚠️ Failed to sync tour progress to DB:", err.message);
     }
   }
 }

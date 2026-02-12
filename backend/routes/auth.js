@@ -1055,7 +1055,7 @@ router.get("/context", authenticateToken, async (req, res) => {
     // Get user info and current org preference
     const userResult = await query(
       `
-      SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, up.current_organization_id
+      SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, u.completed_tours, up.current_organization_id
       FROM users u
       LEFT JOIN user_preferences up ON u.id = up.user_id
       WHERE u.id = $1
@@ -1714,6 +1714,38 @@ router.delete("/account", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Delete account error:", error);
     res.status(500).json({ error: "Failed to delete account" });
+  }
+});
+
+// Update completed tours
+router.post("/tours/complete", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { tourId } = req.body;
+
+    if (!tourId) {
+      return res.status(400).json({ error: "tourId is required" });
+    }
+
+    // Get current completed tours
+    const userResult = await query(
+      "SELECT completed_tours FROM users WHERE id = $1",
+      [userId],
+    );
+    const completedTours = userResult.rows[0].completed_tours || [];
+
+    if (!completedTours.includes(tourId)) {
+      completedTours.push(tourId);
+      await query("UPDATE users SET completed_tours = $1 WHERE id = $2", [
+        JSON.stringify(completedTours),
+        userId,
+      ]);
+    }
+
+    res.json({ success: true, completedTours });
+  } catch (error) {
+    console.error("Failed to update completed tours:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
