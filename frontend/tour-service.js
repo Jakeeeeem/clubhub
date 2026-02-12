@@ -56,12 +56,24 @@ class TourService {
       return;
     }
 
-    // 2. Fallback to localStorage (for guest/session consistency)
-    if (localStorage.getItem(`tour_completed_${tourId}`)) {
-      console.log(`🚀 Tour ${tourId} already completed in LocalStorage. Skip.`);
+    // 2. Fallback to localStorage (mostly for guest/session consistency)
+    // CRITICAL: For a logged-in user, if it's not in the DB, we want to show it even if LocalStorage has it
+    // (This handles the "new account on same browser" issue)
+    const isLoggedIn =
+      window.AppState?.isLoggedIn || localStorage.getItem("authToken");
+    const hasLocalFlag = localStorage.getItem(`tour_completed_${tourId}`);
 
-      // Sync it to DB if AppState is available but doesn't have it
-      this.syncTourToDB(tourId);
+    if (hasLocalFlag && !isLoggedIn) {
+      console.log(
+        `🚀 Tour ${tourId} already completed in LocalStorage (Guest). Skip.`,
+      );
+      return;
+    }
+
+    if (hasLocalFlag && isLoggedIn && dbCompletedTours.includes(tourId)) {
+      console.log(
+        `🚀 Tour ${tourId} already completed in DB and LocalStorage. Skip.`,
+      );
       return;
     }
 

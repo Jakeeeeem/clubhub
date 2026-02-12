@@ -960,34 +960,19 @@
             console.log('Before role change:', AppState.currentUser.role);
             console.log('User type:', AppState.userType);
 
-            // Force AppState to non-player so we redirect out of player dashboard
-            if (AppState.currentUser.role === 'player') {
-              if (AppState.userType === 'coach') {
-                AppState.currentUser.role = 'coach';
-              } else if (AppState.userType === 'organization' || AppState.userType === 'admin') {
-                AppState.currentUser.role = 'admin';
-              } else if (AppState.currentUser.is_platform_admin) {
-                AppState.currentUser.role = 'superadmin';
-              } else {
-                // Fallback to admin if we can't determine, or stay player if it's a pure player account (shouldn't happen with the toggle visible)
-                AppState.currentUser.role = 'admin';
-              }
-            } else if (!AppState.currentUser.role) {
-              // Default fallback for org accounts
-              if (AppState.userType === 'organization') AppState.currentUser.role = 'admin';
-              if (AppState.userType === 'coach') AppState.currentUser.role = 'coach';
+            // CRITICAL: Force the role change for this transition
+            if (AppState.currentUser.role === 'player' || !AppState.currentUser.role) {
+              AppState.currentUser.role = 'admin';
             }
-
-            console.log('After role change:', AppState.currentUser.role);
 
             // CRITICAL: Persist to localStorage
             localStorage.setItem('currentUser', JSON.stringify(AppState.currentUser));
 
+            console.log('Final role for redirect:', AppState.currentUser.role);
+
             if (typeof redirectToDashboard === 'function') {
-              console.log('Calling redirectToDashboard()...');
               redirectToDashboard();
             } else {
-              console.log('redirectToDashboard not found, using direct navigation');
               window.location.href = 'admin-dashboard.html';
             }
           }
@@ -1048,9 +1033,13 @@
     });
 
     function logout() {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('currentUser');
-      window.location.href = 'index.html';
+      if (typeof window.logout === 'function') {
+        window.logout();
+      } else {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+      }
     }
   </script>
 

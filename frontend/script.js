@@ -11,6 +11,7 @@ const AppState = {
   teams: [],
   notifications: [],
   isLoading: false,
+  isLoggedIn: false,
 };
 
 // Wait for all scripts to load before initializing
@@ -177,6 +178,7 @@ async function checkAuthState() {
 
       AppState.currentUser = user;
       AppState.userType = user.account_type;
+      AppState.isLoggedIn = true;
 
       // Update localStorage with fresh data
       localStorage.setItem("currentUser", JSON.stringify(user));
@@ -214,6 +216,7 @@ function checkAuthStateWithoutAPI() {
       AppState.currentUser = user;
       AppState.userType =
         storedUserType || user.account_type || user.userType || "organization";
+      AppState.isLoggedIn = true;
 
       // Sync it back if missing
       if (!storedUserType) {
