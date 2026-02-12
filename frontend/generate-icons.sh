@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# PWA Icon Generator Script
+# This script will help you create PWA icons from your logo
+
+echo "📱 ClubHub PWA Icon Generator"
+echo "================================"
+echo ""
+echo "To create PWA icons, you have two options:"
+echo ""
+echo "Option 1: Online Tool (Recommended)"
+echo "  1. Visit: https://www.pwabuilder.com/imageGenerator"
+echo "  2. Upload: frontend/images/logo.png"
+echo "  3. Download the generated icons"
+echo "  4. Place them in: frontend/images/"
+echo "     - icon-192.png (192x192)"
+echo "     - icon-512.png (512x512)"
+echo ""
+echo "Option 2: Using ImageMagick (if installed)"
+echo "  Run these commands:"
+echo "  convert frontend/images/logo.png -resize 192x192 frontend/images/icon-192.png"
+echo "  convert frontend/images/logo.png -resize 512x512 frontend/images/icon-512.png"
+echo ""
+echo "Option 3: Manual Creation"
+echo "  1. Open frontend/images/logo.png in an image editor"
+echo "  2. Resize to 192x192px and save as icon-192.png"
+echo "  3. Resize to 512x512px and save as icon-512.png"
+echo "  4. Ensure both have transparent or white backgrounds"
+echo ""
+echo "✅ Once icons are created, your PWA will be ready to install!"

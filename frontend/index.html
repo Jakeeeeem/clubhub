@@ -5,6 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClubHub - Sports Club Management Platform</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Complete sports club management platform for leagues, clubs, venues, and players">
+    <meta name="theme-color" content="#dc4343">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ClubHub">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -16,6 +32,11 @@
                 <span class="logo-text">ClubHub</span>
             </div>
             <div class="nav-buttons" id="loggedOutNav">
+                <button class="btn btn-secondary btn-small pwa-install-btn" onclick="installPWA()"
+                    style="display: none; gap: 0.5rem;">
+                    <img src="images/logo.png" alt="Install" style="width: 18px; height: 18px;">
+                    <span class="pwa-install-text">Install App</span>
+                </button>
                 <button class="btn btn-secondary" onclick="showModal('loginModal')">Login</button>
                 <button class="btn btn-primary" onclick="showSignupOptions()">Sign Up</button>
             </div>
@@ -774,6 +795,9 @@
     <script src="api-service.js" onerror="console.log('API service not found')"></script>
     <script src="dialog-service.js"></script>
     <script src="enhanced-login-handler.js" onerror="console.log('Enhanced login handler not found')"></script>
+
+    <!-- PWA Install Handler -->
+    <script src="pwa-install.js"></script>
 </body>
 
 </html>
