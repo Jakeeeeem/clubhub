@@ -1,7 +1,7 @@
 {
-  "name": "ClubHub - Sports Club Management",
+  "name": "ClubHub",
   "short_name": "ClubHub",
-  "description": "Complete sports club management platform for leagues, clubs, venues, and players",
+  "description": "Sports club management platform",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0d0d0d",
@@ -27,19 +27,5 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["sports", "productivity", "business"],
-  "screenshots": [
-    {
-      "src": "images/screenshot-mobile.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "images/screenshot-desktop.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ]
+  "categories": ["sports", "productivity"]
 }
