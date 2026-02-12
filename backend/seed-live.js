@@ -526,7 +526,7 @@ async function seedLive() {
     // Child 1: Leo (In Elite Pro Academy)
     const leoPlayer = await client.query(
       `INSERT INTO players (user_id, club_id, first_name, last_name, email, position, attendance_rate, payment_status, date_of_birth)
-       VALUES ($1, $2, 'Leo', 'Admin', 'leo@demo.com', 'Forward', 92, 'paid', '2012-05-15') RETURNING id`,
+       VALUES ($1, $2, 'Leo', 'Admin', 'leo@demo.com', 'Forward', 0, 'paid', '2012-05-15') RETURNING id`,
       [ownerId, orgA],
     );
     await client.query(
@@ -538,7 +538,7 @@ async function seedLive() {
     // Child 2: Mia (In Sunday League FC)
     const miaPlayer = await client.query(
       `INSERT INTO players (user_id, club_id, first_name, last_name, email, position, attendance_rate, payment_status, date_of_birth)
-       VALUES ($1, $2, 'Mia', 'Admin', 'mia@demo.com', 'Midfielder', 85, 'paid', '2014-08-20') RETURNING id`,
+       VALUES ($1, $2, 'Mia', 'Admin', 'mia@demo.com', 'Midfielder', 0, 'paid', '2014-08-20') RETURNING id`,
       [ownerId, orgB],
     );
     await client.query(

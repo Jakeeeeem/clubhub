@@ -385,9 +385,13 @@ router.get("/player", authenticateToken, async (req, res) => {
       clubIds = userClubs.rows.map((r) => r.club_id).filter((id) => id);
     }
 
-    let attendance = null;
+    let attendance = 0;
     if (player) {
-      attendance = player.attendance_rate;
+      // Force mock defaults (85, 88, 92, 95) to 0 as per user request
+      const mockValues = [85, 88, 92, 95];
+      attendance = mockValues.includes(player.attendance_rate)
+        ? 0
+        : player.attendance_rate || 0;
       console.log("attendance is:", attendance);
     }
 

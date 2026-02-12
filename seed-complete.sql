@@ -106,16 +106,16 @@ UPDATE teams SET coach_id = (SELECT id FROM staff WHERE email = 'peter.r@academy
 
 -- Owner's children
 INSERT INTO players (first_name, last_name, date_of_birth, position, user_id, club_id, sport, gender, location, payment_status, monthly_fee, attendance_rate)
-SELECT 'Oliver', 'Smith', '2012-03-15', 'Forward', u.id, c.id, 'Football', 'Male', 'London, UK', 'paid', 50.00, 95
+SELECT 'Oliver', 'Smith', '2012-03-15', 'Forward', u.id, c.id, 'Football', 'Male', 'London, UK', 'paid', 50.00, 0
 FROM users u, clubs c WHERE u.email = 'owner@demo.com' AND c.name = 'Elite Youth Academy';
 
 INSERT INTO players (first_name, last_name, date_of_birth, position, user_id, club_id, sport, gender, location, payment_status, monthly_fee, attendance_rate)
-SELECT 'Emma', 'Smith', '2014-07-22', 'Midfielder', u.id, c.id, 'Football', 'Female', 'London, UK', 'pending', 50.00, 88
+SELECT 'Emma', 'Smith', '2014-07-22', 'Midfielder', u.id, c.id, 'Football', 'Female', 'London, UK', 'pending', 50.00, 0
 FROM users u, clubs c WHERE u.email = 'owner@demo.com' AND c.name = 'Elite Youth Academy';
 
 -- Invited player's child
 INSERT INTO players (first_name, last_name, date_of_birth, position, user_id, club_id, sport, gender, location, payment_status, monthly_fee, attendance_rate)
-SELECT 'Noah', 'Brown', '2010-11-08', 'Defender', u.id, c.id, 'Football', 'Male', 'London, UK', 'paid', 50.00, 92
+SELECT 'Noah', 'Brown', '2010-11-08', 'Defender', u.id, c.id, 'Football', 'Male', 'London, UK', 'paid', 50.00, 0
 FROM users u, clubs c WHERE u.email = 'player@demo.com' AND c.name = 'Elite Youth Academy';
 
 -- DUMMY PLAYERS (Parent 1's kids)
@@ -129,7 +129,7 @@ FROM users u, clubs c WHERE u.email = 'parent1@demo.com' AND c.name = 'Elite You
 
 -- Parent 2's kids
 INSERT INTO players (first_name, last_name, date_of_birth, position, user_id, club_id, sport, gender, location, payment_status, monthly_fee, attendance_rate)
-SELECT 'Jack', 'Davis', '2013-09-08', 'Forward', u.id, c.id, 'Football', 'Male', 'London, UK', 'pending', 50.00, 85
+SELECT 'Jack', 'Davis', '2013-09-08', 'Forward', u.id, c.id, 'Football', 'Male', 'London, UK', 'pending', 50.00, 0
 FROM users u, clubs c WHERE u.email = 'parent2@demo.com' AND c.name = 'Elite Youth Academy';
 
 INSERT INTO players (first_name, last_name, date_of_birth, position, user_id, club_id, sport, gender, location, payment_status, monthly_fee, attendance_rate)
