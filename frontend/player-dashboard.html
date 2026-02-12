@@ -761,31 +761,16 @@
       </div>
       <form id="addChildForm">
         <div class="form-group">
-          <label>First Name</label>
+          <label>First Name *</label>
           <input type="text" name="firstName" required placeholder="e.g. Tom">
         </div>
         <div class="form-group">
-          <label>Last Name</label>
+          <label>Last Name *</label>
           <input type="text" name="lastName" required placeholder="e.g. Smith">
         </div>
         <div class="form-group">
-          <label>Date of Birth</label>
+          <label>Date of Birth *</label>
           <input type="date" name="dateOfBirth" required>
-        </div>
-        <div class="form-group">
-          <label>Sport</label>
-          <select name="sport" required onchange="handleSportChange(this.value)">
-            <option value="Football">Football</option>
-            <option value="Basketball">Basketball</option>
-            <option value="Tennis">Tennis</option>
-            <option value="Rugby">Rugby</option>
-            <option value="Cricket">Cricket</option>
-            <option value="Athletics">Athletics</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div id="dynamicSportFields" style="margin-top: 1rem;">
-          <!-- Dynamic fields like Position, Batting Style, etc. -->
         </div>
         <div class="form-group">
           <label>Gender</label>
@@ -797,6 +782,22 @@
           </select>
         </div>
         <div class="form-group">
+          <label>Sport</label>
+          <select name="sport" required onchange="handleSportChange(this.value)">
+            <option value="">Select Sport...</option>
+            <option value="Football">Football</option>
+            <option value="Basketball">Basketball</option>
+            <option value="Tennis">Tennis</option>
+            <option value="Rugby">Rugby</option>
+            <option value="Cricket">Cricket</option>
+            <option value="Athletics">Athletics</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div id="dynamicSportFields">
+          <!-- Dynamic fields like Position, Batting Style, etc. -->
+        </div>
+        <div class="form-group">
           <label>Location (City/Area)</label>
           <input type="text" name="location" placeholder="e.g. London">
         </div>
@@ -805,7 +806,11 @@
           <textarea name="bio" placeholder="Brief player summary..." rows="3"
             style="width: 100%; border-radius: 8px; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;"></textarea>
         </div>
-        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">Create Profile</button>
+        <div class="modal-footer" style="display: flex; gap: 1rem; margin-top: 2rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeAddChildModal()"
+            style="flex: 1;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="flex: 1;">Add Child</button>
+        </div>
       </form>
     </div>
   </div>
@@ -920,13 +925,32 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const toggle = document.getElementById('mode-toggle');
-      if (toggle) {
-        // Player dashboard should have toggle initially checked (Player mode)
+      const clubLabel = document.getElementById('club-label');
+      const playerLabel = document.getElementById('player-label');
+
+      function syncToggleState() {
+        if (!toggle) return;
+        // Player dashboard should ALWAYS have toggle checked (Player mode)
         toggle.checked = true;
+        if (clubLabel) clubLabel.classList.remove('active');
+        if (playerLabel) playerLabel.classList.add('active');
+      }
+
+      if (toggle) {
+        syncToggleState();
+
+        // Listen for pageshow to fix back-button state
+        window.addEventListener('pageshow', (event) => {
+          syncToggleState();
+        });
 
         toggle.addEventListener('change', (e) => {
           if (!e.target.checked) {
             console.log('🔄 Player → Club toggle activated');
+
+            // Update labels visually before redirect
+            if (clubLabel) clubLabel.classList.add('active');
+            if (playerLabel) playerLabel.classList.remove('active');
 
             // Ensure AppState exists
             if (!window.AppState) {
@@ -939,14 +963,12 @@
               if (storedUser) {
                 try {
                   AppState.currentUser = JSON.parse(storedUser);
-                  console.log('✅ Loaded user from localStorage:', AppState.currentUser.email);
                 } catch (e) {
                   console.error('❌ Failed to parse user from localStorage');
-                  return; // Don't proceed if we can't load user
+                  return;
                 }
               } else {
-                console.error('❌ No user data in localStorage');
-                return; // Don't proceed if there's no user
+                return;
               }
             }
 
@@ -957,18 +979,9 @@
                 'organization';
             }
 
-            console.log('Before role change:', AppState.currentUser.role);
-            console.log('User type:', AppState.userType);
-
-            // CRITICAL: Force the role change for this transition
-            if (AppState.currentUser.role === 'player' || !AppState.currentUser.role) {
-              AppState.currentUser.role = 'admin';
-            }
-
-            // CRITICAL: Persist to localStorage
+            // Force role to admin/owner for the transition
+            AppState.currentUser.role = 'admin';
             localStorage.setItem('currentUser', JSON.stringify(AppState.currentUser));
-
-            console.log('Final role for redirect:', AppState.currentUser.role);
 
             if (typeof redirectToDashboard === 'function') {
               redirectToDashboard();

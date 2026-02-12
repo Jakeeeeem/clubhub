@@ -259,10 +259,32 @@
         // Mode Toggle Handler
         document.addEventListener('DOMContentLoaded', () => {
             const toggle = document.getElementById('mode-toggle');
+            const clubLabel = document.getElementById('club-label');
+            const playerLabel = document.getElementById('player-label');
+
+            function syncToggleState() {
+                if (!toggle) return;
+                // Coach dashboard is part of "Club" side, so it should be unchecked
+                toggle.checked = false;
+                if (clubLabel) clubLabel.classList.add('active');
+                if (playerLabel) playerLabel.classList.remove('active');
+            }
+
             if (toggle) {
+                syncToggleState();
+
+                // Fix for back-button
+                window.addEventListener('pageshow', (event) => {
+                    syncToggleState();
+                });
+
                 toggle.addEventListener('change', (e) => {
                     if (e.target.checked) {
                         console.log('🔄 Coach → Player toggle activated');
+
+                        // Update labels visually before redirect
+                        if (clubLabel) clubLabel.classList.remove('active');
+                        if (playerLabel) playerLabel.classList.add('active');
 
                         // Ensure AppState exists
                         if (!window.AppState) {
@@ -275,14 +297,12 @@
                             if (storedUser) {
                                 try {
                                     AppState.currentUser = JSON.parse(storedUser);
-                                    console.log('✅ Loaded user from localStorage:', AppState.currentUser.email);
                                 } catch (e) {
                                     console.error('❌ Failed to parse user from localStorage');
-                                    return; // Don't proceed if we can't load user
+                                    return;
                                 }
                             } else {
-                                console.error('❌ No user data in localStorage');
-                                return; // Don't proceed if there's no user
+                                return;
                             }
                         }
 
@@ -293,22 +313,13 @@
                                 'organization';
                         }
 
-                        console.log('Before role change:', AppState.currentUser.role);
-                        console.log('User type:', AppState.userType);
-
                         // Switch to Player mode
                         AppState.currentUser.role = 'player';
-                        console.log('After role change:', AppState.currentUser.role);
-
-                        // CRITICAL: Persist to localStorage
                         localStorage.setItem('currentUser', JSON.stringify(AppState.currentUser));
 
-                        // Redirect will happen immediately, no need to restore role
                         if (typeof redirectToDashboard === 'function') {
-                            console.log('Calling redirectToDashboard()...');
                             redirectToDashboard();
                         } else {
-                            console.log('redirectToDashboard not found, using direct navigation');
                             window.location.href = 'player-dashboard.html';
                         }
                     }
