@@ -63,17 +63,10 @@ class TourService {
       window.AppState?.isLoggedIn || localStorage.getItem("authToken");
     const hasLocalFlag = localStorage.getItem(`tour_completed_${tourId}`);
 
-    if (hasLocalFlag && !isLoggedIn) {
-      console.log(
-        `🚀 Tour ${tourId} already completed in LocalStorage (Guest). Skip.`,
-      );
-      return;
-    }
-
-    if (hasLocalFlag && isLoggedIn && dbCompletedTours.includes(tourId)) {
-      console.log(
-        `🚀 Tour ${tourId} already completed in DB and LocalStorage. Skip.`,
-      );
+    // If it's in localStorage, we generally want to skip it to avoid annoying the user
+    // even if it hasn't synced to the DB yet for this specific session
+    if (hasLocalFlag) {
+      console.log(`🚀 Tour ${tourId} completed in LocalStorage. Skip.`);
       return;
     }
 

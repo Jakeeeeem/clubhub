@@ -183,7 +183,7 @@ router.post("/register", registerValidation, async (req, res) => {
           payment_reminders_enabled, receipt_emails_enabled
         )
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-        RETURNING id, email, first_name, last_name, account_type, org_types, phone, date_of_birth, created_at
+        RETURNING id, email, first_name, last_name, account_type, org_types, phone, date_of_birth, created_at, completed_tours
       `,
         [
           email,
@@ -314,6 +314,7 @@ router.post("/register", registerValidation, async (req, res) => {
         org_types: result.org_types,
         phone: result.phone,
         date_of_birth: result.date_of_birth,
+        completed_tours: result.completed_tours || [],
         organization: result.club || null,
         club: result.club || null,
       },
@@ -634,6 +635,7 @@ router.post(
               userType: user.account_type,
               account_type: user.account_type, // For dashboard compatibility
               isPlatformAdmin: user.is_platform_admin || false,
+              completed_tours: user.completed_tours || [],
             },
           });
         }
@@ -690,6 +692,7 @@ router.post(
           lastName: user.last_name,
           userType: user.account_type,
           isPlatformAdmin: user.is_platform_admin || false,
+          completed_tours: user.completed_tours || [],
         },
       });
     } catch (error) {
@@ -793,14 +796,25 @@ router.get("/me", async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const result = await query(
-      "SELECT id, email, first_name, last_name, account_type FROM users WHERE id = $1",
-      [decoded.id],
-    );
-    if (result.rows.length === 0)
-      return res.status(404).json({ error: "User not found" });
-
-    const u = result.rows[0];
+    let u;
+    try {
+      const userRes = await query(
+        "SELECT id, email, first_name, last_name, account_type, completed_tours FROM users WHERE id = $1",
+        [decoded.id],
+      );
+      if (userRes.rows.length === 0)
+        return res.status(404).json({ error: "User not found" });
+      u = userRes.rows[0];
+    } catch (dbErr) {
+      const userRes = await query(
+        "SELECT id, email, first_name, last_name, account_type FROM users WHERE id = $1",
+        [decoded.id],
+      );
+      if (userRes.rows.length === 0)
+        return res.status(404).json({ error: "User not found" });
+      u = userRes.rows[0];
+      u.completed_tours = [];
+    }
     return res.json({
       id: u.id,
       email: u.email,
@@ -808,6 +822,7 @@ router.get("/me", async (req, res) => {
       lastName: u.last_name,
       userType: u.account_type,
       account_type: u.account_type, // For dashboard compatibility
+      completed_tours: u.completed_tours || [],
     });
   } catch (err) {
     console.error("Get current user error:", err);
@@ -1232,6 +1247,7 @@ router.get("/context", authenticateToken, async (req, res) => {
         lastName: user.last_name,
         userType: user.account_type,
         isPlatformAdmin: user.is_platform_admin || false,
+        completed_tours: user.completed_tours || [],
       },
       currentOrganization: currentOrg,
       organizations: organizations,
