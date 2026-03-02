@@ -7,7 +7,7 @@
     <title>Admin Dashboard - ClubHub</title>
 
     <!-- PWA Meta Tags -->
-    <meta name="description" content="Manage your sports club with comprehensive admin tools">
+    <meta name="description" content="Manage your sports group with comprehensive admin tools">
     <meta name="theme-color" content="#dc4343">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="/images/logo.png">
 
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="org-switcher.css">
+    <link rel="stylesheet" href="group-switcher.css">
     <style>
         /* CRITICAL: Dashboard section visibility - inline to bypass caching */
         .dashboard-section {
@@ -160,7 +160,7 @@
 
             <!-- Mode Toggle -->
             <div class="mode-toggle-container">
-                <span class="mode-label active" id="club-label">Club</span>
+                <span class="mode-label active" id="group-label">Group</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="mode-toggle" />
                     <span class="toggle-slider"></span>
@@ -170,8 +170,8 @@
 
             <!-- Mode Toggle -->
             <div class="user-info">
-                <!-- Organization Switcher -->
-                <div id="org-switcher-container"></div>
+                <!-- Group Switcher -->
+                <div id="group-switcher-container"></div>
 
                 <span id="adminNameDisplay">Hello, Admin!</span>
                 <div class="user-avatar" id="adminAvatar">A</div>
@@ -179,14 +179,25 @@
             </div>
         </nav>
     </header>
+    <!-- App Top Tabs (Mobile Headlines) -->
+    <div class="app-top-tabs mobile-only" id="mobileTabs">
+        <a href="#" class="tab-item active" onclick="showSection('overview'); return false;">Overview</a>
+        <a href="#" class="tab-item" onclick="showSection('players'); return false;">Players</a>
+        <a href="#" class="tab-item" onclick="showSection('teams'); return false;">Teams</a>
+        <a href="#" class="tab-item" onclick="showSection('staff'); return false;">Staff</a>
+        <a href="#" class="tab-item" onclick="showSection('events'); return false;">Events</a>
+        <a href="#" class="tab-item" onclick="showSection('finances'); return false;">Finance</a>
+        <a href="#" class="tab-item" onclick="showSection('listings'); return false;">Listings</a>
+        <a href="#" class="tab-item" onclick="showSection('item-shop'); return false;">Shop</a>
+    </div>
 
     <main class="main">
         <div class="dashboard container dashboard-container">
-            <div class="dashboard-header"
+            <div class="dashboard-header glass-header"
                 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
                 <div>
-                    <h1 class="neon-text display-org-name">Admin Dashboard</h1>
-                    <p style="color: var(--text-muted);">Manage your organization with complete control and insights</p>
+                    <h1 class="neon-text display-group-name">Admin Dashboard</h1>
+                    <p style="color: var(--text-muted);">Manage your group with complete control and insights</p>
                 </div>
                 <div class="stripe-access" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <button id="stripeAccessBtn" class="btn btn-stripe" onclick="accessStripeAccount()">Access Stripe
@@ -214,7 +225,7 @@
                         <button onclick="showSection('staff')">👔 Staff</button>
                         <div class="dropdown-divider"></div>
                         <button onclick="showSection('talent-id')">🌟 Talent ID</button>
-                        <button onclick="showSection('club-profile')">🏢 Club Profile</button>
+                        <button onclick="showSection('group-profile')">🏢 Group Profile</button>
                         <button
                             onclick="localStorage.setItem('lastDashboard', 'admin-dashboard.html'); window.location.href='player-settings.html'">⚙️
                             Account Settings</button>
@@ -230,7 +241,8 @@
                         <button onclick="showSection('events')">📅 Events Calendar</button>
                         <button onclick="showSection('tournaments')">🏆 Tournaments</button>
                         <div class="dropdown-divider"></div>
-                        <button onclick="showSection('training-manager')">🎯 Training Manager</button>
+                        <button onclick="window.location.href='training-manager.html'">🎯 Training Manager</button>
+                        <button onclick="window.location.href='camp-manager.html'">🏕️ Camp Manager</button>
                         <button onclick="showSection('venue-booking')" class="closed-feature">🏟️ Venue Booking</button>
                         <button onclick="showSection('league-management')" class="closed-feature">🥇 Leagues</button>
                     </div>
@@ -243,7 +255,7 @@
                     </button>
                     <div class="nav-dropdown-menu">
                         <button onclick="showSection('finances')">💰 Financial Overview</button>
-                        <button onclick="showSection('shop')">🛒 Club Shop</button>
+                        <button onclick="showSection('shop')">🛒 Group Shop</button>
                     </div>
                 </div>
 
@@ -255,6 +267,7 @@
                     <div class="nav-dropdown-menu">
                         <button onclick="showSection('listings')">📋 Recruiting Listings</button>
                         <button onclick="showSection('marketing')">📢 Marketing Hub</button>
+                        <button onclick="window.location.href='scouting.html'">🔍 Scouting & Discovery</button>
                         <button onclick="showSection('polls-section')" class="closed-feature">🗳️ Polls &
                             Voting</button>
                         <div class="dropdown-divider"></div>
@@ -267,19 +280,19 @@
                 <!-- Overview Section -->
                 <div id="overview" class="dashboard-section active">
                     <div class="stats-grid">
-                        <div class="stat-card">
+                        <div class="stat-card card-elite">
                             <span class="stat-number" id="totalPlayers">0</span>
                             <span class="stat-label">Total Players</span>
                         </div>
-                        <div class="stat-card">
+                        <div class="stat-card card-elite">
                             <span class="stat-number" id="totalStaff">0</span>
                             <span class="stat-label">Staff Members</span>
                         </div>
-                        <div class="stat-card">
+                        <div class="stat-card card-elite">
                             <span class="stat-number" id="totalEvents">0</span>
                             <span class="stat-label">Active Events</span>
                         </div>
-                        <div class="stat-card">
+                        <div class="stat-card card-elite">
                             <span class="stat-number" id="totalRevenue">£0</span>
                             <span class="stat-label">Monthly Revenue</span>
                         </div>
@@ -302,29 +315,29 @@
                     </div>
                 </div>
 
-                <!-- Club Profile Section -->
-                <div id="club-profile" class="dashboard-section">
+                <!-- Group Profile Section -->
+                <div id="group-profile" class="dashboard-section">
                     <div class="card">
-                        <h3>🏢 Club Profile</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage your organization's information
+                        <h3>🏢 Group Profile</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 2rem;">Manage your group's information
                             and branding</p>
 
-                        <form id="clubProfileForm">
+                        <form id="groupProfileForm">
                             <div class="premium-form-grid">
                                 <!-- LEFT COLUMN: CORE INFO -->
                                 <div style="display: flex; flex-direction: column; gap: 1.5rem;">
                                     <div class="form-section-title" style="margin-top: 0;">📋 Basic Information</div>
 
                                     <div class="form-group">
-                                        <label for="clubName">🏢 Club Name *</label>
-                                        <input type="text" id="clubName" name="name" required
+                                        <label for="groupName">🏢 Group Name *</label>
+                                        <input type="text" id="groupName" name="name" required
                                             placeholder="Elite Pro Academy">
                                     </div>
 
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                         <div class="form-group">
-                                            <label for="clubSport">⚽ Sport</label>
-                                            <select id="clubSport" name="sport">
+                                            <label for="groupSport">⚽ Sport</label>
+                                            <select id="groupSport" name="sport">
                                                 <option value="">Select sport</option>
                                                 <option value="Football">Football</option>
                                                 <option value="Basketball">Basketball</option>
@@ -334,8 +347,8 @@
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <label for="clubEstablished">📅 Established</label>
-                                            <input type="text" id="clubEstablished" name="established"
+                                            <label for="groupEstablished">📅 Established</label>
+                                            <input type="text" id="groupEstablished" name="established"
                                                 placeholder="e.g. 1995" maxlength="4">
                                         </div>
                                     </div>
@@ -344,31 +357,31 @@
 
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                         <div class="form-group">
-                                            <label for="clubEmail">✉️ Club Email</label>
-                                            <input type="email" id="clubEmail" name="email"
-                                                placeholder="contact@club.com">
+                                            <label for="groupEmail">✉️ Group Email</label>
+                                            <input type="email" id="groupEmail" name="email"
+                                                placeholder="contact@group.com">
                                         </div>
                                         <div class="form-group">
-                                            <label for="clubPhone">📱 Club Phone</label>
-                                            <input type="tel" id="clubPhone" name="phone" placeholder="+44...">
+                                            <label for="groupPhone">📱 Group Phone</label>
+                                            <input type="tel" id="groupPhone" name="phone" placeholder="+44...">
                                         </div>
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="clubWebsite">🌐 Website</label>
-                                        <input type="url" id="clubWebsite" name="website"
-                                            placeholder="https://yourclub.com">
+                                        <label for="groupWebsite">🌐 Website</label>
+                                        <input type="url" id="groupWebsite" name="website"
+                                            placeholder="https://yourgroup.com">
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="clubLocation">📍 Town / City</label>
-                                        <input type="text" id="clubLocation" name="location"
+                                        <label for="groupLocation">📍 Town / City</label>
+                                        <input type="text" id="groupLocation" name="location"
                                             placeholder="e.g. London, UK">
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="clubAddress">🏠 Full Address</label>
-                                        <input type="text" id="clubAddress" name="address"
+                                        <label for="groupAddress">🏠 Full Address</label>
+                                        <input type="text" id="groupAddress" name="address"
                                             placeholder="123 Pitch Street">
                                     </div>
                                 </div>
@@ -378,45 +391,45 @@
                                     <div class="form-section-title" style="margin-top: 0;">✨ Branding Assets</div>
 
                                     <div class="branding-preview-box">
-                                        <label>Club Official Logo</label>
-                                        <img id="clubLogoPreview" src="images/placeholder-logo-profile.png"
+                                        <label>Group Official Logo</label>
+                                        <img id="groupLogoPreview" src="images/placeholder-logo-profile.png"
                                             onerror="this.src='images/placeholder-logo-profile.png'"
                                             style="width: 100%; height: auto; max-height: 250px; object-fit: contain; border-radius: 12px; border: 2px solid var(--border-color); background: rgba(0,0,0,0.2); padding: 1rem;">
                                         <div style="width: 100%;">
                                             <button type="button" class="btn btn-secondary w-100" style="width: 100%;"
-                                                onclick="document.getElementById('clubLogoInput').click()">
+                                                onclick="document.getElementById('groupLogoInput').click()">
                                                 Change Logo Image
                                             </button>
-                                            <input type="file" id="clubLogoInput" accept="image/*"
+                                            <input type="file" id="groupLogoInput" accept="image/*"
                                                 style="display: none;" onchange="handleLogoUpload(this)">
                                         </div>
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="clubDescription">📝 Club Description</label>
-                                        <textarea id="clubDescription" name="description" rows="4"
-                                            placeholder="Write a brief overview of your club..."></textarea>
+                                        <label for="groupDescription">📝 Group Description</label>
+                                        <textarea id="groupDescription" name="description" rows="4"
+                                            placeholder="Write a brief overview of your group..."></textarea>
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="clubPhilosophy">🎯 Club Philosophy</label>
-                                        <textarea id="clubPhilosophy" name="philosophy" rows="3"
+                                        <label for="groupPhilosophy">🎯 Group Philosophy</label>
+                                        <textarea id="groupPhilosophy" name="philosophy" rows="3"
                                             placeholder="Values, mission, and style of play..."></textarea>
                                     </div>
                                 </div>
 
                                 <!-- FULL WIDTH: GALLERY -->
                                 <div class="full-width">
-                                    <div class="form-section-title">🖼️ Club Gallery (Photos)</div>
-                                    <div class="upload-zone-premium" id="clubPicturesArea"
-                                        onclick="if(!event.target.closest('button')) document.getElementById('clubPictures').click()">
-                                        <input type="file" id="clubPictures" name="pictures" accept="image/*" multiple
+                                    <div class="form-section-title">🖼️ Group Gallery (Photos)</div>
+                                    <div class="upload-zone-premium" id="groupPicturesArea"
+                                        onclick="if(!event.target.closest('button')) document.getElementById('groupPictures').click()">
+                                        <input type="file" id="groupPictures" name="pictures" accept="image/*" multiple
                                             onchange="handlePictureUpload(this)" style="display: none;">
                                         <div class="upload-placeholder">
                                             <span class="icon">📸</span>
                                             <p
                                                 style="margin: 0; color: var(--text-main); font-size: 1.1rem; font-weight: 500;">
-                                                Drag and drop club photos or click to browse</p>
+                                                Drag and drop group photos or click to browse</p>
                                             <p
                                                 style="margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--text-muted);">
                                                 Max 5 high-quality images (PNG/JPG)</p>
@@ -431,8 +444,8 @@
                             <div class="form-actions"
                                 style="display: flex; gap: 1rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
                                 <button type="submit" class="btn btn-primary"
-                                    style="padding: 1rem 2.5rem; font-size: 1rem;">💾 Save Club Profile</button>
-                                <button type="button" class="btn btn-secondary" onclick="loadClubProfile()"
+                                    style="padding: 1rem 2.5rem; font-size: 1rem;">💾 Save Group Profile</button>
+                                <button type="button" class="btn btn-secondary" onclick="loadGroupProfile()"
                                     style="padding: 1rem 2rem;">🔄 Reset Changes</button>
                             </div>
                         </form>
@@ -949,6 +962,20 @@
                                             <!-- Populated via JS -->
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+                            <!-- Recent Results -->
+                            <div class="card"
+                                style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem;">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 700;">Recent Results</h4>
+                                    <span style="font-size: 0.75rem; opacity: 0.5;">Last 10 matches</span>
+                                </div>
+                                <div id="recentResultsContainer"
+                                    style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <p style="opacity:0.5; font-size: 0.85rem; text-align: center; padding: 2rem 0;">No
+                                        match results recorded yet.</p>
                                 </div>
                             </div>
                         </div>
@@ -1605,30 +1632,233 @@
 
     <!-- Add Player to Team Modal -->
     <div id="addPlayerToTeamModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0.5rem;">
                 <h2>👥 Add Player to Team</h2>
                 <button class="close" onclick="closeModal('addPlayerToTeamModal')">&times;</button>
             </div>
-            <form id="addPlayerToTeamForm">
-                <div class="form-group">
-                    <label for="playerSelect">Select Player from Organization</label>
-                    <select id="playerSelect" required>
-                        <option value="">Loading players...</option>
-                    </select>
+
+            <div class="modal-tabs"
+                style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding: 0 1rem;">
+                <button type="button" class="modal-tab-btn active" id="tab-existing-player"
+                    onclick="switchModalTab('existing', 'addPlayerToTeamModal')"
+                    style="background: none; border: none; color: var(--text-main); font-weight: 500; cursor: pointer; padding: 0.75rem 0.25rem; border-bottom: 2px solid var(--accent-color); transition: all 0.2s;">Existing
+                    Members</button>
+                <button type="button" class="modal-tab-btn" id="tab-new-player"
+                    onclick="switchModalTab('new', 'addPlayerToTeamModal')"
+                    style="background: none; border: none; color: var(--text-muted); font-weight: 500; cursor: pointer; padding: 0.75rem 0.25rem; transition: all 0.2s;">Invite
+                    New via Email</button>
+            </div>
+
+            <form id="addPlayerToTeamForm" onsubmit="handleAddPlayerToTeam(event)">
+                <!-- EXISTING PLAYER SECTION -->
+                <div id="existingPlayerSection" class="modal-tab-content-box">
+                    <div class="form-group">
+                        <label for="playerSelect">Select Player from Organization</label>
+                        <select id="playerSelect">
+                            <option value="">Loading players...</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="playerTeamPosition">Position (Optional)</label>
-                    <input type="text" id="playerTeamPosition" placeholder="e.g. striker, defender">
+
+                <!-- NEW PLAYER SECTION (HIDDEN BY DEFAULT) -->
+                <div id="newPlayerSection" class="modal-tab-content-box" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="playerInviteFirstName">First Name *</label>
+                            <input type="text" id="playerInviteFirstName" placeholder="Tommy">
+                        </div>
+                        <div class="form-group">
+                            <label for="playerInviteLastName">Last Name *</label>
+                            <input type="text" id="playerInviteLastName" placeholder="Admin">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="playerInviteEmail">Email Address *</label>
+                        <input type="email" id="playerInviteEmail" placeholder="player@example.com">
+                    </div>
+                    <div
+                        style="background: rgba(0, 246, 255, 0.05); border: 1px solid rgba(0, 246, 255, 0.2); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; display: flex; gap: 0.75rem;">
+                        <span style="font-size: 1.2rem;">✨</span>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+                            A secure invitation link will be sent to this email. The player will be automatically added
+                            to <strong><span id="targetTeamNameDisplay">this team</span></strong> roster upon joining.
+                        </p>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="playerJerseyNumber">Jersey Number (Optional)</label>
-                    <input type="number" id="playerJerseyNumber">
+
+                <!-- SHARED FIELDS -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="playerTeamPosition">Team Position (Optional)</label>
+                        <input type="text" id="playerTeamPosition" placeholder="e.g. Forward">
+                    </div>
+                    <div class="form-group">
+                        <label for="playerJerseyNumber">Jersey Number (Optional)</label>
+                        <input type="number" id="playerJerseyNumber" placeholder="10">
+                    </div>
                 </div>
-                <div class="form-actions">
+
+                <div class="form-actions"
+                    style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 1rem;">
                     <button type="button" class="btn btn-secondary"
                         onclick="closeModal('addPlayerToTeamModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">✅ Add to Team</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">✅ Add to
+                        Roster</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Availability Override Modal -->
+    <div id="availabilityOverrideModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; padding: 2rem;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                <h2 style="font-size: 1.25rem;">✍️ Force Status Update</h2>
+                <button class="close" onclick="closeModal('availabilityOverrideModal')">&times;</button>
+            </div>
+            <p id="overrideInfo" style="margin: 0.5rem 0 1.5rem 0; color: var(--text-muted); font-size: 0.85rem;"></p>
+
+            <form id="availabilityOverrideForm" onsubmit="handleAvailabilityOverride(event)">
+                <input type="hidden" id="overrideEventId">
+                <input type="hidden" id="overridePlayerId">
+                <input type="hidden" id="overrideStatusValue" required>
+
+                <div class="form-group">
+                    <label
+                        style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; margin-bottom: 0.75rem; display: block;">Select
+                        Availability</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <button type="button" class="btn btn-status-select" onclick="setOverrideStatus('going', this)"
+                            data-status="going">
+                            <span style="font-size: 1.1rem;">✅</span> Going
+                        </button>
+                        <button type="button" class="btn btn-status-select"
+                            onclick="setOverrideStatus('not_going', this)" data-status="not_going">
+                            <span style="font-size: 1.1rem;">❌</span> Not Going
+                        </button>
+                        <button type="button" class="btn btn-status-select" onclick="setOverrideStatus('maybe', this)"
+                            data-status="maybe">
+                            <span style="font-size: 1.1rem;">❓</span> Maybe
+                        </button>
+                        <button type="button" class="btn btn-status-select" onclick="setOverrideStatus('none', this)"
+                            data-status="none">
+                            <span style="font-size: 1.1rem;">⚪</span> No Response
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="overrideNotes"
+                        style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; margin-bottom: 0.5rem; display: block;">Admin
+                        Note (Optional)</label>
+                    <input type="text" id="overrideNotes" placeholder="e.g., Parent called in sick"
+                        style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 8px;">
+                </div>
+
+                <div class="form-actions" style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('availabilityOverrideModal')"
+                        style="flex: 1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1.5;">✅ Save Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Record Result Modal -->
+    <div id="recordResultModal" class="modal">
+        <div class="modal-content" style="max-width: 850px; padding: 2.5rem;">
+            <div class="modal-header" style="border-bottom: none; margin-bottom: 1.5rem;">
+                <h2>🏆 Match Report</h2>
+                <button class="close" onclick="closeModal('recordResultModal')">&times;</button>
+            </div>
+
+            <form id="recordResultForm" onsubmit="handleRecordMatchResult(event)">
+                <input type="hidden" id="resultEventId">
+                <input type="hidden" id="resultMatchId">
+
+                <!-- Score Board -->
+                <div
+                    style="background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%); padding: 2.5rem; border-radius: 20px; margin-bottom: 2rem; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 3.5rem;">
+                        <div style="text-align: center; flex: 1;">
+                            <label
+                                style="display: block; margin-bottom: 1rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">Home
+                                Team</label>
+                            <input type="number" id="homeScore" value="0" min="0" required
+                                style="width: 100px; height: 100px; font-size: 3.5rem; text-align: center; background: rgba(0,0,0,0.3); border-radius: 16px; border: 2px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 700;">
+                        </div>
+                        <div style="font-size: 2.5rem; font-weight: 900; opacity: 0.2;">VS</div>
+                        <div style="text-align: center; flex: 1;">
+                            <label
+                                style="display: block; margin-bottom: 1rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem;">Away
+                                Team</label>
+                            <input type="number" id="awayScore" value="0" min="0" required
+                                style="width: 100px; height: 100px; font-size: 3.5rem; text-align: center; background: rgba(0,0,0,0.3); border-radius: 16px; border: 2px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Space Grotesk', sans-serif; font-weight: 700;">
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 2rem; margin-top: 1.5rem;">
+                        <label class="radio-label"
+                            style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="matchResult" value="win" checked> Win
+                        </label>
+                        <label class="radio-label"
+                            style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="matchResult" value="loss"> Loss
+                        </label>
+                        <label class="radio-label"
+                            style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="matchResult" value="draw"> Draw
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="matchNotes" style="font-size: 0.9rem; font-weight: 600; opacity: 0.8;">Match Notes &
+                        Summary</label>
+                    <textarea id="matchNotes" rows="3" placeholder="Describe the key moments, opposition, etc..."
+                        style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem; color: #fff;"></textarea>
+                </div>
+
+                <!-- Player Stats Section -->
+                <div style="margin-top: 3rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.1rem; font-weight: 700;">🏃 Player Stats & Ratings</h3>
+                        <span style="font-size: 0.8rem; opacity: 0.5;">Rate players 1-10 and record goals/assists</span>
+                    </div>
+
+                    <div
+                        style="max-height: 450px; overflow-y: auto; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead
+                                style="background: rgba(255,255,255,0.03); position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <tr>
+                                    <th
+                                        style="padding: 1.25rem 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">
+                                        Player</th>
+                                    <th
+                                        style="padding: 1.25rem 1rem; text-align: center; width: 100px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">
+                                        Rating</th>
+                                    <th style="padding: 1.25rem 1rem; text-align: center; width: 70px;">⚽</th>
+                                    <th style="padding: 1.25rem 1rem; text-align: center; width: 70px;">🅰️</th>
+                                    <th style="padding: 1.25rem 1rem; text-align: center; width: 70px;">🟨</th>
+                                    <th style="padding: 1.25rem 1rem; text-align: center; width: 70px;">🟥</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matchPlayerStatsBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div
+                    style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: flex-end; gap: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('recordResultModal')"
+                        style="padding: 0.85rem 2rem;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.85rem 3rem;">✅ Save & Sync
+                        Records</button>
                 </div>
             </form>
         </div>
@@ -1882,46 +2112,125 @@
                             <option value="trial">Trial Session</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="eventLocation">Location</label>
-                        <input type="text" id="eventLocation" placeholder="Event venue">
+                    <label for="eventTeamSelect">Assign to Team</label>
+                    <select id="eventTeamSelect" onchange="loadPlayersForAssignment(this.value)">
+                        <option value="">-- All Club Members --</option>
+                    </select>
+                </div>
+                <div class="form-group" id="opponentContainer" style="display: none;">
+                    <label for="eventOpponent">Opponent</label>
+                    <input type="text" id="eventOpponent" placeholder="e.g., Riverside FC">
+                </div>
+                <div class="form-group">
+                    <label for="eventLocation">Location</label>
+                    <input type="text" id="eventLocation" placeholder="Event venue">
+                </div>
+                <div class="form-group">
+                    <label for="eventDate">Date *</label>
+                    <input type="date" id="eventDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventTime">Time *</label>
+                    <input type="time" id="eventTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="eventPrice">Price (£)</label>
+                    <input type="number" id="eventPrice" step="0.01" min="0" value="0">
+                    <small>Set to 0 for free events</small>
+                </div>
+                <div class="form-group">
+                    <label for="eventCapacity">Capacity</label>
+                    <input type="number" id="eventCapacity" min="1" placeholder="Unlimited">
+                </div>
+                <div class="form-group full-width">
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription" rows="3" placeholder="Event details and information..."></textarea>
+                </div>
+
+                <!-- RECURRENCE SECTION (Phase 1) -->
+                <div
+                    style="grid-column: 1 / -1; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; margin: 0.5rem 0; border: 1px dashed rgba(255,255,255,0.1);">
+                    <h4
+                        style="margin: 0 0 1rem 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">
+                        🔄 Recurrence & Settings</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="recurrencePattern">Pattern</label>
+                            <select id="recurrencePattern" onchange="toggleRecurrenceEnd(this.value)">
+                                <option value="none">One-time Event</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="recurrenceEndContainer" style="display: none;">
+                            <label for="recurrenceEndDate">Repeat Until</label>
+                            <input type="date" id="recurrenceEndDate">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="eventDate">Date *</label>
-                        <input type="date" id="eventDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventTime">Time *</label>
-                        <input type="time" id="eventTime" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventPrice">Price (£)</label>
-                        <input type="number" id="eventPrice" step="0.01" min="0" value="0">
-                        <small>Set to 0 for free events</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="eventCapacity">Capacity</label>
-                        <input type="number" id="eventCapacity" min="1" placeholder="Unlimited">
-                    </div>
-                    <div class="form-group full-width">
-                        <label for="eventDescription">Description</label>
-                        <textarea id="eventDescription" rows="3"
-                            placeholder="Event details and information..."></textarea>
-                    </div>
-                    <div class="form-group full-width">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="notifyPlayers" checked>
-                            <span>📨 Notify all members via email/app</span>
+
+                    <div style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                        <label class="checkbox-label"
+                            style="margin-bottom: 0.5rem; display: flex; align-items: center;">
+                            <input type="checkbox" id="requireDeclineReason">
+                            <span style="font-size: 0.85rem;">✍️ Require reason if player declines</span>
                         </label>
                     </div>
                 </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">📅 Create Event</button>
-                    <button type="button" class="btn btn-secondary"
-                        onclick="closeModal('addEventModal')">Cancel</button>
+
+                <!-- ASSIGNMENT SECTION (Phase 1) -->
+                <div style="grid-column: 1 / -1; margin-top: 0.5rem;" id="eventAssignmentSection">
+                    <label style="display: block; margin-bottom: 0.75rem; font-weight: 600;">👥 Assign
+                        Specific
+                        Players (Optional)</label>
+                    <div id="eventPlayerCheckboxes"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid var(--border-color);">
+                        <p
+                            style="opacity: 0.4; font-size: 0.8rem; grid-column: 1/-1; text-align: center; padding: 1rem;">
+                            Select a team first to see players...</p>
+                    </div>
+                    <small style="display: block; margin-top: 0.5rem; opacity: 0.6;">Leave empty to invite
+                        all team
+                        members.</small>
                 </div>
-            </form>
+
+                <!-- NOTIFICATIONS (Phase 1) -->
+                <div style="grid-column: 1 / -1; margin-top: 1rem;">
+                    <label style="display: block; margin-bottom: 0.75rem; font-weight: 600;">🔔 Notification
+                        Schedule</label>
+                    <div
+                        style="display: flex; gap: 1.5rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 10px;">
+                        <label class="checkbox-label" style="margin: 0;">
+                            <input type="checkbox" name="notifSchedule" value="7d"> <span>7 Days</span>
+                        </label>
+                        <label class="checkbox-label" style="margin: 0;">
+                            <input type="checkbox" name="notifSchedule" value="4d"> <span>4 Days</span>
+                        </label>
+                        <label class="checkbox-label" style="margin: 0;">
+                            <input type="checkbox" name="notifSchedule" value="2d" checked> <span>2
+                                Days</span>
+                        </label>
+                        <label class="checkbox-label" style="margin: 0;">
+                            <input type="checkbox" name="notifSchedule" value="1d" checked> <span>1
+                                Day</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="notifyPlayers" checked>
+                        <span style="font-weight: 600; color: var(--accent-color);">🚀 Send immediate
+                            announcement</span>
+                    </label>
+                </div>
         </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">📅 Create Event</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')">Cancel</button>
+        </div>
+        </form>
+    </div>
     </div>
 
 
@@ -2436,8 +2745,8 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const products = await apiService.getProducts(clubId);
+                const groupId = await getActiveGroupId();
+                const products = await apiService.getProducts(groupId);
 
                 if (!products || products.length === 0) {
                     container.innerHTML = `
@@ -2539,7 +2848,7 @@
                 price: parseFloat(document.getElementById('productPrice').value),
                 stock_quantity: document.getElementById('productStock').value ? parseInt(document.getElementById('productStock').value) : null,
                 description: document.getElementById('productDescription').value.trim(),
-                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id),
+                groupId: AppState.activeGroupId || (AppState.clubs?.[0]?.id),
                 custom_fields: customFields
             };
 
@@ -2618,8 +2927,8 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const campaigns = await apiService.getCampaigns(clubId);
+                const groupId = await getActiveGroupId();
+                const campaigns = await apiService.getCampaigns(groupId);
 
                 if (!campaigns || campaigns.length === 0) {
                     container.innerHTML = `
@@ -2698,7 +3007,7 @@
                 subject: document.getElementById('campaignSubject').value.trim(),
                 target_group: document.getElementById('campaignTarget').value,
                 content: document.getElementById('campaignMessage').value.trim(),
-                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+                groupId: AppState.activeGroupId || (AppState.clubs?.[0]?.id)
             };
 
             try {
@@ -2764,10 +3073,10 @@
 
             try {
                 // Determine active club ID from session/user if available
-                const activeClubId = user?.clubId || user?.currentOrganizationId || null;
-                console.log('📊 Fetching dashboard for Club ID:', activeClubId || 'All');
+                const activeGroupId = user?.groupId || user?.currentGroupId || null;
+                console.log('📊 Fetching dashboard for Club ID:', activeGroupId || 'All');
 
-                const dashboardData = await apiService.getAdminDashboardData(activeClubId);
+                const dashboardData = await apiService.getAdminDashboardData(activeGroupId);
 
                 if (dashboardData) {
                     AppState.clubs = dashboardData.clubs || [];
@@ -2776,13 +3085,13 @@
                     if (AppState.clubs.length === 0 && !user?.is_platform_admin) {
                         console.log('⚠️ No organizations found for user, redirecting...');
                         setTimeout(() => {
-                            window.location.href = 'create-organization.html';
+                            window.location.href = 'create-group.html';
                         }, 500);
                         return;
                     }
 
-                    // Priority: activeClubId from user > first club in list
-                    AppState.activeClubId = activeClubId || (AppState.clubs[0]?.id);
+                    // Priority: activeGroupId from user > first club in list
+                    AppState.activeGroupId = activeGroupId || (AppState.clubs[0]?.id);
 
                     AppState.players = dashboardData.players || [];
                     AppState.staff = dashboardData.staff || [];
@@ -2792,7 +3101,7 @@
                     updateDashboardStats(dashboardData.statistics);
 
                     // Initial Gallery Load
-                    const activeClub = AppState.clubs.find(c => c.id == AppState.activeClubId);
+                    const activeClub = AppState.clubs.find(c => c.id == AppState.activeGroupId);
                     if (activeClub && activeClub.images) {
                         displayClubImages(activeClub.images);
                     }
@@ -2971,9 +3280,9 @@
                 addPlayerToTeamForm.addEventListener('submit', handleAddPlayerToTeam);
             }
             // Club profile form
-            const clubProfileForm = document.getElementById('clubProfileForm');
-            if (clubProfileForm) {
-                clubProfileForm.addEventListener('submit', handleClubProfileUpdate);
+            const groupProfileForm = document.getElementById('groupProfileForm');
+            if (groupProfileForm) {
+                groupProfileForm.addEventListener('submit', handleClubProfileUpdate);
             }
 
             // Item Shop form
@@ -2988,7 +3297,7 @@
             }
 
             // Drag and Drop for Club Pictures
-            const dropArea = document.getElementById('clubPicturesArea');
+            const dropArea = document.getElementById('groupPicturesArea');
             if (dropArea) {
                 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                     dropArea.addEventListener(eventName, (e) => {
@@ -3400,8 +3709,8 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const plans = await apiService.listPaymentPlans(clubId);
+                const groupId = await getActiveGroupId();
+                const plans = await apiService.listPaymentPlans(groupId);
 
                 if (!plans || plans.length === 0) {
                     container.innerHTML = `
@@ -3480,11 +3789,11 @@
 
         async function loadFinances() {
             try {
-                const clubId = await getActiveClubId();
-                if (!clubId) return;
+                const groupId = await getActiveGroupId();
+                if (!groupId) return;
 
                 // Load payments for financial overview
-                const payments = await apiService.getPayments({ clubId });
+                const payments = await apiService.getPayments({ groupId });
 
                 // Calculate financial statistics
                 const monthlyRevenue = payments
@@ -3560,9 +3869,9 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const listings = await apiService.getListings(clubId);
-                const clubApplications = await apiService.getClubApplications(clubId);
+                const groupId = await getActiveGroupId();
+                const listings = await apiService.getListings(groupId);
+                const clubApplications = await apiService.getClubApplications(groupId);
 
                 AppState.listings = listings;
                 AppState.clubApplications = clubApplications;
@@ -3863,8 +4172,8 @@
 
         async function handleCreateListing(e) {
             if (e) e.preventDefault();
-            const clubId = await getActiveClubId();
-            if (!clubId) return showNotification('No club context found', 'error');
+            const groupId = await getActiveGroupId();
+            if (!groupId) return showNotification('No club context found', 'error');
 
             const payload = {
                 title: document.getElementById('listingTitle').value,
@@ -3873,7 +4182,7 @@
                 age_group: document.getElementById('listingAgeGroup').value,
                 description: document.getElementById('listingDescription').value,
                 requirements: document.getElementById('listingRequirements').value,
-                clubId: clubId
+                groupId: groupId
             };
 
             try {
@@ -3889,8 +4198,8 @@
             }
         }
 
-        async function getActiveClubId() {
-            if (AppState.activeClubId) return AppState.activeClubId;
+        async function getActiveGroupId() {
+            if (AppState.activeGroupId) return AppState.activeGroupId;
             if (AppState.clubs && AppState.clubs.length > 0) return AppState.clubs[0].id;
 
             // Fallback to checking apiService context directly or the global currentOrgId
@@ -3898,7 +4207,7 @@
                 if (typeof currentOrgId !== 'undefined' && currentOrgId) return currentOrgId;
                 const context = await apiService.getContext();
                 if (context.organization?.id) {
-                    AppState.activeClubId = context.organization.id;
+                    AppState.activeGroupId = context.organization.id;
                     return context.organization.id;
                 }
             } catch (e) {
@@ -4017,9 +4326,9 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
+                const groupId = await getActiveGroupId();
 
-                if (!clubId) {
+                if (!groupId) {
                     container.innerHTML = `
                         <div style="text-align: center; padding: 2rem; opacity: 0.8;">
                             <p>No club ID found. Please select a club first.</p>
@@ -4029,7 +4338,7 @@
                 }
 
                 // Use the consolidated getStaff method with demo fallback support
-                const staff = await apiService.getStaff(clubId);
+                const staff = await apiService.getStaff(groupId);
 
                 if (!staff || staff.length === 0) {
                     container.innerHTML = `
@@ -4128,13 +4437,13 @@
             container.innerHTML = '<option value="">Loading events...</option>';
 
             try {
-                const clubId = await getActiveClubId();
-                if (!clubId) {
+                const groupId = await getActiveGroupId();
+                if (!groupId) {
                     container.innerHTML = '<option value="">No club selected</option>';
                     return;
                 }
 
-                const events = await apiService.getEvents(clubId);
+                const events = await apiService.getEvents(groupId);
                 const talentEvents = events.filter(e => e.event_type === 'talent-id');
 
                 if (talentEvents.length === 0) {
@@ -4162,13 +4471,13 @@
             container.innerHTML = '<option value="">Loading tournaments...</option>';
 
             try {
-                const clubId = await getActiveClubId();
-                if (!clubId) {
+                const groupId = await getActiveGroupId();
+                if (!groupId) {
                     container.innerHTML = '<option value="">No club selected</option>';
                     return;
                 }
 
-                const events = await apiService.getEvents(clubId);
+                const events = await apiService.getEvents(groupId);
                 const tournaments = events.filter(e => e.event_type === 'tournament');
 
                 if (tournaments.length === 0) {
@@ -4196,9 +4505,9 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
+                const groupId = await getActiveGroupId();
 
-                if (!clubId) {
+                if (!groupId) {
                     container.innerHTML = `
                         <div style="text-align: center; padding: 2rem; opacity: 0.8;">
                             <p>No club ID found. Please select a club first.</p>
@@ -4209,7 +4518,7 @@
 
                 let applications;
                 try {
-                    applications = await apiService.makeRequest(`/clubs/${clubId}/applications`);
+                    applications = await apiService.makeRequest(`/clubs/${groupId}/applications`);
                 } catch (e) {
                     if (localStorage.getItem('isDemoSession') === 'true') {
                         applications = [
@@ -4357,8 +4666,8 @@
         async function viewApplicationDetails(applicationId) {
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const applications = await apiService.makeRequest(`/clubs/${clubId}/applications`);
+                const groupId = await getActiveGroupId();
+                const applications = await apiService.makeRequest(`/clubs/${groupId}/applications`);
                 const app = applications.find(a => a.id === applicationId);
 
                 if (!app) {
@@ -4412,7 +4721,7 @@
                 listing_type: document.getElementById('listingType').value,
                 position: document.getElementById('listingPosition').value.trim(),
                 description: document.getElementById('listingDescription').value.trim(),
-                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+                groupId: AppState.activeGroupId || (AppState.clubs?.[0]?.id)
             };
 
             try {
@@ -4508,8 +4817,8 @@
             try {
                 showLoading(true);
                 // Get active club ID to filter teams suitable for this club
-                const clubId = await getActiveClubId();
-                const teams = await apiService.getTeams(clubId);
+                const groupId = await getActiveGroupId();
+                const teams = await apiService.getTeams(groupId);
 
                 // Remove existing modal
                 const existing = document.getElementById('assignTeamModal');
@@ -4650,13 +4959,23 @@
         }
 
         async function showAddPlayerToTeamModal() {
+            // Update team name in display
+            const nameEl = document.getElementById('targetTeamNameDisplay');
+            if (nameEl && currentTeamId) {
+                const team = AppState.teams?.find(t => t.id === currentTeamId);
+                if (team) nameEl.textContent = team.name;
+            }
+
+            // Reset tabs
+            switchModalTab('existing', 'addPlayerToTeamModal');
+
             const select = document.getElementById('playerSelect');
             select.innerHTML = '<option value="">Loading players...</option>';
             showModal('addPlayerToTeamModal');
 
             try {
-                const clubId = await getActiveClubId();
-                const players = await apiService.getPlayers(clubId);
+                const groupId = await getActiveGroupId();
+                const players = await apiService.getPlayers(groupId);
 
                 if (players.length === 0) {
                     select.innerHTML = '<option value="">No players found in organization</option>';
@@ -4680,32 +4999,51 @@
 
         async function handleAddPlayerToTeam(e) {
             if (e) e.preventDefault();
-            const playerId = document.getElementById('playerSelect').value;
+
+            const isExisting = document.querySelector('#tab-existing-player').classList.contains('active');
             const position = document.getElementById('playerTeamPosition').value;
             const jerseyNumber = document.getElementById('playerJerseyNumber').value;
 
-            if (!playerId) {
-                showNotification('Please select a player', 'error');
-                return;
+            let payload = {
+                position,
+                jerseyNumber
+            };
+
+            if (isExisting) {
+                const playerId = document.getElementById('playerSelect').value;
+                if (!playerId) {
+                    showNotification('Please select a player', 'error');
+                    return;
+                }
+                payload.playerId = playerId;
+            } else {
+                const email = document.getElementById('playerInviteEmail').value;
+                const firstName = document.getElementById('playerInviteFirstName').value;
+                const lastName = document.getElementById('playerInviteLastName').value;
+
+                if (!email || !firstName || !lastName) {
+                    showNotification('Please fill in all required fields (Name & Email)', 'error');
+                    return;
+                }
+                payload.playerEmail = email;
+                payload.firstName = firstName;
+                payload.lastName = lastName;
             }
 
             try {
                 showLoading(true);
-                await apiService.assignPlayerToTeam(currentTeamId, {
-                    playerId,
-                    position,
-                    jerseyNumber
-                });
+                await apiService.assignPlayerToTeam(currentTeamId, payload);
 
-                showNotification('Player added to team!', 'success');
+                showNotification(isExisting ? 'Player added to team!' : 'Invitation sent to player!', 'success');
                 closeModal('addPlayerToTeamModal');
-                document.getElementById('addPlayerToTeamForm').reset();
 
-                // Refresh roster
-                await loadTeamDetails(currentTeamId);
+                // Refresh the roster
+                if (currentTeamId) {
+                    await loadTeamDetails(currentTeamId);
+                }
             } catch (error) {
-                console.error('Assign player failed:', error);
-                showNotification('Failed to add player: ' + error.message, 'error');
+                console.error('Failed to add/invite player:', error);
+                showNotification('Action failed: ' + error.message, 'error');
             } finally {
                 showLoading(false);
             }
@@ -4817,7 +5155,7 @@
             const startDate = document.getElementById('planStartDate').value || new Date().toISOString().split('T')[0];
             const priceVal = (document.getElementById('planCustomPrice')?.value || '').trim();
             const customPrice = priceVal !== '' ? parseFloat(priceVal) : null;
-            const clubId = AppState.activeClubId || AppState.clubs?.[0]?.id || null;
+            const groupId = AppState.activeGroupId || AppState.clubs?.[0]?.id || null;
 
             if (!planId) {
                 showNotification('Please select a payment plan', 'error');
@@ -4828,7 +5166,7 @@
                 showLoading(true);
 
                 // Call the (now robust) API function
-                await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice, clubId);
+                await apiService.assignPlayerToPaymentPlan(playerId, planId, startDate, customPrice, groupId);
 
                 // Optimistic local update so UI flips immediately
                 const p = (AppState.players || []).find(x => String(x.id) === String(playerId));
@@ -4867,8 +5205,8 @@
             console.log('🚀 Opening Premium Bulk Assign Modal for plan:', planId);
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const players = await apiService.getPlayers({ clubId });
+                const groupId = await getActiveGroupId();
+                const players = await apiService.getPlayers({ groupId });
                 const plan = AppState.paymentPlans?.find(p => p.id === planId);
                 const planName = plan ? plan.name : 'Selected Plan';
 
@@ -4979,11 +5317,11 @@
             try {
                 showLoading(true);
                 if (apiService.bulkAssignPaymentPlan) {
-                    await apiService.bulkAssignPaymentPlan(playerIds, planId, startDate, AppState.activeClubId);
+                    await apiService.bulkAssignPaymentPlan(playerIds, planId, startDate, AppState.activeGroupId);
                 } else {
                     // Fallback
-                    const clubId = AppState.activeClubId;
-                    const promises = playerIds.map(pid => apiService.assignPlayerToPaymentPlan(pid, planId, startDate, null, clubId));
+                    const groupId = AppState.activeGroupId;
+                    const promises = playerIds.map(pid => apiService.assignPlayerToPaymentPlan(pid, planId, startDate, null, groupId));
                     await Promise.allSettled(promises);
                 }
 
@@ -5043,7 +5381,7 @@
                 ? Number(feeRaw)
                 : null;
 
-            const club_id = await getActiveClubId();
+            const group_id = await getActiveGroupId();
 
             const payload = {
                 first_name: document.getElementById('playerFirstName').value.trim(),
@@ -5056,7 +5394,7 @@
                 position: (document.getElementById('playerPosition').value || '').trim() || null,
                 location: (document.getElementById('playerLocation').value || '').trim() || null,
                 bio: (document.getElementById('playerBio').value || '').trim() || null,
-                club_id,
+                group_id,
                 ...(payment_plan_id ? { payment_plan_id } : {}),
                 ...(plan_price != null ? { plan_price } : {})
             };
@@ -5081,21 +5419,21 @@
             e.preventDefault();
 
             // Robust Club ID Resolution
-            let clubId = AppState.activeClubId || AppState.clubs?.[0]?.id;
+            let groupId = AppState.activeGroupId || AppState.clubs?.[0]?.id;
 
             // If not in AppState, try to get from context directly (async check if needed, but for now assuming context is cached or we might need to await it?)
             // Since this function is async, we can safely await getContext if needed, but let's check AppState first.
-            if (!clubId) {
+            if (!groupId) {
                 try {
                     // Since we are inside an async function, we can await
                     const context = await apiService.getContext();
-                    clubId = context.currentOrganization?.id || context.currentUser?.clubId;
+                    groupId = context.currentOrganization?.id || context.currentUser?.groupId;
                 } catch (err) {
                     console.error("Failed to fetch context for Club ID", err);
                 }
             }
 
-            if (!clubId) {
+            if (!groupId) {
                 showNotification('Error: Could not determine Organization/Club ID. Please refresh the page.', 'error');
                 return;
             }
@@ -5105,7 +5443,7 @@
                 ageGroup: document.getElementById('teamAgeGroup').value,
                 sport: document.getElementById('teamSport').value,
                 description: document.getElementById('teamDescription').value,
-                clubId: clubId
+                groupId: groupId
             };
 
             try {
@@ -5124,25 +5462,106 @@
         }
 
         // Handle real event creation with capacity tracking
+        // Initialize and Show Event Modal
+        window.showCreateEventModal = async function () {
+            console.log('📅 Preparing Create Event Modal...');
+
+            // Reset form
+            const form = document.getElementById('addEventForm');
+            if (form) form.reset();
+
+            // Populate Teams
+            const teamSelect = document.getElementById('eventTeamSelect');
+            if (teamSelect) {
+                teamSelect.innerHTML = '<option value="">-- All Club Members --</option>';
+                const teams = AppState.teams || [];
+                teams.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.name;
+                    teamSelect.appendChild(opt);
+                });
+            }
+
+            // Sync with current team if possible
+            if (currentTeamId && teamSelect) {
+                teamSelect.value = currentTeamId;
+                await loadPlayersForAssignment(currentTeamId);
+            } else {
+                document.getElementById('eventPlayerCheckboxes').innerHTML =
+                    '<p style="opacity: 0.4; font-size: 0.8rem; grid-column: 1/-1; text-align: center; padding: 1rem;">Select a team first to see players...</p>';
+            }
+
+            // Reset UI states
+            toggleRecurrenceEnd('none');
+            showModal('addEventModal');
+        };
+
+        window.toggleRecurrenceEnd = function (val) {
+            const container = document.getElementById('recurrenceEndContainer');
+            if (container) container.style.display = (val !== 'none') ? 'block' : 'none';
+        };
+
+        window.loadPlayersForAssignment = async function (teamId) {
+            const container = document.getElementById('eventPlayerCheckboxes');
+            if (!container) return;
+
+            if (!teamId) {
+                container.innerHTML = '<p style="opacity: 0.4; font-size: 0.8rem; grid-column: 1/-1; text-align: center; padding: 1rem;">Select a team first to see players...</p>';
+                return;
+            }
+
+            try {
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 1rem;">Loading roster...</p>';
+                const team = await apiService.getTeamById(teamId);
+                const players = team.players || [];
+
+                if (players.length === 0) {
+                    container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 1rem;">No players found in this team.</p>';
+                    return;
+                }
+
+                container.innerHTML = players.map(p => `
+                    <label class="checkbox-label" style="margin: 0; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="assignedPlayers" value="${p.id}">
+                        <span style="font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.first_name} ${p.last_name}">
+                            ${p.first_name} ${p.last_name}
+                        </span>
+                    </label>
+                `).join('');
+
+            } catch (err) {
+                console.error('Failed to load players for assignment:', err);
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 1rem; color: var(--danger-color);">Error loading players.</p>';
+            }
+        };
+
+        // Handle real event creation with capacity tracking
         async function handleAddEvent(e) {
             e.preventDefault();
 
             // Robust Club ID Resolution
-            let clubId = AppState.activeClubId || AppState.clubs?.[0]?.id;
+            let groupId = AppState.activeGroupId || AppState.clubs?.[0]?.id;
 
-            if (!clubId) {
+            if (!groupId) {
                 try {
                     const context = await apiService.getContext();
-                    clubId = context.currentOrganization?.id || context.currentUser?.clubId;
+                    groupId = context.currentOrganization?.id || context.currentUser?.groupId;
                 } catch (err) {
                     console.error("Failed to fetch context for Club ID", err);
                 }
             }
 
-            if (!clubId) {
+            if (!groupId) {
                 showNotification('Error: Could not determine Organization/Club ID.', 'error');
                 return;
             }
+
+            // Collect assigned players
+            const assignedPlayers = Array.from(document.querySelectorAll('input[name="assignedPlayers"]:checked')).map(cb => cb.value);
+
+            // Collect notification schedule
+            const notificationSchedule = Array.from(document.querySelectorAll('input[name="notifSchedule"]:checked')).map(cb => cb.value);
 
             const formData = {
                 title: document.getElementById('eventTitle').value,
@@ -5153,23 +5572,32 @@
                 price: parseFloat(document.getElementById('eventPrice').value) || 0,
                 capacity: parseInt(document.getElementById('eventCapacity').value) || null,
                 description: document.getElementById('eventDescription').value,
-                clubId: clubId
+                groupId: groupId,
+                teamId: document.getElementById('eventTeamSelect').value || null,
+                opponent: document.getElementById('eventOpponent')?.value || null,
+                recurrencePattern: document.getElementById('recurrencePattern').value,
+                recurrenceEndDate: document.getElementById('recurrenceEndDate').value,
+                requireDeclineReason: document.getElementById('requireDeclineReason').checked,
+                notificationSchedule: notificationSchedule,
+                assignedPlayers: assignedPlayers
             };
 
             try {
                 showLoading(true);
-                const eventResult = await apiService.createEvent(formData);
-                showNotification('Event created successfully!', 'success');
+                const result = await apiService.createEvent(formData);
+                const count = result.count || 1;
+
+                showNotification(`🎉 ${count > 1 ? count + ' events' : 'Event'} created successfully!`, 'success');
 
                 // Automated notifications logic
                 const shouldNotify = document.getElementById('notifyPlayers')?.checked;
-                if (shouldNotify && eventResult && eventResult.id) {
+                if (shouldNotify && result.events && result.events[0]) {
                     try {
-                        await apiService.sendEventNotification(eventResult.id);
-                        showNotification('Notification emails sent to all players!', 'success');
+                        await apiService.sendEventNotification(result.events[0].id);
+                        showNotification('Launch announcement sent!', 'success');
                     } catch (notifyErr) {
-                        console.error('Failed to send automated notification:', notifyErr);
-                        showNotification('Event created, but notifications failed to send.', 'warning');
+                        console.error('Failed to send announcement:', notifyErr);
+                        showNotification('Events created, but announcement failed to send.', 'warning');
                     }
                 }
 
@@ -5190,11 +5618,11 @@
             const form = e.currentTarget;
 
             const profileData = {
-                name: form.querySelector('#clubName')?.value?.trim(),
-                description: form.querySelector('#clubDescription')?.value?.trim(),
-                location: form.querySelector('#clubLocation')?.value?.trim(),
-                philosophy: form.querySelector('#clubPhilosophy')?.value?.trim(),
-                website: form.querySelector('#clubWebsite')?.value?.trim(),
+                name: form.querySelector('#groupName')?.value?.trim(),
+                description: form.querySelector('#groupDescription')?.value?.trim(),
+                location: form.querySelector('#groupLocation')?.value?.trim(),
+                philosophy: form.querySelector('#groupPhilosophy')?.value?.trim(),
+                website: form.querySelector('#groupWebsite')?.value?.trim(),
             };
 
             try {
@@ -5245,8 +5673,8 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const events = await apiService.getEvents(clubId);
+                const groupId = await getActiveGroupId();
+                const events = await apiService.getEvents(groupId);
 
                 if (events.length === 0) {
                     container.innerHTML = `
@@ -5254,7 +5682,7 @@
                             <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
                             <h3 style="margin-bottom: 0.5rem;">No events scheduled</h3>
                             <p style="color: var(--text-muted); margin-bottom: 2rem;">Plan matches, training sessions, and club events.</p>
-                            <button class="btn btn-primary" onclick="showModal('addEventModal')">➕ Create Event</button>
+                            <button class="btn btn-primary" onclick="showCreateEventModal()">➕ Create Event</button>
                         </div>
                 `;
                     return;
@@ -5365,8 +5793,8 @@
         // Fallback data loading
         async function loadDashboardStats() {
             try {
-                const clubId = await getActiveClubId();
-                const stats = clubId ? await apiService.getAdminDashboardData(clubId) : null;
+                const groupId = await getActiveGroupId();
+                const stats = groupId ? await apiService.getAdminDashboardData(groupId) : null;
 
                 if (stats) {
                     if (stats.statistics) {
@@ -5375,9 +5803,9 @@
                     // Also update title if we have the club info
                     if (stats.club) {
                         updateDashboardTitle(stats.club.name);
-                    } else if (clubId) {
+                    } else if (groupId) {
                         // Try to find name from AppState or Context
-                        const club = (AppState.clubs || []).find(c => c.id === clubId);
+                        const club = (AppState.clubs || []).find(c => c.id === groupId);
                         if (club) updateDashboardTitle(club.name);
                     }
                 }
@@ -5411,16 +5839,16 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
+                const groupId = await getActiveGroupId();
 
-                if (!clubId) {
+                if (!groupId) {
                     container.innerHTML = '<p>No club found. Please create a club first.</p>';
                     return;
                 }
 
                 // Collect advanced filters
                 const filters = {
-                    clubId,
+                    groupId,
                     viewType: document.getElementById('playerListFilter')?.value || 'all',
                     teamId: document.getElementById('teamFilter')?.value || null,
                     sport: document.getElementById('sportFilter')?.value || null,
@@ -5558,8 +5986,8 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const teams = await apiService.getTeams(clubId);
+                const groupId = await getActiveGroupId();
+                const teams = await apiService.getTeams(groupId);
 
                 if (teams.length === 0) {
                     container.innerHTML = `
@@ -5603,19 +6031,27 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="stats-cell">
-                                            <div class="stat-pill">
-                                                <span class="stat-value win-stat">${team.wins || 0}</span>
-                                                <span class="stat-label">Wins</span>
+                                        <div class="stats-cell" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; justify-content: center;">
+                                            <div style="display: flex; gap: 0.4rem;">
+                                                <div class="stat-pill" style="min-width: 35px;">
+                                                    <span class="stat-value win-stat" style="font-size: 0.8rem;">${team.wins || 0}</span>
+                                                    <span class="stat-label" style="font-size: 0.6rem;">W</span>
+                                                </div>
+                                                <div class="stat-pill" style="min-width: 35px;">
+                                                    <span class="stat-value draw-stat" style="font-size: 0.8rem;">${team.draws || 0}</span>
+                                                    <span class="stat-label" style="font-size: 0.6rem;">D</span>
+                                                </div>
+                                                <div class="stat-pill" style="min-width: 35px;">
+                                                    <span class="stat-value loss-stat" style="font-size: 0.8rem;">${team.losses || 0}</span>
+                                                    <span class="stat-label" style="font-size: 0.6rem;">L</span>
+                                                </div>
                                             </div>
-                                            <div class="stat-pill">
-                                                <span class="stat-value loss-stat">${team.losses || 0}</span>
-                                                <span class="stat-label">Loss</span>
-                                            </div>
-                                            <div class="stat-pill">
-                                                <span class="stat-value draw-stat">${team.draws || 0}</span>
-                                                <span class="stat-label">Draw</span>
-                                            </div>
+                                            ${(team.wins + (team.draws || 0) + team.losses) > 0 ? `
+                                                <div style="width: 100px; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-top: 2px;">
+                                                    <div style="width: ${((team.wins / (team.wins + (team.draws || 0) + team.losses)) * 100).toFixed(0)}%; height: 100%; background: var(--success-color);"></div>
+                                                </div>
+                                                <span style="font-size: 0.65rem; opacity: 0.5; font-weight: 600;">${((team.wins / (team.wins + (team.draws || 0) + team.losses)) * 100).toFixed(0)}% WIN RATE</span>
+                                            ` : ''}
                                         </div>
                                     </td>
                                     <td>
@@ -5683,9 +6119,9 @@
             if (!input.files || input.files.length === 0) return;
 
             const files = Array.from(input.files);
-            const clubId = await getActiveClubId();
+            const groupId = await getActiveGroupId();
 
-            if (!clubId) {
+            if (!groupId) {
                 showNotification('No active organization/club found. Please select or create one first.', 'error');
                 input.value = '';
                 return;
@@ -5708,7 +6144,7 @@
 
                 for (const file of files) {
                     try {
-                        const result = await apiService.uploadClubImage(clubId, file);
+                        const result = await apiService.uploadClubImage(groupId, file);
                         if (result.images) {
                             displayClubImages(result.images);
                         }
@@ -5727,7 +6163,7 @@
                 }
 
                 // Final refresh to be sure
-                await loadClubProfileImages();
+                await loadGroupProfileImages();
 
             } catch (error) {
                 console.error('Upload process failed:', error);
@@ -5763,10 +6199,10 @@
         async function deleteClubImage(imgUrl) {
             if (!confirm('Delete this image?')) return;
 
-            const clubId = await getActiveClubId();
+            const groupId = await getActiveGroupId();
             try {
                 showLoading(true);
-                const result = await apiService.deleteClubImage(clubId, imgUrl);
+                const result = await apiService.deleteClubImage(groupId, imgUrl);
                 showNotification('Image deleted', 'success');
                 displayClubImages(result.images);
             } catch (e) {
@@ -5776,13 +6212,13 @@
             }
         }
 
-        async function loadClubProfileImages() {
+        async function loadGroupProfileImages() {
             try {
-                const activeClubId = await getActiveClubId();
-                if (!activeClubId) return;
+                const activeGroupId = await getActiveGroupId();
+                if (!activeGroupId) return;
 
-                const dashboardData = await apiService.getAdminDashboardData(activeClubId);
-                const club = dashboardData.clubs?.find(c => c.id == activeClubId);
+                const dashboardData = await apiService.getAdminDashboardData(activeGroupId);
+                const club = dashboardData.clubs?.find(c => c.id == activeGroupId);
                 if (club && club.images) {
                     displayClubImages(club.images);
                 }
@@ -5801,8 +6237,8 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const polls = await apiService.getPolls(clubId);
+                const groupId = await getActiveGroupId();
+                const polls = await apiService.getPolls(groupId);
 
                 if (!polls || polls.length === 0) {
                     container.innerHTML = '<div style="text-align: center; padding: 2rem; opacity: 0.7;"><h3>No Active Polls</h3><p>Engage your members by creating a poll.</p><button class="btn btn-primary" onclick="showModal(\'createPollModal\')">Create Poll</button></div>';
@@ -5866,8 +6302,8 @@
 
             try {
                 showLoading(true);
-                const clubId = await getActiveClubId();
-                const tourneys = await apiService.getTournaments(clubId);
+                const groupId = await getActiveGroupId();
+                const tourneys = await apiService.getTournaments(groupId);
 
                 if (!tourneys || tourneys.length === 0) {
                     container.innerHTML = `
@@ -6035,8 +6471,8 @@
             container.innerHTML = 'Loading...';
 
             try {
-                const clubId = await getActiveClubId();
-                const teams = await apiService.getTeams(clubId);
+                const groupId = await getActiveGroupId();
+                const teams = await apiService.getTeams(groupId);
 
                 if (teams.length === 0) {
                     container.innerHTML = '<p>No teams available.</p>';
@@ -6218,6 +6654,43 @@
             }
         }
 
+        function switchModalTab(tabType, modalId) {
+            console.log(`🔄 Switching modal tab to: ${tabType}`);
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+
+            // Update buttons
+            const buttons = modal.querySelectorAll('.modal-tab-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.color = 'var(--text-muted)';
+                btn.style.borderBottom = 'none';
+            });
+
+            const activeBtn = modal.querySelector(`#tab-${tabType === 'existing' ? 'existing-player' : 'new-player'}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.style.color = 'var(--text-main)';
+                activeBtn.style.borderBottom = '2px solid var(--accent-color)';
+            }
+
+            // Show/Hide sections
+            const existingSection = modal.querySelector('#existingPlayerSection');
+            const newSection = modal.querySelector('#newPlayerSection');
+
+            if (tabType === 'existing') {
+                if (existingSection) existingSection.style.display = 'block';
+                if (newSection) newSection.style.display = 'none';
+            } else {
+                if (existingSection) existingSection.style.display = 'none';
+                if (newSection) newSection.style.display = 'block';
+
+                // Focus first input in new section
+                const firstNameInput = modal.querySelector('#playerInviteFirstName');
+                if (firstNameInput) setTimeout(() => firstNameInput.focus(), 50);
+            }
+        }
+
         function getOrdinal(n) {
             const s = ["th", "st", "nd", "rd"],
                 v = n % 100;
@@ -6323,23 +6796,18 @@
                 return;
             }
 
-            // Set active button (supporting both direct buttons and dropdown items)
-            // We search for the button that triggers this section
-            const clickedButton = document.querySelector(`.dashboard-nav-grouped button[onclick*="'${sectionId}'"]`) ||
-                document.querySelector(`.dashboard-nav-grouped button[onclick*='"${sectionId}"']`);
-
-            if (clickedButton) {
-                clickedButton.classList.add('active');
-
-                // If inside a dropdown, also highlight the parent trigger
-                const dropdownContainer = clickedButton.closest('.nav-dropdown-container');
-                if (dropdownContainer) {
-                    const trigger = dropdownContainer.querySelector('.dropdown-trigger');
-                    if (trigger) trigger.classList.add('active');
+            // Sync with Mobile Tabs and Bottom Nav
+            const allNavLinks = document.querySelectorAll('.nav-link, .tab-item');
+            allNavLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(`'${sectionId}'`)) {
+                    link.classList.add('active');
+                    // Scroll into view if it's a tab
+                    if (link.classList.contains('tab-item') && link.offsetParent) {
+                        link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
                 }
-            } else {
-                console.warn(`⚠️ Nav button for '${sectionId}' not found`);
-            }
+            });
 
             // Handle data loading for specific sections
             switch (sectionId) {
@@ -6363,10 +6831,10 @@
                     console.log('Loading events...');
                     if (typeof loadEvents === 'function') loadEvents();
                     break;
-                case 'club-profile':
+                case 'group-profile':
                     console.log('Loading club profile...');
-                    if (typeof loadClubProfile === 'function') loadClubProfile();
-                    if (typeof loadClubProfileImages === 'function') loadClubProfileImages();
+                    if (typeof loadGroupProfile === 'function') loadGroupProfile();
+                    if (typeof loadGroupProfileImages === 'function') loadGroupProfileImages();
                     break;
                 case 'finances':
                     console.log('Loading finances...');
@@ -6448,31 +6916,38 @@
         }
 
         async function loadTeamDetails(teamId) {
-            console.log('DEBUG: RUNNING NEW VERSION 4765');
+            console.log('🔄 Loading team details for:', teamId);
             try {
                 showLoading(true);
                 const team = await apiService.getTeamById(teamId);
 
-                console.log('Team Details Loaded:', team);
+                console.log('✅ Team Loaded:', team);
                 AppState.currentTeamRoster = team.players || [];
+                currentTeamId = team.id;
 
-                // Populate Stats
+                // Populate Header Stats
                 const statsContainer = document.getElementById('teamDetailStats');
                 if (statsContainer) {
+                    const winPct = team.win_percentage || 0;
                     statsContainer.innerHTML = `
-                        <span class="status-badge" style="background:#4caf50; color:white;">${team.wins || 0} Wins</span>
-                        <span class="status-badge" style="background:#f44336; color:white;">${team.losses || 0} Losses</span>
-                        <span class="status-badge" style="background:#ff9800; color:white;">${team.draws || 0} Draws</span>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <div style="text-align: right; margin-right: 0.5rem; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 0.75rem;">
+                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-color);">${winPct}%</div>
+                                <div style="font-size: 0.65rem; opacity: 0.6; text-transform: uppercase;">Win Rate</div>
+                            </div>
+                            <span class="status-badge" style="background: rgba(76, 175, 80, 0.1); color: #4caf50; border: 1px solid rgba(76, 175, 80, 0.2);">${team.wins || 0}W</span>
+                            <span class="status-badge" style="background: rgba(255, 152, 0, 0.1); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.2);">${team.draws || 0}D</span>
+                            <span class="status-badge" style="background: rgba(244, 67, 54, 0.1); color: #f44336; border: 1px solid rgba(244, 67, 54, 0.2);">${team.losses || 0}L</span>
+                        </div>
                     `;
                 }
 
-                // Populate Roster
+                // Render Summary & Components
                 renderRoster(AppState.currentTeamRoster);
+                renderTeamEvents(team.upcoming_events || []);
 
-                // Populate Events
-                renderTeamEvents(team.upcoming_events || team.events || []);
-
-                // Initialize Availability (Placeholder for now)
+                // Add a "Recent Results" preview if matches exist
+                renderRecentResults(team.recent_matches || []);
 
             } catch (error) {
                 console.error('Failed to load team details:', error);
@@ -6520,18 +6995,187 @@
             if (!container) return;
 
             if (events.length === 0) {
-                container.innerHTML = '<p style="padding:1rem;">No upcoming events scheduled.</p>';
+                container.innerHTML = '<p style="padding:1rem;">No events scheduled for this team.</p>';
                 return;
             }
 
-            container.innerHTML = events.map(e => `
-                <div class="card event-card" style="border-left: 4px solid var(--accent-color);">
-                    <h4>${e.title}</h4>
-                    <p>📅 ${new Date(e.event_date).toLocaleDateString()} at ${e.event_time}</p>
-                    <p>📍 ${e.location || 'TBA'}</p>
-                    <button class="btn btn-small btn-secondary_outline" onclick="viewEventAvailability('${e.id}')">View Availability</button>
+            const now = new Date();
+
+            container.innerHTML = events.map(e => {
+                const eventDate = new Date(e.event_date);
+                const isPast = eventDate < now;
+                const isMatch = e.event_type === 'match';
+
+                return `
+                <div class="card event-card" style="border-left: 4px solid ${isMatch ? 'var(--accent-color)' : 'var(--secondary-color)'}; margin-bottom: 1rem; padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${e.title}</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0;">📅 ${eventDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} at ${e.event_time ? e.event_time.slice(0, 5) : 'TBA'}</p>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0;">📍 ${e.location || 'TBA'}</p>
+                        </div>
+                        <span class="status-badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 4px;">${e.event_type.toUpperCase()}</span>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                        <button class="btn btn-small btn-secondary_outline" onclick="viewEventAvailability('${e.id}')" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">
+                            ${isPast ? '👥 View Roster' : '📋 Check Availability'}
+                        </button>
+                        ${isMatch && isPast ? `
+                            <button class="btn btn-small btn-primary" onclick="showRecordResultModal('${e.id}', '${e.title.replace(/'/g, "\\'")}')" style="font-size: 0.75rem; padding: 0.4rem 1rem;">
+                                🏆 Record Result
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
+                `;
+            }).join('');
+        }
+
+        async function showRecordResultModal(eventId, eventTitle) {
+            document.getElementById('resultEventId').value = eventId;
+            const body = document.getElementById('matchPlayerStatsBody');
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 3rem;"><span class="loader"></span><p style="margin-top:1rem; opacity:0.6;">Loading match roster...</p></td></tr>';
+
+            showModal('recordResultModal');
+
+            try {
+                // We use the current roster from AppState
+                const players = AppState.currentTeamRoster || [];
+
+                if (players.length === 0) {
+                    body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 3rem; opacity: 0.6;"><div style="font-size:2rem; margin-bottom:1rem;">🏃</div><p>No players found in team roster to record stats.</p></td></tr>';
+                    return;
+                }
+
+                body.innerHTML = players.map(p => `
+                    <tr data-player-id="${p.id}" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <td style="padding: 1.25rem 1rem;">
+                            <div style="font-weight: 600; color: #fff;">${p.first_name} ${p.last_name}</div>
+                            <div style="font-size: 0.7rem; opacity: 0.5; color: var(--text-muted);">${p.team_position || 'Player'}</div>
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <input type="number" class="player-rating" value="7" min="1" max="10" 
+                                style="width: 55px; text-align: center; background: rgba(0, 246, 255, 0.05); border: 1px solid rgba(0, 246, 255, 0.2); border-radius: 6px; padding: 6px; color: var(--accent-color); font-weight: bold;">
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <input type="number" class="player-goals" value="0" min="0" style="width: 50px; text-align: center; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px; color: #fff;">
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <input type="number" class="player-assists" value="0" min="0" style="width: 50px; text-align: center; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px; color: #fff;">
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <input type="number" class="player-yellow" value="0" min="0" max="2" style="width: 45px; text-align: center; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px; color: #fff;">
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <input type="number" class="player-red" value="0" min="0" max="1" style="width: 45px; text-align: center; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px; color: #fff;">
+                        </td>
+                    </tr>
                 `).join('');
+
+            } catch (error) {
+                console.error('Failed to prepare result modal:', error);
+                body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 3rem; color: var(--danger-color);">⚠️ Error loading roster.</td></tr>';
+            }
+        }
+
+        async function handleRecordMatchResult(e) {
+            if (e) e.preventDefault();
+
+            const eventId = document.getElementById('resultEventId').value;
+            const homeScore = parseInt(document.getElementById('homeScore').value);
+            const awayScore = parseInt(document.getElementById('awayScore').value);
+            const result = document.querySelector('input[name="matchResult"]:checked').value;
+            const notes = document.getElementById('matchNotes').value;
+
+            // Collect player stats
+            const playerStats = [];
+            const rows = document.querySelectorAll('#matchPlayerStatsBody tr[data-player-id]');
+
+            rows.forEach(row => {
+                const playerId = row.getAttribute('data-player-id');
+                const rating = parseInt(row.querySelector('.player-rating').value);
+                const goals = parseInt(row.querySelector('.player-goals').value);
+                const assists = parseInt(row.querySelector('.player-assists').value);
+                const yellowCards = parseInt(row.querySelector('.player-yellow').value);
+                const redCards = parseInt(row.querySelector('.player-red').value);
+
+                playerStats.push({
+                    playerId,
+                    rating,
+                    goals,
+                    assists,
+                    yellowCards,
+                    redCards,
+                    minutesPlayed: 90
+                });
+            });
+
+            try {
+                showLoading(true);
+                await apiService.recordMatchResult(eventId, {
+                    home_score: homeScore,
+                    away_score: awayScore,
+                    result,
+                    notes,
+                    playerStats
+                });
+
+                showNotification('🏆 Match result and player statistics synced!', 'success');
+                closeModal('recordResultModal');
+
+                // Refresh team data to see updated stats
+                if (currentTeamId) {
+                    await loadTeamDetails(currentTeamId);
+                    // Also refresh visuals
+                    loadTeams();
+                }
+
+            } catch (error) {
+                console.error('Failed to record result:', error);
+                showNotification('Failed to save record: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderRecentResults(matches) {
+            const container = document.getElementById('recentResultsContainer');
+            if (!container) return;
+
+            if (!matches || matches.length === 0) {
+                container.innerHTML = '<p style="opacity:0.5; font-size: 0.85rem; text-align: center; padding: 2rem 0;">No match results recorded yet.</p>';
+                return;
+            }
+
+            container.innerHTML = matches.map(m => {
+                let badgeColor = '#666';
+                if (m.result === 'win') badgeColor = '#4caf50';
+                if (m.result === 'loss') badgeColor = '#f44336';
+                if (m.result === 'draw') badgeColor = '#ff9800';
+
+                return `
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: ${badgeColor}; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 0.8rem;">
+                                ${m.result ? m.result[0].toUpperCase() : '-'}
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 0.9rem; color: #fff;">${m.title}</div>
+                                <div style="font-size: 0.75rem; opacity: 0.5; color: var(--text-muted);">${new Date(m.event_date).toLocaleDateString()}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.25rem;">
+                                <span style="color: ${m.result === 'win' ? 'var(--success-color)' : '#fff'}; opacity: ${m.result === 'win' ? '1' : '0.4'}">${m.home_score}</span>
+                                <span style="opacity: 0.2; font-size: 0.9rem;">-</span>
+                                <span style="color: ${m.result === 'loss' ? 'var(--danger-color)' : '#fff'}; opacity: ${m.result === 'loss' ? '1' : '0.4'}">${m.away_score}</span>
+                            </div>
+                            <button class="btn btn-small btn-secondary_outline" onclick="showRecordResultModal('${m.id}', '${m.title.replace(/'/g, "\\'")}')" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;">✏️ Edit</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Feature: Switch Tabs
@@ -6579,68 +7223,101 @@
 
 
         async function loadTeamAvailability(teamId) {
+            const container = document.getElementById('availabilityGrid');
+            if (!container) return;
+
             try {
-                const data = await apiService.makeRequest(`/teams/${teamId}/availability`);
+                container.innerHTML = '<div style="text-align:center; padding: 4rem;"><span class="loader"></span><p style="margin-top: 1rem; opacity: 0.7;">Analysing roster and events...</p></div>';
+
+                const data = await apiService.getTeamAvailabilityVotes(teamId);
                 renderAvailabilityGrid(data);
             } catch (error) {
                 console.error('Failed to load availability:', error);
-                document.getElementById('availabilityGrid').innerHTML = '<p style="color:red">Failed to load availability data</p>';
+                container.innerHTML = '<div style="text-align:center; padding: 3rem; color:var(--danger-color);"><p>⚠️ Failed to load availability grid</p><button class="btn btn-small" onclick="loadTeamAvailability(\'' + teamId + '\')" style="margin-top:1rem;">Retry</button></div>';
             }
         }
 
         function renderAvailabilityGrid(data) {
             const container = document.getElementById('availabilityGrid');
-            if (!container) return;
+            if (!container || !data) return;
 
             const { events, players, responses } = data;
 
             if (events.length === 0) {
-                container.innerHTML = '<p style="text-align: center; padding: 2rem; opacity: 0.7;">No upcoming events found.</p>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 4rem 2rem; opacity: 0.6;">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem;">📅</div>
+                        <p>No upcoming events scheduled for this team.</p>
+                        <p style="font-size: 0.85rem;">Create a training session or match to start tracking availability.</p>
+                    </div>
+                `;
                 return;
             }
 
-            // Create Grid Table
+            // Create response map for quick lookup: {eventId_playerId: {status, notes}}
+            const responseMap = {};
+            responses.forEach(r => {
+                responseMap[`${r.event_id}_${r.player_id}`] = {
+                    status: r.availability,
+                    notes: r.notes
+                };
+            });
+
             let html = `
-                <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
-                    <thead>
-                        <tr>
-                            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #444; position: sticky; left: 0; background: var(--bg-secondary); z-index: 2;">Player</th>
-                            ${events.map(e => `
-                                <th style="padding: 10px; text-align: center; border-bottom: 2px solid #444; min-width: 80px;">
-                                    <div style="font-size: 0.8rem; opacity: 0.8;">${new Date(e.event_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
-                                    <div style="font-size: 0.7rem; opacity: 0.6;">${e.event_time ? e.event_time.slice(0, 5) : ''}</div>
-                                    <div style="font-size: 1.2rem;" title="${e.title}">
-                                        ${e.event_type === 'match' ? '⚽' : e.event_type === 'training' ? '🏋️' : '📅'}
-                                    </div>
-                                </th>
-                            `).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="availability-scroll-container" style="overflow-x: auto; position: relative; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <table class="availability-table" style="width: 100%; border-collapse: separate; border-spacing: 0; min-width: 700px;">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; padding: 1.25rem 1rem; position: sticky; left: 0; background: var(--bg-secondary); z-index: 10; border-bottom: 2px solid var(--border-color); min-width: 180px; box-shadow: 2px 0 5px rgba(0,0,0,0.1);">Player</th>
+                                ${events.map(e => `
+                                    <th style="padding: 1rem; text-align: center; border-bottom: 2px solid var(--border-color); min-width: 130px; background: rgba(255,255,255,0.01);">
+                                        <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${e.title}">${e.title}</div>
+                                        <div style="font-size: 0.7rem; color: var(--accent-color); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            ${new Date(e.event_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                                        </div>
+                                        <div style="font-size: 0.7rem; color: var(--text-muted); opacity: 0.7;">${e.event_time ? e.event_time.slice(0, 5) : ''} | ${e.event_type.toUpperCase()}</div>
+                                    </th>
+                                `).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
             `;
 
-            players.forEach(player => {
+            players.forEach(p => {
                 html += `
                     <tr>
-                        <td style="padding: 10px; border-bottom: 1px solid #444; position: sticky; left: 0; background: var(--bg-secondary); z-index: 1;">
-                            <div style="font-weight: 500;">${player.first_name} ${player.last_name}</div>
-                            <div style="font-size: 0.7rem; opacity: 0.6;">#${player.jersey_number || '-'}</div>
+                        <td style="padding: 1rem; position: sticky; left: 0; background: var(--bg-secondary); z-index: 5; border-bottom: 1px solid rgba(255,255,255,0.05); box-shadow: 2px 0 5px rgba(0,0,0,0.05);">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-color); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; color: black; opacity: 0.8;">
+                                    ${p.first_name[0]}${p.last_name[0]}
+                                </div>
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-weight: 500; font-size: 0.9rem;">${p.first_name} ${p.last_name}</span>
+                                    <span style="font-size: 0.7rem; color: var(--text-muted);">#${p.jersey_number || '-'}</span>
+                                </div>
+                            </div>
                         </td>
-                        ${events.map(event => {
-                    const response = responses.find(r => r.event_id === event.id && r.player_id === player.id);
-                    const status = response ? response.availability : 'none';
-                    const icon = {
-                        'yes': '✅',
-                        'no': '❌',
-                        'maybe': '❓',
-                        'none': '⚪'
-                    }[status];
+                        ${events.map(e => {
+                    const resp = responseMap[`${e.id}_${p.id}`];
+                    const status = resp ? resp.status : 'none';
+                    let icon = '⚪';
+                    let color = 'rgba(255,255,255,0.1)';
+                    let label = 'No Response';
+
+                    if (status === 'yes') { icon = '✅'; color = 'rgba(76, 175, 80, 0.1)'; label = 'Going'; }
+                    if (status === 'no') { icon = '❌'; color = 'rgba(244, 67, 54, 0.1)'; label = 'Not Going'; }
+                    if (status === 'maybe') { icon = '❓'; color = 'rgba(255, 152, 0, 0.1)'; label = 'Maybe'; }
 
                     return `
-                                <td style="padding: 10px; text-align: center; border-bottom: 1px solid #444; cursor: pointer; border-left: 1px solid #444;" 
-                                    onclick="toggleAvailability('${event.id}', '${player.id}', '${status}')"
-                                    title="${response?.notes || status}">
-                                    <span style="font-size: 1.2rem;">${icon}</span>
+                                <td style="text-align: center; padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s;" 
+                                    onclick="openAvailabilityOverride('${e.id}', '${p.id}', '${p.first_name} ${p.last_name}', '${e.title}')"
+                                    onmouseover="this.style.background='rgba(255,255,255,0.03)'"
+                                    onmouseout="this.style.background='transparent'"
+                                    title="${resp?.notes ? 'Note: ' + resp.notes : label}">
+                                    <div style="display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; background: ${color}; font-size: 1.2rem; position: relative;">
+                                        ${icon}
+                                        ${resp?.notes ? '<div style="position: absolute; bottom: -2px; right: -2px; width: 8px; height: 8px; background: var(--accent-color); border-radius: 50%; border: 2px solid var(--bg-secondary);"></div>' : ''}
+                                    </div>
                                 </td>
                             `;
                 }).join('')}
@@ -6648,28 +7325,76 @@
                 `;
             });
 
-            html += `</tbody></table>`;
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 2rem; font-size: 0.8rem; opacity: 0.6;">
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: #4caf50;">✅</span> Going</span>
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: #f44336;">❌</span> Not Going</span>
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: #ff9800;">❓</span> Maybe</span>
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: #fff;">⚪</span> No Response</span>
+                </div>
+            `;
+
             container.innerHTML = html;
         }
 
-        async function toggleAvailability(eventId, playerId, currentStatus) {
-            // Admin override logic (simple cycle: yes -> no -> maybe -> none)
-            const newStatus = {
-                'yes': 'no',
-                'no': 'maybe',
-                'maybe': 'yes', // Skip 'none' for easier cycling, but available if needed
-                'none': 'yes'
-            }[currentStatus] || 'yes';
+        function openAvailabilityOverride(eventId, playerId, playerName, eventTitle) {
+            document.getElementById('overrideEventId').value = eventId;
+            document.getElementById('overridePlayerId').value = playerId;
+            document.getElementById('overrideInfo').innerHTML = `Force status update for <strong>${playerName}</strong> for event <strong>"${eventTitle}"</strong>.`;
+
+            // Reset selection
+            document.querySelectorAll('.btn-status-select').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('overrideStatusValue').value = '';
+            document.getElementById('overrideNotes').value = '';
+
+            showModal('availabilityOverrideModal');
+        }
+
+        function setOverrideStatus(status, btn) {
+            document.getElementById('overrideStatusValue').value = status;
+
+            // Update UI
+            document.querySelectorAll('.btn-status-select').forEach(el => {
+                el.style.background = 'rgba(255,255,255,0.05)';
+                el.style.borderColor = 'var(--border-color)';
+                el.classList.remove('active');
+            });
+
+            if (btn) {
+                btn.classList.add('active');
+                btn.style.background = 'rgba(0, 246, 255, 0.1)';
+                btn.style.borderColor = 'var(--accent-color)';
+            }
+        }
+
+        async function handleAvailabilityOverride(e) {
+            if (e) e.preventDefault();
+
+            const eventId = document.getElementById('overrideEventId').value;
+            const playerId = document.getElementById('overridePlayerId').value;
+            const status = document.getElementById('overrideStatusValue').value;
+            const notes = document.getElementById('overrideNotes').value;
+
+            if (!status) {
+                showNotification('Please select a status', 'error');
+                return;
+            }
 
             try {
                 showLoading(true);
-                await apiService.overrideAvailability(eventId, playerId, newStatus);
-                showNotification('Availability updated', 'success');
-                // Refresh grid
+                await apiService.overrideAvailability(eventId, playerId, status, notes);
+
+                showNotification('Availability updated successfully', 'success');
+                closeModal('availabilityOverrideModal');
+
+                // Refresh the grid
                 await loadTeamAvailability(currentTeamId);
             } catch (error) {
-                console.error('Failed to update availability:', error);
-                showNotification('Update failed: ' + error.message, 'error');
+                console.error('Override failed:', error);
+                showNotification('Failed to update status: ' + error.message, 'error');
             } finally {
                 showLoading(false);
             }
@@ -6799,7 +7524,7 @@
 
             try {
                 // Fetch all club players (filtered)
-                const players = await apiService.getClubPlayers(AppState.activeClubId || (AppState.clubs && AppState.clubs[0] ? AppState.clubs[0].id : null));
+                const players = await apiService.getClubPlayers(AppState.activeGroupId || (AppState.clubs && AppState.clubs[0] ? AppState.clubs[0].id : null));
 
                 // Fetch current team roster to filter out
                 // Using global currentTeamId set in openTeamManagement
@@ -6968,7 +7693,7 @@
                     description,
                     billingAnchorType,
                     billingAnchorDay: billingAnchorDay ? parseInt(billingAnchorDay) : null,
-                    clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+                    groupId: AppState.activeGroupId || (AppState.clubs?.[0]?.id)
                 });
                 showNotification('Payment Plan created successfully!', 'success');
                 closeModal('createPaymentPlanModal');
@@ -7137,7 +7862,7 @@
                 category: document.getElementById('productCategory').value,
                 description: document.getElementById('productDescription').value,
                 custom_fields: customFields,
-                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+                groupId: AppState.activeGroupId || (AppState.clubs?.[0]?.id)
             };
 
             try {
@@ -7174,7 +7899,7 @@
                 description: document.getElementById('eventDescription').value,
                 team_id: document.getElementById('eventTeam').value || null,
                 opponent: document.getElementById('eventOpponent').value || null,
-                clubId: AppState.activeClubId || (AppState.clubs?.[0]?.id)
+                groupId: AppState.activeGroupId || (AppState.clubs?.[0]?.id)
             };
 
             try {
@@ -7763,7 +8488,7 @@
                         clubRole: player.role || 'player',
                         message: `Reminder: You've been invited to join our organization.`,
                         organizationId: AppState.currentOrganization?.id,
-                        clubId: AppState.currentOrganization?.id,
+                        groupId: AppState.currentOrganization?.id,
                         isPublic: false
                     };
 
@@ -7800,7 +8525,7 @@
 
                     position: document.getElementById('editPlayerPosition').value.trim(),
                     paymentStatus: document.getElementById('editPlayerPaymentStatus').value,
-                    clubId: AppState.currentOrganization?.id || (AppState.clubs?.[0]?.id)
+                    groupId: AppState.currentOrganization?.id || (AppState.clubs?.[0]?.id)
                 };
 
 
@@ -8067,7 +8792,7 @@
                         message: message || `You've been invited to join our organization as a ${role}.`,
                         teamId: teamId, // Optional, null if not selected
                         organizationId: orgId,
-                        clubId: orgId, // Ensure clubId is passed for backend compatibility
+                        groupId: orgId, // Ensure groupId is passed for backend compatibility
                         isPublic: false
                     };
 
@@ -8149,7 +8874,7 @@
                         message: document.getElementById('inviteMessage').value,
                         isPublic: false,
                         organizationId: orgId,
-                        clubId: orgId,
+                        groupId: orgId,
                         paymentPlanId: document.getElementById('invitePaymentPlan').value || null,
                         planPrice: document.getElementById('invitePlanPrice').value ? Number(document.getElementById('invitePlanPrice').value) : null
                     };
@@ -8221,7 +8946,7 @@
 
             let currentOrgId = null; // Store the org ID when profile loads
 
-            async function loadClubProfile() {
+            async function loadGroupProfile() {
                 try {
                     const context = await apiService.getContext();
                     let org = context.currentOrganization;
@@ -8273,16 +8998,16 @@
                     currentOrgId = org.id;
 
                     // Populate fields ONLY if the data exists in the object (avoid overwriting with empty if partial)
-                    if (org.name !== undefined) document.getElementById('clubName').value = org.name || '';
-                    if (org.description !== undefined) document.getElementById('clubDescription').value = org.description || '';
-                    if (org.location !== undefined) document.getElementById('clubLocation').value = org.location || '';
-                    if (org.sport !== undefined) document.getElementById('clubSport').value = org.sport || '';
-                    if (org.website !== undefined) document.getElementById('clubWebsite').value = org.website || '';
-                    if (org.philosophy !== undefined) document.getElementById('clubPhilosophy').value = org.philosophy || '';
-                    if (org.email !== undefined) document.getElementById('clubEmail').value = org.email || '';
-                    if (org.phone !== undefined) document.getElementById('clubPhone').value = org.phone || '';
-                    if (org.established !== undefined) document.getElementById('clubEstablished').value = org.established || '';
-                    if (org.address !== undefined) document.getElementById('clubAddress').value = org.address || '';
+                    if (org.name !== undefined) document.getElementById('groupName').value = org.name || '';
+                    if (org.description !== undefined) document.getElementById('groupDescription').value = org.description || '';
+                    if (org.location !== undefined) document.getElementById('groupLocation').value = org.location || '';
+                    if (org.sport !== undefined) document.getElementById('groupSport').value = org.sport || '';
+                    if (org.website !== undefined) document.getElementById('groupWebsite').value = org.website || '';
+                    if (org.philosophy !== undefined) document.getElementById('groupPhilosophy').value = org.philosophy || '';
+                    if (org.email !== undefined) document.getElementById('groupEmail').value = org.email || '';
+                    if (org.phone !== undefined) document.getElementById('groupPhone').value = org.phone || '';
+                    if (org.established !== undefined) document.getElementById('groupEstablished').value = org.established || '';
+                    if (org.address !== undefined) document.getElementById('groupAddress').value = org.address || '';
 
                     // Display logo if exists or show placeholder
                     const rawBaseUrl = apiService.baseURL.replace('/api', '');
@@ -8299,7 +9024,7 @@
                         }
                     }
 
-                    const logoPreview = document.getElementById('clubLogoPreview');
+                    const logoPreview = document.getElementById('groupLogoPreview');
                     if (logoPreview) logoPreview.src = logoUrl;
 
                     // Display images
@@ -8363,16 +9088,16 @@
                     }
 
                     const formData = {
-                        name: document.getElementById('clubName').value.trim(),
-                        description: document.getElementById('clubDescription').value.trim(),
-                        location: document.getElementById('clubLocation').value.trim(),
-                        sport: document.getElementById('clubSport').value.trim(),
-                        philosophy: document.getElementById('clubPhilosophy').value.trim(),
-                        email: document.getElementById('clubEmail').value.trim(),
-                        phone: document.getElementById('clubPhone').value.trim(),
-                        established: document.getElementById('clubEstablished').value.trim(),
-                        address: document.getElementById('clubAddress').value.trim(),
-                        website: document.getElementById('clubWebsite').value.trim()
+                        name: document.getElementById('groupName').value.trim(),
+                        description: document.getElementById('groupDescription').value.trim(),
+                        location: document.getElementById('groupLocation').value.trim(),
+                        sport: document.getElementById('groupSport').value.trim(),
+                        philosophy: document.getElementById('groupPhilosophy').value.trim(),
+                        email: document.getElementById('groupEmail').value.trim(),
+                        phone: document.getElementById('groupPhone').value.trim(),
+                        established: document.getElementById('groupEstablished').value.trim(),
+                        address: document.getElementById('groupAddress').value.trim(),
+                        website: document.getElementById('groupWebsite').value.trim()
                     };
 
                     console.log('📤 Sending update request:', formData);
@@ -8391,7 +9116,7 @@
                     await apiService.refreshContext();
 
                     // Reload the entire profile to refresh images and all data
-                    await loadClubProfile();
+                    await loadGroupProfile();
                 } catch (error) {
                     console.error('Save profile error:', error);
                     showNotification('❌ ' + (error.message || 'Failed to save profile'), 'error');
@@ -8425,7 +9150,7 @@
 
                         // Just update preview with a local object URL for the demo session
                         const objectUrl = URL.createObjectURL(file);
-                        document.getElementById('clubLogoPreview').src = objectUrl;
+                        document.getElementById('groupLogoPreview').src = objectUrl;
                         showNotification('✅ Logo updated (Demo Mode)', 'success');
                         return;
                     }
@@ -8439,7 +9164,7 @@
                         const sanitizedLogoPath = response.logo_url.startsWith('/') ? response.logo_url.substring(1) : response.logo_url;
                         const fullUrl = response.logo_url.startsWith('http') ? response.logo_url : `${backendUrl}${sanitizedLogoPath}`;
 
-                        document.getElementById('clubLogoPreview').src = fullUrl;
+                        document.getElementById('groupLogoPreview').src = fullUrl;
                         showNotification('✅ Logo uploaded successfully!', 'success');
 
                         // Update Org Switcher immediately
@@ -8534,7 +9259,7 @@
                     showNotification('✅ Image deleted successfully!', 'success');
 
                     // Reload profile to refresh images
-                    await loadClubProfile();
+                    await loadGroupProfile();
                 } catch (error) {
                     console.error('Delete image error:', error);
                     showNotification('❌ Failed to delete image: ' + error.message, 'error');
@@ -8544,13 +9269,13 @@
             }
 
             // Bind club profile form
-            document.getElementById('clubProfileForm')?.addEventListener('submit', saveClubProfile);
+            document.getElementById('groupProfileForm')?.addEventListener('submit', saveClubProfile);
 
 
 
 
             // Expose globally
-            window.loadClubProfile = loadClubProfile;
+            window.loadGroupProfile = loadGroupProfile;
             window.saveClubProfile = saveClubProfile;
             window.handlePictureUpload = handlePictureUpload;
             window.loadPlayers = loadPlayers;
@@ -8558,7 +9283,7 @@
             window.deleteClubImage = deleteClubImage;
         </script>
 
-        <script src="org-switcher.js"></script>
+        <script src="group-switcher.js"></script>
         <!-- Edit Payment Plan Modal -->
         <div id="editPaymentPlanModal" class="modal">
             <div class="modal-content">
@@ -8748,13 +9473,13 @@
                 try {
                     showLoading(true);
 
-                    const clubId = AppState.activeClubId || (AppState.clubs?.[0]?.id);
-                    if (!clubId) throw new Error('No active club');
+                    const groupId = AppState.activeGroupId || (AppState.clubs?.[0]?.id);
+                    if (!groupId) throw new Error('No active club');
 
                     // Fetch staff and teams in parallel
                     const [staffList, teams] = await Promise.all([
-                        apiService.getStaff(clubId),
-                        apiService.getTeams(clubId)
+                        apiService.getStaff(groupId),
+                        apiService.getTeams(groupId)
                     ]);
 
                     const member = staffList.find(s => s.id === id);
@@ -9019,7 +9744,7 @@
             async function loadTraining() {
                 try {
                     showLoading(true);
-                    const orgId = localStorage.getItem('currentOrganizationId');
+                    const orgId = localStorage.getItem('currentGroupId');
                     const events = await apiService.makeRequest(`/events?organizationId=${orgId}&eventType=talent-id`);
 
                     const select = document.getElementById('adminTrainingEventSelect');
@@ -9595,6 +10320,106 @@
             });
         </script>
 
+        <!-- Quick Action Modal (Threads Style) -->
+        <div id="quickActionModal" class="modal">
+            <div class="modal-content" style="max-width: 400px; border-radius: 24px; padding: 2rem;">
+                <div class="modal-header" style="border: none; padding-bottom: 0;">
+                    <h2 style="width: 100%; text-align: center; font-size: 1.5rem;">Quick Create</h2>
+                    <span class="close" onclick="closeModal('quickActionModal')">&times;</span>
+                </div>
+                <div class="quick-actions-grid"
+                    style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem;">
+                    <button class="btn btn-primary" onclick="closeModal('quickActionModal'); showSection('events');"
+                        style="justify-content: flex-start; padding: 1.25rem;">
+                        <span>📅</span> Add New Event
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showSection('teams');"
+                        style="justify-content: flex-start; padding: 1.25rem;">
+                        <span>🛡️</span> Create New Team
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showSection('listings');"
+                        style="justify-content: flex-start; padding: 1.25rem;">
+                        <span>📢</span> Create Listing
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showSection('staff');"
+                        style="justify-content: flex-start; padding: 1.25rem;">
+                        <span>👥</span> Add Staff/Coach
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar (Threads Style) -->
+        <nav class="app-bottom-nav mobile-only">
+            <a href="#" class="nav-link active" onclick="showSection('overview'); return false;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-link" onclick="showSection('teams'); return false;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span>Teams</span>
+            </a>
+            <a href="#" class="nav-link create-btn-nav" onclick="openQuickActionModal(); return false;">
+                <div
+                    style="background: var(--primary); padding: 8px; border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                </div>
+            </a>
+            <a href="#" class="nav-link" onclick="showSection('events'); return false;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                <span>Schedule</span>
+            </a>
+            <a href="#" class="nav-link" onclick="showSection('group-profile'); return false;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Profile</span>
+            </a>
+        </nav>
+
+        <script>
+            function openQuickActionModal() {
+                const modal = document.getElementById('quickActionModal');
+                if (modal) modal.style.display = 'block';
+            }
+
+            function closeModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) modal.style.display = 'none';
+            }
+
+            // Close modal when clicking outside
+            if (!window._modalInit) {
+                window.addEventListener('click', function (event) {
+                    if (event.target.classList.contains('modal')) {
+                        event.target.style.display = 'none';
+                    }
+                });
+                window._modalInit = true;
+            }
+        </script>
         <!-- PWA Install Handler -->
         <script src="pwa-install.js"></script>
 </body>

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tournament Manager - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="org-switcher.css">
+    <link rel="stylesheet" href="group-switcher.css">
     <style>
         .bracket {
             display: flex;
@@ -125,6 +125,7 @@
                     <div class="tabs" style="margin: 2rem 0;">
                         <button class="tab active" onclick="showTab('teams')">Teams</button>
                         <button class="tab" onclick="showTab('groups')">Groups</button>
+                        <button class="tab" onclick="showTab('pitches')">Pitches</button>
                         <button class="tab" onclick="showTab('matches')">Matches</button>
                         <button class="tab" onclick="showTab('bracket')">Bracket</button>
                     </div>
@@ -164,13 +165,43 @@
                         </div>
                     </div>
 
+                    <!-- Pitches Tab -->
+                    <div id="pitches-tab" class="tab-content" style="display: none;">
+                        <div class="card" style="margin-bottom: 2rem;">
+                            <h3>Pitch Configuration</h3>
+                            <div
+                                style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; margin-top: 1rem;">
+                                <input type="text" id="pitchNameInput" placeholder="Pitch Name (e.g. Pitch 1)">
+                                <select id="pitchTypeInput">
+                                    <option value="Grass">Grass</option>
+                                    <option value="3G">3G Artifical</option>
+                                    <option value="4G">4G Artifical</option>
+                                    <option value="Indoor">Indoor</option>
+                                </select>
+                                <select id="pitchSizeInput">
+                                    <option value="11v11">11v11</option>
+                                    <option value="9v9">9v9</option>
+                                    <option value="7v7">7v7</option>
+                                    <option value="5v5">5v5</option>
+                                </select>
+                                <button class="btn btn-primary" onclick="addPitch()">Add Pitch</button>
+                            </div>
+                        </div>
+                        <div id="pitchesGrid" class="team-grid">
+                            <!-- Pitches will be loaded here -->
+                        </div>
+                    </div>
+
                     <!-- Matches Tab -->
                     <div id="matches-tab" class="tab-content" style="display: none;">
-                        <div style="margin-bottom: 1rem; display: flex; gap: 1rem;">
+                        <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
                             <select id="groupFixtureSelect" style="padding: 0.5rem;"></select>
                             <button class="btn btn-primary btn-small"
                                 onclick="generateFixtures('league', document.getElementById('groupFixtureSelect').value)">Generate
                                 Group Fixtures</button>
+                            <div style="flex: 1;"></div>
+                            <button class="btn btn-special btn-small" onclick="openAutoScheduleModal()">⚡ Auto-Schedule
+                                All</button>
                         </div>
                         <table class="data-table" style="width: 100%;">
                             <thead>
@@ -279,10 +310,48 @@
         </div>
     </div>
 
+    <!-- Auto-Schedule Modal -->
+    <div id="autoScheduleModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAutoScheduleModal()">&times;</span>
+            <h2 class="neon-text">Auto-Schedule Fixtures</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Assign matches to pitches and time slots
+                automatically.</p>
+
+            <form id="autoScheduleForm" onsubmit="runAutoSchedule(event)">
+                <div class="form-group">
+                    <label>Tournament Stage</label>
+                    <select name="stageId" id="scheduleStageSelect" required>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Start Time (Tournament Day One)</label>
+                    <input type="time" name="startTime" value="09:00" required>
+                </div>
+                <div class="form-group">
+                    <label>Match Duration (Minutes)</label>
+                    <input type="number" name="matchDuration" value="20" min="5">
+                </div>
+                <div class="form-group">
+                    <label>Break/Changeover (Minutes)</label>
+                    <input type="number" name="breakDuration" value="5" min="0">
+                </div>
+
+                <div class="card" style="background: rgba(255,166,0,0.1); border: 1px solid orange; margin: 1.5rem 0;">
+                    <p style="margin:0; font-size: 0.9rem;"><strong>Note:</strong> Matches will be distributed across
+                        all active pitches starting from the selected time.</p>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">⚡ Run Scheduler</button>
+            </form>
+        </div>
+    </div>
+
     <script src="api-service.js"></script>
     <script src="script.js"></script>
     <script src="enhanced-login-handler.js"></script>
-    <script src="org-switcher.js"></script>
+    <script src="group-switcher.js"></script>
     <script>
         let currentTournamentId = null;
         let tournamentData = null;
@@ -405,6 +474,7 @@
 
                 displayTeams(data.teams);
                 displayGroups(data.groups, data.teams);
+                displayPitches(data.pitches || []);
                 displayMatches(data.matches);
                 renderBracket(data.matches, data.teams);
 
@@ -412,6 +482,10 @@
                 const groupSelect = document.getElementById('groupFixtureSelect');
                 groupSelect.innerHTML = '<option value="">Entire Tournament</option>' +
                     data.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+
+                // Update schedule stage select
+                const stageSelect = document.getElementById('scheduleStageSelect');
+                stageSelect.innerHTML = data.stages.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
                 document.getElementById('tournamentContent').style.display = 'block';
             } catch (error) {
@@ -540,6 +614,70 @@
                 loadTournament();
             } catch (error) {
                 alert('Failed to unassign');
+            }
+        }
+
+        // --- Pitch Methods ---
+        function displayPitches(pitches) {
+            const grid = document.getElementById('pitchesGrid');
+            if (pitches.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No pitches configured yet.</p>';
+                return;
+            }
+
+            grid.innerHTML = pitches.map(p => `
+                <div class="card">
+                    <h3>${p.name}</h3>
+                    <p><strong>Type:</strong> ${p.pitch_type}</p>
+                    <p><strong>Size:</strong> ${p.pitch_size}</p>
+                    <span class="badge" style="background: ${p.is_active ? '#22c55e' : '#6b7280'}">${p.is_active ? 'Active' : 'Inactive'}</span>
+                </div>
+            `).join('');
+        }
+
+        async function addPitch() {
+            const name = document.getElementById('pitchNameInput').value;
+            const type = document.getElementById('pitchTypeInput').value;
+            const size = document.getElementById('pitchSizeInput').value;
+            if (!name) return;
+
+            try {
+                await apiService.createTournamentPitch(currentTournamentId, { name, pitch_type: type, pitch_size: size });
+                document.getElementById('pitchNameInput').value = '';
+                loadTournament();
+            } catch (error) {
+                alert('Failed to add pitch');
+            }
+        }
+
+        // --- Auto-Schedule Methods ---
+        function openAutoScheduleModal() {
+            document.getElementById('autoScheduleModal').style.display = 'block';
+        }
+
+        function closeAutoScheduleModal() {
+            document.getElementById('autoScheduleModal').style.display = 'none';
+        }
+
+        async function runAutoSchedule(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+
+            if (!confirm('This will automatically assign times and pitches to all matches in this stage. Continue?')) return;
+
+            try {
+                await apiService.autoScheduleTournament(currentTournamentId, {
+                    stageId: data.stageId,
+                    startTime: data.startTime,
+                    matchDuration: parseInt(data.matchDuration),
+                    breakDuration: parseInt(data.breakDuration)
+                });
+                alert('Auto-scheduling complete!');
+                closeAutoScheduleModal();
+                loadTournament();
+            } catch (error) {
+                alert('Scheduling failed: ' + error.message);
             }
         }
 
@@ -762,7 +900,7 @@
             }
         }
     </script>
-    <script src="org-switcher.js"></script>
+    <script src="group-switcher.js"></script>
 </body>
 
 </html>

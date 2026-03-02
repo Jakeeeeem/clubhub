@@ -635,19 +635,42 @@ router.get(
       }
 
       // Get applications
-      const applicationsResult = await query(
-        `
-      SELECT ca.*, 
-             u.first_name,
-             u.last_name,
-             u.email
-      FROM club_applications ca
-      JOIN users u ON ca.user_id = u.id
-      WHERE ca.club_id = $1
-      ORDER BY ca.submitted_at DESC
-    `,
-        [req.params.id],
-      );
+      const { position, ageMin, ageMax } = req.query;
+      let queryText = `
+        SELECT ca.*, 
+               u.first_name,
+               u.last_name,
+               u.email,
+               p.date_of_birth
+        FROM club_applications ca
+        JOIN users u ON ca.user_id = u.id
+        LEFT JOIN players p ON u.id = p.user_id
+        WHERE ca.club_id = $1
+      `;
+      const queryParams = [req.params.id];
+      let paramCount = 1;
+
+      if (position) {
+        paramCount++;
+        queryText += ` AND ca.preferred_position = $${paramCount}`;
+        queryParams.push(position);
+      }
+
+      if (ageMin) {
+        paramCount++;
+        queryText += ` AND p.date_of_birth <= CURRENT_DATE - (CAST($${paramCount} AS INTEGER) * INTERVAL '1 year')`;
+        queryParams.push(ageMin);
+      }
+
+      if (ageMax) {
+        paramCount++;
+        queryText += ` AND p.date_of_birth >= CURRENT_DATE - (CAST($${paramCount} AS INTEGER) * INTERVAL '1 year')`;
+        queryParams.push(ageMax);
+      }
+
+      queryText += ` ORDER BY ca.submitted_at DESC`;
+
+      const applicationsResult = await query(queryText, queryParams);
 
       res.json({
         club: {
@@ -1027,5 +1050,63 @@ router.delete(
     }
   },
 );
+
+// ================= CLUB REVIEWS =================
+
+/**
+ * @route   POST /api/clubs/:id/reviews
+ * @desc    Submit a review for a club
+ */
+router.post("/:id/reviews", authenticateToken, async (req, res) => {
+  const { rating, comment } = req.body;
+  const clubId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    // 1. Check if user is a member of the club
+    const memberCheck = await query(
+      "SELECT id FROM player_plans WHERE user_id = $1 AND club_id = $2",
+      [userId, clubId],
+    );
+    const isVerified = memberCheck.rows.length > 0;
+
+    const result = await query(
+      `
+            INSERT INTO club_reviews (club_id, user_id, rating, comment, is_verified_member)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (club_id, user_id) 
+            DO UPDATE SET rating = $3, comment = $4, is_verified_member = $5, updated_at = NOW()
+            RETURNING *
+        `,
+      [clubId, userId, rating, comment, isVerified],
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to submit review" });
+  }
+});
+
+/**
+ * @route   GET /api/clubs/:id/reviews
+ * @desc    Get reviews for a club
+ */
+router.get("/:id/reviews", async (req, res) => {
+  try {
+    const result = await query(
+      `
+            SELECT r.*, u.first_name, u.last_name
+            FROM club_reviews r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.club_id = $1 AND r.status = 'published'
+            ORDER BY r.created_at DESC
+        `,
+      [req.params.id],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch reviews" });
+  }
+});
 
 module.exports = router;

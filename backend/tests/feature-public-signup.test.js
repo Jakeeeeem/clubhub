@@ -95,6 +95,8 @@ describe("Public Registration Flow (Simple Mocks)", () => {
       firstName: "New",
       lastName: "User",
       accountType: "adult",
+      agreeTerms: true,
+      agreeThirdParty: true,
     });
 
     expect(res.statusCode).toBe(201);
@@ -110,6 +112,8 @@ describe("Public Registration Flow (Simple Mocks)", () => {
         lastName: "Owner",
         accountType: "organization",
         orgTypes: ["Football"],
+        agreeTerms: true,
+        agreeThirdParty: false,
       });
 
     expect(res.statusCode).toBe(201);
@@ -131,6 +135,7 @@ describe("Public Registration Flow (Simple Mocks)", () => {
       firstName: "Dupe",
       lastName: "User",
       accountType: "adult",
+      agreeTerms: true,
     });
 
     expect(res.statusCode).toBe(409);

@@ -37,11 +37,11 @@ async function handleLogin(e) {
 
     if (pendingInviteToken) {
       console.log(
-        "🎉 Pending invite token found, auto-accepting club invitation...",
+        "🎉 Pending invite token found, auto-accepting group invitation...",
       );
 
       try {
-        // Auto-accept the club invitation
+        // Auto-accept the group invitation
         const acceptResponse = await fetch(
           `${apiService.baseURL}/invites/accept/${pendingInviteToken}`,
           {
@@ -58,7 +58,7 @@ async function handleLogin(e) {
 
         if (acceptResponse.ok) {
           const inviteResult = await acceptResponse.json();
-          console.log("✅ Auto-accepted club invitation:", inviteResult);
+          console.log("✅ Auto-accepted group invitation:", inviteResult);
 
           // Clear the pending invite token
           localStorage.removeItem("pendingInviteToken");
@@ -196,11 +196,11 @@ async function handleRegister(e) {
 
     if (pendingInviteToken) {
       console.log(
-        "🎉 Pending invite token found, auto-accepting club invitation...",
+        "🎉 Pending invite token found, auto-accepting group invitation...",
       );
 
       try {
-        // Auto-accept the club invitation
+        // Auto-accept the group invitation
         const acceptResponse = await fetch(
           `${apiService.baseURL}/invites/accept/${pendingInviteToken}`,
           {
@@ -217,7 +217,7 @@ async function handleRegister(e) {
 
         if (acceptResponse.ok) {
           const inviteResult = await acceptResponse.json();
-          console.log("✅ Auto-accepted club invitation:", inviteResult);
+          console.log("✅ Auto-accepted group invitation:", inviteResult);
 
           // Clear the pending invite token
           localStorage.removeItem("pendingInviteToken");
@@ -339,9 +339,9 @@ async function determineUserRedirect(user) {
 
     console.log("📦 Context response:", context);
 
-    if (context && context.organizations && context.organizations.length > 0) {
+    if (context && context.groups && context.groups.length > 0) {
       const currentOrg =
-        context.currentOrganization || context.organizations[0];
+        context.currentGroup || context.groups[0];
       const role = (
         currentOrg.user_role ||
         currentOrg.role ||
@@ -349,7 +349,7 @@ async function determineUserRedirect(user) {
       ).toLowerCase();
 
       console.log(
-        `✅ User has ${context.organizations.length} organization(s)!`,
+        `✅ User has ${context.groups.length} group(s)!`,
       );
       console.log(`📍 Current org: ${currentOrg.name}, Role: ${role}`);
 
@@ -366,9 +366,9 @@ async function determineUserRedirect(user) {
       }
 
       // If role is something else but they have an org, default to admin for org accounts
-      if (userType === "organization" || userType === "admin") {
+      if (userType === "group" || userType === "admin") {
         console.log(
-          "✅ Organization account with membership → admin-dashboard.html",
+          "✅ Group account with membership → admin-dashboard.html",
         );
         return "admin-dashboard.html";
       }
@@ -377,14 +377,14 @@ async function determineUserRedirect(user) {
       console.log("⚠️ Unknown role but has orgs → player-dashboard.html");
       return "player-dashboard.html";
     } else {
-      console.log("ℹ️ No active organization memberships found.");
+      console.log("ℹ️ No active group memberships found.");
       console.log(
-        "⚠️ User is organization type but has NO memberships → create-organization.html",
+        "⚠️ User is group type but has NO memberships → create-group.html",
       );
 
-      // Only redirect to create-organization if they truly have ZERO orgs
-      if (userType === "organization" || userType === "admin") {
-        return "create-organization.html";
+      // Only redirect to create-group if they truly have ZERO orgs
+      if (userType === "group" || userType === "admin") {
+        return "create-group.html";
       }
     }
   } catch (error) {
@@ -404,7 +404,7 @@ async function determineUserRedirect(user) {
     return "coach-dashboard.html";
   }
 
-  if (userType === "organization" || userType === "admin") {
+  if (userType === "group" || userType === "admin") {
     console.log("✅ Fallback: admin-dashboard.html");
     return "admin-dashboard.html";
   }
@@ -531,9 +531,9 @@ function updateNavigation(isLoggedIn, user = null) {
                         return '<button class="btn btn-primary" onclick="window.location.href=\'coach-dashboard.html\'">Dashboard</button>';
                       }
                       if (
-                        user.userType === "organization" ||
+                        user.userType === "group" ||
                         user.userType === "admin" ||
-                        user.account_type === "organization"
+                        user.account_type === "group"
                       ) {
                         return '<button class="btn btn-primary" onclick="window.location.href=\'admin-dashboard.html\'">Dashboard</button>';
                       }
@@ -602,7 +602,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
       messageContainer.innerHTML = `
                 <h3 style="color: #1976d2; margin: 0 0 10px 0;">🎉 You've been invited to join a club!</h3>
-                <p style="color: #1565c0; margin: 10px 0;">Please log in or create an account to accept your club invitation.</p>
+                <p style="color: #1565c0; margin: 10px 0;">Please log in or create an account to accept your group invitation.</p>
                 <div style="margin-top: 15px;">
                     <button class="btn btn-primary" onclick="showModal('loginModal')" style="margin-right: 10px;">Login</button>
                     <button class="btn btn-success" onclick="showModal('registerModal')">Create Account</button>

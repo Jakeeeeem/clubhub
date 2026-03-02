@@ -6,12 +6,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scouting Dashboard - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .rating-star {
+            color: #fbbf24;
+            font-size: 1.2rem;
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body class="bg-dark">
     <header class="header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'">ClubHub</div>
+            <div class="logo" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text neon-text">ClubHub</span>
+            </div>
             <div class="nav-buttons">
                 <button class="btn btn-secondary" onclick="window.location.href='index.html'">Back to Home</button>
             </div>
@@ -20,89 +48,231 @@
 
     <main class="main container" style="margin-top: 100px;">
         <div class="dashboard-header">
-            <h1>Scouting Dashboard</h1>
-            <p>Discover talent across all registered clubs and organizations.</p>
-        </div>
-
-        <div class="card" style="margin-bottom: 2rem;">
-            <div class="search-filters">
-                <div class="form-group">
-                    <label>Position</label>
-                    <input type="text" id="scoutPosition" placeholder="e.g. Forward" onkeyup="loadScouts()">
-                </div>
-                <div class="form-group">
-                    <label>Sport</label>
-                    <select id="scoutSport" onchange="loadScouts()">
-                        <option value="">All Sports</option>
-                        <option value="football">Football</option>
-                        <option value="basketball">Basketball</option>
-                        <option value="tennis">Tennis</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Min Age</label>
-                    <input type="number" id="scoutMinAge" placeholder="10" onchange="loadScouts()">
-                </div>
-                <div class="form-group">
-                    <label>Max Age</label>
-                    <input type="number" id="scoutMaxAge" placeholder="25" onchange="loadScouts()">
-                </div>
+            <div>
+                <h1 class="neon-text">Talent Discovery & Scouting</h1>
+                <p style="color: var(--text-muted);">Identify elite players and review professional scouting reports.
+                </p>
+            </div>
+            <div id="scoutStatus" style="display: none;">
+                <span class="verified-badge">✓ Verified Scout</span>
             </div>
         </div>
 
-        <div class="card-grid" id="scoutsContainer">
-            <!-- Populated by JS -->
+        <!-- Tabs -->
+        <div class="tabs" style="margin: 2rem 0;">
+            <button class="tab active" onclick="showTab('discovery')">Player Discovery</button>
+            <button class="tab" id="reportsTab" onclick="showTab('reports')">Scouting Reports</button>
+            <button class="tab" id="analyticsTab" onclick="showTab('analytics')"
+                style="display: none;">Analytics</button>
+        </div>
+
+        <!-- Player Discovery Tab -->
+        <div id="discovery-tab" class="tab-content active">
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="search-filters">
+                    <div class="form-group">
+                        <label>Position</label>
+                        <input type="text" id="scoutPosition" placeholder="e.g. Forward" onkeyup="loadPlayers()">
+                    </div>
+                    <div class="form-group">
+                        <label>Sport</label>
+                        <select id="scoutSport" onchange="loadPlayers()">
+                            <option value="">All Sports</option>
+                            <option value="football">Football</option>
+                            <option value="basketball">Basketball</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Age Range</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="number" id="scoutMinAge" placeholder="10" style="width: 70px;"
+                                onchange="loadPlayers()">
+                            <span>-</span>
+                            <input type="number" id="scoutMaxAge" placeholder="25" style="width: 70px;"
+                                onchange="loadPlayers()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-grid" id="playersContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports-tab" class="tab-content" style="display: none;">
+            <div class="report-grid" id="reportsContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics-tab" class="tab-content" style="display: none;">
+            <div class="card">
+                <h3>Global Scouting Coverage</h3>
+                <div id="analyticsData">
+                    <!-- Analytics will be loaded here -->
+                </div>
+            </div>
         </div>
     </main>
 
     <script src="api-service.js"></script>
     <script>
-        async function loadScouts() {
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+
+            // Check if user is a verified scout/staff
+            if (user.role === 'staff' || user.role === 'admin') {
+                document.getElementById('scoutStatus').style.display = 'block';
+                document.getElementById('analyticsTab').style.display = 'block';
+            }
+
+            loadPlayers();
+            loadReports();
+        });
+
+        async function loadPlayers() {
             const pos = document.getElementById('scoutPosition').value;
             const sport = document.getElementById('scoutSport').value;
             const minAge = document.getElementById('scoutMinAge').value;
             const maxAge = document.getElementById('scoutMaxAge').value;
 
-            const container = document.getElementById('scoutsContainer');
+            const container = document.getElementById('playersContainer');
             container.innerHTML = '<p class="text-center">Searching for talent...</p>';
 
             try {
-                let url = `${apiService.baseURL}/players/scout?`;
-                if (pos) url += `position=${pos}&`;
-                if (sport) url += `sport=${sport}&`;
-                if (minAge) url += `minAge=${minAge}&`;
-                if (maxAge) url += `maxAge=${maxAge}&`;
+                const filters = {};
+                if (pos) filters.position = pos;
+                if (sport) filters.sport = sport;
+                if (minAge) filters.minAge = minAge;
+                if (maxAge) filters.maxAge = maxAge;
 
-                const response = await fetch(url);
-                const scouts = await response.json();
+                // Using the specific scouting discovery endpoint
+                const players = await apiService.makeRequest(`/players/scout?${new URLSearchParams(filters)}`);
 
-                if (scouts.length === 0) {
+                if (!players || players.length === 0) {
                     container.innerHTML = '<p class="text-center">No players found matching these criteria.</p>';
                     return;
                 }
 
-                container.innerHTML = scouts.map(player => `
+                container.innerHTML = players.map(player => `
                     <div class="card">
-                        <div class="user-avatar" style="width: 48px; height: 48px; font-size: 1.25rem; margin-bottom: 1rem;">
-                            ${player.first_name.charAt(0)}${player.last_name.charAt(0)}
+                        <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem;">
+                            <div class="user-avatar" style="width: 64px; height: 64px; font-size: 1.5rem;">
+                                ${player.first_name.charAt(0)}${player.last_name.charAt(0)}
+                            </div>
+                            <div>
+                                <h3 style="margin:0">${player.first_name} ${player.last_name}</h3>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">${player.position || 'Unknown Position'}</p>
+                                <span class="badge" style="background: rgba(255,255,255,0.05);">${player.age} yrs</span>
+                            </div>
                         </div>
-                        <h3>${player.first_name} ${player.last_name}</h3>
-                        <p><strong>Position:</strong> ${player.position || 'N/A'}</p>
                         <p><strong>Club:</strong> ${player.club_name || 'Free Agent'}</p>
-                        <p><strong>Age:</strong> ${player.age}</p>
-                        <div class="item-actions" style="margin-top: 1.5rem;">
-                            <button class="btn btn-primary btn-small" onclick="alert('Inquiry feature coming soon!')">Contact Club</button>
+                        <p><strong>Region:</strong> ${player.region || 'TBD'}</p>
+                        
+                        <div class="item-actions" style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+                            <button class="btn btn-primary btn-small" style="flex: 1;" onclick="requestContact('${player.id}')">Contact Club</button>
+                            <button class="btn btn-secondary btn-small" onclick="viewReports('${player.id}')">Reports</button>
                         </div>
                     </div>
                 `).join('');
 
             } catch (error) {
-                console.error('Failed to load scouts:', error);
+                console.error('Failed to load players:', error);
                 container.innerHTML = '<p class="text-danger">Failed to load scouting data.</p>';
             }
         }
 
-        document.addEventListener('DOMContentLoaded', loadScouts);
+        async function loadReports() {
+            const container = document.getElementById('reportsContainer');
+            try {
+                const reports = await apiService.getScoutingReports();
+
+                if (!reports || reports.length === 0) {
+                    container.innerHTML = '<p class="text-center">No scouting reports available yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = reports.map(r => `
+                    <div class="card report-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <h3>${r.player_name}</h3>
+                            <div class="rating-star">
+                                ${'★'.repeat(r.overall_rating)}${'☆'.repeat(5 - r.overall_rating)}
+                            </div>
+                        </div>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+                            Report by: ${r.scout_name} • ${new Date(r.created_at).toLocaleDateString()}
+                        </p>
+                        <p><strong>Technical:</strong> ${r.technical_ability}/5</p>
+                        <p><strong>Tactical:</strong> ${r.tactical_awareness}/5</p>
+                        <p><strong>Physical:</strong> ${r.physical_presence}/5</p>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                            <p style="font-style: italic; font-size: 0.9rem;">"${r.notes}"</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load reports:', error);
+            }
+        }
+
+        async function requestContact(playerId) {
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            if (!user.id) {
+                alert('Please login to request contact.');
+                return;
+            }
+
+            try {
+                await apiService.requestScoutContact(user.id, playerId);
+                alert('Contact request sent to the club. They will review your credentials.');
+            } catch (error) {
+                alert('Failed to send request: ' + error.message);
+            }
+        }
+
+        async function loadAnalytics() {
+            const container = document.getElementById('analyticsData');
+            try {
+                const analytics = await apiService.getScoutingAnalytics();
+                container.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+                        <div class="card" style="background: rgba(255,255,255,0.03);">
+                            <h4>Total Reports</h4>
+                            <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary);">${analytics.total_reports || 0}</div>
+                        </div>
+                        <div class="card" style="background: rgba(255,255,255,0.03);">
+                            <h4>Verified Scouts</h4>
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #22c55e;">${analytics.verified_scouts || 0}</div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-top: 2rem; background: rgba(255,255,255,0.03);">
+                        <h4>Player Coverage</h4>
+                        <p>${analytics.players_with_reports || 0} players have at least one professional report.</p>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = '<p>Failed to load analytics.</p>';
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+            event.target.classList.add('active');
+
+            if (tabName === 'analytics') loadAnalytics();
+        }
+
+        function viewReports(playerId) {
+            showTab('reports');
+            // TODO: Filter reports by player ID
+        }
     </script>
 </body>
 

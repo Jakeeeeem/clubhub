@@ -1,25 +1,25 @@
 /**
- * Organization Switcher Component
- * Dropdown to switch between organizations (like Stripe)
+ * Group Switcher Component
+ * Dropdown to switch between groups (like Stripe)
  */
 
-class OrganizationSwitcher {
+class GroupSwitcher {
   constructor() {
-    this.currentOrg = null;
-    this.organizations = [];
-    this.allOrganizations = []; // For filtering/searching
+    this.currentGroup = null;
+    this.groups = [];
+    this.allGroups = []; // For filtering/searching
     this.isPlatformAdmin = false;
     this.isOpen = false;
     this.init();
   }
 
   async init() {
-    await this.loadOrganizations();
+    await this.loadGroups();
     this.render();
     this.attachEventListeners();
   }
 
-  async loadOrganizations() {
+  async loadGroups() {
     try {
       const response = await apiService.makeRequest("/auth/context");
       if (response.success) {
@@ -43,9 +43,9 @@ class OrganizationSwitcher {
           }
         }
 
-        let organizations = response.organizations || [];
+        let groups = response.groups || response.organizations || [];
         console.log(
-          `Switcher: Found ${organizations.length} member organizations. Admin: ${this.isPlatformAdmin}`,
+          `Switcher: Found ${groups.length} member groups. Admin: ${this.isPlatformAdmin}`,
         );
 
         // If Platform Admin, fetch ALL organizations
@@ -54,26 +54,26 @@ class OrganizationSwitcher {
             console.log(
               "Switcher: Platform Admin detected, fetching all platform clubs...",
             );
-            const allOrgsResponse = await apiService.makeRequest(
-              "/platform-admin/organizations?limit=1000",
+            const allGroupsResponse = await apiService.makeRequest(
+              "/platform-admin/groups?limit=1000",
             );
-            if (allOrgsResponse && allOrgsResponse.organizations) {
+            if (allGroupsResponse && allGroupsResponse.groups) {
               console.log(
-                `Switcher: Loaded ${allOrgsResponse.organizations.length} platform clubs.`,
+                `Switcher: Loaded ${allGroupsResponse.groups.length} platform clubs.`,
               );
               // Map to match the format from /auth/context
-              organizations = allOrgsResponse.organizations.map((org) => ({
-                id: org.id,
-                name: org.name,
-                sport: org.sport,
-                location: org.location,
-                logo_url: org.logo_url,
+              groups = allGroupsResponse.groups.map((group) => ({
+                id: group.id,
+                name: group.name,
+                sport: group.sport,
+                location: group.location,
+                logo_url: group.logo_url,
                 user_role: "Platform Admin",
                 role: "Platform Admin",
               }));
             }
           } catch (error) {
-            console.warn("Switcher: Failed to load all organizations:", error);
+            console.warn("Switcher: Failed to load all groups:", error);
           }
         } else {
           // For non-admins, filter based on dashboard type
@@ -82,8 +82,8 @@ class OrganizationSwitcher {
             path.includes("admin-dashboard.html") ||
             path.includes("coach-dashboard.html")
           ) {
-            organizations = organizations.filter((org) => {
-              const role = (org.user_role || org.role || "").toLowerCase();
+            groups = groups.filter((group) => {
+              const role = (group.user_role || group.role || "").toLowerCase();
               return [
                 "owner",
                 "admin",
@@ -96,81 +96,82 @@ class OrganizationSwitcher {
           }
         }
 
-        this.organizations = organizations;
-        this.allOrganizations = organizations;
-        this.currentOrg = response.currentOrganization;
+        this.groups = groups;
+        this.allGroups = groups;
+        this.currentGroup =
+          response.currentGroup || response.currentOrganization;
 
         this.render();
       }
     } catch (error) {
-      console.error("Failed to load organizations:", error);
+      console.error("Failed to load groups:", error);
     }
   }
 
   render() {
-    const container = document.getElementById("org-switcher-container");
+    const container = document.getElementById("group-switcher-container");
     if (!container) return;
 
-    // ALWAYS show the org switcher, even if there are no organizations
-    // This allows users to see "No Organization" and create one
+    // ALWAYS show the group switcher, even if there are no groups
+    // This allows users to see "No Group" and create one
 
-    const currentOrgName = this.currentOrg?.name || "No Organization";
-    const currentOrgRole =
-      this.currentOrg?.user_role || this.currentOrg?.role || "";
+    const currentGroupName = this.currentGroup?.name || "No Group";
+    const currentGroupRole =
+      this.currentGroup?.user_role || this.currentGroup?.role || "";
 
     container.innerHTML = `
-      <div class="org-switcher">
-        <button class="org-switcher-trigger" id="org-switcher-trigger">
-          <div class="org-switcher-current">
-            <div class="org-avatar">
+      <div class="group-switcher">
+        <button class="group-switcher-trigger" id="group-switcher-trigger">
+          <div class="group-switcher-current">
+            <div class="group-avatar">
               ${
-                this.currentOrg?.logo_url
-                  ? `<img src="${this.currentOrg.logo_url}" alt="${currentOrgName}">`
-                  : `<span>${currentOrgName.charAt(0)}</span>`
+                this.currentGroup?.logo_url
+                  ? `<img src="${this.currentGroup.logo_url}" alt="${currentGroupName}">`
+                  : `<span>${currentGroupName.charAt(0)}</span>`
               }
             </div>
-            <div class="org-info">
-              <div class="org-name">${currentOrgName}</div>
-              ${currentOrgRole ? `<div class="org-role">${this.formatRole(currentOrgRole)}</div>` : ""}
+            <div class="group-info">
+              <div class="group-name">${currentGroupName}</div>
+              ${currentGroupRole ? `<div class="group-role">${this.formatRole(currentGroupRole)}</div>` : ""}
             </div>
           </div>
-          <svg class="org-switcher-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <svg class="group-switcher-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
 
-        <div class="org-switcher-dropdown" id="org-switcher-dropdown">
-          <div class="org-switcher-header">
-            <span>${this.isPlatformAdmin ? "Search All Clubs" : "Switch Organization"}</span>
+        <div class="group-switcher-dropdown" id="group-switcher-dropdown">
+          <div class="group-switcher-header">
+            <span>${this.isPlatformAdmin ? "Search All Groups" : "Switch Group"}</span>
           </div>
           
           ${
             this.isPlatformAdmin
               ? `
-            <div class="org-switcher-search">
-              <input type="text" id="org-search-input" placeholder="Search platform..." autocomplete="off">
+            <div class="group-switcher-search">
+              <input type="text" id="group-search-input" placeholder="Search platform..." autocomplete="off">
             </div>
           `
               : ""
           }
 
-          <div class="org-switcher-list" id="org-switcher-list">
+          <div class="group-switcher-list" id="group-switcher-list">
             ${
-              this.organizations.length === 0
+              this.groups.length === 0
                 ? `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-                   No organizations found.
+                   No groups found.
                  </div>`
-                : this.organizations
-                    .map((org) => this.renderOrgItem(org))
+                : this.groups
+                    .map((group) => this.renderGroupItem(group))
                     .join("")
             }
           </div>
-          <div class="org-switcher-footer">
-            <button class="org-switcher-action" onclick="window.location.href='create-organization.html'">
+          <div class="group-switcher-footer">
+            <button class="group-switcher-action" onclick="window.location.href='create-group.html'">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
-              Create Organization
+              Create Group
             </button>
           </div>
         </div>
@@ -178,44 +179,44 @@ class OrganizationSwitcher {
     `;
   }
 
-  renderOrgItem(org) {
-    // Check if active - must match both org ID and player ID (if viewing as child)
+  renderGroupItem(group) {
+    // Check if active - must match both group ID and player ID (if viewing as child)
     const isActive =
-      this.currentOrg?.id === org.id &&
-      (org.player_id
-        ? this.currentOrg?.player_id === org.player_id
-        : !this.currentOrg?.player_id);
+      this.currentGroup?.id === group.id &&
+      (group.player_id
+        ? this.currentGroup?.player_id === group.player_id
+        : !this.currentGroup?.player_id);
 
     // Determine display role
-    let displayRole = this.formatRole(org.user_role || org.role);
+    let displayRole = this.formatRole(group.user_role || group.role);
 
     // If this is a child's player context, show the child's name
-    if (org.player_id && org.player_name) {
-      displayRole = `Player - ${org.player_name}`;
+    if (group.player_id && group.player_name) {
+      displayRole = `Player - ${group.player_name}`;
     }
 
     return `
       <button 
-        class="org-switcher-item ${isActive ? "active" : ""}" 
-        data-org-id="${org.id}"
-        data-player-id="${org.player_id || ""}"
+        class="group-switcher-item ${isActive ? "active" : ""}" 
+        data-group-id="${group.id}"
+        data-player-id="${group.player_id || ""}"
         ${isActive ? "disabled" : ""}
       >
-        <div class="org-item-avatar">
+        <div class="group-item-avatar">
           ${
-            org.logo_url
-              ? `<img src="${org.logo_url}" alt="${org.name}">`
-              : `<span>${org.name.charAt(0)}</span>`
+            group.logo_url
+              ? `<img src="${group.logo_url}" alt="${group.name}">`
+              : `<span>${group.name.charAt(0)}</span>`
           }
         </div>
-        <div class="org-item-info">
-          <div class="org-item-name">${org.name}</div>
-          <div class="org-item-role">${displayRole}</div>
+        <div class="group-item-info">
+          <div class="group-item-name">${group.name}</div>
+          <div class="group-item-role">${displayRole}</div>
         </div>
         ${
           isActive
             ? `
-          <svg class="org-item-check" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <svg class="group-item-check" width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M3 8L6 11L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         `
@@ -240,8 +241,8 @@ class OrganizationSwitcher {
   }
 
   attachEventListeners() {
-    const trigger = document.getElementById("org-switcher-trigger");
-    const dropdown = document.getElementById("org-switcher-dropdown");
+    const trigger = document.getElementById("group-switcher-trigger");
+    const dropdown = document.getElementById("group-switcher-dropdown");
 
     if (!trigger || !dropdown) return;
 
@@ -253,31 +254,31 @@ class OrganizationSwitcher {
 
     // Close on outside click
     document.addEventListener("click", (e) => {
-      if (!e.target.closest(".org-switcher")) {
+      if (!e.target.closest(".group-switcher")) {
         this.closeDropdown();
       }
     });
 
-    // Handle organization selection
+    // Handle group selection
     dropdown.addEventListener("click", async (e) => {
-      const item = e.target.closest(".org-switcher-item");
+      const item = e.target.closest(".group-switcher-item");
       if (item && !item.disabled) {
-        const orgId = item.dataset.orgId;
+        const groupId = item.dataset.groupId;
         const playerId = item.dataset.playerId || null;
-        await this.switchOrganization(orgId, playerId);
+        await this.switchGroup(groupId, playerId);
       }
     });
 
     // Handle Search for Platform Admins
     if (this.isPlatformAdmin) {
-      const searchInput = document.getElementById("org-search-input");
+      const searchInput = document.getElementById("group-search-input");
       if (searchInput) {
         searchInput.addEventListener("input", (e) => {
           const query = e.target.value.toLowerCase();
-          this.organizations = this.allOrganizations.filter(
-            (org) =>
-              org.name.toLowerCase().includes(query) ||
-              (org.sport && org.sport.toLowerCase().includes(query)),
+          this.groups = this.allGroups.filter(
+            (group) =>
+              group.name.toLowerCase().includes(query) ||
+              (group.sport && group.sport.toLowerCase().includes(query)),
           );
           this.updateList();
         });
@@ -289,55 +290,52 @@ class OrganizationSwitcher {
   }
 
   updateList() {
-    const listContainer = document.getElementById("org-switcher-list");
+    const listContainer = document.getElementById("group-switcher-list");
     if (!listContainer) return;
 
-    if (this.organizations.length === 0) {
-      listContainer.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No matching organizations.</div>`;
+    if (this.groups.length === 0) {
+      listContainer.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No matching groups.</div>`;
     } else {
-      listContainer.innerHTML = this.organizations
-        .map((org) => this.renderOrgItem(org))
+      listContainer.innerHTML = this.groups
+        .map((group) => this.renderGroupItem(group))
         .join("");
     }
   }
 
   toggleDropdown() {
-    const dropdown = document.getElementById("org-switcher-dropdown");
+    const dropdown = document.getElementById("group-switcher-dropdown");
     if (!dropdown) return;
 
     this.isOpen = !this.isOpen;
     dropdown.classList.toggle("open", this.isOpen);
 
-    const trigger = document.getElementById("org-switcher-trigger");
+    const trigger = document.getElementById("group-switcher-trigger");
     if (trigger) {
       trigger.classList.toggle("open", this.isOpen);
     }
   }
 
   closeDropdown() {
-    const dropdown = document.getElementById("org-switcher-dropdown");
+    const dropdown = document.getElementById("group-switcher-dropdown");
     if (dropdown) {
       this.isOpen = false;
       dropdown.classList.remove("open");
 
-      const trigger = document.getElementById("org-switcher-trigger");
+      const trigger = document.getElementById("group-switcher-trigger");
       if (trigger) {
         trigger.classList.remove("open");
       }
     }
   }
 
-  async switchOrganization(orgId, playerId = null) {
+  async switchGroup(groupId, playerId = null) {
     try {
-      showNotification("Switching organization...", "info");
+      showNotification("Switching group...", "info");
 
-      const response = await apiService.makeRequest(
-        "/auth/switch-organization",
-        {
-          method: "POST",
-          body: JSON.stringify({ organizationId: orgId }),
-        },
-      );
+      const response = await apiService.makeRequest("/auth/switch-group", {
+        method: "POST",
+        body: JSON.stringify({ organizationId: groupId }),
+      });
 
       if (response.success) {
         // Store player ID in localStorage if viewing as a child
@@ -351,23 +349,20 @@ class OrganizationSwitcher {
           // Preserving a child ID is dangerous because that child likely doesn't exist in the new club.
           delete user.activePlayerId;
           sessionStorage.removeItem("activePlayerId");
-          console.log(
-            `👤 Switching organization: Resetting to default profile`,
-          );
+          console.log(`👤 Switching group: Resetting to default profile`);
         }
-        user.clubId = orgId;
-        user.currentOrganizationId = orgId;
+        user.clubId = groupId;
+        user.currentGroupId = groupId;
         localStorage.setItem("currentUser", JSON.stringify(user));
 
-        showNotification("Organization switched successfully!", "success");
+        showNotification("Group switched successfully!", "success");
 
         // Fetch new context to get updated role
         try {
           const context = await apiService.refreshContext();
-          if (context && context.currentOrganization) {
+          if (context && context.currentGroup) {
             const newRole =
-              context.currentOrganization.user_role ||
-              context.currentOrganization.role;
+              context.currentGroup.user_role || context.currentGroup.role;
 
             // Update local storage user - CRITICAL FIX: Ensure we merge with existing or fetch fresh if missing
             let currentUser = null;
@@ -390,7 +385,7 @@ class OrganizationSwitcher {
 
             if (currentUser) currentUser.role = newRole;
             // Also sync clubId for determining active club
-            currentUser.clubId = context.currentOrganization.id;
+            currentUser.clubId = context.currentGroup.id;
 
             localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
@@ -422,10 +417,10 @@ class OrganizationSwitcher {
 }
 
 // Initialize on page load
-let orgSwitcher;
+let groupSwitcher;
 document.addEventListener("DOMContentLoaded", () => {
-  const container = document.getElementById("org-switcher-container");
+  const container = document.getElementById("group-switcher-container");
   if (container) {
-    orgSwitcher = new OrganizationSwitcher();
+    groupSwitcher = new GroupSwitcher();
   }
 });

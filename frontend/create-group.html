@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Organization - ClubHub</title>
+    <title>Create Group - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        .create-org-container {
+        .create-group-container {
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -15,7 +15,7 @@
             padding: 2rem;
         }
 
-        .create-org-card {
+        .create-group-card {
             max-width: 600px;
             width: 100%;
             background: var(--bg-card);
@@ -24,12 +24,12 @@
             padding: 3rem;
         }
 
-        .create-org-header {
+        .create-group-header {
             text-align: center;
             margin-bottom: 2rem;
         }
 
-        .create-org-icon {
+        .create-group-icon {
             width: 64px;
             height: 64px;
             margin: 0 auto 1rem;
@@ -46,14 +46,14 @@
             color: white;
         }
 
-        .create-org-title {
+        .create-group-title {
             font-size: 1.75rem;
             font-weight: 700;
             color: var(--text-main);
             margin-bottom: 0.5rem;
         }
 
-        .create-org-subtitle {
+        .create-group-subtitle {
             color: var(--text-muted);
         }
 
@@ -185,33 +185,33 @@
             </div>
 
             <div style="color: var(--text-muted); font-size: 0.9rem;">
-                Step 1 of 1: Create Organization
+                Step 1 of 1: Create Group
             </div>
         </nav>
     </header>
 
-    <div class="create-org-container">
-        <div class="create-org-card">
-            <div class="create-org-header">
-                <div class="create-org-icon">
+    <div class="create-group-container">
+        <div class="create-group-card">
+            <div class="create-group-header">
+                <div class="create-group-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                         <polyline points="9 22 9 12 15 12 15 22" />
                     </svg>
                 </div>
-                <h1 class="create-org-title">Create Your Organization</h1>
-                <p class="create-org-subtitle">Set up your club and start managing your team</p>
+                <h1 class="create-group-title">Create Your Group</h1>
+                <p class="create-group-subtitle">Set up your club and start managing your team</p>
             </div>
 
             <div class="success-message" id="successMessage">
-                ✅ Organization created successfully! Redirecting...
+                ✅ Group created successfully! Redirecting...
             </div>
 
             <div class="error-message" id="errorMessage"></div>
 
-            <form id="createOrgForm">
+            <form id="createGroupForm">
                 <div class="form-group">
-                    <label for="name">Organization Name *</label>
+                    <label for="name">Group Name *</label>
                     <input type="text" id="name" name="name" placeholder="e.g., Elite FC" required>
                 </div>
 
@@ -243,12 +243,11 @@
 
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" name="description"
-                        placeholder="Tell us about your organization..."></textarea>
+                    <textarea id="description" name="description" placeholder="Tell us about your group..."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="logo">Organization Logo (Optional)</label>
+                    <label for="logo">Group Logo (Optional)</label>
                     <div class="file-upload-area" id="logoUploadArea">
                         <input type="file" id="logo" name="logo" accept="image/*" style="display: none;">
                         <div class="upload-placeholder" id="uploadPlaceholder">
@@ -278,7 +277,7 @@
                             Back
                         </button>
                         <button type="submit" class="btn btn-primary" id="submitBtn">
-                            Create Organization
+                            Create Group
                         </button>
                     </div>
 
@@ -381,7 +380,7 @@
             previewImg.src = '';
         }
 
-        const form = document.getElementById('createOrgForm');
+        const form = document.getElementById('createGroupForm');
         const submitBtn = document.getElementById('submitBtn');
         const successMessage = document.getElementById('successMessage');
         const errorMessage = document.getElementById('errorMessage');
@@ -398,22 +397,22 @@
             errorMessage.style.display = 'none';
 
             try {
-                // 1. Create Organization (JSON)
+                // 1. Create Group (JSON)
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData);
                 // Remove logo from JSON data as it's handled separately
                 delete data.logo;
 
-                console.log('Creating organization...', data);
+                console.log('Creating group...', data);
 
-                const response = await apiService.makeRequest('/organizations', {
+                const response = await apiService.makeRequest('/groups', {
                     method: 'POST',
                     body: JSON.stringify(data)
                 });
 
-                if (response.success && response.organization) {
+                if (response.success && response.group) {
                     const orgId = response.organization.id;
-                    console.log('✅ Organization created with ID:', orgId);
+                    console.log('✅ Group created with ID:', orgId);
 
                     // 2. Upload Logo (if selected)
                     if (selectedLogoFile) {
@@ -422,7 +421,7 @@
                             const logoFormData = new FormData();
                             logoFormData.append('logo', selectedLogoFile);
 
-                            await apiService.makeRequest(`/organizations/${orgId}/logo`, {
+                            await apiService.makeRequest(`/groups/${orgId}/logo`, {
                                 method: 'POST',
                                 body: logoFormData
                             });
@@ -443,25 +442,25 @@
 
                     // Redirect to dashboard after 2 seconds
                     setTimeout(() => {
-                        window.location.href = 'admin-dashboard.html';
+                        window.location.href = 'coach-dashboard.html';
                     }, 2000);
                 } else {
-                    throw new Error(response.error || 'Failed to create organization');
+                    throw new Error(response.error || 'Failed to create group');
                 }
             } catch (error) {
-                console.error('Error creating organization:', error);
+                console.error('Error creating group:', error);
 
                 // Use premium showAlert
                 if (typeof showAlert === 'function') {
-                    showAlert(error.message || 'Failed to create organization', 'Error', 'error');
+                    showAlert(error.message || 'Failed to create group', 'Error', 'error');
                 } else {
-                    errorMessage.textContent = `❌ ${error.message || 'Failed to create organization'}`;
+                    errorMessage.textContent = `❌ ${error.message || 'Failed to create group'}`;
                     errorMessage.style.display = 'block';
                 }
 
                 // Re-enable submit button
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Organization';
+                submitBtn.textContent = 'Create Group';
             }
         });
     </script>

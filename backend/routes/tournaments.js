@@ -362,7 +362,165 @@ router.post(
   },
 );
 
-// Update Team Status
+// ================= PITCH MANAGEMENT =================
+
+/**
+ * @route   POST /api/tournaments/:id/pitches
+ * @desc    Add pitches to a tournament
+ */
+router.post(
+  "/:id/pitches",
+  authenticateToken,
+  requireOrganization,
+  [
+    body("name").notEmpty(),
+    body("pitchType").optional(),
+    body("pitchSize").optional(),
+  ],
+  async (req, res) => {
+    const { name, pitchType, pitchSize } = req.body;
+    try {
+      const result = await query(
+        `
+                INSERT INTO tournament_pitches (event_id, name, pitch_type, pitch_size)
+                VALUES ($1, $2, $3, $4) RETURNING *
+            `,
+        [req.params.id, name, pitchType || "Grass", pitchSize || "11v11"],
+      );
+      res.status(201).json(result.rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to create pitch" });
+    }
+  },
+);
+
+/**
+ * @route   GET /api/tournaments/:id/pitches
+ * @desc    Get all pitches for a tournament
+ */
+router.get("/:id/pitches", authenticateToken, async (req, res) => {
+  try {
+    const result = await query(
+      "SELECT * FROM tournament_pitches WHERE event_id = $1 ORDER BY name",
+      [req.params.id],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch pitches" });
+  }
+});
+
+// ================= PRO SCHEDULER =================
+
+/**
+ * @route   POST /api/tournaments/:id/auto-schedule
+ * @desc    Professionally schedule matches across multiple pitches
+ */
+router.post(
+  "/:id/auto-schedule",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    const eventId = req.params.id;
+    const { stageId, startTime, internalBuffer } = req.body; // startTime e.g. "09:00"
+
+    try {
+      await withTransaction(async (client) => {
+        // 1. Fetch Stage Info (Duration/Break)
+        const stageRes = await client.query(
+          "SELECT * FROM tournament_stages WHERE id = $1",
+          [stageId],
+        );
+        if (stageRes.rows.length === 0) throw new Error("Stage not found");
+        const stage = stageRes.rows[0];
+
+        // 2. Fetch Tournament Date
+        const eventRes = await client.query(
+          "SELECT event_date FROM events WHERE id = $1",
+          [eventId],
+        );
+        const eventDate = eventRes.rows[0].event_date;
+
+        // 3. Fetch Unscheduled Matches
+        const matchesRes = await client.query(
+          "SELECT id FROM tournament_matches WHERE stage_id = $1 AND start_time IS NULL ORDER BY match_number",
+          [stageId],
+        );
+        const matches = matchesRes.rows;
+
+        // 4. Fetch Active Pitches
+        const pitchesRes = await client.query(
+          "SELECT id FROM tournament_pitches WHERE event_id = $1 AND is_active = TRUE ORDER BY name",
+          [eventId],
+        );
+        const pitches = pitchesRes.rows;
+        if (pitches.length === 0)
+          throw new Error("No active pitches found. Please add pitches first.");
+
+        // 5. Scheduling Logic
+        const duration = stage.match_duration || 20;
+        const buffer = internalBuffer || stage.break_duration || 5;
+        const totalSlot = duration + buffer;
+
+        // Initialize pitch trackers (next available time on each pitch)
+        const baseStartTime = startTime || "09:00";
+        const [baseH, baseM] = baseStartTime.split(":").map(Number);
+
+        const pitchAvailability = pitches.map(() => {
+          const t = new Date(eventDate);
+          t.setHours(baseH, baseM, 0, 0);
+          return t;
+        });
+
+        for (let i = 0; i < matches.length; i++) {
+          // Find pitch that is available earliest
+          let earliestPitchIdx = 0;
+          for (let j = 1; j < pitchAvailability.length; j++) {
+            if (pitchAvailability[j] < pitchAvailability[earliestPitchIdx]) {
+              earliestPitchIdx = j;
+            }
+          }
+
+          const matchStartTime = new Date(pitchAvailability[earliestPitchIdx]);
+          const matchEndTime = new Date(
+            matchStartTime.getTime() + duration * 60000,
+          );
+
+          await client.query(
+            `
+                    UPDATE tournament_matches 
+                    SET start_time = $1, end_time = $2, pitch_id = $3
+                    WHERE id = $4
+                `,
+            [
+              matchStartTime.toISOString(),
+              matchEndTime.toISOString(),
+              pitches[earliestPitchIdx].id,
+              matches[i].id,
+            ],
+          );
+
+          // Update pitch availability for NEXT match on THIS pitch
+          pitchAvailability[earliestPitchIdx] = new Date(
+            matchStartTime.getTime() + totalSlot * 60000,
+          );
+        }
+      });
+
+      res.json({ message: "Auto-scheduling complete" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Scheduling failed: " + err.message });
+    }
+  },
+);
+
+// ================= TEAM MANAGEMENT =================
+
+/**
+ * @route   POST /api/tournaments/teams/:id/status
+ * @desc    Update tournament team registration status
+ */
 router.post(
   "/teams/:id/status",
   authenticateToken,
@@ -402,5 +560,70 @@ router.post(
     }
   },
 );
+
+/**
+ * @route   GET /api/tournaments/:id/bracket
+ * @desc    Get structured bracket data for visualization/printing
+ */
+router.get("/:id/bracket", authenticateToken, async (req, res) => {
+  const eventId = req.params.id;
+  try {
+    const [stages, matches, teams] = await Promise.all([
+      query(
+        "SELECT * FROM tournament_stages WHERE event_id = $1 ORDER BY sequence",
+        [eventId],
+      ),
+      query(
+        `
+        SELECT m.*, 
+               ht.team_name as home_name, 
+               at.team_name as away_name,
+               p.name as pitch_name
+        FROM tournament_matches m
+        LEFT JOIN tournament_teams ht ON m.home_team_id = ht.id
+        LEFT JOIN tournament_teams at ON m.away_team_id = at.id
+        LEFT JOIN tournament_pitches p ON m.pitch_id = p.id
+        WHERE m.event_id = $1
+        ORDER BY m.round_number, m.match_number
+      `,
+        [eventId],
+      ),
+      query(
+        "SELECT id, team_name, status FROM tournament_teams WHERE event_id = $1",
+        [eventId],
+      ),
+    ]);
+
+    // Group matches by stage and round
+    const bracketData = stages.rows.map((stage) => {
+      const stageMatches = matches.rows.filter((m) => m.stage_id === stage.id);
+
+      // Group by round
+      const rounds = {};
+      stageMatches.forEach((m) => {
+        if (!rounds[m.round_number]) rounds[m.round_number] = [];
+        rounds[m.round_number].push(m);
+      });
+
+      return {
+        ...stage,
+        rounds: Object.keys(rounds)
+          .map((r) => ({
+            round: parseInt(r),
+            matches: rounds[r],
+          }))
+          .sort((a, b) => a.round - b.round),
+      };
+    });
+
+    res.json({
+      stages: bracketData,
+      teams: teams.rows,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch bracket data" });
+  }
+});
 
 module.exports = router;

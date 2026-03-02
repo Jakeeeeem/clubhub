@@ -49,6 +49,10 @@ const registerValidation = [
     .optional()
     .isISO8601()
     .withMessage("Invalid date of birth"),
+  body("agreeTerms")
+    .equals("true")
+    .withMessage("You must agree to the terms and conditions"),
+  body("agreeThirdParty").optional().isBoolean(),
 ];
 
 const childProfileValidation = [
@@ -160,6 +164,8 @@ router.post("/register", registerValidation, async (req, res) => {
       orgTypes = [],
       phone,
       dateOfBirth,
+      agreeTerms,
+      agreeThirdParty = false,
       profile = {},
     } = req.body;
 
@@ -180,9 +186,9 @@ router.post("/register", registerValidation, async (req, res) => {
         INSERT INTO users (
           email, password_hash, first_name, last_name, account_type, org_types,
           phone, date_of_birth, email_recovery_enabled, auto_payments_enabled,
-          payment_reminders_enabled, receipt_emails_enabled
+          payment_reminders_enabled, receipt_emails_enabled, agree_terms, agree_third_party
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
         RETURNING id, email, first_name, last_name, account_type, org_types, phone, date_of_birth, created_at, completed_tours
       `,
         [
@@ -198,6 +204,8 @@ router.post("/register", registerValidation, async (req, res) => {
           profile.autoPayments || false,
           profile.paymentReminders !== false,
           profile.receiptEmails !== false,
+          agreeTerms === true || agreeTerms === "true",
+          agreeThirdParty === true || agreeThirdParty === "true",
         ],
       );
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Club Invitation - ClubHub</title>
+    <title>Group Invitation - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .invite-container {
@@ -88,7 +88,7 @@
             padding: 0 2rem 2.5rem;
         }
 
-        .club-card {
+        .group-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-color);
             border-radius: 16px;
@@ -99,7 +99,7 @@
             gap: 1rem;
         }
 
-        .club-logo-placeholder {
+        .group-logo-placeholder {
             width: 60px;
             height: 60px;
             background: var(--bg-dark);
@@ -113,11 +113,11 @@
             flex-shrink: 0;
         }
 
-        .club-info-main {
+        .group-info-main {
             flex: 1;
         }
 
-        .club-name {
+        .group-name {
             font-size: 1.25rem;
             font-weight: 700;
             color: #f8fafc;
@@ -125,14 +125,14 @@
             margin-bottom: 0.25rem;
         }
 
-        .club-meta {
+        .group-meta {
             display: flex;
             gap: 1rem;
             font-size: 0.9rem;
             color: var(--text-muted);
         }
 
-        .club-meta span {
+        .group-meta span {
             display: flex;
             align-items: center;
             gap: 0.4rem;
@@ -392,17 +392,17 @@
                 <div class="invite-header">
                     <div class="invite-icon">🎉</div>
                     <h1>You're Invited!</h1>
-                    <p>You've been invited to join a sports club on ClubHub</p>
+                    <p>You've been invited to join a group on ClubHub</p>
                 </div>
 
                 <div class="invite-body">
                     <div id="inviteFormContainer">
                         <!-- Club Card -->
-                        <div class="club-card">
-                            <div class="club-logo-placeholder">⚽</div>
-                            <div class="club-info-main">
-                                <div class="club-name" id="clubName" style="color: #ffffff !important;">Loading...</div>
-                                <div class="club-meta">
+                        <div class="group-card">
+                            <div class="group-logo-placeholder">⚽</div>
+                            <div class="group-info-main">
+                                <div class="group-name" id="clubName" style="color: #ffffff !important;">Loading...</div>
+                                <div class="group-meta">
                                     <span>📍 <span id="clubLocation">-</span></span>
                                     <span>🏆 <span id="clubSport">-</span></span>
                                 </div>
@@ -411,7 +411,7 @@
 
                         <!-- Role Badge -->
                         <div class="role-badge">
-                            You are being invited as a <span id="clubRole"
+                            You are being invited as a <span id="groupRole"
                                 style="text-transform: capitalize;">Player</span>
                         </div>
 
@@ -420,7 +420,7 @@
                             <strong style="color: var(--text-main); margin-left: 0.5rem;" id="teamName"></strong>
                         </div>
 
-                        <div id="clubDescription"
+                        <div id="groupDescription"
                             style="text-align: center; color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.6;">
                         </div>
 
@@ -446,7 +446,7 @@
 
                         <!-- Terms -->
                         <div class="terms-box">
-                            <strong style="color: var(--text-main);">Club Membership Terms</strong>
+                            <strong style="color: var(--text-main);">Group Membership Terms</strong>
                             <ul>
                                 <li>By joining, you agree to follow club rules and guidelines.</li>
                                 <li>You acknowledge properly sharing your contact info with admins.</li>
@@ -454,14 +454,14 @@
                             </ul>
                             <label class="terms-checkbox">
                                 <input type="checkbox" id="acceptTerms">
-                                <span>I accept the club membership terms and conditions</span>
+                                <span>I accept the group membership terms and conditions</span>
                             </label>
                         </div>
 
                         <!-- Actions -->
                         <div style="display: flex; flex-direction: column; gap: 1rem;">
                             <button id="acceptBtn" class="btn btn-primary" onclick="acceptInvite()" disabled>
-                                <span>✅</span> Accept & Join Club
+                                <span>✅</span> Accept & Join Group
                             </button>
                             <button id="declineBtn" class="btn btn-secondary" onclick="declineInvite()"
                                 style="display: none; margin-top: 0; justify-content: center;">
@@ -607,9 +607,9 @@
                 }
 
                 console.log('📄 Loading invite details for token:', token);
-                console.log('🔗 Full API URL:', `${API_BASE_URL}/invites/details/${token}`);
+                console.log('🔗 Full API URL:', `${API_BASE_URL}/groups/invites/details/${token}`);
 
-                const response = await fetch(`${API_BASE_URL}/invites/details/${token}`, {
+                const response = await fetch(`${API_BASE_URL}/groups/invites/details/${token}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -653,10 +653,10 @@
             document.getElementById('clubName').textContent = inviteData.club.name;
             document.getElementById('clubLocation').textContent = inviteData.club.location || 'Not specified';
             document.getElementById('clubSport').textContent = inviteData.club.sport || 'Not specified';
-            document.getElementById('clubDescription').textContent = inviteData.club.description || 'No description available';
+            document.getElementById('groupDescription').textContent = inviteData.club.description || 'No description available';
 
             // Populate invite information
-            document.getElementById('clubRole').textContent = capitalizeFirst(inviteData.invite.clubRole);
+            document.getElementById('groupRole').textContent = capitalizeFirst(inviteData.invite.groupRole);
             document.getElementById('inviterName').textContent = inviteData.inviter.name;
             document.getElementById('expiresAt').textContent = formatDate(inviteData.invite.expiresAt);
 
@@ -705,10 +705,10 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const token = urlParams.get('token');
 
-                console.log('✅ Accepting club invitation...');
-                console.log('🔗 Accept URL:', `${API_BASE_URL}/invites/accept/${token}`);
+                console.log('✅ Accepting group invitation...');
+                console.log('🔗 Accept URL:', `${API_BASE_URL}/groups/invites/accept/${token}`);
 
-                const response = await fetch(`${API_BASE_URL}/invites/accept/${token}`, {
+                const response = await fetch(`${API_BASE_URL}/groups/invites/accept/${token}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -764,9 +764,9 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const token = urlParams.get('token');
 
-                console.log('❌ Declining club invitation...');
+                console.log('❌ Declining group invitation...');
 
-                const response = await fetch(`${API_BASE_URL}/invites/decline/${token}`, {
+                const response = await fetch(`${API_BASE_URL}/groups/invites/decline/${token}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -811,7 +811,7 @@
                 if (declineBtn) declineBtn.disabled = true;
             } else {
                 acceptBtn.disabled = !document.getElementById('acceptTerms').checked;
-                acceptBtn.textContent = '✅ Accept & Join Club';
+                acceptBtn.textContent = '✅ Accept & Join Group';
                 if (declineBtn) declineBtn.disabled = false;
             }
         }
@@ -825,7 +825,7 @@
             // Auto-redirect after 5 seconds
             // Auto-redirect after 5 seconds
             setTimeout(() => {
-                const role = (inviteData?.invite?.clubRole || 'player').toLowerCase();
+                const role = (inviteData?.invite?.groupRole || 'player').toLowerCase();
                 if (['admin', 'owner', 'coach', 'assistant-coach', 'assistant_coach', 'staff', 'treasurer', 'secretary', 'welfare-officer'].includes(role)) {
                     window.location.href = 'admin-dashboard.html';
                 } else {

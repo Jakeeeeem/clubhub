@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="/images/logo.png">
 
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="org-switcher.css">
+    <link rel="stylesheet" href="group-switcher.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@
 
             <!-- Mode Toggle -->
             <div class="mode-toggle-container">
-                <span class="mode-label active" id="club-label">Club</span>
+                <span class="mode-label active" id="group-label">Group</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="mode-toggle" />
                     <span class="toggle-slider"></span>
@@ -43,13 +43,22 @@
             </div>
 
             <div class="user-info">
-                <div id="org-switcher-container"></div>
+                <div id="org-switcher-container"></div> <!-- Group Switcher -->
                 <div class="user-avatar" id="coachAvatar">C</div>
                 <span id="coachNameDisplay">Coach</span>
                 <button onclick="logout()" class="btn btn-secondary btn-small">Logout</button>
             </div>
         </nav>
     </header>
+
+    <!-- App Top Tabs (Mobile Headlines) -->
+    <div class="app-top-tabs" id="mobileTabs">
+        <a href="#" class="tab-item active" onclick="showCoachSection('overview'); return false;">Overview</a>
+        <a href="#" class="tab-item" onclick="showCoachSection('teams'); return false;">Teams</a>
+        <a href="#" class="tab-item" onclick="showCoachSection('players'); return false;">Players</a>
+        <a href="#" class="tab-item" onclick="showCoachSection('tactical-board'); return false;">Tactics</a>
+        <a href="#" class="tab-item" onclick="showCoachSection('events'); return false;">Calendar</a>
+    </div>
 
     <main class="main">
         <div class="dashboard container dashboard-container">
@@ -60,148 +69,215 @@
                 </div>
             </div>
 
-            <!-- Grouped Dashboard Navigation -->
-            <div class="dashboard-nav-grouped">
-                <button class="nav-item active" onclick="showCoachSection('overview')">
-                    📊 Overview
+            <!-- Grouped Dashboard Navigation (Desktop) -->
+            <div class="dashboard-nav-grouped desktop-only">
+                <!-- ... existing nav content stays for desktop, but we could also unify it ... -->
+            </div>
+            <button class="nav-item active" onclick="showCoachSection('overview')">
+                📊 Overview
+            </button>
+
+            <!-- Team Management Group -->
+            <div class="nav-dropdown-container" id="nav-group-coaching">
+                <button class="nav-item dropdown-trigger">
+                    📋 Team Management ▾
                 </button>
-
-                <!-- Team Management Group -->
-                <div class="nav-dropdown-container" id="nav-group-coaching">
-                    <button class="nav-item dropdown-trigger">
-                        📋 Team Management ▾
-                    </button>
-                    <div class="nav-dropdown-menu">
-                        <button onclick="showCoachSection('teams')">🛡️ My Teams</button>
-                        <button onclick="showCoachSection('players')">👥 My Players</button>
-                        <button onclick="showCoachSection('tactical-board')">📝 Tactics Board</button>
-                    </div>
-                </div>
-
-                <!-- Schedule Group -->
-                <div class="nav-dropdown-container">
-                    <button class="nav-item dropdown-trigger">
-                        📅 Schedule & Events ▾
-                    </button>
-                    <div class="nav-dropdown-menu">
-                        <button onclick="showCoachSection('events')">🗓️ Calendar</button>
-                        <button onclick="showCoachSection('event-finder')">🔍 Find Events</button>
-                    </div>
-                </div>
-
-                <!-- Profile Group -->
-                <div class="nav-dropdown-container">
-                    <button class="nav-item dropdown-trigger">
-                        👤 Profile ▾
-                    </button>
-                    <div class="nav-dropdown-menu">
-                        <button onclick="showCoachSection('profile')">My Profile</button>
-                        <button
-                            onclick="localStorage.setItem('lastDashboard', 'coach-dashboard.html'); window.location.href='player-settings.html'">Settings</button>
-                    </div>
-                </div>
-
-                <!-- Shop Group -->
-                <div class="nav-dropdown-container">
-                    <button class="nav-item dropdown-trigger">
-                        🛒 Shop ▾
-                    </button>
-                    <div class="nav-dropdown-menu">
-                        <button onclick="showCoachSection('item-shop')">Equipment Store</button>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Dashboard Sections -->
-
-            <!-- Overview Section -->
-            <div id="coach-overview" class="dashboard-section active">
-                <div class="stats-grid"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                    <div class="stat-card">
-                        <span class="stat-number" id="managedTeamsCount">0</span>
-                        <span class="stat-label">Teams Managed</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number" id="totalPlayersCount">0</span>
-                        <span class="stat-label">Total Players</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-number" id="upcomingSessionsCount">0</span>
-                        <span class="stat-label">Upcoming Sessions</span>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3>Recent Groups</h3>
-                    <div id="groupsContainer">
-                        <p class="loading-text">Loading groups...</p>
-                    </div>
+                <div class="nav-dropdown-menu">
+                    <button onclick="showCoachSection('teams')">🛡️ My Teams</button>
+                    <button onclick="showCoachSection('players')">👥 My Players</button>
+                    <button onclick="showCoachSection('tactical-board')">📝 Tactics Board</button>
                 </div>
             </div>
 
-            <!-- Profile Section -->
-            <div id="coach-profile" class="dashboard-section">
-                <div class="card">
-                    <div class="section-header"
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3>👤 Coach Profile</h3>
-                        <button class="btn btn-primary" onclick="saveCoachProfile()">Save Changes</button>
-                    </div>
-                    <form id="coachProfileForm">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                            <div class="form-group">
-                                <label>First Name</label>
-                                <input type="text" id="coach-prof-firstName" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Last Name</label>
-                                <input type="text" id="coach-prof-lastName" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Email Address</label>
-                                <input type="email" id="coach-prof-email" readonly style="opacity: 0.6;">
-                            </div>
-                            <div class="form-group">
-                                <label>Phone Number</label>
-                                <input type="tel" id="coach-prof-phone">
-                            </div>
-                            <div class="form-group" style="grid-column: span 2;">
-                                <label>Bio / Experience</label>
-                                <textarea id="coach-prof-bio" rows="4"
-                                    style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 0.8rem;"></textarea>
-                            </div>
+            <!-- Schedule Group -->
+            <div class="nav-dropdown-container">
+                <button class="nav-item dropdown-trigger">
+                    📅 Schedule & Events ▾
+                </button>
+                <div class="nav-dropdown-menu">
+                    <button onclick="showCoachSection('events')">🗓️ Calendar</button>
+                    <button onclick="showCoachSection('event-finder')">🔍 Find Events</button>
+                </div>
+            </div>
+
+            <!-- Profile Group -->
+            <div class="nav-dropdown-container">
+                <button class="nav-item dropdown-trigger">
+                    👤 Profile ▾
+                </button>
+                <div class="nav-dropdown-menu">
+                    <button onclick="showCoachSection('profile')">My Profile</button>
+                    <button
+                        onclick="localStorage.setItem('lastDashboard', 'coach-dashboard.html'); window.location.href='player-settings.html'">Settings</button>
+                </div>
+            </div>
+
+            <!-- Shop Group -->
+            <div class="nav-dropdown-container">
+                <button class="nav-item dropdown-trigger">
+                    🛒 Shop ▾
+                </button>
+                <div class="nav-dropdown-menu">
+                    <button onclick="showCoachSection('item-shop')">Equipment Store</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Dashboard Sections -->
+
+        <!-- Overview Section -->
+        <div id="coach-overview" class="dashboard-section active">
+            <div class="stats-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="stat-card">
+                    <span class="stat-number" id="managedTeamsCount">0</span>
+                    <span class="stat-label">Teams Managed</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="totalPlayersCount">0</span>
+                    <span class="stat-label">Total Players</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="upcomingSessionsCount">0</span>
+                    <span class="stat-label">Upcoming Sessions</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Recent Groups</h3>
+                <div id="groupsContainer">
+                    <p class="loading-text">Loading groups...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="coach-profile" class="dashboard-section">
+            <div class="card">
+                <div class="section-header"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>👤 Coach Profile</h3>
+                    <button class="btn btn-primary" onclick="saveCoachProfile()">Save Changes</button>
+                </div>
+                <form id="coachProfileForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" id="coach-prof-firstName" required>
                         </div>
-                    </form>
-                </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="coach-prof-lastName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="coach-prof-email" readonly style="opacity: 0.6;">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="coach-prof-phone">
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Bio / Experience</label>
+                            <textarea id="coach-prof-bio" rows="4"
+                                style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 0.8rem;"></textarea>
+                        </div>
+                    </div>
+                </form>
             </div>
+        </div>
 
-            <!-- Other placeholders for JS logic -->
-            <div id="coach-teams" class="dashboard-section">
-                <div class="card">
-                    <h3>My Teams</h3>
-                    <div id="coachTeamsList"></div>
+        <!-- Other placeholders for JS logic -->
+        <div id="coach-teams" class="dashboard-section">
+            <div class="card">
+                <h3>My Teams</h3>
+                <div id="coachTeamsList"></div>
+            </div>
+        </div>
+        <div id="coach-players" class="dashboard-section">
+            <div class="card">
+                <h3>Active Rosters</h3>
+                <div id="coachPlayersList"></div>
+            </div>
+        </div>
+        <div id="coach-events" class="dashboard-section">
+            <div class="card">
+                <h3>Training & Match Schedule</h3>
+                <div id="coachEventsList"></div>
+            </div>
+        </div>
+        <div id="coach-tactical-board" class="dashboard-section">
+            <div class="card card-glass-red" style="padding: 1.5rem;">
+                <div class="section-header"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div>
+                        <h3 class="neon-text-red">🏟️ Lineup Planner</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">Craft your matchday strategy with
+                            precision</p>
+                    </div>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <select id="formationSelect" class="btn btn-secondary"
+                            style="background: rgba(255,255,255,0.05); padding-right: 2rem;" onchange="setFormation()">
+                            <option value="4-4-2">4-4-2</option>
+                            <option value="4-3-3">4-3-3</option>
+                            <option value="3-5-2">3-5-2</option>
+                            <option value="4-2-3-1">4-2-3-1</option>
+                            <option value="5-3-2">5-3-2</option>
+                        </select>
+                        <button class="btn btn-primary btn-small" onclick="saveFormation()">Save Strategy</button>
+                    </div>
+                </div>
+
+                <div class="planner-layout"
+                    style="display: grid; grid-template-columns: 280px 1fr; gap: 2rem; height: 650px;">
+                    <!-- Player Roster Sidebar -->
+                    <div class="roster-sidebar"
+                        style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <h4 style="font-size: 1rem; color: var(--text-main);">Available Players</h4>
+                        <div class="search-box" style="position: relative;">
+                            <input type="text" id="rosterSearch" placeholder="Filter roster..."
+                                style="width: 100%; padding: 0.6rem 2.5rem 0.6rem 1rem; border-radius: 10px; font-size: 0.85rem;"
+                                onkeyup="filterRoster()">
+                            <span
+                                style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); opacity: 0.5;">🔍</span>
+                        </div>
+                        <div id="availablePlayers" class="roster-list"
+                            style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Tactical Pitch -->
+                    <div class="pitch-container"
+                        style="position: relative; background: #1a472a; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: inset 0 0 100px rgba(0,0,0,0.5); overflow: hidden; height: 100%;">
+                        <!-- Soccer Field Markings (SVG) -->
+                        <svg class="field-markings" viewBox="0 0 100 100" preserveAspectRatio="none"
+                            style="position: absolute; width: 100%; height: 100%; pointer-events: none; opacity: 0.8;">
+                            <rect x="0" y="0" width="100" height="100" fill="transparent" stroke="white"
+                                stroke-width="0.5" />
+                            <line x1="0" y1="50" x2="100" y2="50" stroke="white" stroke-width="0.5" />
+                            <circle cx="50" cy="50" r="10" fill="transparent" stroke="white" stroke-width="0.5" />
+                            <circle cx="50" cy="50" r="0.8" fill="white" />
+                            <!-- Penalty Areas -->
+                            <rect x="25" y="0" width="50" height="15" fill="transparent" stroke="white"
+                                stroke-width="0.5" />
+                            <rect x="25" y="85" width="50" height="15" fill="transparent" stroke="white"
+                                stroke-width="0.5" />
+                            <!-- Goal Areas -->
+                            <rect x="38" y="0" width="24" height="6" fill="transparent" stroke="white"
+                                stroke-width="0.5" />
+                            <rect x="38" y="94" width="24" height="6" fill="transparent" stroke="white"
+                                stroke-width="0.5" />
+                        </svg>
+                        <div id="tacticalBoard"
+                            style="position: absolute; width: 100%; height: 100%; pointer-events: all; cursor: crosshair;">
+                            <!-- Players assigned in JS -->
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div id="coach-players" class="dashboard-section">
-                <div class="card">
-                    <h3>Active Rosters</h3>
-                    <div id="coachPlayersList"></div>
-                </div>
-            </div>
-            <div id="coach-events" class="dashboard-section">
-                <div class="card">
-                    <h3>Training & Match Schedule</h3>
-                    <div id="coachEventsList"></div>
-                </div>
-            </div>
-            <div id="coach-tactical-board" class="dashboard-section">
-                <div class="card">
-                    <h3>Formation & Tactics</h3>
-                    <div id="tacticalBoard"></div>
-                </div>
-            </div>
+        </div>
 
         </div>
     </main>
@@ -210,9 +286,50 @@
     <script src="api-service.js"></script>
     <script src="workspace-manager.js"></script>
     <script src="script.js"></script>
-    <script src="org-switcher.js"></script>
+    <script src="group-switcher.js"></script>
     <script src="dialog-service.js"></script>
     <script src="tour-service.js"></script>
+    <!-- App Bottom Navigation (Mobile Only) -->
+    <nav class="app-bottom-nav">
+        <a href="coach-dashboard.html" class="nav-link active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-link" onclick="showCoachSection('event-finder'); return false;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Search</span>
+        </a>
+        <a href="#" class="nav-link" onclick="openCreateMenu(); return false;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Post</span>
+        </a>
+        <a href="#" class="nav-link" onclick="showCoachSection('events'); return false;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Events</span>
+        </a>
+        <a href="#" class="nav-link" onclick="showCoachSection('profile'); return false;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Profile</span>
+        </a>
+    </nav>
+
+    <script src="tactical-logic.js"></script>
     <script src="coach-dashboard.js"></script>
 
     <script>
@@ -224,8 +341,8 @@
                         tourService.start('coach_main', [
                             {
                                 target: '#org-switcher-container',
-                                title: 'Club Context',
-                                text: 'View your coaching assignments and staff details for different organizations.',
+                                title: 'Group Context',
+                                text: 'View your coaching assignments and staff details for different groups.',
                                 position: 'bottom'
                             },
                             {
@@ -270,7 +387,7 @@
         // Mode Toggle Handler
         document.addEventListener('DOMContentLoaded', () => {
             const toggle = document.getElementById('mode-toggle');
-            const clubLabel = document.getElementById('club-label');
+            const clubLabel = document.getElementById('group-label');
             const playerLabel = document.getElementById('player-label');
 
             function syncToggleState() {
@@ -338,6 +455,32 @@
             }
         });
     </script>
+    <!-- Quick Action Modal (Threads Style) -->
+    <div id="quickActionModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; border-radius: 24px; padding: 2rem;">
+            <div class="modal-header" style="border: none; padding-bottom: 0;">
+                <h2 style="width: 100%; text-align: center; font-size: 1.5rem;">Quick Create</h2>
+                <span class="close" onclick="closeModal('quickActionModal')">&times;</span>
+            </div>
+            <div class="quick-actions-grid"
+                style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="closeModal('quickActionModal'); showCoachSection('events');"
+                    style="justify-content: flex-start; padding: 1.25rem;">
+                    <span>📅</span> Add Team Event
+                </button>
+                <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showCoachSection('teams');"
+                    style="justify-content: flex-start; padding: 1.25rem;">
+                    <span>🛡️</span> Create New Team
+                </button>
+                <button class="btn btn-secondary"
+                    onclick="closeModal('quickActionModal'); showCoachSection('tactical-board');"
+                    style="justify-content: flex-start; padding: 1.25rem;">
+                    <span>📝</span> New Tactical Plan
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Match Result Modal -->
     <div id="resultModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
@@ -392,6 +535,56 @@
             </form>
         </div>
     </div>
+
+    <!-- Bottom Navigation Bar (Threads Style) -->
+    <nav class="app-bottom-nav mobile-only">
+        <a href="#" class="nav-link active" onclick="showCoachSection('overview'); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-link" onclick="showCoachSection('teams'); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <span>Teams</span>
+        </a>
+        <a href="#" class="nav-link create-btn-nav" onclick="openCreateModal(); return false;">
+            <div
+                style="background: var(--primary); padding: 8px; border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+            </div>
+        </a>
+        <a href="#" class="nav-link" onclick="showCoachSection('events'); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span>Schedule</span>
+        </a>
+        <a href="#" class="nav-link" onclick="showCoachSection('profile'); return false;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span>Profile</span>
+        </a>
+    </nav>
 
     <!-- PWA Install Handler -->
     <script src="pwa-install.js"></script>

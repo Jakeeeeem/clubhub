@@ -49,7 +49,7 @@
             padding: 1rem;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: var(--input-radius);
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -107,7 +107,7 @@
             padding: 1.5rem;
             border: 1px solid var(--border-color);
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
+            border-radius: var(--input-radius);
             cursor: pointer;
             text-align: center;
             transition: all 0.2s;
@@ -143,7 +143,7 @@
             background: rgba(255, 193, 7, 0.1);
             border: 1px solid rgba(255, 193, 7, 0.2);
             padding: 1rem;
-            border-radius: 12px;
+            border-radius: var(--input-radius);
             font-size: 0.9rem;
             color: #ffe082;
             display: flex;
@@ -169,7 +169,7 @@
             color: var(--text-muted);
             border: 1px solid var(--border-color);
             padding: 1rem 2rem;
-            border-radius: 12px;
+            border-radius: var(--btn-radius);
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
@@ -185,7 +185,7 @@
             color: white;
             border: none;
             padding: 1rem 2rem;
-            border-radius: 12px;
+            border-radius: var(--btn-radius);
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
@@ -284,18 +284,18 @@
                         ⚽</div>
                     <div style="text-align: center; width: 100%;">
                         <strong style="display: block; margin-bottom: 0.25rem;">Player / Fan</strong>
-                        <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.2;">Join clubs, find
+                        <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.2;">Join groups, find
                             events, and track your career.</span>
                     </div>
                 </div>
-                <div class="checkbox-card account-type-card" id="type-org" onclick="selectSignupType('organization')">
+                <div class="checkbox-card account-type-card" id="type-org" onclick="selectSignupType('group')">
                     <div class="type-icon"
                         style="font-size: 2rem; margin-bottom: 0.5rem; display: block; width: 100%; text-align: center;">
                         🏢</div>
                     <div style="text-align: center; width: 100%;">
-                        <strong style="display: block; margin-bottom: 0.25rem;">Club / Org</strong>
+                        <strong style="display: block; margin-bottom: 0.25rem;">Group / Club</strong>
                         <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.2;">Manage teams, take
-                            payments, and grow your club.</span>
+                            payments, and grow your group.</span>
                     </div>
                 </div>
             </div>
@@ -360,14 +360,26 @@
             </div>
 
             <div class="form-group" style="margin-top: 1.5rem; display: flex; align-items: flex-start; gap: 0.75rem;">
-                <input type="checkbox" id="agreeTerms"
-                    style="width: 18px; height: 18px; cursor: pointer; margin-top: 0.2rem; accent-color: var(--primary);">
+                <input type="checkbox" id="agreeTerms" disabled
+                    style="width: 18px; height: 18px; cursor: pointer; margin-top: 0.2rem; accent-color: var(--primary); opacity: 0.5;">
                 <label for="agreeTerms"
-                    style="font-weight: 500; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; line-height: 1.4;">
-                    I agree to the <a href="terms.html" target="_blank"
-                        style="color: var(--primary); text-decoration: none; font-weight: 600;">Terms & Conditions</a>
+                    style="font-weight: 500; font-size: 0.9rem; color: var(--text-muted); cursor: not-allowed; line-height: 1.4;">
+                    I agree to the <a href="terms.html" target="_blank" id="termsLink"
+                        style="color: var(--primary); text-decoration: none; font-weight: 600; cursor: pointer;">Terms &
+                        Conditions</a>
                     and <a href="privacy.html" target="_blank"
                         style="color: var(--primary); text-decoration: none; font-weight: 600;">Privacy Policy</a>.
+                    <br><small style="color: var(--primary); font-style: italic;">(Please click to read T&Cs before
+                        checking)</small>
+                </label>
+            </div>
+
+            <div class="form-group" style="margin-top: 0.75rem; display: flex; align-items: flex-start; gap: 0.75rem;">
+                <input type="checkbox" id="agreeThirdParty"
+                    style="width: 18px; height: 18px; cursor: pointer; margin-top: 0.2rem; accent-color: var(--primary);">
+                <label for="agreeThirdParty"
+                    style="font-weight: 500; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; line-height: 1.4;">
+                    I consent to my data being used by 3rd party partners for recruitment and platform enhancements.
                 </label>
             </div>
         </div>
@@ -406,6 +418,19 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function () {
+            // T&C Click-through enforcement
+            const termsLink = document.getElementById('termsLink');
+            const agreeTerms = document.getElementById('agreeTerms');
+            if (termsLink && agreeTerms) {
+                termsLink.addEventListener('click', function () {
+                    agreeTerms.disabled = false;
+                    agreeTerms.style.opacity = '1';
+                    agreeTerms.parentElement.style.cursor = 'pointer';
+                    agreeTerms.style.cursor = 'pointer';
+                    console.log('📜 Terms & Conditions clicked, checkbox enabled');
+                });
+            }
+
             // ============================================================================
             // HANDLE INVITATION PARAMETERS
             // ============================================================================
@@ -426,7 +451,7 @@
             const typeParam = urlParams.get('type');
             if (typeParam) {
                 console.log('📋 Type from URL detected:', typeParam);
-                const type = typeParam === 'organization' ? 'organization' : 'adult';
+                const type = typeParam === 'group' || typeParam === 'group' ? 'group' : 'adult';
                 document.getElementById('selectedAccountType').value = type;
 
                 // We'll update UI in a moment once selectSignupType is defined or manually
@@ -460,7 +485,7 @@
                             ✉️ You're Joining via Invitation
                         </div>
                         <div style="color: #6ee7b7; font-size: 0.9rem;">
-                            After creating your account, you'll automatically join the organization
+                            After creating your account, you'll automatically join the group
                         </div>
                     `;
                     step1.insertBefore(banner, step1.firstChild.nextSibling);
@@ -471,7 +496,7 @@
         function selectSignupType(type) {
             document.getElementById('selectedAccountType').value = type;
             document.querySelectorAll('.account-type-card').forEach(card => card.classList.remove('selected'));
-            const selectedCard = document.getElementById(type === 'organization' ? 'type-org' : 'type-player');
+            const selectedCard = document.getElementById(type === 'group' || type === 'group' ? 'type-org' : 'type-player');
             if (selectedCard) selectedCard.classList.add('selected');
 
             // Auto-advance to next step
@@ -481,7 +506,7 @@
         // Initialize Step 1 cards
         window.addEventListener('load', () => {
             const currentType = document.getElementById('selectedAccountType').value;
-            const selectedCard = document.getElementById(currentType === 'organization' ? 'type-org' : 'type-player');
+            const selectedCard = document.getElementById(currentType === 'group' || currentType === 'group' ? 'type-org' : 'type-player');
             if (selectedCard) selectedCard.classList.add('selected');
         });
 
@@ -513,10 +538,10 @@
                     return;
                 }
 
-                // Check Terms and Conditions
-                const agreeTerms = document.getElementById('agreeTerms');
-                if (agreeTerms && !agreeTerms.checked) {
-                    showAlert('You must agree to the Terms & Conditions and Privacy Policy to create an account.', 'Agreement Required', 'warning');
+                // Check Data Sharing Agreement
+                const agreeThirdParty = document.getElementById('agreeThirdParty');
+                if (agreeThirdParty && !agreeThirdParty.checked) {
+                    showAlert('Please consent to the data sharing agreement to proceed with registration.', 'Agreement Required', 'warning');
                     return;
                 }
 
@@ -581,8 +606,8 @@
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const roleParam = document.getElementById('selectedAccountType').value || urlParams.get('type') || 'adult';
-                // If they create an organization later, they will get the 'owner' role.
-                const userType = roleParam || 'adult';
+                // If they create a group later, they will get the 'owner' role.
+                const userType = roleParam === 'group' || roleParam === 'group' ? 'group' : roleParam;
 
                 const userData = {
                     firstName,
@@ -612,7 +637,7 @@
                 if (pendingInviteToken) {
                     try {
                         console.log('📧 Accepting pending invitation:', pendingInviteToken);
-                        nextBtn.textContent = 'Joining Organization...';
+                        nextBtn.textContent = 'Joining Group...';
 
                         const inviteResponse = await apiService.acceptInvitation(pendingInviteToken);
 
@@ -649,8 +674,8 @@
                 }
                 // 2. Uninvited User -> Decide based on chosen type
                 else if (!pendingInviteToken) {
-                    if (userType === 'organization') {
-                        redirectUrl = 'create-organization.html';
+                    if (userType === 'group' || userType === 'group') {
+                        redirectUrl = 'create-group.html';
                     } else {
                         redirectUrl = 'player-dashboard.html';
                     }

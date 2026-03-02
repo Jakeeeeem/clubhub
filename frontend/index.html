@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClubHub - Sports Club Management Platform</title>
+    <title>ClubHub - Sports Group Management Platform</title>
 
     <!-- PWA Meta Tags -->
-    <meta name="description" content="Complete sports club management platform for leagues, clubs, venues, and players">
+    <meta name="description" content="Complete sports group management platform for leagues, groups, venues, and players">
     <meta name="theme-color" content="#dc4343">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -54,7 +54,7 @@
                     <!-- Client Feedback: Audience List -->
                     <p class="audience-tagline"
                         style="font-size: 1.1rem; color: #cbd5e1; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.5rem; font-weight: 600;">
-                        Leagues • Clubs • Venues • Tournament Providers • Coaches
+                        Leagues • Groups • Venues • Tournament Providers • Coaches
                     </p>
 
                     <h1 class="welcome-title">Welcome to <span class="highlight-red">ClubHub</span></h1>
@@ -62,7 +62,7 @@
 
                     <!-- Client Feedback: Free Platform Emphasis -->
                     <div class="free-badge"
-                        style="display: inline-block; background: rgba(255, 51, 51, 0.15); border: 1px solid rgba(255, 51, 51, 0.4); padding: 0.5rem 1.5rem; border-radius: 50px; margin-bottom: 2rem; color: var(--primary-color);">
+                        style="display: inline-block; background: rgba(255, 51, 51, 0.15); border: 1px solid rgba(255, 51, 51, 0.4); padding: 0.5rem 1.5rem; border-radius: 50px; margin-bottom: 2rem; color: var(--primary);">
                         <span style="font-weight: 700;">✨ 100% Free Platform</span> &mdash; Free to Create an Account
                     </div>
 
@@ -78,12 +78,12 @@
 
                 <div class="role-cards-grid">
                     <div class="role-card glass-panel">
-                        <h3>For Organizations</h3>
-                        <p>Complete club management with player tracking, event organization, and financial tools</p>
+                        <h3>For Groups</h3>
+                        <p>Complete group management with player tracking, event group, and financial tools</p>
                     </div>
                     <div class="role-card glass-panel">
                         <h3>For Players</h3>
-                        <p>Join clubs, book events, track progress, and manage payments seamlessly</p>
+                        <p>Join groups, book events, track progress, and manage payments seamlessly</p>
                     </div>
                     <div class="role-card glass-panel">
                         <h3>For Coaches</h3>
@@ -93,39 +93,40 @@
             </div>
         </section>
 
-        <!-- Find Clubs Recruiting Section (USP) -->
+        <!-- Find Groups Recruiting Section (USP) -->
         <section
             style="background: linear-gradient(135deg, rgba(220, 67, 67, 0.1) 0%, rgba(13, 13, 13, 0.95) 50%); padding: 4rem 0; border-top: 1px solid rgba(220, 67, 67, 0.2); border-bottom: 1px solid rgba(220, 67, 67, 0.2);">
             <div class="container">
                 <div style="text-align: center; margin-bottom: 3rem;">
                     <h2
                         style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, var(--primary-color), #ff6b6b); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
-                        🔍 Find Clubs Recruiting Now
+                        🔍 Find Groups Recruiting Now
                     </h2>
                     <p style="font-size: 1.2rem; color: #cbd5e1; max-width: 600px; margin: 0 auto;">
-                        Discover clubs actively looking for players. <br> No signup required to search!
+                        Discover groups actively looking for players. <br> No signup required to search!
                     </p>
                 </div>
 
                 <!-- Search Bar -->
                 <div style="max-width: 800px; margin: 0 auto 3rem;">
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <input type="text" id="clubSearchInput" placeholder="Search by club name, sport, or location..."
-                            style="flex: 1; min-width: 250px; padding: 1rem 1.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 12px; color: #fff; font-size: 1rem;"
-                            onkeyup="searchRecruitingClubs()">
-                        <button class="btn btn-primary" onclick="searchRecruitingClubs()" style="padding: 1rem 2rem;">
+                        <input type="text" id="groupSearchInput"
+                            placeholder="Search by group name, sport, or location..."
+                            style="flex: 1; min-width: 250px; padding: 1rem 1.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: var(--input-radius); color: #fff; font-size: 1rem;"
+                            onkeyup="searchRecruitingGroups()">
+                        <button class="btn btn-primary" onclick="searchRecruitingGroups()" style="padding: 1rem 2rem;">
                             Search
                         </button>
                     </div>
                 </div>
 
                 <!-- Results Grid -->
-                <div id="recruitingClubsGrid"
+                <div id="recruitingGroupsGrid"
                     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 350px)); gap: 1.5rem; justify-content: center;">
                     <!-- Populated by JavaScript -->
                     <div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;">
-                        <p style="font-size: 1.1rem;">🔍 Start searching to find clubs recruiting players...</p>
-                        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Currently showing clubs with active
+                        <p style="font-size: 1.1rem;">🔍 Start searching to find groups recruiting players...</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Currently showing groups with active
                             recruitment listings</p>
                     </div>
                 </div>
@@ -133,10 +134,10 @@
         </section>
 
         <section class="hero-platforms">
-            <a href="signup.html?type=organization" class="platform-col org">
+            <a href="signup.html?type=group" class="platform-col org">
                 <div class="platform-content">
-                    <h2 class="platform-title">Organizations</h2>
-                    <p class="platform-tagline">Manage your club. Recruit talent. Drive revenue.</p>
+                    <h2 class="platform-title">Groups</h2>
+                    <p class="platform-tagline">Manage your group. Recruit talent. Drive revenue.</p>
                     <span class="platform-btn">Start Managing</span>
                 </div>
             </a>
@@ -144,7 +145,7 @@
             <a href="signup.html?type=adult" class="platform-col player">
                 <div class="platform-content">
                     <h2 class="platform-title">Players</h2>
-                    <p class="platform-tagline">Build your CV. Find your next club. Join the community.</p>
+                    <p class="platform-tagline">Build your CV. Find your next group. Join the community.</p>
                     <span class="platform-btn">Join Now</span>
                 </div>
             </a>
@@ -179,7 +180,7 @@
                 <!-- Role Toggle Tabs -->
                 <div class="role-toggle-container">
                     <button class="role-tab active" onclick="switchRoleFeatures('player')">Player</button>
-                    <button class="role-tab" onclick="switchRoleFeatures('club')">Club</button>
+                    <button class="role-tab" onclick="switchRoleFeatures('group')">Group</button>
                     <button class="role-tab" onclick="switchRoleFeatures('coach')">Team / Coach</button>
                     <button class="role-tab" onclick="switchRoleFeatures('tournament')">Tournament / League</button>
                     <button class="role-tab" onclick="switchRoleFeatures('event')">Event Provider</button>
@@ -191,7 +192,7 @@
                     <!-- Player Features -->
                     <div id="player-features" class="role-features active">
                         <div class="feature-check-card"><i>🔍</i>
-                            <h4>Find new clubs recruiting and apply directly</h4>
+                            <h4>Find new groups recruiting and apply directly</h4>
                         </div>
                         <div class="feature-check-card"><i>📅</i>
                             <h4>Book tournaments with your team, or football events individually</h4>
@@ -206,12 +207,12 @@
                             <h4>Receive matchday feedback from coaches</h4>
                         </div>
                         <div class="feature-check-card"><i>💳</i>
-                            <h4>Manage club resources and automated payments</h4>
+                            <h4>Manage group resources and automated payments</h4>
                         </div>
                     </div>
 
-                    <!-- Club Features -->
-                    <div id="club-features" class="role-features">
+                    <!-- Group Features -->
+                    <div id="group-features" class="role-features">
                         <div class="feature-check-card"><i>📊</i>
                             <h4>Manage recruitment, subscriptions and training in one place</h4>
                         </div>
@@ -231,7 +232,7 @@
                             <h4>Manage and receive bookings for camps or venues</h4>
                         </div>
                         <div class="feature-check-card"><i>📂</i>
-                            <h4>Add all club documents (medical, consent, conduct)</h4>
+                            <h4>Add all group documents (medical, consent, conduct)</h4>
                         </div>
                     </div>
 
@@ -314,22 +315,22 @@
                     style="text-align: center; font-size: 3.5rem; margin-bottom: 2rem; font-family: 'Outfit';">Choose
                     Your Account Type</h2>
                 <div class="account-types-grid">
-                    <!-- Organization Card -->
-                    <div class="account-type-card organization">
+                    <!-- Group Card -->
+                    <div class="account-type-card group">
                         <div class="account-icon">🏢</div>
-                        <h3>Organization Account</h3>
+                        <h3>Group Account</h3>
                         <p class="subtitle" style="color: #64748b; text-align: center; margin-bottom: 1rem;">Perfect for
-                            clubs, academies, and sports organizations</p>
+                            groups, academies, and sports groups</p>
                         <ul class="features-list">
-                            <li>Complete club management dashboard</li>
+                            <li>Complete group management dashboard</li>
                             <li>Player & staff management</li>
-                            <li>Event & team organization</li>
+                            <li>Event & team group</li>
                             <li>Automated payment collection</li>
-                            <li>Club listing & discovery</li>
+                            <li>Group listing & discovery</li>
                             <li>Advanced reporting & analytics</li>
                         </ul>
-                        <button class="btn btn-danger" onclick="goToSignup('organization')"
-                            style="width: 100%; padding: 1.2rem; font-weight: 700;">Start Managing Your Club</button>
+                        <button class="btn btn-danger" onclick="goToSignup('group')"
+                            style="width: 100%; padding: 1.2rem; font-weight: 700;">Start Managing Your Group</button>
                     </div>
 
                     <!-- Player Card -->
@@ -339,7 +340,7 @@
                         <p class="subtitle" style="color: #64748b; text-align: center; margin-bottom: 1rem;">Perfect for
                             players and sports enthusiasts</p>
                         <ul class="features-list">
-                            <li>Join multiple clubs & teams</li>
+                            <li>Join multiple groups & teams</li>
                             <li>Browse & book events</li>
                             <li>Track progress & stats</li>
                             <li>Team schedule & availability</li>
@@ -369,7 +370,7 @@
                             <div class="testimonial-author">
                                 <div class="author-info">
                                     <h4>James Wilson</h4>
-                                    <span>Club Admin</span>
+                                    <span>Group Admin</span>
                                 </div>
                             </div>
                         </div>
@@ -402,7 +403,7 @@
                             <div class="testimonial-author">
                                 <div class="author-info">
                                     <h4>David Roberts</h4>
-                                    <span>Club Treasurer</span>
+                                    <span>Group Treasurer</span>
                                 </div>
                             </div>
                         </div>
@@ -426,7 +427,7 @@
                             <div class="testimonial-author">
                                 <div class="author-info">
                                     <h4>James Wilson</h4>
-                                    <span>Club Admin</span>
+                                    <span>Group Admin</span>
                                 </div>
                             </div>
                         </div>
@@ -459,7 +460,7 @@
                             <div class="testimonial-author">
                                 <div class="author-info">
                                     <h4>David Roberts</h4>
-                                    <span>Club Treasurer</span>
+                                    <span>Group Treasurer</span>
                                 </div>
                             </div>
                         </div>
@@ -482,9 +483,9 @@
         <!-- CTA Section -->
         <section class="cta-section">
             <div class="container">
-                <h2>Ready to Transform Your Club?</h2>
+                <h2>Ready to Transform Your Group?</h2>
                 <p style="font-size: 1.25rem; color: var(--text-muted); max-width: 700px; margin: 0 auto 3rem;">Join
-                    thousands of clubs and players already using ClubHub to streamline their sports management. Get
+                    thousands of groups and players already using ClubHub to streamline their sports management. Get
                     started today!</p>
                 <div class="cta-buttons">
                     <button class="btn btn-primary" onclick="showSignupOptions()"
@@ -577,7 +578,7 @@
             <div style="padding: 2rem; text-align: center;">
                 <p style="margin-bottom: 2rem; color: #cbd5e1; font-size: 1.1rem; line-height: 1.6;">
                     Join the complete ecosystem for grassroots sports. <br>One account connecting players, parents,
-                    coaches and clubs.
+                    coaches and groups.
                 </p>
 
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
@@ -588,7 +589,7 @@
                     <div style="margin-top: 10px;">
                         <span style="color: #64748b; font-size: 0.9rem;">Already have an account?</span>
                         <a href="#" onclick="closeModal('registerModal'); showModal('loginModal'); return false;"
-                            style="color: var(--primary-color); text-decoration: none; font-size: 0.9rem; margin-left: 5px;">Login</a>
+                            style="color: var(--primary); text-decoration: none; font-size: 0.9rem; margin-left: 5px;">Login</a>
                     </div>
                 </div>
             </div>
@@ -630,17 +631,17 @@
             }
         }
 
-        // Search for clubs with active recruitment listings
-        async function searchRecruitingClubs() {
-            const searchTerm = document.getElementById('clubSearchInput').value.trim();
-            const grid = document.getElementById('recruitingClubsGrid');
+        // Search for groups with active recruitment listings
+        async function searchRecruitingGroups() {
+            const searchTerm = document.getElementById('groupSearchInput').value.trim();
+            const grid = document.getElementById('recruitingGroupsGrid');
 
             // Enforce minimum 3 characters
             if (searchTerm.length < 3) {
                 // If search is empty or too short, you might want to show nothing or a prompt
                 if (searchTerm.length === 0) {
                     // Optionally show a default list or clear
-                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;"><p>🔍 Start searching to find clubs (min 3 chars)...</p></div>';
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;"><p>🔍 Start searching to find groups (min 3 chars)...</p></div>';
                     return;
                 }
                 grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;"><p>Please enter at least 3 characters to search.</p></div>';
@@ -651,53 +652,53 @@
                 grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem;"><p>🔍 Searching...</p></div>';
 
                 // Use the shared apiService (it handles production URLs automatically)
-                let clubs = await apiService.getClubs(searchTerm);
+                let groups = await apiService.getGroups(searchTerm);
 
-                // Dummy data removed as per request to show only real clubs
+                // Dummy data removed as per request to show only real groups
 
 
-                if (!clubs || clubs.length === 0) {
+                if (!groups || groups.length === 0) {
                     grid.innerHTML = `
                         <div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;">
-                            <p style="font-size: 1.1rem;">No clubs found matching "${searchTerm}"</p>
-                            <p style="margin-top: 0.5rem;">Try a different search term or browse all clubs</p>
+                            <p style="font-size: 1.1rem;">No groups found matching "${searchTerm}"</p>
+                            <p style="margin-top: 0.5rem;">Try a different search term or browse all groups</p>
                         </div>
                     `;
                     return;
                 }
 
-                grid.innerHTML = clubs.map(club => {
-                    const logoSrc = club.logo_url || 'images/placeholder-logo-profile.png';
+                grid.innerHTML = groups.map(group => {
+                    const logoSrc = group.logo_url || 'images/placeholder-logo-profile.png';
                     return `
                     <div class="card" style="cursor: pointer; transition: transform 0.2s;" 
-                         onclick="window.location.href='club-detail.html?id=${club.id || club._id}'">
+                         onclick="window.location.href='group-detail.html?id=${group.id || group._id}'">
                         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                             <img src="${logoSrc}" 
                                  style="width: 50px; height: 50px; min-width: 50px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); background: #1e293b;"
                                  onerror="this.src='images/placeholder-logo-profile.png'">
                             <div>
-                                <h3 style="margin-bottom: 0.25rem; color: var(--primary-color); line-height: 1.2; font-size: 1.1rem;">${club.name}</h3>
-                                <span style="background: rgba(220, 67, 67, 0.1); color: var(--primary-color); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem;">
-                                    ${club.sport || 'Sport'}
+                                <h3 style="margin-bottom: 0.25rem; color: var(--primary); line-height: 1.2; font-size: 1.1rem;">${group.name}</h3>
+                                <span style="background: rgba(220, 67, 67, 0.1); color: var(--primary); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem;">
+                                    ${group.sport || 'Sport'}
                                 </span>
                             </div>
                         </div>
                         <div style="margin-bottom: 1rem;">
-                            ${club.available_positions && club.available_positions.length > 0
+                            ${group.available_positions && group.available_positions.length > 0
                             ? `<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                    ${club.available_positions.slice(0, 3).map(p =>
+                                    ${group.available_positions.slice(0, 3).map(p =>
                                 `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">
                                             ${p.position || p.title}
                                         </span>`
                             ).join('')}
-                                    ${club.available_positions.length > 3 ? `<span style="font-size: 0.8rem; color: #94a3b8;">+${club.available_positions.length - 3} more</span>` : ''}
+                                    ${group.available_positions.length > 3 ? `<span style="font-size: 0.8rem; color: #94a3b8;">+${group.available_positions.length - 3} more</span>` : ''}
                                    </div>`
-                            : `<p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5;">${club.description ? club.description.substring(0, 100) + '...' : 'Recruiting players now'}</p>`
+                            : `<p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5;">${group.description ? group.description.substring(0, 100) + '...' : 'Recruiting players now'}</p>`
                         }
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color);">
                             <span style="color: #64748b; font-size: 0.85rem;">
-                                📍 ${club.location || 'Location TBD'}
+                                📍 ${group.location || 'Location TBD'}
                             </span>
                             <span style="color: #22c55e; font-size: 0.85rem; font-weight: 600;">
                                 ✓ Recruiting
@@ -711,7 +712,7 @@
                 console.error('Search error:', error);
                 grid.innerHTML = `
                     < div style = "grid-column: 1/-1; text-align: center; color: #ef4444; padding: 2rem;" >
-                        <p>Failed to load clubs. Please try again.</p>
+                        <p>Failed to load groups. Please try again.</p>
                     </div >
                     `;
             }

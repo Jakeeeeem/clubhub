@@ -458,7 +458,7 @@ async function logout() {
     // Clear all state regardless of API success
     AppState.currentUser = null;
     AppState.userType = null;
-    AppState.clubs = [];
+    AppState.groups = [];
     AppState.players = [];
     AppState.staff = [];
     AppState.events = [];
@@ -532,14 +532,14 @@ async function loadAdminData() {
     // Try to load admin dashboard data
     const dashboardData = await apiService.getAdminDashboardData();
 
-    AppState.clubs = dashboardData.clubs || [];
+    AppState.groups = dashboardData.groups || dashboardData.clubs || [];
     AppState.players = dashboardData.players || [];
     AppState.staff = dashboardData.staff || [];
     AppState.events = dashboardData.events || [];
     AppState.teams = dashboardData.teams || [];
 
     console.log("✅ Admin data loaded:", {
-      clubs: AppState.clubs.length,
+      groups: AppState.groups.length,
       players: AppState.players.length,
       staff: AppState.staff.length,
       events: AppState.events.length,
@@ -556,9 +556,9 @@ async function loadUserData() {
 
   try {
     // Load all data that players need with individual API calls for reliability
-    const [clubs, events, playersResponse, staff, teams] = await Promise.all([
-      apiService.getClubs().catch((e) => {
-        console.warn("Failed to load clubs:", e);
+    const [groups, events, playersResponse, staff, teams] = await Promise.all([
+      apiService.getGroups().catch((e) => {
+        console.warn("Failed to load groups:", e);
         return [];
       }),
       apiService.getEvents().catch((e) => {
@@ -579,14 +579,14 @@ async function loadUserData() {
       }),
     ]);
 
-    AppState.clubs = clubs || [];
+    AppState.groups = groups || [];
     AppState.events = events || [];
     AppState.players = playersResponse?.players || playersResponse || [];
     AppState.staff = staff || [];
     AppState.teams = teams || [];
 
     console.log("📊 User data loaded successfully:", {
-      clubs: AppState.clubs.length,
+      groups: AppState.groups.length,
       events: AppState.events.length,
       players: AppState.players.length,
       staff: AppState.staff.length,
@@ -621,14 +621,14 @@ async function loadDataFallback() {
   try {
     console.log("📊 Loading data with fallback method...");
 
-    const clubs = await apiService.getClubs().catch(() => []);
+    const groups = await apiService.getGroups().catch(() => []);
     const events = await apiService.getEvents().catch(() => []);
 
-    AppState.clubs = clubs;
+    AppState.groups = groups;
     AppState.events = events;
 
     console.log("✅ Fallback data loaded:", {
-      clubs: AppState.clubs.length,
+      groups: AppState.groups.length,
       events: AppState.events.length,
     });
   } catch (error) {
@@ -665,15 +665,16 @@ function updateNotificationBadge() {
 
 window.AppState = window.AppState || {};
 
-async function getActiveClubId() {
-  if (AppState.activeClubId) return AppState.activeClubId;
+async function getActiveGroupId() {
+  if (AppState.activeGroupId) return AppState.activeGroupId;
 
   // 1. Check Context (Most accurate for current session)
   try {
     const context = await apiService.getContext();
-    if (context?.currentOrganization?.id) {
-      AppState.activeClubId = context.currentOrganization.id;
-      return AppState.activeClubId;
+    if (context?.currentGroupId || context?.currentOrganization?.id) {
+      AppState.activeGroupId =
+        context.currentGroupId || context.currentOrganization.id;
+      return AppState.activeGroupId;
     }
   } catch (_) {
     /* fall through */
@@ -681,24 +682,26 @@ async function getActiveClubId() {
 
   // 2. Authoritative source (fallback)
   try {
-    const resp = await apiService.getUserOrganizations();
-    const orgs = (resp && resp.organizations) || [];
-    const primary = orgs.find((o) => o.is_primary) || orgs[0];
+    const resp =
+      (await apiService.getUserGroups()) ||
+      (await apiService.getUserOrganizations());
+    const groups = (resp && (resp.groups || resp.organizations)) || [];
+    const primary = groups.find((o) => o.is_primary) || groups[0];
     if (primary?.id) {
-      AppState.activeClubId = primary.id;
-      return AppState.activeClubId;
+      AppState.activeGroupId = primary.id;
+      return AppState.activeGroupId;
     }
   } catch (_) {
     /* fall through */
   }
 
-  // 3. Fallback to AppState clubs
-  if (Array.isArray(AppState.clubs) && AppState.clubs.length) {
+  // 3. Fallback to AppState groups
+  if (Array.isArray(AppState.groups) && AppState.groups.length) {
     const primaryFromDashboard =
-      AppState.clubs.find((c) => c.is_primary) || AppState.clubs[0];
+      AppState.groups.find((c) => c.is_primary) || AppState.groups[0];
     if (primaryFromDashboard?.id) {
-      AppState.activeClubId = primaryFromDashboard.id;
-      return AppState.activeClubId;
+      AppState.activeGroupId = primaryFromDashboard.id;
+      return AppState.activeGroupId;
     }
   }
 
@@ -795,7 +798,7 @@ function redirectToDashboard() {
 
     if (!hasManagedOrg && !AppState.currentUser?.is_platform_admin) {
       console.log("👋 No managed organizations found, heading to creation...");
-      window.location.href = "create-organization.html";
+      window.location.href = "create-group.html";
     } else {
       window.location.href = "admin-dashboard.html";
     }
@@ -809,7 +812,7 @@ function redirectToDashboard() {
       organizations.length === 0 &&
       !AppState.currentUser?.is_platform_admin
     ) {
-      window.location.href = "create-organization.html";
+      window.location.href = "create-group.html";
     } else {
       window.location.href = "admin-dashboard.html";
     }
@@ -1026,7 +1029,7 @@ function debugSessionState() {
     "Current page": window.location.pathname,
     "Events loaded": AppState.events?.length || 0,
     "Players loaded": AppState.players?.length || 0,
-    "Clubs loaded": AppState.clubs?.length || 0,
+    "Groups loaded": AppState.groups?.length || 0,
   });
 }
 

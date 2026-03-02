@@ -298,7 +298,7 @@ router.get("/details/:token", async (req, res) => {
     // Get invite details with team information
     const inviteResult = await query(
       `
-      SELECT ci.*, c.name as club_name, c.description as club_description, 
+      SELECT ci.*, ci.role as club_role, c.name as club_name, c.description as club_description, 
        c.location as club_location, c.sport as club_sport,
        u.first_name as inviter_first_name, u.last_name as inviter_last_name,
        t.name as team_name,
@@ -345,6 +345,7 @@ WHERE ci.token = $1;
         email: invite.is_public ? null : invite.email,
         firstName: invite.first_name,
         lastName: invite.last_name,
+        clubName: invite.club_name,
         clubRole: invite.club_role,
         personalMessage: invite.personal_message,
         expiresAt: invite.expires_at,

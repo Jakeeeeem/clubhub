@@ -24,25 +24,25 @@ class ApiService {
       console.log("🛡️ Returning mock context for demo session");
       const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
 
-      // In demo mode, we should simulate the role change based on the organization the user is switching to.
+      // In demo mode, we should simulate the role change based on the group the user is switching to.
       // If the user has activePlayerId, they are definitely a player in this context.
       const role = user.activePlayerId ? "player" : user.role || "admin";
 
       this.context = {
         success: true,
         user: user,
-        currentOrganization: {
-          id: user.clubId || "demo-club-id",
+        currentGroup: {
+          id: user.groupId || "demo-club-id",
           name: user.activePlayerId
             ? "Elite Academy (Player)"
-            : "Pro Club Demo",
+            : "Pro Group Demo",
           role: role,
           user_role: role,
         },
-        organizations: [
+        groups: [
           {
             id: "demo-club-id",
-            name: "Pro Club Demo",
+            name: "Pro Group Demo",
             role: "admin",
           },
           {
@@ -73,13 +73,13 @@ class ApiService {
   }
 
   getCurrentOrg() {
-    return this.context?.currentOrganization || null;
+    return this.context?.currentGroup || null;
   }
 
   getUserRole() {
     return (
-      this.context?.currentOrganization?.user_role ||
-      this.context?.currentOrganization?.role ||
+      this.context?.currentGroup?.user_role ||
+      this.context?.currentGroup?.role ||
       null
     );
   }
@@ -175,10 +175,10 @@ class ApiService {
             user.is_platform_admin === true || user.role === "superadmin";
           const role = user.activePlayerId ? "player" : user.role || "admin";
 
-          let organizations = [
+          let groups = [
             {
               id: "demo-club-id",
-              name: "Pro Club Demo",
+              name: "Pro Group Demo",
               role: role === "coach" ? "coach" : "admin",
               user_role: role === "coach" ? "coach" : "admin",
             },
@@ -200,20 +200,20 @@ class ApiService {
 
           // For Super Admin, we add all these to their context automatically
           if (isSuper) {
-            organizations = organizations.map((org) => ({
+            groups = groups.map((org) => ({
               ...org,
               user_role: "owner", // Super Admin acts as owner for all orgs
               role: "owner",
             }));
 
             // Also add some additional dummy orgs to show scale
-            organizations.push({
+            groups.push({
               id: "org-3",
               name: "Westside United",
               role: "owner",
               user_role: "owner",
             });
-            organizations.push({
+            groups.push({
               id: "org-4",
               name: "London Lions",
               role: "owner",
@@ -224,40 +224,40 @@ class ApiService {
           return {
             success: true,
             user: user,
-            currentOrganization: {
-              id: user.clubId || "demo-club-id",
+            currentGroup: {
+              id: user.groupId || "demo-club-id",
               name: user.activePlayerId
                 ? "Elite Academy (Player)"
-                : user.clubId === "demo-coach-org-2"
+                : user.groupId === "demo-coach-org-2"
                   ? "Secondary Academy"
-                  : "Pro Club Demo",
+                  : "Pro Group Demo",
               role: isSuper ? "owner" : role,
               user_role: isSuper ? "owner" : role,
             },
-            organizations: organizations,
+            groups: groups,
           };
         }
-        if (endpoint.includes("/auth/switch-organization")) {
-          console.log("🛡️ Intercepting Organization Switch for Demo");
+        if (endpoint.includes("/auth/switch-group")) {
+          console.log("🛡️ Intercepting Group Switch for Demo");
           const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
           const body = JSON.parse(options.body || "{}");
-          const newOrgId = body.organizationId || "demo-club-id";
+          const newOrgId = body.groupId || "demo-club-id";
 
           // Update user object with new club ID
-          user.clubId = newOrgId;
-          user.currentOrganizationId = newOrgId;
+          user.groupId = newOrgId;
+          user.currentGroupId = newOrgId;
           localStorage.setItem("currentUser", JSON.stringify(user));
 
           return {
             success: true,
-            message: "Organization switched successfully (Demo Mode)",
-            organizationId: newOrgId,
-            currentOrganization: {
+            message: "Group switched successfully (Demo Mode)",
+            groupId: newOrgId,
+            currentGroup: {
               id: newOrgId,
               name:
                 newOrgId === "demo-coach-org-2"
                   ? "Secondary Academy"
-                  : "Pro Club Demo",
+                  : "Pro Group Demo",
               role: user.role || "admin",
             },
           };
@@ -275,7 +275,7 @@ class ApiService {
               bio:
                 user.bio ||
                 "Professional sports enthusiast and dedicated ClubHub member.",
-              account_type: user.account_type || "organization",
+              account_type: user.account_type || "group",
             },
           };
         }
@@ -302,19 +302,19 @@ class ApiService {
             success: true,
             stats: {
               total_users: 1284,
-              total_organizations: 92,
+              total_groups: 92,
               active_plans: 78,
               pending_invitations: 15,
             },
             recentSignups: 42,
           };
         }
-        if (endpoint.includes("/platform-admin/organizations")) {
+        if (endpoint.includes("/platform-admin/groups")) {
           return {
             success: true,
             total: 92,
             page: 1,
-            organizations: [
+            groups: [
               {
                 id: "org1",
                 name: "Elite Performance Academy",
@@ -406,7 +406,7 @@ class ApiService {
                 first_name: "John",
                 last_name: "Doe",
                 email: "john@example.com",
-                account_type: "organization",
+                account_type: "group",
                 org_count: 2,
                 created_at: "2023-01-15",
                 is_platform_admin: false,
@@ -428,7 +428,7 @@ class ApiService {
                 first_name: "Platform",
                 last_name: "Admin",
                 email: "super@clubhub.com",
-                account_type: "organization",
+                account_type: "group",
                 org_count: 5,
                 created_at: "2021-01-01",
                 is_platform_admin: true,
@@ -452,8 +452,8 @@ class ApiService {
             success: true,
             activity: [
               {
-                type: "organization_registered",
-                title: "New organization: Elite Academy",
+                type: "group_registered",
+                title: "New group: Elite Academy",
                 user_email: "admin@elite.com",
                 timestamp: new Date().toISOString(),
               },
@@ -475,7 +475,7 @@ class ApiService {
         if (endpoint.includes("/organizations/super/")) {
           return {
             success: true,
-            organization: {
+            group: {
               id: "demo-org",
               name: "Elite Performance Academy",
               sport: "Football",
@@ -642,20 +642,20 @@ class ApiService {
             success: true,
             stats: {
               total_users: 1250,
-              total_organizations: 42,
+              total_groups: 42,
               active_plans: 38,
               pending_invitations: 15,
             },
             recentSignups: 85,
           };
         }
-        if (endpoint.includes("/platform-admin/organizations")) {
+        if (endpoint.includes("/platform-admin/groups")) {
           return {
             success: true,
-            organizations: [
+            groups: [
               {
                 id: "demo-club-id",
-                name: "Pro Club Demo",
+                name: "Pro Group Demo",
                 sport: "Football",
                 owner_email: "demo-admin@clubhub.com",
                 member_count: 142,
@@ -683,7 +683,7 @@ class ApiService {
                 first_name: "John",
                 last_name: "Smith",
                 email: "demo-admin@clubhub.com",
-                account_type: "organization",
+                account_type: "group",
                 org_count: 1,
                 is_platform_admin: false,
                 created_at: "2024-01-01T00:00:00Z",
@@ -693,7 +693,7 @@ class ApiService {
                 first_name: "Michael",
                 last_name: "Thompson",
                 email: "demo-coach@clubhub.com",
-                account_type: "organization",
+                account_type: "group",
                 org_count: 1,
                 is_platform_admin: false,
                 created_at: "2024-01-02T00:00:00Z",
@@ -708,8 +708,8 @@ class ApiService {
             success: true,
             activity: [
               {
-                type: "organization_created",
-                title: "New Organization: Pro Club Demo",
+                type: "group_created",
+                title: "New Group: Pro Group Demo",
                 user_email: "demo-admin@clubhub.com",
                 timestamp: "2024-01-01T10:00:00Z",
               },
@@ -743,10 +743,10 @@ class ApiService {
               position: "Midfielder",
               date_of_birth: "2010-05-15",
             },
-            clubs: [
+            groups: [
               {
                 id: "demo-club-id",
-                name: "Pro Club Demo",
+                name: "Pro Group Demo",
                 sport: "Football",
                 location: "London",
               },
@@ -787,7 +787,7 @@ class ApiService {
               date_of_birth: "2012-08-20",
               sport: "Football",
               club_id: "demo-club-id",
-              club_name: "Pro Club Demo",
+              club_name: "Pro Group Demo",
             },
           ];
         }
@@ -912,9 +912,9 @@ class ApiService {
 
   // =========================== ITEM SHOP METHODS ===========================
 
-  async getProducts(clubId = null) {
+  async getProducts(groupId = null) {
     try {
-      const endpoint = clubId ? `/products?clubId=${clubId}` : "/products";
+      const endpoint = groupId ? `/products?groupId=${groupId}` : "/products";
       return await this.makeRequest(endpoint);
     } catch (error) {
       if (localStorage.getItem("isDemoSession") === "true") {
@@ -988,12 +988,12 @@ class ApiService {
     }
   }
 
-  async getCampaigns(clubId = null) {
+  async getCampaigns(groupId = null) {
     if (localStorage.getItem("isDemoSession") === "true") {
       return this.getAdminDashboardFallback().campaigns;
     }
     try {
-      const endpoint = clubId ? `/campaigns?clubId=${clubId}` : "/campaigns";
+      const endpoint = groupId ? `/campaigns?groupId=${groupId}` : "/campaigns";
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch campaigns:", error);
@@ -1003,16 +1003,16 @@ class ApiService {
     }
   }
 
-  async getClubs(query = "", hasListings = true) {
+  async getGroups(query = "", hasListings = true) {
     try {
       const queryString = new URLSearchParams({
         search: query,
-        has_listings: hasListings, // Only fetch clubs with active listings if requested
+        has_listings: hasListings, // Only fetch groups with active listings if requested
       }).toString();
 
-      return await this.makeRequest(`/clubs?${queryString}`);
+      return await this.makeRequest(`/groups?${queryString}`);
     } catch (error) {
-      console.error("Failed to search clubs:", error);
+      console.error("Failed to search groups:", error);
       throw error;
     }
   }
@@ -1076,7 +1076,7 @@ class ApiService {
 
   // =========================== ENHANCED INVITE METHODS ===========================
 
-  async generateClubInvite(inviteData) {
+  async generateGroupInvite(inviteData) {
     console.log("📧 Generating club invite:", inviteData);
 
     try {
@@ -1085,7 +1085,7 @@ class ApiService {
         body: JSON.stringify(inviteData),
       });
 
-      console.log("✅ Club invite generated:", response);
+      console.log("✅ Group invite generated:", response);
       return response;
     } catch (error) {
       console.error("❌ Failed to generate club invite:", error);
@@ -1106,7 +1106,7 @@ class ApiService {
     }
   }
 
-  async acceptClubInvite(token, acceptData = {}) {
+  async acceptGroupInvite(token, acceptData = {}) {
     console.log("✅ Accepting club invite:", { token, acceptData });
 
     try {
@@ -1115,7 +1115,7 @@ class ApiService {
         body: JSON.stringify(acceptData),
       });
 
-      console.log("✅ Club invite accepted:", response);
+      console.log("✅ Group invite accepted:", response);
       return response;
     } catch (error) {
       console.error("❌ Failed to accept club invite:", error);
@@ -1123,7 +1123,7 @@ class ApiService {
     }
   }
 
-  async declineClubInvite(token, reason = null) {
+  async declineGroupInvite(token, reason = null) {
     console.log("❌ Declining club invite:", { token, reason });
 
     try {
@@ -1132,7 +1132,7 @@ class ApiService {
         body: JSON.stringify({ reason }),
       });
 
-      console.log("✅ Club invite declined:", response);
+      console.log("✅ Group invite declined:", response);
       return response;
     } catch (error) {
       console.error("❌ Failed to decline club invite:", error);
@@ -1160,13 +1160,13 @@ class ApiService {
 
   // Consolidated with line 833
 
-  async getFilteredPlayers(filter, clubId) {
+  async getFilteredPlayers(filter, groupId) {
     // Backend API expects 'filter' usually as part of query?
     // Based on players.js reading in Step 1796 (implied), route was modified?
     // Actually I haven't modified players.js for 'filtered' endpoint yet.
     // I should check players.js. For now I'll assume /players/filtered/:filter
     return await this.makeRequest(
-      `/players/filtered/${filter}?clubId=${clubId}`,
+      `/players/filtered/${filter}?groupId=${groupId}`,
     );
   }
 
@@ -1191,28 +1191,28 @@ class ApiService {
   }
 
   // =========================== ORGANIZATION GALLERY METHODS ===========================
-  async uploadClubImage(clubId, file) {
+  async uploadGroupImage(groupId, file) {
     const formData = new FormData();
     formData.append("image", file);
 
-    return await this.makeRequest(`/organizations/${clubId}/images`, {
+    return await this.makeRequest(`/groups/${groupId}/images`, {
       method: "POST",
       body: formData,
     });
   }
 
-  async uploadClubLogo(clubId, file) {
+  async uploadGroupLogo(groupId, file) {
     const formData = new FormData();
     formData.append("logo", file);
 
-    return await this.makeRequest(`/organizations/${clubId}/logo`, {
+    return await this.makeRequest(`/groups/${groupId}/logo`, {
       method: "POST",
       body: formData,
     });
   }
 
-  async deleteClubImage(orgId, imageUrl) {
-    return await this.makeRequest(`/organizations/${orgId}/images`, {
+  async deleteGroupImage(orgId, imageUrl) {
+    return await this.makeRequest(`/groups/${orgId}/images`, {
       method: "DELETE",
       body: JSON.stringify({ imageUrl }),
     });
@@ -1275,7 +1275,7 @@ class ApiService {
     description,
     billingAnchorType,
     billingAnchorDay,
-    clubId,
+    groupId,
   }) {
     try {
       const payload = {
@@ -1287,7 +1287,7 @@ class ApiService {
         description,
         billingAnchorType,
         billingAnchorDay,
-        clubId,
+        groupId,
       };
 
       console.log("📝 Creating payment plan:", payload);
@@ -1331,10 +1331,10 @@ class ApiService {
     }
   }
 
-  async listPaymentPlans(clubId = null) {
+  async listPaymentPlans(groupId = null) {
     try {
-      const endpoint = clubId
-        ? `/payments/plans?clubId=${clubId}`
+      const endpoint = groupId
+        ? `/payments/plans?groupId=${groupId}`
         : "/payments/plans";
       const response = await this.makeRequest(endpoint);
       return response;
@@ -1344,10 +1344,10 @@ class ApiService {
     }
   }
 
-  async bulkAssignPaymentPlan(playerIds, planId, startDate, clubId = null) {
+  async bulkAssignPaymentPlan(playerIds, planId, startDate, groupId = null) {
     return await this.makeRequest("/payments/bulk-assign-plan", {
       method: "POST",
-      body: JSON.stringify({ playerIds, planId, startDate, clubId }),
+      body: JSON.stringify({ playerIds, planId, startDate, groupId }),
     });
   }
 
@@ -1389,9 +1389,11 @@ class ApiService {
 
   // =========================== AUTHENTICATION METHODS ===========================
 
-  async getClubApplications(clubId) {
+  async getGroupApplications(groupId) {
     try {
-      const response = await this.makeRequest(`/clubs/${clubId}/applications`);
+      const response = await this.makeRequest(
+        `/groups/${groupId}/applications`,
+      );
       return response.applications || [];
     } catch (error) {
       console.warn("❌ Failed to fetch club applications:", error);
@@ -1409,20 +1411,20 @@ class ApiService {
         id: "demo-super-admin-id",
         first_name: "Super",
         last_name: "Admin",
-        account_type: "organization",
+        account_type: "group",
         is_platform_admin: true,
         userType: "admin",
         role: "superadmin",
-        clubId: "demo-club-id",
+        groupId: "demo-club-id",
       },
       "demo-admin@clubhub.com": {
         id: "demo-pro-admin-id",
         first_name: "John",
         last_name: "Smith",
-        account_type: "organization",
-        userType: "organization",
+        account_type: "group",
+        userType: "group",
         role: "admin",
-        clubId: "demo-club-id",
+        groupId: "demo-club-id",
       },
       "demo-coach@clubhub.com": {
         id: "demo-pro-coach-id",
@@ -1431,7 +1433,7 @@ class ApiService {
         account_type: "coach",
         userType: "coach",
         role: "coach",
-        clubId: "demo-club-id",
+        groupId: "demo-club-id",
       },
       "demo-player@clubhub.com": {
         id: "demo-pro-player-id",
@@ -1440,7 +1442,7 @@ class ApiService {
         account_type: "player",
         userType: "player",
         role: "player",
-        clubId: "demo-club-id",
+        groupId: "demo-club-id",
       },
       "admin@clubhub.com": {
         id: "demo-admin-id",
@@ -1449,7 +1451,7 @@ class ApiService {
         account_type: "admin",
         userType: "admin",
         role: "admin",
-        clubId: "demo-club-id",
+        groupId: "demo-club-id",
       },
       "coach@clubhub.com": {
         id: "demo-coach-id",
@@ -1458,7 +1460,7 @@ class ApiService {
         account_type: "coach",
         userType: "coach",
         role: "coach",
-        clubId: "demo-club-id",
+        groupId: "demo-club-id",
       },
       "player@clubhub.com": {
         id: "demo-player-id",
@@ -1467,7 +1469,7 @@ class ApiService {
         account_type: "player",
         userType: "player",
         role: "player",
-        clubId: "demo-club-id",
+        groupId: "demo-club-id",
       },
     };
 
@@ -1486,8 +1488,8 @@ class ApiService {
           account_type: mockUser.account_type,
           userType: mockUser.userType,
           role: mockUser.role,
-          clubId: mockUser.clubId,
-          currentOrganizationId: mockUser.clubId,
+          groupId: mockUser.groupId,
+          currentGroupId: mockUser.groupId,
         },
       };
 
@@ -1581,74 +1583,74 @@ class ApiService {
 
   // =========================== CLUB METHODS ===========================
 
-  async getClubs(search = null) {
+  async getGroups(search = null) {
     try {
       const endpoint = search
-        ? `/clubs?search=${encodeURIComponent(search)}`
-        : "/clubs";
-      const clubs = await this.makeRequest(endpoint);
-      localStorage.setItem("cachedClubs", JSON.stringify(clubs));
-      return clubs;
+        ? `/groups?search=${encodeURIComponent(search)}`
+        : "/groups";
+      const groups = await this.makeRequest(endpoint);
+      localStorage.setItem("cachedGroups", JSON.stringify(groups));
+      return groups;
     } catch (error) {
-      console.warn("❌ Failed to fetch clubs:", error);
+      console.warn("❌ Failed to fetch groups:", error);
       if (localStorage.getItem("isDemoSession") === "true")
-        return this.getAdminDashboardFallback().clubs;
-      const cachedClubs = localStorage.getItem("cachedClubs");
-      return cachedClubs ? JSON.parse(cachedClubs) : [];
+        return this.getAdminDashboardFallback().groups;
+      const cachedGroups = localStorage.getItem("cachedGroups");
+      return cachedGroups ? JSON.parse(cachedGroups) : [];
     }
   }
 
-  async getClub(id) {
+  async getGroup(id) {
     if (
       localStorage.getItem("isDemoSession") === "true" ||
       id.startsWith("dummy-")
     ) {
-      const demoClubs = this.getAdminDashboardFallback().clubs;
-      return demoClubs.find((c) => c.id === id) || demoClubs[0];
+      const demoGroups = this.getAdminDashboardFallback().groups;
+      return demoGroups.find((c) => c.id === id) || demoGroups[0];
     }
     try {
-      return await this.makeRequest(`/clubs/${id}`);
+      return await this.makeRequest(`/groups/${id}`);
     } catch (error) {
       console.warn(`❌ Failed to fetch club ${id}:`, error);
       if (localStorage.getItem("isDemoSession") === "true") {
-        return this.getAdminDashboardFallback().clubs[0];
+        return this.getAdminDashboardFallback().groups[0];
       }
       throw error;
     }
   }
 
-  async getClubById(id) {
+  async getGroupById(id) {
     // 1. Explicit dummy ID check
     if (id && id.toString().startsWith("dummy-")) {
-      const demoClubs = this.getAdminDashboardFallback().clubs;
-      return demoClubs.find((c) => c.id === id) || demoClubs[0];
+      const demoGroups = this.getAdminDashboardFallback().groups;
+      return demoGroups.find((c) => c.id === id) || demoGroups[0];
     }
 
     // 2. Try real API
     try {
-      return await this.makeRequest(`/clubs/${id}`);
+      return await this.makeRequest(`/groups/${id}`);
     } catch (error) {
       // 3. Fallback only if in demo session
       if (localStorage.getItem("isDemoSession") === "true") {
-        const demoClubs = this.getAdminDashboardFallback().clubs;
-        return demoClubs[0];
+        const demoGroups = this.getAdminDashboardFallback().groups;
+        return demoGroups[0];
       }
       throw error;
     }
   }
 
-  async createClub(clubData) {
-    const response = await this.makeRequest("/clubs", {
+  async createGroup(clubData) {
+    const response = await this.makeRequest("/groups", {
       method: "POST",
       body: JSON.stringify(clubData),
     });
 
-    this.cacheClubs([response.club]);
+    this.cacheGroups([response.club]);
     return response;
   }
 
-  async updateClub(id, clubData) {
-    return await this.makeRequest(`/organizations/${id}`, {
+  async updateGroup(id, clubData) {
+    return await this.makeRequest(`/groups/${id}`, {
       method: "PUT",
       body: JSON.stringify(clubData),
     });
@@ -1659,17 +1661,14 @@ class ApiService {
   // ============================================================================
 
   /**
-   * Send an invitation to join an organization
-   * @param {string} organizationId - Organization ID
+   * Send an invitation to join an group
+   * @param {string} groupId - Group ID
    * @param {object} inviteData - { email, role, message }
    */
-  async sendInvitation(organizationId, inviteData) {
+  async sendInvitation(groupId, inviteData) {
     try {
-      console.log(
-        `📧 Sending invitation for org ${organizationId}:`,
-        inviteData,
-      );
-      return await this.makeRequest(`/organizations/${organizationId}/invite`, {
+      console.log(`📧 Sending invitation for org ${groupId}:`, inviteData);
+      return await this.makeRequest(`/groups/${groupId}/invite`, {
         method: "POST",
         body: JSON.stringify(inviteData),
       });
@@ -1725,30 +1724,28 @@ class ApiService {
   }
 
   /**
-   * Get all invitations for an organization
-   * @param {string} organizationId - Organization ID
+   * Get all invitations for an group
+   * @param {string} groupId - Group ID
    */
-  async getOrganizationInvitations(organizationId) {
+  async getGroupInvitations(groupId) {
     try {
-      return await this.makeRequest(
-        `/organizations/${organizationId}/invitations`,
-      );
+      return await this.makeRequest(`/groups/${groupId}/invitations`);
     } catch (error) {
-      console.error("❌ Failed to get organization invitations:", error);
+      console.error("❌ Failed to get group invitations:", error);
       throw error;
     }
   }
 
-  async deleteClub(id) {
-    return await this.makeRequest(`/clubs/${id}`, {
+  async deleteGroup(id) {
+    return await this.makeRequest(`/groups/${id}`, {
       method: "DELETE",
     });
   }
 
-  async applyToClub(clubId, applicationData) {
+  async applyToGroup(groupId, applicationData) {
     try {
-      console.log(`📝 Applying to club ${clubId}:`, applicationData);
-      return await this.makeRequest(`/clubs/${clubId}/apply`, {
+      console.log(`📝 Applying to club ${groupId}:`, applicationData);
+      return await this.makeRequest(`/groups/${groupId}/apply`, {
         method: "POST",
         body: JSON.stringify(applicationData),
       });
@@ -1762,12 +1759,12 @@ class ApiService {
 
   async getPlayers(arg = null) {
     try {
-      let clubId = null;
+      let groupId = null;
       let viewType = "all";
       let queryParams = "page=1&limit=1000";
 
       if (typeof arg === "object" && arg !== null) {
-        clubId = arg.clubId;
+        groupId = arg.groupId;
         viewType = arg.viewType || "all";
         if (arg.sport) queryParams += `&sport=${encodeURIComponent(arg.sport)}`;
         if (arg.location)
@@ -1777,7 +1774,7 @@ class ApiService {
         if (arg.minAge) queryParams += `&min_age=${arg.minAge}`;
         if (arg.maxAge) queryParams += `&max_age=${arg.maxAge}`;
       } else {
-        clubId = arg;
+        groupId = arg;
       }
 
       // Use filtered endpoint if a specific view is requested (on-plan, assigned, etc.)
@@ -1786,8 +1783,8 @@ class ApiService {
           ? `/players/filtered/${viewType}`
           : `/players`;
 
-      const endpoint = clubId
-        ? `${baseEndpoint}?clubId=${clubId}&${queryParams}`
+      const endpoint = groupId
+        ? `${baseEndpoint}?groupId=${groupId}&${queryParams}`
         : `${baseEndpoint}?${queryParams}`;
 
       console.log(`🔍 Fetching players from: ${endpoint}`);
@@ -1858,13 +1855,13 @@ class ApiService {
 
   // =========================== EVENT METHODS ===========================
 
-  async getEvents(clubId = null) {
+  async getEvents(groupId = null) {
     if (localStorage.getItem("isDemoSession") === "true") {
       return this.getAdminDashboardFallback().events;
     }
     try {
-      const endpoint = clubId
-        ? `/events?clubId=${clubId}&upcoming=true`
+      const endpoint = groupId
+        ? `/events?groupId=${groupId}&upcoming=true`
         : "/events?upcoming=true";
       const events = await this.makeRequest(endpoint);
       localStorage.setItem("cachedEvents", JSON.stringify(events));
@@ -1946,12 +1943,12 @@ class ApiService {
 
   // =========================== TEAM METHODS ===========================
 
-  async getTeams(clubId = null) {
+  async getTeams(groupId = null) {
     if (localStorage.getItem("isDemoSession") === "true") {
       return this.getAdminDashboardFallback().teams;
     }
     try {
-      const endpoint = clubId ? `/teams?clubId=${clubId}` : "/teams";
+      const endpoint = groupId ? `/teams?groupId=${groupId}` : "/teams";
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch teams:", error);
@@ -2043,6 +2040,13 @@ class ApiService {
     });
   }
 
+  async recordMatchResult(eventId, resultData) {
+    return await this.makeRequest(`/events/${eventId}/result`, {
+      method: "POST",
+      body: JSON.stringify(resultData),
+    });
+  }
+
   async getTeamAvailabilityVotes(teamId, eventId = null) {
     try {
       const endpoint = eventId
@@ -2070,12 +2074,12 @@ class ApiService {
 
   // =========================== STAFF METHODS ===========================
 
-  async getStaff(clubId = null) {
+  async getStaff(groupId = null) {
     if (localStorage.getItem("isDemoSession") === "true") {
       return this.getAdminDashboardFallback().staff;
     }
     try {
-      const endpoint = clubId ? `/staff?clubId=${clubId}` : "/staff";
+      const endpoint = groupId ? `/staff?groupId=${groupId}` : "/staff";
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch staff:", error);
@@ -2183,10 +2187,10 @@ class ApiService {
     });
   }
 
-  async getFilteredPlayers(filter, clubId = null) {
+  async getFilteredPlayers(filter, groupId = null) {
     try {
-      const endpoint = clubId
-        ? `/players/filtered/${filter}?clubId=${clubId}`
+      const endpoint = groupId
+        ? `/players/filtered/${filter}?groupId=${groupId}`
         : `/players/filtered/${filter}`;
       return await this.makeRequest(endpoint);
     } catch (error) {
@@ -2200,14 +2204,14 @@ class ApiService {
     planId,
     startDate,
     customPrice = null,
-    clubId = null,
+    groupId = null,
   ) {
     const body = {
       playerId,
       planId,
       startDate,
       customPrice,
-      clubId,
+      groupId,
     };
 
     const makeJsonRequest = (url, data) =>
@@ -2224,11 +2228,17 @@ class ApiService {
       { url: `/players/${playerId}/payment-plan`, data: body },
       {
         url: "/players/assign-payment-plan",
-        data: { playerId, planId, startDate, customPrice, clubId },
+        data: { playerId, planId, startDate, customPrice, groupId },
       },
       {
         url: "/payments/bulk-assign-plan",
-        data: { playerIds: [playerId], planId, startDate, customPrice, clubId },
+        data: {
+          playerIds: [playerId],
+          planId,
+          startDate,
+          customPrice,
+          groupId,
+        },
       },
     ];
 
@@ -2267,9 +2277,9 @@ class ApiService {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     try {
       const context = await this.getContext();
-      const currentOrgId = context?.currentOrganization?.id;
+      const currentOrgId = context?.currentGroup?.id;
       const endpoint = currentOrgId
-        ? `/dashboard/admin?clubId=${currentOrgId}`
+        ? `/dashboard/admin?groupId=${currentOrgId}`
         : "/dashboard/admin";
       return await this.makeRequest(endpoint);
     } catch (error) {
@@ -2282,9 +2292,9 @@ class ApiService {
           "🔄 Attempting to load dashboard data from individual endpoints...",
         );
 
-        const [clubs, players, staff, events, teams, payments] =
+        const [groups, players, staff, events, teams, payments] =
           await Promise.allSettled([
-            this.getClubs(),
+            this.getGroups(),
             this.getPlayers(),
             this.getStaff(),
             this.getEvents(),
@@ -2293,14 +2303,15 @@ class ApiService {
           ]);
 
         return {
-          clubs: clubs.status === "fulfilled" ? clubs.value : [],
+          groups: groups.status === "fulfilled" ? groups.value : [],
           players: players.status === "fulfilled" ? players.value : [],
           staff: staff.status === "fulfilled" ? staff.value : [],
           events: events.status === "fulfilled" ? events.value : [],
           teams: teams.status === "fulfilled" ? teams.value : [],
           payments: payments.status === "fulfilled" ? payments.value : [],
           statistics: {
-            total_clubs: clubs.status === "fulfilled" ? clubs.value.length : 0,
+            total_groups:
+              groups.status === "fulfilled" ? groups.value.length : 0,
             total_players:
               players.status === "fulfilled" ? players.value.length : 0,
             total_staff: staff.status === "fulfilled" ? staff.value.length : 0,
@@ -2370,9 +2381,9 @@ class ApiService {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     try {
       const context = await this.getContext();
-      const currentOrgId = context?.currentOrganization?.id;
+      const currentOrgId = context?.currentGroup?.id;
       const endpoint = currentOrgId
-        ? `/dashboard/admin/enhanced?clubId=${currentOrgId}`
+        ? `/dashboard/admin/enhanced?groupId=${currentOrgId}`
         : "/dashboard/admin/enhanced";
       return await this.makeRequest(endpoint);
     } catch (error) {
@@ -2386,7 +2397,7 @@ class ApiService {
         );
 
         const [
-          clubs,
+          groups,
           players,
           staff,
           events,
@@ -2396,7 +2407,7 @@ class ApiService {
           campaigns,
           listings,
         ] = await Promise.allSettled([
-          this.getClubs(),
+          this.getGroups(),
           this.getPlayers(),
           this.getStaff(),
           this.getEvents(),
@@ -2408,7 +2419,7 @@ class ApiService {
         ]);
 
         return {
-          clubs: clubs.status === "fulfilled" ? clubs.value : [],
+          groups: groups.status === "fulfilled" ? groups.value : [],
           players: players.status === "fulfilled" ? players.value : [],
           staff: staff.status === "fulfilled" ? staff.value : [],
           events: events.status === "fulfilled" ? events.value : [],
@@ -2418,7 +2429,8 @@ class ApiService {
           campaigns: campaigns.status === "fulfilled" ? campaigns.value : [],
           listings: listings.status === "fulfilled" ? listings.value : [],
           statistics: {
-            total_clubs: clubs.status === "fulfilled" ? clubs.value.length : 0,
+            total_groups:
+              groups.status === "fulfilled" ? groups.value.length : 0,
             total_players:
               players.status === "fulfilled" ? players.value.length : 0,
             total_staff: staff.status === "fulfilled" ? staff.value.length : 0,
@@ -2461,12 +2473,12 @@ class ApiService {
         return this.getPlayerDashboardFallback();
       }
       const context = await this.getContext();
-      const currentOrgId = context?.currentOrganization?.id;
+      const currentOrgId = context?.currentGroup?.id;
       let endpoint = "/dashboard/player";
       const params = [];
 
       if (playerId) params.push(`playerId=${playerId}`);
-      if (currentOrgId) params.push(`clubId=${currentOrgId}`);
+      if (currentOrgId) params.push(`groupId=${currentOrgId}`);
 
       if (params.length > 0) {
         endpoint += "?" + params.join("&");
@@ -2483,10 +2495,10 @@ class ApiService {
           "🔄 Attempting to load player dashboard data from individual endpoints...",
         );
 
-        const [events, clubs, teams, payments, bookings] =
+        const [events, groups, teams, payments, bookings] =
           await Promise.allSettled([
             this.getEvents(),
-            this.getClubs(),
+            this.getGroups(),
             this.getTeams(),
             this.getPayments(),
             this.getUserBookings(),
@@ -2496,7 +2508,7 @@ class ApiService {
         return {
           player: null,
           attendance: null,
-          clubs: clubs.status === "fulfilled" ? clubs.value : [],
+          groups: groups.status === "fulfilled" ? groups.value : [],
           teams: teams.status === "fulfilled" ? teams.value : [],
           events: events.status === "fulfilled" ? events.value : [],
           payments: payments.status === "fulfilled" ? payments.value : [],
@@ -2515,7 +2527,7 @@ class ApiService {
 
   // =========================== MARKETING & SHOP METHODS ===========================
 
-  async getCampaigns(clubId) {
+  async getCampaigns(groupId) {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     try {
       if (isDemo) {
@@ -2547,14 +2559,14 @@ class ApiService {
           },
         ];
       }
-      return await this.makeRequest(`/clubs/${clubId}/campaigns`);
+      return await this.makeRequest(`/groups/${groupId}/campaigns`);
     } catch (error) {
       console.warn("❌ Failed to fetch campaigns:", error);
       return [];
     }
   }
 
-  async getProducts(clubId) {
+  async getProducts(groupId) {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     try {
       if (isDemo) {
@@ -2570,7 +2582,7 @@ class ApiService {
           },
           {
             id: "p2",
-            name: "Club Hoodie",
+            name: "Group Hoodie",
             price: 35.0,
             stock_quantity: 50,
             description:
@@ -2592,7 +2604,7 @@ class ApiService {
           },
         ];
       }
-      return await this.makeRequest(`/clubs/${clubId}/products`);
+      return await this.makeRequest(`/groups/${groupId}/products`);
     } catch (error) {
       console.warn("❌ Failed to fetch products:", error);
       return [];
@@ -2611,7 +2623,7 @@ class ApiService {
 
     if (!isDemo)
       return {
-        clubs: [],
+        groups: [],
         players: [],
         staff: [],
         events: [],
@@ -2621,7 +2633,7 @@ class ApiService {
         campaigns: [],
         listings: [],
         statistics: {
-          total_clubs: 0,
+          total_groups: 0,
           total_players: 0,
           total_staff: 0,
           total_events: 0,
@@ -2631,10 +2643,10 @@ class ApiService {
       };
 
     return {
-      clubs: [
+      groups: [
         {
           id: "demo-club-id",
-          name: "Pro Club Demo",
+          name: "Pro Group Demo",
           location: "London, UK",
           sport: "Football",
           member_count: 142,
@@ -2798,13 +2810,13 @@ class ApiService {
             .toISOString()
             .split("T")[0],
           time: "10:00",
-          location: "Clubhouse Boardroom",
+          location: "Grouphouse Boardroom",
           type: "meeting",
           status: "upcoming",
         },
         {
           id: "e4",
-          title: "Pro Club vs City Lions",
+          title: "Pro Group vs City Lions",
           date: new Date(Date.now() + 86400000 * 4).toISOString().split("T")[0],
           time: "15:00",
           location: "Away: City Stadium",
@@ -2886,7 +2898,7 @@ class ApiService {
       products: [
         {
           id: "prod1",
-          name: "Official Club Jersey",
+          name: "Official Group Jersey",
           price: 45.0,
           stock_quantity: 50,
           description:
@@ -2902,7 +2914,7 @@ class ApiService {
         },
         {
           id: "prod3",
-          name: "Club Water Bottle",
+          name: "Group Water Bottle",
           price: 12.5,
           stock_quantity: 100,
           description: "BPA-free 750ml bottle with club crest.",
@@ -2950,7 +2962,7 @@ class ApiService {
         },
       ],
       statistics: {
-        total_clubs: 1,
+        total_groups: 1,
         total_players: 142,
         total_staff: 12,
         total_events: 5,
@@ -2973,7 +2985,7 @@ class ApiService {
     if (!isDemo)
       return {
         player: null,
-        clubs: [],
+        groups: [],
         teams: [],
         events: [],
         payments: [],
@@ -2990,10 +3002,10 @@ class ApiService {
         id: "demo-player-id",
         email: "demo-player@clubhub.com",
       },
-      clubs: [
+      groups: [
         {
           id: "demo-club-id",
-          name: "Pro Club Demo",
+          name: "Pro Group Demo",
           location: "London, UK",
           sport: "Football",
         },
@@ -3121,8 +3133,8 @@ class ApiService {
 
   // =========================== UTILITY METHODS ===========================
 
-  cacheClubs(clubs) {
-    localStorage.setItem("cachedClubs", JSON.stringify(clubs));
+  cacheGroups(groups) {
+    localStorage.setItem("cachedGroups", JSON.stringify(groups));
   }
 
   formatCurrency(amount) {
@@ -3134,12 +3146,12 @@ class ApiService {
 
   // =========================== APPLICANT MANAGEMENT METHODS ===========================
 
-  async getListings(clubId = null) {
+  async getListings(groupId = null) {
     if (localStorage.getItem("isDemoSession") === "true") {
       return this.getAdminDashboardFallback().listings;
     }
     try {
-      const endpoint = clubId ? `/listings?clubId=${clubId}` : "/listings";
+      const endpoint = groupId ? `/listings?groupId=${groupId}` : "/listings";
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch listings:", error);
@@ -3197,8 +3209,8 @@ class ApiService {
     });
   }
 
-  async getClubApplications(clubId) {
-    return await this.makeRequest(`/clubs/${clubId}/applications`);
+  async getGroupApplications(groupId) {
+    return await this.makeRequest(`/groups/${groupId}/applications`);
   }
 
   // =========================== ADVANCED TEAM MANAGEMENT METHODS ===========================
@@ -3281,22 +3293,22 @@ class ApiService {
 
   // =========================== ORGANIZATION TOGGLE METHODS ===========================
 
-  async getUserOrganizations() {
+  async getUserGroups() {
     try {
-      return await this.makeRequest("/auth/organizations");
+      return await this.makeRequest("/auth/groups");
     } catch (error) {
-      console.error("❌ Failed to fetch organizations:", error);
+      console.error("❌ Failed to fetch groups:", error);
       throw error;
     }
   }
 
-  async switchPrimaryOrganization(clubId) {
+  async switchPrimaryGroup(groupId) {
     try {
-      return await this.makeRequest(`/auth/switch-organization/${clubId}`, {
+      return await this.makeRequest(`/auth/switch-group/${groupId}`, {
         method: "POST",
       });
     } catch (error) {
-      console.error("❌ Failed to switch organization:", error);
+      console.error("❌ Failed to switch group:", error);
       throw error;
     }
   }
@@ -3388,10 +3400,10 @@ class ApiService {
     } catch (error) {
       console.warn("❌ Failed to fetch enhanced player dashboard data:", error);
       try {
-        const [events, clubs, teams, payments, bookings, children, profile] =
+        const [events, groups, teams, payments, bookings, children, profile] =
           await Promise.allSettled([
             this.getEvents(),
-            this.getClubs(),
+            this.getGroups(),
             this.getTeams(),
             this.getPayments(),
             this.getUserBookings(),
@@ -3402,7 +3414,7 @@ class ApiService {
           player: profile.status === "fulfilled" ? profile.value.profile : null,
           children:
             children.status === "fulfilled" ? children.value.children : [],
-          clubs: clubs.status === "fulfilled" ? clubs.value : [],
+          groups: groups.status === "fulfilled" ? groups.value : [],
           teams: teams.status === "fulfilled" ? teams.value : [],
           events: events.status === "fulfilled" ? events.value : [],
           payments: payments.status === "fulfilled" ? payments.value : [],
@@ -3462,9 +3474,9 @@ class ApiService {
 
   // =========================== CLUB APPLICATION WITH CHILD SUPPORT ===========================
 
-  async applyToClubForChild(clubId, childId, applicationData) {
+  async applyToGroupForChild(groupId, childId, applicationData) {
     try {
-      return await this.makeRequest(`/clubs/${clubId}/apply-child`, {
+      return await this.makeRequest(`/groups/${groupId}/apply-child`, {
         method: "POST",
         body: JSON.stringify({ childId, ...applicationData }),
       });
@@ -3530,9 +3542,9 @@ class ApiService {
 
   // =========================== DOCUMENT METHODS ===========================
 
-  async getDocumentsEnhanced(clubId = null) {
+  async getDocumentsEnhanced(groupId = null) {
     try {
-      const endpoint = clubId ? `/documents?clubId=${clubId}` : "/documents";
+      const endpoint = groupId ? `/documents?groupId=${groupId}` : "/documents";
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch documents:", error);
@@ -3565,38 +3577,37 @@ class ApiService {
       console.warn("❌ Failed to fetch enhanced admin dashboard data:", error);
       try {
         const [
-          clubs,
+          groups,
           players,
           staff,
           events,
           teams,
           payments,
           children,
-          organizations,
+          userGroups,
         ] = await Promise.allSettled([
-          this.getClubs(),
+          this.getGroups(),
           this.getPlayers(),
           this.getStaff(),
           this.getEvents(),
           this.getTeams(),
           this.getPayments(),
           this.getChildProfiles().catch(() => []),
-          this.getUserOrganizations().catch(() => ({ organizations: [] })),
+          this.getUserGroups().catch(() => ({ groups: [] })),
         ]);
         return {
-          clubs: clubs.status === "fulfilled" ? clubs.value : [],
+          groups: groups.status === "fulfilled" ? groups.value : [],
           players: players.status === "fulfilled" ? players.value : [],
           staff: staff.status === "fulfilled" ? staff.value : [],
           events: events.status === "fulfilled" ? events.value : [],
           teams: teams.status === "fulfilled" ? teams.value : [],
           payments: payments.status === "fulfilled" ? payments.value : [],
           children: children.status === "fulfilled" ? children.value : [],
-          organizations:
-            organizations.status === "fulfilled"
-              ? organizations.value.organizations
-              : [],
+          userGroups:
+            userGroups.status === "fulfilled" ? userGroups.value.groups : [],
           statistics: {
-            total_clubs: clubs.status === "fulfilled" ? clubs.value.length : 0,
+            total_groups:
+              groups.status === "fulfilled" ? groups.value.length : 0,
             total_players:
               players.status === "fulfilled" ? players.value.length : 0,
             total_staff: staff.status === "fulfilled" ? staff.value.length : 0,
@@ -3619,10 +3630,10 @@ class ApiService {
   }
 
   // =========================== POLLS & VOTING ===========================
-  async getPolls(clubId) {
+  async getPolls(groupId) {
     try {
       const response = await this.makeRequest(
-        `/clubs/${clubId || "demo-club-id"}/polls`,
+        `/groups/${groupId || "demo-club-id"}/polls`,
       );
       return Array.isArray(response) ? response : response.polls || [];
     } catch (error) {
@@ -3646,9 +3657,9 @@ class ApiService {
   }
 
   // =========================== TOURNAMENTS ===========================
-  async getTournaments(clubId) {
+  async getTournaments(groupId) {
     try {
-      const events = await this.getEvents(clubId);
+      const events = await this.getEvents(groupId);
       return (events || []).filter(
         (e) => e.event_type === "tournament" || e.type === "tournament",
       );
@@ -3712,7 +3723,94 @@ class ApiService {
         ],
       };
     }
-    return await this.makeRequest(`/tournaments/${tournamentId}`);
+    return await this.makeRequest(`/tournaments/${tournamentId}/dashboard`);
+  }
+
+  async getTournamentPitches(tournamentId) {
+    return await this.makeRequest(`/tournaments/${tournamentId}/pitches`);
+  }
+
+  async createTournamentPitch(tournamentId, pitchData) {
+    return await this.makeRequest(`/tournaments/${tournamentId}/pitches`, {
+      method: "POST",
+      body: JSON.stringify(pitchData),
+    });
+  }
+
+  async autoScheduleTournament(tournamentId, scheduleData) {
+    return await this.makeRequest(
+      `/tournaments/${tournamentId}/auto-schedule`,
+      {
+        method: "POST",
+        body: JSON.stringify(scheduleData),
+      },
+    );
+  }
+
+  async getTournamentBracket(tournamentId) {
+    return await this.makeRequest(`/tournaments/${tournamentId}/bracket`);
+  }
+
+  // =========================== SCOUTING ===========================
+  async getScoutingReports(filters = {}) {
+    const queryParams = new URLSearchParams(filters).toString();
+    return await this.makeRequest(`/scouting/reports?${queryParams}`);
+  }
+
+  async submitScoutingReport(reportData) {
+    return await this.makeRequest("/scouting/reports", {
+      method: "POST",
+      body: JSON.stringify(reportData),
+    });
+  }
+
+  async getScoutingAnalytics() {
+    return await this.makeRequest("/scouting/analytics");
+  }
+
+  async requestScoutContact(requestId, playerId) {
+    return await this.makeRequest("/scouting/contact-requests", {
+      method: "POST",
+      body: JSON.stringify({ playerId, requestId }),
+    });
+  }
+
+  // =========================== CAMPS & GROUPS ===========================
+  async createCampGroup(eventId, groupData) {
+    return await this.makeRequest(`/events/${eventId}/groups`, {
+      method: "POST",
+      body: JSON.stringify(groupData),
+    });
+  }
+
+  async assignPlayerToCampGroup(eventId, assignmentData) {
+    return await this.makeRequest(`/events/${eventId}/assign-group`, {
+      method: "POST",
+      body: JSON.stringify(assignmentData),
+    });
+  }
+
+  async assignCampBib(eventId, bibData) {
+    return await this.makeRequest(`/events/${eventId}/bibs`, {
+      method: "POST",
+      body: JSON.stringify(bibData),
+    });
+  }
+
+  async exportAttendeeData(eventId) {
+    // This returns a blob for CSV export
+    const response = await fetch(`${this.baseURL}/events/${eventId}/export`, {
+      headers: { Authorization: `Bearer ${this.token}` },
+    });
+    if (!response.ok) throw new Error("Export failed");
+    return await response.blob();
+  }
+
+  async checkInPlayer(eventId, checkInData) {
+    return await this.makeRequest(`/events/${eventId}/checkin`, {
+      method: "POST",
+      body: JSON.stringify(checkInData),
+    });
   }
 
   async updateMatchStats(matchId, payload) {
@@ -3752,8 +3850,8 @@ class ApiService {
     const enhancedMessages = {
       "child-profile":
         "Unable to manage child profile. Please check your parent account permissions.",
-      "organization-switch":
-        "Unable to switch organization. Please verify your organization access.",
+      "group-switch":
+        "Unable to switch group. Please verify your group access.",
       "password-reset":
         "Password reset failed. Please try again or contact support.",
       "profile-update":
@@ -3768,6 +3866,26 @@ class ApiService {
       error.message ||
       "An unexpected error occurred";
     return { error: true, message, context, originalError: error.message };
+  }
+
+  // Tactical Formations
+  async getTacticalFormations(orgId, teamId = null) {
+    let endpoint = `/tactical?group_id=${orgId}`;
+    if (teamId) endpoint += `&team_id=${teamId}`;
+    return await this.makeRequest(endpoint);
+  }
+
+  async saveTacticalFormation(data) {
+    return await this.makeRequest("/tactical", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTacticalFormation(id) {
+    return await this.makeRequest(`/tactical/${id}`, {
+      method: "DELETE",
+    });
   }
 }
 

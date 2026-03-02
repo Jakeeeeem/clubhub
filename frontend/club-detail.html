@@ -268,6 +268,45 @@
                     </button>
                 </form>
             </div>
+
+            <!-- Reviews Section -->
+            <div class="card" style="margin-top: 3rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>⭐ Member Reviews</h2>
+                    <button class="btn btn-secondary btn-small" onclick="openReviewModal()">Write a Review</button>
+                </div>
+
+                <div id="reviewsContainer">
+                    <p class="text-center" style="color: var(--text-muted);">No reviews yet. Be the first to share your
+                        experience!</p>
+                </div>
+            </div>
+
+            <!-- Review Modal -->
+            <div id="reviewModal" class="modal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <span class="close" onclick="closeReviewModal()">&times;</span>
+                    <h2>Rate this Club</h2>
+                    <form onsubmit="submitReview(event)" style="margin-top: 1.5rem;">
+                        <div class="form-group">
+                            <label>Rating</label>
+                            <select id="reviewRating" required>
+                                <option value="5">⭐⭐⭐⭐⭐ (Excellent)</option>
+                                <option value="4">⭐⭐⭐⭐ (Great)</option>
+                                <option value="3">⭐⭐⭐ (Good)</option>
+                                <option value="2">⭐⭐ (Fair)</option>
+                                <option value="1">⭐ (Poor)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Your Testimonial</label>
+                            <textarea id="reviewText" required placeholder="What makes this club special?"
+                                style="height: 100px;"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Post Review</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -440,6 +479,64 @@
         // Initialize
         loadClubDetails();
         checkInitialAuth();
+        loadReviews();
+
+        // --- Review Methods ---
+        async function loadReviews() {
+            const container = document.getElementById('reviewsContainer');
+            try {
+                // Endpoint we expect in backend (already added in Phase 3/4)
+                const reviews = await apiService.makeRequest(`/clubs/${clubId}/reviews`);
+
+                if (reviews && reviews.length > 0) {
+                    container.innerHTML = reviews.map(r => `
+                        <div class="card" style="margin-bottom: 1rem; background: rgba(255,255,255,0.02);">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <div style="color: #fbbf24; margin-bottom: 0.25rem;">${'⭐'.repeat(r.rating)}</div>
+                                    <p style="margin:0; font-weight: 600;">${r.author_name || 'Anonymous User'}</p>
+                                </div>
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">${new Date(r.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <p style="margin-top: 1rem; font-style: italic;">"${r.testimonial}"</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error('Failed to load reviews:', err);
+            }
+        }
+
+        function openReviewModal() {
+            document.getElementById('reviewModal').style.display = 'block';
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').style.display = 'none';
+        }
+
+        async function submitReview(e) {
+            e.preventDefault();
+            const rating = document.getElementById('reviewRating').value;
+            const testimonial = document.getElementById('reviewText').value;
+
+            try {
+                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                await apiService.makeRequest(`/clubs/${clubId}/reviews`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        rating,
+                        testimonial,
+                        authorName: user.id ? `${user.first_name} ${user.last_name}` : 'Guest User'
+                    })
+                });
+                alert('Thank you for your review!');
+                closeReviewModal();
+                loadReviews();
+            } catch (err) {
+                alert('Failed to post review: ' + err.message);
+            }
+        }
     </script>
 </body>
 

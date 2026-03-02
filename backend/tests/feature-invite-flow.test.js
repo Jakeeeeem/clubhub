@@ -4,37 +4,41 @@ const jwt = require("jsonwebtoken");
 // Comprehensive mock database for invite flow
 const mockQuery = jest.fn((text, params) => {
   // 1. Club lookup by owner_id (for invite generation)
-  if (text.includes("FROM clubs WHERE owner_id")) {
-    return Promise.resolve({
-      rows: [
-        {
-          id: "club-123",
-          name: "Test FC",
-          owner_id: "coach-123",
-          organization_id: "org-123",
-        },
-      ],
-    });
-  }
-
-  // 2. Club lookup with owner verification
-  if (text.includes("FROM clubs WHERE id") && text.includes("AND owner_id")) {
-    return Promise.resolve({
-      rows: [
-        {
-          id: "club-123",
-          name: "Test FC",
-          owner_id: "coach-123",
-          organization_id: "org-123",
-        },
-      ],
-    });
-  }
-
-  // 3. Check for duplicate pending invites
+  // 2. Club lookup with owner verification (and permission check JOIN)
   if (
-    text.includes("FROM club_invites") &&
-    text.includes("invite_status = 'pending'")
+    text.includes("FROM organizations c") &&
+    text.includes("JOIN organization_members om")
+  ) {
+    return Promise.resolve({
+      rows: [
+        {
+          id: "club-123",
+          name: "Test FC",
+          owner_id: "coach-123",
+          organization_id: "org-123",
+          requester_role: "owner",
+        },
+      ],
+    });
+  }
+
+  // 3. Organization lookup by owner (fallback)
+  if (text.includes("FROM organizations WHERE owner_id")) {
+    return Promise.resolve({
+      rows: [
+        {
+          id: "club-123",
+          name: "Test FC",
+          owner_id: "coach-123",
+        },
+      ],
+    });
+  }
+
+  // 4. Check for duplicate pending invites
+  if (
+    text.includes("FROM invitations") &&
+    text.includes("status = 'pending'")
   ) {
     return Promise.resolve({ rows: [] });
   }
@@ -44,8 +48,8 @@ const mockQuery = jest.fn((text, params) => {
     return Promise.resolve({ rows: [] });
   }
 
-  // 5. Insert new invite
-  if (text.includes("INSERT INTO club_invites")) {
+  // 6. Insert new invite
+  if (text.includes("INSERT INTO invitations")) {
     const isPublic = params[11] || false;
     return Promise.resolve({
       rows: [
@@ -69,8 +73,11 @@ const mockQuery = jest.fn((text, params) => {
     });
   }
 
-  // 6. Get invite details (public endpoint)
-  if (text.includes("FROM club_invites ci") && text.includes("JOIN clubs c")) {
+  // 7. Get invite details (public endpoint)
+  if (
+    text.includes("FROM invitations ci") &&
+    text.includes("JOIN organizations c")
+  ) {
     return Promise.resolve({
       rows: [
         {

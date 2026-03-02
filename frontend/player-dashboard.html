@@ -17,10 +17,10 @@
   <link rel="apple-touch-icon" href="/images/logo.png">
 
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="org-switcher.css">
+  <link rel="stylesheet" href="group-switcher.css">
   <script src="https://js.stripe.com/v3/"></script>
   <script src="api-service.js"></script>
-  <script src="org-switcher.js"></script>
+  <script src="group-switcher.js"></script>
   <script src="workspace-manager.js"></script>
   <link rel="stylesheet" href="tour-service.css">
   <script src="tour-service.js"></script>
@@ -69,9 +69,26 @@
     </nav>
   </header>
 
+  <!-- Mobile Top Tabs (Threads Style) -->
+  <div class="app-top-tabs mobile-only">
+    <div class="tabs-container">
+      <div class="tab-item active" onclick="showPlayerSection('overview')">Overview</div>
+      <div class="tab-item" onclick="showPlayerSection('teams')">Teams</div>
+      <div class="tab-item" onclick="showPlayerSection('my-clubs')">Clubs</div>
+      <div class="tab-item" onclick="showPlayerSection('documents')">Documents</div>
+      <div class="tab-item" onclick="showPlayerSection('polls')">Polls</div>
+      <div class="tab-item" onclick="showPlayerSection('profile')">Profile</div>
+      <div class="tab-item" onclick="showPlayerSection('family')">Family</div>
+      <div class="tab-item" onclick="showPlayerSection('payments')">Payments</div>
+      <div class="tab-item" onclick="showPlayerSection('club-finder')">Find Clubs</div>
+      <div class="tab-item" onclick="showPlayerSection('event-finder')">Find Events</div>
+    </div>
+  </div>
+
   <main class="main">
     <div class="dashboard container dashboard-container">
-      <div class="dashboard-header" style="margin-bottom: 2rem;">
+      <div class="dashboard-header glass-header"
+        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
         <h1 class="neon-text display-org-name">Player Dashboard</h1>
         <p>Manage your sporting activities within <span class="display-org-name">your organization</span></p>
       </div>
@@ -215,19 +232,19 @@
         <!-- Overview -->
         <div id="player-overview" class="dashboard-section active">
           <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card card-elite">
               <span class="stat-number" id="playerClubs">0</span>
               <span class="stat-label">Active Clubs</span>
             </div>
-            <div class="stat-card">
+            <div class="stat-card card-elite">
               <span class="stat-number" id="playerTeams">0</span>
               <span class="stat-label">Teams</span>
             </div>
-            <div class="stat-card">
+            <div class="stat-card card-elite">
               <span class="stat-number" id="playerEvents">0</span>
               <span class="stat-label">Upcoming Events</span>
             </div>
-            <div class="stat-card">
+            <div class="stat-card card-elite">
               <span class="stat-number" id="playerAttendance">0</span>
               <span class="stat-label">Attendance</span>
             </div>
@@ -1064,6 +1081,101 @@
         localStorage.removeItem('currentUser');
         window.location.href = 'index.html';
       }
+    }
+  </script>
+
+  <!-- Quick Action Modal (Threads Style) -->
+  <div id="quickActionModal" class="modal">
+    <div class="modal-content" style="max-width: 400px; border-radius: 24px; padding: 2rem;">
+      <div class="modal-header" style="border: none; padding-bottom: 0;">
+        <h2 style="width: 100%; text-align: center; font-size: 1.5rem;">Quick Actions</h2>
+        <span class="close" onclick="closeModal('quickActionModal')">&times;</span>
+      </div>
+      <div class="quick-actions-grid" style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem;">
+        <button class="btn btn-primary" onclick="closeModal('quickActionModal'); showPlayerSection('event-finder');"
+          style="justify-content: flex-start; padding: 1.25rem;">
+          <span>🔍</span> Find Events
+        </button>
+        <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showPlayerSection('club-finder');"
+          style="justify-content: flex-start; padding: 1.25rem;">
+          <span>🏰</span> Discover Clubs
+        </button>
+        <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showPlayerSection('family');"
+          style="justify-content: flex-start; padding: 1.25rem;">
+          <span>👨‍👩‍👧‍👦</span> Manage Family
+        </button>
+        <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showPlayerSection('venue-booking');"
+          style="justify-content: flex-start; padding: 1.25rem;">
+          <span>🏟️</span> Book Venue
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar (Threads Style) -->
+  <nav class="app-bottom-nav mobile-only">
+    <a href="#" class="nav-link active" onclick="showPlayerSection('overview'); return false;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+      <span>Home</span>
+    </a>
+    <a href="#" class="nav-link" onclick="showPlayerSection('teams'); return false;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+      <span>Teams</span>
+    </a>
+    <a href="#" class="nav-link create-btn-nav" onclick="openQuickActionModal(); return false;">
+      <div
+        style="background: var(--primary); padding: 8px; border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </div>
+    </a>
+    <a href="#" class="nav-link" onclick="showPlayerSection('event-finder'); return false;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+      <span>Schedule</span>
+    </a>
+    <a href="#" class="nav-link" onclick="showPlayerSection('profile'); return false;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script>
+    function openQuickActionModal() {
+      const modal = document.getElementById('quickActionModal');
+      if (modal) modal.style.display = 'block';
+    }
+
+    // Close modal when clicking outside
+    if (!window._modalInit) {
+      window.addEventListener('click', function (event) {
+        if (event.target.classList.contains('modal')) {
+          event.target.style.display = 'none';
+        }
+      });
+      window._modalInit = true;
     }
   </script>
 

@@ -1,6 +1,6 @@
 /**
  * Workspace Manager
- * Handles role-based access control and organizational context on the frontend.
+ * Handles role-based access control and group context on the frontend.
  */
 
 class WorkspaceManager {
@@ -14,8 +14,8 @@ class WorkspaceManager {
       console.log("🚀 Initializing Workspace Manager...");
       this.context = await apiService.getContext();
 
-      if (!this.context || !this.context.currentOrganization) {
-        console.warn("⚠️ No active organization context found.");
+      if (!this.context || !this.context.currentGroup) {
+        console.warn("⚠️ No active group context found.");
         console.log("ℹ️ User can still access dashboards with manual toggle");
         // Don't apply branding or role permissions if no org context
         return;
@@ -41,7 +41,7 @@ class WorkspaceManager {
       }
 
       console.log(
-        `✅ Workspace context applied: ${this.context.currentOrganization.name} (${this.context.currentOrganization.user_role})`,
+        `✅ Workspace context applied: ${this.context.currentGroup.name} (${this.context.currentGroup.user_role})`,
       );
     } catch (error) {
       console.error("❌ Workspace initialization failed:", error);
@@ -53,15 +53,15 @@ class WorkspaceManager {
    * Apply organization-specific branding (Logo, Name)
    */
   applyBranding() {
-    const org = this.context.currentOrganization;
+    const group = this.context.currentGroup;
 
     // Update dashboard title/header
     const orgNameDisplays = document.querySelectorAll(".display-org-name");
-    orgNameDisplays.forEach((el) => (el.textContent = org.name));
+    orgNameDisplays.forEach((el) => (el.textContent = group.name));
 
     // Update logo
     const logoImgs = document.querySelectorAll(".display-org-logo");
-    if (org.logo_url) {
+    if (group.logo_url) {
       logoImgs.forEach((img) => {
         if (img.tagName === "IMG") img.src = org.logo_url;
       });
@@ -72,14 +72,14 @@ class WorkspaceManager {
    * Hide/Show UI elements based on data-roles attribute
    */
   enforceRolePermissions() {
-    if (!this.context || !this.context.currentOrganization) {
-      console.error("❌ Cannot enforce permissions: No organization context");
+    if (!this.context || !this.context.currentGroup) {
+      console.error("❌ Cannot enforce permissions: No group context");
       return;
     }
 
-    const org = this.context.currentOrganization;
+    const group = this.context.currentGroup;
     // Support various field names for roles (snake_case, camelCase, or 'role')
-    const rawRole = org.user_role || org.role || org.userRole || "";
+    const rawRole = group.user_role || group.role || group.userRole || "";
     const userRole = rawRole.toString().trim().toLowerCase();
 
     const protectedElements = document.querySelectorAll("[data-roles]");

@@ -2634,6 +2634,26 @@ function showPlayerSection(sectionId) {
   const target = byId("player-" + sectionId);
   if (target) target.classList.add("active");
 
+  // Sync with Mobile Tabs and Bottom Nav (Threads Style)
+  const allNavLinks = document.querySelectorAll(".nav-link, .tab-item");
+  allNavLinks.forEach((link) => {
+    link.classList.remove("active");
+    if (
+      link.getAttribute("onclick") &&
+      link.getAttribute("onclick").includes(`'${sectionId}'`)
+    ) {
+      link.classList.add("active");
+      // Scroll into view if it's a tab
+      if (link.classList.contains("tab-item") && link.offsetParent) {
+        link.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  });
+
   // Find and highlight active button & parent dropdown
   const btn = document.querySelector(
     ".dashboard-nav-grouped button[onclick*=\"showPlayerSection('" +

@@ -271,10 +271,10 @@ router.post("/stripe/connect/onboard", authenticateToken, async (req, res) => {
     const account = await getOrCreateStripeConnectAccount(req.user);
 
     const refresh_url =
-      (process.env.FRONTEND_URL || "https://clubhubsports.net") +
+      (process.env.FRONTEND_URL || "https://clubhubsports.io") +
       "/admin-dashboard.html";
     const return_url =
-      (process.env.FRONTEND_URL || "https://clubhubsports.net") +
+      (process.env.FRONTEND_URL || "https://clubhubsports.io") +
       "/admin-dashboard.html";
 
     const link = await stripe.accountLinks.create({
@@ -312,7 +312,7 @@ router.get("/stripe/connect/manage", authenticateToken, async (req, res) => {
       );
 
       const return_url =
-        (process.env.FRONTEND_URL || "https://clubhubsports.net") +
+        (process.env.FRONTEND_URL || "https://clubhubsports.io") +
         "/admin-dashboard.html";
 
       const link = await stripe.accountLinks.create({
@@ -2283,7 +2283,7 @@ router.get(
       const paymentToken = Buffer.from(
         `${payment.id}:${payment.created_at || new Date().toISOString()}`,
       ).toString("base64");
-      const baseUrl = process.env.BASE_URL || "https://clubhubsports.net";
+      const baseUrl = process.env.BASE_URL || "https://clubhubsports.io";
       const paymentLink = `${baseUrl}/payment.html?id=${payment.id}&token=${paymentToken}`;
 
       res.json({

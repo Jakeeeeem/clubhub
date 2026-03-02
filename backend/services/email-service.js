@@ -822,6 +822,54 @@ class EmailService {
       console.error("❌ Failed to send plan assignment email:", error);
     }
   }
+
+  // Send event reminder email
+  async sendEventReminderEmail(reminderData) {
+    const {
+      email,
+      firstName,
+      eventTitle,
+      eventDate,
+      eventTime,
+      location,
+      teamName,
+      clubName,
+      leadTime, // e.g., "7 days", "24 hours"
+    } = reminderData;
+
+    try {
+      const subject = `Reminder: ${eventTitle} in ${leadTime}`;
+      const content = `
+        <h2>Event Reminder</h2>
+        <p>Hello ${firstName},</p>
+        <p>This is a reminder for the upcoming event: <strong>${eventTitle}</strong> for <strong>${teamName}</strong>.</p>
+        
+        <div class="card">
+          <h3 style="margin-bottom: 20px;">${eventTitle}</h3>
+          <p><strong>Starts in:</strong> ${leadTime}</p>
+          <p><strong>Date:</strong> ${new Date(eventDate).toLocaleDateString()}</p>
+          <p><strong>Time:</strong> ${eventTime || "TBA"}</p>
+          <p><strong>Location:</strong> ${location || "TBA"}</p>
+        </div>
+
+        <p>If you haven't already, please confirm your attendance to help the coaches with planning.</p>
+
+        <div style="text-align: center;">
+          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">Confirm Presence</a>
+        </div>
+      `;
+
+      const html = this.getBaseHtmlTemplate(content);
+      return await this.sendEmail({
+        to: email,
+        subject,
+        html,
+        text: `Reminder: ${eventTitle} is in ${leadTime}. Confirm at ${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
+      });
+    } catch (error) {
+      console.error("❌ Failed to send event reminder email:", error);
+    }
+  }
 }
 
 // Create singleton instance

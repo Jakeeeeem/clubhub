@@ -9,7 +9,7 @@ async function initializeCoachDashboard() {
 
   // Ensure we have dashboard data loaded into AppState
   if (!AppState.staff || AppState.staff.length === 0) {
-    console.log("📡 Fetching organization data for Coach...");
+    console.log("📡 Fetching group data for Coach...");
     try {
       const activeClubId =
         AppState.currentUser?.clubId ||
@@ -83,7 +83,7 @@ function showCoachSection(sectionId) {
 
   // Remove active class from all nav buttons
   const navButtons = document.querySelectorAll(
-    ".dashboard-nav button, .dashboard-nav-grouped button, .nav-item",
+    ".dashboard-nav button, .dashboard-nav-grouped button, .nav-item, .tab-item, .nav-link",
   );
   navButtons.forEach((button) => {
     button.classList.remove("active");
@@ -95,8 +95,25 @@ function showCoachSection(sectionId) {
     targetSection.classList.add("active");
   }
 
-  // Add active class to clicked button
-  event.target.classList.add("active");
+  // Add active class to clicked button OR find the corresponding button if called programmatically
+  if (event && event.target) {
+    event.target.classList.add("active");
+  } else {
+    // Find matching tab/nav-link
+    const matchingTab = document.querySelector(
+      `.tab-item[onclick*="'${sectionId}'"]`,
+    );
+    if (matchingTab) matchingTab.classList.add("active");
+
+    // Also scroll the tab into view if mobile
+    if (matchingTab && matchingTab.offsetParent) {
+      matchingTab.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }
 
   // Load section-specific content
   switch (sectionId) {
@@ -125,6 +142,16 @@ function showCoachSection(sectionId) {
       loadCoachProfile();
       break;
   }
+}
+
+function openCreateModal() {
+  const modal = document.getElementById("quickActionModal");
+  if (modal) modal.style.display = "block";
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.style.display = "none";
 }
 
 function loadCoachProfile() {
@@ -589,16 +616,13 @@ function handleAddTeamEvent(e) {
 }
 
 // Tactical Board
+// Tactical Board & Lineup Planner
 function initializeTacticalBoard() {
   const board = document.getElementById("tacticalBoard");
+  if (!board) return;
 
-  // Add goal areas
-  board.innerHTML = `
-        <div style="position: absolute; top: 0; left: 25%; width: 50%; height: 15%; border: 2px solid white; border-top: none;"></div>
-        <div style="position: absolute; bottom: 0; left: 25%; width: 50%; height: 15%; border: 2px solid white; border-bottom: none;"></div>
-        <div style="position: absolute; top: 0; left: 40%; width: 20%; height: 8%; border: 2px solid white; border-top: none;"></div>
-        <div style="position: absolute; bottom: 0; left: 40%; width: 20%; height: 8%; border: 2px solid white; border-bottom: none;"></div>
-    `;
+  // Clear board but keep SVG markings from HTML if any (they are outside tacticalBoard now)
+  board.innerHTML = "";
 
   setFormation();
   loadAvailablePlayers();
@@ -607,143 +631,146 @@ function initializeTacticalBoard() {
 function setFormation() {
   const formation = document.getElementById("formationSelect").value;
   const board = document.getElementById("tacticalBoard");
+  if (!board) return;
 
-  // Remove existing player positions
-  const existingPlayers = board.querySelectorAll(".player-position");
-  existingPlayers.forEach((p) => p.remove());
+  // Clear existing players
+  board.innerHTML = "";
 
-  tacticalBoardData.formation = formation;
-  tacticalBoardData.players = [];
-
-  const formations = {
-    "4-4-2": [
-      { x: 50, y: 85 }, // GK
-      { x: 20, y: 65 },
-      { x: 40, y: 65 },
-      { x: 60, y: 65 },
-      { x: 80, y: 65 }, // Defense
-      { x: 25, y: 45 },
-      { x: 45, y: 45 },
-      { x: 55, y: 45 },
-      { x: 75, y: 45 }, // Midfield
-      { x: 40, y: 25 },
-      { x: 60, y: 25 }, // Attack
-    ],
-    "4-3-3": [
-      { x: 50, y: 85 }, // GK
-      { x: 20, y: 65 },
-      { x: 40, y: 65 },
-      { x: 60, y: 65 },
-      { x: 80, y: 65 }, // Defense
-      { x: 30, y: 45 },
-      { x: 50, y: 45 },
-      { x: 70, y: 45 }, // Midfield
-      { x: 25, y: 25 },
-      { x: 50, y: 25 },
-      { x: 75, y: 25 }, // Attack
-    ],
-  };
-
-  const positions = formations[formation] || formations["4-4-2"];
+  const positions = TacticalLogic.getFormationPositions(formation);
 
   positions.forEach((pos, index) => {
-    const player = document.createElement("div");
-    player.className = "player-position";
-    player.style.left = `${pos.x}%`;
-    player.style.top = `${pos.y}%`;
-    player.textContent = index + 1;
-    player.draggable = true;
+    const playerEl = document.createElement("div");
+    playerEl.className = "player-position";
+    playerEl.style.left = `${pos.x}%`;
+    playerEl.style.top = `${pos.y}%`;
+    playerEl.style.transform = "translate(-50%, -50%)";
+    playerEl.dataset.index = index;
+    playerEl.dataset.role = pos.role;
+    playerEl.textContent = pos.role;
 
-    // Add drag functionality
-    player.addEventListener("dragstart", handleDragStart);
-    player.addEventListener("click", () => selectPlayer(player, index));
+    // Label for player name
+    const label = document.createElement("div");
+    label.className = "player-label";
+    label.textContent = "Empty";
+    playerEl.appendChild(label);
 
-    board.appendChild(player);
+    // Click to select for assignment
+    playerEl.onclick = () => selectPosition(playerEl);
 
-    tacticalBoardData.players.push({
-      position: index + 1,
-      x: pos.x,
-      y: pos.y,
-      playerId: null,
-    });
+    board.appendChild(playerEl);
   });
+}
+
+function selectPosition(el) {
+  document
+    .querySelectorAll(".player-position")
+    .forEach((p) => p.classList.remove("selected"));
+  el.classList.add("selected");
+  window.selectedPositionEl = el;
 }
 
 function loadAvailablePlayers() {
   const container = document.getElementById("availablePlayers");
+  if (!container) return;
 
-  // Get all players from coach's teams
-  const allPlayerIds = currentTeams.flatMap((t) => t.players || []);
-  const players = AppState.players.filter((p) => allPlayerIds.includes(p.id));
+  const players = AppState.players || [];
 
-  container.innerHTML = `
-        <div class="available-players">
-            ${players
-              .map(
-                (player) => `
-                <div class="available-player" data-player-id="${player.id}">
-                    ${player.firstName} ${player.lastName}
-                </div>
-            `,
-              )
-              .join("")}
-        </div>
-    `;
-
-  // Add click handlers
-  container.querySelectorAll(".available-player").forEach((playerEl) => {
-    playerEl.addEventListener("click", () => assignPlayerToPosition(playerEl));
-  });
-}
-
-let selectedPosition = null;
-
-function selectPlayer(playerEl, index) {
-  // Remove previous selection
-  document
-    .querySelectorAll(".player-position")
-    .forEach((p) => p.classList.remove("selected"));
-
-  // Select current position
-  playerEl.classList.add("selected");
-  selectedPosition = index;
-}
-
-function assignPlayerToPosition(playerEl) {
-  if (selectedPosition === null) {
-    showNotification(
-      "Please select a position on the tactical board first",
-      "error",
-    );
+  if (players.length === 0) {
+    container.innerHTML =
+      '<p style="color:var(--text-muted); font-size: 0.8rem;">No players found in database.</p>';
     return;
   }
 
-  const playerId = playerEl.dataset.playerId;
-  const player = AppState.players.find((p) => p.id === playerId);
+  container.innerHTML = players
+    .map(
+      (player) => `
+        <div class="available-player" onclick="assignPlayerToSelected('${player.id}', '${player.first_name || player.firstName}', '${player.last_name || player.lastName}')" data-player-id="${player.id}">
+            <div class="user-avatar" style="width:30px; height:30px; font-size:0.7rem; border-radius:8px;">
+                ${(player.first_name || player.firstName || "P").charAt(0)}
+            </div>
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-weight:600;">${player.first_name || player.firstName} ${player.last_name || player.lastName}</span>
+                <span style="font-size:0.7rem; opacity:0.6;">${player.position || "Player"}</span>
+            </div>
+        </div>
+    `,
+    )
+    .join("");
+}
 
-  if (player) {
-    // Update tactical board data
-    tacticalBoardData.players[selectedPosition].playerId = playerId;
+function filterRoster() {
+  const term = document.getElementById("rosterSearch").value.toLowerCase();
+  const items = document.querySelectorAll(".available-player");
 
-    // Update visual representation
-    const positionEl =
-      document.querySelectorAll(".player-position")[selectedPosition];
-    positionEl.textContent =
-      (player.firstName || player.first_name).charAt(0) +
-      (player.lastName || player.last_name).charAt(0);
-    positionEl.title = `${player.firstName} ${player.lastName}`;
+  items.forEach((item) => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(term) ? "flex" : "none";
+  });
+}
 
-    // Mark player as assigned
-    playerEl.classList.add("assigned");
+function assignPlayerToSelected(id, first, last) {
+  if (!window.selectedPositionEl) {
+    showNotification("Please select a position on the pitch first", "error");
+    return;
+  }
 
-    // Clear selection
-    positionEl.classList.remove("selected");
-    selectedPosition = null;
+  const playerEl = window.selectedPositionEl;
+  const label = playerEl.querySelector(".player-label");
 
-    showNotification(
-      `${player.firstName} ${player.lastName} assigned to position`,
-      "success",
-    );
+  // Update visual
+  playerEl.textContent = first.charAt(0) + last.charAt(0);
+  playerEl.appendChild(label); // keep label
+  label.textContent = `${first} ${last.charAt(0)}.`;
+
+  playerEl.style.background =
+    "radial-gradient(circle at 30% 30%, #4ade80 0%, #16a34a 100%)";
+  playerEl.classList.remove("selected");
+  window.selectedPositionEl = null;
+
+  showNotification(
+    `Assigned ${first} ${last} to ${playerEl.dataset.role}`,
+    "success",
+  );
+}
+
+async function saveFormation() {
+  const formation = document.getElementById("formationSelect").value;
+  const board = document.getElementById("tacticalBoard");
+  const players = Array.from(board.querySelectorAll(".player-position")).map(
+    (p) => ({
+      role: p.dataset.role,
+      label: p.querySelector(".player-label").textContent,
+      x: parseFloat(p.style.left),
+      y: parseFloat(p.style.top),
+      playerId: p.dataset.playerId || null,
+    }),
+  );
+
+  const orgId =
+    AppState.currentOrgId ||
+    (await window.apiService.getContext())?.currentOrganization?.id;
+  if (!orgId) {
+    showNotification("Cannot save: Organization context missing", "error");
+    return;
+  }
+
+  try {
+    const payload = {
+      organization_id: orgId,
+      team_id: AppState.currentTeamId || null,
+      name: `Strategy ${new Date().toLocaleDateString()}`,
+      formation: formation,
+      lineup: players,
+      is_default: true,
+    };
+
+    const result = await window.apiService.saveTacticalFormation(payload);
+    if (result) {
+      showNotification("Strategy saved securely to the cloud!", "success");
+    }
+  } catch (err) {
+    console.error("Save failed:", err);
+    showNotification("Failed to save strategy: " + err.message, "error");
   }
 }
 

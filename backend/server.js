@@ -39,6 +39,7 @@ app.use(
           "https://api.stripe.com",
           "https://js.stripe.com",
           "https://clubhub-dev.onrender.com",
+          "https://clubhubsports.io",
           "https://clubhubsports-dev.onrender.com",
           "http://localhost:3000",
           "http://localhost:8000",
@@ -60,6 +61,7 @@ app.use(
       const allowedOrigins = [
         "https://clubhubsports.net",
         "https://www.clubhubsports.net",
+        "https://api.clubhubsports.io",
         "https://api.clubhubsports.net",
         "https://clubhubsports-dev.onrender.com",
         "https://clubhub-dev.onrender.com",
@@ -293,10 +295,13 @@ app.use("/api/listings", listingsRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/debug", require("./routes/debug")); // Register debug routes
 app.use("/api/talent-id", talentIdRoutes);
+app.use("/api/scouting", require("./routes/scouting")); // Professional scouting system
 app.use("/api/venues", require("./routes/venues")); // Venue booking system
 app.use("/api/leagues", require("./routes/leagues")); // League management system
+app.use("/api/tournaments", require("./routes/tournaments")); // Tournament enhancement system
 app.use("/api/polls", require("./routes/polls")); // Voting/Polls system
 app.use("/api/email", require("./routes/email")); // Email service routes
+app.use("/api/tactical", require("./routes/tactical")); // Tactical formations system
 
 // Handle 404 for API routes specifically
 app.use("/api/*", (req, res) => {
@@ -371,8 +376,16 @@ async function startServer() {
       console.log(`📋 API Health check: http://localhost:${PORT}/api/health`);
 
       // Start recurring billing scheduler
+      const { startBillingScheduler } = require("./services/billing-service");
       startBillingScheduler();
       console.log("⏰ Recurring billing scheduler started");
+
+      // Start event notification scheduler
+      const {
+        startNotificationScheduler,
+      } = require("./services/notification-service");
+      startNotificationScheduler();
+      console.log("⏰ Event notification scheduler started");
 
       // 🔥 TEST STRIPE CONNECTION
       if (process.env.STRIPE_SECRET_KEY) {

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camp Manager - ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="group-switcher.css">
+    <style>
+        .camp-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .camp-stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .attendee-list {
+            margin-top: 2rem;
+        }
+
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-present {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .status-absent {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body class="bg-dark">
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text neon-text">ClubHub</span>
+            </div>
+            <div class="user-info">
+                <div id="org-switcher-container"></div>
+                <span id="adminNameDisplay">Camp Admin</span>
+                <div class="user-avatar" id="adminAvatar">C</div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main container" style="margin-top: 100px;">
+        <div class="dashboard-header">
+            <div>
+                <h1 class="neon-text">Camp Management</h1>
+                <p style="color: var(--text-muted);">Organize groups, assign bibs, and track attendance for your camps.
+                </p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="exportData()">📥 Export CSV</button>
+            </div>
+        </div>
+
+        <div class="card" style="margin: 2rem 0;">
+            <label><strong>Select Camp Event:</strong></label>
+            <select id="campSelect" onchange="loadCampData()"
+                style="width: 100%; padding: 0.75rem; margin-top: 0.5rem;">
+                <option value="">-- Select Camp --</option>
+            </select>
+        </div>
+
+        <div id="campContent" style="display: none;">
+            <div class="camp-stats">
+                <div class="camp-stat-card">
+                    <p>Total Players</p>
+                    <div class="stat-val" id="totalPlayers">0</div>
+                </div>
+                <div class="camp-stat-card">
+                    <p>Present</p>
+                    <div class="stat-val" id="presentCount" style="color: #22c55e;">0</div>
+                </div>
+                <div class="camp-stat-card">
+                    <p>Groups</p>
+                    <div class="stat-val" id="groupsCount" style="color: #3b82f6;">0</div>
+                </div>
+                <div class="camp-stat-card">
+                    <p>Unassigned</p>
+                    <div class="stat-val" id="unassignedCount" style="color: #ef4444;">0</div>
+                </div>
+            </div>
+
+            <div class="tabs" style="margin-bottom: 2rem;">
+                <button class="tab active" onclick="showTab('attendees')">Attendees</button>
+                <button class="tab" onclick="showTab('groups')">Groups & Bibs</button>
+            </div>
+
+            <!-- Attendees Tab -->
+            <div id="attendees-tab" class="tab-content active">
+                <table class="data-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Group</th>
+                            <th>Bib</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendeesBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Groups Tab -->
+            <div id="groups-tab" class="tab-content" style="display: none;">
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3>Create New Group</h3>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. U12 Elite)" style="flex:1;">
+                        <button class="btn btn-primary" onclick="createGroup()">Create</button>
+                    </div>
+                </div>
+                <div id="groupsContainer" class="card-grid">
+                    <!-- Groups will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Assign Modal -->
+    <div id="assignModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Assign Player</h2>
+            <p id="modalPlayerName" style="color: var(--text-muted);"></p>
+
+            <form onsubmit="finishAssignment(event)" style="margin-top: 2rem;">
+                <div class="form-group">
+                    <label>Assign to Group</label>
+                    <select id="assignGroupSelect">
+                        <option value="">-- No Group --</option>
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Bib Color</label>
+                        <select id="assignBibColor">
+                            <option value="Red">Red</option>
+                            <option value="Blue">Blue</option>
+                            <option value="Yellow">Yellow</option>
+                            <option value="Green">Green</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bib Number</label>
+                        <input type="number" id="assignBibNumber" placeholder="e.g. 10">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Save
+                    Assignment</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="api-service.js"></script>
+    <script src="group-switcher.js"></script>
+    <script>
+        let currentEventId = null;
+        let attendees = [];
+        let groups = [];
+        let currentPlayerId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) { window.location.href = 'login.html'; return; }
+
+            loadCamps();
+        });
+
+        async function loadCamps() {
+            const orgId = localStorage.getItem('currentOrganizationId');
+            const camps = await apiService.makeRequest(`/events?clubId=${orgId}&eventType=camp`);
+
+            const select = document.getElementById('campSelect');
+            select.innerHTML = '<option value="">-- Select Camp --</option>' +
+                camps.map(c => `<option value="${c.id}">${c.title} (${new Date(c.event_date).toLocaleDateString()})</option>`).join('');
+        }
+
+        async function loadCampData() {
+            currentEventId = document.getElementById('campSelect').value;
+            if (!currentEventId) {
+                document.getElementById('campContent').style.display = 'none';
+                return;
+            }
+
+            try {
+                // Fetch attendees and groups
+                const [playersRes, groupsRes] = await Promise.all([
+                    apiService.makeRequest(`/events/${currentEventId}/players`),
+                    apiService.makeRequest(`/events/${currentEventId}/groups`)
+                ]);
+
+                attendees = playersRes;
+                groups = groupsRes;
+
+                updateStats();
+                displayAttendees();
+                displayGroups();
+
+                // Update assignment select
+                const assignSelect = document.getElementById('assignGroupSelect');
+                assignSelect.innerHTML = '<option value="">-- No Group --</option>' +
+                    groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+
+                document.getElementById('campContent').style.display = 'block';
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('totalPlayers').textContent = attendees.length;
+            document.getElementById('presentCount').textContent = attendees.filter(a => a.checked_in).length;
+            document.getElementById('groupsCount').textContent = groups.length;
+            document.getElementById('unassignedCount').textContent = attendees.filter(a => !a.group_id).length;
+        }
+
+        function displayAttendees() {
+            const body = document.getElementById('attendeesBody');
+            body.innerHTML = attendees.map(a => `
+                <tr>
+                    <td>
+                        <div style="font-weight:bold;">${a.first_name} ${a.last_name}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">${a.email}</div>
+                    </td>
+                    <td>${a.group_name || 'Unassigned'}</td>
+                    <td>${a.bib_number ? `<span class="badge" style="background:${a.bib_color.toLowerCase()}">${a.bib_color} #${a.bib_number}</span>` : '-'}</td>
+                    <td>
+                        <span class="status-pill ${a.checked_in ? 'status-present' : 'status-absent'}">
+                            ${a.checked_in ? 'Present' : 'Absent'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="openAssignModal('${a.id}', '${a.first_name} ${a.last_name}')">Assign</button>
+                        ${!a.checked_in ? `<button class="btn btn-secondary btn-sm" onclick="checkIn('${a.id}')">Check In</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function displayGroups() {
+            const container = document.getElementById('groupsContainer');
+            container.innerHTML = groups.map(g => `
+                <div class="card">
+                    <h3>${g.name}</h3>
+                    <p style="color:var(--text-muted);">${attendees.filter(a => a.group_id === g.id).length} Players Assigned</p>
+                </div>
+            `).join('');
+        }
+
+        async function createGroup() {
+            const name = document.getElementById('newGroupName').value;
+            if (!name) return;
+            await apiService.createCampGroup(currentEventId, { name });
+            document.getElementById('newGroupName').value = '';
+            loadCampData();
+        }
+
+        function openAssignModal(playerId, playerName) {
+            currentPlayerId = playerId;
+            document.getElementById('modalPlayerName').textContent = playerName;
+            document.getElementById('assignModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('assignModal').style.display = 'none';
+        }
+
+        async function finishAssignment(e) {
+            e.preventDefault();
+            const groupId = document.getElementById('assignGroupSelect').value;
+            const bibColor = document.getElementById('assignBibColor').value;
+            const bibNumber = document.getElementById('assignBibNumber').value;
+
+            try {
+                if (groupId) {
+                    await apiService.assignPlayerToCampGroup(currentEventId, { playerId: currentPlayerId, groupId });
+                }
+                if (bibNumber) {
+                    await apiService.assignCampBib(currentEventId, { playerId: currentPlayerId, bibColor, bibNumber });
+                }
+                alert('Assignment preserved!');
+                closeModal();
+                loadCampData();
+            } catch (err) {
+                alert('Save failed: ' + err.message);
+            }
+        }
+
+        async function checkIn(playerId) {
+            await apiService.checkInPlayer(currentEventId, { playerId, method: 'manual' });
+            loadCampData();
+        }
+
+        async function exportData() {
+            const blob = await apiService.exportAttendeeData(currentEventId);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `camp_attendees_${currentEventId}.csv`;
+            a.click();
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
