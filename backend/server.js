@@ -21,6 +21,7 @@ const productRoutes = require("./routes/products");
 const campaignRoutes = require("./routes/campaigns");
 const listingsRoutes = require("./routes/listings");
 const talentIdRoutes = require("./routes/talent-id");
+const formRoutes = require("./routes/forms");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -302,6 +303,7 @@ app.use("/api/tournaments", require("./routes/tournaments")); // Tournament enha
 app.use("/api/polls", require("./routes/polls")); // Voting/Polls system
 app.use("/api/email", require("./routes/email")); // Email service routes
 app.use("/api/tactical", require("./routes/tactical")); // Tactical formations system
+app.use("/api/forms", formRoutes); // Dynamic Form Builder
 
 // Handle 404 for API routes specifically
 app.use("/api/*", (req, res) => {

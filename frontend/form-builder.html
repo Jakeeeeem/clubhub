@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Builder — ClubHub</title>
+    <meta name="description" content="Create and manage custom forms for your group">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="group-switcher.css">
+    <script src="api-service.js"></script>
+    <style>
+        /* ── Variables ── */
+        :root {
+            --builder-accent: #6366f1;
+            --builder-accent-glow: rgba(99, 102, 241, 0.25);
+            --card-glass: rgba(255, 255, 255, 0.04);
+        }
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* ── Page Layout ── */
+        .builder-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: calc(100vh - 80px);
+        }
+
+        @media (max-width: 1024px) {
+            .builder-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .preview-panel {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .builder-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Panel Cards ── */
+        .panel {
+            background: var(--card-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .panel-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+        }
+
+        /* ── Field Type Palette ── */
+        .field-palette {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+
+        .field-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: grab;
+            font-size: 0.82rem;
+            font-weight: 500;
+            transition: all 0.15s;
+            user-select: none;
+        }
+
+        .field-chip:hover {
+            background: var(--builder-accent-glow);
+            border-color: var(--builder-accent);
+            color: var(--builder-accent);
+            transform: translateY(-2px);
+        }
+
+        .field-chip:active {
+            cursor: grabbing;
+            transform: scale(0.97);
+        }
+
+        /* ── Canvas ── */
+        .canvas-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .canvas-header input[type="text"],
+        .canvas-header textarea {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 0;
+            color: var(--text-main);
+            width: 100%;
+            padding: 0.4rem 0;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .canvas-header input[type="text"] {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .canvas-header input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .canvas-header textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .canvas-header textarea {
+            resize: none;
+            height: 50px;
+            font-size: 0.9rem;
+        }
+
+        #fieldCanvas {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            min-height: 200px;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        #fieldCanvas.drag-over {
+            border-color: var(--builder-accent);
+            background: var(--builder-accent-glow);
+        }
+
+        #fieldCanvas.empty::after {
+            content: '⬆ Drag fields here from the palette';
+            display: block;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding: 2rem 0;
+        }
+
+        /* ── Field Row ── */
+        .field-row {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: border-color 0.15s;
+            position: relative;
+        }
+
+        .field-row:hover {
+            border-color: var(--builder-accent);
+        }
+
+        .field-row.selected {
+            border-color: var(--builder-accent);
+            background: var(--builder-accent-glow);
+        }
+
+        .field-row-handle {
+            color: var(--text-muted);
+            cursor: grab;
+            font-size: 1.1rem;
+        }
+
+        .field-row-info {
+            flex: 1;
+        }
+
+        .field-row-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .field-row-type {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: capitalize;
+        }
+
+        .field-row-required {
+            font-size: 0.7rem;
+            color: #f87171;
+            font-weight: 700;
+            background: rgba(248, 113, 113, 0.1);
+            padding: 2px 6px;
+            border-radius: 99px;
+        }
+
+        .field-row-delete {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.25rem;
+            border-radius: 6px;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .field-row-delete:hover {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.1);
+        }
+
+        /* ── Properties Panel ── */
+        .props-placeholder {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem 0;
+            font-size: 0.9rem;
+        }
+
+        .prop-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .prop-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .prop-group input,
+        .prop-group select,
+        .prop-group textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.55rem 0.75rem;
+            color: var(--text-main);
+            font-size: 0.88rem;
+        }
+
+        .prop-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toggle-row label {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .toggle-switch-sm input {
+            display: none;
+        }
+
+        .toggle-switch-sm span {
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+            background: var(--border-color);
+            border-radius: 99px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch-sm span::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: left 0.2s;
+        }
+
+        .toggle-switch-sm input:checked+span {
+            background: var(--builder-accent);
+        }
+
+        .toggle-switch-sm input:checked+span::after {
+            left: 19px;
+        }
+
+        .options-builder {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .option-row {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .option-row input {
+            flex: 1;
+        }
+
+        .option-row button {
+            background: rgba(248, 113, 113, 0.1);
+            border: none;
+            color: #f87171;
+            border-radius: 6px;
+            padding: 0 0.5rem;
+            cursor: pointer;
+        }
+
+        .btn-add-option {
+            margin-top: 0.5rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--builder-accent);
+            border: 1px dashed var(--builder-accent);
+            border-radius: 8px;
+            width: 100%;
+            padding: 0.5rem;
+            cursor: pointer;
+            font-size: 0.83rem;
+            font-weight: 600;
+            transition: background 0.15s;
+        }
+
+        .btn-add-option:hover {
+            background: var(--builder-accent-glow);
+        }
+
+        /* ── Action bar ── */
+        .canvas-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-save-form {
+            background: linear-gradient(135deg, var(--builder-accent), #818cf8);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.75rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+            box-shadow: 0 4px 20px var(--builder-accent-glow);
+        }
+
+        .btn-save-form:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-save-form:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-preview-form {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-main);
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-preview-form:hover {
+            border-color: var(--builder-accent);
+            color: var(--builder-accent);
+        }
+
+        /* ── Forms List sidebar ── */
+        .form-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.6rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .form-list-item:hover {
+            border-color: var(--builder-accent);
+            background: var(--builder-accent-glow);
+        }
+
+        .form-list-item-title {
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
+        .form-list-item-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .badge-responses {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--builder-accent);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 99px;
+        }
+
+        /* ── Modal preview ── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--bg-card, #1a1a2e);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-box h2 {
+            margin: 0 0 1.5rem;
+        }
+
+        .modal-box .preview-field {
+            margin-bottom: 1.25rem;
+        }
+
+        .modal-box .preview-field label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .modal-box .preview-field label .req {
+            color: #f87171;
+            margin-left: 3px;
+        }
+
+        .modal-box .preview-field input,
+        .modal-box .preview-field select,
+        .modal-box .preview-field textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-box {
+            position: relative;
+        }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1f2937;
+            color: white;
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s;
+            z-index: 9999;
+            border-left: 4px solid var(--builder-accent);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text neon-text">ClubHub</span>
+            </div>
+            <div style="display:flex; gap:1rem; align-items:center;">
+                <button class="btn btn-secondary btn-small" onclick="window.location.href='admin-dashboard.html'">←
+                    Dashboard</button>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container" style="padding-top:1.5rem;">
+        <div
+            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+            <div>
+                <h1 style="margin:0; font-size:1.75rem;">📋 Form Builder</h1>
+                <p style="color:var(--text-muted); margin:0.3rem 0 0;">Create custom forms for registrations, surveys,
+                    and data collection</p>
+            </div>
+            <button class="btn-save-form" onclick="newForm()" id="btnNewForm">+ New Form</button>
+        </div>
+    </div>
+
+    <div class="builder-layout">
+        <!-- ── LEFT PANEL: Field Palette + My Forms ── -->
+        <aside>
+            <!-- My Forms -->
+            <div class="panel" style="margin-bottom:1.25rem;">
+                <div class="panel-title">My Forms</div>
+                <div id="myFormsContainer">
+                    <p style="color:var(--text-muted); font-size:0.88rem;">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Palette -->
+            <div class="panel" id="fieldPalettePanel">
+                <div class="panel-title">Field Types</div>
+                <div class="field-palette" id="fieldPalette">
+                    <div class="field-chip" draggable="true" data-type="text">📝 Text</div>
+                    <div class="field-chip" draggable="true" data-type="number">🔢 Number</div>
+                    <div class="field-chip" draggable="true" data-type="email">📧 Email</div>
+                    <div class="field-chip" draggable="true" data-type="phone">📱 Phone</div>
+                    <div class="field-chip" draggable="true" data-type="date">📅 Date</div>
+                    <div class="field-chip" draggable="true" data-type="textarea">💬 Paragraph</div>
+                    <div class="field-chip" draggable="true" data-type="select">📋 Dropdown</div>
+                    <div class="field-chip" draggable="true" data-type="multiselect">☑️ Multi-select</div>
+                    <div class="field-chip" draggable="true" data-type="checkbox">✅ Checkbox</div>
+                    <div class="field-chip" draggable="true" data-type="file">📎 File Upload</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── CENTRE PANEL: Canvas ── -->
+        <main class="panel">
+            <div class="canvas-header">
+                <input type="text" id="formTitle" placeholder="Untitled Form" maxlength="120">
+                <textarea id="formDescription" placeholder="Add a description (optional)..."></textarea>
+            </div>
+
+            <div id="fieldCanvas" class="empty"></div>
+
+            <div class="canvas-actions">
+                <button class="btn-save-form" onclick="saveForm()" id="btnSaveForm">💾 Save Form</button>
+                <button class="btn-preview-form" onclick="openPreview()">👁 Preview</button>
+                <button class="btn-preview-form" onclick="viewResponses()" id="btnViewResponses"
+                    style="display:none;">📊 View Responses</button>
+                <button class="btn-preview-form" onclick="copyShareLink()" id="btnShareLink" style="display:none;">🔗
+                    Share Link</button>
+            </div>
+        </main>
+
+        <!-- ── RIGHT PANEL: Properties ── -->
+        <aside class="panel preview-panel" id="propsPanel">
+            <div class="panel-title">Field Properties</div>
+            <div id="propsContent">
+                <div class="props-placeholder">🖱 Click a field on the canvas to edit its properties</div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal-backdrop" id="previewModal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closePreview()">✕</button>
+            <h2 id="previewTitle">Form Preview</h2>
+            <div id="previewBody"></div>
+            <button class="btn-save-form"
+                style="width:100%; margin-top:1rem; background:linear-gradient(135deg,#10b981,#34d399);">Submit</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* =========================================================
+           State
+           ========================================================= */
+        let fields = [];          // current form's field defs
+        let selectedFieldIdx = -1;
+        let currentFormId = null; // null for new forms
+        let dragSrcType = null;   // dragging from palette
+
+        /* =========================================================
+           Boot
+           ========================================================= */
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) return window.location.href = 'index.html';
+            loadMyForms();
+            initDnD();
+        });
+
+        /* =========================================================
+           API helpers
+           ========================================================= */
+        const API = window.API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : '');
+
+        async function apiFetch(path, opts = {}) {
+            const token = localStorage.getItem('authToken');
+            const res = await fetch(`${API}${path}`, {
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...opts.headers },
+                ...opts
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Request failed');
+            return data;
+        }
+
+        /* =========================================================
+           Forms list
+           ========================================================= */
+        async function loadMyForms() {
+            try {
+                const { forms } = await apiFetch('/api/forms');
+                const container = document.getElementById('myFormsContainer');
+                if (!forms.length) {
+                    container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No forms yet. Click + New Form to start.</p>';
+                    return;
+                }
+                container.innerHTML = forms.map(f => `
+            <div class="form-list-item" onclick="loadForm('${f.id}')">
+                <div>
+                    <div class="form-list-item-title">${f.title}</div>
+                    <div class="form-list-item-meta">${new Date(f.created_at).toLocaleDateString()}</div>
+                </div>
+                <span class="badge-responses">${f.response_count} resp.</span>
+            </div>
+        `).join('');
+            } catch (e) {
+                document.getElementById('myFormsContainer').innerHTML = `<p style="color:#f87171; font-size:0.85rem;">Failed to load forms</p>`;
+            }
+        }
+
+        /* =========================================================
+           New / Load form
+           ========================================================= */
+        function newForm() {
+            currentFormId = null;
+            fields = [];
+            selectedFieldIdx = -1;
+            document.getElementById('formTitle').value = '';
+            document.getElementById('formDescription').value = '';
+            document.getElementById('btnViewResponses').style.display = 'none';
+            document.getElementById('btnShareLink').style.display = 'none';
+            renderCanvas();
+            clearProps();
+        }
+
+        async function loadForm(id) {
+            try {
+                const { form } = await apiFetch(`/api/forms/${id}`);
+                currentFormId = id;
+                document.getElementById('formTitle').value = form.title;
+                document.getElementById('formDescription').value = form.description || '';
+                fields = form.fields.map(f => ({
+                    id: f.id,
+                    label: f.label,
+                    type: f.field_type,
+                    required: f.is_required,
+                    options: f.options ? (Array.isArray(f.options) ? f.options : []) : []
+                }));
+                selectedFieldIdx = -1;
+                document.getElementById('btnViewResponses').style.display = '';
+                document.getElementById('btnShareLink').style.display = '';
+                renderCanvas();
+                clearProps();
+            } catch (e) {
+                showToast('❌ Failed to load form: ' + e.message);
+            }
+        }
+
+        /* =========================================================
+           Canvas rendering
+           ========================================================= */
+        function renderCanvas() {
+            const canvas = document.getElementById('fieldCanvas');
+            canvas.classList.toggle('empty', fields.length === 0);
+
+            if (fields.length === 0) {
+                canvas.innerHTML = '';
+                return;
+            }
+
+            canvas.innerHTML = fields.map((f, i) => `
+        <div class="field-row ${selectedFieldIdx === i ? 'selected' : ''}"
+             onclick="selectField(${i})"
+             draggable="true"
+             data-index="${i}"
+             ondragstart="onRowDragStart(event, ${i})"
+             ondragover="onRowDragOver(event)"
+             ondrop="onRowDrop(event, ${i})">
+            <span class="field-row-handle">⣿</span>
+            <div class="field-row-info">
+                <div class="field-row-label">${f.label || 'Untitled field'}</div>
+                <div class="field-row-type">${f.type}</div>
+            </div>
+            ${f.required ? '<span class="field-row-required">Required</span>' : ''}
+            <button class="field-row-delete" onclick="event.stopPropagation(); deleteField(${i})">🗑</button>
+        </div>
+    `).join('');
+        }
+
+        /* =========================================================
+           Field operations
+           ========================================================= */
+        function addField(type) {
+            const labels = { text: 'Text Answer', number: 'Number', email: 'Email', phone: 'Phone', date: 'Date', textarea: 'Paragraph', select: 'Dropdown', multiselect: 'Multi-select', checkbox: 'Checkbox', file: 'File Upload' };
+            fields.push({ label: labels[type] || 'Field', type, required: false, options: ['select', 'multiselect', 'checkbox'].includes(type) ? ['Option 1'] : [] });
+            selectedFieldIdx = fields.length - 1;
+            renderCanvas();
+            renderProps(selectedFieldIdx);
+        }
+
+        function deleteField(idx) {
+            fields.splice(idx, 1);
+            if (selectedFieldIdx >= fields.length) selectedFieldIdx = fields.length - 1;
+            renderCanvas();
+            if (selectedFieldIdx >= 0) renderProps(selectedFieldIdx); else clearProps();
+        }
+
+        function selectField(idx) {
+            selectedFieldIdx = idx;
+            renderCanvas();
+            renderProps(idx);
+        }
+
+        /* =========================================================
+           Props panel
+           ========================================================= */
+        function renderProps(idx) {
+            const f = fields[idx];
+            const needsOptions = ['select', 'multiselect', 'checkbox'].includes(f.type);
+
+            document.getElementById('propsContent').innerHTML = `
+        <div class="prop-group">
+            <label>Label</label>
+            <input type="text" id="propLabel" value="${f.label}" oninput="updateField(${idx}, 'label', this.value)">
+        </div>
+        <div class="prop-group">
+            <label>Placeholder / Hint (optional)</label>
+            <input type="text" id="propHint" value="${f.hint || ''}" oninput="updateField(${idx}, 'hint', this.value)">
+        </div>
+        <div class="prop-group">
+            <div class="toggle-row">
+                <label>Required</label>
+                <label class="toggle-switch-sm">
+                    <input type="checkbox" id="propRequired" ${f.required ? 'checked' : ''} onchange="updateField(${idx}, 'required', this.checked)">
+                    <span></span>
+                </label>
+            </div>
+        </div>
+        ${needsOptions ? `
+        <div class="prop-group">
+            <label>Options</label>
+            <div class="options-builder" id="optionsBuilder">
+                ${(f.options || []).map((o, oi) => `
+                    <div class="option-row">
+                        <input type="text" value="${o}" oninput="updateOption(${idx}, ${oi}, this.value)">
+                        <button onclick="removeOption(${idx}, ${oi})">✕</button>
+                    </div>
+                `).join('')}
+            </div>
+            <button class="btn-add-option" onclick="addOption(${idx})">+ Add Option</button>
+        </div>` : ''}
+    `;
+        }
+
+        function clearProps() {
+            document.getElementById('propsContent').innerHTML = '<div class="props-placeholder">🖱 Click a field on the canvas to edit its properties</div>';
+        }
+
+        function updateField(idx, key, value) {
+            fields[idx][key] = value;
+            if (key === 'label') {
+                // update label in row instantly without full re-render
+                const rows = document.querySelectorAll('.field-row');
+                if (rows[idx]) rows[idx].querySelector('.field-row-label').textContent = value || 'Untitled field';
+            }
+            if (key === 'required') renderCanvas();
+        }
+
+        function addOption(idx) {
+            fields[idx].options = fields[idx].options || [];
+            fields[idx].options.push('Option ' + (fields[idx].options.length + 1));
+            renderProps(idx);
+        }
+
+        function removeOption(idx, oi) {
+            fields[idx].options.splice(oi, 1);
+            renderProps(idx);
+        }
+
+        function updateOption(idx, oi, value) {
+            fields[idx].options[oi] = value;
+        }
+
+        /* =========================================================
+           Drag & Drop — palette → canvas
+           ========================================================= */
+        function initDnD() {
+            document.querySelectorAll('.field-chip').forEach(chip => {
+                chip.addEventListener('dragstart', e => {
+                    dragSrcType = chip.dataset.type;
+                    e.dataTransfer.effectAllowed = 'copy';
+                });
+            });
+
+            const canvas = document.getElementById('fieldCanvas');
+            canvas.addEventListener('dragover', e => { e.preventDefault(); canvas.classList.add('drag-over'); });
+            canvas.addEventListener('dragleave', () => canvas.classList.remove('drag-over'));
+            canvas.addEventListener('drop', e => {
+                e.preventDefault();
+                canvas.classList.remove('drag-over');
+                if (dragSrcType) { addField(dragSrcType); dragSrcType = null; }
+            });
+        }
+
+        /* ── Reordering rows ── */
+        let dragRowSrc = -1;
+        function onRowDragStart(e, idx) { dragRowSrc = idx; dragSrcType = null; e.dataTransfer.effectAllowed = 'move'; }
+        function onRowDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+        function onRowDrop(e, targetIdx) {
+            e.stopPropagation();
+            if (dragRowSrc < 0 || dragRowSrc === targetIdx) return;
+            const moved = fields.splice(dragRowSrc, 1)[0];
+            fields.splice(targetIdx, 0, moved);
+            selectedFieldIdx = targetIdx;
+            dragRowSrc = -1;
+            renderCanvas();
+            renderProps(selectedFieldIdx);
+        }
+
+        /* =========================================================
+           Save
+           ========================================================= */
+        async function saveForm() {
+            const title = document.getElementById('formTitle').value.trim();
+            if (!title) return showToast('⚠️ Please add a form title');
+            if (fields.length === 0) return showToast('⚠️ Add at least one field');
+
+            const btn = document.getElementById('btnSaveForm');
+            btn.disabled = true; btn.textContent = 'Saving...';
+
+            const payload = {
+                title,
+                description: document.getElementById('formDescription').value.trim() || null,
+                fields: fields.map((f, i) => ({
+                    label: f.label,
+                    fieldType: f.type,
+                    isRequired: !!f.required,
+                    options: f.options && f.options.length ? f.options : null,
+                    sortOrder: i
+                }))
+            };
+
+            try {
+                if (currentFormId) {
+                    // For existing forms: update header only (field editing would need separate endpoint in the future)
+                    await apiFetch(`/api/forms/${currentFormId}`, { method: 'PUT', body: JSON.stringify({ title: payload.title, description: payload.description }) });
+                    showToast('✅ Form updated!');
+                } else {
+                    const { form } = await apiFetch('/api/forms', { method: 'POST', body: JSON.stringify(payload) });
+                    currentFormId = form.id;
+                    document.getElementById('btnViewResponses').style.display = '';
+                    document.getElementById('btnShareLink').style.display = '';
+                    showToast('✅ Form created!');
+                }
+                loadMyForms();
+            } catch (e) {
+                showToast('❌ ' + e.message);
+            } finally {
+                btn.disabled = false; btn.textContent = '💾 Save Form';
+            }
+        }
+
+        /* =========================================================
+           Preview
+           ========================================================= */
+        function openPreview() {
+            const title = document.getElementById('formTitle').value || 'Form Preview';
+            document.getElementById('previewTitle').textContent = title;
+            document.getElementById('previewBody').innerHTML = fields.map(f => `
+        <div class="preview-field">
+            <label>${f.label}${f.required ? '<span class="req">*</span>' : ''}</label>
+            ${renderPreviewInput(f)}
+        </div>
+    `).join('') || '<p style="color:var(--text-muted)">No fields yet.</p>';
+            document.getElementById('previewModal').classList.add('open');
+        }
+
+        function renderPreviewInput(f) {
+            switch (f.type) {
+                case 'textarea': return `<textarea rows="3" placeholder="${f.hint || ''}"></textarea>`;
+                case 'select': return `<select><option value="">Choose...</option>${(f.options || []).map(o => `<option>${o}</option>`).join('')}</select>`;
+                case 'multiselect': return (f.options || []).map(o => `<label style="display:flex;gap:.5rem;align-items:center;"><input type="checkbox"> ${o}</label>`).join('');
+                case 'checkbox': return (f.options || []).map(o => `<label style="display:flex;gap:.5rem;align-items:center;"><input type="checkbox"> ${o}</label>`).join('');
+                case 'date': return `<input type="date">`;
+                case 'number': return `<input type="number" placeholder="${f.hint || ''}">`;
+                case 'email': return `<input type="email" placeholder="${f.hint || 'your@email.com'}">`;
+                case 'phone': return `<input type="tel" placeholder="${f.hint || '+44...'}">`;
+                case 'file': return `<input type="file">`;
+                default: return `<input type="text" placeholder="${f.hint || ''}">`;
+            }
+        }
+
+        function closePreview() { document.getElementById('previewModal').classList.remove('open'); }
+
+        /* =========================================================
+           Responses & Share
+           ========================================================= */
+        async function viewResponses() {
+            if (!currentFormId) return;
+            try {
+                const { responses, total } = await apiFetch(`/api/forms/${currentFormId}/responses`);
+                if (total === 0) return showToast('📭 No responses yet for this form.');
+                // Build a CSV-like preview in a new window
+                const win = window.open('', '_blank');
+                const headers = Object.keys(responses[0].response_data || {});
+                win.document.write(`<html><head><title>Form Responses</title><style>body{font-family:system-ui;padding:2rem;background:#111;color:#eee;}table{border-collapse:collapse;width:100%}th,td{border:1px solid #333;padding:.5rem .75rem;text-align:left}th{background:#1e1e2e}</style></head><body>`);
+                win.document.write(`<h2>📊 Responses — ${total} total</h2><table><thead><tr><th>Submitted</th><th>User</th>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`);
+                responses.forEach(r => {
+                    win.document.write(`<tr><td>${new Date(r.submitted_at).toLocaleString()}</td><td>${r.first_name ? r.first_name + ' ' + r.last_name : 'Guest'}</td>${headers.map(h => `<td>${r.response_data[h] ?? ''}</td>`).join('')}</tr>`);
+                });
+                win.document.write('</tbody></table></body></html>');
+                win.document.close();
+            } catch (e) {
+                showToast('❌ ' + e.message);
+            }
+        }
+
+        function copyShareLink() {
+            if (!currentFormId) return;
+            const url = `${window.location.origin}/public-form.html?formId=${currentFormId}`;
+            navigator.clipboard.writeText(url).then(() => showToast('🔗 Share link copied!'));
+        }
+
+        /* =========================================================
+           Utility
+           ========================================================= */
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+
+</html>

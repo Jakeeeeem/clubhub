@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form — ClubHub</title>
+    <meta name="description" content="Fill in and submit this form">
+    <link rel="stylesheet" href="styles.css">
+    <script src="api-service.js"></script>
+    <style>
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .form-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 600px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .form-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .form-logo img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+
+        .form-logo span {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem;
+        }
+
+        .form-desc {
+            color: var(--text-muted);
+            margin: 0 0 2rem;
+            font-size: 0.93rem;
+            line-height: 1.6;
+        }
+
+        .form-field {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-field label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-field label .req {
+            color: #f87171;
+            margin-left: 3px;
+        }
+
+        .form-field input,
+        .form-field select,
+        .form-field textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.7rem 0.9rem;
+            color: var(--text-main);
+            font-size: 0.93rem;
+            transition: border-color 0.15s;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus,
+        .form-field textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .form-field textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #6366f1;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.9rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
+            margin-top: 0.5rem;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-screen {
+            text-align: center;
+            padding: 3rem 0;
+            display: none;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-screen h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .success-screen p {
+            color: var(--text-muted);
+        }
+
+        .error-screen {
+            text-align: center;
+            padding: 3rem 0;
+        }
+
+        .loading-placeholder {
+            text-align: center;
+            padding: 3rem 0;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="form-card">
+        <div class="form-logo">
+            <img src="images/logo.png" alt="ClubHub" onerror="this.style.display='none'">
+            <span>ClubHub</span>
+        </div>
+
+        <div id="loadingState" class="loading-placeholder">
+            <p>⏳ Loading form...</p>
+        </div>
+
+        <div id="formContent" style="display:none;">
+            <h1 class="form-title" id="pubTitle"></h1>
+            <p class="form-desc" id="pubDesc"></p>
+            <form id="publicForm" onsubmit="submitForm(event)">
+                <div id="fieldsContainer"></div>
+                <button type="submit" class="btn-submit" id="submitBtn">Submit</button>
+            </form>
+        </div>
+
+        <div id="successScreen" class="success-screen">
+            <div class="success-icon">✅</div>
+            <h2>Response Received!</h2>
+            <p>Thank you — your response has been submitted successfully.</p>
+        </div>
+
+        <div id="errorScreen" style="display:none;" class="error-screen">
+            <p style="font-size:2rem;">❌</p>
+            <p id="errorMsg" style="color:var(--text-muted);">This form could not be loaded.</p>
+        </div>
+    </div>
+
+    <script>
+        const API = window.API_BASE || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : '');
+        let formSchema = null;
+
+        async function loadPublicForm() {
+            const params = new URLSearchParams(window.location.search);
+            const formId = params.get('formId');
+            if (!formId) return showError('No form ID specified in the URL.');
+
+            try {
+                const res = await fetch(`${API}/api/forms/${formId}`);
+                if (!res.ok) throw new Error('Form not found');
+                const { form } = await res.json();
+                formSchema = form;
+
+                document.title = form.title + ' — ClubHub';
+                document.getElementById('pubTitle').textContent = form.title;
+                document.getElementById('pubDesc').textContent = form.description || '';
+                renderFields(form.fields);
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('formContent').style.display = 'block';
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+
+        function renderFields(fields) {
+            const container = document.getElementById('fieldsContainer');
+            container.innerHTML = fields.map(f => `
+        <div class="form-field">
+            <label for="field_${f.id}">${f.label}${f.is_required ? '<span class="req">*</span>' : ''}</label>
+            ${renderInput(f)}
+        </div>
+    `).join('');
+        }
+
+        function renderInput(f) {
+            const id = `field_${f.id}`;
+            const req = f.is_required ? 'required' : '';
+            switch (f.field_type) {
+                case 'textarea':
+                    return `<textarea id="${id}" name="${f.label}" ${req} rows="4"></textarea>`;
+                case 'select':
+                    return `<select id="${id}" name="${f.label}" ${req}><option value="">Choose an option...</option>${(f.options || []).map(o => `<option>${o}</option>`).join('')}</select>`;
+                case 'multiselect':
+                case 'checkbox':
+                    return `<div class="checkbox-group">${(f.options || []).map((o, i) => `
+                <label><input type="checkbox" name="${f.label}" value="${o}"> ${o}</label>
+            `).join('')}</div>`;
+                case 'date':
+                    return `<input type="date" id="${id}" name="${f.label}" ${req}>`;
+                case 'number':
+                    return `<input type="number" id="${id}" name="${f.label}" ${req} placeholder="Enter a number">`;
+                case 'email':
+                    return `<input type="email" id="${id}" name="${f.label}" ${req} placeholder="your@email.com">`;
+                case 'phone':
+                    return `<input type="tel" id="${id}" name="${f.label}" ${req} placeholder="+44 7700...">`;
+                case 'file':
+                    return `<input type="file" id="${id}" name="${f.label}">`;
+                default:
+                    return `<input type="text" id="${id}" name="${f.label}" ${req} placeholder="Your answer...">`;
+            }
+        }
+
+        async function submitForm(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            // Collect response data
+            const responseData = {};
+            formSchema.fields.forEach(f => {
+                if (['multiselect', 'checkbox'].includes(f.field_type)) {
+                    const checked = [...document.querySelectorAll(`input[name="${f.label}"]:checked`)].map(c => c.value);
+                    responseData[f.label] = checked;
+                } else {
+                    const el = document.querySelector(`[name="${f.label}"]`);
+                    if (el) responseData[f.label] = el.value;
+                }
+            });
+
+            const params = new URLSearchParams(window.location.search);
+            const formId = params.get('formId');
+            const eventId = params.get('eventId') || null;
+            const token = localStorage.getItem('authToken');
+
+            try {
+                const res = await fetch(`${API}/api/forms/${formId}/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { Authorization: `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ responseData, eventId })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Submission failed');
+
+                document.getElementById('formContent').style.display = 'none';
+                document.getElementById('successScreen').style.display = 'block';
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Submit';
+                alert('❌ ' + err.message);
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorMsg').textContent = msg;
+            document.getElementById('errorScreen').style.display = 'block';
+        }
+
+        loadPublicForm();
+    </script>
+</body>
+
+</html>
