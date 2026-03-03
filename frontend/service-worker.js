@@ -25,6 +25,18 @@ self.addEventListener("install", (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+
+  // Skip non-http/https schemes (e.g. chrome-extension://)
+  if (!url.protocol.startsWith("http")) return;
+
+  // Skip API calls — always go to network for fresh data
+  if (
+    url.pathname.startsWith("/api/") ||
+    url.hostname !== self.location.hostname
+  )
+    return;
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       // Cache hit - return response

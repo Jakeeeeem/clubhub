@@ -96,7 +96,20 @@ class ApiService {
 
     console.log("🔍 Detecting environment:", { hostname });
 
-    // Production environment
+    // Local development
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:3000/api";
+    }
+
+    // Production — .io domain (primary live domain)
+    if (
+      hostname === "clubhubsports.io" ||
+      hostname === "www.clubhubsports.io"
+    ) {
+      return "https://clubhubsports.io/api";
+    }
+
+    // Production — .net domain (legacy / alternate)
     if (
       hostname === "clubhubsports.net" ||
       hostname === "www.clubhubsports.net"
@@ -104,23 +117,25 @@ class ApiService {
       return "https://api.clubhubsports.net/api";
     }
 
-    // If we are on Render Dev but want to test local bypass, we prioritize localhost if it's available
-    // Otherwise, use the standard dev API
+    // Render dev / staging deployments
     if (
       hostname === "clubhubsports-dev.onrender.com" ||
       hostname === "clubhub-dev.onrender.com"
     ) {
-      // Check if we are running locally and just hitting the dev URL
-      if (
-        window.location.protocol === "http:" &&
-        (hostname === "localhost" || hostname === "127.0.0.1")
-      ) {
-        return "http://localhost:3000/api";
-      }
       return "https://clubhub-dev.onrender.com/api";
     }
 
-    // Local development fallback
+    // Any other Render deployment (catch-all)
+    if (hostname.endsWith(".onrender.com")) {
+      return `https://${hostname}/api`;
+    }
+
+    // Unknown production-like host — use same origin
+    if (window.location.protocol === "https:") {
+      return `${window.location.origin}/api`;
+    }
+
+    // Final fallback — local
     return "http://localhost:3000/api";
   }
 
