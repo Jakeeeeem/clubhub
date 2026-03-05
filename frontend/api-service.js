@@ -39,20 +39,9 @@ class ApiService {
           role: role,
           user_role: role,
         },
-        groups: [
-          {
-            id: "demo-club-id",
-            name: "Pro Group Demo",
-            role: "admin",
-          },
-          {
-            id: "demo-player-org",
-            name: "Elite Academy (Player)",
-            role: "player",
-            player_id: "demo-player-id",
-            player_name: "Jordan Smith",
-          },
-        ],
+        groups: demoGroups,
+        organizations: demoGroups, // Compatibility
+        clubs: demoGroups, // Compatibility
       };
       return this.context;
     }
@@ -839,6 +828,18 @@ class ApiService {
         if (endpoint.includes("/api/health")) {
           return { status: "healthy", service: "ClubHub API (Demo Mode)" };
         }
+        if (endpoint.includes("/payments/plan/current")) {
+          return {
+            id: "p1",
+            name: "Pro Admin Plan",
+            amount: 9900,
+            interval: "year",
+            status: "active",
+          };
+        }
+        if (endpoint.includes("/auth/tours/complete")) {
+          return { success: true, message: "Tour completion saved (Demo)" };
+        }
 
         // For other requests in demo mode, optionally skip or return fallback
         console.warn(
@@ -1598,6 +1599,10 @@ class ApiService {
 
   // =========================== CLUB METHODS ===========================
 
+  async getClubs() {
+    return await this.getGroups();
+  }
+
   async getGroups(search = null) {
     try {
       const endpoint = search
@@ -2324,25 +2329,27 @@ class ApiService {
             this.getPayments(),
           ]);
 
-        return {
+        const stats = {
+          total_groups: groups.status === "fulfilled" ? groups.value.length : 0,
+          total_players:
+            players.status === "fulfilled" ? players.value.length : 0,
+          total_staff: staff.status === "fulfilled" ? staff.value.length : 0,
+          total_events: events.status === "fulfilled" ? events.value.length : 0,
+          total_teams: teams.status === "fulfilled" ? teams.value.length : 0,
+          monthly_revenue: 0,
+        };
+
+        const result = {
           groups: groups.status === "fulfilled" ? groups.value : [],
+          clubs: groups.status === "fulfilled" ? groups.value : [], // Added for compatibility
           players: players.status === "fulfilled" ? players.value : [],
           staff: staff.status === "fulfilled" ? staff.value : [],
           events: events.status === "fulfilled" ? events.value : [],
           teams: teams.status === "fulfilled" ? teams.value : [],
           payments: payments.status === "fulfilled" ? payments.value : [],
-          statistics: {
-            total_groups:
-              groups.status === "fulfilled" ? groups.value.length : 0,
-            total_players:
-              players.status === "fulfilled" ? players.value.length : 0,
-            total_staff: staff.status === "fulfilled" ? staff.value.length : 0,
-            total_events:
-              events.status === "fulfilled" ? events.value.length : 0,
-            total_teams: teams.status === "fulfilled" ? teams.value.length : 0,
-            monthly_revenue: 0,
-          },
+          statistics: stats,
         };
+        return result;
       } catch (fallbackError) {
         console.error("❌ Fallback data loading also failed:", fallbackError);
         return this.getAdminDashboardFallback();
@@ -2664,21 +2671,24 @@ class ApiService {
         },
       };
 
+    const demoClubs = [
+      {
+        id: "demo-club-id",
+        name: "Pro Group Demo",
+        location: "London, UK",
+        sport: "Football",
+        member_count: 142,
+        is_primary: true,
+        logo_url: "images/logo.png",
+        description: "Premier demo football club showcasing ClubHub features",
+        founded_year: 1995,
+        colors: { primary: "#dc2626", secondary: "#ffffff" },
+      },
+    ];
+
     return {
-      groups: [
-        {
-          id: "demo-club-id",
-          name: "Pro Group Demo",
-          location: "London, UK",
-          sport: "Football",
-          member_count: 142,
-          is_primary: true,
-          logo_url: "images/logo.png",
-          description: "Premier demo football club showcasing ClubHub features",
-          founded_year: 1995,
-          colors: { primary: "#dc2626", secondary: "#ffffff" },
-        },
-      ],
+      groups: demoClubs,
+      clubs: demoClubs, // Added for compatibility
       players: [
         {
           id: "demo-player-id",
