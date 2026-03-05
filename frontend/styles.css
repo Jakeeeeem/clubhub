@@ -2732,7 +2732,7 @@ main.main.home-main {
     padding: 0.6rem 1.8rem;
     border-radius: 50px;
     margin-bottom: 2.5rem;
-    color: #ff7e7e; /* Lightened for extreme readability */
+    color: #ffffff; /* White text as requested */
     font-weight: 700;
     letter-spacing: 0.5px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
