@@ -447,11 +447,15 @@
 
         function handleLoginSuccess(data) {
             console.log("Login success data:", data);
+
+            // Try different common token keys
+            const token = data.token || data.accessToken || data.auth_token;
+
             try {
-                if (data.token) {
+                if (token) {
                     // 1. Store Token
-                    console.log("Storing token:", data.token.substring(0, 10) + "...");
-                    localStorage.setItem('authToken', data.token);
+                    console.log("Storing token:", token.substring(0, 10) + "...");
+                    localStorage.setItem('authToken', token);
 
                     if (!data.user) {
                         console.error("User object missing in login response!");
@@ -492,8 +496,8 @@
                     console.log("Redirecting to:", redirect);
                     setTimeout(() => window.location.href = redirect, 1000);
                 } else {
-                    console.error("No token in response:", data);
-                    showStatus('Login failed: No token received', 'error');
+                    console.error("No token in response. Found keys:", Object.keys(data));
+                    showStatus('Login failed: No token received in response', 'error');
                 }
             } catch (err) {
                 console.error("Error in handleLoginSuccess:", err);

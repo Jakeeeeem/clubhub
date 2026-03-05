@@ -28,6 +28,7 @@ class ApiService {
       // If the user has activePlayerId, they are definitely a player in this context.
       const role = user.activePlayerId ? "player" : user.role || "admin";
 
+      const demoClubs = this.getAdminDashboardFallback().groups;
       this.context = {
         success: true,
         user: user,
@@ -39,9 +40,9 @@ class ApiService {
           role: role,
           user_role: role,
         },
-        groups: demoGroups,
-        organizations: demoGroups, // Compatibility
-        clubs: demoGroups, // Compatibility
+        groups: demoClubs,
+        organizations: demoClubs, // Compatibility
+        clubs: demoClubs, // Compatibility
       };
       return this.context;
     }
@@ -839,6 +840,34 @@ class ApiService {
         }
         if (endpoint.includes("/auth/tours/complete")) {
           return { success: true, message: "Tour completion saved (Demo)" };
+        }
+        if (endpoint.includes("/dashboard/admin")) {
+          // Return full dashboard fallback immediately for demo sessions
+          const fallback = this.getAdminDashboardFallback();
+          return fallback;
+        }
+        if (
+          endpoint.includes("/groups") &&
+          !endpoint.includes("/platform-admin")
+        ) {
+          return this.getAdminDashboardFallback().groups;
+        }
+        if (endpoint.includes("/auth/context")) {
+          const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+          const demoClubs = this.getAdminDashboardFallback().groups;
+          return {
+            success: true,
+            user: user,
+            currentGroup: {
+              id: user.groupId || "demo-club-id",
+              name: "Pro Group Demo",
+              role: "admin",
+              user_role: "admin",
+            },
+            groups: demoClubs,
+            organizations: demoClubs,
+            clubs: demoClubs,
+          };
         }
 
         // For other requests in demo mode, optionally skip or return fallback
@@ -2302,13 +2331,32 @@ class ApiService {
 
   async getAdminDashboardData() {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
+
+    // In demo mode, return fallback immediately without hitting real API
+    if (isDemo) {
+      console.log(
+        "🛡️ Demo session – returning admin dashboard fallback immediately",
+      );
+      return this.getAdminDashboardFallback();
+    }
+
     try {
       const context = await this.getContext();
       const currentOrgId = context?.currentGroup?.id;
       const endpoint = currentOrgId
         ? `/dashboard/admin?groupId=${currentOrgId}`
         : "/dashboard/admin";
-      return await this.makeRequest(endpoint);
+      const data = await this.makeRequest(endpoint);
+
+      // Ensure 'clubs' property exists for compatibility with admin dashboard
+      if (data && data.groups && !data.clubs) {
+        data.clubs = data.groups;
+      }
+      if (data && !data.groups && data.clubs) {
+        data.groups = data.clubs;
+      }
+
+      return data;
     } catch (error) {
       console.warn("❌ Failed to fetch admin dashboard data:", error);
 
