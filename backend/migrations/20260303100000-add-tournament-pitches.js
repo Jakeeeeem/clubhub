@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
+  up: async (db) => {
     const sql = `
       -- Pitch Management
       CREATE TABLE IF NOT EXISTS tournament_pitches (
@@ -23,17 +23,26 @@ module.exports = {
       ALTER TABLE tournament_matches ADD COLUMN IF NOT EXISTS end_time TIMESTAMP WITH TIME ZONE;
       
       -- Triggers
-      CREATE TRIGGER update_tournament_pitches_updated_at BEFORE UPDATE ON tournament_pitches FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_trigger WHERE tgname = 'update_tournament_pitches_updated_at'
+        ) THEN
+            CREATE TRIGGER update_tournament_pitches_updated_at 
+            BEFORE UPDATE ON tournament_pitches 
+            FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+        END IF;
+      END $$;
     `;
-    return queryInterface.sequelize.query(sql);
+    return db.runSql(sql);
   },
 
-  down: async (queryInterface, Sequelize) => {
+  down: async (db) => {
     const sql = `
       ALTER TABLE tournament_matches DROP COLUMN IF EXISTS pitch_id;
       ALTER TABLE tournament_matches DROP COLUMN IF EXISTS end_time;
       DROP TABLE IF EXISTS tournament_pitches;
     `;
-    return queryInterface.sequelize.query(sql);
+    return db.runSql(sql);
   },
 };

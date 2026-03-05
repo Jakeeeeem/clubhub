@@ -132,6 +132,17 @@ async function runMigrations() {
           ALTER TABLE tournament_stages ADD COLUMN break_duration INTEGER DEFAULT 5; -- minutes
         END IF;
 
+        -- Match Video Integration
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tournament_matches' AND column_name='video_url') THEN
+          ALTER TABLE tournament_matches ADD COLUMN video_url TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tournament_matches' AND column_name='is_video_public') THEN
+          ALTER TABLE tournament_matches ADD COLUMN is_video_public BOOLEAN DEFAULT TRUE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tournament_matches' AND column_name='video_price') THEN
+          ALTER TABLE tournament_matches ADD COLUMN video_price DECIMAL(10,2) DEFAULT 0.00;
+        END IF;
+
         -- Add indices for performance
         IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_event_players_event_id') THEN
             CREATE INDEX idx_event_players_event_id ON event_players(event_id);
