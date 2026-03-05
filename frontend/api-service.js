@@ -101,12 +101,12 @@ class ApiService {
       return "http://localhost:3000/api";
     }
 
-    // Production — .io domain (primary live domain)
+    // Production — .io domain (primary live domain, but API is on .net)
     if (
       hostname === "clubhubsports.io" ||
       hostname === "www.clubhubsports.io"
     ) {
-      return "https://clubhubsports.io/api";
+      return "https://api.clubhubsports.net/api";
     }
 
     // Production — .net domain (legacy / alternate)
