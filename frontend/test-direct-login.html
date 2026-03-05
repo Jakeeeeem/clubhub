@@ -331,11 +331,15 @@
                 return 'https://clubhub-dev.onrender.com/api';
             }
 
-            if (hostname === 'clubhubsports.net' || hostname === 'www.clubhubsports.net') {
+            // 3. Production Domains (both .io and .net use the .net API)
+            if (
+                hostname === 'clubhubsports.net' || hostname === 'www.clubhubsports.net' ||
+                hostname === 'clubhubsports.io' || hostname === 'www.clubhubsports.io'
+            ) {
                 return 'https://api.clubhubsports.net/api';
             }
 
-            // 3. Fallback / Production
+            // 4. Fallback
             return '/api';
         }
 
@@ -377,6 +381,11 @@
 
                 if (!response.ok) {
                     throw new Error(data.message || data.error || `Server Error (${response.status})`);
+                }
+
+                if (!data || !data.token) {
+                    console.error("Malformed response from server:", data);
+                    throw new Error("Server response missing authentication token.");
                 }
 
                 handleLoginSuccess(data);

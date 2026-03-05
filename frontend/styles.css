@@ -1,11 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --primary: #8e001c; /* Slightly deeper, more professional crimson */
-    --primary-hover: #b1032d;
-    --primary-glow: rgba(142, 0, 28, 0.3);
-    --primary-glass: rgba(142, 0, 28, 0.05);
-    --primary-glass-border: rgba(142, 0, 28, 0.2);
+    --primary: #dc2626; /* More vibrant premium red */
+    --primary-hover: #ef4444;
+    --primary-glow: rgba(220, 38, 38, 0.3);
+    --primary-glass: rgba(220, 38, 38, 0.05);
+    --primary-glass-border: rgba(220, 38, 38, 0.2);
     
     --neon-purple: #6d28d9;
     --neon-purple-glow: rgba(109, 40, 217, 0.2);
@@ -294,10 +294,10 @@ section#benefits {
 
 /* PRIMARY */
 .btn-primary {
-    background: linear-gradient(135deg, #c0002f 0%, #8e001c 100%);
+    background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary) 100%);
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 4px 16px rgba(142, 0, 28, 0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+    box-shadow: 0 4px 16px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 .btn-primary:hover {
@@ -2712,15 +2712,30 @@ main.main.home-main {
     padding-bottom: 60px;
 }
 .highlight-red {
-    color: var(--primary);
+    color: #ff4d4d; /* Much more readable vibrant red */
+    text-shadow: 0 0 15px rgba(255, 77, 77, 0.3);
 }
 
 .welcome-subtitle {
     font-size: 1.25rem;
-    color: rgba(255,255,255,0.9);
+    color: rgba(255, 255, 255, 0.9);
     max-width: 700px;
-    margin: 0 auto 3rem;
+    margin: 0 auto 2.5rem;
     line-height: 1.6;
+    font-weight: 400;
+}
+
+.free-badge {
+    display: inline-block;
+    background: rgba(255, 51, 51, 0.12);
+    border: 1px solid rgba(255, 51, 51, 0.4);
+    padding: 0.6rem 1.8rem;
+    border-radius: 50px;
+    margin-bottom: 2.5rem;
+    color: #ff7e7e; /* Lightened for extreme readability */
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .welcome-buttons {
@@ -2731,39 +2746,46 @@ main.main.home-main {
 }
 
 .btn-primary-glow {
-    background: #ff3333; /* Updated per user request */
+    background: linear-gradient(135deg, #ff4c4c 0%, #ff3333 100%);
     color: white;
-    padding: 1rem 2.5rem;
-    border-radius: 50px;
-    font-weight: 700;
+    padding: 1.1rem 3rem;
+    border-radius: 100px; /* Pill style */
+    font-weight: 800;
     font-size: 1.1rem;
     border: none;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(255, 51, 51, 0.4);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 8px 30px rgba(255, 51, 51, 0.4), inset 0 2px 2px rgba(255,255,255,0.2);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .btn-primary-glow:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 51, 51, 0.5);
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(255, 51, 51, 0.6);
 }
 
 .btn-glass {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     color: white;
-    padding: 1rem 2.5rem;
-    border-radius: 50px;
-    font-weight: 600;
+    padding: 1.1rem 3rem;
+    border-radius: 100px;
+    font-weight: 700;
     font-size: 1.1rem;
-    border: 1px solid rgba(255,255,255,0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .btn-glass:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .role-cards-grid {
