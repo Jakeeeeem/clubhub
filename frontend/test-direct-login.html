@@ -283,10 +283,17 @@
             }
         };
 
-        // Initialize state
+        // Initialize state – default to demo mode if no explicit preference is stored
         window.addEventListener('DOMContentLoaded', () => {
-            const isDemo = localStorage.getItem('isDemoSession') === 'true';
+            const storedDemoState = localStorage.getItem('isDemoSession');
+            // Default to demo mode ON unless user has explicitly turned it off
+            const isDemo = storedDemoState === null ? true : (storedDemoState === 'true');
             document.getElementById('demoModeToggle').checked = isDemo;
+            if (isDemo) {
+                localStorage.setItem('isDemoSession', 'true');
+                const mockDataLabel = document.getElementById('mockDataToggleLabel');
+                if (mockDataLabel) mockDataLabel.style.display = 'flex';
+            }
             updateSubtitle();
         });
 

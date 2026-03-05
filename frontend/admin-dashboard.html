@@ -3188,10 +3188,15 @@
                 const dashboardData = await apiService.getAdminDashboardData(activeGroupId);
 
                 if (dashboardData) {
-                    AppState.clubs = dashboardData.clubs || [];
+                    // dashboardData.clubs OR dashboardData.groups — handle both for API compatibility
+                    const clubList = dashboardData.clubs || dashboardData.groups || [];
+                    AppState.clubs = clubList;
 
-                    // If no clubs found and not platform admin, redirect to create-org
-                    if (AppState.clubs.length === 0 && !user?.is_platform_admin) {
+                    const isDemoMode = localStorage.getItem('isDemoSession') === 'true';
+                    const isPlatformAdmin = user?.is_platform_admin || user?.isPlatformAdmin;
+
+                    // If no clubs found and not platform admin or demo, redirect to create-org
+                    if (AppState.clubs.length === 0 && !isPlatformAdmin && !isDemoMode) {
                         console.log('⚠️ No organizations found for user, redirecting...');
                         setTimeout(() => {
                             window.location.href = 'create-group.html';
