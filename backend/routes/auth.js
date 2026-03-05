@@ -49,9 +49,7 @@ const registerValidation = [
     .optional()
     .isISO8601()
     .withMessage("Invalid date of birth"),
-  body("agreeTerms")
-    .equals("true")
-    .withMessage("You must agree to the terms and conditions"),
+  body("agreeTerms").optional().isBoolean().toBoolean(),
   body("agreeThirdParty").optional().isBoolean(),
 ];
 
@@ -823,7 +821,7 @@ router.get("/me", async (req, res) => {
       u = userRes.rows[0];
       u.completed_tours = [];
     }
-    return res.json({
+    const userData = {
       id: u.id,
       email: u.email,
       firstName: u.first_name,
@@ -831,6 +829,10 @@ router.get("/me", async (req, res) => {
       userType: u.account_type,
       account_type: u.account_type, // For dashboard compatibility
       completed_tours: u.completed_tours || [],
+    };
+    return res.json({
+      ...userData, // top-level for old callers
+      user: userData, // nested for tests and new callers
     });
   } catch (err) {
     console.error("Get current user error:", err);

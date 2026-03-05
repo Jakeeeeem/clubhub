@@ -146,8 +146,8 @@ const queries = {
   findAllClubs: "SELECT * FROM organizations ORDER BY created_at DESC",
   findClubById: "SELECT * FROM organizations WHERE id = $1",
   createClub: `
-    INSERT INTO organizations (name, slug, description, location, philosophy, website, sport, owner_id, established)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    INSERT INTO organizations (name, slug, description, location, philosophy, website, types, sport, owner_id, established)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING *
   `,
 

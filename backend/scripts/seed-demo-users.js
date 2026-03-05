@@ -87,39 +87,71 @@ async function seedDemoUsers() {
     const adminUserId = adminResult.rows[0].id;
     console.log(`   ✅ Admin user created: ${adminResult.rows[0].email}`);
 
-    // Create the demo club/organization
-    const clubResult = await client.query(
-      `
-      INSERT INTO clubs (
-        name, sport, description, location, contact_email, 
-        contact_phone, owner_id, member_count, stripe_account_id, types, is_mock
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
-      ON CONFLICT (owner_id) 
-      DO UPDATE SET 
-        name = EXCLUDED.name,
-        updated_at = NOW()
-      RETURNING id, name
-    `,
-      [
-        "Pro Club Demo",
-        "Football",
-        "Premier demo football club showcasing ClubHub features",
-        "London, UK",
-        "demo-admin@clubhub.com",
-        "+44 20 1234 5678",
-        adminUserId,
-        25,
-        null, // Stripe will be configured separately
-        ["academy"], // types
-      ],
+    // Create the demo club/organization (safe upsert via SELECT first)
+    let clubId;
+    const existingClub = await client.query(
+      `SELECT id FROM clubs WHERE owner_id = $1 LIMIT 1`,
+      [adminUserId],
     );
-    const clubId = clubResult.rows[0].id;
-    console.log(`   ✅ Club created: ${clubResult.rows[0].name}`);
-    console.log(`   📧 Email: demo-admin@clubhub.com`);
-    console.log(`   🔑 Password: password123\n`);
+    if (existingClub.rows.length > 0) {
+      clubId = existingClub.rows[0].id;
+      await client.query(
+        `UPDATE clubs SET name = $1, updated_at = NOW() WHERE id = $2`,
+        ["Pro Club Demo", clubId],
+      );
+      console.log(`   ♻️  Club already exists, updated: Pro Club Demo`);
+    } else {
+      const clubResult = await client.query(
+        `
+        INSERT INTO clubs (
+          name, sport, description, location, contact_email,
+          contact_phone, owner_id, member_count, stripe_account_id, types, is_mock
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true)
+        RETURNING id, name
+      `,
+        [
+          "Pro Club Demo",
+          "Football",
+          "Premier demo football club showcasing ClubHub features",
+          "London, UK",
+          "demo-admin@clubhub.com",
+          "+44 20 1234 5678",
+          adminUserId,
+          25,
+          null,
+          ["academy"],
+        ],
+      );
+      clubId = clubResult.rows[0].id;
+      console.log(`   ✅ Club created: ${clubResult.rows[0].name}`);
+    }
+    // Also ensure an organizations record exists (teams.club_id refs organizations.id)
+    let orgId;
+    const existingOrg = await client.query(
+      `SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1`,
+      [adminUserId],
+    );
+    if (existingOrg.rows.length > 0) {
+      orgId = existingOrg.rows[0].id;
+    } else {
+      const orgResult = await client.query(
+        `INSERT INTO organizations (name, sport, description, location, owner_id, slug)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id`,
+        [
+          "Pro Club Demo",
+          "Football",
+          "Premier demo football club",
+          "London, UK",
+          adminUserId,
+          `pro-club-demo-${adminUserId.substring(0, 8)}`,
+        ],
+      );
+      orgId = orgResult.rows[0].id;
+    }
 
-    // Create a demo team
+    // Create a demo team (club_id references organizations.id)
     const teamResult = await client.query(
       `
       INSERT INTO teams (name, age_group, club_id, sport)
@@ -127,7 +159,7 @@ async function seedDemoUsers() {
       ON CONFLICT DO NOTHING
       RETURNING id, name
     `,
-      ["Under 18s", "U18", clubId, "Football"],
+      ["Under 18s", "U18", orgId, "Football"],
     );
 
     let teamId = null;
@@ -190,17 +222,19 @@ async function seedDemoUsers() {
     );
     console.log(`   ✅ Coach assigned to Pro Club Demo`);
 
-    // Assign coach to team if team exists
+    // Assign coach as head coach on the team (via teams table)
     if (teamId) {
-      await client.query(
-        `
-        INSERT INTO team_coaches (team_id, coach_id)
-        VALUES ($1, $2)
-        ON CONFLICT (team_id, coach_id) DO NOTHING
-      `,
-        [teamId, coachUserId],
+      const staffRow = await client.query(
+        `SELECT id FROM staff WHERE user_id = $1 AND club_id = $2 LIMIT 1`,
+        [coachUserId, clubId],
       );
-      console.log(`   ✅ Coach assigned to team`);
+      if (staffRow.rows.length > 0) {
+        await client.query(`UPDATE teams SET coach_id = $1 WHERE id = $2`, [
+          staffRow.rows[0].id,
+          teamId,
+        ]);
+        console.log(`   ✅ Coach assigned to team`);
+      }
     }
 
     console.log(`   📧 Email: demo-coach@clubhub.com`);

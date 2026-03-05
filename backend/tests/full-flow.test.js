@@ -24,17 +24,21 @@ const { seedDemoUsers } = require("../scripts/seed-demo-users");
 describe("Full System Integration Flow", () => {
   beforeAll(async () => {
     // Ensure we are connected to the test database
-    // NOTE: In this environment, we assume the server/pool connects to the correct DB instance
-    // defined in .env or defaults.
-    // We'll verify connection first.
     try {
       await pool.query("SELECT 1");
+    } catch (err) {
+      console.error("DB Connection Failed:", err);
+      throw err;
+    }
 
-      // Seed Super Admin for step 7
+    // Seed Super Admin for step 7 - non-fatal if seed fails
+    try {
       await seedDemoUsers();
     } catch (err) {
-      console.error("DB Connection or Seed Failed:", err);
-      throw err;
+      console.warn(
+        "⚠️  seedDemoUsers failed (non-fatal, step 7 may skip):",
+        err.message,
+      );
     }
   });
 

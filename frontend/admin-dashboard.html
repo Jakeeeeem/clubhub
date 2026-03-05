@@ -209,7 +209,7 @@
 
             <!-- Dashboard Navigation -->
             <!-- Grouped Dashboard Navigation -->
-            <div class="dashboard-nav-grouped">
+            <div class="dashboard-nav-grouped desktop-only">
                 <button class="nav-item active" onclick="showSection('overview')">
                     📊 Overview
                 </button>
@@ -1126,9 +1126,11 @@
                     <div class="section-header" style="margin-top: 1rem;">
                         <h2 id="detailTournamentName">Tournament Name</h2>
                         <div class="action-buttons">
-                            <button class="btn btn-secondary" onclick="generateFixtures()">Generate Next Round</button>
+                            <button class="btn btn-secondary" onclick="openPitchManagement()">📍 Manage Pitches</button>
+                            <button class="btn btn-secondary" onclick="autoSchedule()">📅 Auto Schedule</button>
+                            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 0.5rem;"></div>
                             <button class="btn btn-small btn-primary"
-                                onclick="generateFixtures('regular')">League</button>
+                                onclick="generateFixtures('league')">League</button>
                             <button class="btn btn-small btn-primary"
                                 onclick="generateFixtures('knockout')">Knockout</button>
                         </div>
@@ -1137,13 +1139,25 @@
                     <div class="dashboard-nav" style="margin-bottom: 1rem;">
                         <button class="active" onclick="switchTournamentTab(this, 'fixtures')">Fixtures</button>
                         <button onclick="switchTournamentTab(this, 'standings')">Standings</button>
+                        <button onclick="switchTournamentTab(this, 'bracket')">Bracket</button>
                         <button onclick="switchTournamentTab(this, 'teams')">Teams</button>
                     </div>
 
                     <div id="tab-fixtures" class="tournament-tab">
                         <div class="card">
                             <h3>Upcoming Matches</h3>
-                            <div id="tournamentFixturesList"></div>
+                            <div id="tournamentFixturesList"
+                                style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+                        </div>
+                    </div>
+
+                    <div id="tab-bracket" class="tournament-tab" style="display: none;">
+                        <div class="card">
+                            <h3>Tournament Bracket</h3>
+                            <div id="tournamentBracketVisual"
+                                style="overflow-x: auto; padding: 1rem; min-height: 400px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                                <!-- Rendered via JS -->
+                            </div>
                         </div>
                     </div>
 
@@ -1160,30 +1174,24 @@
                             <div id="tournamentParticipantsList"></div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </div> <!-- End tournaments-section -->
 
-        </div>
-        </div>
-        <div id="tournamentMatchesList" class="item-list"></div>
-        </div>
-        </div>
-        </div>
 
-        <!-- Specialized Polls Section -->
-        <div id="polls-section" class="dashboard-section">
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                    <h3>🗳️ Voting & Polls</h3>
-                    <button class="btn btn-primary" onclick="showModal('createPollModal')">➕ Create
-                        Poll</button>
+                <!-- Specialized Polls Section -->
+                <div id="polls-section" class="dashboard-section">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h3>🗳️ Voting & Polls</h3>
+                            <button class="btn btn-primary" onclick="showModal('createPollModal')">➕ Create
+                                Poll</button>
+                        </div>
+                        <div id="pollsContainer" class="card-grid">
+                            <!-- Polls will be loaded here -->
+                        </div>
+                    </div>
                 </div>
-                <div id="pollsContainer" class="card-grid">
-                    <!-- Polls will be loaded here -->
-                </div>
-            </div>
-        </div>
-        </div> <!-- End dashboard-content -->
+            </div> <!-- End dashboard-content -->
         </div>
     </main>
 
@@ -2080,10 +2088,106 @@
                     </div>
                 </div>
 
+                <div class="form-group full-width"
+                    style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--card-radius); border: 1px solid rgba(255,255,255,0.05); margin-top: 2rem;">
+                    <h3
+                        style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        📹 Match Footage Upload</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Attach a video
+                        recording of this match. You can make it public or invite-only, and optionally set a price for
+                        access.</p>
+
+                    <label for="matchVideoUpload" style="font-weight: 600;">Select Video File</label>
+                    <input type="file" id="matchVideoUpload" accept="video/*" class="form-control"
+                        style="margin-bottom: 1.5rem; background: rgba(0,0,0,0.2);">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div>
+                            <label style="font-weight: 600;">Visibility</label>
+                            <label
+                                style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="matchVideoIsPublic" checked>
+                                Make Publicly Viewable
+                            </label>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">If unchecked,
+                                only invited players/teams can view.</p>
+                        </div>
+                        <div>
+                            <label for="matchVideoPrice" style="font-weight: 600;">Access Price (£)</label>
+                            <input type="number" id="matchVideoPrice" placeholder="0.00" step="0.01" min="0"
+                                class="form-control" style="margin-top: 0.5rem;">
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Leave at 0 for
+                                free access.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button class="btn btn-secondary" onclick="closeModal('matchStatsModal')">Cancel</button>
                     <button class="btn btn-primary" onclick="saveMatchStats()">💾 Save Result</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pitch Management Modal -->
+    <div id="managePitchesModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>📍 Pitch Management</h2>
+                <button class="close" onclick="closeModal('managePitchesModal')">&times;</button>
+            </div>
+            <div style="padding: 1rem;">
+                <form id="addPitchForm"
+                    style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.75rem; align-items: end; margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 4px;">
+                    <div class="form-group" style="margin:0;">
+                        <label>Pitch Name</label>
+                        <input type="text" id="newPitchName" placeholder="Pitch 1" required>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Type</label>
+                        <select id="newPitchType">
+                            <option value="Grass">Grass</option>
+                            <option value="3G">3G / Synthetic</option>
+                            <option value="Indoor">Indoor</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Format</label>
+                        <select id="newPitchSize">
+                            <option value="11v11">11v11</option>
+                            <option value="9v9">9v9</option>
+                            <option value="7v7">7v7</option>
+                            <option value="5v5">5v5</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </form>
+                <div id="pitchesList" class="item-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto Schedule Modal -->
+    <div id="autoScheduleModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2>📅 Auto-Scheduling</h2>
+                <button class="close" onclick="closeModal('autoScheduleModal')">&times;</button>
+            </div>
+            <div style="padding: 1.5rem;">
+                <p style="margin-bottom: 1.5rem; opacity: 0.8;">Assign match times and pitches automatically based on
+                    available slots.</p>
+                <div class="form-group">
+                    <label>First Game Start Time</label>
+                    <input type="time" id="schedStartTime" value="09:00">
+                </div>
+                <div class="form-group">
+                    <label>Buffer Between Games (mins)</label>
+                    <input type="number" id="schedBuffer" value="5">
+                </div>
+                <button class="btn btn-primary" onclick="confirmAutoSchedule()"
+                    style="width: 100%; margin-top: 1rem; padding: 0.8rem;">🚀 Generate Schedule</button>
             </div>
         </div>
     </div>
@@ -2675,6 +2779,10 @@
             // Just verify auth exists - let script.js handle redirect logic
             console.log('✅ Admin authentication verified');
         })();
+
+        // Global state for tournament management
+        let currentTournamentId = null;
+        let currentMatchId = null;
 
         function hydrateAddPlayerPlanSelect() {
             // Add Player Modal
@@ -4460,39 +4568,7 @@
             }
         }
 
-        // Load Tournaments Dashboard
-        async function loadTournamentsDashboard() {
-            console.log('🏆 Loading Tournaments Dashboard...');
-            const container = document.getElementById('tournamentSelect');
-            if (!container) {
-                console.error('❌ tournamentSelect not found!');
-                return;
-            }
 
-            container.innerHTML = '<option value="">Loading tournaments...</option>';
-
-            try {
-                const groupId = await getActiveGroupId();
-                if (!groupId) {
-                    container.innerHTML = '<option value="">No club selected</option>';
-                    return;
-                }
-
-                const events = await apiService.getEvents(groupId);
-                const tournaments = events.filter(e => e.event_type === 'tournament');
-
-                if (tournaments.length === 0) {
-                    container.innerHTML = '<option value="">No tournaments found - Create one in Events!</option>';
-                } else {
-                    container.innerHTML = '<option value="">Select a tournament...</option>' +
-                        tournaments.map(e => `<option value="${e.id}">${e.title} - ${new Date(e.event_date).toLocaleDateString()}</option>`).join('');
-                    console.log(`✅ Loaded ${tournaments.length} tournaments`);
-                }
-            } catch (error) {
-                console.error('Failed to load tournaments:', error);
-                container.innerHTML = '<option value="">Error loading tournaments</option>';
-            }
-        }
 
         // Load and display club applications for approval/rejection
         async function loadClubApplications() {
@@ -5732,6 +5808,7 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons" onclick="event.stopPropagation()">
+                                                ${event.event_type === 'match' ? `<button class="btn-icon stats" title="Record Result" onclick="openMatchResultModal('${event.id}')">🏆</button>` : ''}
                                                 <button class="btn-icon notify" title="Notify Members" onclick="notifyEventMembers('${event.id}')">🔔</button>
                                                 <button class="btn-icon edit" title="Edit Event" onclick="editEvent('${event.id}')">✏️</button>
                                                 <button class="btn-icon delete" title="Delete Event" onclick="deleteEvent('${event.id}')">🗑️</button>
@@ -6315,22 +6392,26 @@
                             <button class="btn btn-primary" onclick="openCreateTournamentModal()">➕ Create Your First Tournament</button>
                         </div>`;
                 } else {
-                    container.innerHTML = tourneys.map(t => `
+                    container.innerHTML = tourneys.map(t => {
+                        const displayName = t.name || t.title || 'Tournament';
+                        const rawType = t.type || (t.tournament_settings?.type) || 'Tournament';
+                        const status = t.status || 'active';
+                        return `
                         <div class="card tournament-card" onclick="viewTournament('${t.id}')">
                             <div class="tournament-card-header">
-                                <span class="badge badge-primary">${(t.type || 'Tournament').toUpperCase()}</span>
+                                <span class="badge badge-primary">${rawType.toUpperCase()}</span>
                                 <span class="tournament-trophy">🏆</span>
                             </div>
                             <div class="tournament-card-body">
-                                <h3>${t.name}</h3>
+                                <h3>${displayName}</h3>
                                 <div class="tournament-meta">
                                     <span>👥 ${t.teams_count || 0} Teams</span>
-                                    <span class="status-dot ${t.status === 'active' ? 'dot-success' : 'dot-warning'}"></span>
-                                    <span>${t.status || 'Active'}</span>
+                                    <span class="status-dot ${status === 'active' ? 'dot-success' : 'dot-warning'}"></span>
+                                    <span>${status}</span>
                                 </div>
                             </div>
                         </div>
-                    `).join('');
+                    `}).join('');
                 }
             } catch (e) {
                 console.error(e);
@@ -6349,19 +6430,24 @@
                 document.getElementById('tournamentListView').style.display = 'none';
                 document.getElementById('tournamentDetailView').style.display = 'block';
 
-                document.getElementById('detailTournamentName').textContent = details.name;
+                // Backend returns `name` (alias) or event.title
+                const tournamentName = details.name || details.event?.title || details.event?.name || 'Tournament';
+                document.getElementById('detailTournamentName').textContent = tournamentName;
 
-                // Render Fixtures
-                renderFixtures(details.fixtures || []);
+                // Render Fixtures (backend joins give us home_team/away_team strings)
+                renderFixtures(details.matches || details.fixtures || []);
 
-                // Render Standings
-                renderStandings(details.standings || [], details.type);
+                // Render Standings (computed server-side or from details)
+                renderStandings(details.standings || [], details.event?.type);
 
                 // Render Teams
-                renderParticipants(details.participants || details.teams || []);
+                renderParticipants(details.teams || details.participants || []);
+
+                // Render Bracket
+                renderBracket(details.matches || []);
 
                 // Switch to Fixtures tab by default
-                const navBtn = document.querySelector('.dashboard-nav button');
+                const navBtn = document.querySelector('#tournamentDetailView .dashboard-nav button');
                 if (navBtn) switchTournamentTab(navBtn, 'fixtures');
 
             } catch (e) {
@@ -6408,7 +6494,7 @@
                     </div>
                     <div style="flex: 1; text-align: left; font-weight: 600; font-size: 1.1rem;">${f.away_team || 'Away'}</div>
                     <div style="margin-left: 1rem;">
-                        <button class="btn btn-small ${f.played ? 'btn-secondary' : 'btn-primary'}" onclick="openMatchStatsModal('${f.id}', '${f.home_team}', '${f.away_team}')">
+                        <button class="btn btn-small ${f.played ? 'btn-secondary' : 'btn-primary'}" onclick="openMatchStatsModal('${f.id}', '${f.home_team}', '${f.away_team}', ${f.home_score}, ${f.away_score})">
                             ${f.played ? 'Edit' : 'Result'}
                         </button>
                     </div>
@@ -6423,7 +6509,6 @@
                 return;
             }
 
-            // Simple Table Concept
             container.innerHTML = `
                 <div class="table-responsive">
                     <table class="data-table">
@@ -6435,21 +6520,26 @@
                                 <th style="text-align:center;">W</th>
                                 <th style="text-align:center;">D</th>
                                 <th style="text-align:center;">L</th>
+                                <th style="text-align:center;">GD</th>
                                 <th style="text-align:center;">Pts</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${standings.map((s, index) => `
+                            ${standings.map((s, index) => {
+                const gd = (s.goals_for || 0) - (s.goals_against || 0);
+                const teamName = s.team_name || s.team || 'Unknown';
+                return `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td>${s.team}</td>
-                                    <td style="text-align:center;">${s.p}</td>
-                                    <td style="text-align:center;">${s.w}</td>
-                                    <td style="text-align:center;">${s.d}</td>
-                                    <td style="text-align:center;">${s.l}</td>
-                                    <td style="text-align:center; font-weight: bold;">${s.pts}</td>
+                                    <td><strong>${teamName}</strong></td>
+                                    <td style="text-align:center;">${s.played || s.p || 0}</td>
+                                    <td style="text-align:center;">${s.wins || s.w || 0}</td>
+                                    <td style="text-align:center;">${s.draws || s.d || 0}</td>
+                                    <td style="text-align:center;">${s.losses || s.l || 0}</td>
+                                    <td style="text-align:center;">${gd > 0 ? '+' : ''}${gd}</td>
+                                    <td style="text-align:center; font-weight: bold; color: var(--accent-light);">${s.points || s.pts || 0}</td>
                                 </tr>
-                            `).join('')}
+                            `}).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -6458,10 +6548,25 @@
 
         function renderParticipants(teams) {
             const container = document.getElementById('tournamentParticipantsList');
-            if (!teams || teams.length === 0) return;
+            if (!teams || teams.length === 0) {
+                container.innerHTML = '<p style="padding: 1rem; opacity: 0.6;">No teams registered yet.</p>';
+                return;
+            }
 
-            container.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
-                ${teams.map(t => `<div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;"><b>${t.name}</b></div>`).join('')}
+            container.innerHTML = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                ${teams.map(t => `
+                    <div class="card" style="padding: 1.25rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1; min-width: 0;">
+                            <h4 style="margin: 0; font-size: 1rem;">${t.team_name || t.name}</h4>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0;">${t.status === 'checked_in' ? '✅ Arrived' : '⏳ Pending'}</p>
+                        </div>
+                        <button class="btn btn-small ${t.status === 'checked_in' ? 'btn-secondary' : 'btn-primary'}" 
+                                onclick="toggleTeamCheckIn('${t.id}', '${t.status}')"
+                                style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">
+                            ${t.status === 'checked_in' ? 'Check Out' : 'Check In'}
+                        </button>
+                    </div>
+                `).join('')}
              </div>`;
         }
 
@@ -6522,12 +6627,17 @@
             }
         }
 
-        async function openMatchStatsModal(matchId, homeName, awayName) {
+        async function openMatchStatsModal(matchId, homeName, awayName, homeScore, awayScore) {
             currentMatchId = matchId;
             document.getElementById('matchHomeTeamName').textContent = homeName;
             document.getElementById('matchAwayTeamName').textContent = awayName;
-            document.getElementById('matchHomeScore').value = '';
-            document.getElementById('matchAwayScore').value = '';
+            document.getElementById('matchHomeScore').value = (homeScore !== null && homeScore !== undefined) ? homeScore : '';
+            document.getElementById('matchAwayScore').value = (awayScore !== null && awayScore !== undefined) ? awayScore : '';
+
+            // Clear Video Inputs
+            document.getElementById('matchVideoUpload').value = '';
+            document.getElementById('matchVideoIsPublic').checked = true;
+            document.getElementById('matchVideoPrice').value = '';
 
             // Populate Dummy Players (or fetch real roster if available)
             const playerListHTML = (prefix) => `
@@ -6555,6 +6665,9 @@
         async function saveMatchStats() {
             const hScore = document.getElementById('matchHomeScore').value;
             const aScore = document.getElementById('matchAwayScore').value;
+            const videoFile = document.getElementById('matchVideoUpload').files[0];
+            const isPublic = document.getElementById('matchVideoIsPublic').checked;
+            const price = document.getElementById('matchVideoPrice').value || 0;
 
             if (hScore === '' || aScore === '') {
                 showNotification('Please enter the score.', 'warning');
@@ -6563,20 +6676,75 @@
 
             try {
                 showLoading(true);
-                await apiService.updateMatchStats(currentMatchId, { home_score: hScore, away_score: aScore });
-                showNotification('Match result saved!', 'success');
+
+                // 1. Save Basic Stats
+                await apiService.updateMatchStats(currentMatchId, { homeScore: hScore, awayScore: aScore });
+
+                // 2. Upload Video If Given
+                if (videoFile) {
+                    showNotification('Uploading video...', 'success');
+                    const uploadData = new FormData();
+                    uploadData.append('video', videoFile);
+                    uploadData.append('isPublic', isPublic);
+                    uploadData.append('price', price);
+
+                    await apiService.makeRequest(`/tournaments/matches/${currentMatchId}/video`, {
+                        method: 'POST',
+                        body: uploadData
+                    });
+                }
+
+                showNotification('Match result & footage saved!', 'success');
                 closeModal('matchStatsModal');
+
                 // Refresh details
                 if (currentTournamentId) viewTournament(currentTournamentId);
             } catch (e) {
-                showNotification('Failed to save result.', 'error');
+                showNotification(e.message || 'Failed to save result or upload video.', 'error');
             } finally {
                 showLoading(false);
             }
         }
 
-        function generateFixtures() {
-            showNotification('Generating next round fixtures... (Coming Soon)', 'info');
+
+
+        async function generateFixtures(type) {
+            if (!currentTournamentId) {
+                showNotification('No tournament selected.', 'error');
+                return;
+            }
+            if (!confirm(`Generate ${type} fixtures? This will add matches to the current tournament.`)) return;
+
+            try {
+                showLoading(true);
+                await apiService.makeRequest(`/tournaments/${currentTournamentId}/generate-fixtures`, {
+                    method: 'POST',
+                    body: JSON.stringify({ type })
+                });
+                showNotification('Fixtures generated successfully!', 'success');
+                await viewTournament(currentTournamentId);
+            } catch (error) {
+                console.error('Fixture generation error:', error);
+                showNotification('Failed to generate fixtures: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function toggleTeamCheckIn(teamId, currentStatus) {
+            const newStatus = currentStatus === 'checked_in' ? 'approved' : 'checked_in';
+            try {
+                showLoading(true);
+                await apiService.makeRequest(`/tournaments/teams/${teamId}/status`, {
+                    method: 'POST',
+                    body: JSON.stringify({ status: newStatus })
+                });
+                await viewTournament(currentTournamentId);
+            } catch (error) {
+                showNotification('Failed to update team status.', 'error');
+            } finally {
+                showLoading(false);
+            }
         }
 
         // Export new functions
@@ -6590,7 +6758,257 @@
         window.switchTournamentTab = switchTournamentTab;
         window.openMatchStatsModal = openMatchStatsModal;
         window.saveMatchStats = saveMatchStats;
-        window.generateFixtures = generateFixtures;
+        function renderBracket(matches) {
+            const container = document.getElementById('tournamentBracketVisual');
+            if (!container) return;
+            // Include all matches that have a round number OR all if none have round_number set
+            let bracketMatches = (matches || []).filter(m => m.round_number !== null && m.round_number !== undefined);
+            if (bracketMatches.length === 0) bracketMatches = matches || []; // fall back to all
+
+            if (bracketMatches.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 3rem; color: var(--text-muted);">
+                    <p>No matches generated yet.</p>
+                    <p style="font-size: 0.9rem;">Generate fixtures to see the bracket visualization.</p>
+                </div>`;
+                return;
+            }
+
+            // Group by round
+            const rounds = {};
+            bracketMatches.forEach(m => {
+                const rk = m.round_number ?? 1;
+                if (!rounds[rk]) rounds[rk] = [];
+                rounds[rk].push(m);
+            });
+
+            const sortedRoundNums = Object.keys(rounds).map(Number).sort((a, b) => a - b);
+            const roundLabels = { 1: 'Round 1', 2: 'Round 2', 3: 'Quarter Finals', 4: 'Semi Finals', 5: 'Final' };
+            const totalRounds = sortedRoundNums.length;
+
+            container.innerHTML = `
+                <div style="display: flex; gap: 3rem; padding: 1rem; align-items: stretch; overflow-x: auto;">
+                    ${sortedRoundNums.map((roundNum, idx) => {
+                const label = totalRounds > 1 && idx === totalRounds - 1 ? 'Final'
+                    : totalRounds > 2 && idx === totalRounds - 2 ? 'Semi Finals'
+                        : totalRounds > 3 && idx === totalRounds - 3 ? 'Quarter Finals'
+                            : `Round ${roundNum}`;
+                return `
+                        <div class="bracket-round" style="display: flex; flex-direction: column; justify-content: space-around; gap: 1.5rem; min-width: 220px;">
+                            <h4 style="text-align: center; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; font-size: 0.8rem;">${label}</h4>
+                            ${rounds[roundNum].map(m => {
+                    const played = m.played || m.status === 'completed';
+                    const homeWon = played && parseInt(m.home_score) > parseInt(m.away_score);
+                    const awayWon = played && parseInt(m.away_score) > parseInt(m.home_score);
+                    return `
+                                <div class="bracket-match" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; position: relative;">
+                                    <div style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                                            <span style="font-weight: ${homeWon ? '700' : '500'}; font-size: 0.9rem; color: ${homeWon ? 'var(--accent-light, #4ade80)' : 'inherit'};">
+                                                ${m.home_team || 'TBD'}
+                                            </span>
+                                            <span style="font-weight: 700; font-size: 1rem; min-width: 20px; text-align: right;">${played ? m.home_score : '-'}</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+                                            <span style="font-weight: ${awayWon ? '700' : '500'}; font-size: 0.9rem; color: ${awayWon ? 'var(--accent-light, #4ade80)' : 'inherit'};">
+                                                ${m.away_team || 'TBD'}
+                                            </span>
+                                            <span style="font-weight: 700; font-size: 1rem; min-width: 20px; text-align: right;">${played ? m.away_score : '-'}</span>
+                                        </div>
+                                    </div>
+                                    <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 4px; background: ${played ? '#4ade80' : 'rgba(255,255,255,0.1)'};"></div>
+                                </div>
+                            `}).join('')}
+                        </div>
+                    `}).join('')}
+                </div>
+            `;
+        }
+
+        window.renderBracket = renderBracket;
+
+        // --- STAFF MODULE ---
+        async function loadStaff() {
+            const container = document.getElementById('staffContainer');
+            if (!container) return;
+            try {
+                showLoading(true);
+                const clubId = AppState.activeGroupId || AppState.clubs?.[0]?.id;
+                const staffResult = await apiService.makeRequest(`/staff?clubId=${clubId}`);
+                AppState.staff = staffResult;
+                if (!staffResult || staffResult.length === 0) {
+                    container.innerHTML = '<div class="card" style="text-align: center; padding: 2rem;"><p>No staff members found.</p></div>';
+                    return;
+                }
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>Name</th><th>Role</th><th>Email</th><th style="text-align: right;">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                ${staffResult.map(member => `
+                                    <tr>
+                                        <td><strong>${member.first_name} ${member.last_name}</strong></td>
+                                        <td><span class="badge badge-secondary">${member.role ? member.role.replace('-', ' ') : 'Staff'}</span></td>
+                                        <td>${member.email}</td>
+                                        <td style="text-align: right;">
+                                            <div class="action-buttons" style="justify-content: flex-end;">
+                                                <button class="btn-icon edit" onclick="editStaff('${member.id}')">✏️</button>
+                                                <button class="btn-icon delete" onclick="deleteStaff('${member.id}')">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+            } catch (error) { console.error('Staff load failed', error); } finally { showLoading(false); }
+        }
+
+        function editStaff(id) {
+            const member = (AppState.staff || []).find(s => s.id === id);
+            if (!member) return;
+            document.getElementById('staffModalTitle').textContent = '✏️ Edit Staff Member';
+            document.getElementById('staffId').value = member.id;
+            document.getElementById('staffFirst').value = member.first_name;
+            document.getElementById('staffLast').value = member.last_name;
+            document.getElementById('staffEmail').value = member.email;
+            document.getElementById('staffRole').value = member.role;
+            showModal('addStaffModal');
+        }
+
+        async function deleteStaff(id) {
+            if (!confirm('Are you sure?')) return;
+            try {
+                await apiService.makeRequest(`/staff/${id}`, { method: 'DELETE' });
+                showNotification('Staff removed', 'success');
+                loadStaff();
+            } catch (e) { showNotification('Delete failed', 'error'); }
+        }
+
+        // --- SHOP / POLLS / VENUES ---
+        // Full implementations are in dedicated <script> blocks below.
+        // Stubs exposed globally after those blocks load.
+
+        // --- PAGE INITIALIZATION & HOOKS ---
+        // Wrap showSection to auto-load sections (runs after all scripts parse)
+        document.addEventListener('DOMContentLoaded', () => {
+            const _origShow = window.showSection;
+            window.showSection = function (sectionId) {
+                if (_origShow) _origShow(sectionId);
+                // Delegate to named loaders if they exist
+                const loaders = {
+                    'staff': () => typeof loadStaff === 'function' && loadStaff(),
+                    'shop-management': () => typeof loadShopProducts === 'function' && loadShopProducts(),
+                    'polls-section': () => typeof loadPolls === 'function' && loadPolls(),
+                    'venue-booking': () => typeof loadVenues === 'function' && loadVenues(),
+                    'talent-id': () => typeof loadTalentIdDashboard === 'function' && loadTalentIdDashboard(),
+                    'tournaments': () => typeof loadTournamentsDashboard === 'function' && loadTournamentsDashboard()
+                };
+                if (loaders[sectionId]) loaders[sectionId]();
+            };
+        });
+
+        window.updateMatchResult = saveMatchStats; // Alias
+
+        // Pitch Management Logic
+        async function openPitchManagement() {
+            if (!currentTournamentId) return;
+            showModal('managePitchesModal');
+            await loadTournamentPitches();
+        }
+
+        async function loadTournamentPitches() {
+            try {
+                const pitches = await apiService.makeRequest(`/tournaments/${currentTournamentId}/pitches`);
+                const container = document.getElementById('pitchesList');
+                if (pitches.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; padding: 2rem; opacity: 0.5;">No pitches added yet.</p>';
+                    return;
+                }
+                container.innerHTML = pitches.map(p => `
+                    <div class="item-list-item">
+                        <div class="item-info">
+                            <h4>${p.name}</h4>
+                            <p>${p.pitch_type} • ${p.pitch_size}</p>
+                        </div>
+                        <button class="btn-icon delete" onclick="deleteTournamentPitch('${p.id}')">🗑️</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Load pitches error:', error);
+            }
+        }
+
+        document.getElementById('addPitchForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('newPitchName').value,
+                pitchType: document.getElementById('newPitchType').value,
+                pitchSize: document.getElementById('newPitchSize').value
+            };
+            try {
+                showLoading(true);
+                await apiService.createTournamentPitch(currentTournamentId, payload);
+                document.getElementById('addPitchForm').reset();
+                await loadTournamentPitches();
+            } catch (error) {
+                showNotification('Failed to add pitch.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        async function deleteTournamentPitch(pitchId) {
+            if (!confirm('Remove this pitch?')) return;
+            try {
+                showLoading(true);
+                await apiService.makeRequest(`/tournaments/pitches/${pitchId}`, { method: 'DELETE' });
+                await loadTournamentPitches();
+            } catch (error) {
+                showNotification('Failed to delete pitch.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function autoSchedule() {
+            if (!currentTournamentId) return;
+            showModal('autoScheduleModal');
+        }
+
+        async function confirmAutoSchedule() {
+            try {
+                showLoading(true);
+                // We need a stageId. For now, fetch details to get the first stage.
+                const details = await apiService.getTournamentDetails(currentTournamentId);
+                const stageId = details.stages?.[0]?.id || details.stage_id; // Try to find a stage
+
+                if (!stageId) {
+                    throw new Error('Please generate fixtures (create a stage) first.');
+                }
+
+                const payload = {
+                    stageId: stageId,
+                    startTime: document.getElementById('schedStartTime').value,
+                    internalBuffer: parseInt(document.getElementById('schedBuffer').value)
+                };
+
+                await apiService.autoScheduleTournament(currentTournamentId, payload);
+                showNotification('Scheduling complete!', 'success');
+                closeModal('autoScheduleModal');
+                await viewTournament(currentTournamentId);
+            } catch (error) {
+                showNotification('Scheduling failed: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        window.openPitchManagement = openPitchManagement;
+        window.deleteTournamentPitch = deleteTournamentPitch;
+        window.autoSchedule = autoSchedule;
+        window.confirmAutoSchedule = confirmAutoSchedule;
 
 
 
@@ -8704,12 +9122,14 @@
             window.loadPolls = loadPolls;
             window.voteOnPoll = voteOnPoll;
 
-            // Updated showSection switcher for Polls
-            const originalShowSection = window.showSection;
-            window.showSection = function (sectionId) {
-                if (originalShowSection) originalShowSection(sectionId);
-                if (sectionId === 'polls-section') loadPolls();
-            };
+            // Updated showSection switcher for Polls (IIFE)
+            (function () {
+                const prevShowSection = window.showSection;
+                window.showSection = function (sectionId) {
+                    if (prevShowSection) prevShowSection(sectionId);
+                    if (sectionId === 'polls-section') loadPolls();
+                };
+            })();
 
             // Expose functions globally
             window.deletePlayer = deletePlayer;
@@ -10071,14 +10491,16 @@
                 // This is handled by showSection() calling the global function, which we need to register
                 window.loadPolls = loadPolls;
 
-                // Add showSection hook for Polls
-                const originalShowSection = window.showSection;
-                window.showSection = function (sectionId) {
-                    originalShowSection(sectionId);
-                    if (sectionId === 'polls-section') loadPolls();
-                    if (sectionId === 'venue-booking') loadVenues();
-                    if (sectionId === 'league-management') loadLeagues();
-                };
+                // Add showSection hook for Polls, Venues, Leagues (IIFE)
+                (function () {
+                    const originalShowSection = window.showSection;
+                    window.showSection = function (sectionId) {
+                        if (originalShowSection) originalShowSection(sectionId);
+                        if (sectionId === 'polls-section') loadPolls();
+                        if (sectionId === 'venue-booking') loadVenues();
+                        if (sectionId === 'league-management') loadLeagues();
+                    };
+                })();
             });
 
             let currentVenueId = null;
@@ -10423,6 +10845,644 @@
         </script>
         <!-- PWA Install Handler -->
         <script src="pwa-install.js"></script>
+
+        <!-- ============================================================
+             MISSING CRUD: Shop Products + Player Edit/Delete
+             ============================================================ -->
+
+        <!-- Edit Player Modal -->
+        <div id="editPlayerModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✏️ Edit Player</h2>
+                    <button class="close" onclick="closeModal('editPlayerModal')">&times;</button>
+                </div>
+                <form id="editPlayerForm">
+                    <input type="hidden" id="editPlayerId">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label for="editPlayerFirst">First Name *</label>
+                            <input type="text" id="editPlayerFirst" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlayerLast">Last Name *</label>
+                            <input type="text" id="editPlayerLast" required>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label for="editPlayerEmail">Email</label>
+                            <input type="email" id="editPlayerEmail">
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlayerPhone">Phone</label>
+                            <input type="tel" id="editPlayerPhone">
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label for="editPlayerDOB">Date of Birth *</label>
+                            <input type="date" id="editPlayerDOB" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPlayerPos">Position</label>
+                            <input type="text" id="editPlayerPos" placeholder="e.g. Striker">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPlayerTeam">Assign to Team</label>
+                        <select id="editPlayerTeam">
+                            <option value="">No Team (Unassigned)</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('editPlayerModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Product Modal -->
+        <div id="editProductModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✏️ Edit Product</h2>
+                    <button class="close" onclick="closeModal('editProductModal')">&times;</button>
+                </div>
+                <form id="editProductForm">
+                    <input type="hidden" id="editProductId">
+                    <div class="form-group">
+                        <label for="editProductName">Product Name *</label>
+                        <input type="text" id="editProductName" required>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label for="editProductPrice">Price (£) *</label>
+                            <input type="number" id="editProductPrice" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editProductStock">Stock</label>
+                            <input type="number" id="editProductStock">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductCategory">Category</label>
+                        <select id="editProductCategory">
+                            <option value="apparel">Apparel</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="accessory">Accessory</option>
+                            <option value="ticket">Ticket</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductDesc">Description</label>
+                        <textarea id="editProductDesc" rows="3"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('editProductModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            /* ================================================================
+               SHOP PRODUCTS — Full CRUD
+               ================================================================ */
+            let _shopProducts = [];
+
+            async function loadShopProducts() {
+                const container = document.getElementById('productsContainer');
+                if (!container) return;
+
+                try {
+                    const clubId = AppState.activeGroupId || AppState.clubs?.[0]?.id;
+                    if (!clubId) {
+                        container.innerHTML = '<p style="color:var(--text-muted)">No active club found.</p>';
+                        return;
+                    }
+
+                    container.innerHTML = '<p style="color:var(--text-muted)">Loading products...</p>';
+                    const products = await apiService.makeRequest(`/products?clubId=${clubId}`);
+                    _shopProducts = Array.isArray(products) ? products : [];
+
+                    if (_shopProducts.length === 0) {
+                        container.innerHTML = `
+                            <div style="text-align:center;padding:3rem;color:var(--text-muted);">
+                                <div style="font-size:3rem;margin-bottom:1rem;">🛒</div>
+                                <h3>No products yet</h3>
+                                <p>Click "Add New Product" to add merchandise, tickets, or equipment to your shop.</p>
+                            </div>`;
+                        return;
+                    }
+
+                    container.innerHTML = `
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem;">
+                            ${_shopProducts.map(p => `
+                                <div class="card" style="position:relative;overflow:hidden;">
+                                    <div style="position:absolute;top:0.75rem;right:0.75rem;display:flex;gap:0.5rem;z-index:2;">
+                                        <button class="btn btn-secondary btn-small" onclick="editProduct('${p.id}')" style="padding:0.3rem 0.6rem;font-size:0.75rem;">✏️</button>
+                                        <button class="btn btn-danger btn-small" onclick="deleteProduct('${p.id}')" style="padding:0.3rem 0.6rem;font-size:0.75rem;background:rgba(239,68,68,0.2);color:#ef4444;border-color:rgba(239,68,68,0.3);">🗑️</button>
+                                    </div>
+                                    ${p.image_url ? `<img src="${p.image_url}" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:1rem;">` : `<div style="width:100%;height:80px;background:rgba(255,255,255,0.05);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:1rem;">🎽</div>`}
+                                    <h4 style="margin:0 0 0.5rem;">${p.name}</h4>
+                                    <p style="color:var(--text-muted);font-size:0.85rem;margin:0 0 0.75rem;">${p.description || ''}</p>
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <span style="font-size:1.25rem;font-weight:700;color:var(--primary-color);">£${parseFloat(p.price).toFixed(2)}</span>
+                                        <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;font-size:0.75rem;">${p.stock_quantity ?? 0} in stock</span>
+                                    </div>
+                                    ${p.category ? `<div style="margin-top:0.75rem;"><span class="badge" style="font-size:0.7rem;background:rgba(255,255,255,0.07);">${p.category}</span></div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>`;
+
+                } catch (error) {
+                    console.error('Load products error:', error);
+                    if (container) container.innerHTML = '<p style="color:#ef4444">Failed to load products. Please refresh.</p>';
+                }
+            }
+
+            function editProduct(productId) {
+                const product = _shopProducts.find(p => p.id === productId);
+                if (!product) return;
+
+                document.getElementById('editProductId').value = product.id;
+                document.getElementById('editProductName').value = product.name;
+                document.getElementById('editProductPrice').value = parseFloat(product.price).toFixed(2);
+                document.getElementById('editProductStock').value = product.stock_quantity ?? 0;
+                document.getElementById('editProductCategory').value = product.category || 'other';
+                document.getElementById('editProductDesc').value = product.description || '';
+
+                showModal('editProductModal');
+            }
+
+            async function deleteProduct(productId) {
+                if (!confirm('Are you sure you want to remove this product from your shop?')) return;
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/products/${productId}`, { method: 'DELETE' });
+                    showNotification('✅ Product removed successfully', 'success');
+                    loadShopProducts();
+                } catch (error) {
+                    showNotification('❌ Failed to delete product: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            document.getElementById('editProductForm')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('editProductId').value;
+                const payload = {
+                    name: document.getElementById('editProductName').value,
+                    price: document.getElementById('editProductPrice').value,
+                    stock_quantity: document.getElementById('editProductStock').value,
+                    category: document.getElementById('editProductCategory').value,
+                    description: document.getElementById('editProductDesc').value,
+                };
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/products/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    showNotification('✅ Product updated successfully', 'success');
+                    closeModal('editProductModal');
+                    loadShopProducts();
+                } catch (error) {
+                    showNotification('❌ Failed to update: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            });
+
+            // Load shop when section becomes active (IIFE)
+            (function () {
+                const _origShowSection = window.showSection;
+                window.showSection = function (section) {
+                    if (_origShowSection) _origShowSection(section);
+                    if (section === 'shop') loadShopProducts();
+                };
+            })();
+
+            window.loadShopProducts = loadShopProducts;
+            window.editProduct = editProduct;
+            window.deleteProduct = deleteProduct;
+
+            /* ================================================================
+               PLAYER EDIT & DELETE
+               ================================================================ */
+            window.editPlayer = async function (playerId) {
+                // Try to get the player from AppState or fetch fresh
+                let player = (AppState.players || []).find(p => p.id === playerId);
+                if (!player) {
+                    try {
+                        player = await apiService.makeRequest(`/players/${playerId}`);
+                    } catch (err) {
+                        showNotification('❌ Could not load player details', 'error');
+                        return;
+                    }
+                }
+
+                // Populate Team Selection
+                const teamSelect = document.getElementById('editPlayerTeam');
+                if (teamSelect) {
+                    const teams = AppState.teams || [];
+                    teamSelect.innerHTML = '<option value="">No Team (Unassigned)</option>';
+                    teams.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = t.name;
+                        if (player.team_id === t.id) opt.selected = true;
+                        teamSelect.appendChild(opt);
+                    });
+                }
+
+                document.getElementById('editPlayerId').value = player.id;
+                document.getElementById('editPlayerFirst').value = player.first_name || '';
+                document.getElementById('editPlayerLast').value = player.last_name || '';
+                document.getElementById('editPlayerEmail').value = player.email || '';
+                document.getElementById('editPlayerPhone').value = player.phone || '';
+                document.getElementById('editPlayerDOB').value = player.date_of_birth ? player.date_of_birth.split('T')[0] : '';
+                document.getElementById('editPlayerPos').value = player.position || '';
+
+                showModal('editPlayerModal');
+            };
+
+            document.getElementById('editPlayerForm')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('editPlayerId').value;
+                const clubId = AppState.activeGroupId || AppState.clubs?.[0]?.id;
+
+                const payload = {
+                    firstName: document.getElementById('editPlayerFirst').value,
+                    lastName: document.getElementById('editPlayerLast').value,
+                    email: document.getElementById('editPlayerEmail').value,
+                    phone: document.getElementById('editPlayerPhone').value,
+                    dateOfBirth: document.getElementById('editPlayerDOB').value,
+                    position: document.getElementById('editPlayerPos').value,
+                    teamId: document.getElementById('editPlayerTeam').value || null,
+                    clubId,
+                };
+
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/players/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    showNotification('✅ Player updated successfully', 'success');
+                    closeModal('editPlayerModal');
+                    if (window.loadPlayers) window.loadPlayers();
+                } catch (error) {
+                    showNotification('❌ Failed to update player: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            });
+
+            window.removePlayer = async function (playerId) {
+                if (!confirm('Remove this player from the club? This cannot be undone.')) return;
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/players/${playerId}`, { method: 'DELETE' });
+                    showNotification('✅ Player removed successfully', 'success');
+                    if (window.loadPlayers) window.loadPlayers();
+                } catch (error) {
+                    showNotification('❌ Failed to remove player: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            };
+        </script>
+        <!-- Edit Team Modal -->
+        <div id="editTeamModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✏️ Edit Team</h2>
+                    <button class="close" onclick="closeModal('editTeamModal')">&times;</button>
+                </div>
+                <form id="editTeamForm">
+                    <input type="hidden" id="editTeamId">
+                    <input type="hidden" id="editTeamClubId">
+                    <div class="form-group">
+                        <label for="editTeamName">Team Name *</label>
+                        <input type="text" id="editTeamName" required>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label for="editTeamSport">Sport *</label>
+                            <select id="editTeamSport" required>
+                                <option value="Football">Football</option>
+                                <option value="Basketball">Basketball</option>
+                                <option value="Rugby">Rugby</option>
+                                <option value="Cricket">Cricket</option>
+                                <option value="Tennis">Tennis</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editTeamAgeGroup">Age Group</label>
+                            <input type="text" id="editTeamAgeGroup" placeholder="e.g. Under 15s">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editTeamDesc">Description</label>
+                        <textarea id="editTeamDesc" rows="3"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="closeModal('editTeamModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            /* ================================================================
+               TEAM EDIT & DELETE
+               ================================================================ */
+            window.editTeam = async function (teamId) {
+                let team = (AppState.teams || []).find(t => t.id === teamId);
+                if (!team) {
+                    try {
+                        team = await apiService.makeRequest(`/teams/${teamId}`);
+                    } catch (err) {
+                        showNotification('❌ Could not load team details', 'error');
+                        return;
+                    }
+                }
+
+                document.getElementById('editTeamId').value = team.id;
+                document.getElementById('editTeamClubId').value = team.club_id;
+                document.getElementById('editTeamName').value = team.name;
+                document.getElementById('editTeamSport').value = team.sport || 'Football';
+                document.getElementById('editTeamAgeGroup').value = team.age_group || '';
+                document.getElementById('editTeamDesc').value = team.description || '';
+
+                showModal('editTeamModal');
+            };
+
+            document.getElementById('editTeamForm')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('editTeamId').value;
+                const clubId = document.getElementById('editTeamClubId').value || AppState.activeGroupId || AppState.clubs?.[0]?.id;
+
+                const payload = {
+                    name: document.getElementById('editTeamName').value,
+                    sport: document.getElementById('editTeamSport').value,
+                    ageGroup: document.getElementById('editTeamAgeGroup').value,
+                    description: document.getElementById('editTeamDesc').value,
+                    clubId,
+                };
+
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/teams/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    showNotification('✅ Team updated successfully', 'success');
+                    closeModal('editTeamModal');
+                    if (window.loadTeams) window.loadTeams();
+                } catch (error) {
+                    showNotification('❌ Failed to update team: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            });
+
+            window.deleteTeam = async function (teamId) {
+                const team = (AppState.teams || []).find(t => t.id === teamId);
+                const name = team ? team.name : 'this team';
+                if (!confirm(`Delete "${name}"? All player assignments will be removed. This cannot be undone.`)) return;
+
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/teams/${teamId}`, { method: 'DELETE' });
+                    showNotification('✅ Team deleted successfully', 'success');
+                    if (window.loadTeams) window.loadTeams();
+                } catch (error) {
+                    showNotification('❌ Failed to delete team: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            };
+        </script>
+
+        <!-- Match Result Modal (Injected) -->
+        <div id="matchResultModal" class="modal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2>⚽ Record Match Result</h2>
+                    <button class="close" onclick="closeModal('matchResultModal')">&times;</button>
+                </div>
+                <form id="matchResultForm">
+                    <input type="hidden" id="resultEventId">
+                    <p id="resultEventTitle"
+                        style="text-align: center; margin-bottom: 2rem; font-weight: 600; color: var(--text-muted);">
+                    </p>
+
+                    <div
+                        style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; margin-bottom: 2rem;">
+                        <div style="text-align: center;">
+                            <label
+                                style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; color: var(--text-muted);">Home
+                                Score</label>
+                            <input type="number" id="homeScore" value="0" min="0"
+                                style="width: 80px; height: 80px; font-size: 2.5rem; text-align: center; border-radius: 12px; background: rgba(255,255,255,0.05); border: 2px solid var(--border-color); font-weight: 800;">
+                        </div>
+                        <div
+                            style="font-size: 1.5rem; font-weight: 700; color: var(--text-muted); padding-top: 1.5rem;">
+                            vs</div>
+                        <div style="text-align: center;">
+                            <label
+                                style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; color: var(--text-muted);">Away
+                                Score</label>
+                            <input type="number" id="awayScore" value="0" min="0"
+                                style="width: 80px; height: 80px; font-size: 2.5rem; text-align: center; border-radius: 12px; background: rgba(255,255,255,0.05); border: 2px solid var(--border-color); font-weight: 800;">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="matchNotes">Match Notes / Highlights</label>
+                        <textarea id="matchNotes" rows="3" placeholder="Scorers, key moments, MOTM..."></textarea>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">💾 Save Match
+                            Outcome</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            // Match Result Handlers
+            window.openMatchResultModal = function (eventId) {
+                const event = (AppState.events || []).find(e => e.id === eventId);
+                if (!event) return;
+
+                document.getElementById('resultEventId').value = eventId;
+                document.getElementById('resultEventTitle').textContent = event.title;
+                document.getElementById('homeScore').value = 0;
+                document.getElementById('awayScore').value = 0;
+                document.getElementById('matchNotes').value = '';
+
+                showModal('matchResultModal');
+            };
+
+            document.getElementById('matchResultForm')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const eventId = document.getElementById('resultEventId').value;
+                const payload = {
+                    homeScore: parseInt(document.getElementById('homeScore').value),
+                    awayScore: parseInt(document.getElementById('awayScore').value),
+                    notes: document.getElementById('matchNotes').value
+                };
+
+                try {
+                    showLoading(true);
+                    await apiService.recordMatchResult(eventId, payload);
+                    showNotification('🏆 Match result saved successfully!', 'success');
+                    closeModal('matchResultModal');
+                    if (window.loadEvents) window.loadEvents();
+                } catch (error) {
+                    showNotification('❌ Failed to save result: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            });
+
+            // Staff Management Logic
+            async function loadStaff() {
+                const container = document.getElementById('staffContainer');
+                if (!container) return;
+
+                try {
+                    showLoading(true);
+                    const clubId = AppState.activeGroupId || AppState.clubs?.[0]?.id;
+                    const staffResult = await apiService.makeRequest(`/staff?clubId=${clubId}`);
+
+                    if (staffResult.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <p>No staff members found.</p>
+                                <button class="btn btn-primary btn-small" onclick="showAddStaffModal()">➕ Add Staff</button>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = `
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Email</th>
+                                        <th style="text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${staffResult.map(member => `
+                                        <tr>
+                                            <td><strong>${member.first_name} ${member.last_name}</strong></td>
+                                            <td><span class="badge badge-secondary">${member.role.replace('-', ' ')}</span></td>
+                                            <td>${member.email}</td>
+                                            <td style="text-align: right;">
+                                                <div class="action-buttons" style="justify-content: flex-end;">
+                                                    <button class="btn-icon edit" onclick="editStaff('${member.id}')">✏️</button>
+                                                    <button class="btn-icon delete" onclick="deleteStaff('${member.id}')">🗑️</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Failed to load staff:', error);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            window.showAddStaffModal = function () {
+                document.getElementById('staffModalTitle').textContent = '👥 Add Staff Member';
+                document.getElementById('addStaffForm').reset();
+                document.getElementById('staffId').value = '';
+                showModal('addStaffModal');
+            };
+
+            window.editStaff = function (id) {
+                const member = (AppState.staff || []).find(s => s.id === id);
+                if (!member) return;
+
+                document.getElementById('staffModalTitle').textContent = '✏️ Edit Staff Member';
+                document.getElementById('staffId').value = member.id;
+                document.getElementById('staffFirst').value = member.first_name;
+                document.getElementById('staffLast').value = member.last_name;
+                document.getElementById('staffEmail').value = member.email;
+                document.getElementById('staffRole').value = member.role;
+
+                showModal('addStaffModal');
+            };
+
+            document.getElementById('addStaffForm')?.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('staffId').value;
+                const clubId = AppState.activeGroupId || AppState.clubs?.[0]?.id;
+
+                const payload = {
+                    firstName: document.getElementById('staffFirst').value,
+                    lastName: document.getElementById('staffLast').value,
+                    email: document.getElementById('staffEmail').value,
+                    role: document.getElementById('staffRole').value,
+                    clubId
+                };
+
+                try {
+                    showLoading(true);
+                    if (id) {
+                        await apiService.makeRequest(`/staff/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                        showNotification('✅ Staff member updated', 'success');
+                    } else {
+                        await apiService.makeRequest('/staff', { method: 'POST', body: JSON.stringify(payload) });
+                        showNotification('✅ Staff member added', 'success');
+                    }
+                    closeModal('addStaffModal');
+                    loadStaff();
+                } catch (error) {
+                    showNotification('❌ Failed to save staff: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            });
+
+            window.deleteStaff = async function (id) {
+                if (!confirm('Are you sure you want to remove this staff member?')) return;
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest(`/staff/${id}`, { method: 'DELETE' });
+                    showNotification('🗑️ Staff member removed', 'success');
+                    loadStaff();
+                } catch (error) {
+                    showNotification('❌ Failed to delete: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            };
+
+            // Hook into staff section loading (IIFE)
+            (function () {
+                const originalShowSection = window.showSection;
+                window.showSection = function (sectionId) {
+                    if (originalShowSection) originalShowSection(sectionId);
+                    if (sectionId === 'staff') loadStaff();
+                };
+            })();
+        </script>
 </body>
 
 </html>

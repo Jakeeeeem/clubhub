@@ -6,6 +6,16 @@ class EmailService {
   }
 
   initializeTransporter() {
+    if (process.env.NODE_ENV === "test") {
+      return {
+        sendMail: async (options) => {
+          // Keep a log for debugging if needed, but don't block
+          // console.log("🧪 Test Mode: Mocking email to", options.to);
+          return { messageId: "test-id-" + Date.now() };
+        },
+        verify: async () => true,
+      };
+    }
     const config = this.getEmailConfig();
     return nodemailer.createTransport(config);
   }

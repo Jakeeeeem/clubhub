@@ -1,0 +1,1 @@
+ALTER TABLE match_results DROP CONSTRAINT match_results_event_id_key;

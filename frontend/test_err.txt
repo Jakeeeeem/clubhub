@@ -1,0 +1,24 @@
+FAIL ./form-builder.test.js
+  ● Test suite failed to run
+
+    The error below may be caused by using the wrong test environment, see https://jestjs.io/docs/configuration#testenvironment-string.
+    Consider using the "jsdom" test environment.
+
+    ReferenceError: document is not defined
+
+      10 |            Boot
+      11 |            ========================================================= */
+    > 12 |         document.addEventListener('DOMContentLoaded', () => {
+         |         ^
+      13 |             const token = localStorage.getItem('authToken');
+      14 |             if (!token) return window.location.href = 'index.html';
+      15 |             loadMyForms();
+
+      at Object.document (form-builder.js:12:9)
+      at Object.require (form-builder.test.js:1:21)
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        0.287 s
+Ran all test suites matching form-builder.test.js.

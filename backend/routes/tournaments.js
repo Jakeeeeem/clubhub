@@ -6,6 +6,43 @@ const {
 } = require("../middleware/auth");
 const router = express.Router();
 const { body, validationResult } = require("express-validator");
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
+
+// Ensure video upload directory exists
+const videoUploadDir = path.join(
+  __dirname,
+  "..",
+  "uploads",
+  "videos",
+  "matches",
+);
+if (!fs.existsSync(videoUploadDir)) {
+  fs.mkdirSync(videoUploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, videoUploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `match-${req.params.id}-${Date.now()}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("video/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Not a video file"), false);
+    }
+  },
+});
 
 // ================= PUBLIC / TEAMS =================
 
@@ -49,6 +86,72 @@ router.post(
   },
 );
 
+/**
+ * @route   POST /api/tournaments
+ * @desc    Create a new tournament event and register internal teams
+ */
+router.post("/", authenticateToken, requireOrganization, async (req, res) => {
+  const { name, type, teams, startDate } = req.body;
+  if (!name)
+    return res.status(400).json({ error: "Tournament name is required" });
+
+  try {
+    let tournamentId;
+    await withTransaction(async (client) => {
+      // Resolve club ID from user context
+      let clubId = req.user.groupId || req.user.clubId;
+      if (!clubId) {
+        const clubRes = await client.query(
+          "SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1",
+          [req.user.id],
+        );
+        clubId = clubRes.rows[0]?.id;
+      }
+      if (!clubId) throw new Error("No club found for user");
+
+      const eventResult = await client.query(
+        `INSERT INTO events
+             (title, event_type, event_date, club_id, status, tournament_settings, created_by, created_at, updated_at)
+           VALUES ($1, 'tournament', $2, $3, 'active', $4, $5, NOW(), NOW())
+           RETURNING id`,
+        [
+          name,
+          startDate || new Date().toISOString().split("T")[0],
+          clubId,
+          JSON.stringify({ type: type || "knockout" }),
+          req.user.id,
+        ],
+      );
+      const eventId = eventResult.rows[0].id;
+      tournamentId = eventId;
+
+      // Register selected internal teams
+      if (Array.isArray(teams) && teams.length > 0) {
+        for (const teamId of teams) {
+          const teamRes = await client.query(
+            "SELECT name FROM teams WHERE id = $1",
+            [teamId],
+          );
+          const teamName = teamRes.rows[0]?.name || "Team";
+          await client.query(
+            `INSERT INTO tournament_teams (event_id, team_name, internal_team_id, status)
+               VALUES ($1, $2, $3, 'approved')`,
+            [eventId, teamName, teamId],
+          );
+        }
+      }
+    });
+    res
+      .status(201)
+      .json({ id: tournamentId, name, type, message: "Tournament created" });
+  } catch (err) {
+    console.error("Create tournament error:", err);
+    res
+      .status(500)
+      .json({ error: "Failed to create tournament", detail: err.message });
+  }
+});
+
 // ================= ADMIN =================
 
 /**
@@ -73,7 +176,16 @@ router.get(
           [eventId],
         ),
         query(
-          "SELECT * FROM tournament_matches WHERE event_id = $1 ORDER BY start_time, match_number",
+          `SELECT m.*,
+                  ht.team_name AS home_team,
+                  at.team_name AS away_team,
+                  p.name AS pitch_name
+           FROM tournament_matches m
+           LEFT JOIN tournament_teams ht ON m.home_team_id = ht.id
+           LEFT JOIN tournament_teams at ON m.away_team_id = at.id
+           LEFT JOIN tournament_pitches p ON m.pitch_id = p.id
+           WHERE m.event_id = $1
+           ORDER BY m.round_number NULLS LAST, m.start_time NULLS LAST, m.match_number`,
           [eventId],
         ),
         query(
@@ -82,12 +194,64 @@ router.get(
         ),
       ]);
 
+      // Compute standings from completed matches
+      const completedMatches = matches.rows.filter(
+        (m) => m.status === "completed" && m.home_score !== null,
+      );
+      const standingsMap = {};
+      teams.rows.forEach((t) => {
+        standingsMap[t.id] = {
+          team_name: t.team_name,
+          played: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goals_for: 0,
+          goals_against: 0,
+          points: 0,
+        };
+      });
+      completedMatches.forEach((m) => {
+        const h = standingsMap[m.home_team_id];
+        const a = standingsMap[m.away_team_id];
+        if (!h || !a) return;
+        const hs = parseInt(m.home_score) || 0;
+        const as_ = parseInt(m.away_score) || 0;
+        h.played++;
+        a.played++;
+        h.goals_for += hs;
+        h.goals_against += as_;
+        a.goals_for += as_;
+        a.goals_against += hs;
+        if (hs > as_) {
+          h.wins++;
+          h.points += 3;
+          a.losses++;
+        } else if (hs < as_) {
+          a.wins++;
+          a.points += 3;
+          h.losses++;
+        } else {
+          h.draws++;
+          a.draws++;
+          h.points++;
+          a.points++;
+        }
+      });
+      const standings = Object.values(standingsMap).sort(
+        (a, b) =>
+          b.points - a.points ||
+          b.goals_for - b.goals_against - (a.goals_for - a.goals_against),
+      );
+
       res.json({
         event: event.rows[0],
         teams: teams.rows,
         stages: stages.rows,
         matches: matches.rows,
         groups: groups.rows,
+        standings,
+        name: event.rows[0]?.title || event.rows[0]?.name || "Tournament",
       });
     } catch (err) {
       console.error(err);
@@ -220,16 +384,25 @@ router.post(
             );
           }
         } else if (type === "league") {
-          // Round Robin
+          // Round Robin - assign round numbers using round-robin algorithm
+          let matchNumber = 0;
           for (let i = 0; i < teams.length; i++) {
             for (let j = i + 1; j < teams.length; j++) {
+              const roundNum =
+                Math.floor(matchNumber / Math.floor(teams.length / 2)) + 1;
               await client.query(
-                `
-                            INSERT INTO tournament_matches (stage_id, event_id, home_team_id, away_team_id, status)
-                            VALUES ($1, $2, $3, $4, 'scheduled')
-                        `,
-                [stageId, eventId, teams[i].id, teams[j].id],
+                `INSERT INTO tournament_matches (stage_id, event_id, home_team_id, away_team_id, round_number, match_number, status)
+                 VALUES ($1, $2, $3, $4, $5, $6, 'scheduled')`,
+                [
+                  stageId,
+                  eventId,
+                  teams[i].id,
+                  teams[j].id,
+                  roundNum,
+                  matchNumber,
+                ],
               );
+              matchNumber++;
             }
           }
         }
@@ -625,5 +798,58 @@ router.get("/:id/bracket", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch bracket data" });
   }
 });
+
+/**
+ * @route   POST /api/tournaments/matches/:id/video
+ * @desc    Upload full match video footage
+ */
+router.post(
+  "/matches/:id/video",
+  authenticateToken,
+  requireOrganization,
+  upload.single("video"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No video file provided" });
+      }
+
+      // Check if match exists and belongs to correct org
+      const matchCheck = await query(
+        `SELECT m.id FROM tournament_matches m 
+         JOIN events e ON m.event_id = e.id 
+         WHERE m.id = $1 AND e.club_id = $2`,
+        [req.params.id, req.user.organization_id],
+      );
+
+      if (matchCheck.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Match not found or unauthorized" });
+      }
+
+      const isPublic = req.body.isPublic !== "false";
+      const price = parseFloat(req.body.price) || 0.0;
+      const videoUrl = `/uploads/videos/matches/${req.file.filename}`;
+
+      await query(
+        `UPDATE tournament_matches 
+         SET video_url = $1, is_video_public = $2, video_price = $3, updated_at = NOW() 
+         WHERE id = $4`,
+        [videoUrl, isPublic, price, req.params.id],
+      );
+
+      res.json({
+        message: "Video uploaded successfully",
+        videoUrl,
+        isPublic,
+        price,
+      });
+    } catch (err) {
+      console.error("Video upload error:", err);
+      res.status(500).json({ error: "Failed to upload video" });
+    }
+  },
+);
 
 module.exports = router;

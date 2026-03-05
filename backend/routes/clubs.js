@@ -287,13 +287,19 @@ router.post(
         });
       }
 
+      const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "-")
+        .replace(/-+/g, "-");
+
       const result = await query(queries.createClub, [
         name,
+        slug,
         description || null,
         location || null,
         philosophy || null,
         website || null,
-        types,
+        types || ["sports-club"],
         sport || null,
         req.user.id,
         established || new Date().getFullYear().toString(),

@@ -1930,6 +1930,13 @@ class ApiService {
     });
   }
 
+  async recordMatchResult(id, resultData) {
+    return await this.makeRequest(`/events/${id}/results`, {
+      method: "POST",
+      body: JSON.stringify(resultData),
+    });
+  }
+
   async bookEvent(eventId, bookingData = {}) {
     return await this.makeRequest(`/events/${eventId}/book`, {
       method: "POST",
@@ -3829,7 +3836,7 @@ class ApiService {
   }
 
   async updateMatchStats(matchId, payload) {
-    return await this.makeRequest(`/matches/${matchId}/stats`, {
+    return await this.makeRequest(`/tournaments/matches/${matchId}/result`, {
       method: "POST",
       body: JSON.stringify(payload),
     });

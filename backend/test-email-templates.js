@@ -28,7 +28,7 @@ async function runDryTest() {
             email: targetEmail,
             firstName: 'Test User',
             accountType: 'organization',
-            dashboardLink: 'https://clubhubsports.net/admin-dashboard.html'
+            dashboardLink: 'https://clubhubsports.io/admin-dashboard.html'
         });
         console.log('✅ Welcome Email Sent');
         await sleep(2000);
@@ -37,7 +37,7 @@ async function runDryTest() {
         await emailService.sendPasswordResetEmail(
             targetEmail,
             'Test User',
-            'https://clubhubsports.net/reset-password?token=dry-run-token'
+            'https://clubhubsports.io/reset-password?token=dry-run-token'
         );
         console.log('✅ Forgot Password Email Sent');
         await sleep(2000);
@@ -47,7 +47,7 @@ async function runDryTest() {
             email: targetEmail,
             clubName: 'Elite Pro Academy',
             inviterName: 'Coach Carter',
-            inviteLink: 'https://clubhubsports.net/join/test-token',
+            inviteLink: 'https://clubhubsports.io/join/test-token',
             personalMessage: 'Come join us for the new season!',
             clubRole: 'player'
         });
@@ -62,7 +62,7 @@ async function runDryTest() {
             amount: 50.00,
             dueDate: new Date(),
             description: 'Monthly Membership Fee',
-            paymentLink: 'https://clubhubsports.net/pay/test-invoice'
+            paymentLink: 'https://clubhubsports.io/pay/test-invoice'
         });
         console.log('✅ Payment Reminder Email Sent');
 

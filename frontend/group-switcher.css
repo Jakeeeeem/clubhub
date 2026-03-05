@@ -14,7 +14,7 @@
   padding: 0.625rem 1rem;
   background: rgba(255, 255, 255, 0.03);
   border: 1.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 220px;
@@ -24,7 +24,7 @@
 
 .group-switcher-trigger:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(220, 67, 67, 0.4);
+  border-color: rgba(177, 3, 45, 0.3);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -32,7 +32,7 @@
 .group-switcher-trigger.open {
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(220, 67, 67, 0.12), 0 8px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 4px rgba(177, 3, 45, 0.08), 0 8px 16px rgba(0, 0, 0, 0.2);
   transform: translateY(-2px);
 }
 
@@ -51,14 +51,14 @@
 .group-avatar {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--primary) 0%, #ff6b6b 100%);
+  border-radius: 3px;
+  background: linear-gradient(135deg, var(--primary) 0%, rgba(177, 3, 45, 0.8) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(220, 67, 67, 0.3);
+  box-shadow: 0 2px 8px rgba(177, 3, 45, 0.2);
   transition: transform 0.2s ease;
 }
 
@@ -129,7 +129,7 @@
     width: 280px;
     background: #1e1e1e;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    border-radius: 4px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     z-index: 1000;
     opacity: 0;
@@ -172,7 +172,7 @@
   padding: 10px 14px;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border-radius: 2px;
   color: white;
   font-size: 13px;
   transition: all 0.3s ease;
@@ -182,7 +182,7 @@
 .group-switcher-search input:focus {
   border-color: var(--primary);
   background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 0 10px rgba(220, 67, 67, 0.15);
+  box-shadow: 0 0 10px rgba(177, 3, 45, 0.12);
 }
 
 .group-switcher-list {
@@ -198,7 +198,7 @@
   padding: 12px 14px;
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
@@ -211,7 +211,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(220, 67, 67, 0.05), rgba(255, 107, 107, 0.05));
+  background: linear-gradient(135deg, rgba(177, 3, 45, 0.05), rgba(177, 3, 45, 0.02));
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -226,9 +226,9 @@
 }
 
 .group-switcher-item.active {
-  background: linear-gradient(135deg, rgba(220, 67, 67, 0.12), rgba(255, 107, 107, 0.08));
+  background: linear-gradient(135deg, rgba(177, 3, 45, 0.1), rgba(177, 3, 45, 0.06));
   cursor: default;
-  border: 1px solid rgba(220, 67, 67, 0.2);
+  border: 1px solid rgba(177, 3, 45, 0.15);
 }
 
 .group-switcher-item:disabled {
@@ -239,14 +239,14 @@
 .group-item-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--primary), #ff6b6b);
+  border-radius: 3px;
+  background: linear-gradient(135deg, var(--primary), rgba(177, 3, 45, 0.8));
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(220, 67, 67, 0.25);
+  box-shadow: 0 2px 8px rgba(177, 3, 45, 0.2);
   transition: transform 0.2s ease;
   position: relative;
   z-index: 1;
@@ -254,7 +254,7 @@
 
 .group-switcher-item:hover .group-item-avatar {
   transform: scale(1.08);
-  box-shadow: 0 4px 12px rgba(220, 67, 67, 0.35);
+  box-shadow: 0 4px 12px rgba(177, 3, 45, 0.3);
 }
 
 .group-item-avatar img {
@@ -318,7 +318,7 @@
   padding: 12px 14px;
   background: transparent;
   border: 1.5px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;

@@ -397,6 +397,7 @@ router.post(
             ? `Created ${createdEvents.length} recurring events`
             : "Event created successfully",
         events: createdEvents,
+        event: createdEvents[0],
         count: createdEvents.length,
       });
 
@@ -1907,5 +1908,86 @@ router.post("/:id/checkin", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Check-in failed" });
   }
 });
+
+/**
+ * @route   POST /api/events/:id/results
+ * @desc    Record match results (score, result, notes)
+ */
+router.post(
+  "/:id/results",
+  authenticateToken,
+  requireOrganization,
+  [
+    body("homeScore")
+      .isInt({ min: 0 })
+      .withMessage("Home score must be a non-negative number"),
+    body("awayScore")
+      .isInt({ min: 0 })
+      .withMessage("Away score must be a non-negative number"),
+    body("notes").optional().trim(),
+  ],
+  async (req, res) => {
+    const { homeScore, awayScore, notes } = req.body;
+    const eventId = req.params.id;
+
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      // Check if event exists and is a match
+      const eventRes = await query(
+        "SELECT * FROM events WHERE id = $1 AND event_type = 'match'",
+        [eventId],
+      );
+      if (eventRes.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Match not found or not a valid match event type" });
+      }
+
+      // Determine result
+      let matchResult = "draw";
+      if (homeScore > awayScore) matchResult = "win";
+      else if (awayScore > homeScore) matchResult = "loss";
+
+      await withTransaction(async (client) => {
+        // Record result
+        await client.query(
+          `
+                    INSERT INTO match_results (event_id, home_score, away_score, result, match_notes, recorded_by)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    ON CONFLICT (event_id) DO UPDATE SET
+                        home_score = EXCLUDED.home_score,
+                        away_score = EXCLUDED.away_score,
+                        result = EXCLUDED.result,
+                        match_notes = EXCLUDED.match_notes,
+                        recorded_at = NOW()
+                `,
+          [
+            eventId,
+            homeScore,
+            awayScore,
+            matchResult,
+            notes || null,
+            req.user.id,
+          ],
+        );
+
+        // Update event status to completed if needed (implicitly done via having a result)
+      });
+
+      res.json({
+        success: true,
+        message: "Match result recorded successfully",
+        result: matchResult,
+      });
+    } catch (err) {
+      console.error("Record match result error:", err);
+      res.status(500).json({ error: "Failed to record match result" });
+    }
+  },
+);
 
 module.exports = router;
