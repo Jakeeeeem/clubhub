@@ -7,50 +7,114 @@
     <title>Tournament Manager - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="group-switcher.css">
-    <style>
-        .bracket {
-            display: flex;
-            gap: 3rem;
-            overflow-x: auto;
-            padding: 2rem;
-            min-height: 400px;
-        }
+    .bracket {
+    display: flex;
+    gap: 4rem; /* For connector lines */
+    overflow-x: auto;
+    padding: 2rem;
+    min-height: 500px;
+    align-items: stretch; /* vital for tree height */
+    }
 
-        .bracket-round {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            min-width: 200px;
-        }
+    .bracket-round {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 260px;
+    }
 
-        .bracket-match {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            margin: 0.5rem 0;
-        }
+    .bracket-match-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+    padding: 1rem 0;
+    }
 
-        .bracket-team {
-            padding: 0.5rem;
-            margin: 0.25rem 0;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .bracket-match {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    position: relative;
+    z-index: 2; /* keep over lines */
+    }
 
-        .bracket-team.winner {
-            background: rgba(34, 197, 94, 0.1);
-            border-left: 3px solid #22c55e;
-        }
+    /* Horizontal OUT (Right) */
+    .bracket-round:not(:last-child) .bracket-match-wrapper .bracket-match::after {
+    content: '';
+    position: absolute;
+    right: -2rem;
+    top: 50%;
+    height: 2px;
+    width: 2rem;
+    background: var(--primary);
+    z-index: 1;
+    }
 
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1rem;
-            margin: 2rem 0;
-        }
+    /* Horizontal IN (Left) */
+    .bracket-round:not(:first-child) .bracket-match-wrapper .bracket-match::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 50%;
+    height: 2px;
+    width: 2rem;
+    background: var(--primary);
+    z-index: 1;
+    }
+
+    /* Vertical Line forming the "Tree" */
+    .bracket-round:not(:last-child) .bracket-match-wrapper:nth-child(odd)::after {
+    content: '';
+    position: absolute;
+    right: -2rem; /* Aligns with the horizontal match::after */
+    top: 50%;
+    width: 2px;
+    height: 100%; /* Spans exactly to center of next sibling */
+    background: var(--primary);
+    z-index: 1;
+    }
+
+    .bracket-team {
+    padding: 0.75rem;
+    margin: 0.25rem 0;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: grab;
+    transition: all 0.2s;
+    border: 1px dashed transparent;
+    background: rgba(255, 255, 255, 0.02);
+    min-height: 40px; /* Empty slot size */
+    }
+
+    .bracket-team:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .bracket-team.drag-over {
+    border-color: var(--primary) !important;
+    background: rgba(34, 197, 94, 0.1) !important;
+    }
+
+    .drag-source {
+    opacity: 0.5;
+    }
+
+    .bracket-team.winner {
+    background: rgba(34, 197, 94, 0.1) !important;
+    border-left: 3px solid #22c55e !important;
+    }
+
+    .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+    }
     </style>
 </head>
 
@@ -541,28 +605,75 @@
                 return;
             }
 
-            grid.innerHTML = groups.map(group => {
+            const unassignedTeams = teams.filter(t => !t.current_group_id && t.status === 'approved');
+
+            const unassignedHtml = `
+                <div class="card" ondragover="allowDrop(event)" ondrop="dropToUnassigned(event)">
+                    <h3>Unassigned Teams</h3>
+                    <div style="margin: 1rem 0; min-height: 100px; padding: 10px; border: 2px dashed rgba(255,255,255,0.1); border-radius: 8px;" class="group-drop-zone">
+                        ${unassignedTeams.map(t => `<div draggable="true" ondragstart="dragGenericTeam(event, '${t.id}')" style="padding: 0.5rem; background: rgba(255,255,255,0.05); margin: 4px 0; border-radius: 4px; display: flex; justify-content: space-between; cursor: grab;">
+                                <span>⚽ ${t.team_name}</span>
+                            </div>`).join('')}
+                    </div>
+                </div>
+            `;
+
+            grid.innerHTML = unassignedHtml + groups.map(group => {
                 const groupTeams = teams.filter(t => t.current_group_id === group.id);
-                const unassignedTeams = teams.filter(t => !t.current_group_id && t.status === 'approved');
 
                 return `
-                    <div class="card">
+                    <div class="card" ondragover="allowDrop(event)" ondrop="dropToGroup(event, '${group.id}')">
                         <h3>${group.name}</h3>
-                        <div style="margin: 1rem 0; min-height: 100px;">
-                            ${groupTeams.length === 0 ? '<p style="font-size: 0.8rem; color: var(--text-muted);">No teams assigned.</p>' :
-                        groupTeams.map(t => `<div style="padding: 0.5rem; background: rgba(255,255,255,0.05); margin: 2px 0; border-radius: 4px; display: flex; justify-content: space-between;">
+                        <div style="margin: 1rem 0; min-height: 100px; padding: 10px; border: 2px dashed rgba(255,255,255,0.1); border-radius: 8px;" class="group-drop-zone">
+                            ${groupTeams.length === 0 ? '<p style="font-size: 0.8rem; color: var(--text-muted);">Drag teams here.</p>' :
+                        groupTeams.map(t => `<div draggable="true" ondragstart="dragGenericTeam(event, '${t.id}')" style="padding: 0.5rem; background: rgba(255,255,255,0.05); margin: 4px 0; border-radius: 4px; display: flex; justify-content: space-between; cursor: grab;">
                                     <span>${t.team_name}</span>
                                     <button onclick="unassignTeam('${t.id}')" style="background:none; border:none; cursor:pointer;">❌</button>
                                 </div>`).join('')
                     }
                         </div>
-                        <select onchange="assignTeamToGroup(this.value, '${group.id}')" style="width: 100%; padding: 0.5rem;">
-                            <option value="">+ Add Team to Group</option>
-                            ${unassignedTeams.map(t => `<option value="${t.id}">${t.team_name}</option>`).join('')}
-                        </select>
                     </div>
                 `;
             }).join('');
+        }
+
+        /* Drag & Drop Standard Methods */
+        function allowDrop(event) {
+            event.preventDefault();
+            const target = event.currentTarget;
+            if (target.classList.contains('bracket-team')) {
+                target.classList.add('drag-over');
+            } else if (target.querySelector('.group-drop-zone')) {
+                const zone = target.querySelector('.group-drop-zone');
+                zone.style.borderColor = 'var(--primary)';
+            }
+        }
+
+        function removeDragHover(event) {
+            const target = event.currentTarget;
+            if (target.classList.contains('bracket-team')) {
+                target.classList.remove('drag-over');
+            } else if (target.querySelector('.group-drop-zone')) {
+                const zone = target.querySelector('.group-drop-zone');
+                zone.style.borderColor = 'rgba(255,255,255,0.1)';
+            }
+        }
+
+        function dragGenericTeam(event, teamId) {
+            event.dataTransfer.setData("teamId", teamId);
+            event.target.classList.add('drag-source');
+        }
+
+        async function dropToGroup(event, groupId) {
+            event.preventDefault();
+            const teamId = event.dataTransfer.getData("teamId");
+            if (teamId) await assignTeamToGroup(teamId, groupId);
+        }
+
+        async function dropToUnassigned(event) {
+            event.preventDefault();
+            const teamId = event.dataTransfer.getData("teamId");
+            if (teamId) await unassignTeam(teamId);
         }
 
         async function createGroup() {
@@ -859,21 +970,79 @@
                 .sort(([a], [b]) => parseInt(a) - parseInt(b))
                 .map(([round, roundMatches]) => `
                     <div class="bracket-round">
-                        <h3 style="text-align: center; margin-bottom: 1rem;">Round ${round}</h3>
+                        <h3 style="text-align: center; margin-bottom: 2rem; color: var(--primary);">Round ${round}</h3>
                         ${roundMatches.map(match => `
-                            <div class="bracket-match">
-                                <div class="bracket-team ${match.home_score > match.away_score ? 'winner' : ''}">
-                                    <span>${match.home_team_name || 'TBD'}</span>
-                                    <strong>${match.home_score !== null ? match.home_score : '-'}</strong>
-                                </div>
-                                <div class="bracket-team ${match.away_score > match.home_score ? 'winner' : ''}">
-                                    <span>${match.away_team_name || 'TBD'}</span>
-                                    <strong>${match.away_score !== null ? match.away_score : '-'}</strong>
+                            <div class="bracket-match-wrapper">
+                                <div class="bracket-match">
+                                    <div class="bracket-team ${match.home_score !== null && match.home_score > match.away_score ? 'winner' : ''}"
+                                        draggable="true" 
+                                        ondragstart="dragBracketTeam(event, '${match.id}', 'home', '${match.home_team_id}')"
+                                        ondragover="allowDrop(event)"
+                                        ondragleave="removeDragHover(event)"
+                                        ondrop="dropBracketTeam(event, '${match.id}', 'home')">
+                                        <span>${match.home_team_name || 'TBD'}</span>
+                                        <strong>${match.home_score !== null ? match.home_score : '-'}</strong>
+                                    </div>
+                                    <div class="bracket-team ${match.away_score !== null && match.away_score > match.home_score ? 'winner' : ''}"
+                                        draggable="true" 
+                                        ondragstart="dragBracketTeam(event, '${match.id}', 'away', '${match.away_team_id}')"
+                                        ondragover="allowDrop(event)"
+                                        ondragleave="removeDragHover(event)"
+                                        ondrop="dropBracketTeam(event, '${match.id}', 'away')">
+                                        <span>${match.away_team_name || 'TBD'}</span>
+                                        <strong>${match.away_score !== null ? match.away_score : '-'}</strong>
+                                    </div>
+                                    <div style="position:absolute; right: -25px; top: 10px; cursor: pointer; color: var(--text-muted); font-size: 0.8rem;" onclick="openScoreModal('${match.id}', '${match.home_team_name || 'TBD'}', '${match.away_team_name || 'TBD'}')">✏️</div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 `).join('');
+        }
+
+        function dragBracketTeam(event, matchId, position, teamId) {
+            if (!teamId || teamId === 'null') {
+                event.preventDefault();
+                return;
+            }
+            event.dataTransfer.setData("sourceMatchId", matchId);
+            event.dataTransfer.setData("sourcePosition", position);
+            event.dataTransfer.setData("teamId", teamId);
+            event.target.classList.add('drag-source');
+        }
+
+        async function dropBracketTeam(event, targetMatchId, targetPosition) {
+            event.preventDefault();
+            removeDragHover(event);
+
+            const sourceMatchId = event.dataTransfer.getData("sourceMatchId");
+            const sourcePosition = event.dataTransfer.getData("sourcePosition");
+            const teamId = event.dataTransfer.getData("teamId");
+
+            if (!teamId || teamId === 'null') return;
+
+            // If dragged onto itself or target match is not defined
+            if (sourceMatchId === targetMatchId && sourcePosition === targetPosition) return;
+
+            try {
+                // Assign team to new slot
+                await apiService.makeRequest(`/tournaments/matches/${targetMatchId}/assign-team`, {
+                    method: 'POST',
+                    body: JSON.stringify({ teamId, position: targetPosition })
+                });
+
+                // Clear from previous slot
+                if (sourceMatchId) {
+                    await apiService.makeRequest(`/tournaments/matches/${sourceMatchId}/assign-team`, {
+                        method: 'POST',
+                        body: JSON.stringify({ teamId: null, position: sourcePosition })
+                    });
+                }
+
+                loadTournament();
+            } catch (err) {
+                alert("Failed to swap team slot.");
+            }
         }
 
         function showTab(tabName) {

@@ -735,6 +735,37 @@ router.post(
 );
 
 /**
+ * @route   POST /api/tournaments/matches/:id/assign-team
+ * @desc    Assign team to a specific match slot (Drag & Drop)
+ */
+router.post(
+  "/matches/:id/assign-team",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    const { teamId, position } = req.body; // position: 'home' or 'away'
+    try {
+      if (position !== "home" && position !== "away") {
+        return res
+          .status(400)
+          .json({ error: "Position must be 'home' or 'away'" });
+      }
+      const field = position === "home" ? "home_team_id" : "away_team_id";
+
+      // Allow dragging "unassigned" to effectively clear the slot if teamId is null
+      await query(`UPDATE tournament_matches SET ${field} = $1 WHERE id = $2`, [
+        teamId || null,
+        req.params.id,
+      ]);
+      res.json({ message: "Team assigned to match" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to assign team to match" });
+    }
+  },
+);
+
+/**
  * @route   GET /api/tournaments/:id/bracket
  * @desc    Get structured bracket data for visualization/printing
  */
