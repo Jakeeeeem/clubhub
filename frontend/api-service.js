@@ -870,6 +870,18 @@ class ApiService {
           };
         }
 
+        if (endpoint.includes("/tournaments")) {
+          return {
+            success: true,
+            id: "mock_t_" + Date.now(),
+            message: "Tournament action mocked in demo mode",
+            tournament: { id: "mock_t_" + Date.now(), name: "Demo Tournament" },
+            bracket: [],
+            pitches: [],
+            standings: [],
+          };
+        }
+
         // For other requests in demo mode, optionally skip or return fallback
         console.warn(
           `🛡️ Demo mode: No mock data for ${endpoint}, allowing real request but it might 403`,

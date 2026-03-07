@@ -1,4 +1,4 @@
-const CACHE_NAME = "clubhub-v2";
+const CACHE_NAME = "clubhub-v3";
 const urlsToCache = [
   "/",
   "/index.html",
