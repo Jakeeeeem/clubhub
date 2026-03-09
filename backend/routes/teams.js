@@ -825,17 +825,21 @@ router.get("/:id/stats", authenticateToken, async (req, res) => {
     const playerStats = await query(
       `
       SELECT 
+        p.id,
         p.first_name,
         p.last_name,
         tp.position,
         COUNT(pr.id) as matches_played,
-        AVG(pr.rating) as average_rating
+        AVG(pr.rating) as average_rating,
+        SUM(COALESCE(pr.goals, 0)) as total_goals,
+        SUM(COALESCE(pr.assists, 0)) as total_assists,
+        SUM(COALESCE(pr.minutes_played, 0)) as total_minutes
       FROM players p
       JOIN team_players tp ON p.id = tp.player_id
       LEFT JOIN player_ratings pr ON p.id = pr.player_id
       WHERE tp.team_id = $1
       GROUP BY p.id, p.first_name, p.last_name, tp.position
-      ORDER BY average_rating DESC NULLS LAST
+      ORDER BY total_goals DESC, average_rating DESC NULLS LAST
     `,
       [teamId],
     );

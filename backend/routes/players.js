@@ -1378,4 +1378,58 @@ router.delete(
   },
 );
 
+// GET player stats
+router.get("/:id/stats", authenticateToken, async (req, res) => {
+  try {
+    const playerId = req.params.id;
+
+    const statsResult = await query(
+      `SELECT 
+         COUNT(pr.id) as matches_played,
+         SUM(COALESCE(pr.goals, 0)) as total_goals,
+         SUM(COALESCE(pr.assists, 0)) as total_assists,
+         SUM(COALESCE(pr.minutes_played, 0)) as total_minutes,
+         AVG(pr.rating) as average_rating
+       FROM player_ratings pr
+       WHERE pr.player_id = $1`,
+      [playerId],
+    );
+
+    res.json(
+      statsResult.rows[0] || {
+        matches_played: 0,
+        total_goals: 0,
+        total_assists: 0,
+        total_minutes: 0,
+        average_rating: 0,
+      },
+    );
+  } catch (error) {
+    console.error("Get player stats error:", error);
+    res.status(500).json({ error: "Failed to fetch player stats" });
+  }
+});
+
+// GET player activities
+router.get("/:id/activities", authenticateToken, async (req, res) => {
+  try {
+    const playerId = req.params.id;
+
+    const result = await query(
+      `SELECT pa.*, e.title as event_title, e.event_date
+       FROM player_activities pa
+       LEFT JOIN events e ON pa.event_id = e.id
+       WHERE pa.player_id = $1
+       ORDER BY pa.created_at DESC
+       LIMIT 20`,
+      [playerId],
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Get player activities error:", error);
+    res.status(500).json({ error: "Failed to fetch player activities" });
+  }
+});
+
 module.exports = router;

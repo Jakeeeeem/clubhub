@@ -1884,6 +1884,24 @@ class ApiService {
     }
   }
 
+  async getPlayerStats(id) {
+    try {
+      return await this.makeRequest(`/players/${id}/stats`);
+    } catch (error) {
+      console.error("❌ Failed to fetch player stats:", error);
+      throw error;
+    }
+  }
+
+  async getPlayerActivities(id) {
+    try {
+      return await this.makeRequest(`/players/${id}/activities`);
+    } catch (error) {
+      console.error("❌ Failed to fetch player activities:", error);
+      throw error;
+    }
+  }
+
   async createPlayer(playerData) {
     return await this.makeRequest("/players", {
       method: "POST",
@@ -2101,11 +2119,40 @@ class ApiService {
     }
   }
 
+  async nudgePlayers(eventId) {
+    try {
+      return await this.makeRequest(`/events/${eventId}/nudge`, {
+        method: "POST",
+      });
+    } catch (error) {
+      console.error("❌ Failed to nudge players:", error);
+      throw error;
+    }
+  }
+
   async overrideAvailability(eventId, playerId, availability, notes = null) {
     return await this.makeRequest(`/events/${eventId}/availability/override`, {
       method: "POST",
       body: JSON.stringify({ playerId, availability, notes }),
     });
+  }
+
+  async getTeamStats(teamId) {
+    try {
+      return await this.makeRequest(`/teams/${teamId}/stats`);
+    } catch (error) {
+      console.error("❌ Failed to fetch team stats:", error);
+      throw error;
+    }
+  }
+
+  async getEventRoster(eventId) {
+    try {
+      return await this.makeRequest(`/events/${eventId}/roster`);
+    } catch (error) {
+      console.error("❌ Failed to fetch event roster:", error);
+      throw error;
+    }
   }
 
   async recordMatchResult(eventId, resultData) {

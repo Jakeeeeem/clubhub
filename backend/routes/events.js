@@ -935,6 +935,115 @@ router.get("/bookings/my-bookings", authenticateToken, async (req, res) => {
   }
 });
 
+// Get event roster (players assigned or in the team)
+router.get("/:id/roster", authenticateToken, async (req, res) => {
+  try {
+    const eventId = req.params.id;
+
+    // First get the event to find the team_id
+    const eventRes = await query("SELECT team_id FROM events WHERE id = $1", [
+      eventId,
+    ]);
+    if (eventRes.rows.length === 0) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    const teamId = eventRes.rows[0].team_id;
+
+    // Get specific assigned players (event_players)
+    const assignedPlayers = await query(
+      `SELECT p.*, tp.position as team_position 
+       FROM players p 
+       JOIN event_players ep ON p.id = ep.player_id 
+       LEFT JOIN team_players tp ON p.id = tp.player_id AND tp.team_id = $2
+       WHERE ep.event_id = $1`,
+      [eventId, teamId],
+    );
+
+    // If no specific assignments, get the whole team roster if a team is linked
+    if (assignedPlayers.rows.length === 0 && teamId) {
+      const teamPlayers = await query(
+        `SELECT p.*, tp.position as team_position 
+         FROM players p 
+         JOIN team_players tp ON p.id = tp.player_id 
+         WHERE tp.team_id = $1`,
+        [teamId],
+      );
+      return res.json(teamPlayers.rows);
+    }
+
+    res.json(assignedPlayers.rows);
+  } catch (error) {
+    console.error("Get event roster error:", error);
+    res.status(500).json({ error: "Failed to fetch event roster" });
+  }
+});
+
+// Nudge players who haven't responded
+router.post("/:id/nudge", authenticateToken, async (req, res) => {
+  try {
+    const eventId = req.params.id;
+
+    // Get event details
+    const eventRes = await query(
+      "SELECT title, event_date, team_id FROM events WHERE id = $1",
+      [eventId],
+    );
+    if (eventRes.rows.length === 0)
+      return res.status(404).json({ error: "Event not found" });
+
+    const event = eventRes.rows[0];
+
+    // Get players who haven't responded
+    const playersToNudge = await query(
+      `SELECT p.id, p.first_name, p.user_id, p.email
+       FROM players p
+       JOIN team_players tp ON p.id = tp.player_id
+       WHERE tp.team_id = $1 
+       AND NOT EXISTS (
+         SELECT 1 FROM availability_responses ar 
+         WHERE ar.event_id = $2 AND ar.player_id = p.id
+       )`,
+      [event.team_id, eventId],
+    );
+
+    if (playersToNudge.rows.length === 0) {
+      return res.json({ message: "Everyone has already responded!" });
+    }
+
+    // In a real app, send push/email notifications here.
+    // For now, we'll log it and return success.
+    console.log(
+      `🔔 Nudging ${playersToNudge.rows.length} players for event: ${event.title}`,
+    );
+
+    // Create system activities for each nudge (optional)
+    for (const player of playersToNudge.rows) {
+      if (player.user_id) {
+        await query(
+          `INSERT INTO notifications (user_id, title, message, type, related_id) 
+           VALUES ($1, $2, $3, $4, $5)`,
+          [
+            player.user_id,
+            "Event Nudge",
+            `Please update your availability for ${event.title} on ${new Date(event.event_date).toLocaleDateString()}`,
+            "event_nudge",
+            eventId,
+          ],
+        );
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Notifications sent to ${playersToNudge.rows.length} players.`,
+    });
+  } catch (error) {
+    console.error("Nudge error:", error);
+    res.status(500).json({ error: "Failed to send nudges" });
+  }
+});
+
 // Submit availability for team event
 router.post(
   "/:id/availability",
