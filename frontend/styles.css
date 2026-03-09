@@ -4691,3 +4691,119 @@ input:focus + .toggle-slider {
 #tournamentBracketVisual::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
 }
+
+/* ====================================================
+   APP-LIKE NAVIGATION LAYOUT (Mobile/Bottom Nav & Top Tabs)
+   ==================================================== */
+
+.app-top-tabs-container {
+    display: none;
+    position: fixed;
+    top: 80px; /* Right below header */
+    left: 0;
+    width: 100%;
+    background: var(--bg-nav);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 990;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 1rem;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.app-top-tabs-container::-webkit-scrollbar {
+    display: none;
+}
+
+.top-app-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 1rem 0.5rem;
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+}
+
+.top-app-tab.active {
+    color: var(--text-main);
+}
+
+.top-app-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 3px 3px 0 0;
+}
+
+.app-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--bg-nav);
+    backdrop-filter: var(--glass-blur);
+    border-top: 1px solid var(--border-color);
+    z-index: 1000;
+    justify-content: space-around;
+    padding: 0.5rem 0;
+    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+}
+
+.app-bottom-nav .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 500;
+    gap: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+}
+
+.app-bottom-nav .nav-item .icon {
+    font-size: 1.4rem;
+    transition: transform 0.2s ease;
+}
+
+.app-bottom-nav .nav-item.active {
+    color: var(--primary);
+}
+
+.app-bottom-nav .nav-item.active .icon {
+    transform: translateY(-2px);
+}
+
+@media (max-width: 900px) {
+    .dashboard-nav-grouped.desktop-only {
+        display: none !important;
+    }
+
+    .app-top-tabs-container {
+        display: flex;
+    }
+
+    .app-bottom-nav {
+        display: flex;
+    }
+
+    /* Adjust main content layout when app nav is active */
+    .dashboard-content {
+        margin-top: 50px; /* Space for top tabs */
+        padding-bottom: 80px; /* Space for bottom nav */
+    }
+}

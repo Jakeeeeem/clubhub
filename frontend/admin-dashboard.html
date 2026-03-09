@@ -277,6 +277,34 @@
                 </div>
             </div>
 
+            <!-- App Mode Navigation (Mobile/App View) -->
+            <div class="app-top-tabs-container" id="appTopTabs">
+                <!-- Horizontally Scrollable Tabs -->
+            </div>
+
+            <div class="app-bottom-nav" id="appBottomNav">
+                <button class="nav-item active" onclick="switchAppNav('home')">
+                    <span class="icon">🏠</span>
+                    <span>Home</span>
+                </button>
+                <button class="nav-item" onclick="switchAppNav('management')">
+                    <span class="icon">👥</span>
+                    <span>Team</span>
+                </button>
+                <button class="nav-item" onclick="switchAppNav('operations')">
+                    <span class="icon">📅</span>
+                    <span>Calendar</span>
+                </button>
+                <button class="nav-item" onclick="switchAppNav('growth')">
+                    <span class="icon">🚀</span>
+                    <span>Growth</span>
+                </button>
+                <button class="nav-item" onclick="switchAppNav('finance')">
+                    <span class="icon">💷</span>
+                    <span>More</span>
+                </button>
+            </div>
+
             <div class="dashboard-content">
                 <!-- Overview Section -->
                 <div id="overview" class="dashboard-section active">
@@ -548,7 +576,7 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <h3>⚽ Team Management</h3>
-                            <button class="btn btn-primary" onclick="showModal('addTeamModal')">➕ Create
+                            <button class="btn btn-primary" onclick="openAddTeamModal()">➕ Create
                                 Team</button>
                         </div>
 
@@ -1565,6 +1593,19 @@
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="teamCoach">Assigned Coach</label>
+                        <select id="teamCoach">
+                            <option value="">Select coach...</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="teamJotform">Jotform Link</label>
+                        <input type="url" id="teamJotform" placeholder="https://form.jotform.com/...">
+                    </div>
+
                     <div class="form-group full-width">
                         <label for="teamDescription">Description</label>
                         <textarea id="teamDescription" rows="3"
@@ -1622,6 +1663,18 @@
                             <option value="Adult">Adult</option>
                             <option value="Veterans">Veterans</option>
                         </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTeamCoach">Assigned Coach</label>
+                        <select id="editTeamCoach">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editTeamJotform">Jotform Link</label>
+                        <input type="url" id="editTeamJotform" placeholder="https://form.jotform.com/...">
                     </div>
 
                     <div class="form-group full-width">
@@ -4694,7 +4747,7 @@
 
             try {
                 showLoading(true);
-                await apiService.makeRequest(`/clubs/applications/${applicationId}/review`, {
+                const result = await apiService.makeRequest(`/clubs/applications/${applicationId}/review`, {
                     method: 'POST',
                     body: JSON.stringify({
                         decision: 'approved',
@@ -4708,6 +4761,10 @@
                 await loadClubApplications();
                 if (typeof loadPlayers === 'function') {
                     await loadPlayers();
+                }
+
+                if (result && result.player_id) {
+                    setTimeout(() => showPlayerTeamAssignment(result.player_id), 500);
                 }
 
             } catch (error) {
@@ -4989,6 +5046,15 @@
             }
         }
 
+        function openAddTeamModal() {
+            const select = document.getElementById('teamCoach');
+            if (select) {
+                select.innerHTML = '<option value="">Select coach...</option>' +
+                    (AppState.staff || []).map(s => `<option value="${s.id}">${s.first_name} ${s.last_name} (${s.role || 'Coach'})</option>`).join('');
+            }
+            showModal('addTeamModal');
+        }
+
         async function editTeam(teamId) {
             console.log('Editing team:', teamId);
             try {
@@ -5000,6 +5066,9 @@
                 document.getElementById('editTeamSport').value = team.sport || '';
                 document.getElementById('editTeamAgeGroup').value = team.age_group || '';
                 document.getElementById('editTeamDescription').value = team.description || '';
+                document.getElementById('editTeamCoach').innerHTML = '<option value="">Select coach...</option>' +
+                    (AppState.staff || []).map(s => `<option value="${s.id}" ${team.coach_id === s.id ? 'selected' : ''}>${s.first_name} ${s.last_name} (${s.role || 'Coach'})</option>`).join('');
+                document.getElementById('editTeamJotform').value = team.jotform_link || '';
 
                 showModal('editTeamModal');
             } catch (error) {
@@ -5017,7 +5086,9 @@
                 name: document.getElementById('editTeamName').value,
                 sport: document.getElementById('editTeamSport').value,
                 ageGroup: document.getElementById('editTeamAgeGroup').value,
-                description: document.getElementById('editTeamDescription').value
+                description: document.getElementById('editTeamDescription').value,
+                coach_id: document.getElementById('editTeamCoach').value || null,
+                jotform_link: document.getElementById('editTeamJotform').value || null
             };
 
             try {
@@ -5525,6 +5596,8 @@
                 ageGroup: document.getElementById('teamAgeGroup').value,
                 sport: document.getElementById('teamSport').value,
                 description: document.getElementById('teamDescription').value,
+                coach_id: document.getElementById('teamCoach').value || null,
+                jotform_link: document.getElementById('teamJotform').value || null,
                 groupId: groupId
             };
 
@@ -6042,6 +6115,7 @@
                                     </td>
                                     <td>
                                         <div class="action-buttons" onclick="event.stopPropagation()">
+                                            <button class="btn-icon stats" title="Assign Team" onclick="showPlayerTeamAssignment('${player.id}')">🛡️</button>
                                             <button class="btn-icon manage" title="Manage Plans" onclick="assignPaymentPlan('${player.id}')">💳</button>
                                             <button class="btn-icon edit" title="Edit Player" onclick="editPlayer('${player.id}')">✏️</button>
                                             <button class="btn-icon delete" title="Remove Player" onclick="removePlayer('${player.id}')">🗑️</button>
@@ -7182,6 +7256,70 @@
                 }
             }, duration);
         }
+
+        // --- APP NAVIGATION LOGIC (Mobile UI) ---
+        const appNavStructure = {
+            'home': [
+                { label: 'Overview', section: 'overview' },
+                { label: 'Group Profile', section: 'group-profile' }
+            ],
+            'management': [
+                { label: 'Players', section: 'players' },
+                { label: 'Groups', section: 'teams' },
+                { label: 'Staff', section: 'staff' },
+                { label: 'Talent ID', section: 'talent-id' }
+            ],
+            'operations': [
+                { label: 'Events', section: 'events' },
+                { label: 'Tournaments', section: 'tournaments' },
+                { label: 'Training', action: () => window.location.href = 'training-manager.html' },
+                { label: 'Camps', action: () => window.location.href = 'camp-manager.html' }
+            ],
+            'growth': [
+                { label: 'Listings', section: 'listings' },
+                { label: 'Scouting', action: () => window.location.href = 'scouting.html' },
+                { label: 'Marketing', section: 'marketing' },
+                { label: 'Emails', section: 'email-campaigns' },
+                { label: 'Polls', section: 'polls-section' }
+            ],
+            'finance': [
+                { label: 'Finances', section: 'finances' },
+                { label: 'Shop', section: 'shop' },
+                { label: 'Forms', action: () => window.location.href = 'form-builder.html' },
+                { label: 'Settings', action: () => { localStorage.setItem('lastDashboard', 'admin-dashboard.html'); window.location.href = 'player-settings.html'; } }
+            ]
+        };
+
+        function switchAppNav(navId) {
+            // Update bottom active status
+            document.querySelectorAll('#appBottomNav .nav-item').forEach(btn => btn.classList.remove('active'));
+            const clickedBottomBtn = document.querySelector(`#appBottomNav .nav-item[onclick="switchAppNav('${navId}')"]`);
+            if (clickedBottomBtn) clickedBottomBtn.classList.add('active');
+
+            // Render top tabs
+            const topTabsContainer = document.getElementById('appTopTabs');
+            if (!topTabsContainer) return;
+            const tabs = appNavStructure[navId] || [];
+
+            topTabsContainer.innerHTML = tabs.map((tab, index) => {
+                const actionCall = tab.action ? `(${tab.action.toString()})()` : `showSection('${tab.section}')`;
+                // Add click handler to make tab active visually
+                return `<button class="top-app-tab ${index === 0 ? 'active' : ''}" onclick="document.querySelectorAll('.top-app-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active'); ${actionCall}">${tab.label}</button>`;
+            }).join('');
+
+            // Automatically click the first tab to show its section
+            const firstTabBtn = topTabsContainer.querySelector('.top-app-tab');
+            if (firstTabBtn) {
+                firstTabBtn.click();
+            }
+        }
+
+        // Auto-initialize the default app nav on load (e.g. home) if mobile view
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth <= 900 && document.getElementById('appBottomNav')) {
+                setTimeout(() => switchAppNav('home'), 100);
+            }
+        });
 
         // Enhanced showSection function
         function showSection(sectionId) {
