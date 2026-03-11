@@ -7917,14 +7917,11 @@
             if (sectionId === 'marketing-hub') finalId = 'marketing';
             if (sectionId === 'item-shop') finalId = 'shop';
             if (sectionId === 'tactical-board') {
-                finalId = 'tactical-board';
                 if (typeof initializeTacticalBoard === 'function') {
                     initializeTacticalBoard();
                 }
             }
-            if (sectionId === 'club-feed') {
-                loadClubFeed();
-            }
+
             if (sectionId === 'club-messenger') {
                 loadMessengerConversations();
             }
@@ -7954,7 +7951,6 @@
                     fallbackSection.classList.add('active');
                     fallbackSection.style.display = 'block';
                 }
-                return;
             }
 
             // Sync with Mobile Tabs and Bottom Nav
@@ -13450,6 +13446,9 @@
                 registerSectionLoader('training-hub', loadAdminDrillLibrary);
             }
         </script>
+    </div> <!-- End .dashboard-content -->
+    </div> <!-- End .dashboard-container -->
+    </main>
 </body>
 
 </html>

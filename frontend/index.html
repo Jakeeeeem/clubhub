@@ -49,15 +49,47 @@
     </header>
 
     <main class="main home-main">
-        <!-- Unified Home Dashboard Hero -->
-        <section class="welcome-hero" style="padding-bottom: 2rem;">
+        <!-- Premium Landing Hero (Visible when logged out) -->
+        <section class="welcome-hero landing-hero" id="landingHero">
+            <div class="container welcome-container" style="padding: 10rem 2rem 6rem; text-align: center;">
+                <div style="position: relative; z-index: 2;">
+                    <span class="badge"
+                        style="background: rgba(220, 38, 38, 0.1); color: var(--primary); padding: 0.5rem 1rem; border-radius: 100px; font-size: 0.85rem; font-weight: 700; border: 1px solid rgba(220, 38, 38, 0.2); margin-bottom: 2rem; display: inline-block; text-transform: uppercase; letter-spacing: 1px;">
+                        The New Standard in Sports Tech</span>
+                    <h1 class="hero-title"
+                        style="font-size: clamp(2.5rem, 8vw, 5rem); line-height: 1.05; font-weight: 900; margin-bottom: 1.5rem; letter-spacing: -2px; font-family: 'Outfit';">
+                        The Complete Ecosystem for <br>
+                        <span
+                            style="background: linear-gradient(135deg, var(--primary) 0%, #ff4d4d 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Grassroots
+                            Sport</span>
+                    </h1>
+                    <p class="hero-subtitle"
+                        style="font-size: 1.25rem; color: var(--text-muted); max-width: 800px; margin: 0 auto 3rem; line-height: 1.6;">
+                        Connecting players, parents, coaches and groups on a single professional platform.
+                        Recruit talent, manage schedules, and automate payments with ease.
+                    </p>
+                    <div class="cta-group" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn btn-primary btn-large" onclick="showSignupOptions()"
+                            style="padding: 1.25rem 3rem; font-size: 1.1rem; border-radius: 100px;">Get Started For
+                            Free</button>
+                        <button class="btn btn-secondary btn-large"
+                            onclick="document.getElementById('benefits').scrollIntoView({behavior: 'smooth'})"
+                            style="padding: 1.25rem 3rem; font-size: 1.1rem; border-radius: 100px;">Explore
+                            Features</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Hero (Hidden by default, shown by JS when logged in) -->
+        <section class="welcome-hero dashboard-hero" id="dashboardHero" style="display: none; padding-bottom: 2rem;">
             <div class="container">
                 <div class="dashboard-home-grid"
                     style="display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 2rem;">
 
                     <!-- Top Hero Card: Next Match -->
                     <div class="glass-panel next-match-hero"
-                        style="padding: 2.5rem; text-align: center; position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(106, 92, 255, 0.1), rgba(0, 209, 255, 0.05));">
+                        style="padding: 2.5rem; text-align: center; position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(106, 92, 255, 0.1), rgba(0, 209, 255, 0.05)); border: 1px solid rgba(255,255,255,0.05);">
                         <div
                             style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px; color: var(--accent-cyan); margin-bottom: 1rem; font-weight: 700;">
                             Next Match</div>
@@ -88,16 +120,19 @@
                         <h3 style="font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 1.5rem;">Quick
                             Actions</h3>
                         <div class="quick-actions-grid"
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
-                            <div class="quick-action-btn accent-purple">
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1.5rem;">
+                            <div class="quick-action-btn accent-purple"
+                                onclick="window.location.href='player-dashboard.html'">
                                 <div class="icon-wrapper">📊</div>
                                 <span>Stats</span>
                             </div>
-                            <div class="quick-action-btn accent-cyan">
+                            <div class="quick-action-btn accent-cyan"
+                                onclick="window.location.href='training-manager.html'">
                                 <div class="icon-wrapper">🏃</div>
                                 <span>Training</span>
                             </div>
-                            <div class="quick-action-btn accent-red">
+                            <div class="quick-action-btn accent-red"
+                                onclick="window.location.href='player-dashboard.html?section=messages'">
                                 <div class="icon-wrapper">💬</div>
                                 <span>Messages</span>
                             </div>
@@ -105,11 +140,13 @@
                                 <div class="icon-wrapper">🎥</div>
                                 <span>Match Video</span>
                             </div>
-                            <div class="quick-action-btn accent-cyan">
+                            <div class="quick-action-btn accent-cyan"
+                                onclick="window.location.href='player-dashboard.html?section=overview'">
                                 <div class="icon-wrapper">⚡</div>
                                 <span>Performance</span>
                             </div>
-                            <div class="quick-action-btn accent-red">
+                            <div class="quick-action-btn accent-red"
+                                onclick="window.location.href='player-dashboard.html?section=teams'">
                                 <div class="icon-wrapper">👥</div>
                                 <span>Teams</span>
                             </div>
@@ -751,9 +788,20 @@
         document.addEventListener('DOMContentLoaded', function () {
             console.log('ClubHub landing page loaded');
 
+            const landingHero = document.getElementById('landingHero');
+            const dashboardHero = document.getElementById('dashboardHero');
+
             // Check if enhanced login handler exists
             if (typeof checkAuthStatus === 'function') {
-                checkAuthStatus();
+                checkAuthStatus().then(isLoggedIn => {
+                    if (isLoggedIn) {
+                        if (landingHero) landingHero.style.display = 'none';
+                        if (dashboardHero) dashboardHero.style.display = 'block';
+                    } else {
+                        if (landingHero) landingHero.style.display = 'block';
+                        if (dashboardHero) dashboardHero.style.display = 'none';
+                    }
+                });
                 console.log('Enhanced login handler detected');
             } else {
                 console.log('Enhanced login handler not found - basic functionality only');
