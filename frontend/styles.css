@@ -3733,59 +3733,71 @@ input:focus + .toggle-slider {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .header {
         height: auto;
-        min-height: 70px;
-        padding: 0.5rem 0;
+        min-height: 56px;
+        padding: 0.4rem 0;
+        position: fixed;
     }
     
     .header .nav {
-        flex-direction: row; /* Keep logo and user-info in a row but wrap if needed */
+        flex-direction: row;
         flex-wrap: wrap;
         gap: 0.5rem;
         justify-content: space-between;
-        padding: 0 1rem;
+        padding: 0 0.75rem;
+        align-items: center;
     }
 
     .logo {
-        font-size: 1.3rem;
+        font-size: 1.1rem;
+        flex: 1;
+        min-width: 100px;
     }
 
     .logo-image {
-        height: 32px;
-        width: 32px;
-    }
-
-    .user-info {
-        gap: 0.5rem;
-    }
-
-    #adminNameDisplay {
-        display: none; /* Hide 'Hello, Admin' on mobile to save space */
-    }
-
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 0.8rem;
+        height: 24px;
+        width: 24px;
     }
 
     .mode-toggle-container {
-        order: 3; /* Move mode toggle to second row */
-        width: 100%;
-        justify-content: center;
-        background: rgba(255,255,255,0.03);
-        padding: 0.5rem;
+        order: 2;
+        margin-top: 0;
+        background: rgba(255,255,255,0.05);
+        padding: 0.25rem 0.5rem;
         border-radius: 50px;
+        scale: 0.8;
+    }
+
+    .user-info {
+        order: 3;
+        width: 100%;
+        gap: 0.5rem;
+        justify-content: space-between;
+        padding: 0.4rem 0.5rem 0.2rem 0.5rem;
+        border-top: 1px solid rgba(255,255,255,0.05);
         margin-top: 0.25rem;
     }
 
-    .nav-buttons {
-        gap: 0.5rem;
-        justify-content: flex-end;
+    #adminNameDisplay {
+        display: none;
     }
 
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+
+    .nav-buttons {
+        gap: 0.4rem;
+    }
+
+    /* Mobile Navigation Refinement */
+    .app-top-tabs {
+        padding: 0.4rem 0;
+    }
     /* Dashboard Header Refinement */
     .dashboard-header {
         padding: 1.5rem 1rem;
@@ -3824,11 +3836,6 @@ input:focus + .toggle-slider {
 
     .stat-label {
         font-size: 0.7rem !important;
-    }
-
-    /* Mobile Navigation Refinement */
-    .app-top-tabs {
-        padding: 0.5rem 0;
     }
 }
 
@@ -4770,7 +4777,7 @@ input:focus + .toggle-slider {
 .app-top-tabs-container {
     display: none;
     position: fixed;
-    top: 80px; /* Right below header */
+    top: 80px; /* Base for desktop/large mobile */
     left: 0;
     width: 100%;
     background: var(--bg-nav);
@@ -4783,6 +4790,12 @@ input:focus + .toggle-slider {
     padding: 0 1rem;
     align-items: center;
     gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .app-top-tabs-container {
+        top: 100px; /* Offset for multi-row mobile header */
+    }
 }
 
 .app-top-tabs-container::-webkit-scrollbar {
@@ -4874,8 +4887,13 @@ input:focus + .toggle-slider {
 
     /* Adjust main content layout when app nav is active */
     .dashboard-content {
-        margin-top: 50px; /* Space for top tabs */
+        margin-top: 100px; /* Space for multi-row header */
         padding-bottom: 80px; /* Space for bottom nav */
+    }
+
+    /* If tabs are present, add more space */
+    .app-top-tabs-container:not([style*="display: none"]) ~ .dashboard-content {
+        margin-top: 150px;
     }
 }
 
