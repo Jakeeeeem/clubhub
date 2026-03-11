@@ -245,6 +245,7 @@
                         <button onclick="showSection('tournaments')">🏆 Tournaments</button>
                         <button onclick="showSection('tactical-board')">📝 Tactics Board</button>
                         <div class="dropdown-divider"></div>
+                        <button onclick="showSection('training-hub')">🏋️ Training Hub</button>
                         <button onclick="showSection('training-manager')">🎯 Training Manager</button>
                         <button onclick="showSection('camp-manager')">🏕️ Camp Manager</button>
                         <button onclick="showSection('form-builder')">📋 Form Builder</button>
@@ -4993,13 +4994,19 @@
                                             <div class="user-info-cell">
                                                 <div class="user-avatar">${(member.first_name?.[0] || '')}${(member.last_name?.[0] || '')}</div>
                                                 <div class="user-name-group">
-                                                    <span class="user-name">${member.first_name} ${member.last_name}</span>
+                                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                        <span class="user-name">${member.first_name} ${member.last_name}</span>
+                                                        ${member.is_verified_scout ? '<span title="Platform Verified Scout" style="cursor: help;">✅</span>' : ''}
+                                                    </div>
                                                     <span class="user-meta">Staff ID: ${member.id.substring(0, 8)}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <span style="font-weight:500; text-transform: capitalize;">${member.role.replace('-', ' ')}</span>
+                                            ${member.club_verified_scout ?
+                            '<br><span style="font-size: 0.65rem; color: #22c55e; font-weight: bold;">✓ Club Verified Scout</span>' :
+                            ''}
                                         </td>
                                         <td>${teamDisplay}</td>
                                         <td>${member.email || 'N/A'}</td>
@@ -5008,6 +5015,10 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons" onclick="event.stopPropagation()">
+                                                <button class="btn-icon" title="${member.club_verified_scout ? 'Revoke Scout Verification' : 'Verify as Club Scout'}" 
+                                                        onclick="handleToggleScoutVerification('${member.id}', ${!member.club_verified_scout})">
+                                                    ${member.club_verified_scout ? '🛡️' : '🔍'}
+                                                </button>
                                                 <button class="btn-icon edit" title="Edit Staff" onclick="editStaffMember('${member.id}')">✏️</button>
                                                 <button class="btn-icon delete" title="Remove Staff" onclick="removeStaffMember('${member.id}')">🗑️</button>
                                             </div>
@@ -8016,9 +8027,13 @@
                     console.log('Loading polls...');
                     if (typeof loadPolls === 'function') loadPolls();
                     break;
+                case 'training-hub':
+                    console.log('Loading training hub...');
+                    if (typeof loadAdminDrillLibrary === 'function') loadAdminDrillLibrary();
+                    break;
                 case 'training-manager':
-                    console.log('Loading training manager...');
-                    if (typeof loadTraining === 'function') loadTraining();
+                    console.log('Redirecting to training hub...');
+                    showSection('training-hub');
                     break;
                 case 'venue-booking':
                     console.log('Loading venue booking...');
@@ -10856,6 +10871,25 @@
                 }
             }
 
+            async function handleToggleScoutVerification(id, verified) {
+                const action = verified ? 'verify' : 'revoke verification';
+                if (!confirm(`Are you sure you want to ${action} for this staff member?`)) {
+                    return;
+                }
+
+                try {
+                    showLoading(true);
+                    await apiService.verifyClubScout(id, verified);
+                    showNotification(`Staff scout status ${verified ? 'verified' : 'revoked'}`, 'success');
+                    loadStaff();
+                } catch (error) {
+                    console.error('Toggle scout error:', error);
+                    showNotification('Failed to toggle scout status: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+
             // Bind the form
             const staffForm = document.getElementById('editStaffForm');
             if (staffForm) staffForm.addEventListener('submit', handleEditStaff);
@@ -10863,6 +10897,7 @@
             // Expose globally
             window.editStaffMember = editStaffMember;
             window.removeStaffMember = removeStaffMember;
+            window.handleToggleScoutVerification = handleToggleScoutVerification;
 
             let adminVenues = [];
             let selectedAdminVenue = null;
@@ -13034,6 +13069,386 @@
                 document.getElementById('adminFormDescription').value = '';
                 renderAdminCanvas();
             };
+        </script>
+
+        <!-- ═══════ TRAINING HUB: COACH / ADMIN ═══════ -->
+        <!-- Training Hub is injected as id="training-hub" by admin-dashboard.js -->
+        <!-- Static fallback section for direct rendering -->
+        <div id="training-hub" class="dashboard-section" style="display:none;">
+            <div style="max-width:900px;">
+
+                <!-- Header -->
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
+                    <div>
+                        <h2 style="font-family:var(--font-heading); font-size:1.8rem; margin:0;">🏋️ Training Hub</h2>
+                        <p style="color:var(--text-muted); margin:0.25rem 0 0;">Create drills, assign to players, and
+                            review their attempts.</p>
+                    </div>
+                    <button class="btn btn-primary"
+                        onclick="document.getElementById('createDrillPanel').style.display='block'; this.style.display='none';"
+                        style="display:flex; align-items:center; gap:0.5rem;">
+                        + Create Drill
+                    </button>
+                </div>
+
+                <!-- Create Drill Panel -->
+                <div id="createDrillPanel" style="display:none; margin-bottom:2rem;">
+                    <div class="glass-panel" style="padding:2rem;">
+                        <h3 style="font-family:var(--font-heading); margin-top:0;">New Drill</h3>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                            <div class="form-group">
+                                <label>Drill Title *</label>
+                                <input type="text" id="drillTitle" placeholder="e.g. Cone Dribbling Slalom"
+                                    style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white;">
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select id="drillCategory"
+                                    style="width:100%; padding:0.75rem; background:rgba(20,20,25,0.8); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white;">
+                                    <option>Ball Control</option>
+                                    <option>Passing</option>
+                                    <option>Shooting</option>
+                                    <option>Fitness</option>
+                                    <option>Goalkeeping</option>
+                                    <option>Tactics</option>
+                                    <option>Agility</option>
+                                    <option>General</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Difficulty</label>
+                                <select id="drillDifficulty"
+                                    style="width:100%; padding:0.75rem; background:rgba(20,20,25,0.8); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white;">
+                                    <option>Beginner</option>
+                                    <option>Intermediate</option>
+                                    <option>Advanced</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Duration (minutes)</label>
+                                <input type="number" id="drillDuration" value="10" min="1"
+                                    style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white;">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top:1rem;">
+                            <label>Description / Instructions</label>
+                            <textarea id="drillDescription" rows="3"
+                                placeholder="Describe the drill and how to perform it..."
+                                style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white; resize:vertical;"></textarea>
+                        </div>
+                        <div class="form-group" style="margin-top:1rem;">
+                            <label>Demo Video URL (optional)</label>
+                            <input type="url" id="drillVideoUrl" placeholder="e.g. https://youtube.com/..."
+                                style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white;">
+                        </div>
+                        <div class="form-group" style="margin-top:1rem;">
+                            <label>Required Equipment (optional)</label>
+                            <input type="text" id="drillEquipment" placeholder="e.g. 6 cones, ball"
+                                style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white;">
+                        </div>
+                        <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+                            <button class="btn btn-primary" style="flex:1; padding:1rem;" onclick="saveNewDrill()">💾
+                                Save Drill</button>
+                            <button class="btn btn-secondary"
+                                onclick="document.getElementById('createDrillPanel').style.display='none'; document.querySelector('[onclick*=createDrillPanel]').style.display='flex';">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs: Library / Review Queue / Team Progress -->
+                <div
+                    style="display:flex; gap:0; background:rgba(255,255,255,0.03); border-radius:14px; padding:4px; margin-bottom:2rem; overflow:hidden;">
+                    <button id="trainingTab-library" onclick="switchTrainingTab('library')"
+                        style="flex:1; padding:0.75rem; background:rgba(106,92,255,0.25); border:none; color:white; border-radius:10px; font-weight:600; cursor:pointer; transition:all 0.2s;">
+                        📚 Drill Library
+                    </button>
+                    <button id="trainingTab-reviews" onclick="switchTrainingTab('reviews')"
+                        style="flex:1; padding:0.75rem; background:transparent; border:none; color:rgba(255,255,255,0.5); border-radius:10px; font-weight:600; cursor:pointer; transition:all 0.2s;">
+                        🎬 Review Queue
+                    </button>
+                    <button id="trainingTab-progress" onclick="switchTrainingTab('progress')"
+                        style="flex:1; padding:0.75rem; background:transparent; border:none; color:rgba(255,255,255,0.5); border-radius:10px; font-weight:600; cursor:pointer; transition:all 0.2s;">
+                        📈 Team Progress
+                    </button>
+                </div>
+
+                <!-- Library Tab -->
+                <div id="trainingPanel-library">
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;"
+                        id="adminDrillsGrid">
+                        <p style="color:var(--text-muted); grid-column:1/-1; text-align:center; padding:2rem;">⏳ Loading
+                            drills...</p>
+                    </div>
+                </div>
+
+                <!-- Review Queue Tab -->
+                <div id="trainingPanel-reviews" style="display:none;">
+                    <div style="display:flex; flex-direction:column; gap:1rem;" id="coachReviewQueue">
+                        <p style="color:var(--text-muted); text-align:center; padding:2rem;">⏳ Loading submissions...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Team Progress Tab -->
+                <div id="trainingPanel-progress" style="display:none;">
+                    <div style="margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem;">
+                        <span style="font-size:0.9rem; color:var(--text-muted);">View Team:</span>
+                        <select id="teamFilter" onchange="loadAdminTeamProgress()" 
+                            style="padding:0.6rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white; font-size:0.9rem; min-width:180px;">
+                            <option value="">Select a team...</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:1rem;" id="teamProgressList">
+                        <p style="color:var(--text-muted); text-align:center; padding:2rem;">⏳ Loading team progress...</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Drill Detail Modal -->
+        <div id="drillDetailModal" class="modal" style="display:none; align-items:flex-end; justify-content:center;">
+            <div
+                style="background:#0d0d10; width:100%; max-width:600px; max-height:92vh; overflow-y:auto; border-radius:24px 24px 0 0; padding:2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3 style="margin:0; font-family:var(--font-heading);">Drill Details</h3>
+                    <button onclick="closeModal('drillDetailModal')"
+                        style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer;">×</button>
+                </div>
+                <div id="drillDetailContent"></div>
+            </div>
+        </div>
+
+        <!-- Review Submission Modal -->
+        <div id="reviewSubmissionModal" class="modal" style="display:none; align-items:center; justify-content:center;">
+            <div
+                style="background:#0d0d10; width:100%; max-width:520px; border-radius:24px; padding:2rem; margin:1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <div>
+                        <h3 style="margin:0; font-family:var(--font-heading);">Review Submission</h3>
+                        <p style="margin:0.25rem 0 0; color:var(--text-muted); font-size:0.85rem;">
+                            <span id="reviewPlayerName">Player</span> • <span id="reviewDrillName">Drill</span>
+                        </p>
+                    </div>
+                    <button onclick="closeModal('reviewSubmissionModal')"
+                        style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer;">×</button>
+                </div>
+                <input type="hidden" id="reviewSubmissionId">
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label
+                        style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem; display:block;">Score
+                        (1–10)</label>
+                    <input type="number" id="reviewScore" min="1" max="10" placeholder="e.g. 7"
+                        style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white; font-size:1rem;">
+                </div>
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label
+                        style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem; display:block;">Feedback</label>
+                    <textarea id="reviewFeedback" rows="4"
+                        placeholder="e.g. Great effort. Improve head position when turning."
+                        style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white; font-size:0.9rem; resize:vertical;"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label
+                        style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem; display:block;">Improvement
+                        Focus (optional)</label>
+                    <input type="text" id="reviewImprovements" placeholder="e.g. Weak foot control, Head position"
+                        style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white; font-size:0.9rem;">
+                </div>
+                <button class="btn btn-primary" style="width:100%; padding:1rem;" onclick="submitCoachReview()">Submit
+                    Review</button>
+            </div>
+        </div>
+
+        <!-- Assign Drill Modal -->
+        <div id="assignDrillModal" class="modal" style="display:none; align-items:center; justify-content:center;">
+          <div style="background:#0d0d10; width:100%; max-width:480px; border-radius:24px; padding:2rem; margin:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+              <h3 style="margin:0; font-family:var(--font-heading);">Assign Drill</h3>
+              <button onclick="closeModal('assignDrillModal')"
+                style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer;">×</button>
+            </div>
+            <input type="hidden" id="assignDrillId">
+            
+            <div class="form-group" style="margin-bottom:1.5rem;">
+              <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem; display:block;">Assign to Team</label>
+              <select id="assignTeamId" style="width:100%; padding:0.85rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:white; font-size:1rem;">
+                <option value="">Select a team...</option>
+                <!-- Populated by JS -->
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:2rem;">
+              <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem; display:block;">Due Date (Optional)</label>
+              <input type="date" id="assignDueDate" style="width:100%; padding:0.85rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:white; font-size:1rem;">
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:1rem;" onclick="submitDrillAssignment()">Assign Drill</button>
+          </div>
+        </div>
+
+        <!-- Training Scripts -->
+        <script src="training.js"></script>
+        <script>
+            // Training Hub tab switching
+            function switchTrainingTab(tab) {
+                ['library', 'reviews', 'progress'].forEach(t => {
+                    const panel = document.getElementById('trainingPanel-' + t);
+                    const btn = document.getElementById('trainingTab-' + t);
+                    if (panel) panel.style.display = t === tab ? 'block' : 'none';
+                    if (btn) {
+                        btn.style.background = t === tab ? 'rgba(106,92,255,0.25)' : 'transparent';
+                        btn.style.color = t === tab ? 'white' : 'rgba(255,255,255,0.5)';
+                    }
+                });
+
+                // Load data for the selected tab
+                if (tab === 'library') loadAdminDrillLibrary();
+                else if (tab === 'reviews') loadCoachReviewQueue();
+                else if (tab === 'progress') loadAdminTeamProgress();
+            }
+
+            async function loadAdminDrillLibrary() {
+                const grid = document.getElementById('adminDrillsGrid');
+                if (!grid) return;
+                try {
+                    const data = await TrainingService.getDrills();
+                    const drills = data.drills || [];
+                    if (!drills.length) {
+                        grid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1; text-align:center; padding:2rem;">No drills yet. Create your first one!</p>';
+                        return;
+                    }
+                    grid.innerHTML = drills.map(d => renderDrillCard(d, 'coach')).join('');
+                } catch (err) {
+                    if (grid) grid.innerHTML = `<p style="color:var(--accent-red); grid-column:1/-1;">${err.message}</p>`;
+                }
+            }
+
+            async function loadAdminTeamProgress() {
+                const container = document.getElementById('teamProgressList');
+                if (!container) return;
+                
+                // Try to get team ID from selected team or first available team
+                let teamId = document.getElementById('teamFilter')?.value;
+                if (!teamId) {
+                  const teams = window.AppState?.teams || [];
+                  teamId = teams[0]?.id;
+                }
+
+                if (!teamId) {
+                    container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;">Select a team to view training progress.</p>';
+                    return;
+                }
+                try {
+                    const data = await TrainingService.getTeamProgress(teamId);
+                    const players = data.players || [];
+                    if (!players.length) {
+                        container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;">No players found in this team.</p>';
+                        return;
+                    }
+                    container.innerHTML = players.map(p => `
+          <div class="glass-card" style="padding:1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div style="display:flex; align-items:center; gap:1rem;">
+              <div style="width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); display:flex; align-items:center; justify-content:center; font-weight:800; color:white; flex-shrink:0;">
+                ${(p.first_name || 'P')[0]}${(p.last_name || '')[0]}
+              </div>
+              <div>
+                <div style="font-weight:600;">${p.first_name} ${p.last_name}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted);">${p.completed_drills || 0} drills completed</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+              <div style="text-align:center;">
+                <div style="font-size:1.4rem; font-weight:800; color:var(--accent-cyan);">${Math.round(p.avg_score || 0)}/10</div>
+                <div style="font-size:0.7rem; color:var(--text-muted);">Avg Score</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:1.4rem; font-weight:800; color:var(--accent-purple);">${p.ball_control || 50}</div>
+                <div style="font-size:0.7rem; color:var(--text-muted);">Ball Control</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-size:1.4rem; font-weight:800; color:var(--accent-purple);">${p.passing || 50}</div>
+                <div style="font-size:0.7rem; color:var(--text-muted);">Passing</div>
+              </div>
+            </div>
+          </div>`).join('');
+                } catch (err) {
+                    if (container) container.innerHTML = `<p style="color:var(--accent-red);">${err.message}</p>`;
+                }
+            }
+
+            async function saveNewDrill() {
+                const title = document.getElementById('drillTitle')?.value?.trim();
+                if (!title) { alert('Please enter a drill title.'); return; }
+
+                const data = {
+                    title,
+                    category: document.getElementById('drillCategory')?.value,
+                    difficulty: document.getElementById('drillDifficulty')?.value,
+                    duration_minutes: parseInt(document.getElementById('drillDuration')?.value) || 10,
+                    description: document.getElementById('drillDescription')?.value?.trim(),
+                    demo_video_url: document.getElementById('drillVideoUrl')?.value?.trim() || null,
+                    required_equipment: document.getElementById('drillEquipment')?.value?.trim() || null,
+                };
+
+                try {
+                    await TrainingService.createDrill(data);
+                    document.getElementById('createDrillPanel').style.display = 'none';
+                    document.querySelector('[onclick*=createDrillPanel]').style.display = 'flex';
+                    if (typeof showNotification === 'function') showNotification('Drill created!', 'success');
+                    loadAdminDrillLibrary();
+                } catch (err) {
+                    alert('Failed to create drill: ' + err.message);
+                }
+            }
+
+            window.openAssignDrillModal = function(drillId) {
+                document.getElementById('assignDrillId').value = drillId;
+                const teamSelect = document.getElementById('assignTeamId');
+                
+                // Populate teams from AppState or existing dropdown
+                const teamFilter = document.getElementById('teamFilter');
+                if (teamFilter) {
+                   teamSelect.innerHTML = '<option value="">Select a team...</option>' + 
+                                          Array.from(teamFilter.options)
+                                               .filter(opt => opt.value)
+                                               .map(opt => `<option value="${opt.value}">${opt.text}</option>`)
+                                               .join('');
+                }
+                
+                showModal('assignDrillModal');
+            };
+
+            window.submitDrillAssignment = async function() {
+                const drillId = document.getElementById('assignDrillId').value;
+                const teamId = document.getElementById('assignTeamId').value;
+                const dueDate = document.getElementById('assignDueDate').value;
+
+                if (!teamId) { alert('Please select a team.'); return; }
+
+                try {
+                    await TrainingService.assignDrill(drillId, {
+                        team_id: teamId,
+                        due_date: dueDate || null
+                    });
+                    closeModal('assignDrillModal');
+                    if (typeof showNotification === 'function') showNotification('Drill assigned to team!', 'success');
+                } catch (err) {
+                    alert('Assignment failed: ' + err.message);
+                }
+            };
+
+            window.viewDrillSubmissions = function(drillId) {
+                // Switching to review tab
+                switchTrainingTab('reviews');
+                // Future: filter review queue by drillId
+            };
+
+            // Register Training Hub in showSection fallback if needed
+            if (typeof registerSectionLoader === 'function') {
+                registerSectionLoader('training-hub', loadAdminDrillLibrary);
+            }
         </script>
 </body>
 

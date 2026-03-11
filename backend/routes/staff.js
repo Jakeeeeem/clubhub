@@ -1260,4 +1260,50 @@ router.get("/:id/schedule", authenticateToken, async (req, res) => {
   }
 });
 
+// PATCH /api/staff/:id/verify-scout - Club level verification
+router.patch(
+  "/:id/verify-scout",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { verified } = req.body;
+
+      // Verify staff member exists and user has permission
+      const staffResult = await query(queries.findStaffById, [id]);
+      if (staffResult.rows.length === 0) {
+        return res.status(404).json({ error: "Staff member not found" });
+      }
+
+      const staff = staffResult.rows[0];
+      const clubResult = await query(queries.findClubById, [staff.club_id]);
+      const club = clubResult.rows[0];
+
+      if (club.owner_id !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const result = await query(
+        `
+      UPDATE staff SET 
+        club_verified_scout = $1,
+        updated_at = NOW() 
+      WHERE id = $2
+      RETURNING *
+    `,
+        [verified, id],
+      );
+
+      res.json({
+        message: `Staff scout status ${verified ? "verified" : "unverified"} by club`,
+        staff: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Verify staff scout error:", error);
+      res.status(500).json({ error: "Failed to verify staff scout" });
+    }
+  },
+);
+
 module.exports = router;

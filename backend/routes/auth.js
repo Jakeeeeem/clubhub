@@ -1082,7 +1082,9 @@ router.get("/context", authenticateToken, async (req, res) => {
     try {
       userResult = await query(
         `
-        SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, u.completed_tours, up.current_organization_id
+        SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, 
+               u.completed_tours, u.is_verified_scout, u.scout_verification_status, 
+               up.current_organization_id
         FROM users u
         LEFT JOIN user_preferences up ON u.id = up.user_id
         WHERE u.id = $1
@@ -1099,7 +1101,8 @@ router.get("/context", authenticateToken, async (req, res) => {
         );
         userResult = await query(
           `
-          SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, up.current_organization_id
+          SELECT u.id, u.email, u.first_name, u.last_name, u.account_type, u.is_platform_admin, 
+                 u.is_verified_scout, u.scout_verification_status, up.current_organization_id
           FROM users u
           LEFT JOIN user_preferences up ON u.id = up.user_id
           WHERE u.id = $1

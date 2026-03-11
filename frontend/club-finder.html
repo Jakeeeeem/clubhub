@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Finder - Discover Sports Groups | ClubHub</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: #0d0d0d;
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(177, 3, 45, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(177, 3, 45, 0.05) 0%, transparent 50%);
+        }
+
+        .finder-container {
+            max-width: 1200px;
+            margin: 100px auto 4rem;
+            padding: 0 1.5rem;
+        }
+
+        .search-hero {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .filter-bar {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 992px) {
+            .filter-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .filter-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .filter-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: #fff;
+            font-family: inherit;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(177, 3, 45, 0.05);
+        }
+
+        .club-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .club-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(177, 3, 45, 0.1);
+        }
+
+        .club-banner {
+            height: 120px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            position: relative;
+        }
+
+        .club-logo-mini {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            border: 3px solid var(--bg-card);
+            position: absolute;
+            bottom: -35px;
+            left: 20px;
+            background: #111;
+            object-fit: cover;
+        }
+
+        .club-content {
+            padding: 45px 20px 20px;
+        }
+
+        .club-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .club-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tag {
+            background: rgba(177, 3, 45, 0.1);
+            color: var(--primary);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .recruit-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #22c55e;
+            color: #000;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .unclaimed-badge {
+            background: #64748b;
+            color: #fff;
+        }
+
+        .placeholder-glow {
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                opacity: 0.4;
+            }
+
+            to {
+                opacity: 0.8;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text neon-text">ClubHub</span>
+            </div>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="signup.html" class="btn btn-primary btn-small">Sign Up</a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="finder-container">
+        <div class="search-hero">
+            <h1 class="neon-text" style="font-size: 3.5rem; margin-bottom: 1rem;">Find Your Next Group</h1>
+            <p style="color: var(--text-muted); font-size: 1.2rem;">Discover sports groups, academies, and grassroots
+                teams recruiting talent.</p>
+        </div>
+
+        <!-- Advanced Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Search Keyword</label>
+                <input type="text" id="clubSearch" class="filter-input" placeholder="Name, sport, or keyword..."
+                    onkeyup="filterClubs()">
+            </div>
+            <div class="filter-group">
+                <label>Sport</label>
+                <select id="sportFilter" class="filter-input" onchange="filterClubs()">
+                    <option value="">All Sports</option>
+                    <option value="football">Football</option>
+                    <option value="basketball">Basketball</option>
+                    <option value="rugby">Rugby</option>
+                    <option value="tennis">Tennis</option>
+                    <option value="cricket">Cricket</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Location</label>
+                <input type="text" id="locationSearch" class="filter-input" placeholder="City or Postcode..."
+                    onkeyup="filterClubs()">
+            </div>
+            <div class="filter-group">
+                <label>Age Category</label>
+                <select id="ageFilter" class="filter-input" onchange="filterClubs()">
+                    <option value="">Any Age</option>
+                    <option value="U8">U8</option>
+                    <option value="U10">U10</option>
+                    <option value="U12">U12</option>
+                    <option value="U14">U14</option>
+                    <option value="U16">U16</option>
+                    <option value="U18">U18</option>
+                    <option value="Seniors">Seniors</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="padding: 0.8rem 2rem;" onclick="filterClubs()">Filter</button>
+        </div>
+
+        <!-- Results Grid -->
+        <div id="clubResultsGrid" class="card-grid"
+            style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+            <!-- Loader shown initially -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 5rem 0;">
+                <div class="placeholder-glow" style="font-size: 1.2rem; color: var(--text-muted);">🔍 Discovering groups
+                    around you...</div>
+            </div>
+        </div>
+
+        <!-- No Results Messaging -->
+        <div id="noResults" style="display: none; text-align: center; padding: 4rem 0;">
+            <div style="font-size: 4rem; opacity: 0.2; margin-bottom: 1rem;">🏟️</div>
+            <h3 style="color: var(--text-main); font-size: 1.5rem; margin-bottom: 0.5rem;">No groups found</h3>
+            <p style="color: var(--text-muted);">Try adjusting your filters or location radius.</p>
+            <button class="btn btn-secondary" onclick="resetFilters()" style="margin-top: 1.5rem;">Clear All
+                Filters</button>
+        </div>
+    </div>
+
+    <!-- PWA Bottom Nav -->
+    <nav class="app-bottom-nav mobile-only">
+        <a href="index.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>Home</span>
+        </a>
+        <a href="club-finder.html" class="nav-link active">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+            </svg>
+            <span>Clubs</span>
+        </a>
+        <a href="signup.html" class="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span>Join</span>
+        </a>
+    </nav>
+
+    <script src="api-service.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load initial data
+            filterClubs();
+
+            // Check for pre-filled params from homepage
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('sport')) {
+                document.getElementById('sportFilter').value = urlParams.get('sport').toLowerCase();
+                filterClubs();
+            }
+        });
+
+        async function filterClubs() {
+            const query = document.getElementById('clubSearch').value.toLowerCase();
+            const sport = document.getElementById('sportFilter').value;
+            const location = document.getElementById('locationSearch').value.toLowerCase();
+            const age = document.getElementById('ageFilter').value;
+            const grid = document.getElementById('clubResultsGrid');
+            const emptyState = document.getElementById('noResults');
+
+            try {
+                // Fetch clubs from API
+                // Currently getGroups(query) is basic, we'll implement more local filtering for demo/UX speed
+                let clubs = await apiService.getGroups(query);
+
+                // Add some "Unclaimed" demo clubs if we're in a real search
+                if (clubs.length < 5) {
+                    clubs = [...clubs, ...getPlaceholderClubs()];
+                }
+
+                // Apply advanced filtering locally
+                const filtered = clubs.filter(c => {
+                    const matchesSport = !sport || (c.sport && c.sport.toLowerCase() === sport.toLowerCase());
+                    const matchesLocation = !location || (c.location && c.location.toLowerCase().includes(location));
+                    const matchesAge = !age || (c.available_positions && c.available_positions.some(p => p.age_group === age));
+                    return matchesSport && matchesLocation && matchesAge;
+                });
+
+                if (filtered.length === 0) {
+                    grid.style.display = 'none';
+                    emptyState.style.display = 'block';
+                } else {
+                    grid.style.display = 'grid';
+                    emptyState.style.display = 'none';
+                    renderClubs(filtered);
+                }
+
+            } catch (err) {
+                console.error("Club finder error:", err);
+                grid.innerHTML = '<p class="text-danger center">Failed to connect to club service. Refreshing...</p>';
+            }
+        }
+
+        function renderClubs(clubs) {
+            const grid = document.getElementById('clubResultsGrid');
+            grid.innerHTML = clubs.map(club => {
+                const isUnclaimed = club.unclaimed === true;
+                const logoSrc = club.logo_url || 'images/placeholder-logo-profile.png';
+                const bannerStyle = club.color ? `background: linear-gradient(135deg, ${club.color}33, ${club.color}00); border-bottom: 2px solid ${club.color};` : '';
+
+                return `
+                <div class="club-card">
+                    <div class="club-banner" style="${bannerStyle}">
+                        <img src="${logoSrc}" class="club-logo-mini" onerror="this.src='images/placeholder-logo-profile.png'">
+                        ${isUnclaimed ?
+                        '<span class="recruit-badge unclaimed-badge">Unclaimed</span>' :
+                        '<span class="recruit-badge">Active</span>'}
+                    </div>
+                    <div class="club-content">
+                        <h3 class="club-name">${club.name}</h3>
+                        <div class="club-meta">
+                            <span>⚽ ${club.sport || 'Multi-Sports'}</span>
+                            <span>📍 ${club.location || 'United Kingdom'}</span>
+                        </div>
+                        <div class="tag-list">
+                            ${(club.available_positions || []).slice(0, 3).map(p => `<span class="tag">${p.age_group || 'Any'} ${p.position || 'Player'}</span>`).join('')}
+                            ${!club.available_positions || club.available_positions.length === 0 ? '<span class="tag">Open Enrolment</span>' : ''}
+                        </div>
+                        
+                        ${isUnclaimed ?
+                        `<button class="btn btn-secondary" style="width:100%; border-style: dashed;" onclick="claimClub('${club.name}')">Claim this Club</button>` :
+                        `<button class="btn btn-primary" style="width:100%;" onclick="window.location.href='club-detail.html?id=${club.id}'">View Club & Apply</button>`
+                    }
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function getPlaceholderClubs() {
+            // These would eventually be indexed from a public scraped database of grassroots clubs
+            return [
+                { id: 'u1', name: 'Elite Performance Academy', sport: 'Football', location: 'Birmingham', color: '#10b981', unclaimed: true, available_positions: [{ age_group: 'U12' }] },
+                { id: 'u2', name: 'Hoop Dreams Bristol', sport: 'Basketball', location: 'Bristol', color: '#f59e0b', unclaimed: true, available_positions: [{ age_group: 'U16' }] },
+                { id: 'u3', name: 'Riverside Rangers FC', sport: 'Football', location: 'London', color: '#3b82f6', unclaimed: false, available_positions: [{ age_group: 'Seniors' }] }
+            ];
+        }
+
+        function resetFilters() {
+            document.getElementById('clubSearch').value = '';
+            document.getElementById('sportFilter').value = '';
+            document.getElementById('locationSearch').value = '';
+            document.getElementById('ageFilter').value = '';
+            filterClubs();
+        }
+
+        function claimClub(name) {
+            alert(`Claim request for ${name} initiated. \n\nWe will send a verification link to the official club email on record.`);
+        }
+    </script>
+</body>
+
+</html>

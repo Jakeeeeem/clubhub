@@ -2859,9 +2859,6 @@ function showPlayerSection(sectionId) {
     case "league-management":
       if (typeof loadPlayerLeagues === "function") loadPlayerLeagues();
       break;
-    case "training-manager":
-      if (typeof loadPlayerTraining === "function") loadPlayerTraining();
-      break;
     case "tournament-manager":
       if (typeof loadPlayerTournaments === "function") loadPlayerTournaments();
       break;
@@ -2916,11 +2913,12 @@ function showPlayerSection(sectionId) {
       loadLeagues();
       break;
     case "training-manager":
-      loadTraining();
+      if (typeof loadTrainingLibrary === "function") loadTrainingLibrary();
+      if (typeof loadTrainingProgress === "function") loadTrainingProgress();
       break;
     case "tournament-manager-placeholder":
       // Consistently using loadPlayerTournaments
-      loadPlayerTournaments();
+      if (typeof loadPlayerTournaments === "function") loadPlayerTournaments();
       break;
     default:
       console.warn("Unknown section:", sectionId);

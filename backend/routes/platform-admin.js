@@ -1018,4 +1018,118 @@ router.post(
   },
 );
 
+// GET /api/platform-admin/scout-verifications - List verification requests
+router.get(
+  "/scout-verifications",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      const { status = "pending" } = req.query;
+      const result = await query(
+        `
+        SELECT svr.*, u.email, u.first_name, u.last_name, o.name as club_name
+        FROM scout_verification_requests svr
+        JOIN users u ON svr.user_id = u.id
+        LEFT JOIN organizations o ON svr.club_id = o.id
+        WHERE svr.status = $1
+        ORDER BY svr.created_at ASC
+        `,
+        [status],
+      );
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Get scout verifications error:", error);
+      res.status(500).json({ error: "Failed to fetch verification requests" });
+    }
+  },
+);
+
+// POST /api/platform-admin/scout-verifications/:id/resolve - Approve or Reject
+router.post(
+  "/scout-verifications/:id/resolve",
+  authenticateToken,
+  requirePlatformAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, adminNotes } = req.body;
+
+      if (!["approved", "rejected"].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      // 1. Update the request
+      const updatedRequest = await query(
+        `
+        UPDATE scout_verification_requests 
+        SET status = $1, admin_notes = $2, updated_at = NOW()
+        WHERE id = $3
+        RETURNING *
+        `,
+        [status, adminNotes, id],
+      );
+
+      if (updatedRequest.rows.length === 0) {
+        return res.status(404).json({ error: "Request not found" });
+      }
+
+      const request = updatedRequest.rows[0];
+
+      // 2. If approved, update the staff/user verification status
+      if (status === "approved") {
+        // Update both the specific staff entry (if it exists for that club)
+        // and potentially a global field if we decide to have one on users.
+        // For now, we update all staff entries for this user to is_verified_scout = true
+        // Update staff entries
+        await query(
+          `
+          UPDATE staff 
+          SET is_verified_scout = true, scout_verification_status = 'verified'
+          WHERE user_id = $1
+          `,
+          [request.user_id],
+        );
+
+        // Update global user status
+        await query(
+          `
+          UPDATE users 
+          SET is_verified_scout = true, scout_verification_status = 'approved'
+          WHERE id = $1
+          `,
+          [request.user_id],
+        );
+      } else {
+        // If rejected
+        await query(
+          `
+          UPDATE staff 
+          SET scout_verification_status = 'unverified'
+          WHERE user_id = $1
+          `,
+          [request.user_id],
+        );
+
+        await query(
+          `
+          UPDATE users 
+          SET is_verified_scout = false, scout_verification_status = 'rejected'
+          WHERE id = $1
+          `,
+          [request.user_id],
+        );
+      }
+
+      res.json({
+        success: true,
+        message: `Request ${status} successfully`,
+      });
+    } catch (error) {
+      console.error("Resolve scout verification error:", error);
+      res.status(500).json({ error: "Failed to resolve verification request" });
+    }
+  },
+);
+
 module.exports = router;

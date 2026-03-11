@@ -147,4 +147,61 @@ router.get("/analytics", authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/scouting/verify-me
+ * @desc    Submit verification documents to become a verified scout
+ */
+router.post("/verify-me", authenticateToken, async (req, res) => {
+  const { clubId, idCardUrl, clubLetterUrl, notes } = req.body;
+  const userId = req.user.id;
+
+  try {
+    // Check if user is staff (required to be a scout)
+    const staffCheck = await query("SELECT id FROM staff WHERE user_id = $1", [
+      userId,
+    ]);
+    if (staffCheck.rows.length === 0) {
+      return res
+        .status(403)
+        .json({ error: "Only staff members can apply for scout verification" });
+    }
+
+    // Check for existing pending request
+    const existing = await query(
+      "SELECT id FROM scout_verification_requests WHERE user_id = $1 AND status = 'pending'",
+      [userId],
+    );
+    if (existing.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "You already have a pending verification request" });
+    }
+
+    const result = await query(
+      `
+            INSERT INTO scout_verification_requests (user_id, club_id, id_card_url, club_letter_url, notes)
+            VALUES ($1, $2, $3, $4, $5) RETURNING *
+        `,
+      [userId, clubId || null, idCardUrl, clubLetterUrl, notes],
+    );
+
+    // Update staff status to pending
+    await query(
+      "UPDATE staff SET scout_verification_status = 'pending' WHERE user_id = $1",
+      [userId],
+    );
+
+    // Update users status to pending
+    await query(
+      "UPDATE users SET scout_verification_status = 'pending' WHERE id = $1",
+      [userId],
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to submit verification request" });
+  }
+});
+
 module.exports = router;

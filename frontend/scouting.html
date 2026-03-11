@@ -53,8 +53,16 @@
                 <p style="color: var(--text-muted);">Identify elite players and review professional scouting reports.
                 </p>
             </div>
-            <div id="scoutStatus" style="display: none;">
-                <span class="verified-badge">✓ Verified Scout</span>
+            <div id="scoutStatus" style="display: flex; gap: 1rem; align-items: center;">
+                <div id="verifiedBadge" style="display: none;">
+                    <span class="verified-badge">✓ Verified Scout</span>
+                </div>
+                <div id="pendingVerification" style="display: none;">
+                    <span class="badge badge-admin" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa;">⏳
+                        Verification Pending</span>
+                </div>
+                <button id="verifyMeBtn" class="btn btn-primary btn-small" onclick="showModal('verifyScoutModal')"
+                    style="display: none;">🛡️ Get Verified</button>
             </div>
         </div>
 
@@ -64,6 +72,44 @@
             <button class="tab" id="reportsTab" onclick="showTab('reports')">Scouting Reports</button>
             <button class="tab" id="analyticsTab" onclick="showTab('analytics')"
                 style="display: none;">Analytics</button>
+        </div>
+
+        <!-- Verify Scout Modal -->
+        <div id="verifyScoutModal" class="modal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+            <div class="modal-content"
+                style="background: #1e293b; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%; position: relative;">
+                <h2 style="margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">🛡️ Get Verified Scout
+                    Status</h2>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Verified scouts get access to sensitive
+                    player contact data and advanced scouting reports.</p>
+
+                <form id="verifyScoutForm" onsubmit="handleVerifySubmit(event)">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label>ID Card / Passport Image URL</label>
+                        <input type="url" name="id_card_url" placeholder="https://example.com/id.jpg" required
+                            style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                        <small style="opacity: 0.6;">Link to an image of your official ID.</small>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label>Club Recommendation / License URL</label>
+                        <input type="url" name="club_letter_url" placeholder="https://example.com/letter.pdf" required
+                            style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                        <small style="opacity: 0.6;">Link to a letter from your club or your coaching license.</small>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label>Additional Notes</label>
+                        <textarea name="notes" placeholder="Tell us about your scouting experience..."
+                            style="width: 100%; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white; min-height: 80px;"></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                        <button type="button" onclick="closeModal('verifyScoutModal')"
+                            class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit for Review</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- Player Discovery Tab -->
@@ -121,17 +167,69 @@
     <script src="api-service.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-
-            // Check if user is a verified scout/staff
-            if (user.role === 'staff' || user.role === 'admin') {
-                document.getElementById('scoutStatus').style.display = 'block';
-                document.getElementById('analyticsTab').style.display = 'block';
-            }
-
+            await checkVerificationStatus();
             loadPlayers();
             loadReports();
         });
+
+        async function checkVerificationStatus() {
+            try {
+                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const context = await apiService.getContext();
+
+                // Super Admin or already verified
+                if (user.is_platform_admin || user.is_verified_scout) {
+                    document.getElementById('verifiedBadge').style.display = 'block';
+                    document.getElementById('analyticsTab').style.display = 'block';
+                    document.getElementById('verifyMeBtn').style.display = 'none';
+                    return;
+                }
+
+                if (user.scout_verification_status === 'pending') {
+                    document.getElementById('pendingVerification').style.display = 'block';
+                    document.getElementById('verifyMeBtn').style.display = 'none';
+                } else {
+                    document.getElementById('verifyMeBtn').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error checking verification status:', error);
+            }
+        }
+
+        async function handleVerifySubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = Object.fromEntries(new FormData(form).entries());
+
+            try {
+                const btn = form.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.textContent = 'Submitting...';
+
+                await apiService.submitScoutVerification(data);
+
+                alert('Verification request submitted successfully! Our team will review your documents shortly.');
+                closeModal('verifyScoutModal');
+
+                // Update UI without reload if possible
+                document.getElementById('verifyMeBtn').style.display = 'none';
+                document.getElementById('pendingVerification').style.display = 'block';
+            } catch (error) {
+                alert('Failed to submit verification: ' + error.message);
+            } finally {
+                const btn = form.querySelector('button[type="submit"]');
+                btn.disabled = false;
+                btn.textContent = 'Submit for Review';
+            }
+        }
+
+        function showModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
 
         async function loadPlayers() {
             const pos = document.getElementById('scoutPosition').value;

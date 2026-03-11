@@ -23,10 +23,11 @@
     <link rel="apple-touch-icon" href="/images/logo.png">
 
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="design-system.css">
 </head>
 
-<body>
-    <header class="header">
+<body class="clubhub-unified">
+    <header class="header unified-header">
         <nav class="nav container">
             <div class="logo">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
@@ -48,47 +49,73 @@
     </header>
 
     <main class="main home-main">
-        <!-- New Welcome Hero Section -->
-        <section class="welcome-hero">
-            <div class="container welcome-container">
-                <div class="welcome-container" style="position: relative; z-index: 2;">
-                    <!-- Client Feedback: Audience List -->
-                    <p class="audience-tagline"
-                        style="font-size: 1.1rem; color: #cbd5e1; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.5rem; font-weight: 600;">
-                        Leagues • Groups • Venues • Tournament Providers • Coaches
-                    </p>
+        <!-- Unified Home Dashboard Hero -->
+        <section class="welcome-hero" style="padding-bottom: 2rem;">
+            <div class="container">
+                <div class="dashboard-home-grid"
+                    style="display: grid; grid-template-columns: 1fr; gap: 2rem; margin-top: 2rem;">
 
-                    <h1 class="welcome-title">Welcome to <span class="highlight-red">ClubHub</span></h1>
-                    <p class="welcome-subtitle">The Complete Ecosystem for Grassroots Sports</p>
-
-                    <!-- Client Feedback: Free Platform Emphasis -->
-                    <div class="free-badge">
-                        <span style="font-weight: 700;">✨ 100% Free Platform</span> &mdash; Free to Create an Account
+                    <!-- Top Hero Card: Next Match -->
+                    <div class="glass-panel next-match-hero"
+                        style="padding: 2.5rem; text-align: center; position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(106, 92, 255, 0.1), rgba(0, 209, 255, 0.05));">
+                        <div
+                            style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px; color: var(--accent-cyan); margin-bottom: 1rem; font-weight: 700;">
+                            Next Match</div>
+                        <div
+                            style="display: flex; align-items: center; justify-content: center; gap: 2rem; margin-bottom: 1.5rem;">
+                            <div class="team-vs">
+                                <div style="font-size: 2.5rem; font-family: var(--font-heading); font-weight: 800;">Your
+                                    Team</div>
+                                <div style="color: var(--text-muted);">Home</div>
+                            </div>
+                            <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent-red);">VS</div>
+                            <div class="team-vs">
+                                <div style="font-size: 2.5rem; font-family: var(--font-heading); font-weight: 800;">
+                                    Opponent</div>
+                                <div style="color: var(--text-muted);">Away</div>
+                            </div>
+                        </div>
+                        <div class="match-details"
+                            style="display: flex; justify-content: center; gap: 2rem; color: var(--text-muted); font-size: 0.95rem;">
+                            <span>📅 Saturday, 14th March</span>
+                            <span>⏰ 10:30 AM</span>
+                            <span>📍 Wembley Academy Pitch 4</span>
+                        </div>
                     </div>
 
-                    <div class="cta-group">
-                        <button class="btn btn-primary-glow"
-                            onclick="document.getElementById('account-types').scrollIntoView({behavior: 'smooth'})">Get
-                            Started</button>
-                        <button class="btn btn-glass"
-                            onclick="document.querySelector('#benefits').scrollIntoView({behavior: 'smooth'})">Learn
-                            More</button>
+                    <!-- Quick Actions Grid -->
+                    <div style="margin-top: 1rem;">
+                        <h3 style="font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 1.5rem;">Quick
+                            Actions</h3>
+                        <div class="quick-actions-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
+                            <div class="quick-action-btn accent-purple">
+                                <div class="icon-wrapper">📊</div>
+                                <span>Stats</span>
+                            </div>
+                            <div class="quick-action-btn accent-cyan">
+                                <div class="icon-wrapper">🏃</div>
+                                <span>Training</span>
+                            </div>
+                            <div class="quick-action-btn accent-red">
+                                <div class="icon-wrapper">💬</div>
+                                <span>Messages</span>
+                            </div>
+                            <div class="quick-action-btn accent-purple">
+                                <div class="icon-wrapper">🎥</div>
+                                <span>Match Video</span>
+                            </div>
+                            <div class="quick-action-btn accent-cyan">
+                                <div class="icon-wrapper">⚡</div>
+                                <span>Performance</span>
+                            </div>
+                            <div class="quick-action-btn accent-red">
+                                <div class="icon-wrapper">👥</div>
+                                <span>Teams</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="role-cards-grid">
-                    <div class="role-card glass-panel">
-                        <h3>For Groups</h3>
-                        <p>Complete group management with player tracking, event group, and financial tools</p>
-                    </div>
-                    <div class="role-card glass-panel">
-                        <h3>For Players</h3>
-                        <p>Join groups, book events, track progress, and manage payments seamlessly</p>
-                    </div>
-                    <div class="role-card glass-panel">
-                        <h3>For Coaches</h3>
-                        <p>Team management, tactical planning, and performance tracking tools</p>
-                    </div>
                 </div>
             </div>
         </section>
@@ -122,14 +149,16 @@
 
                 <!-- Results Grid -->
                 <div id="recruitingGroupsGrid"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 350px)); gap: 1.5rem; justify-content: center;">
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; justify-content: center;">
                     <!-- Populated by JavaScript -->
                     <div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;">
                         <p style="font-size: 1.1rem;">🔍 Start searching to find groups recruiting players...</p>
-                        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Currently showing groups with active
-                            recruitment listings</p>
+                        <a href="club-finder.html" class="btn btn-text"
+                            style="color: var(--primary); margin-top: 1rem; display: inline-block;">Or browse the full
+                            Club Directory →</a>
                     </div>
                 </div>
+
             </div>
         </section>
 
@@ -670,7 +699,7 @@
                 grid.innerHTML = groups.map(group => {
                     const logoSrc = group.logo_url || 'images/placeholder-logo-profile.png';
                     return `
-                    <div class="card" style="cursor: pointer; transition: transform 0.2s;" 
+                    <div class="glass-card" style="cursor: pointer; padding: 1.5rem; transition: transform 0.2s;" 
                          onclick="window.location.href='group-detail.html?id=${group.id || group._id}'">
                         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
                             <img src="${logoSrc}" 

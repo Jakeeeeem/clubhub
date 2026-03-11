@@ -436,6 +436,9 @@
                 <button class="nav-item" onclick="showSection('activity')">
                     📜 Activity
                 </button>
+                <button class="nav-item" onclick="showSection('verifications')">
+                    🛡️ Verifications
+                </button>
                 <button class="nav-item" onclick="showSection('system')">
                     ⚙️ System
                 </button>
@@ -578,6 +581,26 @@
 
                 <div id="activityFeed">
                     <div class="loading">Loading activity...</div>
+                </div>
+            </div>
+
+            <!-- Verifications Section -->
+            <div id="section-verifications" class="dashboard-section section-card">
+                <div class="section-header">
+                    <h2>Scout Verifications</h2>
+                    <button class="btn btn-primary btn-small" onclick="loadVerifications()">Refresh</button>
+                </div>
+
+                <div class="search-bar">
+                    <select id="verificationStatusFilter" onchange="loadVerifications()">
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+
+                <div id="verificationsTable">
+                    <div class="loading">Loading verification requests...</div>
                 </div>
             </div>
 
@@ -827,9 +850,11 @@
                 targetSection.classList.add('active');
             }
 
-            // Special handling for Stripe section
+            // Special handling for sections
             if (sectionId === 'stripe') {
                 loadStripeData();
+            } else if (sectionId === 'verifications') {
+                loadVerifications();
             }
         }
 
@@ -1532,6 +1557,85 @@ Location: ${group.location || 'N/A'}
 
         function showOnboardGroupModal() {
             document.getElementById('onboardGroupModal').style.display = 'flex';
+        }
+
+        async function loadVerifications() {
+            const table = document.getElementById('verificationsTable');
+            const status = document.getElementById('verificationStatusFilter').value;
+
+            table.innerHTML = '<div class="loading">Loading verification requests...</div>';
+
+            try {
+                const requests = await apiService.getPlatformScoutVerifications(status);
+
+                if (!requests || requests.length === 0) {
+                    table.innerHTML = `<div class="loading">No ${status} verification requests.</div>`;
+                    return;
+                }
+
+                table.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Applicant</th>
+                                    <th>Club</th>
+                                    <th>Documents</th>
+                                    <th>Notes</th>
+                                    <th>Date</th>
+                                    ${status === 'pending' ? '<th>Actions</th>' : '<th>Resolution</th>'}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${requests.map(req => `
+                                    <tr>
+                                        <td>
+                                            <strong>${req.first_name} ${req.last_name}</strong><br>
+                                            <span style="font-size: 0.8rem; opacity: 0.6;">${req.email}</span>
+                                        </td>
+                                        <td>${req.club_name || 'Individual'}</td>
+                                        <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                            ${req.id_card_url ? `<a href="${req.id_card_url}" target="_blank" class="badge badge-admin">ID Card</a>` : ''}
+                                            ${req.club_letter_url ? `<a href="${req.club_letter_url}" target="_blank" class="badge badge-coach">Club Letter</a>` : ''}
+                                        </td>
+                                        <td><span style="font-size: 0.8rem;">${req.notes || '-'}</span></td>
+                                        <td>${new Date(req.created_at).toLocaleDateString()}</td>
+                                        ${status === 'pending' ? `
+                                            <td>
+                                                <div style="display: flex; gap: 0.5rem;">
+                                                    <button class="btn btn-primary btn-small" onclick="resolveVerification('${req.id}', 'approved')">Approve</button>
+                                                    <button class="btn btn-owner btn-small" onclick="resolveVerification('${req.id}', 'rejected')">Reject</button>
+                                                </div>
+                                            </td>
+                                        ` : `
+                                            <td>
+                                                <span class="badge ${req.status === 'approved' ? 'badge-coach' : 'badge-owner'}">${req.status.toUpperCase()}</span>
+                                                ${req.admin_notes ? `<br><span style="font-size: 0.7rem;">${req.admin_notes}</span>` : ''}
+                                            </td>
+                                        `}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading verifications:', error);
+                table.innerHTML = '<div class="text-danger">Failed to load verifications.</div>';
+            }
+        }
+
+        async function resolveVerification(requestId, status) {
+            const adminNotes = prompt(`Optional notes for the applicant (${status}):`);
+            if (adminNotes === null) return; // Cancelled
+
+            try {
+                await apiService.resolvePlatformScoutVerification(requestId, status, adminNotes);
+                showToast('Success', `Verification request ${status}`, 'success');
+                loadVerifications();
+            } catch (error) {
+                showToast('Error', 'Failed to resolve verification', 'error');
+            }
         }
 
         async function logout() {

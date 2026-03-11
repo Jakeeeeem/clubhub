@@ -4146,6 +4146,37 @@ class ApiService {
       body: JSON.stringify(data),
     });
   }
+
+  // Scouting Verifications
+  async submitScoutVerification(data) {
+    return await this.makeRequest("/scouting/verify-me", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPlatformScoutVerifications(status = "pending") {
+    return await this.makeRequest(
+      `/platform-admin/scout-verifications?status=${status}`,
+    );
+  }
+
+  async resolvePlatformScoutVerification(requestId, status, adminNotes) {
+    return await this.makeRequest(
+      `/platform-admin/scout-verifications/${requestId}/resolve`,
+      {
+        method: "POST",
+        body: JSON.stringify({ status, adminNotes }),
+      },
+    );
+  }
+
+  async verifyClubScout(staffId, verified) {
+    return await this.makeRequest(`/staff/${staffId}/verify-scout`, {
+      method: "PATCH",
+      body: JSON.stringify({ verified }),
+    });
+  }
 }
 
 // Create and export a singleton instance

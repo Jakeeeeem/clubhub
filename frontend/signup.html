@@ -359,29 +359,46 @@
                 </div>
             </div>
 
-            <div class="form-group" style="margin-top: 1.5rem; display: flex; align-items: flex-start; gap: 0.75rem;">
-                <input type="checkbox" id="agreeTerms" disabled
-                    style="width: 18px; height: 18px; cursor: pointer; margin-top: 0.2rem; accent-color: var(--primary); opacity: 0.5;">
-                <label for="agreeTerms"
-                    style="font-weight: 500; font-size: 0.9rem; color: var(--text-muted); cursor: not-allowed; line-height: 1.4;">
-                    I agree to the <a href="terms.html" target="_blank" id="termsLink"
-                        style="color: var(--primary); text-decoration: none; font-weight: 600; cursor: pointer;">Terms &
-                        Conditions</a>
-                    and <a href="privacy.html" target="_blank"
-                        style="color: var(--primary); text-decoration: none; font-weight: 600;">Privacy Policy</a>.
-                    <br><small style="color: var(--primary); font-style: italic;">(Please click to read T&Cs before
-                        checking)</small>
-                </label>
+            <!-- Legal Consent Group -->
+            <div class="legal-agreements"
+                style="margin-top: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: var(--input-radius);">
+                <h4
+                    style="margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary);">
+                    Legal Agreements</h4>
+
+                <div class="form-group"
+                    style="margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <input type="checkbox" id="agreeTerms"
+                        style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
+                    <label for="agreeTerms"
+                        style="font-size: 0.9rem; color: var(--text-main); cursor: pointer; line-height: 1.5;">
+                        I agree to the <a href="terms.html" target="_blank"
+                            style="color: var(--primary); text-decoration: underline;">Terms & Conditions</a> *
+                    </label>
+                </div>
+
+                <div class="form-group"
+                    style="margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <input type="checkbox" id="agreePrivacy"
+                        style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
+                    <label for="agreePrivacy"
+                        style="font-size: 0.9rem; color: var(--text-main); cursor: pointer; line-height: 1.5;">
+                        I have read and agree to the <a href="privacy.html" target="_blank"
+                            style="color: var(--primary); text-decoration: underline;">Privacy Policy</a> *
+                    </label>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                    <input type="checkbox" id="agreeThirdParty"
+                        style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
+                    <label for="agreeThirdParty"
+                        style="font-size: 0.9rem; color: var(--text-muted); cursor: pointer; line-height: 1.5;">
+                        I consent to my data being securely shared with verified 3rd party scouts, professional clubs,
+                        and platform partners for recruitment opportunities.
+                    </label>
+                </div>
             </div>
 
-            <div class="form-group" style="margin-top: 0.75rem; display: flex; align-items: flex-start; gap: 0.75rem;">
-                <input type="checkbox" id="agreeThirdParty"
-                    style="width: 18px; height: 18px; cursor: pointer; margin-top: 0.2rem; accent-color: var(--primary);">
-                <label for="agreeThirdParty"
-                    style="font-weight: 500; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; line-height: 1.4;">
-                    I consent to my data being used by 3rd party partners for recruitment and platform enhancements.
-                </label>
-            </div>
         </div>
 
         <!-- Success Step -->
@@ -418,18 +435,8 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function () {
-            // T&C Click-through enforcement
-            const termsLink = document.getElementById('termsLink');
-            const agreeTerms = document.getElementById('agreeTerms');
-            if (termsLink && agreeTerms) {
-                termsLink.addEventListener('click', function () {
-                    agreeTerms.disabled = false;
-                    agreeTerms.style.opacity = '1';
-                    agreeTerms.parentElement.style.cursor = 'pointer';
-                    agreeTerms.style.cursor = 'pointer';
-                    console.log('📜 Terms & Conditions clicked, checkbox enabled');
-                });
-            }
+            // ============================================================================
+            // HANDLE INVITATION PARAMETERS
 
             // ============================================================================
             // HANDLE INVITATION PARAMETERS
@@ -538,10 +545,17 @@
                     return;
                 }
 
-                // Check Data Sharing Agreement
-                const agreeThirdParty = document.getElementById('agreeThirdParty');
-                if (agreeThirdParty && !agreeThirdParty.checked) {
-                    showAlert('Please consent to the data sharing agreement to proceed with registration.', 'Agreement Required', 'warning');
+                // Check Legal Agreements
+                const agreeTerms = document.getElementById('agreeTerms');
+                const agreePrivacy = document.getElementById('agreePrivacy');
+
+                if (!agreeTerms.checked) {
+                    showAlert('Please agree to the Terms & Conditions to proceed.', 'Agreement Required', 'warning');
+                    return;
+                }
+
+                if (!agreePrivacy.checked) {
+                    showAlert('Please agree to the Privacy Policy to proceed.', 'Agreement Required', 'warning');
                     return;
                 }
 
@@ -610,6 +624,7 @@
                 const userType = roleParam === 'group' || roleParam === 'group' ? 'group' : roleParam;
 
                 const agreeTerms = document.getElementById('agreeTerms').checked;
+                const agreePrivacy = document.getElementById('agreePrivacy').checked;
                 const agreeThirdParty = document.getElementById('agreeThirdParty').checked;
 
                 const userData = {
@@ -619,6 +634,7 @@
                     password,
                     userType: userType,
                     agreeTerms,
+                    agreePrivacy,
                     agreeThirdParty
                 };
 
