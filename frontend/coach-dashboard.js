@@ -141,6 +141,9 @@ function showCoachSection(sectionId) {
     case "profile":
       loadCoachProfile();
       break;
+    case "tournament-manager":
+      loadCoachTournaments();
+      break;
   }
 }
 
@@ -198,6 +201,297 @@ async function saveCoachProfile() {
     console.error("❌ Failed to update coach profile:", error);
     showNotification("Failed to update profile", "error");
   }
+}
+
+async function loadCoachTournaments() {
+  const container = document.getElementById("coach-tournament-manager");
+  if (!container) return;
+
+  const listView = document.getElementById("coachTournamentListView");
+  const detailView = document.getElementById("coachTournamentDetailView");
+  const grid = document.getElementById("coachTournamentListContainer");
+
+  if (listView) listView.style.display = "block";
+  if (detailView) detailView.style.display = "none";
+
+  try {
+    if (grid) grid.innerHTML = "<p>Loading competitions...</p>";
+
+    const orgId =
+      AppState.currentUser?.clubId ||
+      (await apiService.getContext())?.currentGroup?.id;
+
+    if (!orgId) {
+      if (grid)
+        grid.innerHTML =
+          '<p style="padding: 2rem; opacity: 0.6;">Please select a club to view tournaments.</p>';
+      return;
+    }
+
+    const tournaments = await apiService.makeRequest(
+      `/events?organizationId=${orgId}&eventType=tournament`,
+    );
+
+    if (!tournaments || tournaments.length === 0) {
+      if (grid)
+        grid.innerHTML = `
+                <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
+                    <p style="color: var(--text-muted);">No active tournaments found for this club.</p>
+                </div>
+            `;
+      return;
+    }
+
+    if (grid) {
+      grid.innerHTML = tournaments
+        .map(
+          (t) => `
+                <div class="card tournament-card" style="background: rgba(255,255,255,0.03); cursor: pointer; transition: transform 0.2s;" onclick="viewCoachTournament('${t.id}')">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <div style="width: 48px; height: 48px; background: #dc2626; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🏆</div>
+                        <span class="status-badge" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">${t.status || "Active"}</span>
+                    </div>
+                    <h4>${t.title}</h4>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0;">${formatDate(t.event_date)}</p>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Competition Details</span>
+                        <i style="color: #dc2626;">→</i>
+                    </div>
+                </div>
+            `,
+        )
+        .join("");
+    }
+  } catch (err) {
+    console.error("Load coach tournaments error:", err);
+    if (grid)
+      grid.innerHTML = `<p style="color: var(--primary);">Error connecting to tournament service.</p>`;
+  }
+}
+
+window.viewCoachTournament = async function (tournamentId) {
+  const listView = document.getElementById("coachTournamentListView");
+  const detailView = document.getElementById("coachTournamentDetailView");
+  if (!listView || !detailView) return;
+
+  try {
+    showLoading(true);
+    listView.style.display = "none";
+    detailView.style.display = "block";
+
+    const data = await apiService.getTournamentDetails(tournamentId);
+    if (!data) throw new Error("Could not fetch details");
+
+    document.getElementById("coachDetailTournamentName").textContent =
+      data.tournament.title;
+
+    renderCoachBracket(data.matches || []);
+    renderCoachFixtures(data.matches || []);
+    renderCoachStandings(data.standings || []);
+
+    const firstTab = detailView.querySelector(".nav-item");
+    if (firstTab) switchCoachTournamentTab(firstTab, "bracket");
+  } catch (err) {
+    console.error("View coach tournament error:", err);
+    showNotification("Failed to load competition details", "error");
+    closeCoachTournamentDetail();
+  } finally {
+    showLoading(false);
+  }
+};
+
+window.closeCoachTournamentDetail = function () {
+  const listView = document.getElementById("coachTournamentListView");
+  const detailView = document.getElementById("coachTournamentDetailView");
+  if (listView) listView.style.display = "block";
+  if (detailView) detailView.style.display = "none";
+};
+
+window.switchCoachTournamentTab = function (btn, tabId) {
+  const nav = btn.parentElement;
+  nav
+    .querySelectorAll(".nav-item")
+    .forEach((b) => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  const container = document.getElementById("coachTournamentDetailView");
+  container
+    .querySelectorAll(".coach-tournament-tab")
+    .forEach((t) => (t.style.display = "none"));
+
+  const target = document.getElementById(`coach-tab-${tabId}`);
+  if (target) target.style.display = "block";
+};
+
+function renderCoachBracket(matches) {
+  const container = document.getElementById("coachTournamentBracketVisual");
+  if (!container) return;
+
+  let bracketMatches = matches.filter(
+    (m) => m.round_number !== null && m.round_number !== undefined,
+  );
+  if (bracketMatches.length === 0) bracketMatches = matches;
+
+  if (bracketMatches.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding: 4rem; opacity: 0.3;">
+            <p>Brackets are finalized by administrators before the knockout stage begins.</p>
+        </div>`;
+    return;
+  }
+
+  const rounds = {};
+  bracketMatches.forEach((m) => {
+    const rk = m.round_number ?? 1;
+    if (!rounds[rk]) rounds[rk] = [];
+    rounds[rk].push(m);
+  });
+
+  const sortedRoundNums = Object.keys(rounds)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const totalRounds = sortedRoundNums.length;
+
+  container.innerHTML = `
+        <div class="bracket-tree">
+            ${sortedRoundNums
+              .map((roundNum, idx) => {
+                const label =
+                  totalRounds > 1 && idx === totalRounds - 1
+                    ? "Final"
+                    : totalRounds > 2 && idx === totalRounds - 2
+                      ? "Semi Finals"
+                      : `Round ${roundNum}`;
+
+                return `
+                <div class="bracket-round">
+                    <h4 class="bracket-round-label">${label}</h4>
+                    ${rounds[roundNum]
+                      .map((m, mIdx) => {
+                        const played = m.played || m.status === "completed";
+                        const homeWon =
+                          played &&
+                          parseInt(m.home_score) > parseInt(m.away_score);
+                        const awayWon =
+                          played &&
+                          parseInt(m.away_score) > parseInt(m.home_score);
+                        const isUpper = mIdx % 2 === 0;
+
+                        return `
+                        <div class="bracket-match-container ${idx < totalRounds - 1 ? (isUpper ? "upper" : "lower") : ""}">
+                            <div class="bracket-match" style="border-left: 3px solid ${played ? "#dc2626" : "rgba(255,255,255,0.1)"};">
+                                <div class="match-team ${homeWon ? "winner" : ""}">
+                                    <span class="team-name">${m.home_team || "TBD"} ${m.team_id && currentTeams.some((t) => t.id === m.team_id) ? "⭐" : ""}</span>
+                                    <span class="match-score">${played ? m.home_score : "-"}</span>
+                                </div>
+                                <div class="match-team ${awayWon ? "winner" : ""}">
+                                    <span class="team-name">${m.away_team || "TBD"} ${m.away_team_id && currentTeams.some((t) => t.id === m.away_team_id) ? "⭐" : ""}</span>
+                                    <span class="match-score">${played ? m.away_score : "-"}</span>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                      })
+                      .join("")}
+                </div>
+            `;
+              })
+              .join("")}
+        </div>
+    `;
+}
+
+function renderCoachFixtures(matches) {
+  const container = document.getElementById("coachTournamentFixturesList");
+  if (!container) return;
+
+  if (!matches || matches.length === 0) {
+    container.innerHTML =
+      "<p style='text-align:center; padding:2rem; opacity:0.5;'>Tournament schedule pending.</p>";
+    return;
+  }
+
+  container.innerHTML = matches
+    .map(
+      (m) => `
+        <div class="fixture-item" style="display: flex; align-items: center; padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); background: ${m.status === "live" ? "rgba(220, 38, 38, 0.05)" : "transparent"};">
+            <div style="flex: 1; text-align: right; font-weight: 600;">${m.home_team || "TBD"}</div>
+            <div style="padding: 0 1.5rem; text-align: center; min-width: 100px;">
+                <div style="font-size: 1.2rem; font-weight: 800; background: rgba(0,0,0,0.2); padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                    ${m.status === "completed" || m.status === "live" ? `${m.home_score} - ${m.away_score}` : "VS"}
+                </div>
+                <div style="font-size: 0.65rem; color: ${m.status === "live" ? "#dc2626" : "var(--text-muted)"}; margin-top: 6px; font-weight: 700; text-transform: uppercase;">
+                    ${m.status === "live" ? "● LIVE" : m.status}
+                </div>
+            </div>
+            <div style="flex: 1; text-align: left; font-weight: 600;">${m.away_team || "TBD"}</div>
+            <div style="margin-left: 1rem;">
+                ${
+                  m.status !== "completed" &&
+                  currentTeams.some(
+                    (t) => t.id === m.team_id || t.id === m.away_team_id,
+                  )
+                    ? `<button class="btn btn-small btn-primary" onclick="recordMatchResult('${m.id}')">Update</button>`
+                    : ""
+                }
+            </div>
+        </div>
+    `,
+    )
+    .join("");
+}
+
+function renderCoachStandings(standings) {
+  const container = document.getElementById(
+    "coachTournamentStandingsContainer",
+  );
+  if (!container) return;
+
+  if (!standings || Object.keys(standings).length === 0) {
+    container.innerHTML =
+      "<p style='text-align:center; padding: 4rem; opacity: 0.4;'>Group standings will appear here once the league phase transitions logic is finalized.</p>";
+    return;
+  }
+
+  const sorted = Object.values(standings).sort(
+    (a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf,
+  );
+
+  container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Team</th>
+                        <th style="text-align: center;">P</th>
+                        <th style="text-align: center;">W</th>
+                        <th style="text-align: center;">D</th>
+                        <th style="text-align: center;">L</th>
+                        <th style="text-align: center;">GD</th>
+                        <th style="text-align: center; color: #dc2626;">PtsLocal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sorted
+                      .map(
+                        (s, idx) => `
+                        <tr style="${currentTeams.some((t) => t.name === s.name) ? "background: rgba(220,38,38,0.05); border-left: 2px solid #dc2626;" : ""}">
+                            <td style="opacity: 0.5;">${idx + 1}</td>
+                            <td style="font-weight: 700;">${s.name} ${currentTeams.some((t) => t.name === s.name) ? "(Your Team)" : ""}</td>
+                            <td style="text-align: center;">${s.p}</td>
+                            <td style="text-align: center;">${s.w}</td>
+                            <td style="text-align: center;">${s.d}</td>
+                            <td style="text-align: center;">${s.l}</td>
+                            <td style="text-align: center;">${s.gd > 0 ? "+" : ""}${s.gd}</td>
+                            <td style="text-align: center; font-weight: 800; color: #dc2626;">${s.pts}</td>
+                        </tr>
+                    `,
+                      )
+                      .join("")}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 async function loadCoachProducts() {

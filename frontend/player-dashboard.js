@@ -2918,8 +2918,9 @@ function showPlayerSection(sectionId) {
     case "training-manager":
       loadTraining();
       break;
-    case "tournament-manager":
-      loadTournaments();
+    case "tournament-manager-placeholder":
+      // Consistently using loadPlayerTournaments
+      loadPlayerTournaments();
       break;
     default:
       console.warn("Unknown section:", sectionId);
@@ -4051,78 +4052,292 @@ async function loadPlayerTraining() {
 async function loadPlayerTournaments() {
   const container = byId("player-tournament-manager");
   if (!container) return;
-  const content = container.querySelector(".card");
+
+  const listView = byId("playerTournamentListView");
+  const detailView = byId("playerTournamentDetailView");
+  const grid = byId("playerTournamentListContainer");
+
+  if (listView) listView.style.display = "block";
+  if (detailView) detailView.style.display = "none";
 
   try {
-    content.innerHTML = "<p>Loading tournaments...</p>";
+    if (grid) grid.innerHTML = "<p>Loading tournaments...</p>";
     const orgId = localStorage.getItem("currentOrganizationId");
-    if (!orgId) {
-      content.innerHTML = "<p>Please select a club first.</p>";
+
+    // Fallback search to current user's club if orgId is missing
+    const finalOrgId =
+      orgId ||
+      window.AppState?.currentUser?.clubId ||
+      PlayerDashboardState.clubs[0]?.id;
+
+    if (!finalOrgId) {
+      if (grid)
+        grid.innerHTML = `
+        <div style="text-align: center; padding: 3rem; opacity: 0.6;">
+            <p>Please select a club from the "My Clubs" section to see available tournaments.</p>
+        </div>`;
       return;
     }
 
-    const events = await apiService.makeRequest(
-      `/events?organizationId=${orgId}&eventType=tournament`,
+    const tournaments = await apiService.makeRequest(
+      `/events?organizationId=${finalOrgId}&eventType=tournament`,
     );
 
-    if (!events || events.length === 0) {
-      content.innerHTML = `
-            <h3>⚔️ Tournaments</h3>
-            <div style="text-align: center; padding: 2rem;">
-                <p style="color: var(--text-muted);">No tournaments scheduled.</p>
+    if (!tournaments || tournaments.length === 0) {
+      if (grid)
+        grid.innerHTML = `
+            <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
+                <p style="color: var(--text-muted);">No tournaments scheduled in this organization.</p>
+                <p style="font-size: 0.8rem; margin-top: 0.5rem;">Check out the "Event Finder" to discover open competitions!</p>
             </div>
         `;
       return;
     }
 
-    content.innerHTML = `
-        <h3>⚔️ Tournaments</h3>
-        <div class="card-grid" style="margin-top: 1rem;">
-            ${events
-              .map(
-                (e) => `
-                <div class="card" style="background: rgba(255,255,255,0.03);">
-                    <h4>${e.title}</h4>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">${new Date(e.event_date).toLocaleDateString()}</p>
-                    <p style="margin-top: 0.5rem;">${e.description || "No description"}</p>
-                    <button class="btn btn-primary btn-small" style="margin-top: 1rem;" onclick="viewEventDetails('${e.id}')">Register / View</button>
+    if (grid) {
+      grid.innerHTML = tournaments
+        .map(
+          (t) => `
+            <div class="card tournament-card" style="background: rgba(255,255,255,0.03); cursor: pointer; transition: transform 0.2s;" onclick="viewPlayerTournament('${t.id}')">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div style="width: 48px; height: 48px; background: var(--primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🏆</div>
+                    <span class="status-badge" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">${t.status || "Active"}</span>
                 </div>
-            `,
-              )
-              .join("")}
-        </div>
-        
-        <h3 style="margin-top: 3rem;">🎥 Recent Match Replays</h3>
-        <div class="card-grid" style="margin-top: 1rem;">
-            <div class="card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);">
-                <div style="background: rgba(0,0,0,0.5); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative;">
-                    <span style="font-size: 2rem; opacity: 0.5;">▶️</span>
-                    <span class="badge" style="position: absolute; top: 10px; right: 10px; background: rgba(255,165,0,0.2); color: orange; border: 1px solid orange;">PPV Linked</span>
-                </div>
-                <h4>Summer Cup Final</h4>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Elite FC vs Metro United</p>
-                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                    <button class="btn btn-primary btn-small" style="flex: 1;" onclick="triggerPpvUnlock('mock-match-1', '2.99')">Unlock Replay (£2.99)</button>
+                <h4>${t.title}</h4>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0;">${formatDate(t.event_date)}</p>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Click to see bracket & stats</span>
+                    <i style="color: var(--primary);">→</i>
                 </div>
             </div>
-            
-            <div class="card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);">
-                <div style="background: rgba(0,0,0,0.5); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative;">
-                    <span style="font-size: 2rem; opacity: 0.5;">▶️</span>
-                    <span class="badge" style="position: absolute; top: 10px; right: 10px; background: rgba(34,197,94,0.2); color: #22c55e; border: 1px solid #22c55e;">Free</span>
-                </div>
-                <h4>Group B Clash</h4>
-                <p style="color: var(--text-muted); font-size: 0.9rem;">Northside vs Eastville</p>
-                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                    <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="alert('Playing free highlight video...')">Watch Highlights</button>
-                </div>
-            </div>
-        </div>
-     `;
+        `,
+        )
+        .join("");
+    }
   } catch (error) {
     console.error("Load player tournaments error:", error);
-    content.innerHTML = `<p style="color: red;">Failed to load tournaments.</p>`;
+    if (grid)
+      grid.innerHTML = `<p style="color: red;">Failed to load tournaments. Reference: ${error.message}</p>`;
   }
+}
+
+window.viewPlayerTournament = async function (tournamentId) {
+  const listView = byId("playerTournamentListView");
+  const detailView = byId("playerTournamentDetailView");
+  if (!listView || !detailView) return;
+
+  try {
+    showLoading(true);
+    listView.style.display = "none";
+    detailView.style.display = "block";
+
+    const data = await apiService.getTournamentDetails(tournamentId);
+    if (!data) throw new Error("Could not fetch tournament details");
+
+    const tournament = data.tournament;
+    document.getElementById("playerDetailTournamentName").textContent =
+      tournament.title;
+
+    // Render tabs
+    renderPlayerBracket(data.matches || []);
+    renderPlayerFixtures(data.matches || []);
+    renderPlayerStandings(data.standings || []);
+
+    // Default to bracket tab
+    const firstTab = detailView.querySelector(".nav-item");
+    if (firstTab) switchPlayerTournamentTab(firstTab, "bracket");
+  } catch (err) {
+    console.error("View player tournament error:", err);
+    showNotification("Failed to load tournament details", "error");
+    closePlayerTournamentDetail();
+  } finally {
+    showLoading(false);
+  }
+};
+
+window.closePlayerTournamentDetail = function () {
+  const listView = byId("playerTournamentListView");
+  const detailView = byId("playerTournamentDetailView");
+  if (listView) listView.style.display = "block";
+  if (detailView) detailView.style.display = "none";
+};
+
+window.switchPlayerTournamentTab = function (btn, tabId) {
+  // Update buttons
+  const nav = btn.parentElement;
+  nav
+    .querySelectorAll(".nav-item")
+    .forEach((b) => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  // Update content
+  const container = byId("playerTournamentDetailView");
+  container
+    .querySelectorAll(".player-tournament-tab")
+    .forEach((t) => (t.style.display = "none"));
+
+  const target = byId(`player-tab-${tabId}`);
+  if (target) target.style.display = "block";
+};
+
+function renderPlayerBracket(matches) {
+  const container = document.getElementById("playerTournamentBracketVisual");
+  if (!container) return;
+
+  // Filter for knockout matches (those with round numbers)
+  let bracketMatches = matches.filter(
+    (m) => m.round_number !== null && m.round_number !== undefined,
+  );
+  if (bracketMatches.length === 0) bracketMatches = matches; // Fallback
+
+  if (bracketMatches.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding: 4rem; color: var(--text-muted); opacity: 0.5;">
+            <p>Brackets for this tournament have not been generated yet.</p>
+        </div>`;
+    return;
+  }
+
+  const rounds = {};
+  bracketMatches.forEach((m) => {
+    const rk = m.round_number ?? 1;
+    if (!rounds[rk]) rounds[rk] = [];
+    rounds[rk].push(m);
+  });
+
+  const sortedRoundNums = Object.keys(rounds)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const totalRounds = sortedRoundNums.length;
+
+  container.innerHTML = `
+        <div class="bracket-tree">
+            ${sortedRoundNums
+              .map((roundNum, idx) => {
+                const label =
+                  totalRounds > 1 && idx === totalRounds - 1
+                    ? "Final"
+                    : totalRounds > 2 && idx === totalRounds - 2
+                      ? "Semi Finals"
+                      : `Round ${roundNum}`;
+
+                return `
+                <div class="bracket-round">
+                    <h4 class="bracket-round-label">${label}</h4>
+                    ${rounds[roundNum]
+                      .map((m, mIdx) => {
+                        const played = m.played || m.status === "completed";
+                        const homeWon =
+                          played &&
+                          parseInt(m.home_score) > parseInt(m.away_score);
+                        const awayWon =
+                          played &&
+                          parseInt(m.away_score) > parseInt(m.home_score);
+                        const isUpper = mIdx % 2 === 0;
+
+                        return `
+                        <div class="bracket-match-container ${idx < totalRounds - 1 ? (isUpper ? "upper" : "lower") : ""}">
+                            <div class="bracket-match">
+                                <div class="match-team ${homeWon ? "winner" : ""}">
+                                    <span class="team-name">${m.home_team || "TBD"}</span>
+                                    <span class="match-score">${played ? m.home_score : "-"}</span>
+                                </div>
+                                <div class="match-team ${awayWon ? "winner" : ""}">
+                                    <span class="team-name">${m.away_team || "TBD"}</span>
+                                    <span class="match-score">${played ? m.away_score : "-"}</span>
+                                </div>
+                                ${played ? `<div class="match-status-indicator played"></div>` : ""}
+                            </div>
+                        </div>
+                        `;
+                      })
+                      .join("")}
+                </div>
+            `;
+              })
+              .join("")}
+        </div>
+    `;
+}
+
+function renderPlayerFixtures(matches) {
+  const container = byId("playerTournamentFixturesList");
+  if (!container) return;
+
+  if (!matches || matches.length === 0) {
+    container.innerHTML =
+      "<p style='text-align:center; padding:2rem; opacity:0.5;'>No fixtures scheduled.</p>";
+    return;
+  }
+
+  container.innerHTML = matches
+    .map(
+      (m) => `
+        <div class="fixture-item" style="display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div style="flex: 1; text-align: right; font-weight: 600;">${m.home_team || "TBD"}</div>
+            <div style="padding: 0 1.5rem; text-align: center;">
+                <div style="font-size: 1.2rem; font-weight: 800; background: rgba(255,255,255,0.05); padding: 0.25rem 0.75rem; border-radius: 4px;">
+                    ${m.status === "completed" ? `${m.home_score} - ${m.away_score}` : "vs"}
+                </div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; text-transform: uppercase;">${m.status}</div>
+            </div>
+            <div style="flex: 1; text-align: left; font-weight: 600;">${m.away_team || "TBD"}</div>
+        </div>
+    `,
+    )
+    .join("");
+}
+
+function renderPlayerStandings(standings) {
+  const container = byId("playerTournamentStandingsContainer");
+  if (!container) return;
+
+  if (!standings || Object.keys(standings).length === 0) {
+    container.innerHTML =
+      "<p style='text-align:center; padding:2rem; opacity:0.5;'>Standings are not currently applicable for this tournament stage.</p>";
+    return;
+  }
+
+  // Sort standings by points, then GD, then GF
+  const sorted = Object.values(standings).sort(
+    (a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf,
+  );
+
+  container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table" style="font-size: 0.9rem;">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Team</th>
+                        <th style="text-align: center;">P</th>
+                        <th style="text-align: center;">W</th>
+                        <th style="text-align: center;">D</th>
+                        <th style="text-align: center;">L</th>
+                        <th style="text-align: center;">GD</th>
+                        <th style="text-align: center; color: var(--primary);">PtsLocal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sorted
+                      .map(
+                        (s, idx) => `
+                        <tr style="${idx < 2 ? "background: rgba(34,197,94,0.03);" : ""}">
+                            <td style="opacity: 0.5;">${idx + 1}</td>
+                            <td style="font-weight: 600;">${s.name}</td>
+                            <td style="text-align: center;">${s.p}</td>
+                            <td style="text-align: center;">${s.w}</td>
+                            <td style="text-align: center;">${s.d}</td>
+                            <td style="text-align: center;">${s.l}</td>
+                            <td style="text-align: center;">${s.gd > 0 ? "+" : ""}${s.gd}</td>
+                            <td style="text-align: center; font-weight: 800; color: var(--primary);">${s.pts}</td>
+                        </tr>
+                    `,
+                      )
+                      .join("")}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 async function loadPlayerLeagues() {

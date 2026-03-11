@@ -84,8 +84,10 @@
       <div class="tab-item" onclick="showPlayerSection('payments')">Payments</div>
       <div class="tab-item" onclick="showPlayerSection('club-finder')">Find Clubs</div>
       <div class="tab-item" onclick="showPlayerSection('event-finder')">Find Events</div>
+      <div class="tab-item" onclick="showPlayerSection('tournament-manager')">Tournaments</div>
     </div>
   </div>
+
 
   <main class="main">
     <div class="dashboard container dashboard-container">
@@ -427,11 +429,60 @@
 
         <!-- Tournament Manager Section -->
         <div id="player-tournament-manager" class="dashboard-section">
-          <div class="card">
-            <h3>⚔️ Tournaments</h3>
-            <p>Loading tournaments...</p>
+          <!-- List View -->
+          <div id="playerTournamentListView" class="card">
+            <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
+              ⚔️ My Tournaments
+            </h3>
+            <div id="playerTournamentListContainer" class="card-grid">
+              <p style="color: var(--text-muted);">Loading tournaments...</p>
+            </div>
+          </div>
+
+          <!-- Detail View (Initially Hidden) -->
+          <div id="playerTournamentDetailView" class="dashboard-detail-view" style="display: none;">
+            <div class="detail-header"
+              style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <button class="btn-text" onclick="closePlayerTournamentDetail()"
+                  style="margin-bottom: 1rem; color: var(--primary);">← Back to Tournaments</button>
+                <h2 id="playerDetailTournamentName" class="neon-text">Tournament Name</h2>
+              </div>
+            </div>
+
+            <!-- Tournament Content Tabs -->
+            <div class="dashboard-nav"
+              style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 12px; display: inline-flex; gap: 0.5rem;">
+              <button class="nav-item active" onclick="switchPlayerTournamentTab(this, 'bracket')">🌳 Bracket</button>
+              <button class="nav-item" onclick="switchPlayerTournamentTab(this, 'fixtures')">📅 Fixtures</button>
+              <button class="nav-item" onclick="switchPlayerTournamentTab(this, 'standings')">🏆 Standings</button>
+            </div>
+
+            <!-- Bracket Tab -->
+            <div id="player-tab-bracket" class="player-tournament-tab">
+              <div class="card" style="padding: 0; min-height: 600px; overflow-x: auto;">
+                <div id="playerTournamentBracketVisual" class="bracket-tree">
+                  <!-- Brackets rendered here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Fixtures Tab -->
+            <div id="player-tab-fixtures" class="player-tournament-tab" style="display: none;">
+              <div class="card">
+                <div id="playerTournamentFixturesList"></div>
+              </div>
+            </div>
+
+            <!-- Standings Tab -->
+            <div id="player-tab-standings" class="player-tournament-tab" style="display: none;">
+              <div class="card">
+                <div id="playerTournamentStandingsContainer"></div>
+              </div>
+            </div>
           </div>
         </div>
+
 
         <!-- My Clubs -->
         <div id="player-my-clubs" class="dashboard-section">
