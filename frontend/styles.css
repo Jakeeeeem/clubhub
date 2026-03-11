@@ -2287,9 +2287,9 @@ select option {
 
 .player-position {
     position: absolute;
-    width: 36px;
-    height: 36px;
-    background: var(--primary);
+    width: 38px;
+    height: 38px;
+    background: rgba(0, 0, 0, 0.5);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -2298,20 +2298,69 @@ select option {
     font-size: 0.8rem;
     font-weight: 800;
     cursor: move;
-    border: 2px solid white;
+    border: 2px solid rgba(255, 255, 255, 0.4);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     z-index: 10;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .player-position:hover {
-    transform: scale(1.1);
+    transform: translate(-50%, -50%) scale(1.1) !important;
     box-shadow: 0 0 20px var(--primary-glow);
+    border-color: white;
+}
+
+.player-position.drag-over {
+    background: var(--primary);
+    transform: translate(-50%, -50%) scale(1.2) !important;
+    box-shadow: 0 0 30px var(--primary-glow);
+    border-color: white;
+    border-style: dashed;
 }
 
 .player-position.selected {
     border-color: var(--neon-purple);
     box-shadow: 0 0 20px var(--neon-purple-glow);
+}
+
+.player-label {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    pointer-events: none;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Integrated Sections Styles */
+.camp-tab {
+    animation: fadeIn 0.3s ease;
+}
+
+.field-chip {
+    transition: all 0.2s ease;
+}
+
+.field-chip:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: var(--primary) !important;
+    transform: translateY(-2px);
+}
+
+.field-chip:active {
+    cursor: grabbing;
+}
+
+#adminFieldCanvas.drag-over {
+    background: rgba(74, 222, 128, 0.05) !important;
+    border-color: #4ade80 !important;
 }
 
 /* Dashboards Responsiveness */
@@ -4725,35 +4774,140 @@ input:focus + .toggle-slider {
     }
 }
 
-/* Tournament Bracket Styles */
+/* Tournament Bracket Styles - Professional Knockout Tree */
+.bracket-tree {
+    display: flex;
+    overflow-x: auto;
+    padding: 2.5rem 1rem;
+    gap: 0;
+}
+
 .bracket-round {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 280px;
+    padding: 0 40px; /* Space for connectors */
+}
+
+.bracket-match-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 1rem 0;
 }
 
 .bracket-match {
-    transition: var(--transition);
+    background: #1e293b;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    width: 100%;
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: default;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    z-index: 2;
 }
 
 .bracket-match:hover {
     border-color: var(--primary);
-    background: rgba(255, 255, 255, 0.08) !important;
+    transform: scale(1.02);
+    box-shadow: 0 15px 40px rgba(239, 68, 68, 0.2);
 }
 
+/* Connectors */
 .bracket-match::after {
     content: '';
     position: absolute;
-    right: -1.5rem;
+    right: -40px;
     top: 50%;
-    width: 1.5rem;
-    height: 1px;
+    width: 40px;
+    height: 2px;
     background: rgba(255,255,255,0.1);
-    z-index: -1;
 }
 
-.bracket-round:last-child .bracket-match::after {
-    display: none;
+.bracket-round:last-child .bracket-match::after { display: none; }
+
+/* Branching logic for the World Cup feel */
+.bracket-match-container::before {
+    content: '';
+    position: absolute;
+    left: -40px;
+    top: 50%;
+    width: 40px;
+    height: 2px;
+    background: rgba(255,255,255,0.1);
 }
+
+.bracket-round:first-child .bracket-match-container::before { display: none; }
+
+/* Vertical connectors */
+.bracket-match-container.upper::after,
+.bracket-match-container.lower::after {
+    content: '';
+    position: absolute;
+    right: -40px;
+    width: 2px;
+    background: rgba(255,255,255,0.1);
+}
+
+.bracket-match-container.upper::after {
+    top: 50%;
+    height: 50%;
+}
+
+.bracket-match-container.lower::after {
+    bottom: 50%;
+    height: 50%;
+}
+
+.match-team {
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background 0.2s ease;
+}
+
+.match-team:first-child { border-top-left-radius: 12px; border-top-right-radius: 12px; }
+.match-team:last-child { border-bottom: none; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+
+.match-team:hover { background: rgba(255,255,255,0.03); }
+
+.match-team.winner {
+    background: linear-gradient(90deg, rgba(34, 197, 94, 0.05) 0%, transparent 100%);
+}
+
+.match-team.winner .team-name { color: #4ade80; font-weight: 700; }
+.match-team.winner .match-score { color: #4ade80; }
+
+.team-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.match-score {
+    font-weight: 800;
+    font-family: 'Space Mono', monospace;
+    min-width: 30px;
+    text-align: right;
+    color: var(--text-muted);
+}
+
+.bracket-drag-over {
+    background: rgba(239, 68, 68, 0.15) !important;
+    outline: 2px dashed var(--primary);
+    border-radius: 8px;
+}
+
+
 
 /* Custom Scrollbar for Bracket */
 #tournamentBracketVisual::-webkit-scrollbar {

@@ -245,9 +245,9 @@
                         <button onclick="showSection('tournaments')">🏆 Tournaments</button>
                         <button onclick="showSection('tactical-board')">📝 Tactics Board</button>
                         <div class="dropdown-divider"></div>
-                        <button onclick="window.location.href='training-manager.html'">🎯 Training Manager</button>
-                        <button onclick="window.location.href='camp-manager.html'">🏕️ Camp Manager</button>
-                        <button onclick="window.location.href='form-builder.html'">📋 Form Builder</button>
+                        <button onclick="showSection('training-manager')">🎯 Training Manager</button>
+                        <button onclick="showSection('camp-manager')">🏕️ Camp Manager</button>
+                        <button onclick="showSection('form-builder')">📋 Form Builder</button>
                         <button onclick="showSection('venue-booking')" class="closed-feature">🏟️ Venue Booking</button>
                         <button onclick="showSection('league-management')" class="closed-feature">🥇 Leagues</button>
                     </div>
@@ -1254,82 +1254,246 @@
                     </div>
                 </div>
             </div>
-            <!-- Tournament List View -->
-            <div id="tournamentListView">
-                <div class="card">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3 style="margin: 0;">🏆 Tournament Manager</h3>
-                        <button class="btn btn-primary" onclick="openCreateTournamentModal()">+ Create
-                            Tournament</button>
+            <!-- Tournaments Section -->
+            <div id="tournaments" class="dashboard-section">
+                <!-- Tournament List View -->
+                <div id="tournamentListView">
+                    <div class="card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="margin: 0;">🏆 Tournament Manager</h3>
+                            <button class="btn btn-primary" onclick="openCreateTournamentModal()">+ Create
+                                Tournament</button>
+                        </div>
+
+                        <div id="tournamentsListContainer"
+                            style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+                            <!-- Loaded via JS -->
+                            <div style="text-align: center; padding: 3rem; opacity: 0.5;">
+                                <p>Loading tournaments...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tournament Detail View (Hidden by default) -->
+                <div id="tournamentDetailView" style="display: none;">
+                    <button class="btn btn-secondary btn-small" onclick="closeTournamentDetail()">← Back to
+                        Tournaments</button>
+
+                    <div class="section-header" style="margin-top: 1rem;">
+                        <h2 id="detailTournamentName">Tournament Name</h2>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary" onclick="openPitchManagement()">📍 Manage Pitches</button>
+                            <button class="btn btn-secondary" onclick="autoSchedule()">📅 Auto Schedule</button>
+                            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 0.5rem;"></div>
+                            <button class="btn btn-small btn-primary"
+                                onclick="generateFixtures('league')">League</button>
+                            <button class="btn btn-small btn-primary"
+                                onclick="generateFixtures('knockout')">Knockout</button>
+                        </div>
                     </div>
 
-                    <div id="tournamentsListContainer"
-                        style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
-                        <!-- Loaded via JS -->
-                        <div style="text-align: center; padding: 3rem; opacity: 0.5;">
-                            <p>Loading tournaments...</p>
+                    <div class="dashboard-nav" style="margin-bottom: 1rem;">
+                        <button class="active" onclick="switchTournamentTab(this, 'fixtures')">Fixtures</button>
+                        <button onclick="switchTournamentTab(this, 'standings')">Standings</button>
+                        <button onclick="switchTournamentTab(this, 'bracket')">Bracket</button>
+                        <button onclick="switchTournamentTab(this, 'teams')">Teams</button>
+                    </div>
+
+                    <div id="tab-fixtures" class="tournament-tab">
+                        <div class="card">
+                            <h3>Upcoming Matches</h3>
+                            <div id="tournamentFixturesList"
+                                style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-bracket" class="tournament-tab" style="display: none;">
+                        <div class="card">
+                            <h3>Tournament Bracket</h3>
+                            <div id="tournamentBracketVisual"
+                                style="overflow-x: auto; padding: 1rem; min-height: 400px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                                <!-- Rendered via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-standings" class="tournament-tab" style="display: none;">
+                        <div class="card">
+                            <h3>League Table / Bracket</h3>
+                            <div id="tournamentStandingsContainer"></div>
+                        </div>
+                    </div>
+
+                    <div id="tab-teams" class="tournament-tab" style="display: none;">
+                        <div class="card">
+                            <h3>Participating Teams</h3>
+                            <div id="tournamentParticipantsList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End tournaments-section -->
+
+            <!-- Camp Manager Section -->
+            <div id="camp-manager" class="dashboard-section">
+                <div class="card">
+                    <div class="section-header"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div>
+                            <h3>🏕️ Camp Manager</h3>
+                            <p style="color: var(--text-muted);">Organize groups, assign bibs, and track attendance for
+                                your camps.</p>
+                        </div>
+                        <button class="btn btn-secondary btn-small" onclick="exportCampData()">📥 Export CSV</button>
+                    </div>
+
+                    <div class="card" style="margin-bottom: 2rem; background: rgba(255,255,255,0.02);">
+                        <label><strong>Select Camp Event:</strong></label>
+                        <select id="campSelect" onchange="loadAdminCampData()" style="width: 100%; margin-top: 0.5rem;">
+                            <option value="">-- Select Camp --</option>
+                        </select>
+                    </div>
+
+                    <div id="adminCampContent" style="display: none;">
+                        <div class="stats-grid" style="margin-bottom: 2rem;">
+                            <div class="stat-card">
+                                <span class="stat-label">Total Players</span>
+                                <span class="stat-number" id="totalCampPlayers">0</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Present</span>
+                                <span class="stat-number" id="campPresentCount" style="color: #22c55e;">0</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Groups</span>
+                                <span class="stat-number" id="campGroupsCount" style="color: #3b82f6;">0</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Unassigned</span>
+                                <span class="stat-number" id="campUnassignedCount" style="color: #ef4444;">0</span>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-nav" style="margin-bottom: 2rem;">
+                            <button class="active" onclick="switchCampTab(this, 'attendees')">Attendees</button>
+                            <button onclick="switchCampTab(this, 'groups')">Groups & Bibs</button>
+                        </div>
+
+                        <div id="camp-attendees-tab" class="camp-tab">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Player</th>
+                                            <th>Group</th>
+                                            <th>Bib</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminCampAttendeesBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="camp-groups-tab" class="camp-tab" style="display: none;">
+                            <div class="card" style="margin-bottom: 2rem; border-style: dashed;">
+                                <h4>Create New Group</h4>
+                                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                    <input type="text" id="adminNewCampGroupName"
+                                        placeholder="Group Name (e.g. U12 Elite)" style="flex:1;">
+                                    <button class="btn btn-primary" onclick="createAdminCampGroup()">Create</button>
+                                </div>
+                            </div>
+                            <div id="adminCampGroupsContainer" class="card-grid"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tournament Detail View (Hidden by default) -->
-            <div id="tournamentDetailView" style="display: none;">
-                <button class="btn btn-secondary btn-small" onclick="closeTournamentDetail()">← Back to
-                    Tournaments</button>
-
-                <div class="section-header" style="margin-top: 1rem;">
-                    <h2 id="detailTournamentName">Tournament Name</h2>
-                    <div class="action-buttons">
-                        <button class="btn btn-secondary" onclick="openPitchManagement()">📍 Manage Pitches</button>
-                        <button class="btn btn-secondary" onclick="autoSchedule()">📅 Auto Schedule</button>
-                        <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 0.5rem;"></div>
-                        <button class="btn btn-small btn-primary" onclick="generateFixtures('league')">League</button>
-                        <button class="btn btn-small btn-primary"
-                            onclick="generateFixtures('knockout')">Knockout</button>
+            <!-- Form Builder Section -->
+            <div id="form-builder" class="dashboard-section">
+                <div class="card">
+                    <div class="section-header"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div>
+                            <h3>📋 Form Builder</h3>
+                            <p style="color: var(--text-muted);">Create custom registration forms and surveys.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="newForm()">+ New Form</button>
                     </div>
-                </div>
 
-                <div class="dashboard-nav" style="margin-bottom: 1rem;">
-                    <button class="active" onclick="switchTournamentTab(this, 'fixtures')">Fixtures</button>
-                    <button onclick="switchTournamentTab(this, 'standings')">Standings</button>
-                    <button onclick="switchTournamentTab(this, 'bracket')">Bracket</button>
-                    <button onclick="switchTournamentTab(this, 'teams')">Teams</button>
-                </div>
+                    <div style="display: grid; grid-template-columns: 280px 1fr 300px; gap: 1.5rem; min-height: 600px;">
+                        <!-- Left: My Forms -->
+                        <div class="card" style="background: rgba(255,255,255,0.02); height: fit-content;">
+                            <h4
+                                style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem;">
+                                My Forms</h4>
+                            <div id="adminMyFormsContainer">
+                                <p style="font-size: 0.8rem; opacity: 0.5;">Loading forms...</p>
+                            </div>
+                        </div>
 
-                <div id="tab-fixtures" class="tournament-tab">
-                    <div class="card">
-                        <h3>Upcoming Matches</h3>
-                        <div id="tournamentFixturesList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <!-- Center: Canvas -->
+                        <div class="card"
+                            style="padding: 0; background: #0f172a; border-radius: 16px; display: flex; flex-direction: column;">
+                            <div
+                                style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); text-align: center;">
+                                <input type="text" id="adminFormTitle" placeholder="Untitled Form"
+                                    style="background: transparent; border: none; font-size: 1.5rem; font-weight: 800; text-align: center; color: white;">
+                                <input type="text" id="adminFormDescription" placeholder="Add description..."
+                                    style="background: transparent; border: none; font-size: 0.9rem; text-align: center; color: var(--text-muted); width: 100%; margin-top: 0.5rem;">
+                            </div>
+                            <div id="adminFieldCanvas"
+                                style="flex: 1; padding: 1.5rem; border: 2px dashed rgba(255,255,255,0.05); margin: 1rem; border-radius: 12px; min-height: 300px;">
+                                <div style="text-align: center; margin-top: 5rem; opacity: 0.3;">✨ Drag components here
+                                </div>
+                            </div>
+                            <div
+                                style="padding: 1rem; border-top: 1px solid var(--border-color); display: flex; gap: 1rem; justify-content: center;">
+                                <button class="btn btn-primary" onclick="saveAdminForm()">💾 Save Form</button>
+                                <button class="btn btn-secondary" onclick="previewAdminForm()">👁 Preview</button>
+                            </div>
+                        </div>
+
+                        <!-- Right: Palette -->
+                        <div id="adminFormPalette" class="card"
+                            style="background: rgba(255,255,255,0.02); height: fit-content;">
+                            <h4
+                                style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem;">
+                                Components</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                <div class="field-chip" draggable="true" data-type="text"
+                                    style="padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.7rem; text-align: center; cursor: grab;">
+                                    Short Text</div>
+                                <div class="field-chip" draggable="true" data-type="textarea"
+                                    style="padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.7rem; text-align: center; cursor: grab;">
+                                    Paragraph</div>
+                                <div class="field-chip" draggable="true" data-type="number"
+                                    style="padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.7rem; text-align: center; cursor: grab;">
+                                    Number</div>
+                                <div class="field-chip" draggable="true" data-type="date"
+                                    style="padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.7rem; text-align: center; cursor: grab;">
+                                    Date</div>
+                                <div class="field-chip" draggable="true" data-type="email"
+                                    style="padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.7rem; text-align: center; cursor: grab;">
+                                    Email</div>
+                                <div class="field-chip" draggable="true" data-type="select"
+                                    style="padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.7rem; text-align: center; cursor: grab;">
+                                    Dropdown</div>
+                            </div>
+
+                            <div id="adminPropPanel"
+                                style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); display: none;">
+                                <h4 style="font-size: 0.8rem; text-transform: uppercase;">Properties</h4>
+                                <div id="adminPropContent"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div id="tab-bracket" class="tournament-tab" style="display: none;">
-                    <div class="card">
-                        <h3>Tournament Bracket</h3>
-                        <div id="tournamentBracketVisual"
-                            style="overflow-x: auto; padding: 1rem; min-height: 400px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                            <!-- Rendered via JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-standings" class="tournament-tab" style="display: none;">
-                    <div class="card">
-                        <h3>League Table / Bracket</h3>
-                        <div id="tournamentStandingsContainer"></div>
-                    </div>
-                </div>
-
-                <div id="tab-teams" class="tournament-tab" style="display: none;">
-                    <div class="card">
-                        <h3>Participating Teams</h3>
-                        <div id="tournamentParticipantsList"></div>
-                    </div>
-                </div>
-            </div> <!-- End tournaments-section -->
+            </div>
 
             <!-- Event Attendance Modal -->
             <div id="eventAttendanceModal" class="modal">
@@ -7188,19 +7352,19 @@
         function renderBracket(matches) {
             const container = document.getElementById('tournamentBracketVisual');
             if (!container) return;
-            // Include all matches that have a round number OR all if none have round_number set
+
+            // Include all matches that have a round number
             let bracketMatches = (matches || []).filter(m => m.round_number !== null && m.round_number !== undefined);
-            if (bracketMatches.length === 0) bracketMatches = matches || []; // fall back to all
+            if (bracketMatches.length === 0) bracketMatches = matches || [];
 
             if (bracketMatches.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding: 3rem; color: var(--text-muted);">
-                    <p>No matches generated yet.</p>
-                    <p style="font-size: 0.9rem;">Generate fixtures to see the bracket visualization.</p>
+                container.innerHTML = `<div style="text-align:center; padding: 3rem; color: var(--text-muted); opacity: 0.5;">
+                    <p>✨ No matches generated yet.</p>
+                    <p style="font-size: 0.8rem;">Generate fixtures to see the knockout bracket tree.</p>
                 </div>`;
                 return;
             }
 
-            // Group by round
             const rounds = {};
             bracketMatches.forEach(m => {
                 const rk = m.round_number ?? 1;
@@ -7209,40 +7373,50 @@
             });
 
             const sortedRoundNums = Object.keys(rounds).map(Number).sort((a, b) => a - b);
-            const roundLabels = { 1: 'Round 1', 2: 'Round 2', 3: 'Quarter Finals', 4: 'Semi Finals', 5: 'Final' };
             const totalRounds = sortedRoundNums.length;
 
             container.innerHTML = `
-                <div style="display: flex; gap: 3rem; padding: 1rem; align-items: stretch; overflow-x: auto;">
+                <div class="bracket-tree">
                     ${sortedRoundNums.map((roundNum, idx) => {
                 const label = totalRounds > 1 && idx === totalRounds - 1 ? 'Final'
                     : totalRounds > 2 && idx === totalRounds - 2 ? 'Semi Finals'
                         : totalRounds > 3 && idx === totalRounds - 3 ? 'Quarter Finals'
                             : `Round ${roundNum}`;
+
                 return `
-                        <div class="bracket-round" style="display: flex; flex-direction: column; justify-content: space-around; gap: 1.5rem; min-width: 220px;">
-                            <h4 style="text-align: center; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; font-size: 0.8rem;">${label}</h4>
-                            ${rounds[roundNum].map(m => {
+                        <div class="bracket-round">
+                            <h4 style="text-align: center; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; font-size: 0.7rem; font-weight: 800;">${label}</h4>
+                            ${rounds[roundNum].map((m, mIdx) => {
                     const played = m.played || m.status === 'completed';
                     const homeWon = played && parseInt(m.home_score) > parseInt(m.away_score);
                     const awayWon = played && parseInt(m.away_score) > parseInt(m.home_score);
+                    const isUpper = (mIdx % 2 === 0);
+                    const homeId = m.home_team_id;
+                    const awayId = m.away_team_id;
+
                     return `
-                                <div class="bracket-match" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; position: relative;">
-                                    <div style="padding: 0.75rem; display: flex; flex-direction: column; gap: 0;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                                            <span style="font-weight: ${homeWon ? '700' : '500'}; font-size: 0.9rem; color: ${homeWon ? 'var(--accent-light, #4ade80)' : 'inherit'};">
-                                                ${m.home_team || 'TBD'}
-                                            </span>
-                                            <span style="font-weight: 700; font-size: 1rem; min-width: 20px; text-align: right;">${played ? m.home_score : '-'}</span>
+                                <div class="bracket-match-container ${idx < totalRounds - 1 ? (isUpper ? 'upper' : 'lower') : ''}">
+                                    <div class="bracket-match" id="match-${m.id}">
+                                        <div class="match-team ${homeWon ? 'winner' : ''}" 
+                                            draggable="${!played}" 
+                                            ondragstart="handleBracketDragStart(event, '${m.id}', 'home', '${homeId}')"
+                                            ondragover="handleBracketDragOver(event)"
+                                            ondragleave="this.classList.remove('bracket-drag-over')"
+                                            ondrop="handleBracketDrop(event, '${m.id}', 'home')">
+                                            <span class="team-name">${m.home_team || 'TBD'}</span>
+                                            <span class="match-score">${played ? m.home_score : '-'}</span>
                                         </div>
-                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
-                                            <span style="font-weight: ${awayWon ? '700' : '500'}; font-size: 0.9rem; color: ${awayWon ? 'var(--accent-light, #4ade80)' : 'inherit'};">
-                                                ${m.away_team || 'TBD'}
-                                            </span>
-                                            <span style="font-weight: 700; font-size: 1rem; min-width: 20px; text-align: right;">${played ? m.away_score : '-'}</span>
+                                        <div class="match-team ${awayWon ? 'winner' : ''}" 
+                                            draggable="${!played}" 
+                                            ondragstart="handleBracketDragStart(event, '${m.id}', 'away', '${awayId}')"
+                                            ondragover="handleBracketDragOver(event)"
+                                            ondragleave="this.classList.remove('bracket-drag-over')"
+                                            ondrop="handleBracketDrop(event, '${m.id}', 'away')">
+                                            <span class="team-name">${m.away_team || 'TBD'}</span>
+                                            <span class="match-score">${played ? m.away_score : '-'}</span>
                                         </div>
+                                        ${played ? `<div style="position: absolute; right: 0; top: 0; bottom: 0; width: 4px; background: var(--accent-light);"></div>` : ''}
                                     </div>
-                                    <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 4px; background: ${played ? '#4ade80' : 'rgba(255,255,255,0.1)'};"></div>
                                 </div>
                             `}).join('')}
                         </div>
@@ -7251,7 +7425,59 @@
             `;
         }
 
+
+        window.handleBracketDragStart = function (e, matchId, side, teamId) {
+            if (!teamId || teamId === 'undefined' || teamId === 'null') {
+                e.preventDefault();
+                return;
+            }
+            e.dataTransfer.setData('sourceMatchId', matchId);
+            e.dataTransfer.setData('sourceSide', side);
+            e.dataTransfer.setData('teamId', teamId);
+            e.target.closest('.match-team').style.opacity = '0.5';
+        };
+
+        window.handleBracketDragOver = function (e) {
+            e.preventDefault();
+            const el = e.target.closest('.match-team');
+            if (el) el.classList.add('bracket-drag-over');
+        };
+
+        window.handleBracketDrop = async function (e, targetMatchId, targetSide) {
+            e.preventDefault();
+            const el = e.target.closest('.match-team');
+            if (el) el.classList.remove('bracket-drag-over');
+
+            const sourceMatchId = e.dataTransfer.getData('sourceMatchId');
+            const sourceSide = e.dataTransfer.getData('sourceSide');
+            const teamId = e.dataTransfer.getData('teamId');
+
+            if (sourceMatchId === targetMatchId && sourceSide === targetSide) return;
+
+            try {
+                showLoading(true);
+                // Swapping or moving team in bracket
+                await apiService.makeRequest(`/tournaments/matches/reassign`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        teamId,
+                        targetMatchId,
+                        targetSide,
+                        sourceMatchId,
+                        sourceSide
+                    })
+                });
+                showNotification('Bracket updated successfully', 'success');
+                if (currentTournamentId) viewTournament(currentTournamentId);
+            } catch (err) {
+                showNotification(err.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        };
+
         window.renderBracket = renderBracket;
+
 
         // --- STAFF MODULE ---
         async function loadStaff() {
@@ -11134,7 +11360,7 @@
                 // This is handled by showSection() calling the global function, which we need to register
                 window.loadPolls = loadPolls;
 
-                // Add showSection hook for Polls, Venues, Leagues (IIFE)
+                // Add showSection hook for Polls, Venues, Leagues, Camp, Form Builder (IIFE)
                 (function () {
                     const originalShowSection = window.showSection;
                     window.showSection = function (sectionId) {
@@ -11142,6 +11368,8 @@
                         if (sectionId === 'polls-section') loadPolls();
                         if (sectionId === 'venue-booking') loadVenues();
                         if (sectionId === 'league-management') loadLeagues();
+                        if (sectionId === 'camp-manager') loadAdminCamps();
+                        if (sectionId === 'form-builder') loadAdminForms();
                     };
                 })();
             });
@@ -12051,12 +12279,16 @@
                     showNotification('🏆 Match result saved successfully!', 'success');
                     closeModal('matchResultModal');
                     if (window.loadEvents) window.loadEvents();
+                    if (window.currentTournamentId && window.viewTournament) {
+                        window.viewTournament(window.currentTournamentId);
+                    }
                 } catch (error) {
                     showNotification('❌ Failed to save result: ' + error.message, 'error');
                 } finally {
                     showLoading(false);
                 }
             });
+
 
             // Staff Management Logic
             async function loadStaff() {
@@ -12243,21 +12475,56 @@
                     }
 
                     container.innerHTML = players.map(player => `
-                    <div class="available-player" onclick="assignPlayerToSelected('${player.id}', '${player.first_name || player.firstName}', '${player.last_name || player.lastName}')" data-player-id="${player.id}" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 12px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
-                        <div class="user-avatar" style="width:35px; height:35px; font-size:0.8rem; border-radius:10px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center;">
+                    <div class="available-player" 
+                         draggable="true"
+                         ondragstart="handleTacticalDragStart(event, '${player.id}', '${player.first_name || player.firstName}', '${player.last_name || player.lastName}')"
+                         onclick="assignPlayerToSelected('${player.id}', '${player.first_name || player.firstName}', '${player.last_name || player.lastName}')" 
+                         data-player-id="${player.id}" 
+                         style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 12px; cursor: move; transition: all 0.2s ease; margin-bottom: 0.5rem;" 
+                         onmouseover="this.style.background='rgba(255,255,255,0.1)'" 
+                         onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                        <div class="user-avatar" style="width:35px; height:35px; font-size:0.8rem; border-radius:10px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; pointer-events: none;">
                             ${(player.first_name || player.firstName || 'P').charAt(0)}
                         </div>
-                        <div style="display:flex; flex-direction:column;">
+                        <div style="display:flex; flex-direction:column; pointer-events: none;">
                             <span style="font-weight:600; font-size: 0.9rem;">${player.first_name || player.firstName} ${player.last_name || player.lastName}</span>
                             <span style="font-size:0.75rem; opacity:0.6;">${player.position || 'Player'}</span>
                         </div>
                     </div>
                 `).join('');
+
+                    // Area to drag off pitch
+                    container.ondragover = (e) => e.preventDefault();
+                    container.ondrop = (e) => {
+                        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                        if (data.fromPitch) {
+                            removePlayerFromPitch(data.index);
+                        }
+                    };
                 } catch (err) {
                     console.error('Failed to load roster:', err);
                     container.innerHTML = '<p style="color:#ef4444; padding: 1rem;">Failed to load players.</p>';
                 }
             }
+
+            window.handleTacticalDragStart = function (e, id, first, last) {
+                e.dataTransfer.setData('text/plain', JSON.stringify({ id, first, last, fromPitch: false }));
+                e.dropEffect = 'move';
+            };
+
+            window.removePlayerFromPitch = function (index) {
+                const board = document.getElementById('tacticalBoard');
+                const p = board.querySelector(`.player-position[data-index="${index}"]`);
+                if (p) {
+                    const label = p.querySelector('.player-label');
+                    p.removeAttribute('data-player-id');
+                    p.textContent = p.dataset.role;
+                    p.appendChild(label);
+                    label.textContent = 'Empty';
+                    p.style.background = 'rgba(0,0,0,0.5)';
+                    showNotification('Player removed from pitch', 'info');
+                }
+            };
 
             window.setFormation = function () {
                 const formation = document.getElementById('formationSelect').value;
@@ -12276,16 +12543,62 @@
                     playerEl.dataset.index = index;
                     playerEl.dataset.role = pos.role;
                     playerEl.textContent = pos.role;
+                    playerEl.draggable = true;
 
                     const label = document.createElement('div');
                     label.className = 'player-label';
                     label.textContent = 'Empty';
                     playerEl.appendChild(label);
 
+                    // Drag & Drop Events
+                    playerEl.ondragover = (e) => {
+                        e.preventDefault();
+                        playerEl.classList.add('drag-over');
+                    };
+                    playerEl.ondragleave = () => playerEl.classList.remove('drag-over');
+                    playerEl.ondrop = (e) => {
+                        e.preventDefault();
+                        playerEl.classList.remove('drag-over');
+                        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                        assignPlayerToSlot(playerEl, data.id, data.first, data.last);
+                    };
+
+                    playerEl.ondragstart = (e) => {
+                        if (!playerEl.dataset.playerId) {
+                            e.preventDefault();
+                            return;
+                        }
+                        const labelText = playerEl.querySelector('.player-label').textContent;
+                        const first = labelText.split(' ')[0];
+                        const last = labelText.split(' ')[1] || '';
+                        e.dataTransfer.setData('text/plain', JSON.stringify({
+                            id: playerEl.dataset.playerId,
+                            first,
+                            last,
+                            fromPitch: true,
+                            index: playerEl.dataset.index
+                        }));
+                    };
+
                     playerEl.onclick = () => selectPosition(playerEl);
                     board.appendChild(playerEl);
                 });
             };
+
+            function assignPlayerToSlot(playerEl, id, first, last) {
+                const label = playerEl.querySelector('.player-label');
+
+                playerEl.dataset.playerId = id;
+                playerEl.textContent = first.charAt(0) + last.charAt(0);
+                playerEl.appendChild(label);
+                label.textContent = `${first} ${last.charAt(0)}.`;
+
+                playerEl.style.background = 'radial-gradient(circle at 30% 30%, #4ade80 0%, #16a34a 100%)';
+                playerEl.style.boxShadow = '0 0 15px rgba(74, 222, 128, 0.4)';
+                playerEl.classList.remove('selected');
+
+                showNotification(`Assigned ${first} ${last} to ${playerEl.dataset.role}`, 'success');
+            }
 
             function selectPosition(el) {
                 document.querySelectorAll('.player-position').forEach(p => p.classList.remove('selected'));
@@ -12562,6 +12875,164 @@
                     console.error('Send failed:', err);
                     showNotification('Failed to send message: ' + err.message, 'error');
                 }
+            };
+
+            /* =========================================================
+               Camp Manager & Form Builder Logic
+               ========================================================= */
+            window.loadAdminCamps = async function () {
+                const select = document.getElementById('campSelect');
+                if (!select || select.options.length > 1) return;
+                try {
+                    const orgId = await getActiveGroupId();
+                    const events = await apiService.makeRequest(`/events?organizationId=${orgId}&eventType=camp`);
+                    select.innerHTML = '<option value="">-- Select Camp --</option>';
+                    events.forEach(e => {
+                        const opt = document.createElement('option');
+                        opt.value = e.id;
+                        opt.textContent = `${e.title} (${new Date(e.event_date).toLocaleDateString()})`;
+                        select.appendChild(opt);
+                    });
+                } catch (err) { console.error('Load camps failed:', err); }
+            };
+
+            window.loadAdminCampData = async function () {
+                const campId = document.getElementById('campSelect').value;
+                if (!campId) { document.getElementById('adminCampContent').style.display = 'none'; return; }
+                try {
+                    showLoading(true);
+                    const data = await apiService.makeRequest(`/talent-id/events/${campId}/dashboard`);
+                    document.getElementById('totalCampPlayers').textContent = data.registrants.length;
+                    document.getElementById('campPresentCount').textContent = data.registrants.filter(r => r.status === 'checked_in').length;
+                    document.getElementById('campGroupsCount').textContent = data.groups.length;
+                    document.getElementById('campUnassignedCount').textContent = data.registrants.filter(r => !r.group_id).length;
+
+                    const tbody = document.getElementById('adminCampAttendeesBody');
+                    tbody.innerHTML = data.registrants.map(r => `
+                        <tr>
+                            <td><strong>${r.first_name} ${r.last_name}</strong></td>
+                            <td>${r.group_name || '-'}</td>
+                            <td>${r.bib_number ? `${r.bib_color} #${r.bib_number}` : '-'}</td>
+                            <td>${r.status === 'checked_in' ? '✅ Present' : '⏳ Pending'}</td>
+                            <td><button class="btn btn-sm" onclick="showPlayerTeamAssignment('${r.id}')">Manage</button></td>
+                        </tr>
+                    `).join('');
+
+                    const groupContainer = document.getElementById('adminCampGroupsContainer');
+                    groupContainer.innerHTML = data.groups.map(g => `
+                        <div class="card">
+                            <h4>${g.name}</h4>
+                            <p style="font-size:0.8rem; opacity:0.6;">Players: ${g.player_count || 0}</p>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('adminCampContent').style.display = 'block';
+                } catch (err) { console.error(err); } finally { showLoading(false); }
+            };
+
+            window.switchCampTab = function (btn, tabId) {
+                document.querySelectorAll('.camp-tab').forEach(t => t.style.display = 'none');
+                document.getElementById(`camp-${tabId}-tab`).style.display = 'block';
+                btn.parentNode.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
+
+            // Form Builder Logic (Simplified for integration)
+            let adminFormFields = [];
+            window.loadAdminForms = async function () {
+                const container = document.getElementById('adminMyFormsContainer');
+                try {
+                    const { forms } = await apiService.makeRequest('/forms');
+                    container.innerHTML = forms.map(f => `
+                        <div class="form-list-item" onclick="loadSingleForm('${f.id}')" style="padding:0.75rem; background:rgba(255,255,255,0.03); border-radius:8px; margin-bottom:0.5rem; cursor:pointer;">
+                            <div style="font-weight:600; font-size:0.85rem;">${f.title}</div>
+                            <div style="font-size:0.75rem; opacity:0.5;">${f.response_count || 0} responses</div>
+                        </div>
+                    `).join('');
+                    initFormBuilderDnD();
+                } catch (err) { container.innerHTML = '<p>Failed to load forms</p>'; }
+            };
+
+            function initFormBuilderDnD() {
+                const palette = document.getElementById('adminFormPalette');
+                const canvas = document.getElementById('adminFieldCanvas');
+
+                if (!palette || !canvas) return;
+
+                palette.querySelectorAll('.field-chip').forEach(chip => {
+                    chip.ondragstart = (e) => {
+                        e.dataTransfer.setData('field-type', chip.dataset.type);
+                    };
+                });
+
+                canvas.ondragover = (e) => {
+                    e.preventDefault();
+                    canvas.style.background = 'rgba(255,255,255,0.05)';
+                };
+                canvas.ondragleave = () => canvas.style.background = 'transparent';
+                canvas.ondrop = (e) => {
+                    e.preventDefault();
+                    canvas.style.background = 'transparent';
+                    const type = e.dataTransfer.getData('field-type');
+                    if (type) addAdminField(type);
+                };
+            }
+
+            function addAdminField(type) {
+                adminFormFields.push({ type, label: 'New ' + type, required: false });
+                renderAdminCanvas();
+            }
+
+            function renderAdminCanvas() {
+                const canvas = document.getElementById('adminFieldCanvas');
+                if (adminFormFields.length === 0) {
+                    canvas.innerHTML = '<div style="text-align: center; margin-top: 5rem; opacity: 0.3;">✨ Drag components here</div>';
+                    return;
+                }
+                canvas.innerHTML = adminFormFields.map((f, i) => `
+                    <div class="card" style="margin-bottom:1rem; padding:1rem; border:1px solid rgba(255,255,255,0.1);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <input type="text" value="${f.label}" oninput="adminFormFields[${i}].label=this.value" style="background:transparent; border:none; color:white; font-weight:600; flex:1;">
+                            <button class="btn btn-icon" onclick="removeAdminField(${i})">✕</button>
+                        </div>
+                        <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">${f.type}</div>
+                    </div>
+                `).join('');
+            }
+
+            window.removeAdminField = function (idx) {
+                adminFormFields.splice(idx, 1);
+                renderAdminCanvas();
+            };
+
+            window.saveAdminForm = async function () {
+                const title = document.getElementById('adminFormTitle').value;
+                if (!title) { showNotification('Please enter a title', 'error'); return; }
+                try {
+                    showLoading(true);
+                    await apiService.makeRequest('/forms', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            title,
+                            description: document.getElementById('adminFormDescription').value,
+                            fields: adminFormFields.map((f, i) => ({
+                                label: f.label,
+                                fieldType: f.type,
+                                isRequired: f.required,
+                                sortOrder: i
+                            }))
+                        })
+                    });
+                    showNotification('Form saved successfully!', 'success');
+                    loadAdminForms();
+                } catch (err) { showNotification(err.message, 'error'); } finally { showLoading(false); }
+            };
+
+            window.newForm = function () {
+                adminFormFields = [];
+                document.getElementById('adminFormTitle').value = '';
+                document.getElementById('adminFormDescription').value = '';
+                renderAdminCanvas();
             };
         </script>
 </body>
