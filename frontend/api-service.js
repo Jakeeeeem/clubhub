@@ -870,6 +870,92 @@ class ApiService {
           };
         }
 
+        if (endpoint.includes("/feed")) {
+          if (options.method === "POST") {
+            const body = JSON.parse(options.body || "{}");
+            return {
+              success: true,
+              post: {
+                id: "post_" + Date.now(),
+                user_name: "Demo Admin",
+                content: body.content,
+                created_at: new Date().toISOString(),
+                likes: 0,
+                comments: 0,
+              },
+            };
+          }
+          return [
+            {
+              id: "p1",
+              user_name: "Coach Michael",
+              content:
+                "Great training session today everyone! Keep up the hard work. ⚽",
+              created_at: new Date(Date.now() - 3600000).toISOString(),
+              likes: 12,
+              comments: 3,
+            },
+            {
+              id: "p2",
+              user_name: "Club Secretary",
+              content:
+                "Reminder: Tournament registration closes this Friday. Don't miss out!",
+              created_at: new Date(Date.now() - 86400000).toISOString(),
+              likes: 5,
+              comments: 1,
+            },
+          ];
+        }
+
+        if (endpoint.includes("/messages")) {
+          if (options.method === "POST") {
+            const body = JSON.parse(options.body || "{}");
+            return {
+              success: true,
+              message: {
+                id: "msg_" + Date.now(),
+                sender_name: "You",
+                content: body.content,
+                timestamp: new Date().toISOString(),
+              },
+            };
+          }
+          if (endpoint.split("/").length > 2) {
+            // Specific conversation
+            return [
+              {
+                id: "m1",
+                sender_name: "Coach Michael",
+                content: "Are you coming to practice tonight?",
+                timestamp: new Date(Date.now() - 7200000).toISOString(),
+              },
+              {
+                id: "m2",
+                sender_name: "You",
+                content: "Yes, I'll be there at 6!",
+                timestamp: new Date(Date.now() - 3600000).toISOString(),
+              },
+            ];
+          }
+          // Conversation list
+          return [
+            {
+              id: "c1",
+              name: "U15 Elite Squad",
+              last_message: "Coach Michael: See you tonight!",
+              timestamp: new Date().toISOString(),
+              unread_count: 2,
+            },
+            {
+              id: "c2",
+              name: "Jordan Smith",
+              last_message: "You: Thanks for the feedback!",
+              timestamp: new Date(Date.now() - 86400000).toISOString(),
+              unread_count: 0,
+            },
+          ];
+        }
+
         if (endpoint.includes("/tournaments")) {
           return {
             success: true,
@@ -3959,6 +4045,13 @@ class ApiService {
     });
   }
 
+  async recordMatchResult(eventId, payload) {
+    return await this.makeRequest(`/events/${eventId}/result`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
   // =========================== UTILITY METHODS ===========================
 
   calculateAge(dateOfBirth) {
@@ -4024,6 +4117,33 @@ class ApiService {
   async deleteTacticalFormation(id) {
     return await this.makeRequest(`/tactical/${id}`, {
       method: "DELETE",
+    });
+  }
+
+  // Messenger & Feed
+  async getFeed(orgId) {
+    return await this.makeRequest(`/feed?org_id=${orgId}`);
+  }
+
+  async postToFeed(orgId, data) {
+    return await this.makeRequest(`/feed?org_id=${orgId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMessengerConversations(orgId) {
+    return await this.makeRequest(`/messages?org_id=${orgId}`);
+  }
+
+  async getMessages(conversationId) {
+    return await this.makeRequest(`/messages/${conversationId}`);
+  }
+
+  async sendMessage(conversationId, data) {
+    return await this.makeRequest(`/messages/${conversationId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
     });
   }
 }

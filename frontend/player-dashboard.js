@@ -2071,9 +2071,62 @@ async function bookEvent(eventId) {
   }
 }
 
+window.toggleDeclineReason = function () {
+  const availability = document.querySelector(
+    'input[name="availability"]:checked',
+  )?.value;
+  const declineContainer = byId("declineReasonContainer");
+  const paymentNotice = byId("eventPaymentNotice");
+  const paymentTotal = byId("paymentTotalContainer");
+  const submitBtn = byId("submitAvailabilityBtn");
+
+  if (declineContainer) {
+    declineContainer.style.display = availability === "no" ? "block" : "none";
+  }
+
+  // Handle payment visibility if "Yes" and has price
+  const price = Number(window.currentAvailabilityEventPrice || 0);
+  if (availability === "yes" && price > 0) {
+    if (paymentNotice) paymentNotice.style.display = "block";
+    if (paymentTotal) paymentTotal.style.display = "block";
+    if (submitBtn) submitBtn.textContent = "Pay & Confirm Presence";
+  } else {
+    if (paymentNotice) paymentNotice.style.display = "none";
+    if (paymentTotal) paymentTotal.style.display = "none";
+    if (submitBtn) submitBtn.textContent = "Submit Availability";
+  }
+};
+
 function submitAvailability(eventId) {
-  const eventIdEl = byId("availabilityEventId");
+  const event = (PlayerDashboardState.events || []).find(
+    (e) => e.id === eventId,
+  );
+  const eventIdEl = byId("availabilityEventIdInput");
   if (eventIdEl) eventIdEl.value = eventId;
+
+  // Reset modal state
+  window.currentAvailabilityEventPrice = event ? Number(event.price || 0) : 0;
+  window.currentAvailabilityEventTitle = event ? event.title : "Event";
+
+  const priceVal = byId("eventPriceValue");
+  const payAmt = byId("availabilityPaymentAmount");
+  if (priceVal)
+    priceVal.textContent = formatCurrency(window.currentAvailabilityEventPrice);
+  if (payAmt)
+    payAmt.textContent = formatCurrency(window.currentAvailabilityEventPrice);
+
+  const form = byId("availabilityForm");
+  if (form) form.reset();
+
+  if (byId("declineReasonContainer"))
+    byId("declineReasonContainer").style.display = "none";
+  if (byId("eventPaymentNotice"))
+    byId("eventPaymentNotice").style.display = "none";
+  if (byId("paymentTotalContainer"))
+    byId("paymentTotalContainer").style.display = "none";
+  if (byId("submitAvailabilityBtn"))
+    byId("submitAvailabilityBtn").textContent = "Submit Availability";
+
   showModal("availabilityModal");
 }
 
@@ -2227,31 +2280,159 @@ window.loadPolls = loadPolls;
 
 window.checkInEvent = checkInEvent;
 
-async function handleAvailabilitySubmission(e) {
+window.submitAvailability = function (eventId) {
+  const event = (window.PlayerDashboardState.events || []).find(
+    (e) => e.id === eventId,
+  );
+  if (!event) return showNotification("Event not found", "error");
+
+  removeIfExists("availabilityModal");
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.id = "availabilityModal";
+  modal.style.display = "block";
+
+  const requireReasonMsg = event.require_decline_reason
+    ? `<p style="font-size: 0.8rem; color: var(--primary); margin-bottom: 0.5rem;">Note: The coach requires a reason if you select "No".</p>`
+    : "";
+
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2>RSVP: ${escapeHTML(event.title)}</h2>
+            <button class="close" onclick="closeModal('availabilityModal')">&times;</button>
+        </div>
+        <form id="availabilityForm" onsubmit="window.handleAvailabilitySubmission(event)">
+            <input type="hidden" id="availabilityEventId" value="${event.id}">
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label>Are you attending?</label>
+                <div class="checkbox-group" style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                    <label style="flex: 1; text-align: center; cursor: pointer; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <input type="radio" name="availability" value="yes" required style="display:none;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">👍</div>
+                        <div>Yes</div>
+                    </label>
+                    <label style="flex: 1; text-align: center; cursor: pointer; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <input type="radio" name="availability" value="maybe" required style="display:none;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🤔</div>
+                        <div>Maybe</div>
+                    </label>
+                    <label style="flex: 1; text-align: center; cursor: pointer; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <input type="radio" name="availability" value="no" required style="display:none;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">👎</div>
+                        <div>No</div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="availabilityNotes">Reason / Notes</label>
+                ${requireReasonMsg}
+                <textarea id="availabilityNotes" rows="3" placeholder="Provide any details (e.g., 'Running late', 'Injured')..."></textarea>
+            </div>
+
+            <div class="form-actions" style="margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit RSVP</button>
+            </div>
+        </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Add event listener to radios to highlight selected
+  const radios = modal.querySelectorAll('input[name="availability"]');
+  radios.forEach((radio) => {
+    radio.addEventListener("change", (e) => {
+      modal
+        .querySelectorAll(".checkbox-group label")
+        .forEach((l) => (l.style.borderColor = "var(--border-color)"));
+      e.target.parentElement.style.borderColor = "var(--primary)";
+    });
+  });
+};
+
+window.handleAvailabilitySubmission = async function (e) {
   e.preventDefault();
   try {
-    const eventId = byId("availabilityEventId").value;
+    const eventId = byId("availabilityEventIdInput").value;
     const availability = document.querySelector(
       'input[name="availability"]:checked',
     )?.value;
+    const reason = byId("declineReason")?.value;
     const notes = byId("availabilityNotes").value;
 
     if (!availability)
       return showNotification("Please select your availability", "error");
 
+    if (availability === "no" && !reason) {
+      return showNotification("Please provide a reason for declining", "error");
+    }
+
+    const price = Number(window.currentAvailabilityEventPrice || 0);
+
+    // If "Yes" and needs payment
+    if (availability === "yes" && price > 0) {
+      if (typeof createPaymentModal === "function") {
+        createPaymentModal(
+          price,
+          "RSVP: " + window.currentAvailabilityEventTitle,
+          async (paymentResult) => {
+            // After successful payment, post availability
+            await apiService.makeRequest(
+              "/events/" + eventId + "/availability",
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  availability: availability,
+                  notes: notes,
+                  reason: reason,
+                  paymentId: paymentResult.id,
+                }),
+              },
+            );
+            closeModal("availabilityModal");
+            showNotification(
+              "Payment successful and availability submitted!",
+              "success",
+            );
+            loadPlayerOverview();
+          },
+          (err) => {
+            showNotification(
+              "Payment failed RSVP not confirmed: " + err.message,
+              "error",
+            );
+          },
+        );
+        return; // Exit here, wait for payment callback
+      } else {
+        showNotification(
+          "Payment system offline. Please try booking directly.",
+          "warning",
+        );
+        return;
+      }
+    }
+
+    // Normal submission (Free or No/Maybe)
     await apiService.makeRequest("/events/" + eventId + "/availability", {
       method: "POST",
-      body: JSON.stringify({ availability: availability, notes: notes }),
+      body: JSON.stringify({
+        availability: availability,
+        notes: notes,
+        reason: reason,
+      }),
     });
 
     closeModal("availabilityModal");
     showNotification("Availability submitted successfully!", "success");
-    e.target.reset();
+    loadPlayerOverview();
   } catch (err) {
     console.error("Availability submit error:", err);
-    showNotification("Failed to submit availability: " + err.message, "error");
+    showNotification(err.message || "Failed to submit availability", "error");
   }
-}
+};
 
 function applyToClub(clubId, clubName) {
   const clubIdEl = byId("applyClubId");
@@ -2686,6 +2867,12 @@ function showPlayerSection(sectionId) {
       break;
     case "overview":
       loadPlayerOverview();
+      break;
+    case "club-feed":
+      loadClubFeed();
+      break;
+    case "club-messenger":
+      loadMessengerConversations();
       break;
     case "my-clubs":
       loadPlayerClubs();
@@ -3904,6 +4091,33 @@ async function loadPlayerTournaments() {
               )
               .join("")}
         </div>
+        
+        <h3 style="margin-top: 3rem;">🎥 Recent Match Replays</h3>
+        <div class="card-grid" style="margin-top: 1rem;">
+            <div class="card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);">
+                <div style="background: rgba(0,0,0,0.5); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative;">
+                    <span style="font-size: 2rem; opacity: 0.5;">▶️</span>
+                    <span class="badge" style="position: absolute; top: 10px; right: 10px; background: rgba(255,165,0,0.2); color: orange; border: 1px solid orange;">PPV Linked</span>
+                </div>
+                <h4>Summer Cup Final</h4>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Elite FC vs Metro United</p>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn btn-primary btn-small" style="flex: 1;" onclick="triggerPpvUnlock('mock-match-1', '2.99')">Unlock Replay (£2.99)</button>
+                </div>
+            </div>
+            
+            <div class="card" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color);">
+                <div style="background: rgba(0,0,0,0.5); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative;">
+                    <span style="font-size: 2rem; opacity: 0.5;">▶️</span>
+                    <span class="badge" style="position: absolute; top: 10px; right: 10px; background: rgba(34,197,94,0.2); color: #22c55e; border: 1px solid #22c55e;">Free</span>
+                </div>
+                <h4>Group B Clash</h4>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Northside vs Eastville</p>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="alert('Playing free highlight video...')">Watch Highlights</button>
+                </div>
+            </div>
+        </div>
      `;
   } catch (error) {
     console.error("Load player tournaments error:", error);
@@ -3929,6 +4143,23 @@ window.loadPlayerVenues = loadPlayerVenues;
 window.loadPlayerTraining = loadPlayerTraining;
 window.loadPlayerTournaments = loadPlayerTournaments;
 window.loadPlayerLeagues = loadPlayerLeagues;
+
+// Mock PPV Functions
+window.triggerPpvUnlock = function (matchId, price) {
+  document.getElementById("ppvPriceDisplay").innerText = price;
+  const modal = document.getElementById("ppvUnlockModal");
+  if (modal) modal.style.display = "block";
+};
+
+window.processPpvPurchase = function () {
+  alert("Mocking Stripe Checkout Redirect...");
+  setTimeout(() => {
+    closeModal("ppvUnlockModal");
+    alert(
+      "Payment successful! You now have access to watch this match footage.",
+    );
+  }, 1500);
+};
 
 function calculateAge(dateOfBirth) {
   if (!dateOfBirth) return "N/A";
@@ -4013,3 +4244,201 @@ window.openAddChildModal = openAddChildModal;
 window.closeAddChildModal = closeAddChildModal;
 window.editChildProfile = editChildProfile;
 window.deleteChildProfile = deleteChildProfile;
+
+// --- Community: Feed & Messenger Functions ---
+async function loadClubFeed() {
+  const container = document.getElementById("feedPostsContainer");
+  if (!container) return;
+  container.innerHTML =
+    '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading feed...</p>';
+
+  try {
+    const orgId =
+      PlayerDashboardState.player?.club_id || (await getActiveGroupId());
+    const posts = await apiService.getFeed(orgId);
+
+    if (!posts || posts.length === 0) {
+      container.innerHTML =
+        '<p style="text-align: center; color: var(--text-muted); padding: 2.5rem;">🧵 No threads yet. Share some news or a tip!</p>';
+      return;
+    }
+
+    container.innerHTML = posts
+      .map(
+        (post) => `
+      <div class="feed-post">
+        <div class="feed-avatar" style="display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background:var(--primary);">${post.user_name.charAt(0)}</div>
+        <div class="feed-content">
+          <div class="feed-header">
+            <span class="feed-user">${post.user_name}</span>
+            <span class="feed-time">${new Date(post.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+          </div>
+          <div class="feed-text">${post.content}</div>
+          <div class="feed-actions">
+            <span class="feed-action">❤️ ${post.likes || 1}</span>
+            <span class="feed-action">💬 ${post.comments || 0}</span>
+            <span class="feed-action">🔗 Share</span>
+          </div>
+        </div>
+      </div>
+    `,
+      )
+      .join("");
+  } catch (err) {
+    console.error("Feed load failed:", err);
+    container.innerHTML =
+      '<p style="text-align: center; color: #ef4444; padding: 2rem;">Error loading feed.</p>';
+  }
+}
+
+async function postToClubFeed() {
+  const input = document.getElementById("newPostContent");
+  const content = input.value.trim();
+  if (!content) return;
+
+  try {
+    const orgId =
+      PlayerDashboardState.player?.club_id || (await getActiveGroupId());
+    const result = await apiService.postToFeed(orgId, { content });
+    if (result.success) {
+      input.value = "";
+      showNotification("Post shared to club feed!", "success");
+      loadClubFeed();
+    }
+  } catch (err) {
+    console.error("Post failed:", err);
+    showNotification("Failed to post: " + err.message, "error");
+  }
+}
+
+async function loadMessengerConversations() {
+  const container = document.getElementById("messengerConversationList");
+  if (!container) return;
+  container.innerHTML =
+    '<p style="text-align:center; padding:1rem; opacity:0.5;">Loading conversations...</p>';
+
+  try {
+    const orgId =
+      PlayerDashboardState.player?.club_id || (await getActiveGroupId());
+    const convos = await apiService.getMessengerConversations(orgId);
+
+    if (!convos || convos.length === 0) {
+      container.innerHTML =
+        '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">No messages yet.</p>';
+      return;
+    }
+
+    container.innerHTML = convos
+      .map(
+        (c) => `
+      <div class="conversation-item" onclick="openMessengerChat('${c.id}', '${c.name}')" data-id="${c.id}">
+        <div class="feed-avatar" style="width: 36px; height: 36px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background:var(--primary);">${c.name.charAt(0)}</div>
+        <div class="conversation-info">
+          <div class="conversation-name">${c.name}</div>
+          <div class="conversation-preview">${c.last_message}</div>
+        </div>
+        ${c.unread_count > 0 ? `<div style="background: var(--primary); width: 10px; height: 10px; border-radius: 50%;"></div>` : ""}
+      </div>
+    `,
+      )
+      .join("");
+  } catch (err) {
+    console.error("Messenger load failed:", err);
+    container.innerHTML =
+      '<p style="text-align: center; color: #ef4444; padding: 1rem;">Error loading messages.</p>';
+  }
+}
+
+let currentChatId = null;
+async function openMessengerChat(id, name) {
+  currentChatId = id;
+  document
+    .querySelectorAll(".conversation-item")
+    .forEach((el) => el.classList.remove("active"));
+  const activeEl = document.querySelector(
+    `.conversation-item[data-id="${id}"]`,
+  );
+  if (activeEl) activeEl.classList.add("active");
+
+  document.getElementById("chatHeader").innerHTML = `
+    <div class="feed-avatar" style="width: 32px; height: 32px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background:var(--primary);">${name.charAt(0)}</div>
+    <span>${name}</span>
+  `;
+  document.getElementById("chatInputArea").style.display = "flex";
+  document.getElementById("chatInputArea").style.background = "var(--bg-card)";
+  const messagesContainer = document.getElementById("chatMessages");
+  messagesContainer.innerHTML =
+    '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading...</p>';
+
+  try {
+    const messages = await apiService.getMessages(id);
+    messagesContainer.innerHTML = messages
+      .map(
+        (m) => `
+      <div class="message-bubble ${m.sender_name === "You" ? "sent" : "received"}">
+        ${m.content}
+        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.2rem; text-align: ${m.sender_name === "You" ? "right" : "left"};">
+          ${new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </div>
+      </div>
+    `,
+      )
+      .join("");
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  } catch (err) {
+    console.error("Chat load failed:", err);
+    messagesContainer.innerHTML =
+      '<p style="text-align: center; color: #ef4444;">Error loading chat.</p>';
+  }
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById("chatInputField");
+  const content = input.value.trim();
+  const container = document.getElementById("chatMessages");
+  if (!content || !currentChatId) return;
+
+  try {
+    const tempId = "temp_" + Date.now();
+    container.innerHTML += `
+      <div class="message-bubble sent" id="${tempId}" style="opacity: 0.7;">
+        ${content}
+        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.2rem; text-align: right;">Sending...</div>
+      </div>
+    `;
+    container.scrollTop = container.scrollHeight;
+    input.value = "";
+
+    const result = await apiService.sendMessage(currentChatId, { content });
+    if (result.success) {
+      const tempEl = document.getElementById(tempId);
+      if (tempEl) {
+        tempEl.style.opacity = "1";
+        tempEl.querySelector("div").innerText = new Date().toLocaleTimeString(
+          [],
+          { hour: "2-digit", minute: "2-digit" },
+        );
+      }
+    }
+  } catch (err) {
+    console.error("Send failed:", err);
+    showNotification("Failed to send message: " + err.message, "error");
+  }
+}
+
+// Global exports
+window.loadClubFeed = loadClubFeed;
+window.postToClubFeed = postToClubFeed;
+window.loadMessengerConversations = loadMessengerConversations;
+window.openMessengerChat = openMessengerChat;
+window.sendChatMessage = sendChatMessage;
+
+// Helper to get group ID if not in state
+async function getActiveGroupId() {
+  try {
+    const context = await apiService.getContext();
+    return context.currentGroup?.id || context.user?.groupId;
+  } catch (e) {
+    return localStorage.getItem("lastGroupId");
+  }
+}

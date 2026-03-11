@@ -157,27 +157,53 @@
                     return;
                 }
 
-                container.innerHTML = players.map(player => `
-                    <div class="card">
-                        <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem;">
-                            <div class="user-avatar" style="width: 64px; height: 64px; font-size: 1.5rem;">
+                container.innerHTML = players.map(player => {
+                    const marketValue = (Math.random() * 50 + 10).toFixed(1); // Mock value
+                    const growthPot = Math.floor(Math.random() * 40 + 60); // Mock growth
+
+                    return `
+                    <div class="card talent-card" style="position: relative; overflow: hidden; transition: 0.3s; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: ${growthPot > 85 ? '#4ade80' : '#3b82f6'};"></div>
+                        
+                        <div style="display: flex; gap: 1.25rem; align-items: flex-start; margin-bottom: 1.5rem;">
+                            <div class="user-avatar" style="width: 70px; height: 70px; font-size: 1.6rem; border-radius: 16px; background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid rgba(255,255,255,0.1);">
                                 ${player.first_name.charAt(0)}${player.last_name.charAt(0)}
                             </div>
-                            <div>
-                                <h3 style="margin:0">${player.first_name} ${player.last_name}</h3>
-                                <p style="color: var(--text-muted); font-size: 0.9rem;">${player.position || 'Unknown Position'}</p>
-                                <span class="badge" style="background: rgba(255,255,255,0.05);">${player.age} yrs</span>
+                            <div style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h3 style="margin:0; font-size: 1.2rem;">${player.first_name} ${player.last_name}</h3>
+                                    ${growthPot > 90 ? '<span style="font-size: 0.65rem; background: gold; color: black; padding: 2px 6px; border-radius: 4px; font-weight: 900;">ELITE</span>' : ''}
+                                </div>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 2px 0;">${player.position || 'Unknown Position'}</p>
+                                <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem;">
+                                    <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa; font-size: 0.7rem;">U${player.age}</span>
+                                    <span class="badge" style="background: rgba(255, 255, 255, 0.05); font-size: 0.7rem;">${player.sport?.toUpperCase() || 'FOOTBALL'}</span>
+                                </div>
                             </div>
                         </div>
-                        <p><strong>Club:</strong> ${player.club_name || 'Free Agent'}</p>
-                        <p><strong>Region:</strong> ${player.region || 'TBD'}</p>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 12px;">
+                            <div>
+                                <span style="display:block; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Est. Market Value</span>
+                                <span style="font-weight: 800; color: #4ade80;">£${marketValue}M</span>
+                            </div>
+                            <div>
+                                <span style="display:block; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Growth Potential</span>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-weight: 800;">${growthPot}%</span>
+                                    <div style="flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;">
+                                        <div style="width: ${growthPot}%; height: 100%; background: #3b82f6; border-radius: 2px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
-                        <div class="item-actions" style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
-                            <button class="btn btn-primary btn-small" style="flex: 1;" onclick="requestContact('${player.id}')">Contact Club</button>
-                            <button class="btn btn-secondary btn-small" onclick="viewReports('${player.id}')">Reports</button>
+                        <div class="item-actions" style="display: flex; gap: 0.75rem;">
+                            <button class="btn btn-primary btn-small" style="flex: 1; font-weight: 700;" onclick="requestContact('${player.id}')">Enquire</button>
+                            <button class="btn btn-secondary btn-small" style="background: rgba(255,255,255,0.05);" onclick="viewReports('${player.id}', '${player.first_name} ${player.last_name}')">Full Intel</button>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
 
             } catch (error) {
                 console.error('Failed to load players:', error);
@@ -269,9 +295,17 @@
             if (tabName === 'analytics') loadAnalytics();
         }
 
-        function viewReports(playerId) {
+        function viewReports(playerId, playerName) {
             showTab('reports');
-            // TODO: Filter reports by player ID
+            if (playerName) {
+                // Mock filtering logic for now - in a real app, this would re-fetch or filter the local list
+                console.log('Filtering reports for:', playerName);
+                const reports = document.querySelectorAll('.report-card');
+                reports.forEach(card => {
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    card.style.display = title.includes(playerName.toLowerCase()) ? 'block' : 'none';
+                });
+            }
         }
         <!-- Bottom Navigation Bar (Threads Style) -->
         <nav class="app-bottom-nav mobile-only">

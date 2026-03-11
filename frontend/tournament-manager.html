@@ -26,33 +26,119 @@
     .bracket-match-wrapper {
     position: relative;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 1;
-    padding: 1rem 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
     }
 
     .bracket-match {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    width: 100%;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    z-index: 2; /* keep over lines */
+    z-index: 2;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .bracket-match:hover {
+    transform: translateX(5px) scale(1.02);
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+    }
+
+    .bracket-team {
+    padding: 0.85rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: grab;
+    transition: background 0.2s;
+    height: 50px;
+    }
+
+    .bracket-team:last-child {
+    border-bottom: none;
+    }
+
+    .bracket-team:hover {
+    background: rgba(255, 255, 255, 0.05);
+    }
+
+    .bracket-team span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+    }
+
+    .bracket-team strong {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 10px;
+    border-radius: 6px;
+    min-width: 30px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    color: var(--primary);
+    }
+
+    .bracket-team.winner {
+    background: rgba(74, 222, 128, 0.05);
+    color: #4ade80;
+    font-weight: 800;
+    }
+
+    .drag-hover {
+    background: rgba(96, 165, 250, 0.2) !important;
+    border-color: var(--primary) !important;
+    }
+
+    .round-header {
+    position: absolute;
+    top: -50px;
+    width: 100%;
+    text-align: center;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--primary);
+    font-size: 0.75rem;
+    opacity: 0.8;
     }
 
     /* Horizontal OUT (Right) */
-    .bracket-round:not(:last-child) .bracket-match-wrapper .bracket-match::after {
+    .bracket-round:not(:last-child) /* Horizontal OUT (Right) */
+    .bracket-match-wrapper::after {
     content: '';
     position: absolute;
-    right: -2rem;
+    right: -3rem; /* Aligned with the bracket-round gap */
     top: 50%;
     height: 2px;
-    width: 2rem;
-    background: var(--primary);
+    width: 3.1rem;
+    background: rgba(255, 255, 255, 0.15);
     z-index: 1;
     }
 
+    .bracket-round:last-child .bracket-match-wrapper::after {
+    display: none;
+    }
+
+    /* Vertical connector between two matches */
+    .bracket-match-wrapper:nth-child(even)::before {
+    content: '';
+    position: absolute;
+    right: -3rem;
+    top: -100%; /* Mock vertical line logic */
+    height: 150%;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.15);
+    z-index: 1;
+    }
     /* Horizontal IN (Left) */
     .bracket-round:not(:first-child) .bracket-match-wrapper .bracket-match::before {
     content: '';
@@ -189,6 +275,7 @@
                     <div class="tabs" style="margin: 2rem 0;">
                         <button class="tab active" onclick="showTab('teams')">Teams</button>
                         <button class="tab" onclick="showTab('groups')">Groups</button>
+                        <button class="tab" onclick="showTab('table')">Table</button>
                         <button class="tab" onclick="showTab('pitches')">Pitches</button>
                         <button class="tab" onclick="showTab('matches')">Matches</button>
                         <button class="tab" onclick="showTab('bracket')">Bracket</button>
@@ -253,6 +340,13 @@
                         </div>
                         <div id="pitchesGrid" class="team-grid">
                             <!-- Pitches will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Table Tab -->
+                    <div id="table-tab" class="tab-content" style="display: none;">
+                        <div id="tableContainer">
+                            <!-- Populated by JS -->
                         </div>
                     </div>
 
@@ -321,12 +415,113 @@
                         onclick="addScorerRow()">+ Add Scorer</button>
                 </div>
 
+                <!-- Video Upload Settings -->
+                <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                    <h3>Match Footage</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Upload Video</label>
+                            <input type="file" id="matchVideoFile" accept="video/mp4,video/x-m4v,video/*">
+                        </div>
+                        <div class="form-group">
+                            <label>Visibility</label>
+                            <select id="videoVisibility">
+                                <option value="true">Public (Everyone)</option>
+                                <option value="false">Private (Team Only)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>Price (If PPV / Locked)</label>
+                            <input type="number" id="videoPrice" min="0" step="0.01" value="0.00" placeholder="£0.00">
+                        </div>
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 1rem; margin-top: 3rem;">
                     <button type="button" class="btn btn-secondary" style="flex: 1;"
                         onclick="closeScoreModal()">Cancel</button>
                     <button type="submit" class="btn btn-primary" style="flex: 1;">Save Result</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Match Tactics Modal -->
+    <div id="matchTacticsModal" class="modal">
+        <div class="modal-content" style="max-width: 1000px; padding: 0;">
+            <div class="modal-header"
+                style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="tacticsModalTitle" class="neon-text">Match Lineup & Tactics</h2>
+                <span class="close" onclick="closeModal('matchTacticsModal')">&times;</span>
+            </div>
+
+            <div style="padding: 1.5rem;">
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem;">
+                    <div style="flex: 1;">
+                        <h4 id="tacticsTeamName" style="margin: 0; font-size: 1.2rem; color: var(--primary);">Team Name
+                        </h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Set your formation and
+                            starting XI</p>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <select id="formationSelect" class="btn btn-secondary"
+                            style="background: rgba(255,255,255,0.05);" onchange="setFormation()">
+                            <option value="4-4-2">4-4-2</option>
+                            <option value="4-3-3">4-3-3</option>
+                            <option value="3-5-2">3-5-2</option>
+                            <option value="4-2-3-1">4-2-3-1</option>
+                            <option value="5-3-2">5-3-2</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="saveMatchFormation()">Save Lineup</button>
+                    </div>
+                </div>
+
+                <div class="planner-layout"
+                    style="display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; height: 650px;">
+                    <!-- Player Roster Sidebar -->
+                    <div class="roster-sidebar"
+                        style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <h4 style="font-size: 0.9rem; color: var(--text-main); margin: 0;">Squad Members</h4>
+                        <div class="search-box" style="position: relative;">
+                            <input type="text" id="rosterSearch" placeholder="Search players..."
+                                style="width: 100%; padding: 0.5rem 2rem 0.5rem 0.75rem; border-radius: 8px; font-size: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: white;"
+                                onkeyup="filterRoster()">
+                            <span
+                                style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); opacity: 0.5;">🔍</span>
+                        </div>
+                        <div id="availablePlayers" class="roster-list"
+                            style="flex: 1; overflow-y: auto; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem;">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Tactical Pitch -->
+                    <div class="pitch-container"
+                        style="position: relative; background: #1a472a; border-radius: 16px; border: 3px solid rgba(255,255,255,0.1); box-shadow: inset 0 0 50px rgba(0,0,0,0.4); overflow: hidden; height: 100%;">
+                        <!-- Soccer Field Markings (SVG) -->
+                        <svg class="field-markings" viewBox="0 0 100 100" preserveAspectRatio="none"
+                            style="position: absolute; width: 100%; height: 100%; pointer-events: none; opacity: 0.6;">
+                            <rect x="0" y="0" width="100" height="100" fill="transparent" stroke="white"
+                                stroke-width="0.3" />
+                            <line x1="0" y1="50" x2="100" y2="50" stroke="white" stroke-width="0.3" />
+                            <circle cx="50" cy="50" r="10" fill="transparent" stroke="white" stroke-width="0.3" />
+                            <circle cx="50" cy="50" r="0.8" fill="white" />
+                            <rect x="25" y="0" width="50" height="15" fill="transparent" stroke="white"
+                                stroke-width="0.3" />
+                            <rect x="25" y="85" width="50" height="15" fill="transparent" stroke="white"
+                                stroke-width="0.3" />
+                            <rect x="38" y="0" width="24" height="6" fill="transparent" stroke="white"
+                                stroke-width="0.3" />
+                            <rect x="38" y="94" width="24" height="6" fill="transparent" stroke="white"
+                                stroke-width="0.3" />
+                        </svg>
+                        <div id="tacticalBoard"
+                            style="position: absolute; width: 100%; height: 100%; pointer-events: all;">
+                            <!-- Players assigned in JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -413,6 +608,7 @@
     </div>
 
     <script src="api-service.js"></script>
+    <script src="tactical-logic.js"></script>
     <script src="script.js"></script>
     <script src="enhanced-login-handler.js"></script>
     <script src="group-switcher.js"></script>
@@ -422,6 +618,10 @@
         let currentMatchId = null;
         let matchLineups = { home: [], away: [] };
         let clubTeams = [];
+
+        window.closeModal = function (id) {
+            document.getElementById(id).style.display = 'none';
+        };
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Check auth status
@@ -541,6 +741,7 @@
                 displayPitches(data.pitches || []);
                 displayMatches(data.matches);
                 renderBracket(data.matches, data.teams);
+                renderTable(data.teams, data.matches); // Call the new function here
 
                 // Update group filter select
                 const groupSelect = document.getElementById('groupFixtureSelect');
@@ -600,35 +801,50 @@
 
         function displayGroups(groups, teams) {
             const grid = document.getElementById('groupsGrid');
-            if (groups.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No groups created yet.</p>';
+            if (!groups || groups.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem;">No groups created yet. Click "Add Group" to begin.</p>';
                 return;
             }
 
             const unassignedTeams = teams.filter(t => !t.current_group_id && t.status === 'approved');
 
-            const unassignedHtml = `
-                <div class="card" ondragover="allowDrop(event)" ondrop="dropToUnassigned(event)">
-                    <h3>Unassigned Teams</h3>
-                    <div style="margin: 1rem 0; min-height: 100px; padding: 10px; border: 2px dashed rgba(255,255,255,0.1); border-radius: 8px;" class="group-drop-zone">
-                        ${unassignedTeams.map(t => `<div draggable="true" ondragstart="dragGenericTeam(event, '${t.id}')" style="padding: 0.5rem; background: rgba(255,255,255,0.05); margin: 4px 0; border-radius: 4px; display: flex; justify-content: space-between; cursor: grab;">
-                                <span>⚽ ${t.team_name}</span>
-                            </div>`).join('')}
+            // Header for unassigned teams
+            const headerHtml = `
+                <div style="grid-column: 1/-1; margin-bottom: 2rem;">
+                    <div class="card" style="background: rgba(255,255,255,0.02); border: 2px dashed rgba(255,255,255,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 style="margin:0; font-size: 1rem; color: var(--primary);">📥 Unassigned Teams (${unassignedTeams.length})</h3>
+                            <p style="font-size: 0.8rem; color: var(--text-muted);">Drag teams into their respective groups below</p>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; min-height: 60px;" class="group-drop-zone" ondragover="allowDrop(event)" ondrop="dropToUnassigned(event)">
+                            ${unassignedTeams.map(t => `
+                                <div draggable="true" ondragstart="dragGenericTeam(event, '${t.id}')" 
+                                     style="padding: 0.6rem 1rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; display: flex; align-items: center; gap: 0.5rem; cursor: grab; font-weight: 600; font-size: 0.85rem; color: #60a5fa;">
+                                    ⚽ ${t.team_name}
+                                </div>`).join('')}
+                            ${unassignedTeams.length === 0 ? '<p style="font-size: 0.8rem; color: var(--text-muted); width: 100%; text-align: center;">All teams have been assigned!</p>' : ''}
+                        </div>
                     </div>
                 </div>
             `;
 
-            grid.innerHTML = unassignedHtml + groups.map(group => {
+            grid.innerHTML = headerHtml + groups.map(group => {
                 const groupTeams = teams.filter(t => t.current_group_id === group.id);
 
                 return `
-                    <div class="card" ondragover="allowDrop(event)" ondrop="dropToGroup(event, '${group.id}')">
-                        <h3>${group.name}</h3>
-                        <div style="margin: 1rem 0; min-height: 100px; padding: 10px; border: 2px dashed rgba(255,255,255,0.1); border-radius: 8px;" class="group-drop-zone">
-                            ${groupTeams.length === 0 ? '<p style="font-size: 0.8rem; color: var(--text-muted);">Drag teams here.</p>' :
-                        groupTeams.map(t => `<div draggable="true" ondragstart="dragGenericTeam(event, '${t.id}')" style="padding: 0.5rem; background: rgba(255,255,255,0.05); margin: 4px 0; border-radius: 4px; display: flex; justify-content: space-between; cursor: grab;">
-                                    <span>${t.team_name}</span>
-                                    <button onclick="unassignTeam('${t.id}')" style="background:none; border:none; cursor:pointer;">❌</button>
+                    <div class="card group-card" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; position: relative; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s;" ondragover="allowDrop(event)" ondrop="dropToGroup(event, '${group.id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin:0; font-size: 1.1rem; letter-spacing: 1px;">${group.name}</h3>
+                            <span class="badge" style="background: rgba(255,255,255,0.05);">${groupTeams.length} / 4 Teams</span>
+                        </div>
+                        
+                        <div style="min-height: 120px; padding: 12px; border: 2px dashed rgba(255,255,255,0.05); border-radius: 12px;" class="group-drop-zone">
+                            ${groupTeams.length === 0 ? '<div style="height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0.3; font-size: 0.8rem;">Drop Teams Here</div>' :
+                        groupTeams.map(t => `
+                                <div draggable="true" ondragstart="dragGenericTeam(event, '${t.id}')" 
+                                     style="padding: 0.75rem; background: rgba(255,255,255,0.03); margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: grab;">
+                                    <span style="font-weight: 500;">${t.team_name}</span>
+                                    <button onclick="unassignTeam('${t.id}')" style="background:none; border:none; cursor:pointer; color: #f87171; font-size: 1rem; opacity: 0.5; transition: 0.2s;">✕</button>
                                 </div>`).join('')
                     }
                         </div>
@@ -657,6 +873,88 @@
                 const zone = target.querySelector('.group-drop-zone');
                 zone.style.borderColor = 'rgba(255,255,255,0.1)';
             }
+        }
+
+        function renderTable(groupTeams, matches) {
+            const tableContainer = document.getElementById('tableContainer');
+            if (!groupTeams || groupTeams.length === 0) {
+                tableContainer.innerHTML = '<p style="padding: 2rem; color: var(--text-muted);">Assign teams to groups to see the league table.</p>';
+                return;
+            }
+
+            // Group teams by their group
+            const groupIds = [...new Set(groupTeams.filter(t => t.current_group_id).map(t => t.current_group_id))];
+
+            if (groupIds.length === 0) {
+                tableContainer.innerHTML = '<p style="padding: 2rem; color: var(--text-muted); text-align: center;">No teams assigned to groups yet.</p>';
+                return;
+            }
+
+            tableContainer.innerHTML = groupIds.map(groupId => {
+                const teamExample = groupTeams.find(t => t.current_group_id === groupId);
+                const groupName = teamExample?.group_name || 'Group';
+                const teamsInGroup = groupTeams.filter(t => t.current_group_id === groupId);
+
+                // Calculate stats for each team
+                const stats = teamsInGroup.map(team => {
+                    const teamMatches = matches.filter(m => (m.home_team_id === team.id || m.away_team_id === team.id) && m.status === 'completed');
+                    let played = 0, won = 0, drawn = 0, lost = 0, gf = 0, ga = 0, pts = 0;
+
+                    teamMatches.forEach(m => {
+                        played++;
+                        const isHome = m.home_team_id === team.id;
+                        const score = isHome ? m.home_score : m.away_score;
+                        const oppScore = isHome ? m.away_score : m.home_score;
+
+                        gf += score;
+                        ga += oppScore;
+
+                        if (score > oppScore) { won++; pts += 3; }
+                        else if (score === oppScore) { drawn++; pts += 1; }
+                        else { lost++; }
+                    });
+
+                    return { ...team, played, won, drawn, lost, gf, ga, gd: gf - ga, pts };
+                }).sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
+
+                return `
+                    <div class="card" style="margin-bottom: 2rem; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="padding: 1rem 1.5rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin:0; color: var(--primary); font-size: 1rem;">📊 ${groupName} Standings</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                                <thead style="background: rgba(0,0,0,0.2);">
+                                    <tr>
+                                        <th style="padding: 1rem; text-align: left; width: 40px;">#</th>
+                                        <th style="padding: 1rem; text-align: left;">Team</th>
+                                        <th style="padding: 1rem; text-align: center;">P</th>
+                                        <th style="padding: 1rem; text-align: center;">W</th>
+                                        <th style="padding: 1rem; text-align: center;">D</th>
+                                        <th style="padding: 1rem; text-align: center;">L</th>
+                                        <th style="padding: 1rem; text-align: center;">GD</th>
+                                        <th style="padding: 1rem; text-align: center; color: var(--primary);">Pts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.map((s, idx) => `
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.02);">
+                                            <td style="padding: 0.75rem 1rem; opacity: 0.5;">${idx + 1}</td>
+                                            <td style="padding: 0.75rem 1rem; font-weight: 700;">${s.team_name}</td>
+                                            <td style="padding: 0.75rem 1rem; text-align: center;">${s.played}</td>
+                                            <td style="padding: 0.75rem 1rem; text-align: center;">${s.won}</td>
+                                            <td style="padding: 0.75rem 1rem; text-align: center;">${s.drawn}</td>
+                                            <td style="padding: 0.75rem 1rem; text-align: center;">${s.lost}</td>
+                                            <td style="padding: 0.75rem 1rem; text-align: center; color: ${s.gd > 0 ? '#4ade80' : s.gd < 0 ? '#f87171' : 'inherit'}">${s.gd > 0 ? '+' : ''}${s.gd}</td>
+                                            <td style="padding: 0.75rem 1rem; text-align: center; font-weight: 800; color: var(--primary);">${s.pts}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function dragGenericTeam(event, teamId) {
@@ -823,9 +1121,14 @@
                         <span class="badge" style="background: ${match.status === 'completed' ? '#22c55e' : '#3b82f6'}">${match.status}</span>
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="openScoreModal('${match.id}', '${match.home_team_name}', '${match.away_team_name}')">
-                            ${match.status === 'completed' ? 'Edit Result' : 'Post Score'}
-                        </button>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-sm btn-primary" onclick="openScoreModal('${match.id}', '${match.home_team_name}', '${match.away_team_name}')">
+                                ${match.status === 'completed' ? 'Edit Result' : 'Post Score'}
+                            </button>
+                            <button class="btn btn-sm btn-secondary" style="background: rgba(255,255,255,0.05);" onclick="openMatchTactics('${match.id}', '${match.home_team_id}', '${match.home_team_name}')">
+                                📝 Lineup
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -899,6 +1202,7 @@
             });
 
             try {
+                // Submit Result
                 await apiService.makeRequest(`/tournaments/matches/${currentMatchId}/result`, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -908,11 +1212,25 @@
                     })
                 });
 
+                // Upload video if selected
+                const videoFileInput = document.getElementById('matchVideoFile');
+                if (videoFileInput.files.length > 0) {
+                    const videoFormData = new FormData();
+                    videoFormData.append('video', videoFileInput.files[0]);
+                    videoFormData.append('isPublic', document.getElementById('videoVisibility').value);
+                    videoFormData.append('price', document.getElementById('videoPrice').value);
+
+                    await apiService.makeRequest(`/tournaments/matches/${currentMatchId}/video`, {
+                        method: 'POST',
+                        body: videoFormData
+                    });
+                }
+
                 alert('Match result and player stats updated!');
                 closeScoreModal();
                 loadTournament();
             } catch (error) {
-                alert('Failed to save: ' + error.message);
+                alert('Failed to save at least one item: ' + error.message);
             }
         }
 
@@ -954,8 +1272,8 @@
 
         function renderBracket(matches, teams) {
             const container = document.getElementById('bracketContainer');
-            if (matches.length === 0) {
-                container.innerHTML = '<p style="padding: 2rem;">No bracket yet.</p>';
+            if (!matches || matches.length === 0) {
+                container.innerHTML = '<p style="padding: 2rem; color: var(--text-muted);">No bracket matches generated yet. Generate fixtures for a knockout stage to see the bracket.</p>';
                 return;
             }
 
@@ -966,11 +1284,22 @@
                 return acc;
             }, {});
 
+            const getRoundName = (round, totalRounds) => {
+                const diff = totalRounds - round;
+                if (diff === 0) return 'Final';
+                if (diff === 1) return 'Semi-Finals';
+                if (diff === 2) return 'Quarter-Finals';
+                if (diff === 3) return 'Round of 16';
+                return `Round ${round}`;
+            };
+
+            const totalRounds = Math.max(...Object.keys(rounds).map(Number));
+
             container.innerHTML = Object.entries(rounds)
                 .sort(([a], [b]) => parseInt(a) - parseInt(b))
                 .map(([round, roundMatches]) => `
                     <div class="bracket-round">
-                        <h3 style="text-align: center; margin-bottom: 2rem; color: var(--primary);">Round ${round}</h3>
+                        <div class="round-header">${getRoundName(parseInt(round), totalRounds)}</div>
                         ${roundMatches.map(match => `
                             <div class="bracket-match-wrapper">
                                 <div class="bracket-match">
@@ -992,7 +1321,8 @@
                                         <span>${match.away_team_name || 'TBD'}</span>
                                         <strong>${match.away_score !== null ? match.away_score : '-'}</strong>
                                     </div>
-                                    <div style="position:absolute; right: -25px; top: 10px; cursor: pointer; color: var(--text-muted); font-size: 0.8rem;" onclick="openScoreModal('${match.id}', '${match.home_team_name || 'TBD'}', '${match.away_team_name || 'TBD'}')">✏️</div>
+                                    <div style="position:absolute; right: 5px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); font-size: 0.8rem; z-index: 5;" 
+                                         onclick="openScoreModal('${match.id}', '${match.home_team_name || 'TBD'}', '${match.away_team_name || 'TBD'}')">✏️</div>
                                 </div>
                             </div>
                         `).join('')}
@@ -1062,6 +1392,152 @@
             };
             return colors[status] || '#6b7280';
         }
+
+        // --- Match Tactics ---
+        window.openMatchTactics = async function (matchId, teamId, teamName) {
+            currentMatchId = matchId;
+            document.getElementById('tacticsTeamName').textContent = teamName;
+            document.getElementById('tacticsTeamName').dataset.currentTeamId = teamId;
+
+            // Populate roster
+            const container = document.getElementById('availablePlayers');
+            container.innerHTML = '<p style="color:var(--text-muted); padding: 1rem;">Loading squad...</p>';
+
+            document.getElementById('matchTacticsModal').style.display = 'block';
+
+            try {
+                const players = teamId ? await apiService.getTeamPlayers(teamId) : [];
+                if (!players || players.length === 0) {
+                    container.innerHTML = `<p style="color:var(--text-muted); padding: 1rem;">No players found ${teamId ? 'for this team' : ' (TBD)'}.</p>`;
+                    return;
+                }
+
+                container.innerHTML = players.map(player => `
+                    <div class="available-player" onclick="assignPlayerToSelected('${player.id}', '${player.first_name}', '${player.last_name}')" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem; background: rgba(255,255,255,0.03); border-radius: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 0.4rem;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                        <div class="user-avatar" style="width:28px; height:28px; font-size:0.7rem; border-radius:6px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center;">
+                            ${(player.first_name || 'P').charAt(0)}
+                        </div>
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:600; font-size: 0.8rem;">${player.first_name} ${player.last_name}</span>
+                            <span style="font-size:0.7rem; opacity:0.6;">${player.position || 'Player'}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                setFormation(); // Initialize pitch
+            } catch (err) {
+                console.error('Tactics load error:', err);
+                container.innerHTML = '<p style="color:#ef4444; padding: 1rem;">Error loading roster.</p>';
+            }
+        };
+
+        window.setFormation = function () {
+            const formation = document.getElementById('formationSelect').value;
+            const board = document.getElementById('tacticalBoard');
+            if (!board) return;
+
+            board.innerHTML = '';
+            const positions = TacticalLogic.getFormationPositions(formation);
+
+            positions.forEach((pos, index) => {
+                const playerEl = document.createElement('div');
+                playerEl.className = 'player-position';
+                playerEl.style.left = `${pos.x}%`;
+                playerEl.style.top = `${pos.y}%`;
+                playerEl.style.position = 'absolute';
+                playerEl.style.transform = 'translate(-50%, -50%)';
+                playerEl.style.width = '35px';
+                playerEl.style.height = '35px';
+                playerEl.style.borderRadius = '50%';
+                playerEl.style.background = 'rgba(255,255,255,0.1)';
+                playerEl.style.border = '2px solid rgba(255,255,255,0.3)';
+                playerEl.style.display = 'flex';
+                playerEl.style.alignItems = 'center';
+                playerEl.style.justifyContent = 'center';
+                playerEl.style.fontSize = '0.7rem';
+                playerEl.style.color = 'white';
+                playerEl.style.cursor = 'pointer';
+                playerEl.dataset.index = index;
+                playerEl.dataset.role = pos.role;
+                playerEl.textContent = pos.role;
+
+                const label = document.createElement('div');
+                label.className = 'player-label';
+                label.textContent = 'Empty';
+                label.style.position = 'absolute';
+                label.style.bottom = '-18px';
+                label.style.whiteSpace = 'nowrap';
+                label.style.fontSize = '0.6rem';
+                label.style.background = 'rgba(0,0,0,0.6)';
+                label.style.padding = '1px 4px';
+                label.style.borderRadius = '4px';
+                playerEl.appendChild(label);
+
+                playerEl.onclick = () => selectPosition(playerEl);
+                board.appendChild(playerEl);
+            });
+        };
+
+        function selectPosition(el) {
+            document.querySelectorAll('.player-position').forEach(p => {
+                p.style.boxShadow = 'none';
+                p.style.borderColor = 'rgba(255,255,255,0.3)';
+            });
+            el.style.boxShadow = '0 0 15px var(--primary)';
+            el.style.borderColor = 'var(--primary)';
+            window.selectedPositionEl = el;
+        }
+
+        window.assignPlayerToSelected = function (id, first, last) {
+            if (!window.selectedPositionEl) {
+                alert('Please select a position on the pitch first');
+                return;
+            }
+
+            const playerEl = window.selectedPositionEl;
+            const label = playerEl.querySelector('.player-label');
+
+            playerEl.dataset.playerId = id;
+            playerEl.textContent = first.charAt(0) + last.charAt(0);
+            playerEl.appendChild(label);
+            label.textContent = `${first} ${last.charAt(0)}.`;
+
+            playerEl.style.background = 'radial-gradient(circle at 30% 30%, #4ade80 0%, #16a34a 100%)';
+            playerEl.style.borderColor = '#4ade80';
+            playerEl.style.boxShadow = 'none';
+            window.selectedPositionEl = null;
+        };
+
+        window.saveMatchFormation = async function () {
+            const formation = document.getElementById('formationSelect').value;
+            const board = document.getElementById('tacticalBoard');
+            const players = Array.from(board.querySelectorAll('.player-position')).map(p => ({
+                role: p.dataset.role,
+                label: p.querySelector('.player-label').textContent,
+                x: parseFloat(p.style.left),
+                y: parseFloat(p.style.top),
+                playerId: p.dataset.playerId || null
+            }));
+
+            const teamId = document.getElementById('tacticsTeamName').dataset.currentTeamId;
+
+            try {
+                // Save to general team strategy (as per existing API)
+                const payload = {
+                    team_id: teamId,
+                    formation: formation,
+                    lineup: players,
+                    name: `Match XI: ${document.getElementById('tacticsTeamName').textContent}`,
+                    is_default: false
+                };
+
+                await apiService.saveTacticalFormation(payload);
+                alert('Lineup saved successfully!');
+                closeModal('matchTacticsModal');
+            } catch (err) {
+                alert('Failed to save lineup: ' + err.message);
+            }
+        };
 
         window.onclick = function (event) {
             if (event.target.classList.contains('modal')) {

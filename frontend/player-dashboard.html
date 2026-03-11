@@ -73,6 +73,8 @@
   <div class="app-top-tabs mobile-only">
     <div class="tabs-container">
       <div class="tab-item active" onclick="showPlayerSection('overview')">Overview</div>
+      <div class="tab-item" onclick="showPlayerSection('club-feed')">Feed</div>
+      <div class="tab-item" onclick="showPlayerSection('club-messenger')">Messenger</div>
       <div class="tab-item" onclick="showPlayerSection('teams')">Teams</div>
       <div class="tab-item" onclick="showPlayerSection('my-clubs')">Clubs</div>
       <div class="tab-item" onclick="showPlayerSection('documents')">Documents</div>
@@ -227,9 +229,123 @@
             <!-- Populated by JS -->
             <div class="stat-card loading-card">Loading family members...</div>
           </div>
+
+          <!-- Growth & Potential Section -->
+          <div class="card"
+            style="margin-top: 2rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.8)); border: 1px solid var(--builder-accent);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+              <div>
+                <h3 style="color: var(--primary);">📈 Scouting & Growth</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Track your professional development and market
+                  valuation.</p>
+              </div>
+              <div style="text-align: right;">
+                <span
+                  style="display:block; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Growth
+                  Index</span>
+                <span style="font-size: 1.5rem; font-weight: 900; color: #4ade80;">+12.4%</span>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+              <!-- Growth Chart Mock -->
+              <div
+                style="grid-column: span 2; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1.5rem; position: relative; height: 180px;">
+                <div
+                  style="display: flex; align-items: flex-end; justify-content: space-between; height: 100%; gap: 10px;">
+                  <div
+                    style="flex: 1; height: 40%; background: var(--primary); opacity: 0.3; border-radius: 4px 4px 0 0;">
+                  </div>
+                  <div
+                    style="flex: 1; height: 55%; background: var(--primary); opacity: 0.5; border-radius: 4px 4px 0 0;">
+                  </div>
+                  <div
+                    style="flex: 1; height: 45%; background: var(--primary); opacity: 0.4; border-radius: 4px 4px 0 0;">
+                  </div>
+                  <div
+                    style="flex: 1; height: 70%; background: var(--primary); opacity: 0.7; border-radius: 4px 4px 0 0;">
+                  </div>
+                  <div
+                    style="flex: 1; height: 85%; background: var(--primary); border-radius: 2px 2px 0 0; box-shadow: 0 0 15px var(--primary);">
+                  </div>
+                  <div
+                    style="flex: 1; height: 60%; background: var(--primary); opacity: 0.6; border-radius: 4px 4px 0 0;">
+                  </div>
+                  <div
+                    style="flex: 1; height: 95%; background: #4ade80; border-radius: 4px 4px 0 0; box-shadow: 0 0 15px #4ade80;">
+                  </div>
+                </div>
+                <div
+                  style="position: absolute; top: 1rem; right: 1rem; font-size: 0.7rem; color: var(--text-muted); background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px;">
+                  6 Month Progress</div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="stat-card"
+                  style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Elite
+                    Potential</span>
+                  <div style="display:flex; align-items:center; gap: 10px; margin-top: 5px;">
+                    <span style="font-size: 1.2rem; font-weight: 800;">88/100</span>
+                    <div style="flex:1; height:6px; background:rgba(255,255,255,0.1); border-radius:3px;">
+                      <div
+                        style="width: 88%; height: 100%; background: #4ade80; border-radius:3px; box-shadow: 0 0 10px #4ade80;">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="stat-card"
+                  style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Scout
+                    Visibility</span>
+                  <div style="display:flex; align-items:center; gap: 10px; margin-top: 5px;">
+                    <span style="font-size: 1.2rem; font-weight: 800;">High</span>
+                    <span style="color: #3b82f6; font-size: 0.8rem;">14 Views This Week</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Overview -->
+        <!-- 🧵 Club Feed Section (Threads Style) -->
+        <div id="club-feed" class="dashboard-section" style="display: none;">
+          <div class="community-container">
+            <div class="new-post-card">
+              <textarea class="new-post-input" id="newPostContent"
+                placeholder="Post a message to the club..."></textarea>
+              <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                <button class="btn btn-primary btn-small btn-pill" onclick="postToClubFeed()">Post</button>
+              </div>
+            </div>
+            <div id="feedPostsContainer">
+              <p style="text-align: center; color: var(--text-muted);">Loading community feed...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 💬 Group Messenger Section -->
+        <div id="club-messenger" class="dashboard-section" style="display: none;">
+          <div class="messenger-layout">
+            <div class="messenger-sidebar" id="messengerConversationList">
+              <!-- Conversations will be loaded here -->
+            </div>
+            <div class="messenger-main">
+              <div id="chatHeader" class="chat-header">
+                Select a conversation
+              </div>
+              <div id="chatMessages" class="chat-messages">
+                <!-- Messages will be loaded here -->
+              </div>
+              <div class="chat-input-area" id="chatInputArea" style="display: none;">
+                <input type="text" id="chatInputField" class="chat-input" placeholder="Aa">
+                <button class="btn btn-primary btn-pill" onclick="sendChatMessage()">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="player-overview" class="dashboard-section active">
           <div class="stats-grid">
             <div class="stat-card card-elite">
@@ -595,20 +711,57 @@
         <button class="close" onclick="closeModal('availabilityModal')">&times;</button>
       </div>
       <form id="availabilityForm">
-        <input type="hidden" id="availabilityEventId">
+        <div id="availabilityEventId"></div>
+        <input type="hidden" id="availabilityEventIdInput">
+
+        <div id="eventPaymentNotice"
+          style="display:none; background: rgba(251, 191, 36, 0.1); border: 1px solid #fbbf24; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #fbbf24;">
+          <strong>⚠️ Payment Required:</strong> This event has a fee of <span id="eventPriceValue">£0.00</span>.
+          Selecting "Yes" will require payment to confirm your spot.
+        </div>
+
         <div class="form-group">
           <label>Can you attend this event?</label>
-          <div class="checkbox-group">
-            <label><input type="radio" name="availability" value="yes"> Yes, I can attend</label>
-            <label><input type="radio" name="availability" value="no"> No, I cannot attend</label>
-            <label><input type="radio" name="availability" value="maybe"> Maybe</label>
+          <div class="checkbox-group" style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="radio" name="availability" value="yes" onchange="toggleDeclineReason()"> Yes
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="radio" name="availability" value="no" onchange="toggleDeclineReason()"> No
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="radio" name="availability" value="maybe" onchange="toggleDeclineReason()"> Maybe
+            </label>
           </div>
         </div>
+
+        <div id="declineReasonContainer" class="form-group" style="display: none;">
+          <label for="declineReason">Reason for not attending <span style="color: var(--primary);">*</span></label>
+          <select id="declineReason" class="form-control"
+            style="width: 100%; padding: 0.75rem; background: var(--surface-hover); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main);">
+            <option value="">Select a reason...</option>
+            <option value="injury">Injury</option>
+            <option value="illness">Illness</option>
+            <option value="work">Work Commitment</option>
+            <option value="holiday">Holiday/Vacation</option>
+            <option value="transport">Transport Issues</option>
+            <option value="other">Other (Specify in notes)</option>
+          </select>
+        </div>
+
         <div class="form-group">
           <label for="availabilityNotes">Additional Notes</label>
-          <textarea id="availabilityNotes" rows="3" placeholder="Any additional information..."></textarea>
+          <textarea id="availabilityNotes" rows="3" placeholder="Any additional information..."
+            style="width: 100%; padding: 0.75rem; background: var(--surface-hover); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main);"></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Submit Availability</button>
+
+        <div id="paymentTotalContainer"
+          style="display: none; margin-bottom: 1.5rem; text-align: right; font-size: 1.1rem;">
+          Total to Pay: <strong id="availabilityPaymentAmount" style="color: #fbbf24;">£0.00</strong>
+        </div>
+
+        <button type="submit" id="submitAvailabilityBtn" class="btn btn-primary"
+          style="width: 100%; padding: 1rem;">Submit Availability</button>
       </form>
     </div>
   </div>
@@ -1096,6 +1249,14 @@
           style="justify-content: flex-start; padding: 1.25rem;">
           <span>🔍</span> Find Events
         </button>
+        <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showPlayerSection('club-feed');"
+          style="justify-content: flex-start; padding: 1.25rem;">
+          <span>🧵</span> Club Feed
+        </button>
+        <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showPlayerSection('club-messenger');"
+          style="justify-content: flex-start; padding: 1.25rem;">
+          <span>💬</span> Messenger
+        </button>
         <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showPlayerSection('club-finder');"
           style="justify-content: flex-start; padding: 1.25rem;">
           <span>🏰</span> Discover Clubs
@@ -1107,6 +1268,35 @@
         <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showPlayerSection('venue-booking');"
           style="justify-content: flex-start; padding: 1.25rem;">
           <span>🏟️</span> Book Venue
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PPV Unlock Modal -->
+  <div id="ppvUnlockModal" class="modal" style="display:none; z-index: 99999;">
+    <div class="modal-content"
+      style="max-width: 500px; text-align: center; border-radius: 12px; border: 1px solid var(--primary);">
+      <div class="modal-header" style="border: none;">
+        <h2 style="color: var(--primary);">Premium Match Footage</h2>
+        <span class="close" onclick="closeModal('ppvUnlockModal')">&times;</span>
+      </div>
+
+      <div style="padding: 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🎥</div>
+        <h3>Unlock Full Match Replay</h3>
+        <p style="color: var(--text-muted); margin: 1rem 0;">This match footage is locked. Purchase access to watch the
+          full replay and highlights.</p>
+
+        <div
+          style="background: rgba(255,165,0,0.1); border: 1px solid orange; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+          <h1 style="color: orange; margin: 0; font-size: 2.5rem;">£<span id="ppvPriceDisplay">2.99</span></h1>
+          <span style="font-size: 0.8rem; text-transform: uppercase;">One-time purchase</span>
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 1rem;"
+          onclick="processPpvPurchase()">
+          Unlock Now (Pay with Stripe)
         </button>
       </div>
     </div>

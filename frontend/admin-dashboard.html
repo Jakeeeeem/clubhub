@@ -148,6 +148,7 @@
     <script src="workspace-manager.js"></script>
     <link rel="stylesheet" href="tour-service.css">
     <script src="tour-service.js"></script>
+    <script src="tactical-logic.js"></script>
 </head>
 
 <body>
@@ -186,6 +187,8 @@
         <a href="#" class="tab-item" onclick="showSection('teams'); return false;">Teams</a>
         <a href="#" class="tab-item" onclick="showSection('staff'); return false;">Staff</a>
         <a href="#" class="tab-item" onclick="showSection('events'); return false;">Events</a>
+        <a href="#" class="tab-item" onclick="showSection('tournaments'); return false;">Tournaments</a>
+        <a href="#" class="tab-item" onclick="showSection('tactical-board'); return false;">Tactics</a>
         <a href="#" class="tab-item" onclick="showSection('finances'); return false;">Finance</a>
         <a href="#" class="tab-item" onclick="showSection('listings'); return false;">Listings</a>
         <a href="#" class="tab-item" onclick="showSection('item-shop'); return false;">Shop</a>
@@ -240,6 +243,7 @@
                     <div class="nav-dropdown-menu">
                         <button onclick="showSection('events')">📅 Events Calendar</button>
                         <button onclick="showSection('tournaments')">🏆 Tournaments</button>
+                        <button onclick="showSection('tactical-board')">📝 Tactics Board</button>
                         <div class="dropdown-divider"></div>
                         <button onclick="window.location.href='training-manager.html'">🎯 Training Manager</button>
                         <button onclick="window.location.href='camp-manager.html'">🏕️ Camp Manager</button>
@@ -257,6 +261,17 @@
                     <div class="nav-dropdown-menu">
                         <button onclick="showSection('finances')">💰 Financial Overview</button>
                         <button onclick="showSection('shop')">🛒 Group Shop</button>
+                    </div>
+                </div>
+
+                <!-- Community Group -->
+                <div class="nav-dropdown-container">
+                    <button class="nav-item dropdown-trigger">
+                        💬 Community ▾
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <button onclick="showSection('club-feed')">🧵 Club Feed</button>
+                        <button onclick="showSection('club-messenger')">💬 Group Messenger</button>
                     </div>
                 </div>
 
@@ -307,6 +322,45 @@
 
             <div class="dashboard-content">
                 <!-- Overview Section -->
+                <!-- 🧵 Club Feed Section (Threads Style) -->
+                <div id="club-feed" class="dashboard-section">
+                    <div class="community-container">
+                        <div class="new-post-card">
+                            <textarea class="new-post-input" id="newPostContent"
+                                placeholder="What's happening in the club?"></textarea>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                                <button class="btn btn-primary btn-small btn-pill"
+                                    onclick="postToClubFeed()">Post</button>
+                            </div>
+                        </div>
+                        <div id="feedPostsContainer">
+                            <!-- Posts will be loaded here -->
+                            <p style="text-align: center; color: var(--text-muted);">Loading feed...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 💬 Group Messenger Section -->
+                <div id="club-messenger" class="dashboard-section">
+                    <div class="messenger-layout">
+                        <div class="messenger-sidebar" id="messengerConversationList">
+                            <!-- Conversations will be loaded here -->
+                        </div>
+                        <div class="messenger-main">
+                            <div id="chatHeader" class="chat-header">
+                                Select a conversation to start chatting
+                            </div>
+                            <div id="chatMessages" class="chat-messages">
+                                <!-- Messages will be loaded here -->
+                            </div>
+                            <div class="chat-input-area" id="chatInputArea" style="display: none;">
+                                <input type="text" id="chatInputField" class="chat-input" placeholder="Aa">
+                                <button class="btn btn-primary btn-pill" onclick="sendChatMessage()">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="overview" class="dashboard-section active">
                     <div class="stats-grid">
                         <div class="stat-card card-elite">
@@ -1126,101 +1180,225 @@
             </div> <!-- End talent-id -->
 
             <!-- Tournament Manager Tab -->
-            <div id="tournaments" class="dashboard-section">
-                <!-- Tournament List View -->
-                <div id="tournamentListView">
-                    <div class="card">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3 style="margin: 0;">🏆 Tournament Manager</h3>
-                            <button class="btn btn-primary" onclick="openCreateTournamentModal()">+ Create
-                                Tournament</button>
+            <!-- Tactical Board Section -->
+            <div id="tactical-board" class="dashboard-section">
+                <div class="card card-glass-red" style="padding: 1.5rem;">
+                    <div class="section-header"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div>
+                            <h2 class="neon-text-red">🏟️ Tactical Board</h2>
+                            <p style="font-size: 0.9rem; color: var(--text-muted);">Craft your matchday strategy and
+                                lineups</p>
+                        </div>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <select id="tacticalTeamFilter" class="btn btn-secondary"
+                                style="background: rgba(255,255,255,0.05);" onchange="loadTacticalRoster()">
+                                <option value="">Select Team...</option>
+                            </select>
+                            <select id="formationSelect" class="btn btn-secondary"
+                                style="background: rgba(255,255,255,0.05);" onchange="setFormation()">
+                                <option value="4-4-2">4-4-2</option>
+                                <option value="4-3-3">4-3-3</option>
+                                <option value="3-5-2">3-5-2</option>
+                                <option value="4-2-3-1">4-2-3-1</option>
+                                <option value="5-3-2">5-3-2</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="saveFormation()">Save Strategy</button>
+                        </div>
+                    </div>
+
+                    <div class="planner-layout"
+                        style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; height: 750px;">
+                        <!-- Player Roster Sidebar -->
+                        <div class="roster-sidebar"
+                            style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                            <h4 style="font-size: 1rem; color: var(--text-main);">Available Players</h4>
+                            <div class="search-box" style="position: relative;">
+                                <input type="text" id="rosterSearch" placeholder="Filter roster..."
+                                    style="width: 100%; padding: 0.6rem 2.5rem 0.6rem 1rem; border-radius: 10px; font-size: 0.85rem;"
+                                    onkeyup="filterRoster()">
+                                <span
+                                    style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); opacity: 0.5;">🔍</span>
+                            </div>
+                            <div id="availablePlayers" class="roster-list"
+                                style="flex: 1; overflow-y: auto; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <!-- Populated via JS -->
+                            </div>
                         </div>
 
-                        <div id="tournamentsListContainer"
-                            style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
-                            <!-- Loaded via JS -->
-                            <div style="text-align: center; padding: 3rem; opacity: 0.5;">
-                                <p>Loading tournaments...</p>
+                        <!-- Tactical Pitch -->
+                        <div class="pitch-container"
+                            style="position: relative; background: #1a472a; border-radius: 24px; border: 4px solid rgba(255,255,255,0.15); box-shadow: inset 0 0 100px rgba(0,0,0,0.5); overflow: hidden; height: 100%;">
+                            <!-- Soccer Field Markings (SVG) -->
+                            <svg class="field-markings" viewBox="0 0 100 100" preserveAspectRatio="none"
+                                style="position: absolute; width: 100%; height: 100%; pointer-events: none; opacity: 0.8;">
+                                <rect x="0" y="0" width="100" height="100" fill="transparent" stroke="white"
+                                    stroke-width="0.5" />
+                                <line x1="0" y1="50" x2="100" y2="50" stroke="white" stroke-width="0.5" />
+                                <circle cx="50" cy="50" r="10" fill="transparent" stroke="white" stroke-width="0.5" />
+                                <circle cx="50" cy="50" r="0.8" fill="white" />
+                                <rect x="25" y="0" width="50" height="15" fill="transparent" stroke="white"
+                                    stroke-width="0.5" />
+                                <rect x="25" y="85" width="50" height="15" fill="transparent" stroke="white"
+                                    stroke-width="0.5" />
+                                <rect x="38" y="0" width="24" height="6" fill="transparent" stroke="white"
+                                    stroke-width="0.5" />
+                                <rect x="38" y="94" width="24" height="6" fill="transparent" stroke="white"
+                                    stroke-width="0.5" />
+                            </svg>
+                            <div id="tacticalBoard"
+                                style="position: absolute; width: 100%; height: 100%; pointer-events: all; cursor: crosshair;">
+                                <!-- Players assigned in JS -->
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Tournament Detail View (Hidden by default) -->
-                <div id="tournamentDetailView" style="display: none;">
-                    <button class="btn btn-secondary btn-small" onclick="closeTournamentDetail()">← Back to
-                        Tournaments</button>
-
-                    <div class="section-header" style="margin-top: 1rem;">
-                        <h2 id="detailTournamentName">Tournament Name</h2>
-                        <div class="action-buttons">
-                            <button class="btn btn-secondary" onclick="openPitchManagement()">📍 Manage Pitches</button>
-                            <button class="btn btn-secondary" onclick="autoSchedule()">📅 Auto Schedule</button>
-                            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 0.5rem;"></div>
-                            <button class="btn btn-small btn-primary"
-                                onclick="generateFixtures('league')">League</button>
-                            <button class="btn btn-small btn-primary"
-                                onclick="generateFixtures('knockout')">Knockout</button>
-                        </div>
+            </div>
+            <!-- Tournament List View -->
+            <div id="tournamentListView">
+                <div class="card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="margin: 0;">🏆 Tournament Manager</h3>
+                        <button class="btn btn-primary" onclick="openCreateTournamentModal()">+ Create
+                            Tournament</button>
                     </div>
 
-                    <div class="dashboard-nav" style="margin-bottom: 1rem;">
-                        <button class="active" onclick="switchTournamentTab(this, 'fixtures')">Fixtures</button>
-                        <button onclick="switchTournamentTab(this, 'standings')">Standings</button>
-                        <button onclick="switchTournamentTab(this, 'bracket')">Bracket</button>
-                        <button onclick="switchTournamentTab(this, 'teams')">Teams</button>
-                    </div>
-
-                    <div id="tab-fixtures" class="tournament-tab">
-                        <div class="card">
-                            <h3>Upcoming Matches</h3>
-                            <div id="tournamentFixturesList"
-                                style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
-                        </div>
-                    </div>
-
-                    <div id="tab-bracket" class="tournament-tab" style="display: none;">
-                        <div class="card">
-                            <h3>Tournament Bracket</h3>
-                            <div id="tournamentBracketVisual"
-                                style="overflow-x: auto; padding: 1rem; min-height: 400px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                                <!-- Rendered via JS -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="tab-standings" class="tournament-tab" style="display: none;">
-                        <div class="card">
-                            <h3>League Table / Bracket</h3>
-                            <div id="tournamentStandingsContainer"></div>
-                        </div>
-                    </div>
-
-                    <div id="tab-teams" class="tournament-tab" style="display: none;">
-                        <div class="card">
-                            <h3>Participating Teams</h3>
-                            <div id="tournamentParticipantsList"></div>
-                        </div>
-                    </div>
-                </div> <!-- End tournaments-section -->
-
-
-                <!-- Specialized Polls Section -->
-                <div id="polls-section" class="dashboard-section">
-                    <div class="card">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                            <h3>🗳️ Voting & Polls</h3>
-                            <button class="btn btn-primary" onclick="showModal('createPollModal')">➕ Create
-                                Poll</button>
-                        </div>
-                        <div id="pollsContainer" class="card-grid">
-                            <!-- Polls will be loaded here -->
+                    <div id="tournamentsListContainer"
+                        style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+                        <!-- Loaded via JS -->
+                        <div style="text-align: center; padding: 3rem; opacity: 0.5;">
+                            <p>Loading tournaments...</p>
                         </div>
                     </div>
                 </div>
-            </div> <!-- End dashboard-content -->
+            </div>
+
+            <!-- Tournament Detail View (Hidden by default) -->
+            <div id="tournamentDetailView" style="display: none;">
+                <button class="btn btn-secondary btn-small" onclick="closeTournamentDetail()">← Back to
+                    Tournaments</button>
+
+                <div class="section-header" style="margin-top: 1rem;">
+                    <h2 id="detailTournamentName">Tournament Name</h2>
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="openPitchManagement()">📍 Manage Pitches</button>
+                        <button class="btn btn-secondary" onclick="autoSchedule()">📅 Auto Schedule</button>
+                        <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 0.5rem;"></div>
+                        <button class="btn btn-small btn-primary" onclick="generateFixtures('league')">League</button>
+                        <button class="btn btn-small btn-primary"
+                            onclick="generateFixtures('knockout')">Knockout</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-nav" style="margin-bottom: 1rem;">
+                    <button class="active" onclick="switchTournamentTab(this, 'fixtures')">Fixtures</button>
+                    <button onclick="switchTournamentTab(this, 'standings')">Standings</button>
+                    <button onclick="switchTournamentTab(this, 'bracket')">Bracket</button>
+                    <button onclick="switchTournamentTab(this, 'teams')">Teams</button>
+                </div>
+
+                <div id="tab-fixtures" class="tournament-tab">
+                    <div class="card">
+                        <h3>Upcoming Matches</h3>
+                        <div id="tournamentFixturesList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-bracket" class="tournament-tab" style="display: none;">
+                    <div class="card">
+                        <h3>Tournament Bracket</h3>
+                        <div id="tournamentBracketVisual"
+                            style="overflow-x: auto; padding: 1rem; min-height: 400px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                            <!-- Rendered via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-standings" class="tournament-tab" style="display: none;">
+                    <div class="card">
+                        <h3>League Table / Bracket</h3>
+                        <div id="tournamentStandingsContainer"></div>
+                    </div>
+                </div>
+
+                <div id="tab-teams" class="tournament-tab" style="display: none;">
+                    <div class="card">
+                        <h3>Participating Teams</h3>
+                        <div id="tournamentParticipantsList"></div>
+                    </div>
+                </div>
+            </div> <!-- End tournaments-section -->
+
+            <!-- Event Attendance Modal -->
+            <div id="eventAttendanceModal" class="modal">
+                <div class="modal-content" style="max-width: 700px;">
+                    <div class="modal-header">
+                        <h2 id="attendanceModalTitle">Event Attendance</h2>
+                        <span class="close" onclick="closeModal('eventAttendanceModal')">&times;</span>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <div class="stats-summary"
+                            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                            <div class="stat-card"
+                                style="text-align: center; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 1rem; border-radius: 12px;">
+                                <span style="font-size: 1.5rem; display: block; font-weight: bold; color: #10b981;"
+                                    id="attendingCount">0</span>
+                                <span
+                                    style="font-size: 0.75rem; color: #10b981; font-weight: 600; text-transform: uppercase;">Attending</span>
+                            </div>
+                            <div class="stat-card"
+                                style="text-align: center; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 12px;">
+                                <span style="font-size: 1.5rem; display: block; font-weight: bold; color: #ef4444;"
+                                    id="declinedCount">0</span>
+                                <span
+                                    style="font-size: 0.75rem; color: #ef4444; font-weight: 600; text-transform: uppercase;">Declined</span>
+                            </div>
+                            <div class="stat-card"
+                                style="text-align: center; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); padding: 1rem; border-radius: 12px;">
+                                <span style="font-size: 1.5rem; display: block; font-weight: bold; color: #fbbf24;"
+                                    id="maybeCount">0</span>
+                                <span
+                                    style="font-size: 0.75rem; color: #fbbf24; font-weight: 600; text-transform: uppercase;">No
+                                    Response</span>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Player</th>
+                                        <th style="text-align: center;">Status</th>
+                                        <th>Payment</th>
+                                        <th>Reason / Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="eventAttendanceTableBody">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specialized Polls Section -->
+            <div id="polls-section" class="dashboard-section">
+                <div class="card">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h3>🗳️ Voting & Polls</h3>
+                        <button class="btn btn-primary" onclick="showModal('createPollModal')">➕ Create
+                            Poll</button>
+                    </div>
+                    <div id="pollsContainer" class="card-grid">
+                        <!-- Polls will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End dashboard-content -->
         </div>
     </main>
 
@@ -6055,6 +6233,7 @@
                                         <td>
                                             <div class="action-buttons" onclick="event.stopPropagation()">
                                                 ${event.event_type === 'match' ? `<button class="btn-icon stats" title="Record Result" onclick="showRecordResultModal('${event.id}', '${event.title.replace(/'/g, "\\'")}')">🏆</button>` : ''}
+                                                <button class="btn-icon attendance" title="View Attendance" onclick="viewEventAttendance('${event.id}', '${event.title.replace(/'/g, "\\'")}')">👥</button>
                                                 <button class="btn-icon team-sheet" title="Manage Team Sheet" onclick="openTeamSheetModal('${event.id}', '${event.title.replace(/'/g, "\\'")}', '${event.team_id || ''}')">📋</button>
                                                 <button class="btn-icon notify" title="Notify Members" onclick="notifyEventMembers('${event.id}')">🔔</button>
                                                 <button class="btn-icon edit" title="Edit Event" onclick="editEvent('${event.id}')">✏️</button>
@@ -7430,6 +7609,8 @@
         const appNavStructure = {
             'home': [
                 { label: 'Overview', section: 'overview' },
+                { label: 'Club Feed', section: 'club-feed' },
+                { label: 'Messenger', section: 'club-messenger' },
                 { label: 'Group Profile', section: 'group-profile' }
             ],
             'management': [
@@ -7498,6 +7679,18 @@
             let finalId = sectionId;
             if (sectionId === 'marketing-hub') finalId = 'marketing';
             if (sectionId === 'item-shop') finalId = 'shop';
+            if (sectionId === 'tactical-board') {
+                finalId = 'tactical-board';
+                if (typeof initializeTacticalBoard === 'function') {
+                    initializeTacticalBoard();
+                }
+            }
+            if (sectionId === 'club-feed') {
+                loadClubFeed();
+            }
+            if (sectionId === 'club-messenger') {
+                loadMessengerConversations();
+            }
 
             // Remove active class and hide all sections
             const sections = document.querySelectorAll('.dashboard-section');
@@ -11757,6 +11950,16 @@
                         <textarea id="matchNotes" rows="3" placeholder="Scorers, key moments, MOTM..."></textarea>
                     </div>
 
+                    <div id="playerStatsContainer"
+                        style="margin-top: 1.5rem; max-height: 400px; overflow-y: auto; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid var(--glass-border);">
+                        <h4 style="margin-bottom: 1rem; color: var(--text-main); font-size: 1rem;">Player Statistics
+                        </h4>
+                        <div id="playerStatsList" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Loading
+                                roster...</div>
+                        </div>
+                    </div>
+
                     <div class="form-actions" style="margin-top: 2rem;">
                         <button type="submit" class="btn btn-primary" style="width: 100%;">💾 Save Match
                             Outcome</button>
@@ -11766,8 +11969,11 @@
         </div>
 
         <script>
+            // Store fetched roster
+            let currentMatchRoster = [];
+
             // Match Result Handlers
-            window.openMatchResultModal = function (eventId) {
+            window.openMatchResultModal = async function (eventId) {
                 const event = (AppState.events || []).find(e => e.id === eventId);
                 if (!event) return;
 
@@ -11777,16 +11983,66 @@
                 document.getElementById('awayScore').value = 0;
                 document.getElementById('matchNotes').value = '';
 
+                const statsList = document.getElementById('playerStatsList');
+                statsList.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Loading roster...</div>';
+
                 showModal('matchResultModal');
+
+                try {
+                    // Fetch roster for the event
+                    currentMatchRoster = await apiService.makeRequest(`/events/${eventId}/roster`);
+
+                    if (!currentMatchRoster || currentMatchRoster.length === 0) {
+                        statsList.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">No players found for this event.</div>';
+                        return;
+                    }
+
+                    statsList.innerHTML = currentMatchRoster.map(player => `
+                        <div class="player-stat-row" data-player-id="${player.id}" style="display: grid; grid-template-columns: 1.5fr repeat(5, 1fr); gap: 0.5rem; align-items: center; background: rgba(0,0,0,0.2); padding: 0.75rem; border-radius: 8px;">
+                            <div style="font-size: 0.9rem; font-weight: 600;">${player.first_name} ${player.last_name}</div>
+                            
+                            <div><label style="font-size: 0.7rem; color: var(--text-muted);">Mins</label><input type="number" class="stat-input mins" value="0" min="0" style="width: 100%; padding: 0.25rem;"></div>
+                            <div><label style="font-size: 0.7rem; color: var(--text-muted);">Goals</label><input type="number" class="stat-input goals" value="0" min="0" style="width: 100%; padding: 0.25rem;"></div>
+                            <div><label style="font-size: 0.7rem; color: var(--text-muted);">Asts</label><input type="number" class="stat-input assists" value="0" min="0" style="width: 100%; padding: 0.25rem;"></div>
+                            <div><label style="font-size: 0.7rem; color: var(--text-muted);">YC</label><input type="number" class="stat-input yc" value="0" min="0" max="2" style="width: 100%; padding: 0.25rem;"></div>
+                            <div><label style="font-size: 0.7rem; color: var(--text-muted);">RC</label><input type="number" class="stat-input rc" value="0" min="0" max="1" style="width: 100%; padding: 0.25rem;"></div>
+                        </div>
+                    `).join('');
+                } catch (error) {
+                    console.error('Failed to load roster:', error);
+                    statsList.innerHTML = '<div style="text-align: center; color: #dc2626; font-size: 0.9rem;">Failed to load roster.</div>';
+                }
             };
 
             document.getElementById('matchResultForm')?.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const eventId = document.getElementById('resultEventId').value;
+                const matchResult = parseInt(document.getElementById('homeScore').value) > parseInt(document.getElementById('awayScore').value) ? 'win' : (parseInt(document.getElementById('homeScore').value) < parseInt(document.getElementById('awayScore').value) ? 'loss' : 'draw');
+
+                // Gather player stats
+                const playerStats = [];
+                document.querySelectorAll('.player-stat-row').forEach(row => {
+                    const playerId = row.getAttribute('data-player-id');
+                    const minutesPlayed = parseInt(row.querySelector('.mins').value) || 0;
+                    if (minutesPlayed > 0) {
+                        playerStats.push({
+                            playerId: playerId,
+                            minutesPlayed,
+                            goals: parseInt(row.querySelector('.goals').value) || 0,
+                            assists: parseInt(row.querySelector('.assists').value) || 0,
+                            yellowCards: parseInt(row.querySelector('.yc').value) || 0,
+                            redCards: parseInt(row.querySelector('.rc').value) || 0,
+                            rating: 7 // default rating for now
+                        });
+                    }
+                });
+
                 const payload = {
-                    homeScore: parseInt(document.getElementById('homeScore').value),
-                    awayScore: parseInt(document.getElementById('awayScore').value),
-                    notes: document.getElementById('matchNotes').value
+                    home_score: parseInt(document.getElementById('homeScore').value),
+                    away_score: parseInt(document.getElementById('awayScore').value),
+                    result: matchResult,
+                    notes: document.getElementById('matchNotes').value,
+                    playerStats: playerStats
                 };
 
                 try {
@@ -11932,6 +12188,381 @@
                     if (sectionId === 'staff') loadStaff();
                 };
             })();
+        </script>
+        <script>
+            /* =========================================================================
+               TACTICAL BOARD LOGIC (ADMIN DASHBOARD)
+               ========================================================================= */
+            window.initializeTacticalBoard = async function () {
+                const board = document.getElementById('tacticalBoard');
+                if (!board) return;
+
+                await populateTacticalTeams();
+                setFormation();
+                loadTacticalRoster();
+            };
+
+            async function populateTacticalTeams() {
+                const selector = document.getElementById('tacticalTeamFilter');
+                if (!selector || selector.options.length > 1) return;
+
+                try {
+                    const groupId = await getActiveGroupId();
+                    const teams = await apiService.getTeams(groupId);
+
+                    teams.forEach(team => {
+                        const opt = document.createElement('option');
+                        opt.value = team.id;
+                        opt.textContent = team.name;
+                        selector.appendChild(opt);
+                    });
+                } catch (err) {
+                    console.error('Failed to load teams for tactical board:', err);
+                }
+            }
+
+            window.loadTacticalRoster = async function () {
+                const teamId = document.getElementById('tacticalTeamFilter').value;
+                const container = document.getElementById('availablePlayers');
+                if (!container) return;
+
+                container.innerHTML = '<p style="color:var(--text-muted); padding: 1rem;">Loading roster...</p>';
+
+                try {
+                    let players = [];
+                    if (teamId) {
+                        players = await apiService.getTeamPlayers(teamId);
+                    } else {
+                        const groupId = await getActiveGroupId();
+                        players = await apiService.getPlayers(groupId);
+                    }
+
+                    if (!players || players.length === 0) {
+                        container.innerHTML = '<p style="color:var(--text-muted); padding: 1rem;">No players found.</p>';
+                        return;
+                    }
+
+                    container.innerHTML = players.map(player => `
+                    <div class="available-player" onclick="assignPlayerToSelected('${player.id}', '${player.first_name || player.firstName}', '${player.last_name || player.lastName}')" data-player-id="${player.id}" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 12px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                        <div class="user-avatar" style="width:35px; height:35px; font-size:0.8rem; border-radius:10px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center;">
+                            ${(player.first_name || player.firstName || 'P').charAt(0)}
+                        </div>
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:600; font-size: 0.9rem;">${player.first_name || player.firstName} ${player.last_name || player.lastName}</span>
+                            <span style="font-size:0.75rem; opacity:0.6;">${player.position || 'Player'}</span>
+                        </div>
+                    </div>
+                `).join('');
+                } catch (err) {
+                    console.error('Failed to load roster:', err);
+                    container.innerHTML = '<p style="color:#ef4444; padding: 1rem;">Failed to load players.</p>';
+                }
+            }
+
+            window.setFormation = function () {
+                const formation = document.getElementById('formationSelect').value;
+                const board = document.getElementById('tacticalBoard');
+                if (!board) return;
+
+                board.innerHTML = '';
+                const positions = TacticalLogic.getFormationPositions(formation);
+
+                positions.forEach((pos, index) => {
+                    const playerEl = document.createElement('div');
+                    playerEl.className = 'player-position';
+                    playerEl.style.left = `${pos.x}%`;
+                    playerEl.style.top = `${pos.y}%`;
+                    playerEl.style.transform = 'translate(-50%, -50%)';
+                    playerEl.dataset.index = index;
+                    playerEl.dataset.role = pos.role;
+                    playerEl.textContent = pos.role;
+
+                    const label = document.createElement('div');
+                    label.className = 'player-label';
+                    label.textContent = 'Empty';
+                    playerEl.appendChild(label);
+
+                    playerEl.onclick = () => selectPosition(playerEl);
+                    board.appendChild(playerEl);
+                });
+            };
+
+            function selectPosition(el) {
+                document.querySelectorAll('.player-position').forEach(p => p.classList.remove('selected'));
+                el.classList.add('selected');
+                window.selectedPositionEl = el;
+            }
+
+            window.assignPlayerToSelected = function (id, first, last) {
+                if (!window.selectedPositionEl) {
+                    showNotification('Please select a position on the pitch first', 'error');
+                    return;
+                }
+
+                const playerEl = window.selectedPositionEl;
+                const label = playerEl.querySelector('.player-label');
+
+                playerEl.dataset.playerId = id;
+                playerEl.textContent = first.charAt(0) + last.charAt(0);
+                playerEl.appendChild(label);
+                label.textContent = `${first} ${last.charAt(0)}.`;
+
+                playerEl.style.background = 'radial-gradient(circle at 30% 30%, #4ade80 0%, #16a34a 100%)';
+                playerEl.classList.remove('selected');
+                window.selectedPositionEl = null;
+
+                showNotification(`Assigned ${first} ${last} to ${playerEl.dataset.role}`, 'success');
+            };
+
+            window.saveFormation = async function () {
+                const formation = document.getElementById('formationSelect').value;
+                const board = document.getElementById('tacticalBoard');
+                const players = Array.from(board.querySelectorAll('.player-position')).map(p => ({
+                    role: p.dataset.role,
+                    label: p.querySelector('.player-label').textContent,
+                    x: parseFloat(p.style.left),
+                    y: parseFloat(p.style.top),
+                    playerId: p.dataset.playerId || null
+                }));
+
+                const orgId = await getActiveGroupId();
+                const teamId = document.getElementById('tacticalTeamFilter').value;
+
+                try {
+                    showLoading(true);
+                    const payload = {
+                        organization_id: orgId,
+                        team_id: teamId || null,
+                        name: `Strategy ${new Date().toLocaleDateString()}`,
+                        formation: formation,
+                        lineup: players,
+                        is_default: true
+                    };
+
+                    const result = await apiService.saveTacticalFormation(payload);
+                    if (result) {
+                        showNotification('Tactical strategy saved successfully!', 'success');
+                    }
+                } catch (err) {
+                    console.error('Save failed:', err);
+                    showNotification('Failed to save strategy: ' + err.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            };
+
+            window.viewEventAttendance = async function (eventId, title) {
+                document.getElementById('attendanceModalTitle').textContent = `Attendance: ${title}`;
+                const tbody = document.getElementById('eventAttendanceTableBody');
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:2rem;">Loading attendance data...</td></tr>';
+
+                showModal('eventAttendanceModal');
+
+                try {
+                    // Fetch attendance data
+                    const attendance = await apiService.getEventAttendance(eventId);
+
+                    // Update stats
+                    const attending = attendance.filter(a => a.status === 'yes').length;
+                    const declined = attendance.filter(a => a.status === 'no').length;
+                    const maybe = attendance.filter(a => a.status === 'maybe' || !a.status).length;
+
+                    document.getElementById('attendingCount').textContent = attending;
+                    document.getElementById('declinedCount').textContent = declined;
+                    document.getElementById('maybeCount').textContent = maybe;
+
+                    if (!attendance || attendance.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:2rem;">No attendance records found.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = attendance.map(record => `
+                    <tr>
+                        <td style="display:flex; align-items:center; gap:0.75rem;">
+                            <div class="user-avatar" style="width:30px; height:30px; font-size:0.7rem; border-radius:8px; background: rgba(255,255,255,0.05); color: white; display:flex; align-items:center; justify-content:center;">
+                                ${(record.player_name || 'P').charAt(0)}
+                            </div>
+                            <span>${record.player_name}</span>
+                        </td>
+                        <td style="text-align:center;">
+                            <span class="status-badge status-${record.status === 'yes' ? 'paid' : record.status === 'no' ? 'overdue' : 'pending'}">
+                                ${record.status ? record.status.toUpperCase() : 'NO RESPONSE'}
+                            </span>
+                        </td>
+                        <td>
+                            ${record.payment_status === 'paid' ? '✅ Paid' : record.price > 0 ? '❌ Unpaid' : 'Free'}
+                        </td>
+                        <td style="font-size:0.85rem; color:var(--text-muted);">
+                            ${record.reason || record.notes || '-'}
+                        </td>
+                    </tr>
+                `).join('');
+                } catch (error) {
+                    console.error('Failed to load attendance:', error);
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:2rem;">Error loading attendance data.</td></tr>';
+                }
+            };
+
+            window.filterRoster = function () {
+                const term = document.getElementById('rosterSearch').value.toLowerCase();
+                const items = document.querySelectorAll('.available-player');
+
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    item.style.display = text.includes(term) ? 'flex' : 'none';
+                });
+            };
+
+            // --- Community: Feed & Messenger Functions ---
+            window.loadClubFeed = async function () {
+                const container = document.getElementById('feedPostsContainer');
+                if (!container) return;
+
+                try {
+                    const orgId = await getActiveGroupId();
+                    const posts = await apiService.getFeed(orgId);
+
+                    if (!posts || posts.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2.5rem;">🧵 No threads yet. Share some news or a tip!</p>';
+                        return;
+                    }
+
+                    container.innerHTML = posts.map(post => `
+                        <div class="feed-post">
+                            <div class="feed-avatar" style="display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background:var(--primary);">${post.user_name.charAt(0)}</div>
+                            <div class="feed-content">
+                                <div class="feed-header">
+                                    <span class="feed-user">${post.user_name}</span>
+                                    <span class="feed-time">${new Date(post.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <div class="feed-text">${post.content}</div>
+                                <div class="feed-actions">
+                                    <span class="feed-action">❤️ ${post.likes || 1}</span>
+                                    <span class="feed-action">💬 ${post.comments || 0}</span>
+                                    <span class="feed-action">🔗 Share</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (err) {
+                    console.error('Feed load failed:', err);
+                    container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Error loading community feed.</p>';
+                }
+            };
+
+            window.postToClubFeed = async function () {
+                const input = document.getElementById('newPostContent');
+                const content = input.value.trim();
+                if (!content) return;
+
+                try {
+                    const orgId = await getActiveGroupId();
+                    const result = await apiService.postToFeed(orgId, { content });
+                    if (result.success) {
+                        input.value = '';
+                        showNotification('Post shared to club feed!', 'success');
+                        loadClubFeed();
+                    }
+                } catch (err) {
+                    console.error('Post failed:', err);
+                    showNotification('Failed to post: ' + err.message, 'error');
+                }
+            };
+
+            window.loadMessengerConversations = async function () {
+                const container = document.getElementById('messengerConversationList');
+                if (!container) return;
+                container.innerHTML = '<p style="text-align:center; padding:1rem; opacity:0.5;">Loading chats...</p>';
+
+                try {
+                    const orgId = await getActiveGroupId();
+                    const convos = await apiService.getMessengerConversations(orgId);
+
+                    if (!convos || convos.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">No messages yet.</p>';
+                        return;
+                    }
+
+                    container.innerHTML = convos.map(c => `
+                        <div class="conversation-item" onclick="openMessengerChat('${c.id}', '${c.name}')" data-id="${c.id}">
+                            <div class="feed-avatar" style="width: 36px; height: 36px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background:var(--primary);">${c.name.charAt(0)}</div>
+                            <div class="conversation-info">
+                                <div class="conversation-name">${c.name}</div>
+                                <div class="conversation-preview">${c.last_message}</div>
+                            </div>
+                            ${c.unread_count > 0 ? `<div style="background: var(--primary); width: 10px; height: 10px; border-radius: 50%;"></div>` : ''}
+                        </div>
+                    `).join('');
+                } catch (err) {
+                    console.error('Messenger load failed:', err);
+                    container.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 1rem;">Error loading messages.</p>';
+                }
+            };
+
+            let currentChatId = null;
+            window.openMessengerChat = async function (id, name) {
+                currentChatId = id;
+                document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
+                const activeEl = document.querySelector(`.conversation-item[data-id="${id}"]`);
+                if (activeEl) activeEl.classList.add('active');
+
+                document.getElementById('chatHeader').innerHTML = `
+                    <div class="feed-avatar" style="width: 32px; height: 32px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background:var(--primary);">${name.charAt(0)}</div>
+                    <span>${name}</span>
+                `;
+                document.getElementById('chatInputArea').style.display = 'flex';
+                document.getElementById('chatInputArea').style.background = 'var(--bg-card)';
+                const messagesContainer = document.getElementById('chatMessages');
+                messagesContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading chat history...</p>';
+
+                try {
+                    const messages = await apiService.getMessages(id);
+                    messagesContainer.innerHTML = messages.map(m => `
+                        <div class="message-bubble ${m.sender_name === 'You' ? 'sent' : 'received'}">
+                            ${m.content}
+                            <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.2rem; text-align: ${m.sender_name === 'You' ? 'right' : 'left'};">
+                                ${new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                        </div>
+                    `).join('');
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                } catch (err) {
+                    console.error('Chat load failed:', err);
+                    messagesContainer.innerHTML = '<p style="text-align: center; color: #ef4444;">Error loading conversation history.</p>';
+                }
+            };
+
+            window.sendChatMessage = async function () {
+                const input = document.getElementById('chatInputField');
+                const content = input.value.trim();
+                const container = document.getElementById('chatMessages');
+                if (!content || !currentChatId) return;
+
+                try {
+                    // Append bubble immediately for perceived performance
+                    const tempId = 'temp_' + Date.now();
+                    container.innerHTML += `
+                        <div class="message-bubble sent" id="${tempId}" style="opacity: 0.7;">
+                            ${content}
+                            <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.2rem; text-align: right;">Sending...</div>
+                        </div>
+                    `;
+                    container.scrollTop = container.scrollHeight;
+                    input.value = '';
+
+                    const result = await apiService.sendMessage(currentChatId, { content });
+                    if (result.success) {
+                        const tempEl = document.getElementById(tempId);
+                        if (tempEl) {
+                            tempEl.style.opacity = '1';
+                            tempEl.querySelector('div').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Send failed:', err);
+                    showNotification('Failed to send message: ' + err.message, 'error');
+                }
+            };
         </script>
 </body>
 

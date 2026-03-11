@@ -609,12 +609,17 @@
                 // If they create a group later, they will get the 'owner' role.
                 const userType = roleParam === 'group' || roleParam === 'group' ? 'group' : roleParam;
 
+                const agreeTerms = document.getElementById('agreeTerms').checked;
+                const agreeThirdParty = document.getElementById('agreeThirdParty').checked;
+
                 const userData = {
                     firstName,
                     lastName,
                     email,
                     password,
-                    userType: userType
+                    userType: userType,
+                    agreeTerms,
+                    agreeThirdParty
                 };
 
                 console.log('Registering user:', userData);
