@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scout Dashboard | ClubHub</title>
+
+    <!-- Meta Tags -->
+    <meta name="description" content="Professional scouting and talent discovery platform">
+    <meta name="theme-color" content="#dc2626">
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="group-switcher.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .rating-stars {
+            color: #fbbf24;
+            font-size: 0.9rem;
+        }
+
+        .player-card-compact {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .player-card-compact:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-glass-border);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav container" id="loggedInNav">
+            <div class="logo" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 40px;">
+                <span class="logo-text neon-text">ClubHub</span>
+            </div>
+
+            <div class="header-actions" style="display: flex; align-items: center; gap: 1.5rem;">
+                <div id="scoutStatusBadge">
+                    <!-- Dynamic badge -->
+                </div>
+                <!-- Profile Switcher -->
+                <button id="profile-switcher-trigger" class="glass-btn">
+                    <div class="profiel-icon" id="userInitial">S</div>
+                    <span id="scoutNameDisplay">Professional Scout</span>
+                </button>
+                <button onclick="handleLogout()" class="btn btn-secondary btn-small">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Sidebar for Scout Dashboard -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div style="padding: 1rem; background: var(--primary-glass); border-radius: 12px; border: 1px solid var(--primary-glass-border);">
+                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Access Level</span>
+                <span id="scoutRank" style="font-weight: 700; color: var(--text-main);">Pro Talent Scout</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-group">
+                <span class="nav-group-title">Talent Pool</span>
+                <button class="nav-item active" onclick="showScoutSection('discovery')">
+                    <span class="nav-icon">🔍</span> Discovery
+                </button>
+                <button class="nav-item" onclick="showScoutSection('watchlist')">
+                    <span class="nav-icon">⭐</span> Watchlist
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <span class="nav-group-title">Analysis</span>
+                <button class="nav-item" onclick="showScoutSection('reports')">
+                    <span class="nav-icon">📝</span> My Reports
+                </button>
+                <button class="nav-item" id="analyticsNavLink" onclick="showScoutSection('analytics')" style="display: none;">
+                    <span class="nav-icon">📊</span> Market Trends
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <span class="nav-group-title">Settings</span>
+                <button class="nav-item" onclick="showScoutSection('verification')">
+                    <span class="nav-icon">🛡️</span> Verification
+                </button>
+                <button class="nav-item" onclick="showScoutSection('profile')">
+                    <span class="nav-icon">👤</span> Profile
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="main dashboard-main" style="margin-left: 280px; padding-top: 100px;">
+        <div class="container dashboard-container">
+            
+            <!-- Discovery Section -->
+            <div id="scout-discovery" class="dashboard-section active">
+                <div class="dashboard-header" style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h1 class="neon-text">Talent Discovery</h1>
+                        <p style="color: var(--text-muted);">Browse identified elite talent across all registered clubs.</p>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="text" id="playerSearch" placeholder="Search by name, position or club..." 
+                            style="min-width: 300px; padding: 0.8rem 1.2rem; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03);">
+                        <select id="positionFilter" class="glass-btn" style="min-width: 150px; padding: 0 1rem;">
+                            <option value="">All Positions</option>
+                            <option value="GK">Goalkeeper</option>
+                            <option value="DEF">Defender</option>
+                            <option value="MID">Midfielder</option>
+                            <option value="FWD">Forward</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="discoveryGrid" class="card-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                    <!-- Populated by JS -->
+                    <div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;">
+                        <p class="loading-text">Scanning for potential talent...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="scout-reports" class="dashboard-section" style="display: none;">
+                <div class="dashboard-header" style="margin-bottom: 2rem;">
+                    <h1 class="neon-text">Scouting Reports</h1>
+                    <p style="color: var(--text-muted);">Your professional analysis and player assessments.</p>
+                </div>
+                <div id="reportsGrid" class="card-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Verification Section -->
+            <div id="scout-verification" class="dashboard-section" style="display: none;">
+                <div class="dashboard-header" style="margin-bottom: 2rem;">
+                    <h1 class="neon-text">Scout Verification</h1>
+                    <p style="color: var(--text-muted);">Upgrade your status to access sensitive data and advanced analytics.</p>
+                </div>
+                
+                <div class="glass-card" style="max-width: 800px; padding: 2.5rem; border: 1px solid var(--primary-glass-border);">
+                    <div id="verificationStatusCard">
+                        <h3>Status: <span style="color: var(--primary);">Unverified</span></h3>
+                        <p style="margin: 1.5rem 0; color: var(--text-muted); line-height: 1.7;">
+                            Verified scouts are granted professional credentials within the ClubHub ecosystem. 
+                            This allows you to view direct contact details for parents (for youth players) and players, 
+                            access historical performance data, and view market valuations.
+                        </p>
+                        
+                        <form id="scoutVerificationForm" onsubmit="handleScoutVerification(event)">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                                <div class="form-group">
+                                    <label>Professional ID / coaching License</label>
+                                    <input type="url" id="licenseUrl" placeholder="Link to license image or PDF" required
+                                        style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                                </div>
+                                <div class="form-group">
+                                    <label>Club/Agency Affiliation</label>
+                                    <input type="text" id="affiliation" placeholder="e.g. Manchester City Academy" required
+                                        style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-large">Submit for Verification</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Core Dependencies -->
+    <script src="api-service.js"></script>
+    <script src="enhanced-login-handler.js"></script>
+    
+    <script>
+        // Scout Specific Logic
+        document.addEventListener('DOMContentLoaded', async () => {
+            const isLoggedIn = await checkAuthStatus();
+            if (!isLoggedIn) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (user) {
+                document.getElementById('scoutNameDisplay').textContent = `${user.firstName} ${user.lastName}`;
+                document.getElementById('userInitial').textContent = user.firstName.charAt(0);
+                
+                // Set verification status
+                updateVerificationUI(user);
+            }
+
+            // Initialize Discovery
+            loadTalentPool();
+        });
+
+        function updateVerificationUI(user) {
+            const badgeContainer = document.getElementById('scoutStatusBadge');
+            const rankText = document.getElementById('scoutRank');
+            
+            if (user.isVerifiedScout || user.scout_verified) {
+                badgeContainer.innerHTML = '<span class="verified-badge">✓ Verified Scout</span>';
+                rankText.textContent = 'Elite Talent Scout';
+                document.getElementById('analyticsNavLink').style.display = 'block';
+            } else {
+                badgeContainer.innerHTML = '<span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">Standard Scout</span>';
+                rankText.textContent = 'Pro Talent Scout';
+            }
+        }
+
+        function showScoutSection(sectionId) {
+            console.log(`🚀 Scout switching to section: ${sectionId}`);
+            
+            // Hide all
+            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.sidebar-nav .nav-item').forEach(n => n.classList.remove('active'));
+
+            // Show target
+            const target = document.getElementById(`scout-${sectionId}`);
+            if (target) {
+                target.style.display = 'block';
+                // Find matching nav item
+                const navItem = Array.from(document.querySelectorAll('.sidebar-nav .nav-item')).find(n => n.getAttribute('onclick').includes(`'${sectionId}'`));
+                if (navItem) navItem.classList.add('active');
+            }
+        }
+
+        async function loadTalentPool() {
+            const grid = document.getElementById('discoveryGrid');
+            try {
+                // In a real app, this would be a specific scouting API endpoint
+                // For now, we use existing players data
+                let players = AppState.players;
+                if (!players || players.length === 0) {
+                    const dashboardData = await apiService.getAdminDashboardFallback();
+                    players = dashboardData.players;
+                }
+
+                if (!players || players.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5;">No elite talent currently listed.</p>';
+                    return;
+                }
+
+                grid.innerHTML = players.map(player => `
+                    <div class="glass-card player-card-compact" style="padding: 1.5rem;">
+                        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), #991b1b); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: white;">
+                                ${player.firstName?.charAt(0) || player.first_name?.charAt(0)}
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; font-family: 'Outfit';">${player.firstName || player.first_name} ${player.lastName || player.last_name}</h4>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">${player.position || 'CM'} • Age ${calculateAge(player.dob) || '16'}</span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem; font-size: 0.8rem;">
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <span style="display: block; opacity: 0.5; font-size: 0.65rem;">PACE</span>
+                                <strong>84</strong>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <span style="display: block; opacity: 0.5; font-size: 0.65rem;">SKILL</span>
+                                <strong>78</strong>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-primary btn-small" style="flex: 1;" onclick="viewFullReport('${player.id}')">View Report</button>
+                            <button class="glass-btn btn-small" style="padding: 0 10px;" onclick="addToWatchlist('${player.id}')">⭐</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading talent pool:', error);
+                grid.innerHTML = '<p style="color: var(--primary);">Failed to connect to scouting database.</p>';
+            }
+        }
+
+        function calculateAge(dob) {
+            if (!dob) return null;
+            const diff = Date.now() - new Date(dob).getTime();
+            return Math.abs(new Date(diff).getUTCFullYear() - 1970);
+        }
+
+        function viewFullReport(playerId) {
+            showNotification('Generating deep analysis report...', 'info');
+        }
+
+        function addToWatchlist(playerId) {
+            showNotification('Added to your watchlist', 'success');
+        }
+
+        async function handleScoutVerification(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.textContent;
+            
+            try {
+                btn.disabled = true;
+                btn.textContent = 'Processing...';
+                
+                // Mock API call
+                await new Promise(r => setTimeout(r, 1500));
+                
+                showNotification('Verification request sent! Our team will review your credentials.', 'success');
+                document.getElementById('verificationStatusCard').innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">⏳</span>
+                        <h3>Verification Pending</h3>
+                        <p style="color: var(--text-muted); margin-top: 1rem;">Your documents are being reviewed. This usually takes 24-48 hours.</p>
+                    </div>
+                `;
+            } catch (error) {
+                showNotification('Submission failed. Please try again.', 'error');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+    </script>
+</body>
+
+</html>

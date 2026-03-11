@@ -277,15 +277,14 @@
             </p>
 
             <div class="account-types-grid"
-                style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                 <div class="checkbox-card account-type-card" id="type-player" onclick="selectSignupType('adult')">
                     <div class="type-icon"
                         style="font-size: 2rem; margin-bottom: 0.5rem; display: block; width: 100%; text-align: center;">
                         ⚽</div>
                     <div style="text-align: center; width: 100%;">
                         <strong style="display: block; margin-bottom: 0.25rem;">Player / Fan</strong>
-                        <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.2;">Join groups, find
-                            events, and track your career.</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.1;">Join groups and find events.</span>
                     </div>
                 </div>
                 <div class="checkbox-card account-type-card" id="type-org" onclick="selectSignupType('group')">
@@ -294,8 +293,16 @@
                         🏢</div>
                     <div style="text-align: center; width: 100%;">
                         <strong style="display: block; margin-bottom: 0.25rem;">Group / Club</strong>
-                        <span style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.2;">Manage teams, take
-                            payments, and grow your group.</span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.1;">Manage teams and payments.</span>
+                    </div>
+                </div>
+                <div class="checkbox-card account-type-card" id="type-scout" onclick="selectSignupType('scout')">
+                    <div class="type-icon"
+                        style="font-size: 2rem; margin-bottom: 0.5rem; display: block; width: 100%; text-align: center;">
+                        🔍</div>
+                    <div style="text-align: center; width: 100%;">
+                        <strong style="display: block; margin-bottom: 0.25rem;">Scout</strong>
+                        <span style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.1;">Discover talent and analytics.</span>
                     </div>
                 </div>
             </div>
@@ -503,7 +510,12 @@
         function selectSignupType(type) {
             document.getElementById('selectedAccountType').value = type;
             document.querySelectorAll('.account-type-card').forEach(card => card.classList.remove('selected'));
-            const selectedCard = document.getElementById(type === 'group' || type === 'group' ? 'type-org' : 'type-player');
+            
+            let cardId = 'type-player';
+            if (type === 'group') cardId = 'type-org';
+            if (type === 'scout') cardId = 'type-scout';
+            
+            const selectedCard = document.getElementById(cardId);
             if (selectedCard) selectedCard.classList.add('selected');
 
             // Auto-advance to next step
@@ -513,7 +525,11 @@
         // Initialize Step 1 cards
         window.addEventListener('load', () => {
             const currentType = document.getElementById('selectedAccountType').value;
-            const selectedCard = document.getElementById(currentType === 'group' || currentType === 'group' ? 'type-org' : 'type-player');
+            let cardId = 'type-player';
+            if (currentType === 'group') cardId = 'type-org';
+            if (currentType === 'scout') cardId = 'type-scout';
+            
+            const selectedCard = document.getElementById(cardId);
             if (selectedCard) selectedCard.classList.add('selected');
         });
 
@@ -695,8 +711,10 @@
                 }
                 // 2. Uninvited User -> Decide based on chosen type
                 else if (!pendingInviteToken) {
-                    if (userType === 'group' || userType === 'group') {
+                    if (userType === 'group') {
                         redirectUrl = 'create-group.html';
+                    } else if (userType === 'scout') {
+                        redirectUrl = 'scout-dashboard.html';
                     } else {
                         redirectUrl = 'player-dashboard.html';
                     }

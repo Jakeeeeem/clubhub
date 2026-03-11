@@ -363,6 +363,9 @@ async function determineUserRedirect(user) {
       } else if (["owner", "admin", "manager"].includes(role)) {
         console.log("✅ Redirecting to admin-dashboard.html");
         return "admin-dashboard.html";
+      } else if (["scout"].includes(role)) {
+        console.log("✅ Redirecting to scout-dashboard.html");
+        return "scout-dashboard.html";
       }
 
       // If role is something else but they have an org, default to admin for org accounts
@@ -407,6 +410,11 @@ async function determineUserRedirect(user) {
   if (userType === "group" || userType === "admin") {
     console.log("✅ Fallback: admin-dashboard.html");
     return "admin-dashboard.html";
+  }
+
+  if (userType === "scout") {
+    console.log("✅ Fallback: scout-dashboard.html");
+    return "scout-dashboard.html";
   }
 
   console.log("✅ Final fallback: player-dashboard.html");

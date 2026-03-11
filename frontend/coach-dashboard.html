@@ -28,105 +28,144 @@
     <header class="header">
         <nav class="nav container" id="loggedInNav">
             <div class="logo" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 40px;">
                 <span class="logo-text neon-text">ClubHub</span>
             </div>
 
-            <!-- Mode Toggle -->
-            <div class="mode-toggle-container">
-                <span class="mode-label active" id="group-label">Group</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="mode-toggle" />
-                    <span class="toggle-slider"></span>
-                </label>
-                <span class="mode-label" id="player-label">Player</span>
-            </div>
-
-            <div class="user-info">
-                <div id="org-switcher-container"></div> <!-- Group Switcher -->
-                <div class="user-avatar" id="coachAvatar">C</div>
-                <span id="coachNameDisplay">Coach</span>
+            <div class="header-actions" style="display: flex; align-items: center; gap: 1.5rem;">
+                <!-- Profile Switcher -->
+                <button id="profile-switcher-trigger" class="glass-btn">
+                    <div class="profiel-icon" id="userInitial">C</div>
+                    <span id="coachNameDisplay">Coach</span>
+                </button>
                 <button onclick="logout()" class="btn btn-secondary btn-small">Logout</button>
             </div>
         </nav>
     </header>
 
-    <!-- App Top Tabs (Mobile Headlines) -->
-    <div class="app-top-tabs mobile-only" id="mobileTabs">
-        <a href="#" class="tab-item active" onclick="showCoachSection('overview'); return false;">Overview</a>
-        <a href="#" class="tab-item" onclick="showCoachSection('teams'); return false;">Teams</a>
-        <a href="#" class="tab-item" onclick="showCoachSection('players'); return false;">Players</a>
-        <a href="#" class="tab-item" onclick="showCoachSection('tactical-board'); return false;">Tactics</a>
-        <a href="#" class="tab-item" onclick="showCoachSection('events'); return false;">Calendar</a>
-        <a href="#" class="tab-item" onclick="showCoachSection('tournament-manager'); return false;">Tournaments</a>
-    </div>
-
-
-    <main class="main">
-        <div class="dashboard container dashboard-container">
-            <div class="dashboard-header">
-                <div>
-                    <h1 class="neon-text display-org-name">Coach Dashboard</h1>
-                    <p style="color: var(--text-muted);">Manage your teams, sessions and players</p>
-                </div>
-            </div>
-
-            <!-- Grouped Dashboard Navigation (Desktop) -->
-            <div class="dashboard-nav-grouped desktop-only">
-                <!-- ... existing nav content stays for desktop, but we could also unify it ... -->
-            </div>
-            <button class="nav-item active" onclick="showCoachSection('overview')">
-                📊 Overview
-            </button>
-
-            <!-- Coaching Tools Group -->
-            <div class="nav-dropdown-container" id="nav-group-coaching">
-                <button class="nav-item dropdown-trigger">
-                    📋 Team Management ▾
-                </button>
-                <div class="nav-dropdown-menu">
-                    <button onclick="showCoachSection('teams')">🛡️ My Teams</button>
-                    <button onclick="showCoachSection('players')">👥 My Players</button>
-                    <button onclick="showCoachSection('tactical-board')">📝 Tactics Board</button>
-                    <button onclick="showCoachSection('tournament-manager')">🏆 Tournaments</button>
-                </div>
-            </div>
-
-
-            <!-- Schedule Group -->
-            <div class="nav-dropdown-container">
-                <button class="nav-item dropdown-trigger">
-                    📅 Schedule & Events ▾
-                </button>
-                <div class="nav-dropdown-menu">
-                    <button onclick="showCoachSection('events')">🗓️ Calendar</button>
-                    <button onclick="showCoachSection('event-finder')">🔍 Find Events</button>
-                </div>
-            </div>
-
-            <!-- Profile Group -->
-            <div class="nav-dropdown-container">
-                <button class="nav-item dropdown-trigger">
-                    👤 Profile ▾
-                </button>
-                <div class="nav-dropdown-menu">
-                    <button onclick="showCoachSection('profile')">My Profile</button>
-                    <button
-                        onclick="localStorage.setItem('lastDashboard', 'coach-dashboard.html'); window.location.href='player-settings.html'">Settings</button>
-                </div>
-            </div>
-
-            <!-- Shop Group -->
-            <div class="nav-dropdown-container">
-                <button class="nav-item dropdown-trigger">
-                    🛒 Shop ▾
-                </button>
-                <div class="nav-dropdown-menu">
-                    <button onclick="showCoachSection('item-shop')">Equipment Store</button>
-                </div>
-            </div>
-
+    <!-- Sidebar for Coach Dashboard -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div id="org-switcher-container"></div>
         </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-group">
+                <span class="nav-group-title">Main Dashboard</span>
+                <button class="nav-item active" onclick="showCoachSection('overview')">
+                    <span class="nav-icon">📊</span> Overview
+                </button>
+                <button class="nav-item" onclick="showCoachSection('events')">
+                    <span class="nav-icon">📅</span> Calendar
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <span class="nav-group-title">Coaching Tools</span>
+                <button class="nav-item" onclick="showCoachSection('teams')">
+                    <span class="nav-icon">🛡️</span> My Teams
+                </button>
+                <button class="nav-item" onclick="showCoachSection('players')">
+                    <span class="nav-icon">👥</span> My Players
+                </button>
+                <button class="nav-item" onclick="showCoachSection('scouting')">
+                    <span class="nav-icon">🔍</span> Scouting
+                </button>
+                <button class="nav-item" onclick="showCoachSection('tactical-board')">
+                    <span class="nav-icon">📝</span> Tactics Board
+                </button>
+                <button class="nav-item" onclick="showCoachSection('tournament-manager')">
+                    <span class="nav-icon">🏆</span> Tournaments
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <span class="nav-group-title">Resources</span>
+                <button class="nav-item" onclick="showCoachSection('item-shop')">
+                    <span class="nav-icon">🛒</span> Shop
+                </button>
+                <button class="nav-item" onclick="showCoachSection('profile')">
+                    <span class="nav-icon">👤</span> My Profile
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="main dashboard-main" style="margin-left: 280px; padding-top: 100px;">
+        <div class="container dashboard-container">
+            <div class="dashboard-header" style="margin-bottom: 2rem;">
+                <div>
+                    <h1 class="neon-text display-org-name">Coaching Hub</h1>
+                    <p style="color: var(--text-muted);">Welcome back, Coach! Here's your squad's status.</p>
+                </div>
+            </div>
+
+            <!-- Scouting Section -->
+            <div id="coach-scouting" class="dashboard-section" style="display: none;">
+                <div class="glass-card" style="padding: 2.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+                        <div>
+                            <h2 class="neon-text">Scouting Network</h2>
+                            <p style="color: var(--text-muted);">Discover rising stars and connect with professional scouts.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="window.location.href='scout-dashboard.html'">Go to Full Scout Portal</button>
+                    </div>
+                    
+                    <div class="card-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <div class="glass-card" style="padding: 1.5rem; background: rgba(255,255,255,0.02);">
+                            <h4>Talent Pool</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Browse players identified as "High Potential".</p>
+                            <button class="btn btn-secondary btn-small" style="width: 100%;">View Prospects</button>
+                        </div>
+                        <div class="glass-card" style="padding: 1.5rem; background: rgba(255,255,255,0.02);">
+                            <h4>Scout Directory</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Find verified scouts active in your region.</p>
+                            <button class="btn btn-secondary btn-small" style="width: 100%;">Find Scouts</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div id="coach-overview" class="dashboard-section active">
+                <div class="stats-grid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div class="glass-card stat-card" style="padding: 1.5rem; border-left: 4px solid var(--primary);">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Managed Teams</div>
+                        <div class="stat-number" id="managedTeamsCount" style="font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0;">0</div>
+                        <div style="font-size: 0.75rem; color: #4ade80;">Active coaching roles</div>
+                    </div>
+                    <div class="glass-card stat-card" style="padding: 1.5rem; border-left: 4px solid #6d28d9;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Total Players</div>
+                        <div class="stat-number" id="totalPlayersCount" style="font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0;">0</div>
+                        <div style="font-size: 0.75rem; color: #4ade80;">Registered in your squads</div>
+                    </div>
+                    <div class="glass-card stat-card" style="padding: 1.5rem; border-left: 4px solid #06b6d4;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Upcoming Sessions</div>
+                        <div class="stat-number" id="upcomingSessionsCount" style="font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0;">0</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Next 7 days</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                    <div class="glass-card" style="padding: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="font-family: 'Outfit';">Recent Activity</h3>
+                            <button class="btn btn-text btn-small">View All</button>
+                        </div>
+                        <div id="groupsContainer">
+                            <p class="loading-text">Loading activity...</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="padding: 2rem;">
+                        <h3 style="font-family: 'Outfit'; margin-bottom: 1.5rem;">Today's Schedule</h3>
+                        <div id="todaySchedule">
+                            <p class="loading-text">No sessions today.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         <!-- Dashboard Sections -->
 

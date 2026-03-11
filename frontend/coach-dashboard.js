@@ -75,47 +75,38 @@ function loadCoachData() {
 
 // Section Navigation
 function showCoachSection(sectionId) {
+  console.log(`🚀 Coach switching to section: ${sectionId}`);
+
   // Hide all sections
   const sections = document.querySelectorAll(".dashboard-section");
   sections.forEach((section) => {
     section.classList.remove("active");
+    section.style.display = "none";
   });
 
-  // Remove active class from all nav buttons
-  const navButtons = document.querySelectorAll(
-    ".dashboard-nav button, .dashboard-nav-grouped button, .nav-item, .tab-item, .nav-link",
+  // Remove active class from all nav items (sidebar + mobile)
+  const navItems = document.querySelectorAll(
+    ".sidebar-nav .nav-item, .app-top-tabs .tab-item, .app-bottom-nav .nav-link"
   );
-  navButtons.forEach((button) => {
-    button.classList.remove("active");
+  navItems.forEach((item) => {
+    item.classList.remove("active");
+    
+    // Check if this item is the one being activated (matching sectionId in onclick)
+    if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(`'${sectionId}'`)) {
+      item.classList.add('active');
+    }
   });
 
   // Show selected section
   const targetSection = document.getElementById(`coach-${sectionId}`);
   if (targetSection) {
     targetSection.classList.add("active");
-  }
-
-  // Add active class to clicked button OR find the corresponding button if called programmatically
-  if (event && event.target) {
-    event.target.classList.add("active");
+    targetSection.style.display = "block";
   } else {
-    // Find matching tab/nav-link
-    const matchingTab = document.querySelector(
-      `.tab-item[onclick*="'${sectionId}'"]`,
-    );
-    if (matchingTab) matchingTab.classList.add("active");
-
-    // Also scroll the tab into view if mobile
-    if (matchingTab && matchingTab.offsetParent) {
-      matchingTab.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "center",
-      });
-    }
+    console.error(`❌ Section 'coach-${sectionId}' not found!`);
   }
 
-  // Load section-specific content
+  // Handle section-specific loaders
   switch (sectionId) {
     case "overview":
       loadCoachStats();
@@ -130,13 +121,7 @@ function showCoachSection(sectionId) {
       loadCoachEvents();
       break;
     case "tactical-board":
-      loadTacticalBoard();
-      break;
-    case "event-finder":
-      loadEventFinder();
-      break;
-    case "item-shop":
-      loadCoachProducts();
+      if (typeof initializeTacticalBoard === 'function') initializeTacticalBoard();
       break;
     case "profile":
       loadCoachProfile();
@@ -144,6 +129,12 @@ function showCoachSection(sectionId) {
     case "tournament-manager":
       loadCoachTournaments();
       break;
+  }
+
+  // Close sidebar on mobile
+  if (window.innerWidth <= 768) {
+    const sidebar = document.querySelector(".sidebar");
+    if (sidebar) sidebar.classList.remove("open");
   }
 }
 
