@@ -100,6 +100,16 @@
             </div>
 
             <div class="nav-group">
+                <span class="nav-group-title">Community</span>
+                <button class="nav-item" onclick="showScoutSection('feed')">
+                    <span class="nav-icon">📰</span> Community Feed
+                </button>
+                <button class="nav-item" onclick="showScoutSection('messenger')">
+                    <span class="nav-icon">💬</span> Messages
+                </button>
+            </div>
+
+            <div class="nav-group">
                 <span class="nav-group-title">Settings</span>
                 <button class="nav-item" onclick="showScoutSection('verification')">
                     <span class="nav-icon">🛡️</span> Verification
@@ -188,6 +198,73 @@
                 </div>
             </div>
 
+            <!-- 🧵 Community Feed Section -->
+            <div id="scout-feed" class="dashboard-section" style="display: none;">
+                <div class="dashboard-header" style="margin-bottom: 2rem;">
+                    <h1 class="neon-text">Community Feed</h1>
+                    <p style="color: var(--text-muted);">Stay updated with the latest news, scouting blogs, and talent updates.</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2.5rem; align-items: start;">
+                    <div id="communityFeedContainer" class="community-feed">
+                        <!-- Blog roll items -->
+                        <div class="stat-card">Loading community feed...</div>
+                    </div>
+
+                    <aside class="feed-sidebar">
+                        <div class="glass-card" style="padding: 1.5rem; position: sticky; top: 120px;">
+                            <h4 style="margin-bottom: 1rem; font-family: var(--font-heading);">Market Insights</h4>
+                            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
+                                <div class="stat-card" style="padding: 0.75rem; background: rgba(34, 197, 94, 0.05);">
+                                    <span style="display: block; font-size: 0.65rem; color: var(--text-muted);">TALENT LIQUIDITY</span>
+                                    <strong style="color: #4ade80;">High (+15%)</strong>
+                                </div>
+                                <div class="stat-card" style="padding: 0.75rem; background: rgba(59, 130, 246, 0.05);">
+                                    <span style="display: block; font-size: 0.65rem; color: var(--text-muted);">ACTIVE SCOUTS</span>
+                                    <strong style="color: #60a5fa;">412 👥</strong>
+                                </div>
+                            </div>
+                            <h4 style="margin-bottom: 1rem; font-family: var(--font-heading);">Trending Tags</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                <span class="feed-tag">#Under16Elite</span>
+                                <span class="feed-tag">#BallControl</span>
+                                <span class="feed-tag">#GoalCreators</span>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+
+            <!-- 💬 Messaging Section -->
+            <div id="scout-messenger" class="dashboard-section" style="display: none;">
+                <div class="dashboard-header" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1 class="neon-text">Messages</h1>
+                        <p style="color: var(--text-muted);">Direct communication with club administrators and players/parents.</p>
+                    </div>
+                </div>
+
+                <div class="messaging-container" style="height: 70vh;">
+                    <div class="message-sidebar">
+                        <div class="sidebar-header">
+                            <input type="text" class="chat-input" placeholder="Search contacts..." style="width: 100%;">
+                        </div>
+                        <div id="messengerListItems" class="message-list">
+                            <!-- Message items will be loaded here -->
+                            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                                Loading conversations...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="message-view" id="messageViewContainer">
+                        <div class="message-view-empty">
+                            <div style="font-size: 3rem; opacity: 0.2;">💬</div>
+                            <p>Select a contact to start messaging</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -243,10 +320,149 @@
             if (target) {
                 target.style.display = 'block';
                 // Find matching nav item
-                const navItem = Array.from(document.querySelectorAll('.sidebar-nav .nav-item')).find(n => n.getAttribute('onclick').includes(`'${sectionId}'`));
+                const navItem = Array.from(document.querySelectorAll('.sidebar-nav .nav-item')).find(n => n.getAttribute('onclick').includes(`'${sectionId}'` || sectionId));
                 if (navItem) navItem.classList.add('active');
             }
+
+            // Load section data
+            if (sectionId === 'feed') loadCommunityFeed();
+            if (sectionId === 'messenger') loadMessengerConversations();
         }
+
+        // --- Community Functions ---
+        async function loadCommunityFeed() {
+            const container = document.getElementById("communityFeedContainer");
+            if (!container) return;
+            container.innerHTML = '<div class="stat-card">Loading community feed...</div>';
+
+            try {
+                const items = await apiService.getFeedItems();
+                
+                if (!items || items.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><h4>No updates found</h4><p>Check back later for new announcements and blogs.</p></div>';
+                    return;
+                }
+
+                container.innerHTML = items.map(item => `
+                    <div class="glass-card community-card" style="margin-bottom: 2rem; overflow: hidden; padding: 0;">
+                        ${item.image ? `<div class="community-image-wrapper"><img src="${item.image}" alt="${item.title}" class="community-image"></div>` : ''}
+                        <div style="padding: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div class="feed-avatar" style="width: 32px; height: 32px; font-size: 0.8rem; background: var(--builder-accent); display:flex; align-items:center; justify-content:center; border-radius:50%;">${item.author?.charAt(0) || 'A'}</div>
+                                    <div>
+                                        <div style="font-weight: 600; font-size: 0.9rem;">${item.author || 'Club Admin'}</div>
+                                        <div style="font-size: 0.7rem; color: var(--text-muted);">${formatDate(item.date)}</div>
+                                    </div>
+                                </div>
+                                <span class="feed-tag">${item.type || 'Update'}</span>
+                            </div>
+                            <h2 style="font-family: 'Outfit'; font-size: 1.5rem; margin-bottom: 1rem;">${item.title}</h2>
+                            <div style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem;">${item.content}</div>
+                            <div style="display: flex; gap: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                                <button class="btn-link" style="font-size: 0.85rem; background:none; border:none; color:var(--text-muted);">❤️ ${item.likes || 12}</button>
+                                <button class="btn-link" style="font-size: 0.85rem; background:none; border:none; color:var(--text-muted);">💬 ${item.comments || 5}</button>
+                                <button class="btn-link" style="font-size: 0.85rem; margin-left: auto; background:none; border:none; color:var(--text-muted);">🔗 Share</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Feed load failed:", err);
+                container.innerHTML = '<p class="error-text">Error loading community feed.</p>';
+            }
+        }
+
+        async function loadMessengerConversations() {
+            const listContainer = document.getElementById("messengerListItems");
+            if (!listContainer) return;
+
+            try {
+                const messages = await apiService.getMessages();
+                
+                if (!messages || messages.length === 0) {
+                    listContainer.innerHTML = '<div style="padding: 3rem; text-align: center; color: var(--text-muted);">No messages found.</div>';
+                    return;
+                }
+
+                listContainer.innerHTML = messages.map(m => `
+                    <div class="message-item ${m.unread ? 'unread' : ''}" onclick="openMessageThread('${m.id}')" id="msg-item-${m.id}" style="padding:1rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:1rem; align-items:center;">
+                        <div class="message-avatar" style="width:40px; height:40px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700;">
+                            ${m.sender?.charAt(0) || 'U'}
+                        </div>
+                        <div class="message-info" style="flex:1;">
+                            <div class="message-header" style="display:flex; justify-content:space-between;">
+                                <span class="message-sender" style="font-weight:600; font-size:0.9rem;">${m.sender}</span>
+                                <span class="message-time" style="font-size:0.7rem; color:var(--text-muted);">${formatDate(m.timestamp)}</span>
+                            </div>
+                            <div class="message-preview" style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${m.content}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Messages load failed:", err);
+                listContainer.innerHTML = '<p class="error-text">Error loading messages.</p>';
+            }
+        }
+
+        async function openMessageThread(messageId) {
+            const viewContainer = document.getElementById("messageViewContainer");
+            if (!viewContainer) return;
+
+            // Highlight active
+            document.querySelectorAll('.message-item').forEach(el => el.style.background = 'transparent');
+            const activeItem = document.getElementById(`msg-item-${messageId}`);
+            if (activeItem) activeItem.style.background = 'rgba(255,255,255,0.03)';
+
+            try {
+                const messages = await apiService.getMessages();
+                const thread = messages.find(m => m.id === messageId);
+                
+                if (!thread) return;
+
+                viewContainer.innerHTML = `
+                    <div class="message-thread" style="display:flex; flex-direction:column; height:100%;">
+                        <div class="thread-header" style="padding:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div class="message-avatar" style="width: 40px; height: 40px; border-radius:50%; background: rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-weight:700;">${thread.sender?.charAt(0) || 'U'}</div>
+                                <div>
+                                    <div style="font-weight: 700;">${thread.sender}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-muted);">Active Conversation</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="thread-messages" style="flex:1; padding:1.5rem; overflow-y:auto;">
+                            <div class="message-bubble received" style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px; max-width:80%; margin-bottom:1rem;">
+                                ${thread.content}
+                            </div>
+                        </div>
+
+                        <div class="thread-input-area" style="padding:1.5rem; border-top:1px solid rgba(255,255,255,0.05); display:flex; gap:1rem;">
+                            <input type="text" class="chat-input" placeholder="Type a message..." style="flex: 1; padding:0.8rem; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); color:white;">
+                            <button class="btn btn-primary" onclick="window.showNotification('Reply sent (Demo mode)', 'success')">Send</button>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                console.error("Thread load failed:", err);
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        }
+
+        window.showNotification = window.showNotification || function (msg, type = 'info') {
+            console.log(`${type.toUpperCase()}: ${msg}`);
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = msg;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        };
 
         async function loadTalentPool() {
             const grid = document.getElementById('discoveryGrid');

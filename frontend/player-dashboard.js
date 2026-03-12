@@ -600,6 +600,38 @@ function loadPlayerOverview() {
   loadUpcomingEvents();
   loadRecentActivity();
   loadPerformanceSummary();
+  loadOverviewFeed();
+}
+
+async function loadOverviewFeed() {
+  const container = document.getElementById("overviewFeedContainer");
+  if (!container) return;
+
+  try {
+    const feed = await apiService.getFeedItems();
+    // Only show top 3 for overview
+    const latest = feed.slice(0, 3);
+    
+    if (latest.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">No updates yet.</p>';
+      return;
+    }
+
+    container.innerHTML = latest.map(item => `
+      <div class="stat-card glass-card" style="padding: 1rem; border-color: rgba(255,255,255,0.05);">
+        ${item.image ? `<img src="${item.image}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">` : ''}
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span class="feed-tag">${item.type}</span>
+          <span style="font-size: 0.7rem; color: var(--text-muted);">${formatDate(item.date)}</span>
+        </div>
+        <h4 style="margin: 0; font-size: 1rem; margin-bottom: 0.5rem;">${item.title}</h4>
+        <p style="font-size: 0.8rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${item.summary || item.content}</p>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error("Overview feed failed:", err);
+    container.innerHTML = '<p style="color: var(--text-muted);">Could not load feed preview</p>';
+  }
 }
 
 function loadUpcomingEvents() {
@@ -4458,193 +4490,236 @@ window.closeAddChildModal = closeAddChildModal;
 window.editChildProfile = editChildProfile;
 window.deleteChildProfile = deleteChildProfile;
 
-// --- Community: Feed & Messenger Functions ---
+// --- Community: Premium Feed & Messenger Functions ---
 async function loadClubFeed() {
-  const container = document.getElementById("feedPostsContainer");
+  const container = document.getElementById("communityFeedContainer");
   if (!container) return;
-  container.innerHTML =
-    '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading feed...</p>';
+  container.innerHTML = '<div class="stat-card">Loading community feed...</div>';
 
   try {
-    const orgId =
-      PlayerDashboardState.player?.club_id || (await getActiveGroupId());
-    const posts = await apiService.getFeed(orgId);
-
-    if (!posts || posts.length === 0) {
-      container.innerHTML =
-        '<p style="text-align: center; color: var(--text-muted); padding: 2.5rem;">🧵 No threads yet. Share some news or a tip!</p>';
+    const items = await apiService.getFeedItems();
+    
+    if (!items || items.length === 0) {
+      container.innerHTML = '<div class="empty-state"><h4>No updates found</h4><p>Check back later for new announcements and blogs.</p></div>';
       return;
     }
 
-    container.innerHTML = posts
-      .map(
-        (post) => `
-      <div class="feed-post">
-        <div class="feed-avatar" style="display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background:var(--primary);">${post.user_name.charAt(0)}</div>
-        <div class="feed-content">
-          <div class="feed-header">
-            <span class="feed-user">${post.user_name}</span>
-            <span class="feed-time">${new Date(post.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+    container.innerHTML = items.map(item => `
+      <div class="glass-card community-card" style="margin-bottom: 2rem; overflow: hidden; padding: 0;">
+        ${item.image ? `<div class="community-image-wrapper"><img src="${item.image}" alt="${item.title}" class="community-image"></div>` : ''}
+        <div style="padding: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div class="feed-avatar" style="width: 32px; height: 32px; font-size: 0.8rem; background: var(--builder-accent);">${item.author?.charAt(0) || 'A'}</div>
+              <div>
+                <div style="font-weight: 600; font-size: 0.9rem;">${item.author || 'Club Admin'}</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted);">${formatDate(item.date)}</div>
+              </div>
+            </div>
+            <span class="feed-tag">${item.type || 'Update'}</span>
           </div>
-          <div class="feed-text">${post.content}</div>
-          <div class="feed-actions">
-            <span class="feed-action">❤️ ${post.likes || 1}</span>
-            <span class="feed-action">💬 ${post.comments || 0}</span>
-            <span class="feed-action">🔗 Share</span>
+          <h2 style="font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 1rem;">${item.title}</h2>
+          <div style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem;">${item.content}</div>
+          <div style="display: flex; gap: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+            <button class="btn-text" style="font-size: 0.85rem;">❤️ ${item.likes || 12}</button>
+            <button class="btn-text" style="font-size: 0.85rem;">💬 ${item.comments || 5}</button>
+            <button class="btn-text" style="font-size: 0.85rem; margin-left: auto;">🔗 Share</button>
           </div>
         </div>
       </div>
-    `,
-      )
-      .join("");
+    `).join('');
   } catch (err) {
     console.error("Feed load failed:", err);
-    container.innerHTML =
-      '<p style="text-align: center; color: #ef4444; padding: 2rem;">Error loading feed.</p>';
+    container.innerHTML = '<p class="error-text">Error loading community feed.</p>';
   }
 }
 
-async function postToClubFeed() {
+async function loadMessengerConversations() {
+  const listContainer = document.getElementById("messengerListItems");
+  if (!listContainer) return;
+
+  try {
+    const messages = await apiService.getMessages();
+    
+    // Group messages by type/category or just list them as direct messages
+    const directMessages = messages.filter(m => m.type === 'direct');
+    const announcements = messages.filter(m => m.type === 'announcement');
+    const teamMessages = messages.filter(m => m.type === 'team');
+
+    let html = '';
+
+    if (announcements.length > 0) {
+      html += '<div style="padding: 1rem; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Announcements</div>';
+      html += announcements.map(m => renderMessageListItem(m, 'announcement')).join('');
+    }
+
+    if (teamMessages.length > 0) {
+      html += '<div style="padding: 1rem; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-top: 1rem;">Teams</div>';
+      html += teamMessages.map(m => renderMessageListItem(m, 'team')).join('');
+    }
+
+    if (directMessages.length > 0) {
+      html += '<div style="padding: 1rem; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-top: 1rem;">Direct Messages</div>';
+      html += directMessages.map(m => renderMessageListItem(m, 'direct')).join('');
+    }
+
+    if (!html) {
+      html = '<div style="padding: 3rem; text-align: center; color: var(--text-muted);">No messages found.</div>';
+    }
+
+    listContainer.innerHTML = html;
+  } catch (err) {
+    console.error("Messages load failed:", err);
+    listContainer.innerHTML = '<p class="error-text">Error loading messages.</p>';
+  }
+}
+
+function renderMessageListItem(m, type) {
+  const isUnread = m.unread;
+  const icon = type === 'announcement' ? '📢' : type === 'team' ? '👥' : null;
+  const avatarText = m.sender?.charAt(0) || 'U';
+  
+  return `
+    <div class="message-item ${isUnread ? 'unread' : ''}" onclick="openMessageThread('${m.id}')" id="msg-item-${m.id}">
+      <div class="message-avatar" style="background: ${type === 'announcement' ? 'var(--primary)' : 'rgba(255,255,255,0.1)'};">
+        ${icon || avatarText}
+      </div>
+      <div class="message-info">
+        <div class="message-header">
+          <span class="message-sender">${m.sender}</span>
+          <span class="message-time">${m.timestamp ? formatDate(m.timestamp) : ''}</span>
+        </div>
+        <div class="message-preview">${m.lastMessage || m.content}</div>
+      </div>
+      ${isUnread ? '<div class="unread-dot"></div>' : ''}
+    </div>
+  `;
+}
+
+async function openMessageThread(messageId) {
+  const viewContainer = document.getElementById("messageViewContainer");
+  if (!viewContainer) return;
+
+  // Highlight active
+  document.querySelectorAll('.message-item').forEach(el => el.classList.remove('active'));
+  const activeItem = document.getElementById(`msg-item-${messageId}`);
+  if (activeItem) activeItem.classList.add('active');
+
+  viewContainer.innerHTML = '<div style="display: flex; height: 100%; align-items: center; justify-content: center;"><div class="stat-card">Loading conversation...</div></div>';
+
+  try {
+    const messages = await apiService.getMessages();
+    const thread = messages.find(m => m.id === messageId);
+    
+    if (!thread) {
+      viewContainer.innerHTML = '<div class="message-view-empty"><p>Conversation not found.</p></div>';
+      return;
+    }
+
+    viewContainer.innerHTML = `
+      <div class="message-thread">
+        <div class="thread-header">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="message-avatar" style="width: 40px; height: 40px; background: rgba(255,255,255,0.1);">${thread.sender?.charAt(0) || 'U'}</div>
+            <div>
+              <div style="font-weight: 700;">${thread.sender}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${thread.type === 'announcement' ? 'Official Announcement' : 'Active Conversation'}</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-secondary btn-small">Info</button>
+            <button class="btn btn-secondary btn-small">Mute</button>
+          </div>
+        </div>
+        
+        <div class="thread-messages" id="threadMessages">
+          <div class="message-bubble received">
+            ${thread.content}
+            <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.4rem; text-align: left;">
+              ${thread.timestamp ? new Date(thread.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+            </div>
+          </div>
+          <!-- More messages would go here -->
+        </div>
+
+        <div class="thread-input-area">
+          <textarea class="chat-input" placeholder="Type a message..." style="flex: 1; min-height: 48px; max-height: 120px;"></textarea>
+          <button class="btn btn-primary btn-pill" onclick="sendThreadMessage('${messageId}')">Send</button>
+        </div>
+      </div>
+    `;
+    
+    // Auto scroll to bottom
+    const msgContainer = document.getElementById('threadMessages');
+    if (msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
+
+  } catch (err) {
+    console.error("Thread load failed:", err);
+    viewContainer.innerHTML = '<div class="message-view-empty"><p>Error loading conversation.</p></div>';
+  }
+}
+
+async function sendThreadMessage(id) {
+  const container = document.getElementById("messageViewContainer");
+  const textarea = container?.querySelector('textarea');
+  const content = textarea?.value?.trim();
+  
+  if (!content) return;
+  
+  try {
+    // Optimistic UI
+    const threadContainer = document.getElementById('threadMessages');
+    if (threadContainer) {
+      threadContainer.innerHTML += `
+        <div class="message-bubble sent">
+          ${content}
+          <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.4rem; text-align: right;">
+            Just now
+          </div>
+        </div>
+      `;
+      threadContainer.scrollTop = threadContainer.scrollHeight;
+      textarea.value = '';
+    }
+
+    await apiService.sendMessage({ recipientId: id, content });
+    showNotification("Message sent", "success");
+  } catch (err) {
+    console.error("Send failed:", err);
+    showNotification("Failed to send: " + err.message, "error");
+  }
+}
+
+async function postToCommunityFeed() {
   const input = document.getElementById("newPostContent");
   const content = input.value.trim();
   if (!content) return;
 
   try {
-    const orgId =
-      PlayerDashboardState.player?.club_id || (await getActiveGroupId());
-    const result = await apiService.postToFeed(orgId, { content });
-    if (result.success) {
-      input.value = "";
-      showNotification("Post shared to club feed!", "success");
-      loadClubFeed();
-    }
+    showLoading(true);
+    await apiService.postToFeed(null, { content });
+    input.value = "";
+    showNotification("Post shared to community!", "success");
+    loadClubFeed();
   } catch (err) {
     console.error("Post failed:", err);
     showNotification("Failed to post: " + err.message, "error");
+  } finally {
+    showLoading(false);
   }
 }
 
-async function loadMessengerConversations() {
-  const container = document.getElementById("messengerConversationList");
-  if (!container) return;
-  container.innerHTML =
-    '<p style="text-align:center; padding:1rem; opacity:0.5;">Loading conversations...</p>';
-
-  try {
-    const orgId =
-      PlayerDashboardState.player?.club_id || (await getActiveGroupId());
-    const convos = await apiService.getMessengerConversations(orgId);
-
-    if (!convos || convos.length === 0) {
-      container.innerHTML =
-        '<p style="text-align: center; color: var(--text-muted); padding: 1rem;">No messages yet.</p>';
-      return;
-    }
-
-    container.innerHTML = convos
-      .map(
-        (c) => `
-      <div class="conversation-item" onclick="openMessengerChat('${c.id}', '${c.name}')" data-id="${c.id}">
-        <div class="feed-avatar" style="width: 36px; height: 36px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background:var(--primary);">${c.name.charAt(0)}</div>
-        <div class="conversation-info">
-          <div class="conversation-name">${c.name}</div>
-          <div class="conversation-preview">${c.last_message}</div>
-        </div>
-        ${c.unread_count > 0 ? `<div style="background: var(--primary); width: 10px; height: 10px; border-radius: 50%;"></div>` : ""}
-      </div>
-    `,
-      )
-      .join("");
-  } catch (err) {
-    console.error("Messenger load failed:", err);
-    container.innerHTML =
-      '<p style="text-align: center; color: #ef4444; padding: 1rem;">Error loading messages.</p>';
-  }
-}
-
-let currentChatId = null;
-async function openMessengerChat(id, name) {
-  currentChatId = id;
-  document
-    .querySelectorAll(".conversation-item")
-    .forEach((el) => el.classList.remove("active"));
-  const activeEl = document.querySelector(
-    `.conversation-item[data-id="${id}"]`,
-  );
-  if (activeEl) activeEl.classList.add("active");
-
-  document.getElementById("chatHeader").innerHTML = `
-    <div class="feed-avatar" style="width: 32px; height: 32px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background:var(--primary);">${name.charAt(0)}</div>
-    <span>${name}</span>
-  `;
-  document.getElementById("chatInputArea").style.display = "flex";
-  document.getElementById("chatInputArea").style.background = "var(--bg-card)";
-  const messagesContainer = document.getElementById("chatMessages");
-  messagesContainer.innerHTML =
-    '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading...</p>';
-
-  try {
-    const messages = await apiService.getMessages(id);
-    messagesContainer.innerHTML = messages
-      .map(
-        (m) => `
-      <div class="message-bubble ${m.sender_name === "You" ? "sent" : "received"}">
-        ${m.content}
-        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.2rem; text-align: ${m.sender_name === "You" ? "right" : "left"};">
-          ${new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </div>
-      </div>
-    `,
-      )
-      .join("");
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  } catch (err) {
-    console.error("Chat load failed:", err);
-    messagesContainer.innerHTML =
-      '<p style="text-align: center; color: #ef4444;">Error loading chat.</p>';
-  }
-}
-
-async function sendChatMessage() {
-  const input = document.getElementById("chatInputField");
-  const content = input.value.trim();
-  const container = document.getElementById("chatMessages");
-  if (!content || !currentChatId) return;
-
-  try {
-    const tempId = "temp_" + Date.now();
-    container.innerHTML += `
-      <div class="message-bubble sent" id="${tempId}" style="opacity: 0.7;">
-        ${content}
-        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.2rem; text-align: right;">Sending...</div>
-      </div>
-    `;
-    container.scrollTop = container.scrollHeight;
-    input.value = "";
-
-    const result = await apiService.sendMessage(currentChatId, { content });
-    if (result.success) {
-      const tempEl = document.getElementById(tempId);
-      if (tempEl) {
-        tempEl.style.opacity = "1";
-        tempEl.querySelector("div").innerText = new Date().toLocaleTimeString(
-          [],
-          { hour: "2-digit", minute: "2-digit" },
-        );
-      }
-    }
-  } catch (err) {
-    console.error("Send failed:", err);
-    showNotification("Failed to send message: " + err.message, "error");
-  }
+function openNewMessageModal() {
+  showNotification("New message feature coming soon!", "info");
 }
 
 // Global exports
 window.loadClubFeed = loadClubFeed;
-window.postToClubFeed = postToClubFeed;
+window.postToCommunityFeed = postToCommunityFeed;
 window.loadMessengerConversations = loadMessengerConversations;
-window.openMessengerChat = openMessengerChat;
-window.sendChatMessage = sendChatMessage;
+window.openMessageThread = openMessageThread;
+window.sendThreadMessage = sendThreadMessage;
+window.openNewMessageModal = openNewMessageModal;
 
 // Helper to get group ID if not in state
 async function getActiveGroupId() {

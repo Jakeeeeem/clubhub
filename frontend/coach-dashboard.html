@@ -81,6 +81,12 @@
 
             <div class="nav-group">
                 <span class="nav-group-title">Resources</span>
+                <button class="nav-item" onclick="showCoachSection('feed')">
+                    <span class="nav-icon">📰</span> Community Feed
+                </button>
+                <button class="nav-item" onclick="showCoachSection('messenger')">
+                    <span class="nav-icon">💬</span> Messages
+                </button>
                 <button class="nav-item" onclick="showCoachSection('item-shop')">
                     <span class="nav-icon">🛒</span> Shop
                 </button>
@@ -100,6 +106,65 @@
                 </div>
             </div>
 
+            <!-- profile Section -->
+            <div id="coach-profile" class="dashboard-section" style="display: none;">
+                <div class="dashboard-header" style="margin-bottom: 2rem;">
+                    <h1 class="neon-text">My Profile</h1>
+                    <p style="color: var(--text-muted);">Manage your personal information and preferences.</p>
+                </div>
+                <div id="profileContent">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+
+            <!-- 🧵 Community Feed Section -->
+            <div id="coach-feed" class="dashboard-section" style="display: none;">
+                <div class="dashboard-header" style="margin-bottom: 2rem;">
+                    <h1 class="neon-text">Community Feed</h1>
+                    <p style="color: var(--text-muted);">Stay updated with the latest news, coaching blogs, and club updates.</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2.5rem; align-items: start;">
+                    <div id="communityFeedContainer" class="community-feed">
+                        <div class="stat-card">Loading community feed...</div>
+                    </div>
+
+                    <aside class="feed-sidebar">
+                        <div class="glass-card" style="padding: 1.5rem; position: sticky; top: 120px;">
+                            <h4 style="margin-bottom: 1rem; font-family: var(--font-heading);">Quick Post</h4>
+                            <textarea id="coachNewPostContent" class="chat-input" placeholder="Share a tip or update..." style="width:100%; min-height:100px; margin-bottom:1rem;"></textarea>
+                            <button class="btn btn-primary w-100" onclick="postToCommunityAsCoach()">Share Post</button>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+
+            <!-- 💬 Messaging Section -->
+            <div id="coach-messenger" class="dashboard-section" style="display: none;">
+                <div class="dashboard-header" style="margin-bottom: 2rem;">
+                    <h1 class="neon-text">Messenger</h1>
+                    <p style="color: var(--text-muted);">Direct communication with players, scouts, and club staff.</p>
+                </div>
+
+                <div class="messaging-container" style="height: 70vh;">
+                    <div class="message-sidebar">
+                        <div class="sidebar-header">
+                            <input type="text" class="chat-input" placeholder="Search contacts..." style="width: 100%;">
+                        </div>
+                        <div id="messengerListItems" class="message-list">
+                            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                                Loading conversations...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="message-view" id="messageViewContainer">
+                        <div class="message-view-empty">
+                            <div style="font-size: 3rem; opacity: 0.2;">💬</div>
+                            <p>Select a contact to start messaging</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Scouting Section -->
             <div id="coach-scouting" class="dashboard-section" style="display: none;">
                 <div class="glass-card" style="padding: 2.5rem;">

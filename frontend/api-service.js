@@ -14,6 +14,10 @@ class ApiService {
     // Test connection on initialization
     this.testConnection();
     this.context = null;
+
+    // Cache for feed and messages in demo mode
+    this._mockFeed = null;
+    this._mockMessages = null;
   }
 
   async getContext() {
@@ -127,6 +131,38 @@ class ApiService {
 
     // Final fallback — local
     return "http://localhost:3000/api";
+  }
+
+  // Messaging & Feed Methods
+  async getFeedItems(role = "all") {
+    if (localStorage.getItem("isDemoSession") === "true") {
+      const allItems = this.getAdminDashboardFallback().feed;
+      if (role === "all") return allItems;
+      return allItems.filter(item => 
+        item.roles.includes("all") || item.roles.includes(role.toLowerCase())
+      );
+    }
+    return await this.makeRequest(`/feed?role=${role}`);
+  }
+
+  async getMessages(type = "all") {
+    if (localStorage.getItem("isDemoSession") === "true") {
+      const allMessages = this.getAdminDashboardFallback().messages;
+      if (type === "all") return allMessages;
+      return allMessages.filter(msg => msg.type === type);
+    }
+    return await this.makeRequest(`/messages?type=${type}`);
+  }
+
+  async sendMessage(messageData) {
+    if (localStorage.getItem("isDemoSession") === "true") {
+      console.log("🛡️ Demo mode: Simulating message send", messageData);
+      return { success: true, message: "Message sent (simulated)" };
+    }
+    return await this.makeRequest("/messages", {
+      method: "POST",
+      body: JSON.stringify(messageData)
+    });
   }
 
   async makeRequest(endpoint, options = {}) {
@@ -3190,6 +3226,90 @@ class ApiService {
         pending_payments: 4,
         attendance_avg: 94,
       },
+      feed: [
+        {
+          id: "f1",
+          title: "New Tactical Analysis Tool Launched",
+          excerpt: "Analyze your team's performance with our new professional-grade tactical board.",
+          content: "We're excited to announce the rollout of our new tactical analysis board for all coaches. This tool allows for real-time player positioning and strategy mapping.",
+          imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800",
+          date: new Date().toISOString(),
+          author: "ClubHub Admin",
+          type: "announcement",
+          roles: ["coach", "admin"]
+        },
+        {
+          id: "f2",
+          title: "Elite Scouting: Assessing Modern Wingers",
+          excerpt: "Professional scout Michael Thompson shares his top 5 metrics for assessing world-class wingers.",
+          content: "When I'm at a match, the first thing I look for is spatial awareness and the ability to transition quickly from defense to attack...",
+          imageUrl: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800",
+          date: new Date(Date.now() - 86400000).toISOString(),
+          author: "Michael Thompson",
+          type: "blog",
+          roles: ["scout", "coach", "admin"]
+        },
+        {
+          id: "f3",
+          title: "Summer League Registration Now Open!",
+          excerpt: "The annual Summer League is back. Secure your spot early and get a 10% discount on entry fees.",
+          content: "Registration for the 2025 Summer League officially begins today. We're expecting our largest turnout yet with over 50 teams across 4 age divisions.",
+          imageUrl: "https://images.unsplash.com/photo-1543351611-58f69d7c1781?auto=format&fit=crop&q=80&w=800",
+          date: new Date(Date.now() - 172800000).toISOString(),
+          author: "Tournament Director",
+          type: "update",
+          roles: ["player", "parent", "coach", "admin"]
+        },
+        {
+          id: "f4",
+          title: "Scouting Growth: New Metrics for Players",
+          excerpt: "We've added 'Growth Index' to all player profiles. See how you compare to the national average.",
+          content: "The new Growth Index takes into account physical development, technical proficiency, and tactical awareness to give scouts a holistic view.",
+          imageUrl: "https://images.unsplash.com/photo-1517603951030-1474131f20bd?auto=format&fit=crop&q=80&w=800",
+          date: new Date(Date.now() - 259200000).toISOString(),
+          author: "Platform Analytics",
+          type: "update",
+          roles: ["player", "scout"]
+        }
+      ],
+      messages: [
+        {
+          id: "m1",
+          threadId: "t1",
+          senderId: "system",
+          senderName: "ClubHub Admin",
+          subject: "Platform Update: Scout Verifications",
+          body: "Attention all scouts: Professional verification is now mandatory for accessing U16 performance data. Please update your credentials by the end of the month.",
+          timestamp: new Date().toISOString(),
+          priority: "high",
+          type: "announcement",
+          category: "Security"
+        },
+        {
+          id: "m2",
+          threadId: "t2",
+          senderId: "demo-coach-id",
+          senderName: "Michael Thompson",
+          subject: "Training Session Change",
+          body: "Hi team, training tomorrow is moved to 6 PM at Field B. Check the app for the exact pitch location.",
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          priority: "normal",
+          type: "team",
+          category: "Schedule"
+        },
+        {
+          id: "m3",
+          threadId: "t3",
+          senderId: "superadmin@clubhub.com",
+          senderName: "Platform Director",
+          subject: "Welcome to the New Scouting Ecosystem",
+          body: "We are thrilled to have you as part of our verified scouting network. Your access to the talent pool is now active.",
+          timestamp: new Date(Date.now() - 86400000).toISOString(),
+          priority: "normal",
+          type: "direct",
+          category: "Onboarding"
+        }
+      ]
     };
   }
 
