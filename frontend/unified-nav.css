@@ -4,64 +4,71 @@
 
 :root {
     --nav-height: 72px;
-    --sidebar-width: 280px;
-    --glass-bg: rgba(10, 10, 12, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --accent-glow: rgba(220, 38, 38, 0.4);
+    --sidebar-width: 320px; /* Increased for premium feel */
+    --glass-bg: rgba(10, 10, 12, 0.92);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-glow: rgba(220, 38, 38, 0.5);
+    --primary: #dc2626; /* Brand Red */
 }
 
-/* --- Global Header --- */
-.pro-header {
+/* --- Global Header (Standardized) --- */
+.pro-header, header.header {
     height: 80px;
-    background: rgba(10, 10, 12, 0.7);
-    backdrop-filter: blur(25px) saturate(180%);
-    -webkit-backdrop-filter: blur(25px) saturate(180%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 2000;
-    display: flex;
-    align-items: center;
-    padding: 0 2rem;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    background: rgba(8, 8, 10, 0.8) !important;
+    backdrop-filter: blur(30px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 3000 !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 1.5rem !important;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3) !important;
 }
 
-.pro-header .logo-area {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    cursor: pointer;
-    transition: transform 0.2s;
+.pro-header .nav-container, header.header .container, header.header .nav {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
-.pro-header .logo-area:hover {
-    transform: scale(1.02);
+.pro-header .logo-area, header.header .logo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
 }
 
-.pro-header .logo-img {
-    height: 38px;
-    width: 38px;
-    filter: drop-shadow(0 0 12px rgba(220, 38, 38, 0.3));
+.pro-header .logo-img, header.header .logo-image {
+    height: 32px !important;
+    width: auto !important;
+    filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.5)) !important;
 }
 
-.pro-header .logo-text {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 800;
-    font-size: 1.4rem;
-    letter-spacing: -0.8px;
-    background: linear-gradient(135deg, #fff 40%, rgba(255,255,255,0.6) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+.pro-header .logo-text, header.header .logo-text {
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 800 !important;
+    font-size: 1.25rem !important;
+    letter-spacing: -0.5px !important;
+    background: linear-gradient(135deg, #fff 40%, #999 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
 }
 
 /* --- Header Actions --- */
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
+    gap: 1rem;
 }
 
 .action-btn {
@@ -105,14 +112,13 @@
 .user-profile-trigger {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 4px;
-    padding-left: 12px;
-    background: rgba(255, 255, 255, 0.03);
+    gap: 0.5rem;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
-    border-radius: 14px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .user-profile-trigger:hover {
@@ -129,44 +135,43 @@
 .user-avatar-sm {
     width: 32px;
     height: 32px;
-    border-radius: 10px;
+    border-radius: 8px;
     background: linear-gradient(135deg, var(--primary), #991b1b);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    color: white;
+    font-weight: 800;
+    color: #fff;
     font-size: 0.8rem;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
 
-/* --- Header Mode Indicator --- */
+/* --- Mode Switcher (Pills) --- */
 .header-mode-toggle {
     display: flex;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--glass-border);
-    padding: 4px;
+    padding: 3px;
     border-radius: 100px;
-    gap: 4px;
-    transition: all 0.3s;
+    gap: 3px;
 }
 
 .mode-pill {
-    padding: 0.5rem 1.25rem;
+    padding: 6px 14px;
     border-radius: 100px;
-    font-size: 0.75rem;
-    font-weight: 800;
+    font-size: 0.65rem;
+    font-weight: 900;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    color: rgba(255,255,255,0.4);
+    color: rgba(255, 255, 255, 0.3);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     white-space: nowrap;
 }
 
 .mode-pill.active {
     background: #fff;
     color: #000;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .mode-pill:not(.active):hover {
@@ -337,40 +342,37 @@
     color: #fff;
 }
 
+/* --- Sidebar (Pro Menu) --- */
 .pro-sidebar {
     position: fixed;
     top: 0;
-    left: -280px;
-    left: -var(--sidebar-width, 280px);
-    width: 280px;
-    width: var(--sidebar-width, 280px);
+    left: -var(--sidebar-width);
+    width: var(--sidebar-width);
     height: 100vh;
     background: rgba(10, 10, 12, 0.98);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
     border-right: 1px solid var(--glass-border);
-    z-index: 4000;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 5000;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
-    padding: 0;
-    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 20px 0 60px rgba(0, 0, 0, 0.8);
 }
 
 .pro-sidebar.active {
-    transform: translateX(280px);
-    transform: translateX(var(--sidebar-width, 280px));
+    transform: translateX(var(--sidebar-width));
 }
 
 .sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    z-index: 3500;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(12px);
+    z-index: 4500;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.4s;
+    transition: opacity 0.5s ease;
 }
 
 .sidebar-overlay.active {
@@ -378,12 +380,30 @@
     visibility: visible;
 }
 
+/* Mobile Sidebar - Open All The Way */
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width: 100%;
+    }
+    
+    .pro-sidebar {
+        border-right: none;
+    }
+    
+    .pro-sidebar.active {
+        transform: translateX(100%);
+    }
+    
+    .sidebar-header {
+        padding: 1.5rem !important;
+    }
+}
+
 /* --- Nav Menu in Sidebar --- */
 .sidebar-nav {
     flex: 1;
     overflow-y: auto;
-    margin: 0 -0.75rem;
-    padding: 0 0.75rem;
+    padding: 0 1.5rem;
     scrollbar-width: none; /* Hide scrollbar Firefox */
 }
 
@@ -392,32 +412,32 @@
 }
 
 .nav-group-title {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 800;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.25);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin: 2rem 0 0.75rem 1rem;
+    letter-spacing: 2px;
+    margin: 2.5rem 0 1rem 0;
 }
 
 .sidebar-link {
     display: flex;
     align-items: center;
     gap: 1.25rem;
-    padding: 0.85rem 1rem;
-    color: rgba(255, 255, 255, 0.7);
+    padding: 0.9rem 1.25rem;
+    color: rgba(255, 255, 255, 0.6);
     text-decoration: none;
-    font-size: 0.95rem;
-    font-weight: 500;
-    border-radius: 16px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-bottom: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s;
+    margin-bottom: 6px;
     border: 1px solid transparent;
 }
 
 .sidebar-link i {
-    font-size: 1.15rem;
-    width: 28px;
+    font-size: 1.25rem;
+    width: 32px;
     text-align: center;
     opacity: 0.9;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -438,11 +458,11 @@
 }
 
 .sidebar-link.active {
-    background: linear-gradient(90deg, rgba(220, 38, 38, 0.15) 0%, transparent 100%);
+    background: rgba(220, 38, 38, 0.1);
     color: var(--primary);
+    border: 1px solid rgba(220, 38, 38, 0.2);
     font-weight: 700;
-    border-left: 3px solid var(--primary);
-    border-radius: 4px 16px 16px 4px;
+    border-radius: 12px;
 }
 
 .sidebar-link.active i {
@@ -611,48 +631,30 @@
     background: var(--primary);
 }
 
-/* --- Unified Navigation Overrides --- */
-/* Hide older/inconsistent dashboard nav elements to ensure a singular experience */
-#appBottomNav, 
-.app-bottom-nav,
-.mobile-nav-toggle,
-.old-sidebar,
-.app-top-tabs-container,
-#appTopTabs {
+/* --- Cleanup & Priority --- */
+/* Suppress legacy navigation fragments totally */
+.header nav, 
+.header .user-info, 
+.header #org-switcher-container,
+#header-nav,
+.nav-buttons,
+.mobile-nav-toggle {
     display: none !important;
 }
 
-/* Ensure Unified Header has priority */
-.pro-header {
-    z-index: 3000 !important;
+/* Ensure Unified Components are Visible */
+.pro-header.unified-header .nav-container {
+    display: flex !important;
 }
 
-/* Improve Side Menu Trigger (Hamburger) Hit Area */
-.side-menu-trigger {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border-radius: 12px;
-    transition: background 0.2s, transform 0.1s;
-    margin-right: 0.5rem;
+/* Fix main content padding */
+.main {
+    padding-top: 100px !important;
 }
 
-.side-menu-trigger:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.side-menu-trigger:active {
-    transform: scale(0.94);
-}
-
-/* Standardize Sidebar Width across all screens */
-:root {
-    --sidebar-width: 280px;
-}
-
-.pro-sidebar {
-    width: var(--sidebar-width);
+@media (max-width: 768px) {
+    .main {
+        padding-top: 90px !important;
+        padding-bottom: 80px !important;
+    }
 }

@@ -70,16 +70,25 @@ const UnifiedNav = {
         checkSwitcher();
     },
 
+    /**
+     * Unified Header
+     * Transforms ANY existing header into the standardized ClubHub bar
+     */
     renderHeader() {
-        const header = document.querySelector('.pro-header');
-        if (!header) return;
+        const header = document.querySelector('header.header, .pro-header');
+        if (!header) {
+            console.warn('⚠️ No header found to unify. Skipping renderHeader...');
+            return;
+        }
 
+        // Standardize header classes
+        header.classList.add('pro-header', 'unified-header');
+        
+        // Build the unified internal structure
         header.innerHTML = `
             <div class="nav-container">
                 <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
-                    <div class="hamburger-box">
-                        <span class="hamburger-inner"></span>
-                    </div>
+                    <i class="fa fa-bars"></i>
                 </div>
 
                 <div class="logo-area" onclick="window.location.href='index.html'">
@@ -93,18 +102,21 @@ const UnifiedNav = {
                         <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
                     </div>
 
-                    <div class="notification-trigger">
+                    <div class="action-btn desktop-only" onclick="showPlayerSection('notifications')">
                         <i>🔔</i>
                         <span class="badge" style="display:none">0</span>
                     </div>
 
-                    <div class="user-profile-trigger" id="profileTrigger" onclick="event.stopPropagation(); UnifiedNav.toggleProfileDropdown()">
+                    <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleSidebar(true)">
                         <span class="user-name desktop-only" id="header-user-name">Loading...</span>
                         <div class="user-avatar-sm" id="header-user-avatar">?</div>
+                        <i class="fa fa-chevron-down" style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;"></i>
                     </div>
                 </div>
             </div>
         `;
+        
+        this.updateModeUI();
     },
 
     renderBottomNav() {
