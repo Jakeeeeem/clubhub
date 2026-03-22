@@ -81,8 +81,15 @@
       <!-- Organization Switcher -->
       <div id="org-switcher-container"></div>
 
-      <div class="nav-buttons" id="loggedInNav">
-        <!-- Populated by JS -->
+      <div class="header-actions" style="display:flex; align-items:center; gap:1rem;">
+        <div id="org-switcher-container-inner"></div>
+        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
+          <span class="user-name desktop-only" id="header-user-name">Loading...</span>
+          <div class="user-avatar-sm" id="header-user-avatar">?</div>
+        </div>
+        <div class="nav-buttons" id="loggedInNav">
+          <!-- Populated by JS -->
+        </div>
       </div>
     </nav>
   </header>
