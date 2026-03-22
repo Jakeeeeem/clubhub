@@ -131,8 +131,8 @@ function startNotificationScheduler() {
     console.error("Initial reminder check failed:", err),
   );
 
-  // Re-run every 12 hours
-  setInterval(checkEventReminders, 1000 * 60 * 60 * 12);
+  // Re-run every 15 minutes (more responsive for game day reminders)
+  setInterval(checkEventReminders, 1000 * 60 * 15);
 }
 
 module.exports = { startNotificationScheduler, checkEventReminders };

@@ -1,4 +1,4 @@
-const CACHE_NAME = "clubhub-v3";
+const CACHE_NAME = "clubhub-v5";
 const urlsToCache = [
   "/",
   "/index.html",
@@ -6,10 +6,14 @@ const urlsToCache = [
   "/script.js",
   "/api-service.js",
   "/dialog-service.js",
+  "/unified-nav.css",
+  "/unified-nav.js",
   "/images/logo.png",
   "/player-dashboard.html",
   "/admin-dashboard.html",
   "/coach-dashboard.html",
+  "/scout-dashboard.html",
+  "/super-admin-dashboard.html",
 ];
 
 // Install event - cache resources

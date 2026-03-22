@@ -12,6 +12,7 @@
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="group-switcher.css">
+    <link rel="stylesheet" href="unified-nav.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -48,80 +49,36 @@
 </head>
 
 <body>
-    <header class="header">
-        <nav class="nav container" id="loggedInNav">
-            <div class="logo" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 40px;">
-                <span class="logo-text neon-text">ClubHub</span>
+    <header class="pro-header">
+        <div class="nav-container">
+            <div class="logo-area" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="Logo" class="logo-img">
+                <span class="logo-text">ClubHub</span>
             </div>
 
-            <div class="header-actions" style="display: flex; align-items: center; gap: 1.5rem;">
-                <div id="scoutStatusBadge">
-                    <!-- Dynamic badge -->
+            <div class="header-actions">
+                <div id="scoutStatusBadge"></div>
+                
+                <div class="notification-trigger">
+                    <i>🔔</i>
+                    <span class="badge">4</span>
                 </div>
-                <!-- Profile Switcher -->
-                <button id="profile-switcher-trigger" class="glass-btn">
-                    <div class="profiel-icon" id="userInitial">S</div>
-                    <span id="scoutNameDisplay">Professional Scout</span>
-                </button>
-                <button onclick="handleLogout()" class="btn btn-secondary btn-small">Logout</button>
-            </div>
-        </nav>
-    </header>
 
-    <!-- Sidebar for Scout Dashboard -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div style="padding: 1rem; background: var(--primary-glass); border-radius: 12px; border: 1px solid var(--primary-glass-border);">
-                <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">Access Level</span>
-                <span id="scoutRank" style="font-weight: 700; color: var(--text-main);">Pro Talent Scout</span>
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleSidebar(true)">
+                    <span class="user-name desktop-only" id="scoutNameDisplay">Professional Scout</span>
+                    <div class="user-avatar-sm" id="userInitial">S</div>
+                </div>
             </div>
         </div>
+    </header>
 
-        <nav class="sidebar-nav">
-            <div class="nav-group">
-                <span class="nav-group-title">Talent Pool</span>
-                <button class="nav-item active" onclick="showScoutSection('discovery')">
-                    <span class="nav-icon">🔍</span> Discovery
-                </button>
-                <button class="nav-item" onclick="showScoutSection('watchlist')">
-                    <span class="nav-icon">⭐</span> Watchlist
-                </button>
-            </div>
+    <nav class="pro-bottom-nav mobile-only">
+        <div class="bottom-nav-container" id="pro-bottom-nav-content">
+            <!-- Loaded by unified-nav.js -->
+        </div>
+    </nav>
 
-            <div class="nav-group">
-                <span class="nav-group-title">Analysis</span>
-                <button class="nav-item" onclick="showScoutSection('reports')">
-                    <span class="nav-icon">📝</span> My Reports
-                </button>
-                <button class="nav-item" id="analyticsNavLink" onclick="showScoutSection('analytics')" style="display: none;">
-                    <span class="nav-icon">📊</span> Market Trends
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <span class="nav-group-title">Community</span>
-                <button class="nav-item" onclick="showScoutSection('feed')">
-                    <span class="nav-icon">📰</span> Community Feed
-                </button>
-                <button class="nav-item" onclick="showScoutSection('messenger')">
-                    <span class="nav-icon">💬</span> Messages
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <span class="nav-group-title">Settings</span>
-                <button class="nav-item" onclick="showScoutSection('verification')">
-                    <span class="nav-icon">🛡️</span> Verification
-                </button>
-                <button class="nav-item" onclick="showScoutSection('profile')">
-                    <span class="nav-icon">👤</span> Profile
-                </button>
-            </div>
-        </nav>
-    </aside>
-
-    <main class="main dashboard-main" style="margin-left: 280px; padding-top: 100px;">
+    <main class="main dashboard-main" style="padding-top: 100px;">
         <div class="container dashboard-container">
             
             <!-- Discovery Section -->
@@ -129,10 +86,10 @@
                 <div class="dashboard-header" style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
                     <div>
                         <h1 class="neon-text">Talent Discovery</h1>
-                        <p style="color: var(--text-muted);">Browse identified elite talent across all registered clubs.</p>
+                        <p style="color: var(--text-muted);">Browse identified elite talent across all registered groups.</p>
                     </div>
                     <div style="display: flex; gap: 1rem;">
-                        <input type="text" id="playerSearch" placeholder="Search by name, position or club..." 
+                        <input type="text" id="playerSearch" placeholder="Search by name, position or group..." 
                             style="min-width: 300px; padding: 0.8rem 1.2rem; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03);">
                         <select id="positionFilter" class="glass-btn" style="min-width: 150px; padding: 0 1rem;">
                             <option value="">All Positions</option>
@@ -187,7 +144,7 @@
                                         style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
                                 </div>
                                 <div class="form-group">
-                                    <label>Club/Agency Affiliation</label>
+                                    <label>Group/Agency Affiliation</label>
                                     <input type="text" id="affiliation" placeholder="e.g. Manchester City Academy" required
                                         style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
                                 </div>
@@ -557,6 +514,9 @@
             }
         }
     </script>
+    <!-- PWA Install Handler -->
+    <script src="pwa-install.js"></script>
+    <script src="unified-nav.js"></script>
 </body>
 
 </html>

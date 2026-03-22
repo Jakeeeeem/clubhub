@@ -12,11 +12,11 @@
 
 /* --- Global Header --- */
 .pro-header {
-    height: var(--nav-height);
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--glass-border);
+    height: 80px;
+    background: rgba(10, 10, 12, 0.7);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     position: fixed;
     top: 0;
     left: 0;
@@ -24,38 +24,34 @@
     z-index: 2000;
     display: flex;
     align-items: center;
-    padding: 0 1.5rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.pro-header .nav-container {
-    width: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 0 2rem;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pro-header .logo-area {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
     cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.pro-header .logo-area:hover {
+    transform: scale(1.02);
 }
 
 .pro-header .logo-img {
-    height: 32px;
-    width: 32px;
-    filter: drop-shadow(0 0 8px var(--accent-glow));
+    height: 38px;
+    width: 38px;
+    filter: drop-shadow(0 0 12px rgba(220, 38, 38, 0.3));
 }
 
 .pro-header .logo-text {
     font-family: 'Outfit', sans-serif;
     font-weight: 800;
-    font-size: 1.25rem;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #fff 30%, var(--primary) 100%);
+    font-size: 1.4rem;
+    letter-spacing: -0.8px;
+    background: linear-gradient(135deg, #fff 40%, rgba(255,255,255,0.6) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -143,27 +139,62 @@
     font-size: 0.8rem;
 }
 
+/* --- Header Mode Indicator --- */
+.header-mode-toggle {
+    display: flex;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--glass-border);
+    padding: 4px;
+    border-radius: 100px;
+    gap: 4px;
+    transition: all 0.3s;
+}
+
+.mode-pill {
+    padding: 0.5rem 1.25rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.mode-pill.active {
+    background: #fff;
+    color: #000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.mode-pill:not(.active):hover {
+    color: #fff;
+    background: rgba(255,255,255,0.08);
+}
+
 /* --- Unified Sidebar (Drawer) --- */
 .pro-sidebar {
     position: fixed;
     top: 0;
-    right: -var(--sidebar-width);
+    left: -var(--sidebar-width);
     width: var(--sidebar-width);
     height: 100vh;
     background: var(--glass-bg);
-    backdrop-filter: blur(30px);
-    -webkit-backdrop-filter: blur(30px);
-    border-left: 1px solid var(--glass-border);
+    backdrop-filter: blur(30px) saturate(150%);
+    -webkit-backdrop-filter: blur(30px) saturate(150%);
+    border-right: 1px solid var(--glass-border);
     z-index: 3000;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
-    padding: 2rem;
-    box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5);
+    padding: 1.5rem;
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
 }
 
 .pro-sidebar.active {
-    transform: translateX(-var(--sidebar-width));
+    transform: translateX(var(--sidebar-width));
 }
 
 .sidebar-overlay {
@@ -191,112 +222,158 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 1rem;
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    margin-bottom: 2rem;
+    gap: 1.25rem;
+    padding: 2rem 1.5rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px;
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-user-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(220, 38, 38, 0.05) 0%, transparent 70%);
+    pointer-events: none;
 }
 
 .sidebar-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
+    width: 72px;
+    height: 72px;
+    border-radius: 22px;
     background: linear-gradient(135deg, var(--primary), #991b1b);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 800;
     color: white;
-    box-shadow: 0 8px 16px rgba(220, 38, 38, 0.2);
+    box-shadow: 0 12px 24px rgba(220, 38, 38, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
-/* --- Mode Switcher in Sidebar --- */
+.sidebar-name {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-top: 0.25rem;
+}
+
+/* --- Premium Segmented Mode Switcher --- */
 .sidebar-mode-switcher {
     width: 100%;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     display: flex;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 4px;
-    border-radius: 12px;
-    border: 1px solid var(--glass-border);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 3px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
 }
 
 .mode-tab {
     flex: 1;
-    padding: 8px;
-    border-radius: 8px;
-    font-size: 0.75rem;
+    padding: 9px;
+    border-radius: 11px;
+    font-size: 0.8rem;
     font-weight: 700;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.5);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: center;
+    z-index: 1;
+    position: relative;
 }
 
 .mode-tab.active {
+    color: #fff;
     background: var(--primary);
-    color: white;
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+.mode-tab:not(.active):hover {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 /* --- Nav Menu in Sidebar --- */
 .sidebar-nav {
     flex: 1;
     overflow-y: auto;
-    margin: 0 -0.5rem;
-    padding: 0 0.5rem;
+    margin: 0 -0.75rem;
+    padding: 0 0.75rem;
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    display: none; /* Hide scrollbar Chrome/Safari */
 }
 
 .nav-group-title {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: 800;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.4);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin: 1.5rem 0 0.75rem 0.5rem;
+    letter-spacing: 1.5px;
+    margin: 2rem 0 0.75rem 1rem;
 }
 
 .sidebar-link {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
-    color: var(--text-main);
+    gap: 1.25rem;
+    padding: 0.85rem 1rem;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    border-radius: 12px;
-    transition: all 0.2s;
+    border-radius: 16px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 4px;
+    border: 1px solid transparent;
 }
 
 .sidebar-link i {
-    width: 20px;
+    font-size: 1.15rem;
+    width: 28px;
     text-align: center;
-    opacity: 0.7;
-    transition: all 0.2s;
+    opacity: 0.9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sidebar-link:hover {
     background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    transform: translateX(4px);
 }
 
 .sidebar-link:hover i {
-    color: var(--primary);
     opacity: 1;
+    transform: scale(1.2) rotate(5deg);
 }
 
 .sidebar-link.active {
-    background: rgba(220, 38, 38, 0.1);
+    background: linear-gradient(90deg, rgba(220, 38, 38, 0.15) 0%, transparent 100%);
     color: var(--primary);
     font-weight: 700;
+    border-left: 3px solid var(--primary);
+    border-radius: 4px 16px 16px 4px;
 }
 
 .sidebar-link.active i {
-    color: var(--primary);
     opacity: 1;
+    filter: saturate(1);
+    color: var(--primary);
 }
 
 /* --- Bottom Nav (Mobile Only) --- */

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - ClubHub</title>
+    <title>Group Admin - ClubHub</title>
 
     <!-- PWA Meta Tags -->
     <meta name="description" content="Manage your sports group with comprehensive admin tools">
@@ -180,22 +180,9 @@
     </header>
     <!-- App Top Tabs (Mobile Headlines) -->
     <nav class="pro-bottom-nav mobile-only">
-        <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;">
-            <i>📊</i>
-            <span>Dashboard</span>
-        </a>
-        <a href="#" class="bottom-nav-link" onclick="showSection('club-messenger'); return false;">
-            <i>💬</i>
-            <span>Messages</span>
-        </a>
-        <a href="scouting.html" class="bottom-nav-link">
-            <i>🔍</i>
-            <span>Scout</span>
-        </a>
-        <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
-            <i>🍔</i>
-            <span>More</span>
-        </a>
+        <div class="nav-container" id="pro-bottom-nav-content">
+            <!-- Populated by UnifiedNav.renderBottomNav() -->
+        </div>
     </nav>
 
     <main class="main">
@@ -275,7 +262,7 @@
                         💬 Community ▾
                     </button>
                     <div class="nav-dropdown-menu">
-                        <button onclick="showSection('club-feed')">🧵 Club Feed</button>
+                        <button onclick="showSection('club-feed')">🧵 Group Feed</button>
                         <button onclick="showSection('club-messenger')">💬 Group Messenger</button>
                     </div>
                 </div>
@@ -332,10 +319,10 @@
                     <div class="community-container">
                         <div class="new-post-card">
                             <textarea class="new-post-input" id="newPostContent"
-                                placeholder="What's happening in the club?"></textarea>
+                                placeholder="What's happening in the group?"></textarea>
                             <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
                                 <button class="btn btn-primary btn-small btn-pill"
-                                    onclick="postToClubFeed()">Post</button>
+                                    onclick="postToClubFeed()">Post to Group</button>
                             </div>
                         </div>
                         <div id="feedPostsContainer">
@@ -755,7 +742,7 @@
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                         <div>
                             <h2 style="margin: 0; font-size: 1.75rem;">📋 Recruitment & Applications</h2>
-                            <p style="color: var(--text-muted); margin: 0.5rem 0 0 0;">Manage your club listings and
+                            <p style="color: var(--text-muted); margin: 0.5rem 0 0 0;">Manage your group listings and
                                 review incoming applications.</p>
                         </div>
                         <button class="btn btn-primary" onclick="showModal('createListingModal')">
@@ -793,7 +780,7 @@
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                         <div>
                             <h2 style="margin: 0; font-size: 1.75rem;">🛒 Item Shop Management</h2>
-                            <p style="color: var(--text-muted); margin: 0.5rem 0 0 0;">Manage your club merchandise,
+                            <p style="color: var(--text-muted); margin: 0.5rem 0 0 0;">Manage your group merchandise,
                                 tickets, and other items.</p>
                         </div>
                         <button class="btn btn-primary" onclick="showModal('addProductModal')">
@@ -935,7 +922,7 @@
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                             <div>
                                 <h3>🏟️ Venue Booking</h3>
-                                <p style="color: var(--text-muted);">Browse and book sports venues for your club.</p>
+                                <p style="color: var(--text-muted);">Browse and book sports venues for your group.</p>
                             </div>
                         </div>
 
@@ -1611,7 +1598,7 @@
                     <div class="form-group full-width">
                         <label for="inviteMessage">Personal Message</label>
                         <textarea id="inviteMessage" rows="3"
-                            placeholder="Welcome to our club! We're excited to have you join our team..."></textarea>
+                            placeholder="Welcome to our group! We're excited to have you join our team..."></textarea>
                     </div>
                 </div>
                 <div class="form-actions">
@@ -2710,7 +2697,7 @@
                     </div>
                     <label for="eventTeamSelect">Assign to Team</label>
                     <select id="eventTeamSelect" onchange="loadPlayersForAssignment(this.value)">
-                        <option value="">-- All Club Members --</option>
+                        <option value="">-- All Group Members --</option>
                     </select>
                 </div>
                 <div class="form-group" id="opponentContainer" style="display: none;">
@@ -2943,7 +2930,7 @@
     <div id="createListingModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📋 Create Club Listing</h2>
+                <h2>📋 Create Group Listing</h2>
                 <button class="close" onclick="closeModal('createListingModal')">&times;</button>
             </div>
             <form id="createListingForm">
@@ -2999,7 +2986,7 @@
     <div id="editListingModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>✏️ Edit Club Listing</h2>
+                <h2>✏️ Edit Group Listing</h2>
                 <button class="close" onclick="closeModal('editListingModal')">&times;</button>
             </div>
             <form id="editListingForm">
@@ -3103,7 +3090,7 @@
                 <div class="form-grid">
                     <div class="form-group full-width">
                         <label for="productName">Product Name *</label>
-                        <input type="text" id="productName" required placeholder="e.g., Club Hoodie">
+                        <input type="text" id="productName" required placeholder="e.g., Group Hoodie">
                     </div>
                     <div class="form-group">
                         <label for="productPrice">Price (£) *</label>
@@ -3195,7 +3182,7 @@
                         <select id="campaignTarget">
                             <option value="all">All Members</option>
                             <option value="players">Current Players</option>
-                            <option value="applicants">Club Applicants</option>
+                            <option value="applicants">Group Applicants</option>
                             <option value="staff">Staff Members</option>
                         </select>
                     </div>
@@ -3353,7 +3340,7 @@
                         <div style="text-align: center; padding: 4rem 2rem; opacity: 0.8; background: rgba(255,255,255,0.02); border-radius: 16px;">
                             <div style="font-size: 3rem; margin-bottom: 1rem;">🛍️</div>
                             <h3 style="margin-bottom: 0.5rem;">No products found</h3>
-                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Add merchandise or tickets to your club shop.</p>
+                            <p style="color: var(--text-muted); margin-bottom: 2rem;">Add merchandise or tickets to your group shop.</p>
                             <button class="btn btn-primary" onclick="showModal('addProductModal')">➕ Add Your First Product</button>
                         </div>
                     `;
@@ -7839,8 +7826,8 @@
         const appNavStructure = {
             'home': [
                 { label: 'Overview', section: 'overview' },
-                { label: 'Club Feed', section: 'club-feed' },
-                { label: 'Messenger', section: 'club-messenger' },
+                { label: 'Group Feed', section: 'club-feed' },
+                { label: 'Group Messenger', section: 'club-messenger' },
                 { label: 'Group Profile', section: 'group-profile' }
             ],
             'management': [

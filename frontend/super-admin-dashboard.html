@@ -18,6 +18,7 @@
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="group-switcher.css">
+    <link rel="stylesheet" href="unified-nav.css">
     <style>
         .dashboard-section {
             display: none !important;
@@ -383,33 +384,34 @@
 </head>
 
 <body>
-    <header class="header">
-        <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text neon-text">ClubHub</span>
+    <header class="pro-header">
+        <div class="nav-container">
+            <div class="logo-area" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="Logo" class="logo-img">
+                <span class="logo-text">ClubHub</span>
             </div>
 
-            <!-- Group Switcher for Super Admin -->
-            <div id="org-switcher-container"></div>
+            <div class="header-actions">
+                <div id="org-switcher-container"></div>
+                
+                <div class="notification-trigger">
+                    <i>🔔</i>
+                    <span class="badge">3</span>
+                </div>
 
-            <!-- Mode Toggle -->
-            <div class="mode-toggle-container">
-                <span class="mode-label active" id="platform-label">Platform</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="mode-toggle" />
-                    <span class="toggle-slider"></span>
-                </label>
-                <span class="mode-label" id="player-label">Player</span>
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleSidebar(true)">
+                    <span class="user-name desktop-only" id="adminName">Platform Admin</span>
+                    <div class="user-avatar-sm" id="adminAvatar">PA</div>
+                </div>
             </div>
-
-            <div class="user-info">
-                <span id="adminName">Platform Admin</span>
-                <div class="user-avatar" id="adminAvatar">PA</div>
-                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
-            </div>
-        </nav>
+        </div>
     </header>
+
+    <nav class="pro-bottom-nav mobile-only">
+        <div class="nav-container" id="pro-bottom-nav-content">
+            <!-- Populated by UnifiedNav.renderBottomNav() -->
+        </div>
+    </nav>
 
     <main class="main">
         <div class="platform-admin-container">
@@ -1646,6 +1648,7 @@ Location: ${group.location || 'N/A'}
 
     <!-- PWA Install Handler -->
     <script src="pwa-install.js"></script>
+    <script src="unified-nav.js"></script>
 </body>
 
 </html>

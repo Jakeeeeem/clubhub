@@ -1026,9 +1026,27 @@ section#benefits {
     padding: 0.5rem;
     border-radius: 14px;
     border: 1px solid var(--glass-border);
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Standard desktop wrap */
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
+}
+
+@media (max-width: 768px) {
+    .dashboard-nav-grouped {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        scroll-snap-type: x mandatory;
+    }
+    .dashboard-nav-grouped::-webkit-scrollbar {
+        display: none;
+    }
+    .nav-item {
+        scroll-snap-align: start;
+        flex-shrink: 0;
+    }
 }
 
 .nav-item {
@@ -1178,6 +1196,15 @@ section#benefits {
     border-radius: 14px;
     margin-bottom: 2rem;
     border: 1px solid rgba(255,255,255,0.07);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x mandatory;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .tab-btn {
@@ -1502,6 +1529,44 @@ select option {
 
 .table tr:hover td {
     background: rgba(255, 255, 255, 0.02);
+}
+
+/* TOUCH-READY MOBILE TABLES */
+@media (max-width: 600px) {
+    .table thead {
+        display: none;
+    }
+    .table, .table tbody, .table tr, .table td {
+        display: block;
+        width: 100%;
+    }
+    .table tr {
+        margin-bottom: 1rem;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1rem;
+    }
+    .table td {
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0.5rem;
+        text-align: right;
+    }
+    .table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        text-align: left;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        padding-right: 1rem;
+    }
+    .table td:last-child {
+        border-bottom: none;
+    }
 }
 
 /* Status Badge Styles */
@@ -5324,6 +5389,7 @@ input:focus + .toggle-slider {
     margin-bottom: 1rem;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -5436,6 +5502,7 @@ input:focus + .toggle-slider {
     color: var(--text-muted);
     display: -webkit-box;
     -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

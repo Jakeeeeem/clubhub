@@ -24,29 +24,42 @@
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="design-system.css">
+    <link rel="stylesheet" href="unified-nav.css">
 </head>
 
 <body class="clubhub-unified">
-    <header class="header unified-header">
-        <nav class="nav container">
-            <div class="logo">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+    <header class="pro-header">
+        <div class="nav-container">
+            <div class="logo-area" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="Logo" class="logo-img">
                 <span class="logo-text">ClubHub</span>
             </div>
-            <div class="nav-buttons" id="loggedOutNav">
-                <button class="btn btn-secondary btn-small pwa-install-btn" onclick="installPWA()"
-                    style="display: none; gap: 0.5rem;">
-                    <img src="images/logo.png" alt="Install" style="width: 18px; height: 18px;">
-                    <span class="pwa-install-text">Install App</span>
+
+            <div class="header-actions" id="loggedOutNav">
+                <button class="action-btn pwa-install-btn" onclick="installPWA()"
+                    style="display: none; width: auto; padding: 0 1rem; gap: 0.5rem; font-size: 0.8rem; font-weight: 700;">
+                    <i>📥</i>
+                    <span>Install</span>
                 </button>
-                <button class="btn btn-secondary" onclick="showModal('loginModal')">Login</button>
-                <button class="btn btn-primary" onclick="showSignupOptions()">Sign Up</button>
+                <button class="btn btn-secondary btn-small" onclick="showModal('loginModal')">Login</button>
+                <button class="btn btn-primary btn-small" onclick="showSignupOptions()">Sign Up</button>
             </div>
-            <div class="nav-buttons" id="loggedInNav" style="display: none;">
-                <!-- Populated by enhanced-login-handler.js -->
+
+            <div class="header-actions" id="loggedInNav" style="display: none;">
+                <!-- Populated by enhanced-login-handler.js/unified-nav.js -->
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleSidebar(true)">
+                    <span class="user-name desktop-only" id="userNameDisplay">User</span>
+                    <div class="user-avatar-sm" id="userAvatar">U</div>
+                </div>
             </div>
-        </nav>
+        </div>
     </header>
+
+    <nav class="pro-bottom-nav mobile-only" id="homeBottomNav" style="display: none;">
+        <div class="nav-container" id="pro-bottom-nav-content">
+            <!-- Populated by UnifiedNav.renderBottomNav() -->
+        </div>
+    </nav>
 
     <main class="main home-main">
         <!-- Premium Landing Hero (Visible when logged out) -->
@@ -876,6 +889,7 @@
 
     <!-- PWA Install Handler -->
     <script src="pwa-install.js"></script>
+    <script src="unified-nav.js"></script>
 </body>
 
 </html>

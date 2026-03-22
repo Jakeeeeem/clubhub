@@ -7,7 +7,7 @@
   <title>Player Dashboard - ClubHub</title>
 
   <!-- PWA Meta Tags -->
-  <meta name="description" content="Manage your sports profile, track performance, and connect with clubs">
+  <meta name="description" content="Manage your sports profile, track performance, and connect with groups">
   <meta name="theme-color" content="#dc4343">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -69,22 +69,9 @@
 
   <!-- Mobile Top Tabs (Threads Style) -->
   <nav class="pro-bottom-nav mobile-only">
-    <a href="#" class="bottom-nav-link active" onclick="showPlayerSection('overview'); return false;">
-      <i>📊</i>
-      <span>Dashboard</span>
-    </a>
-    <a href="#" class="bottom-nav-link" onclick="showPlayerSection('club-messenger'); return false;">
-      <i>💬</i>
-      <span>Messages</span>
-    </a>
-    <a href="scouting.html" class="bottom-nav-link">
-      <i>🔍</i>
-      <span>Explore</span>
-    </a>
-    <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
-      <i>🍔</i>
-      <span>More</span>
-    </a>
+    <div class="nav-container" id="pro-bottom-nav-content">
+      <!-- Populated by UnifiedNav.renderBottomNav() -->
+    </div>
   </nav>
 
 
@@ -93,7 +80,7 @@
       <div class="dashboard-header glass-header"
         style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
         <h1 class="neon-text display-org-name">Player Dashboard</h1>
-        <p>Manage your sporting activities within <span class="display-org-name">your organization</span></p>
+        <p>Manage your sporting activities within <span class="display-org-name">your group</span></p>
       </div>
 
       <!-- Dashboard Navigation -->
@@ -455,7 +442,7 @@
           <div class="stats-grid" style="margin-bottom: 2rem;">
             <div class="stat-card glass-card">
               <span class="stat-number" id="playerClubs">0</span>
-              <span class="stat-label">Active Clubs</span>
+              <span class="stat-label">Active Groups</span>
             </div>
             <div class="stat-card glass-card">
               <span class="stat-number" id="playerTeams">0</span>
@@ -834,7 +821,7 @@
   <div id="applyClubModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Apply to Club</h2>
+        <h2>Apply to Group</h2>
         <button class="close" onclick="closeModal('applyClubModal')">&times;</button>
       </div>
       <form id="applyClubForm">
@@ -1195,7 +1182,7 @@
           <h1 id="cv-name" style="margin: 0;">Child Name</h1>
           <button class="btn btn-primary" onclick="editCurrentChild()">Edit Profile</button>
         </div>
-        <p id="cv-subtitle" style="color: var(--text-muted); margin-top: 0.5rem;">Position • Club</p>
+        <p id="cv-subtitle" style="color: var(--text-muted); margin-top: 0.5rem;">Position • Group</p>
 
         <div class="cv-grid"
           style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
@@ -1245,7 +1232,7 @@
       </div>
       <form id="addHistoryForm">
         <div class="form-group">
-          <label>Club Name</label>
+          <label>Group Name</label>
           <input type="text" name="club_name" required>
         </div>
         <div class="form-group">

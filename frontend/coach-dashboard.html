@@ -18,6 +18,7 @@
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="group-switcher.css">
+    <link rel="stylesheet" href="unified-nav.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -25,79 +26,36 @@
 </head>
 
 <body>
-    <header class="header">
-        <nav class="nav container" id="loggedInNav">
-            <div class="logo" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 40px;">
-                <span class="logo-text neon-text">ClubHub</span>
+    <header class="pro-header">
+        <div class="nav-container">
+            <div class="logo-area" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="Logo" class="logo-img">
+                <span class="logo-text">ClubHub</span>
             </div>
 
-            <div class="header-actions" style="display: flex; align-items: center; gap: 1.5rem;">
-                <!-- Profile Switcher -->
-                <button id="profile-switcher-trigger" class="glass-btn">
-                    <div class="profiel-icon" id="userInitial">C</div>
-                    <span id="coachNameDisplay">Coach</span>
-                </button>
-                <button onclick="logout()" class="btn btn-secondary btn-small">Logout</button>
+            <div class="header-actions">
+                <div id="org-switcher-container"></div>
+                
+                <div class="notification-trigger">
+                    <i>🔔</i>
+                    <span class="badge">2</span>
+                </div>
+
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleSidebar(true)">
+                    <span class="user-name desktop-only" id="coachNameDisplay">Coach</span>
+                    <div class="user-avatar-sm" id="coachAvatar">C</div>
+                </div>
             </div>
-        </nav>
+        </div>
     </header>
 
-    <!-- Sidebar for Coach Dashboard -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div id="org-switcher-container"></div>
+    <nav class="pro-bottom-nav mobile-only">
+        <div class="bottom-nav-container" id="pro-bottom-nav-content">
+            <!-- Loaded by unified-nav.js -->
         </div>
+    </nav>
 
-        <nav class="sidebar-nav">
-            <div class="nav-group">
-                <span class="nav-group-title">Main Dashboard</span>
-                <button class="nav-item active" onclick="showCoachSection('overview')">
-                    <span class="nav-icon">📊</span> Overview
-                </button>
-                <button class="nav-item" onclick="showCoachSection('events')">
-                    <span class="nav-icon">📅</span> Calendar
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <span class="nav-group-title">Coaching Tools</span>
-                <button class="nav-item" onclick="showCoachSection('teams')">
-                    <span class="nav-icon">🛡️</span> My Teams
-                </button>
-                <button class="nav-item" onclick="showCoachSection('players')">
-                    <span class="nav-icon">👥</span> My Players
-                </button>
-                <button class="nav-item" onclick="showCoachSection('scouting')">
-                    <span class="nav-icon">🔍</span> Scouting
-                </button>
-                <button class="nav-item" onclick="showCoachSection('tactical-board')">
-                    <span class="nav-icon">📝</span> Tactics Board
-                </button>
-                <button class="nav-item" onclick="showCoachSection('tournament-manager')">
-                    <span class="nav-icon">🏆</span> Tournaments
-                </button>
-            </div>
-
-            <div class="nav-group">
-                <span class="nav-group-title">Resources</span>
-                <button class="nav-item" onclick="showCoachSection('feed')">
-                    <span class="nav-icon">📰</span> Community Feed
-                </button>
-                <button class="nav-item" onclick="showCoachSection('messenger')">
-                    <span class="nav-icon">💬</span> Messages
-                </button>
-                <button class="nav-item" onclick="showCoachSection('item-shop')">
-                    <span class="nav-icon">🛒</span> Shop
-                </button>
-                <button class="nav-item" onclick="showCoachSection('profile')">
-                    <span class="nav-icon">👤</span> My Profile
-                </button>
-            </div>
-        </nav>
-    </aside>
-
-    <main class="main dashboard-main" style="margin-left: 280px; padding-top: 100px;">
+    <main class="main dashboard-main" style="padding-top: 100px;">
         <div class="container dashboard-container">
             <div class="dashboard-header" style="margin-bottom: 2rem;">
                 <div>
@@ -655,58 +613,10 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation Bar (Threads Style) -->
-    <nav class="app-bottom-nav mobile-only">
-        <a href="#" class="nav-link active" onclick="showCoachSection('overview'); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            <span>Home</span>
-        </a>
-        <a href="#" class="nav-link" onclick="showCoachSection('teams'); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            <span>Teams</span>
-        </a>
-        <a href="#" class="nav-link create-btn-nav" onclick="openCreateModal(); return false;">
-            <div
-                style="background: var(--primary); padding: 8px; border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-            </div>
-        </a>
-        <a href="#" class="nav-link" onclick="showCoachSection('events'); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span>Schedule</span>
-        </a>
-        <a href="#" class="nav-link" onclick="showCoachSection('profile'); return false;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span>Profile</span>
-        </a>
-    </nav>
 
     <!-- PWA Install Handler -->
     <script src="pwa-install.js"></script>
+    <script src="unified-nav.js"></script>
 </body>
 
 </html>
