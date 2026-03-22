@@ -11,6 +11,32 @@
     --primary: #dc2626; /* Brand Red */
 }
 
+/* Prevent unified nav from overriding desktop headers introduced today.
+   On larger screens, keep original site header behavior. */
+@media (min-width:1025px) {
+    .pro-header, header.header {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        width: auto !important;
+        z-index: auto !important;
+        height: auto !important;
+        background: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-bottom: none !important;
+        display: block !important;
+        align-items: stretch !important;
+        padding: 0 !important;
+        transition: none !important;
+    }
+
+    .pro-header .nav-container { display: block !important; }
+    .header-center { position: static !important; transform: none !important; }
+    .desktop-only { display: inline-flex !important; }
+    .mobile-only { display: none !important; }
+}
+
 /* --- Global Header (Standardized) --- */
 .pro-header, header.header {
     height: 80px;

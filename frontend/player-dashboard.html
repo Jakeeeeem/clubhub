@@ -45,35 +45,30 @@
       }
     }
   </script>
-  <header class="pro-header">
-    <div class="nav-container">
-      <div class="logo-area" onclick="window.location.href='index.html'">
-        <img src="images/logo.png" alt="Logo" class="logo-img">
+  <header class="header">
+    <nav class="nav container">
+      <div class="logo" onclick="window.location.href='index.html'">
+        <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
         <span class="logo-text">ClubHub</span>
       </div>
 
-      <div class="header-actions">
-        <div id="org-switcher-container" class="desktop-only" style="margin-right: 10px;"></div>
-        <div class="mode-toggle-container desktop-only" style="margin-right: 15px;">
-            <span id="group-label" class="mode-label">Group</span>
-            <label class="switch">
-                <input type="checkbox" id="mode-toggle" checked>
-                <span class="slider round"></span>
-            </label>
-            <span id="player-label" class="mode-label active">Player</span>
-        </div>
-        <div class="action-btn" onclick="showPlayerSection('notifications')">
-          <i>🔔</i>
-          <span class="badge">3</span>
-        </div>
-        
-        <div class="user-profile-trigger" onclick="UnifiedNav.toggleSidebar(true)">
-          <span class="user-name desktop-only" id="playerNameDisplayNav">Player</span>
-          <div class="user-avatar-sm" id="playerAvatarNav">P</div>
-          <i style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;">▼</i>
-        </div>
+      <!-- Mode Toggle -->
+      <div class="mode-toggle-container">
+        <span class="mode-label" id="club-label">Club</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="mode-toggle" checked />
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="mode-label active" id="player-label">Player</span>
       </div>
-    </div>
+
+      <!-- Organization Switcher -->
+      <div id="org-switcher-container"></div>
+
+      <div class="nav-buttons" id="loggedInNav">
+        <!-- Populated by JS -->
+      </div>
+    </nav>
   </header>
 
   <!-- Mobile Top Tabs (Threads Style) -->
@@ -315,12 +310,13 @@
 
           <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2.5rem; align-items: start;">
             <div class="feed-main-column">
-              <div class="glass-card" style="padding: 1.5rem; margin-bottom: 2rem; border-color: rgba(177, 3, 45, 0.3);">
+              <div class="glass-card"
+                style="padding: 1.5rem; margin-bottom: 2rem; border-color: rgba(177, 3, 45, 0.3);">
                 <div style="display: flex; gap: 1rem;">
                   <div class="sender-avatar" style="width: 48px; height: 48px; flex-shrink: 0;">${initials}</div>
                   <div style="flex: 1;">
-                    <textarea id="newPostContent" class="chat-input" 
-                      style="width: 100%; height: 100px; border-radius: 12px; margin-bottom: 1rem; resize: none; background: rgba(255,255,255,0.03);" 
+                    <textarea id="newPostContent" class="chat-input"
+                      style="width: 100%; height: 100px; border-radius: 12px; margin-bottom: 1rem; resize: none; background: rgba(255,255,255,0.03);"
                       placeholder="What's on your mind?"></textarea>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                       <div style="display: flex; gap: 0.5rem;">
@@ -363,7 +359,8 @@
 
         <!-- 💬 Premium Messaging Section -->
         <div id="club-messenger" class="dashboard-section" style="display: none;">
-          <div class="section-header" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+          <div class="section-header"
+            style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
             <div>
               <h1 class="neon-text">Messages</h1>
               <p>Direct communication with coaches, scouts, and admin.</p>
@@ -465,7 +462,8 @@
               <span class="stat-number" id="playerAttendance">0</span>
               <span class="stat-label">Attendance</span>
             </div>
-            <div class="stat-card glass-card" onclick="showPlayerSection('subscriptions')" style="cursor: pointer; border: 1px solid rgba(74, 222, 128, 0.2);">
+            <div class="stat-card glass-card" onclick="showPlayerSection('subscriptions')"
+              style="cursor: pointer; border: 1px solid rgba(74, 222, 128, 0.2);">
               <span class="stat-number" id="playerPlanPrice">£0.00</span>
               <span class="stat-label" id="playerPlanName">No Plan</span>
             </div>
@@ -477,352 +475,359 @@
               style="padding: 1.5rem; background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(10, 10, 12, 0.8)); border: 1px solid rgba(220, 38, 38, 0.2); grid-column: span 2;">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
                 <div>
-                  <h3 style="color: var(--primary); margin-bottom: 0.25rem; font-family: var(--font-heading);">📈 Scouting
+                  <h3 style="color: var(--primary); margin-bottom: 0.25rem; font-family: var(--font-heading);">📈
+                    Scouting
                     & Growth</h3>
                   <p style="color: var(--text-muted); font-size: 0.85rem;">Your professional trajectory and market
                     performance.</p>
                 </div>
                 <div style="text-align: right;">
-                  <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                  <div
+                    style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
                     Current Valuation</div>
                   <div style="font-size: 1.5rem; font-weight: 800; color: #4ade80;">£12,500</div>
                   <div style="font-size: 0.75rem; color: #4ade80; opacity: 0.8;">▲ 12.4% this month</div>
                 </div>
               </div>
 
-                <div class="growth-metric-card"
-                  style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                  <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">PROGRESSION INDEX</div>
-                  <div style="height: 60px; display: flex; align-items: flex-end; gap: 4px; padding-bottom: 4px;">
-                    <div style="flex: 1; height: 30%; background: var(--primary); opacity: 0.3; border-radius: 2px;"></div>
-                    <div style="flex: 1; height: 45%; background: var(--primary); opacity: 0.4; border-radius: 2px;"></div>
-                    <div style="flex: 1; height: 40%; background: var(--primary); opacity: 0.5; border-radius: 2px;"></div>
-                    <div style="flex: 1; height: 60%; background: var(--primary); opacity: 0.7; border-radius: 2px;"></div>
-                    <div style="flex: 1; height: 75%; background: var(--primary); opacity: 0.8; border-radius: 2px;"></div>
-                    <div style="flex: 1; height: 100%; background: var(--primary); border-radius: 2px;"></div>
+              <div class="growth-metric-card"
+                style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">PROGRESSION INDEX</div>
+                <div style="height: 60px; display: flex; align-items: flex-end; gap: 4px; padding-bottom: 4px;">
+                  <div style="flex: 1; height: 30%; background: var(--primary); opacity: 0.3; border-radius: 2px;">
                   </div>
-                  <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.65rem;">
-                    <span>Jan</span>
-                    <span>Current</span>
+                  <div style="flex: 1; height: 45%; background: var(--primary); opacity: 0.4; border-radius: 2px;">
                   </div>
+                  <div style="flex: 1; height: 40%; background: var(--primary); opacity: 0.5; border-radius: 2px;">
+                  </div>
+                  <div style="flex: 1; height: 60%; background: var(--primary); opacity: 0.7; border-radius: 2px;">
+                  </div>
+                  <div style="flex: 1; height: 75%; background: var(--primary); opacity: 0.8; border-radius: 2px;">
+                  </div>
+                  <div style="flex: 1; height: 100%; background: var(--primary); border-radius: 2px;"></div>
                 </div>
-
-                <!-- Scout Visibility -->
-                <div class="growth-metric-card"
-                  style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                  <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">SCOUT VISIBILITY</div>
-                  <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">89 / 100</div>
-                  <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;">
-                    <div style="width: 89%; height: 100%; background: var(--accent-cyan); border-radius: 2px;"></div>
-                  </div>
-                  <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem;">4 Verified scouts viewed
-                    your profile this week.</p>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.65rem;">
+                  <span>Jan</span>
+                  <span>Current</span>
                 </div>
               </div>
-            </div>
 
-            <div class="glass-card" style="padding: 1.5rem;">
-              <h3>Recent Activity</h3>
-              <div id="playerRecentActivity"></div>
-            </div>
-
-            <div class="glass-card" style="padding: 1.5rem;">
-              <h3>Upcoming Events</h3>
-              <div id="playerUpcomingEvents"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Venue Booking Section -->
-        <div id="player-venue-booking" class="dashboard-section">
-          <div class="card">
-            <h3>🏟️ Venue Booking</h3>
-            <p>Loading booking system...</p>
-          </div>
-        </div>
-
-        <!-- League Management Section -->
-        <div id="player-league-management" class="dashboard-section">
-          <div class="card">
-            <h3>🥇 Leagues</h3>
-            <p>Loading leagues...</p>
-          </div>
-        </div>
-
-        <!-- Training Manager Section -->
-        <div id="player-training-manager" class="dashboard-section">
-          <div class="card">
-            <h3>🎯 Training</h3>
-            <p>Loading training sessions...</p>
-          </div>
-        </div>
-
-        <!-- Tournament Manager Section -->
-        <div id="player-tournament-manager" class="dashboard-section">
-          <!-- List View -->
-          <div id="playerTournamentListView" class="card">
-            <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
-              ⚔️ My Tournaments
-            </h3>
-            <div id="playerTournamentListContainer" class="card-grid">
-              <p style="color: var(--text-muted);">Loading tournaments...</p>
-            </div>
-          </div>
-
-          <!-- Detail View (Initially Hidden) -->
-          <div id="playerTournamentDetailView" class="dashboard-detail-view" style="display: none;">
-            <div class="detail-header"
-              style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <button class="btn-text" onclick="closePlayerTournamentDetail()"
-                  style="margin-bottom: 1rem; color: var(--primary);">← Back to Tournaments</button>
-                <h2 id="playerDetailTournamentName" class="neon-text">Tournament Name</h2>
-              </div>
-            </div>
-
-            <!-- Tournament Content Tabs -->
-            <div class="dashboard-nav"
-              style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 12px; display: inline-flex; gap: 0.5rem;">
-              <button class="nav-item active" onclick="switchPlayerTournamentTab(this, 'bracket')">🌳 Bracket</button>
-              <button class="nav-item" onclick="switchPlayerTournamentTab(this, 'fixtures')">📅 Fixtures</button>
-              <button class="nav-item" onclick="switchPlayerTournamentTab(this, 'standings')">🏆 Standings</button>
-            </div>
-
-            <!-- Bracket Tab -->
-            <div id="player-tab-bracket" class="player-tournament-tab">
-              <div class="card" style="padding: 0; min-height: 600px; overflow-x: auto;">
-                <div id="playerTournamentBracketVisual" class="bracket-tree">
-                  <!-- Brackets rendered here -->
+              <!-- Scout Visibility -->
+              <div class="growth-metric-card"
+                style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">SCOUT VISIBILITY</div>
+                <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">89 / 100</div>
+                <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;">
+                  <div style="width: 89%; height: 100%; background: var(--accent-cyan); border-radius: 2px;"></div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Fixtures Tab -->
-            <div id="player-tab-fixtures" class="player-tournament-tab" style="display: none;">
-              <div class="card">
-                <div id="playerTournamentFixturesList"></div>
-              </div>
-            </div>
-
-            <!-- Standings Tab -->
-            <div id="player-tab-standings" class="player-tournament-tab" style="display: none;">
-              <div class="card">
-                <div id="playerTournamentStandingsContainer"></div>
+                <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem;">4 Verified scouts viewed
+                  your profile this week.</p>
               </div>
             </div>
           </div>
-        </div>
 
-
-        <!-- My Clubs -->
-        <div id="player-my-clubs" class="dashboard-section">
-          <div class="card">
-            <h3>My Groups</h3>
-            <div class="card-grid" id="playerClubsContainer"></div>
+          <div class="glass-card" style="padding: 1.5rem;">
+            <h3>Recent Activity</h3>
+            <div id="playerRecentActivity"></div>
           </div>
 
-          <div class="card">
-            <h3>Group Staff</h3>
-            <div class="table-responsive">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Staff Name</th>
-                    <th>Role</th>
-                    <th>Contact</th>
-                    <th>Group</th>
-                  </tr>
-                </thead>
-                <tbody id="clubStaffTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Teams -->
-        <div id="player-teams" class="dashboard-section">
-          <div class="card">
-            <h3>My Teams</h3>
-            <div class="card-grid" id="playerTeamsContainer"></div>
-          </div>
-
-          <div class="card">
-            <h3>Team Events & Availability</h3>
-            <div id="teamEventsContainer"></div>
-          </div>
-        </div>
-
-        <!-- Polls & Voting -->
-        <div id="player-polls" class="dashboard-section">
-          <div class="card" style="padding: 0; overflow: hidden; height: 85vh;">
-            <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
-          </div>
-        </div>
-
-        <!-- Subscriptions -->
-        <div id="player-subscriptions" class="dashboard-section">
-          <div class="card">
-            <h3>My Subscription</h3>
-            <div id="currentPlanInfo" style="margin-bottom: 2rem;"></div>
-
-            <div class="subscription-benefits"></div>
-          </div>
-
-          <div class="card">
-            <h3>Change Subscription Plan</h3>
-            <div id="planAssignRow" class="search-filters" style="align-items:flex-end">
-              <div class="form-group">
-                <label for="planSelector">Choose Plan</label>
-                <select id="planSelector"></select>
-              </div>
-              <div class="form-group">
-                <label for="planStartDate">Start Date</label>
-                <input type="date" id="planStartDate" />
-              </div>
-              <button class="btn btn-primary" id="assignPlanBtn">Update Subscription</button>
-            </div>
-          </div>
-
-
-        </div>
-
-        <!-- Payments -->
-        <div id="player-payments" class="dashboard-section">
-          <div class="stats-grid">
-            <div class="stat-card">
-              <span class="stat-number" id="totalDue">£0</span>
-              <span class="stat-label">Total Due</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-number" id="nextPayment">£0</span>
-              <span class="stat-label">Next Payment</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-number" id="paymentStatus">Up to Date</span>
-              <span class="stat-label">Status</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-number" id="totalPaid">£0</span>
-              <span class="stat-label">Total Paid</span>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Payment History</h3>
-            <div class="table-responsive">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="paymentHistoryTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>Outstanding Payments</h3>
-            <div id="outstandingPayments"></div>
-          </div>
-        </div>
-
-        <!-- Club Finder -->
-        <div id="player-club-finder" class="dashboard-section">
-          <div class="card">
-            <h3>Find Groups</h3>
-            <div class="search-filters">
-              <div class="form-group">
-                <label for="clubSearchInput">Search Groups</label>
-                <input type="text" id="clubSearchInput" placeholder="Search by name or location..."
-                  onkeyup="filterClubs()">
-              </div>
-              <div class="form-group">
-                <label for="clubTypeFilter">Group Type</label>
-                <select id="clubTypeFilter" onchange="filterClubs()">
-                  <option value="">All Types</option>
-                  <option value="club">Group</option>
-                  <option value="event">Event Organizer</option>
-                  <option value="tournament">Tournament Organizer</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="clubSportFilter">Sport</label>
-                <select id="clubSportFilter" onchange="filterClubs()">
-                  <option value="">All Sports</option>
-                  <option value="football">Football</option>
-                  <option value="basketball">Basketball</option>
-                  <option value="tennis">Tennis</option>
-                  <option value="rugby">Rugby</option>
-                  <option value="cricket">Cricket</option>
-                </select>
-              </div>
-            </div>
-            <div class="card-grid" id="availableClubsContainer"></div>
-          </div>
-        </div>
-
-        <!-- Event Finder -->
-        <div id="player-event-finder" class="dashboard-section">
-          <div class="card">
-            <h3>Find and Book Events</h3>
-            <div class="search-filters">
-              <div class="form-group">
-                <label for="eventSearchInput">Search Events</label>
-                <input type="text" id="eventSearchInput" placeholder="Search events..." onkeyup="filterPlayerEvents()">
-              </div>
-              <div class="form-group">
-                <label for="playerEventTypeFilter">Event Type</label>
-                <select id="playerEventTypeFilter" onchange="filterPlayerEvents()">
-                  <option value="">All Types</option>
-                  <option value="camp">Holiday Camps</option>
-                  <option value="tournament">Tournaments</option>
-                  <option value="talent-id">Talent ID</option>
-                  <option value="training">Training</option>
-                  <option value="match">Matches</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="playerEventDateFilter">Date From</label>
-                <input type="date" id="playerEventDateFilter" onchange="filterPlayerEvents()">
-              </div>
-            </div>
-            <div class="card-grid" id="availablePlayerEventsContainer"></div>
-          </div>
-        </div>
-
-        <!-- Documents -->
-        <div id="player-documents" class="dashboard-section">
-          <div class="card">
-            <h3>My Documents</h3>
-            <div class="table-responsive">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Document Name</th>
-                    <th>Type</th>
-                    <th>Club</th>
-                    <th>Last Updated</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="playerDocumentsTableBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Item Shop -->
-        <div id="player-item-shop" class="dashboard-section">
-          <div class="card" style="padding: 0; overflow: hidden; height: 85vh;">
-            <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
+          <div class="glass-card" style="padding: 1.5rem;">
+            <h3>Upcoming Events</h3>
+            <div id="playerUpcomingEvents"></div>
           </div>
         </div>
       </div>
+
+      <!-- Venue Booking Section -->
+      <div id="player-venue-booking" class="dashboard-section">
+        <div class="card">
+          <h3>🏟️ Venue Booking</h3>
+          <p>Loading booking system...</p>
+        </div>
+      </div>
+
+      <!-- League Management Section -->
+      <div id="player-league-management" class="dashboard-section">
+        <div class="card">
+          <h3>🥇 Leagues</h3>
+          <p>Loading leagues...</p>
+        </div>
+      </div>
+
+      <!-- Training Manager Section -->
+      <div id="player-training-manager" class="dashboard-section">
+        <div class="card">
+          <h3>🎯 Training</h3>
+          <p>Loading training sessions...</p>
+        </div>
+      </div>
+
+      <!-- Tournament Manager Section -->
+      <div id="player-tournament-manager" class="dashboard-section">
+        <!-- List View -->
+        <div id="playerTournamentListView" class="card">
+          <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
+            ⚔️ My Tournaments
+          </h3>
+          <div id="playerTournamentListContainer" class="card-grid">
+            <p style="color: var(--text-muted);">Loading tournaments...</p>
+          </div>
+        </div>
+
+        <!-- Detail View (Initially Hidden) -->
+        <div id="playerTournamentDetailView" class="dashboard-detail-view" style="display: none;">
+          <div class="detail-header"
+            style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <button class="btn-text" onclick="closePlayerTournamentDetail()"
+                style="margin-bottom: 1rem; color: var(--primary);">← Back to Tournaments</button>
+              <h2 id="playerDetailTournamentName" class="neon-text">Tournament Name</h2>
+            </div>
+          </div>
+
+          <!-- Tournament Content Tabs -->
+          <div class="dashboard-nav"
+            style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 12px; display: inline-flex; gap: 0.5rem;">
+            <button class="nav-item active" onclick="switchPlayerTournamentTab(this, 'bracket')">🌳 Bracket</button>
+            <button class="nav-item" onclick="switchPlayerTournamentTab(this, 'fixtures')">📅 Fixtures</button>
+            <button class="nav-item" onclick="switchPlayerTournamentTab(this, 'standings')">🏆 Standings</button>
+          </div>
+
+          <!-- Bracket Tab -->
+          <div id="player-tab-bracket" class="player-tournament-tab">
+            <div class="card" style="padding: 0; min-height: 600px; overflow-x: auto;">
+              <div id="playerTournamentBracketVisual" class="bracket-tree">
+                <!-- Brackets rendered here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Fixtures Tab -->
+          <div id="player-tab-fixtures" class="player-tournament-tab" style="display: none;">
+            <div class="card">
+              <div id="playerTournamentFixturesList"></div>
+            </div>
+          </div>
+
+          <!-- Standings Tab -->
+          <div id="player-tab-standings" class="player-tournament-tab" style="display: none;">
+            <div class="card">
+              <div id="playerTournamentStandingsContainer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- My Clubs -->
+      <div id="player-my-clubs" class="dashboard-section">
+        <div class="card">
+          <h3>My Groups</h3>
+          <div class="card-grid" id="playerClubsContainer"></div>
+        </div>
+
+        <div class="card">
+          <h3>Group Staff</h3>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Staff Name</th>
+                  <th>Role</th>
+                  <th>Contact</th>
+                  <th>Group</th>
+                </tr>
+              </thead>
+              <tbody id="clubStaffTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teams -->
+      <div id="player-teams" class="dashboard-section">
+        <div class="card">
+          <h3>My Teams</h3>
+          <div class="card-grid" id="playerTeamsContainer"></div>
+        </div>
+
+        <div class="card">
+          <h3>Team Events & Availability</h3>
+          <div id="teamEventsContainer"></div>
+        </div>
+      </div>
+
+      <!-- Polls & Voting -->
+      <div id="player-polls" class="dashboard-section">
+        <div class="card" style="padding: 0; overflow: hidden; height: 85vh;">
+          <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+      </div>
+
+      <!-- Subscriptions -->
+      <div id="player-subscriptions" class="dashboard-section">
+        <div class="card">
+          <h3>My Subscription</h3>
+          <div id="currentPlanInfo" style="margin-bottom: 2rem;"></div>
+
+          <div class="subscription-benefits"></div>
+        </div>
+
+        <div class="card">
+          <h3>Change Subscription Plan</h3>
+          <div id="planAssignRow" class="search-filters" style="align-items:flex-end">
+            <div class="form-group">
+              <label for="planSelector">Choose Plan</label>
+              <select id="planSelector"></select>
+            </div>
+            <div class="form-group">
+              <label for="planStartDate">Start Date</label>
+              <input type="date" id="planStartDate" />
+            </div>
+            <button class="btn btn-primary" id="assignPlanBtn">Update Subscription</button>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- Payments -->
+      <div id="player-payments" class="dashboard-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-number" id="totalDue">£0</span>
+            <span class="stat-label">Total Due</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="nextPayment">£0</span>
+            <span class="stat-label">Next Payment</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="paymentStatus">Up to Date</span>
+            <span class="stat-label">Status</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="totalPaid">£0</span>
+            <span class="stat-label">Total Paid</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Payment History</h3>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="paymentHistoryTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Outstanding Payments</h3>
+          <div id="outstandingPayments"></div>
+        </div>
+      </div>
+
+      <!-- Club Finder -->
+      <div id="player-club-finder" class="dashboard-section">
+        <div class="card">
+          <h3>Find Groups</h3>
+          <div class="search-filters">
+            <div class="form-group">
+              <label for="clubSearchInput">Search Groups</label>
+              <input type="text" id="clubSearchInput" placeholder="Search by name or location..."
+                onkeyup="filterClubs()">
+            </div>
+            <div class="form-group">
+              <label for="clubTypeFilter">Group Type</label>
+              <select id="clubTypeFilter" onchange="filterClubs()">
+                <option value="">All Types</option>
+                <option value="club">Group</option>
+                <option value="event">Event Organizer</option>
+                <option value="tournament">Tournament Organizer</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="clubSportFilter">Sport</label>
+              <select id="clubSportFilter" onchange="filterClubs()">
+                <option value="">All Sports</option>
+                <option value="football">Football</option>
+                <option value="basketball">Basketball</option>
+                <option value="tennis">Tennis</option>
+                <option value="rugby">Rugby</option>
+                <option value="cricket">Cricket</option>
+              </select>
+            </div>
+          </div>
+          <div class="card-grid" id="availableClubsContainer"></div>
+        </div>
+      </div>
+
+      <!-- Event Finder -->
+      <div id="player-event-finder" class="dashboard-section">
+        <div class="card">
+          <h3>Find and Book Events</h3>
+          <div class="search-filters">
+            <div class="form-group">
+              <label for="eventSearchInput">Search Events</label>
+              <input type="text" id="eventSearchInput" placeholder="Search events..." onkeyup="filterPlayerEvents()">
+            </div>
+            <div class="form-group">
+              <label for="playerEventTypeFilter">Event Type</label>
+              <select id="playerEventTypeFilter" onchange="filterPlayerEvents()">
+                <option value="">All Types</option>
+                <option value="camp">Holiday Camps</option>
+                <option value="tournament">Tournaments</option>
+                <option value="talent-id">Talent ID</option>
+                <option value="training">Training</option>
+                <option value="match">Matches</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="playerEventDateFilter">Date From</label>
+              <input type="date" id="playerEventDateFilter" onchange="filterPlayerEvents()">
+            </div>
+          </div>
+          <div class="card-grid" id="availablePlayerEventsContainer"></div>
+        </div>
+      </div>
+
+      <!-- Documents -->
+      <div id="player-documents" class="dashboard-section">
+        <div class="card">
+          <h3>My Documents</h3>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Document Name</th>
+                  <th>Type</th>
+                  <th>Club</th>
+                  <th>Last Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="playerDocumentsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item Shop -->
+      <div id="player-item-shop" class="dashboard-section">
+        <div class="card" style="padding: 0; overflow: hidden; height: 85vh;">
+          <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+      </div>
+    </div>
     </div>
   </main>
 
@@ -1553,11 +1558,13 @@
       <!-- Header -->
       <div style="margin-bottom:2rem;">
         <h2 style="font-family:var(--font-heading); font-size:1.8rem; margin:0;">🏋️ My Training</h2>
-        <p style="color:var(--text-muted); margin:0.25rem 0 0;">View assigned drills, watch demos, and submit your attempts.</p>
+        <p style="color:var(--text-muted); margin:0.25rem 0 0;">View assigned drills, watch demos, and submit your
+          attempts.</p>
       </div>
 
       <!-- Stats / Performance Overview -->
-      <div class="glass-panel" style="padding:1.5rem; margin-bottom:2rem; display:grid; grid-template-columns:1fr 2fr; gap:2rem; align-items:center; flex-wrap:wrap;">
+      <div class="glass-panel"
+        style="padding:1.5rem; margin-bottom:2rem; display:grid; grid-template-columns:1fr 2fr; gap:2rem; align-items:center; flex-wrap:wrap;">
         <div>
           <h4 style="margin:0 0 1rem; font-family:var(--font-heading);">Skill Profile</h4>
           <div id="playerSkillBars">
@@ -1567,7 +1574,8 @@
         </div>
         <div>
           <h4 style="margin:0 0 1rem; font-family:var(--font-heading);">Activity History</h4>
-          <div id="drillHistoryList" style="display:flex; flex-direction:column; gap:0.75rem; max-height:240px; overflow-y:auto; padding-right:0.5rem;">
+          <div id="drillHistoryList"
+            style="display:flex; flex-direction:column; gap:0.75rem; max-height:240px; overflow-y:auto; padding-right:0.5rem;">
             <!-- Populated by training.js -->
             <p style="color:var(--text-muted); font-size:0.85rem;">No history yet.</p>
           </div>
@@ -1576,23 +1584,32 @@
 
       <!-- Filters -->
       <div style="display:flex; gap:1rem; margin-bottom:1.5rem; overflow-x:auto; padding-bottom:5px;">
-        <button class="btn btn-secondary btn-small" style="white-space:nowrap; background:rgba(106,92,255,0.25); border-color:var(--accent-purple);" onclick="loadTrainingLibrary('All Drills')">All Drills</button>
-        <button class="btn btn-secondary btn-small" style="white-space:nowrap;" onclick="loadTrainingLibrary('Ball Control')">Ball Control</button>
-        <button class="btn btn-secondary btn-small" style="white-space:nowrap;" onclick="loadTrainingLibrary('Passing')">Passing</button>
-        <button class="btn btn-secondary btn-small" style="white-space:nowrap;" onclick="loadTrainingLibrary('Shooting')">Shooting</button>
-        <button class="btn btn-secondary btn-small" style="white-space:nowrap;" onclick="loadTrainingLibrary('Fitness')">Fitness</button>
+        <button class="btn btn-secondary btn-small"
+          style="white-space:nowrap; background:rgba(106,92,255,0.25); border-color:var(--accent-purple);"
+          onclick="loadTrainingLibrary('All Drills')">All Drills</button>
+        <button class="btn btn-secondary btn-small" style="white-space:nowrap;"
+          onclick="loadTrainingLibrary('Ball Control')">Ball Control</button>
+        <button class="btn btn-secondary btn-small" style="white-space:nowrap;"
+          onclick="loadTrainingLibrary('Passing')">Passing</button>
+        <button class="btn btn-secondary btn-small" style="white-space:nowrap;"
+          onclick="loadTrainingLibrary('Shooting')">Shooting</button>
+        <button class="btn btn-secondary btn-small" style="white-space:nowrap;"
+          onclick="loadTrainingLibrary('Fitness')">Fitness</button>
       </div>
 
       <!-- Drill Grid -->
-      <div id="trainingLibraryGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
+      <div id="trainingLibraryGrid"
+        style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
         <!-- Populated by training.js -->
-        <p style="color:var(--text-muted); text-align:center; padding:2rem; grid-column:1/-1;">⏳ Loading assignment library...</p>
+        <p style="color:var(--text-muted); text-align:center; padding:2rem; grid-column:1/-1;">⏳ Loading assignment
+          library...</p>
       </div>
 
       <div id="trainingLibraryEmpty" style="display:none; text-align:center; padding:4rem 2rem;">
         <div style="font-size:3rem; margin-bottom:1rem;">🎯</div>
         <h3 style="margin:0;">No Drills Assigned</h3>
-        <p style="color:var(--text-muted); margin-top:0.5rem;">You're all caught up! Check back later for new tasks from your coach.</p>
+        <p style="color:var(--text-muted); margin-top:0.5rem;">You're all caught up! Check back later for new tasks from
+          your coach.</p>
       </div>
     </div>
   </div>

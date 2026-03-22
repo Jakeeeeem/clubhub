@@ -153,40 +153,33 @@
 </head>
 
 <body>
-    <header class="pro-header">
-        <div class="nav-container">
-            <div class="logo-area" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="Logo" class="logo-img">
-                <span class="logo-text">ClubHub</span>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text neon-text">ClubHub</span>
             </div>
 
-            <div class="header-actions">
-                <div id="org-switcher-container" class="desktop-only" style="margin-right: 10px;"></div>
-                <div class="mode-toggle-container desktop-only" style="margin-right: 15px;">
-                    <span id="group-label" class="mode-label active">Group</span>
-                    <label class="switch">
-                        <input type="checkbox" id="mode-toggle">
-                        <span class="slider round"></span>
-                    </label>
-                    <span id="player-label" class="mode-label">Player</span>
-                </div>
-                
-                <div class="action-btn desktop-only" onclick="showSection('club-messenger')">
-                    <i>💬</i>
-                    <span class="badge">2</span>
-                </div>
-                <div class="action-btn" onclick="showSection('notifications')">
-                    <i>🔔</i>
-                    <span class="badge">5</span>
-                </div>
-                
-                <div class="user-profile-trigger" onclick="UnifiedNav.toggleSidebar(true)">
-                    <span class="user-name desktop-only" id="adminNameDisplayNav">Admin</span>
-                    <div class="user-avatar-sm" id="adminAvatarNav">A</div>
-                    <i style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;">▼</i>
-                </div>
+            <!-- Mode Toggle -->
+            <div class="mode-toggle-container">
+                <span class="mode-label active" id="group-label">Group</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="mode-toggle" />
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="mode-label" id="player-label">Player</span>
             </div>
-        </div>
+
+            <!-- Mode Toggle -->
+            <div class="user-info">
+                <!-- Group Switcher -->
+                <div id="group-switcher-container"></div>
+
+                <span id="adminNameDisplay">Hello, Admin!</span>
+                <div class="user-avatar" id="adminAvatar">A</div>
+                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+            </div>
+        </nav>
     </header>
     <!-- App Top Tabs (Mobile Headlines) -->
     <nav class="pro-bottom-nav mobile-only">
@@ -332,8 +325,8 @@
                             <textarea class="new-post-input" id="newPostContent"
                                 placeholder="What's happening in the group?"></textarea>
                             <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-                                <button class="btn btn-primary btn-small btn-pill"
-                                    onclick="postToClubFeed()">Post to Group</button>
+                                <button class="btn btn-primary btn-small btn-pill" onclick="postToClubFeed()">Post to
+                                    Group</button>
                             </div>
                         </div>
                         <div id="feedPostsContainer">
@@ -1176,10 +1169,12 @@
                 <div class="card card-glass-red">
                     <div class="section-header" style="margin-bottom: 2rem;">
                         <h2 class="neon-text-red">🛡️ Scout Verification Requests</h2>
-                        <p style="color: var(--text-muted);">Review and approve professional scouts for your organisation.</p>
+                        <p style="color: var(--text-muted);">Review and approve professional scouts for your
+                            organisation.</p>
                     </div>
 
-                    <div id="scoutApprovalsList" style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));">
+                    <div id="scoutApprovalsList"
+                        style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));">
                         <!-- Populated via JS -->
                         <div style="text-align: center; padding: 3rem; opacity: 0.5;">
                             <p>Loading verification requests...</p>
@@ -1195,15 +1190,23 @@
                         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                         <div>
                             <h2 class="neon-text-red">🏟️ Advanced Tactics Board</h2>
-                            <p style="font-size: 0.9rem; color: var(--text-muted);">Craft animations and detailed session plans</p>
+                            <p style="font-size: 0.9rem; color: var(--text-muted);">Craft animations and detailed
+                                session plans</p>
                         </div>
                         <div style="display: flex; gap: 1rem; align-items: center;">
-                            <div class="animation-controls" style="display: flex; gap: 0.5rem; background: rgba(0,0,0,0.3); padding: 0.4rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                                <button class="btn btn-icon btn-small" onclick="prevFrame()" title="Previous Frame">⬅️</button>
-                                <span id="frameIndicator" style="font-size: 0.8rem; font-weight: 700; min-width: 60px; text-align: center; color: var(--primary);">Frame 1/1</span>
-                                <button class="btn btn-icon btn-small" onclick="nextFrame()" title="Next Frame">➡️</button>
-                                <button class="btn btn-primary btn-small" onclick="addFrame()" style="padding: 0.2rem 0.6rem;">+ New Frame</button>
-                                <button class="btn btn-success btn-small" onclick="playTacticalAnimation()">▶️ Play</button>
+                            <div class="animation-controls"
+                                style="display: flex; gap: 0.5rem; background: rgba(0,0,0,0.3); padding: 0.4rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                                <button class="btn btn-icon btn-small" onclick="prevFrame()"
+                                    title="Previous Frame">⬅️</button>
+                                <span id="frameIndicator"
+                                    style="font-size: 0.8rem; font-weight: 700; min-width: 60px; text-align: center; color: var(--primary);">Frame
+                                    1/1</span>
+                                <button class="btn btn-icon btn-small" onclick="nextFrame()"
+                                    title="Next Frame">➡️</button>
+                                <button class="btn btn-primary btn-small" onclick="addFrame()"
+                                    style="padding: 0.2rem 0.6rem;">+ New Frame</button>
+                                <button class="btn btn-success btn-small" onclick="playTacticalAnimation()">▶️
+                                    Play</button>
                             </div>
                             <select id="formationSelect" class="btn btn-secondary"
                                 style="background: rgba(255,255,255,0.05);" onchange="setFormation()">
@@ -1222,8 +1225,12 @@
                         <!-- Player Roster Sidebar -->
                         <div class="roster-sidebar"
                             style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
-                            <h4 style="font-size: 0.9rem; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px;">Players</h4>
-                            <select id="tacticalTeamFilter" style="width: 100%; height: 38px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color);" onchange="loadTacticalRoster()">
+                            <h4
+                                style="font-size: 0.9rem; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px;">
+                                Players</h4>
+                            <select id="tacticalTeamFilter"
+                                style="width: 100%; height: 38px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color);"
+                                onchange="loadTacticalRoster()">
                                 <option value="">Select Team...</option>
                             </select>
                             <div class="search-box" style="position: relative;">
@@ -1264,26 +1271,37 @@
                         </div>
 
                         <!-- Equipment Drawer -->
-                        <div class="equipment-drawer" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 20px; display: flex; flex-direction: column; align-items: center; padding: 1rem; gap: 1.5rem;">
-                            <h4 style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Tools</h4>
-                            <div class="equip-item" draggable="true" ondragstart="handleTacticalDragStart(event, 'cone', 'Cone', '')" style="cursor: move; text-align: center;">
+                        <div class="equipment-drawer"
+                            style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 20px; display: flex; flex-direction: column; align-items: center; padding: 1rem; gap: 1.5rem;">
+                            <h4 style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Tools
+                            </h4>
+                            <div class="equip-item" draggable="true"
+                                ondragstart="handleTacticalDragStart(event, 'cone', 'Cone', '')"
+                                style="cursor: move; text-align: center;">
                                 <div style="font-size: 2rem; filter: drop-shadow(0 0 5px orange);">📐</div>
                                 <span style="font-size: 0.7rem; opacity: 0.6;">Cone</span>
                             </div>
-                            <div class="equip-item" draggable="true" ondragstart="handleTacticalDragStart(event, 'ball', 'Ball', '')" style="cursor: move; text-align: center;">
+                            <div class="equip-item" draggable="true"
+                                ondragstart="handleTacticalDragStart(event, 'ball', 'Ball', '')"
+                                style="cursor: move; text-align: center;">
                                 <div style="font-size: 2rem; filter: drop-shadow(0 0 8px skyblue);">⚽</div>
                                 <span style="font-size: 0.7rem; opacity: 0.6;">Ball</span>
                             </div>
-                            <div class="equip-item" draggable="true" ondragstart="handleTacticalDragStart(event, 'pole', 'Pole', '')" style="cursor: move; text-align: center;">
+                            <div class="equip-item" draggable="true"
+                                ondragstart="handleTacticalDragStart(event, 'pole', 'Pole', '')"
+                                style="cursor: move; text-align: center;">
                                 <div style="font-size: 2rem; filter: drop-shadow(0 0 5px #fff);">📍</div>
                                 <span style="font-size: 0.7rem; opacity: 0.6;">Pole</span>
                             </div>
-                            <div class="equip-item" draggable="true" ondragstart="handleTacticalDragStart(event, 'marker', 'Marker', '')" style="cursor: move; text-align: center;">
+                            <div class="equip-item" draggable="true"
+                                ondragstart="handleTacticalDragStart(event, 'marker', 'Marker', '')"
+                                style="cursor: move; text-align: center;">
                                 <div style="font-size: 2rem; filter: drop-shadow(0 0 5px yellow);">🟡</div>
                                 <span style="font-size: 0.7rem; opacity: 0.6;">Marker</span>
                             </div>
                             <div style="flex: 1;"></div>
-                            <button class="btn btn-icon" onclick="clearBoard()" title="Clear Board" style="background: rgba(220, 38, 38, 0.2); color: #ef4444;">🗑️</button>
+                            <button class="btn btn-icon" onclick="clearBoard()" title="Clear Board"
+                                style="background: rgba(220, 38, 38, 0.2); color: #ef4444;">🗑️</button>
                         </div>
                     </div>
                 </div>
@@ -2526,10 +2544,16 @@
 
                     <div class="form-group full-width">
                         <label>Facilities</label>
-                        <div style="display: flex; gap: 1.5rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; flex-wrap: wrap;">
-                            <label class="checkbox-label" style="margin:0;"><input type="checkbox" id="venueFacility4G"> <span style="font-size: 0.85rem;">🌱 4G/Grass</span></label>
-                            <label class="checkbox-label" style="margin:0;"><input type="checkbox" id="venueFacilityFloodlit"> <span style="font-size: 0.85rem;">💡 Floodlit</span></label>
-                            <label class="checkbox-label" style="margin:0;"><input type="checkbox" id="venueFacilityChanging"> <span style="font-size: 0.85rem;">🚪 Changing Rooms</span></label>
+                        <div
+                            style="display: flex; gap: 1.5rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; flex-wrap: wrap;">
+                            <label class="checkbox-label" style="margin:0;"><input type="checkbox" id="venueFacility4G">
+                                <span style="font-size: 0.85rem;">🌱 4G/Grass</span></label>
+                            <label class="checkbox-label" style="margin:0;"><input type="checkbox"
+                                    id="venueFacilityFloodlit"> <span style="font-size: 0.85rem;">💡
+                                    Floodlit</span></label>
+                            <label class="checkbox-label" style="margin:0;"><input type="checkbox"
+                                    id="venueFacilityChanging"> <span style="font-size: 0.85rem;">🚪 Changing
+                                    Rooms</span></label>
                         </div>
                     </div>
                 </div>
@@ -2842,11 +2866,13 @@
 
                 <!-- NOTIFICATIONS (Phase 1) -->
                 <div style="grid-column: 1 / -1; margin-top: 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
                         <label style="font-weight: 600; margin: 0;">🔔 Notification Schedule</label>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <span style="font-size: 0.8rem; opacity: 0.6;">Send at:</span>
-                            <input type="time" id="notificationTime" value="09:00" style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: white;">
+                            <input type="time" id="notificationTime" value="09:00"
+                                style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: white;">
                         </div>
                     </div>
                     <div
@@ -8159,15 +8185,15 @@
                         apiService.getTeamStats(teamId),
                         apiService.getTeamAvailabilityVotes(teamId)
                     ]);
-                    
+
                     renderTeamStats(stats);
-                    
+
                     // Refresh roster with stats AND availability
                     if (stats.players && stats.players.length > 0) {
                         // Pass availability to roster renderer
                         renderRoster(stats.players, availability);
                     }
-                    
+
                     renderRecentResults(stats.recent_form || team.recent_matches || []);
                 } catch (err) {
                     console.warn('Failed to load deep stats, showing basic results');
@@ -8240,17 +8266,17 @@
             container.innerHTML = `
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem;">
                     ${players.map(p => {
-                        let statusSymbol = '<span style="opacity:0.2;">⚪</span>';
-                        if (nextEvent) {
-                            const status = responseMap[p.id];
-                            if (status === 'going' || status === 'confirmed') statusSymbol = '<span style="color:#22c55e;">✅</span>';
-                            else if (status === 'declined' || status === 'unavailable') statusSymbol = '<span style="color:#ef4444;">❌</span>';
-                            else if (status === 'maybe') statusSymbol = '<span style="color:#eab308;">❓</span>';
-                        }
-                        
-                        const initials = (p.first_name[0] + (p.last_name ? p.last_name[0] : '')).toUpperCase();
+                let statusSymbol = '<span style="opacity:0.2;">⚪</span>';
+                if (nextEvent) {
+                    const status = responseMap[p.id];
+                    if (status === 'going' || status === 'confirmed') statusSymbol = '<span style="color:#22c55e;">✅</span>';
+                    else if (status === 'declined' || status === 'unavailable') statusSymbol = '<span style="color:#ef4444;">❌</span>';
+                    else if (status === 'maybe') statusSymbol = '<span style="color:#eab308;">❓</span>';
+                }
 
-                        return `
+                const initials = (p.first_name[0] + (p.last_name ? p.last_name[0] : '')).toUpperCase();
+
+                return `
                         <div class="glass-card player-stat-card" style="padding: 1.25rem; display: flex; align-items: center; gap: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);" onclick="viewPlayerStats('${p.id}', '${p.first_name} ${p.last_name}')">
                             <div class="player-avatar" style="width: 56px; height: 56px; border-radius: 50%; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.3); flex-shrink: 0;">
                                 ${initials}
@@ -8296,10 +8322,10 @@
                             </div>
                         </div>
                         `;
-                    }).join('')}
+            }).join('')}
                 </div>
             `;
-            
+
             // Add CSS for hover actions if not present
             if (!document.getElementById('rosterStyles')) {
                 const style = document.createElement('style');
@@ -8395,7 +8421,7 @@
             }).join('');
         }
 
-        window.quickAddStats = async function(playerId, playerName) {
+        window.quickAddStats = async function (playerId, playerName) {
             // Check if we have recent matches
             const recentMatches = AppState.currentTeamRecentMatches || [];
             if (recentMatches.length === 0) {
@@ -8461,7 +8487,7 @@
                 e.preventDefault();
                 const eventId = document.getElementById('quickStatsEventId').value;
                 const matchObj = recentMatches.find(m => m.id === eventId);
-                
+
                 const stats = {
                     home_score: matchObj.home_score || 0,
                     away_score: matchObj.away_score || 0,
@@ -9858,15 +9884,18 @@
 
                     <div class="form-group" style="margin-top: 1rem;">
                         <label for="eventImage">Event Image (Optional)</label>
-                        <input type="file" id="eventImage" accept="image/*" class="btn btn-secondary" style="width: 100%;">
+                        <input type="file" id="eventImage" accept="image/*" class="btn btn-secondary"
+                            style="width: 100%;">
                     </div>
 
                     <div class="form-group">
                         <label for="eventDescription">Description / Notes</label>
-                        <textarea id="eventDescription" rows="3" placeholder="Tell the team more about this event..."></textarea>
+                        <textarea id="eventDescription" rows="3"
+                            placeholder="Tell the team more about this event..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">📅 Create Event</button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">📅 Create
+                        Event</button>
                 </form>
             </div>
         </div>
@@ -12888,14 +12917,14 @@
             let tacticalFrames = [[]];
             let currentFrameIdx = 0;
 
-            window.addFrame = function() {
+            window.addFrame = function () {
                 saveCurrentFrameState();
                 tacticalFrames.push(JSON.parse(JSON.stringify(tacticalFrames[currentFrameIdx])));
                 currentFrameIdx++;
                 updateFrameIndicator();
             };
 
-            window.nextFrame = function() {
+            window.nextFrame = function () {
                 if (currentFrameIdx < tacticalFrames.length - 1) {
                     saveCurrentFrameState();
                     currentFrameIdx++;
@@ -12904,7 +12933,7 @@
                 }
             };
 
-            window.prevFrame = function() {
+            window.prevFrame = function () {
                 if (currentFrameIdx > 0) {
                     saveCurrentFrameState();
                     currentFrameIdx--;
@@ -12936,7 +12965,7 @@
                 const board = document.getElementById('tacticalBoard');
                 board.innerHTML = '';
                 const state = tacticalFrames[idx];
-                
+
                 state.forEach((item, i) => {
                     const el = document.createElement('div');
                     el.className = item.type === 'player' ? 'player-position' : 'equipment-item draggable';
@@ -12952,12 +12981,12 @@
                         el.dataset.first = item.first;
                         el.dataset.last = item.last;
                         el.textContent = item.first.charAt(0) + (item.last ? item.last.charAt(0) : '');
-                        
+
                         const label = document.createElement('div');
                         label.className = 'player-label';
                         label.textContent = item.label || 'Empty';
                         el.appendChild(label);
-                        
+
                         if (item.id) {
                             el.style.background = 'radial-gradient(circle at 30% 30%, #4ade80 0%, #16a34a 100%)';
                         }
@@ -12973,7 +13002,7 @@
             }
 
             function getEquipEmoji(type) {
-                switch(type) {
+                switch (type) {
                     case 'cone': return '📐';
                     case 'ball': return '⚽';
                     case 'pole': return '📍';
@@ -12982,7 +13011,7 @@
                 }
             }
 
-            window.playTacticalAnimation = function() {
+            window.playTacticalAnimation = function () {
                 saveCurrentFrameState();
                 let frame = 0;
                 const interval = setInterval(() => {
@@ -12997,18 +13026,18 @@
                 }, 800);
             };
 
-            window.clearBoard = function() {
-                if(confirm('Clear all items from pitch?')) {
+            window.clearBoard = function () {
+                if (confirm('Clear all items from pitch?')) {
                     document.getElementById('tacticalBoard').innerHTML = '';
                     tacticalFrames[currentFrameIdx] = [];
                 }
             };
 
             function setupDraggable(el) {
-                el.onmousedown = function(e) {
+                el.onmousedown = function (e) {
                     const board = document.getElementById('tacticalBoard');
                     const rect = board.getBoundingClientRect();
-                    
+
                     function moveAt(pageX, pageY) {
                         let x = ((pageX - rect.left) / rect.width) * 100;
                         let y = ((pageY - rect.top) / rect.height) * 100;
@@ -13018,7 +13047,7 @@
 
                     function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
                     document.addEventListener('mousemove', onMouseMove);
-                    document.onmouseup = function() {
+                    document.onmouseup = function () {
                         document.removeEventListener('mousemove', onMouseMove);
                         document.onmouseup = null;
                         saveCurrentFrameState();
@@ -13026,7 +13055,7 @@
                 };
             }
 
-            window.assignPlayerToSlot = function(playerEl, id, first, last) {
+            window.assignPlayerToSlot = function (playerEl, id, first, last) {
                 const label = playerEl.querySelector('.player-label');
                 playerEl.dataset.playerId = id;
                 playerEl.dataset.first = first;
@@ -13533,13 +13562,14 @@
                 <div id="trainingPanel-progress" style="display:none;">
                     <div style="margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem;">
                         <span style="font-size:0.9rem; color:var(--text-muted);">View Team:</span>
-                        <select id="teamFilter" onchange="loadAdminTeamProgress()" 
+                        <select id="teamFilter" onchange="loadAdminTeamProgress()"
                             style="padding:0.6rem 1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:white; font-size:0.9rem; min-width:180px;">
                             <option value="">Select a team...</option>
                         </select>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:1rem;" id="teamProgressList">
-                        <p style="color:var(--text-muted); text-align:center; padding:2rem;">⏳ Loading team progress...</p>
+                        <p style="color:var(--text-muted); text-align:center; padding:2rem;">⏳ Loading team progress...
+                        </p>
                     </div>
                 </div>
 
@@ -13602,29 +13632,36 @@
 
         <!-- Assign Drill Modal -->
         <div id="assignDrillModal" class="modal" style="display:none; align-items:center; justify-content:center;">
-          <div style="background:#0d0d10; width:100%; max-width:480px; border-radius:24px; padding:2rem; margin:1rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-              <h3 style="margin:0; font-family:var(--font-heading);">Assign Drill</h3>
-              <button onclick="closeModal('assignDrillModal')"
-                style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer;">×</button>
-            </div>
-            <input type="hidden" id="assignDrillId">
-            
-            <div class="form-group" style="margin-bottom:1.5rem;">
-              <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem; display:block;">Assign to Team</label>
-              <select id="assignTeamId" style="width:100%; padding:0.85rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:white; font-size:1rem;">
-                <option value="">Select a team...</option>
-                <!-- Populated by JS -->
-              </select>
-            </div>
+            <div
+                style="background:#0d0d10; width:100%; max-width:480px; border-radius:24px; padding:2rem; margin:1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3 style="margin:0; font-family:var(--font-heading);">Assign Drill</h3>
+                    <button onclick="closeModal('assignDrillModal')"
+                        style="background:rgba(255,255,255,0.08); border:none; color:#fff; width:36px; height:36px; border-radius:50%; font-size:1.2rem; cursor:pointer;">×</button>
+                </div>
+                <input type="hidden" id="assignDrillId">
 
-            <div class="form-group" style="margin-bottom:2rem;">
-              <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem; display:block;">Due Date (Optional)</label>
-              <input type="date" id="assignDueDate" style="width:100%; padding:0.85rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:white; font-size:1rem;">
-            </div>
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label
+                        style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem; display:block;">Assign
+                        to Team</label>
+                    <select id="assignTeamId"
+                        style="width:100%; padding:0.85rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:white; font-size:1rem;">
+                        <option value="">Select a team...</option>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
 
-            <button class="btn btn-primary" style="width:100%; padding:1rem;" onclick="submitDrillAssignment()">Assign Drill</button>
-          </div>
+                <div class="form-group" style="margin-bottom:2rem;">
+                    <label style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem; display:block;">Due
+                        Date (Optional)</label>
+                    <input type="date" id="assignDueDate"
+                        style="width:100%; padding:0.85rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:white; font-size:1rem;">
+                </div>
+
+                <button class="btn btn-primary" style="width:100%; padding:1rem;"
+                    onclick="submitDrillAssignment()">Assign Drill</button>
+            </div>
         </div>
 
         <!-- Training Scripts -->
@@ -13667,12 +13704,12 @@
             async function loadAdminTeamProgress() {
                 const container = document.getElementById('teamProgressList');
                 if (!container) return;
-                
+
                 // Try to get team ID from selected team or first available team
                 let teamId = document.getElementById('teamFilter')?.value;
                 if (!teamId) {
-                  const teams = window.AppState?.teams || [];
-                  teamId = teams[0]?.id;
+                    const teams = window.AppState?.teams || [];
+                    teamId = teams[0]?.id;
                 }
 
                 if (!teamId) {
@@ -13742,24 +13779,24 @@
                 }
             }
 
-            window.openAssignDrillModal = function(drillId) {
+            window.openAssignDrillModal = function (drillId) {
                 document.getElementById('assignDrillId').value = drillId;
                 const teamSelect = document.getElementById('assignTeamId');
-                
+
                 // Populate teams from AppState or existing dropdown
                 const teamFilter = document.getElementById('teamFilter');
                 if (teamFilter) {
-                   teamSelect.innerHTML = '<option value="">Select a team...</option>' + 
-                                          Array.from(teamFilter.options)
-                                               .filter(opt => opt.value)
-                                               .map(opt => `<option value="${opt.value}">${opt.text}</option>`)
-                                               .join('');
+                    teamSelect.innerHTML = '<option value="">Select a team...</option>' +
+                        Array.from(teamFilter.options)
+                            .filter(opt => opt.value)
+                            .map(opt => `<option value="${opt.value}">${opt.text}</option>`)
+                            .join('');
                 }
-                
+
                 showModal('assignDrillModal');
             };
 
-            window.submitDrillAssignment = async function() {
+            window.submitDrillAssignment = async function () {
                 const drillId = document.getElementById('assignDrillId').value;
                 const teamId = document.getElementById('assignTeamId').value;
                 const dueDate = document.getElementById('assignDueDate').value;
@@ -13778,7 +13815,7 @@
                 }
             };
 
-            window.viewDrillSubmissions = function(drillId) {
+            window.viewDrillSubmissions = function (drillId) {
                 // Switching to review tab
                 switchTrainingTab('reviews');
                 // Future: filter review queue by drillId
@@ -13790,19 +13827,19 @@
             }
 
             // Scout Approvals Logic
-            window.loadScoutApprovals = async function() {
+            window.loadScoutApprovals = async function () {
                 const container = document.getElementById('scoutApprovalsList');
                 if (!container) return;
-                
+
                 container.innerHTML = '<p class="text-center" style="grid-column: 1/-1;">Loading requests...</p>';
                 try {
                     const requests = await apiService.getPlatformScoutVerifications('pending');
-                    
+
                     if (!requests || requests.length === 0) {
                         container.innerHTML = '<p class="text-center" style="grid-column: 1/-1; opacity: 0.6;">No pending scout verification requests.</p>';
                         return;
                     }
-                    
+
                     container.innerHTML = requests.map(req => `
                         <div class="card" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
@@ -13832,22 +13869,22 @@
                 }
             };
 
-            window.resolveScoutRequest = async function(requestId, staffId, status) {
+            window.resolveScoutRequest = async function (requestId, staffId, status) {
                 if (!confirm(`Are you sure you want to ${status} this request?`)) return;
-                
+
                 try {
                     showLoading(true);
-                    
+
                     // 1. Resolve request in platform
                     await apiService.resolvePlatformScoutVerification(requestId, status, '');
-                    
+
                     // 2. If approved, update staff record
                     if (status === 'approved') {
                         await apiService.verifyClubScout(staffId, true);
                     }
-                    
+
                     if (typeof showNotification === 'function') showNotification(`Scout successfully ${status}!`, 'success');
-                    
+
                     // Reload list
                     loadScoutApprovals();
                 } catch (error) {
@@ -13857,10 +13894,10 @@
                     showLoading(false);
                 }
             };
-            
+
             // Intercept showSection to load scout approvals when the section is shown
             const _scout_origShowSection = window.showSection;
-            window.showSection = function(sectionId) {
+            window.showSection = function (sectionId) {
                 if (typeof _scout_origShowSection === 'function') _scout_origShowSection(sectionId);
                 if (sectionId === 'scout-approvals') {
                     loadScoutApprovals();

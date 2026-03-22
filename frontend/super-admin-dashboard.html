@@ -996,34 +996,34 @@
             setTimeout(() => {
                 toast.style.animation = 'slideOut 0.3s forwards';
                 setTimeout(() => toast.remove(), 300);
-            }, 5000);
-        }
+            <body>
+                <header class="header">
+                    <nav class="nav container">
+                        <div class="logo" onclick="window.location.href='index.html'">
+                            <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                            <span class="logo-text neon-text">ClubHub</span>
+                        </div>
 
-        // Load platform stats
-        async function loadStats() {
-            try {
-                const includeMock = localStorage.getItem('includeMockData') === 'true' ? 'true' : 'false';
-                const stats = await apiService.makeRequest(`/platform-admin/stats?includeMock=${includeMock}`);
+                        <!-- Group Switcher for Super Admin -->
+                        <div id="org-switcher-container"></div>
 
-                document.getElementById('totalUsers').textContent = stats.stats.total_users;
-                document.getElementById('totalOrgs').textContent = stats.stats.total_groups;
-                document.getElementById('activePlans').textContent = stats.stats.active_plans;
-                document.getElementById('pendingInvites').textContent = stats.stats.pending_invitations;
+                        <!-- Mode Toggle -->
+                        <div class="mode-toggle-container">
+                            <span class="mode-label active" id="platform-label">Platform</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="mode-toggle" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="mode-label" id="player-label">Player</span>
+                        </div>
 
-                document.getElementById('userChange').textContent =
-                    `+${stats.recentSignups} in last 30 days`;
-
-            } catch (error) {
-                console.error('Error loading stats:', error);
-                if (error.message.includes('Forbidden')) {
-                    showToast('Access Denied', 'You do not have platform admin access', 'error');
-                    window.location.href = 'index.html';
-                }
-            }
-        }
-
-        // Load groups
-        async function loadGroups(page = 1, search = '') {
+                        <div class="user-info">
+                            <span id="adminName">Platform Admin</span>
+                            <div class="user-avatar" id="adminAvatar">PA</div>
+                            <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+                        </div>
+                    </nav>
+                </header>
             try {
                 const includeMock = localStorage.getItem('includeMockData') === 'true' ? 'true' : 'false';
                 const data = await apiService.makeRequest(
