@@ -6,7 +6,7 @@ const UnifiedNav = {
         console.log('🚀 Unified Nav Initializing...');
         this.renderSidebar();
         this.renderBottomNav();
-        this.renderHeader();
+        // this.renderHeader(); // Omitted: Use original desktop headers instead of overwriting them
         this.renderProfileDropdown();
         this.bindEvents();
         this.updateHeaderState();
@@ -76,18 +76,13 @@ const UnifiedNav = {
      */
     renderHeader() {
         const header = document.querySelector('header.header, .pro-header');
-        if (!header) {
-            console.warn('⚠️ No header found to unify. Skipping renderHeader...');
-            return;
-        }
+        if (!header) return;
 
-        // Standardize header classes
         header.classList.add('pro-header', 'unified-header');
         
-        // Build the unified internal structure
         header.innerHTML = `
             <div class="nav-container">
-                <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
+                <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
                     <i class="fa fa-bars"></i>
                 </div>
 
@@ -96,21 +91,23 @@ const UnifiedNav = {
                     <span class="logo-text">ClubHub</span>
                 </div>
 
-                <div class="header-actions">
-                    <div class="header-mode-toggle desktop-only" id="header-mode-toggle">
+                <div class="header-center desktop-only">
+                    <div class="header-mode-toggle" id="header-mode-toggle">
                         <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Group Hub</div>
                         <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
                     </div>
+                </div>
 
-                    <div class="action-btn desktop-only" onclick="showPlayerSection('notifications')">
-                        <i>🔔</i>
-                        <span class="badge" style="display:none">0</span>
+                <div class="header-actions">
+                    <div class="action-btn desktop-only" onclick="showPlayerSection ? showPlayerSection('notifications') : showSection('notifications')">
+                        <i class="fa fa-bell-o"></i>
+                        <span class="badge" id="header-notif-badge" style="display:none">0</span>
                     </div>
 
                     <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleSidebar(true)">
                         <span class="user-name desktop-only" id="header-user-name">Loading...</span>
                         <div class="user-avatar-sm" id="header-user-avatar">?</div>
-                        <i class="fa fa-chevron-down" style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;"></i>
+                        <i class="fa fa-chevron-down desktop-only" style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;"></i>
                     </div>
                 </div>
             </div>

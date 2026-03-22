@@ -74,8 +74,30 @@
                 <p style="color: var(--text-muted);">Organize groups, assign bibs, and track attendance for your camps.
                 </p>
             </div>
-            <div class="header-actions">
+            <div class="header-actions" style="display: flex; gap: 0.75rem;">
+                <button class="btn btn-primary" onclick="openQRScanner()" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 1.2rem;">📱</span> QR Check-in
+                </button>
                 <button class="btn btn-secondary" onclick="exportData()">📥 Export CSV</button>
+            </div>
+        </div>
+
+        <!-- Bib Stock Section -->
+        <div class="card" style="margin: 2rem 0; background: rgba(220, 38, 38, 0.05); border: 1px dashed var(--primary);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">🎽 Numbered Bib Stock</h3>
+                <button class="btn btn-secondary btn-sm" onclick="addBibStockRow()">+ Add Stock</button>
+            </div>
+            <div id="bibStockContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+                <!-- Initial Stock Examples -->
+                <div class="bib-stock-pill" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-weight: bold; color: #3b82f6;">Blue</span>
+                    <input type="number" value="1" style="width: 40px; background: transparent; border: none; color: white; text-align: center; font-weight: 800;">
+                </div>
+                <div class="bib-stock-pill" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-weight: bold; color: #f97316;">Orange</span>
+                    <input type="number" value="8" style="width: 40px; background: transparent; border: none; color: white; text-align: center; font-weight: 800;">
+                </div>
             </div>
         </div>
 
@@ -146,6 +168,23 @@
         </div>
     </main>
 
+    <!-- QR Scanner Modal -->
+    <div id="qrModal" class="modal">
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            <span class="close" onclick="closeQRModal()">&times;</span>
+            <div style="background: #000; height: 300px; border-radius: 12px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <div id="scannerLine" style="position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--primary); box-shadow: 0 0 15px var(--primary); animation: scanline 2s linear infinite;"></div>
+                <div style="z-index: 10; font-size: 3rem;">📸</div>
+            </div>
+            <h3 style="margin-top: 1.5rem;">Scanning for QR...</h3>
+            <p style="color: var(--text-muted);">Point camera at player's registration QR code.</p>
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
+                <input type="text" id="manualQrId" placeholder="Manual ID Entry" style="flex: 1;">
+                <button class="btn btn-primary" onclick="manualCheckIn()">Submit</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Assign Modal -->
     <div id="assignModal" class="modal">
         <div class="modal-content">
@@ -163,11 +202,12 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label>Bib Color</label>
-                        <select id="assignBibColor">
+                        <select id="assignBibColor" onchange="checkBibStock(this.value)">
                             <option value="Red">Red</option>
                             <option value="Blue">Blue</option>
                             <option value="Yellow">Yellow</option>
                             <option value="Green">Green</option>
+                            <option value="Orange">Orange</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -175,11 +215,22 @@
                         <input type="number" id="assignBibNumber" placeholder="e.g. 10">
                     </div>
                 </div>
+                <div id="stockInquiry" style="font-size: 0.8rem; color: #f59e0b; margin-top: -0.5rem; margin-bottom: 1rem; display: none;">
+                    ⚠️ Note: Minimal stock for this color.
+                </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Save
                     Assignment</button>
             </form>
         </div>
     </div>
+
+    <style>
+        @keyframes scanline {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+    </style>
 
     <script src="api-service.js"></script>
     <script src="group-switcher.js"></script>
@@ -321,6 +372,60 @@
             loadCampData();
         }
 
+        function openQRScanner() {
+            document.getElementById('qrModal').style.display = 'block';
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').style.display = 'none';
+        }
+
+        async function manualCheckIn() {
+            const qrId = document.getElementById('manualQrId').value;
+            if (!qrId) return;
+            try {
+                // Simulate check-in with registration ID
+                await apiService.checkInPlayer(currentEventId, { playerId: qrId, method: 'qr' });
+                showNotification('Check-in Successful!', 'success');
+                closeQRModal();
+                loadCampData();
+            } catch (err) {
+                alert('Check-in failed: ' + err.message);
+            }
+        }
+
+        function addBibStockRow() {
+            const color = prompt("Enter Bib Color:");
+            const qty = prompt("Enter Stock Quantity:");
+            if (!color || !qty) return;
+
+            const container = document.getElementById('bibStockContainer');
+            const html = `
+                <div class="bib-stock-pill" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-weight: bold; color: ${color.toLowerCase()};">${color}</span>
+                    <input type="number" value="${qty}" style="width: 40px; background: transparent; border: none; color: white; text-align: center; font-weight: 800;">
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function checkBibStock(color) {
+            const stockInquiry = document.getElementById('stockInquiry');
+            const stockItems = Array.from(document.querySelectorAll('.bib-stock-pill'));
+            const match = stockItems.find(item => item.querySelector('span').textContent.toLowerCase() === color.toLowerCase());
+            
+            if (match) {
+                const qty = parseInt(match.querySelector('input').value);
+                if (qty <= 1) {
+                    stockInquiry.style.display = 'block';
+                } else {
+                    stockInquiry.style.display = 'none';
+                }
+            } else {
+                stockInquiry.style.display = 'none';
+            }
+        }
+
         async function exportData() {
             const blob = await apiService.exportAttendeeData(currentEventId);
             const url = window.URL.createObjectURL(blob);
@@ -335,6 +440,10 @@
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             event.target.classList.add('active');
             document.getElementById(`${tabName}-tab`).style.display = 'block';
+        }
+
+        function showNotification(msg, type) {
+            alert(msg); // Placeholder for better UI non-blocking notif
         }
     </script>
 </body>

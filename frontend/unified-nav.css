@@ -22,46 +22,49 @@
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    z-index: 3000 !important;
+    z-index: 3500 !important; /* Above everything */
     display: flex !important;
     align-items: center !important;
-    padding: 0 1.5rem !important;
+    padding: 0 2rem !important;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3) !important;
 }
 
-.pro-header .nav-container, header.header .container, header.header .nav {
+.pro-header .nav-container {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    height: 100% !important;
 }
 
-.pro-header .logo-area, header.header .logo {
+.header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+}
+
+.pro-header .logo-area {
     display: flex !important;
     align-items: center !important;
     gap: 0.75rem !important;
     cursor: pointer !important;
-    flex-shrink: 0 !important;
+    z-index: 10;
 }
 
-.pro-header .logo-img, header.header .logo-image {
-    height: 32px !important;
+.logo-img {
+    height: 34px !important;
     width: auto !important;
-    filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.5)) !important;
+    filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.4));
 }
 
-.pro-header .logo-text, header.header .logo-text {
+.logo-text {
     font-family: 'Outfit', sans-serif !important;
     font-weight: 800 !important;
-    font-size: 1.25rem !important;
+    font-size: 1.3rem !important;
     letter-spacing: -0.5px !important;
-    background: linear-gradient(135deg, #fff 40%, #999 100%) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
+    color: #fff !important;
 }
 
 /* --- Header Actions --- */
@@ -632,14 +635,19 @@
 }
 
 /* --- Cleanup & Priority --- */
-/* Suppress legacy navigation fragments totally */
-.header nav, 
-.header .user-info, 
-.header #org-switcher-container,
-#header-nav,
-.nav-buttons,
-.mobile-nav-toggle {
-    display: none !important;
+/* Let desktop headers have their original components visible! */
+.pro-header.unified-header .nav-container {
+    display: flex !important;
+}
+
+/* On mobile, standard desktop headers should be hidden gracefully */
+@media (max-width: 768px) {
+    .header nav, 
+    #header-nav,
+    .nav-buttons,
+    .mobile-nav-toggle {
+        display: none !important;
+    }
 }
 
 /* Ensure Unified Components are Visible */

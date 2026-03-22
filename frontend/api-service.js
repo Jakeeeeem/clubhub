@@ -3336,6 +3336,21 @@ class ApiService {
       body: JSON.stringify({ verified }),
     });
   }
+
+  async getScoutingReports() {
+    return await this.makeRequest('/scouting/reports');
+  }
+
+  async requestScoutContact(userId, playerId) {
+    return await this.makeRequest('/scouting/request-contact', {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, player_id: playerId })
+    });
+  }
+
+  async getScoutingAnalytics() {
+    return await this.makeRequest('/scouting/analytics');
+  }
 }
 
 // Create and export a singleton instance

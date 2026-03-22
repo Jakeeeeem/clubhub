@@ -34,9 +34,17 @@
             </div>
 
             <div class="header-actions">
-                <div id="org-switcher-container"></div>
+                <div id="org-switcher-container" class="desktop-only" style="margin-right: 10px;"></div>
+                <div class="mode-toggle-container desktop-only" style="margin-right: 15px;">
+                    <span id="group-label" class="mode-label active">Group</span>
+                    <label class="switch">
+                        <input type="checkbox" id="mode-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span id="player-label" class="mode-label">Player</span>
+                </div>
                 
-                <div class="notification-trigger">
+                <div class="notification-trigger" onclick="UnifiedNav.toggleSidebar(true)">
                     <i>🔔</i>
                     <span class="badge">2</span>
                 </div>

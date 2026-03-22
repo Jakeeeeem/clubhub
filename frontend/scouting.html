@@ -415,26 +415,14 @@
                 });
             }
         }
-        <!-- Bottom Navigation Bar (Threads Style) -->
-    <nav class="pro-bottom-nav mobile-only">
-        <a href="index.html" class="bottom-nav-link">
-            <i>🏠</i>
-            <span>Home</span>
-        </a>
-        <a href="scouting.html" class="bottom-nav-link active">
-            <i>🔍</i>
-            <span>Discover</span>
-        </a>
-        <a href="player-dashboard.html" class="bottom-nav-link">
-            <i>👤</i>
-            <span>Profile</span>
-        </a>
-        <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
-            <i>🍔</i>
-            <span>More</span>
-        </a>
-    </nav>
     </script>
+
+    <!-- App Top Tabs (Mobile Headlines) -->
+    <nav class="pro-bottom-nav mobile-only">
+        <div class="nav-container" id="pro-bottom-nav-content">
+            <!-- Populated by UnifiedNav.renderBottomNav() -->
+        </div>
+    </nav>
     <script src="unified-nav.js"></script>
 </body>
 
