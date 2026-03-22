@@ -6,12 +6,16 @@ const UnifiedNav = {
         console.log('🚀 Unified Nav Initializing...');
         this.renderSidebar();
         this.renderBottomNav();
-        this.renderHeaderAddons();
+        this.renderHeader();
         this.renderProfileDropdown();
         this.bindEvents();
         this.updateHeaderState();
+        this.syncUserData();
         this.renderMenu();
         this.autoLabelTables();
+        
+        // Ensure sidebar is closed initially
+        this.toggleSidebar(false);
     },
 
     renderSidebar() {
@@ -20,21 +24,87 @@ const UnifiedNav = {
         const sidebarHTML = `
             <div class="sidebar-overlay" id="sidebar-overlay"></div>
             <aside class="pro-sidebar" id="pro-sidebar">
-                <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem;">
-                    <span style="font-weight: 800; opacity: 0.8;">MENU</span>
-                    <button onclick="UnifiedNav.toggleSidebar(false)" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem; line-height: 1;">&times;</button>
+                <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <img src="images/logo.png" style="height: 24px; width: 24px;">
+                        <span style="font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px; opacity: 0.9;">CLUBHUB</span>
+                    </div>
+                    <button onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 4px 8px;">&times;</button>
+                </div>
+
+                <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1rem 1rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.5rem;">Switch Group</div>
+                    <div id="sidebar-switcher-target"></div>
                 </div>
 
                 <nav class="sidebar-nav" id="sidebar-nav-content">
                     <!-- Dynamic rendering by renderMenu() -->
                 </nav>
 
-                <div class="sidebar-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
-                    <a href="#" class="sidebar-link" onclick="handleLogout(); return false;" style="color: #ef4444; padding: 0.75rem 0;"><i>🚪</i> Logout</a>
+                <div class="sidebar-footer" style="padding: 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>⚙️</i> Settings</a>
+                        <a href="#" class="sidebar-link" onclick="handleAuthError(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>🚪</i> Sign Out</a>
+                    </div>
                 </div>
             </aside>
         `;
         document.body.insertAdjacentHTML('beforeend', sidebarHTML);
+        this.initSidebarSwitcher();
+    },
+
+    initSidebarSwitcher() {
+        const target = document.getElementById('sidebar-switcher-target');
+        if (!target) return;
+
+        const checkSwitcher = () => {
+            if (typeof GroupSwitcher !== 'undefined') {
+                GroupSwitcher.render(target);
+            } else {
+                const script = document.createElement('script');
+                script.src = 'group-switcher.js';
+                script.onload = () => { if (typeof GroupSwitcher !== 'undefined') GroupSwitcher.render(target); };
+                document.head.appendChild(script);
+            }
+        };
+        checkSwitcher();
+    },
+
+    renderHeader() {
+        const header = document.querySelector('.pro-header');
+        if (!header) return;
+
+        header.innerHTML = `
+            <div class="nav-container">
+                <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
+                    <div class="hamburger-box">
+                        <span class="hamburger-inner"></span>
+                    </div>
+                </div>
+
+                <div class="logo-area" onclick="window.location.href='index.html'">
+                    <img src="images/logo.png" alt="Logo" class="logo-img">
+                    <span class="logo-text">ClubHub</span>
+                </div>
+
+                <div class="header-actions">
+                    <div class="header-mode-toggle desktop-only" id="header-mode-toggle">
+                        <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Group Hub</div>
+                        <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
+                    </div>
+
+                    <div class="notification-trigger">
+                        <i>🔔</i>
+                        <span class="badge" style="display:none">0</span>
+                    </div>
+
+                    <div class="user-profile-trigger" id="profileTrigger" onclick="event.stopPropagation(); UnifiedNav.toggleProfileDropdown()">
+                        <span class="user-name desktop-only" id="header-user-name">Loading...</span>
+                        <div class="user-avatar-sm" id="header-user-avatar">?</div>
+                    </div>
+                </div>
+            </div>
+        `;
     },
 
     renderBottomNav() {
@@ -51,39 +121,40 @@ const UnifiedNav = {
 
         if (isPlayer) {
             navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showPlayerSection('overview'); return false;"><i>📊</i><span>Home</span></a>
+                <a href="#" class="bottom-nav-link active" onclick="showPlayerSection('overview'); return false;"><i>🏠</i><span>Home</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showPlayerSection('teams'); return false;"><i>🛡️</i><span>Teams</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showPlayerSection('club-messenger'); return false;"><i>💬</i><span>Chat</span></a>
-                <a href="scouting.html" class="bottom-nav-link"><i>🔍</i><span>Scout</span></a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>👤</i><span>Profile</span></a>
+                <a href="scouting.html" class="bottom-nav-link"><i>🌟</i><span>Talent</span></a>
+                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>🍔</i><span>More</span></a>
             `;
         } else if (isCoach) {
             navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showCoachSection('overview'); return false;"><i>📊</i><span>Home</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showCoachSection('players'); return false;"><i>👥</i><span>Players</span></a>
+                <a href="#" class="bottom-nav-link active" onclick="showCoachSection('overview'); return false;"><i>🏠</i><span>Home</span></a>
+                <a href="#" class="bottom-nav-link" onclick="showCoachSection('players'); return false;"><i>👥</i><span>Squad</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showCoachSection('messenger'); return false;"><i>💬</i><span>Chat</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showCoachSection('scouting'); return false;"><i>🔍</i><span>Scout</span></a>
+                <a href="#" class="bottom-nav-link" onclick="showCoachSection('tournament-manager'); return false;"><i>🏆</i><span>Events</span></a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>🍔</i><span>More</span></a>
             `;
         } else if (isScout) {
             navHtml = `
                 <a href="#" class="bottom-nav-link active" onclick="showScoutSection('discovery'); return false;"><i>🔍</i><span>Discover</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showScoutSection('watchlist'); return false;"><i>⭐</i><span>Stars</span></a>
+                <a href="#" class="bottom-nav-link" onclick="showScoutSection('watchlist'); return false;"><i>⭐</i><span>Watch</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showScoutSection('messenger'); return false;"><i>💬</i><span>Chat</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showScoutSection('reports'); return false;"><i>📝</i><span>Reports</span></a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>👤</i><span>Account</span></a>
+                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>🍔</i><span>More</span></a>
             `;
         } else if (isSuperAdmin) {
             navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;"><i>📊</i><span>Panel</span></a>
+                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;"><i>🏠</i><span>Panel</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showSection('groups'); return false;"><i>🏢</i><span>Groups</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showSection('users'); return false;"><i>👥</i><span>Users</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showSection('activity'); return false;"><i>📜</i><span>Logs</span></a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>⚙️</i><span>System</span></a>
+                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>🍔</i><span>More</span></a>
             `;
         } else {
+            // General Group Admin
             navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;"><i>📊</i><span>Home</span></a>
+                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;"><i>🏠</i><span>Home</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showSection('players'); return false;"><i>🏃</i><span>Players</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showSection('events'); return false;"><i>📅</i><span>Events</span></a>
                 <a href="#" class="bottom-nav-link" onclick="showSection('finances'); return false;"><i>💰</i><span>Finance</span></a>
@@ -95,41 +166,7 @@ const UnifiedNav = {
     },
 
     renderHeaderAddons() {
-        const headerContainer = document.querySelector('.pro-header .nav-container');
-        if (!headerContainer) return;
-        
-        // 1. ADD HAMBURGER (Left)
-        const logoArea = headerContainer.querySelector('.logo-area');
-        if (logoArea && !document.getElementById('side-menu-trigger')) {
-            const hamburgerHTML = `
-                <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
-                    <i>☰</i>
-                </div>
-            `;
-            logoArea.insertAdjacentHTML('beforebegin', hamburgerHTML);
-        }
-        
-        // 2. Role Switcher in Header (Desktop Only)
-        const headerActions = headerContainer.querySelector('.header-actions');
-        if (headerActions && !document.getElementById('header-mode-toggle')) {
-            const toggleHTML = `
-                <div class="header-mode-toggle desktop-only" id="header-mode-toggle" style="margin-left: auto; margin-right: 1rem;">
-                    <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Group</div>
-                    <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player</div>
-                </div>
-            `;
-            headerActions.insertAdjacentHTML('beforebegin', toggleHTML);
-        }
-        
-        // 3. Update Profile Trigger for Dropdown
-        const profileTrigger = document.querySelector('.user-profile-trigger');
-        if (profileTrigger) {
-            profileTrigger.removeAttribute('onclick');
-            profileTrigger.onclick = (e) => {
-                e.stopPropagation();
-                this.toggleProfileDropdown();
-            };
-        }
+        // Obsolete: Replaced by renderHeader
     },
 
     renderProfileDropdown() {
@@ -146,19 +183,19 @@ const UnifiedNav = {
                 
                 <div class="dropdown-divider"></div>
                 
-                <div class="dropdown-mode-switcher">
+                <div class="dropdown-mode-switcher mobile-only">
                     <div class="dropdown-mode-pill active" id="drop-mode-group" onclick="UnifiedNav.switchMode('group')">Group Hub</div>
                     <div class="dropdown-mode-pill" id="drop-mode-player" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
                 </div>
                 
-                <div class="dropdown-divider"></div>
-                
-                <a href="player-settings.html" class="dropdown-link"><i>⚙️</i> Account Settings</a>
-                <a href="#" class="dropdown-link" onclick="handleLogout(); return false;" style="color: #ef4444;"><i>🚪</i> Logout</a>
+                <div class="dropdown-links" style="margin-top: 1rem;">
+                    <a href="player-settings.html" class="dropdown-link"><i>⚙️</i> Account Settings</a>
+                    <a href="#" class="dropdown-link" style="color: #ef4444;" onclick="handleAuthError(); return false;"><i>🚪</i> Sign Out</a>
+                </div>
             </div>
         `;
-        const headerActions = document.querySelector('.header-actions');
-        if (headerActions) headerActions.insertAdjacentHTML('beforeend', dropdownHTML);
+        const header = document.querySelector('.pro-header .nav-container');
+        if (header) header.insertAdjacentHTML('beforeend', dropdownHTML);
     },
 
     toggleProfileDropdown(show) {
@@ -219,8 +256,10 @@ const UnifiedNav = {
 
     syncUserData() {
         const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        const name = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Professional';
-        const initial = (user.first_name || 'P').charAt(0);
+        const firstName = user.firstName || user.first_name || '';
+        const lastName = user.lastName || user.last_name || '';
+        const name = `${firstName} ${lastName}`.trim() || 'User';
+        const initial = (firstName || 'U').charAt(0).toUpperCase();
         
         let role = 'Member';
         const type = user.account_type || localStorage.getItem('userType');
@@ -228,14 +267,21 @@ const UnifiedNav = {
         else if (type === 'coach') role = 'Technical Coach';
         else if (type === 'scout') role = 'Talent Scout';
         else if (type === 'admin') role = 'Group Admin';
+        else if (type === 'player') role = 'Pro Player';
 
-        const avatarEl = document.getElementById('dropdown-avatar');
-        const nameEl = document.getElementById('dropdown-name');
-        const roleEl = document.getElementById('dropdown-role');
-        
-        if (avatarEl) avatarEl.textContent = initial;
-        if (nameEl) nameEl.textContent = name;
-        if (roleEl) roleEl.textContent = role;
+        // Targets to update across header/sidebar/dropdown
+        const targets = {
+            'header-user-name': name,
+            'header-user-avatar': initial,
+            'dropdown-name': name,
+            'dropdown-avatar': initial,
+            'dropdown-role': role
+        };
+
+        for (const [id, val] of Object.entries(targets)) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        }
 
         this.updateModeUI();
     },

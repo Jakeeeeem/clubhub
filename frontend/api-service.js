@@ -179,7 +179,6 @@ class ApiService {
       ...options.headers,
     };
 
-    // If sending FormData, let the browser set the Content-Type with boundary
     if (options.body instanceof FormData) {
       delete headers["Content-Type"];
     }
@@ -196,898 +195,165 @@ class ApiService {
     };
 
     try {
+      // 🛡️ INTERCEPT REQUESTS IN DEMO MODE
       if (localStorage.getItem("isDemoSession") === "true") {
-        console.log(
-          `🛡️ Demo session - Intercepting API Request: ${options.method || "GET"} ${url}`,
-        );
-
-        // Return mock data for specific endpoints during demo session
-        if (endpoint.includes("/auth/context")) {
-          const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-
-          // Ensure user is treated as active in demo mode unless flagged otherwise
-          if (user.is_active === false) {
-            console.warn("🛡️ Blocked inactive user in demo mode");
-            throw new Error("Account deactivated");
-          }
-          user.is_active = true; // Default to true for demo
-
-          const isSuper =
-            user.is_platform_admin === true || user.role === "superadmin";
-          const role = user.activePlayerId ? "player" : user.role || "admin";
-
-          let groups = [
-            {
-              id: "demo-club-id",
-              name: "Pro Group Demo",
-              role: role === "coach" ? "coach" : "admin",
-              user_role: role === "coach" ? "coach" : "admin",
-            },
-            {
-              id: "demo-coach-org-2",
-              name: "Secondary Academy",
-              role: "coach",
-              user_role: "coach",
-            },
-            {
-              id: "demo-player-org",
-              name: "Elite Academy (Player)",
-              role: "player",
-              user_role: "player",
-              player_id: "demo-player-id",
-              player_name: "Jordan Smith",
-            },
-          ];
-
-          // For Super Admin, we add all these to their context automatically
-          if (isSuper) {
-            groups = groups.map((org) => ({
-              ...org,
-              user_role: "owner", // Super Admin acts as owner for all orgs
-              role: "owner",
-            }));
-
-            // Also add some additional dummy orgs to show scale
-            groups.push({
-              id: "org-3",
-              name: "Westside United",
-              role: "owner",
-              user_role: "owner",
-            });
-            groups.push({
-              id: "org-4",
-              name: "London Lions",
-              role: "owner",
-              user_role: "owner",
-            });
-          }
-
-          return {
-            success: true,
-            user: user,
-            currentGroup: {
-              id: user.groupId || "demo-club-id",
-              name: user.activePlayerId
-                ? "Elite Academy (Player)"
-                : user.groupId === "demo-coach-org-2"
-                  ? "Secondary Academy"
-                  : "Pro Group Demo",
-              role: isSuper ? "owner" : role,
-              user_role: isSuper ? "owner" : role,
-            },
-            groups: groups,
-          };
+        console.log(`🛡️ Intercepting Demo Request: ${options.method || "GET"} ${endpoint}`);
+        const interceptResult = await this._interceptDemoRequest(endpoint, options);
+        if (interceptResult !== null) {
+          return interceptResult;
         }
-        if (endpoint.includes("/auth/switch-group")) {
-          console.log("🛡️ Intercepting Group Switch for Demo");
-          const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-          const body = JSON.parse(options.body || "{}");
-          const newOrgId = body.groupId || "demo-club-id";
-
-          // Update user object with new club ID
-          user.groupId = newOrgId;
-          user.currentGroupId = newOrgId;
-          localStorage.setItem("currentUser", JSON.stringify(user));
-
-          return {
-            success: true,
-            message: "Group switched successfully (Demo Mode)",
-            groupId: newOrgId,
-            currentGroup: {
-              id: newOrgId,
-              name:
-                newOrgId === "demo-coach-org-2"
-                  ? "Secondary Academy"
-                  : "Pro Group Demo",
-              role: user.role || "admin",
-            },
-          };
-        }
-        if (endpoint.includes("/auth/profile")) {
-          const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-          return {
-            success: true,
-            profile: {
-              id: user.id || "demo-user-id",
-              first_name: user.firstName || user.first_name || "Demo",
-              last_name: user.lastName || user.last_name || "User",
-              email: user.email || "demo@clubhub.com",
-              phone: user.phone || "+44 7700 900000",
-              bio:
-                user.bio ||
-                "Professional sports enthusiast and dedicated ClubHub member.",
-              account_type: user.account_type || "group",
-            },
-          };
-        }
-        if (endpoint.includes("/auth/settings")) {
-          return {
-            success: true,
-            emailNotifications: true,
-            pushNotifications: true,
-            marketingEmails: false,
-            theme: "dark",
-          };
-        }
-        if (endpoint.includes("/dashboard/admin")) {
-          return this.getAdminDashboardFallback();
-        }
-        if (endpoint.includes("/dashboard/player")) {
-          return this.getPlayerDashboardFallback();
-        }
-        if (endpoint.includes("/dashboard/coach")) {
-          return this.getCoachDashboardFallback();
-        }
-        if (endpoint.includes("/platform-admin/stats")) {
-          return {
-            success: true,
-            stats: {
-              total_users: 1284,
-              total_groups: 92,
-              active_plans: 78,
-              pending_invitations: 15,
-            },
-            recentSignups: 42,
-          };
-        }
-        if (endpoint.includes("/platform-admin/groups")) {
-          return {
-            success: true,
-            total: 92,
-            page: 1,
-            groups: [
-              {
-                id: "org1",
-                name: "Elite Performance Academy",
-                sport: "Football",
-                owner_email: "owner@elite.com",
-                member_count: 145,
-                created_at: "2023-01-15",
-              },
-              {
-                id: "org2",
-                name: "London Lions SC",
-                sport: "Basketball",
-                owner_email: "admin@lions.com",
-                member_count: 82,
-                created_at: "2023-03-22",
-              },
-              {
-                id: "org3",
-                name: "Westside United",
-                sport: "Football",
-                owner_email: "mitch@westside.com",
-                member_count: 210,
-                created_at: "2021-11-05",
-              },
-              {
-                id: "org4",
-                name: "Grassroots FC",
-                sport: "Football",
-                owner_email: "info@grassroots.com",
-                member_count: 45,
-                created_at: "2024-05-10",
-              },
-              {
-                id: "org5",
-                name: "Pro Tennis Academy",
-                sport: "Tennis",
-                owner_email: "coach@protennis.com",
-                member_count: 32,
-                created_at: "2023-08-12",
-              },
-            ],
-          };
-        }
-        if (endpoint.includes("/platform-admin/users")) {
-          // Handle POST requests (Create, Status Update)
-          if (options.method === "POST") {
-            // Status Update
-            if (endpoint.includes("/status")) {
-              return {
-                success: true,
-                message: "User status updated successfully (Demo Mode)",
-              };
-            }
-            // Create User
-            const body = JSON.parse(options.body || "{}");
-            return {
-              success: true,
-              message: "User created successfully (Demo Mode)",
-              user: {
-                id: "new-user-" + Date.now(),
-                first_name: body.firstName,
-                last_name: body.lastName,
-                email: body.email,
-                account_type: body.accountType,
-                org_count: 0,
-                is_platform_admin: false,
-                is_active: true,
-                created_at: new Date().toISOString(),
-              },
-            };
-          }
-
-          // Handle DELETE requests
-          if (options.method === "DELETE") {
-            return {
-              success: true,
-              message: "User deleted successfully (Demo Mode)",
-            };
-          }
-
-          // Handle GET requests (List Users)
-          return {
-            success: true,
-            total: 1284,
-            page: 1,
-            users: [
-              {
-                id: "u1",
-                first_name: "John",
-                last_name: "Doe",
-                email: "john@example.com",
-                account_type: "group",
-                org_count: 2,
-                created_at: "2023-01-15",
-                is_platform_admin: false,
-                is_active: true,
-              },
-              {
-                id: "u2",
-                first_name: "Sarah",
-                last_name: "Smith",
-                email: "sarah@example.com",
-                account_type: "adult",
-                org_count: 1,
-                created_at: "2023-04-10",
-                is_platform_admin: false,
-                is_active: true,
-              },
-              {
-                id: "u3",
-                first_name: "Platform",
-                last_name: "Admin",
-                email: "super@clubhub.com",
-                account_type: "group",
-                org_count: 5,
-                created_at: "2021-01-01",
-                is_platform_admin: true,
-                is_active: true,
-              },
-            ],
-          };
-        }
-        if (endpoint.includes("/platform-admin/activity")) {
-          if (
-            endpoint.includes("/generate-mock-data") &&
-            options.method === "POST"
-          ) {
-            return {
-              success: true,
-              message: "Mock data generated successfully (Demo Mode)",
-            };
-          }
-
-          return {
-            success: true,
-            activity: [
-              {
-                type: "group_registered",
-                title: "New group: Elite Academy",
-                user_email: "admin@elite.com",
-                timestamp: new Date().toISOString(),
-              },
-              {
-                type: "user_joined",
-                title: "New user: Michael Jordan",
-                user_email: "mj@bulls.com",
-                timestamp: new Date(Date.now() - 3600000).toISOString(),
-              },
-              {
-                type: "invite_sent",
-                title: "Invite sent to kobe@lakers.com",
-                user_email: "super@clubhub.com",
-                timestamp: new Date(Date.now() - 7200000).toISOString(),
-              },
-            ],
-          };
-        }
-        if (endpoint.includes("/organizations/super/")) {
-          return {
-            success: true,
-            group: {
-              id: "demo-org",
-              name: "Elite Performance Academy",
-              sport: "Football",
-              owner_name: "John Owner",
-              owner_email: "admin@elite.com",
-              status: "Active",
-              created_at: "2023-01-15",
-              subscription_plan: "Pro Plus",
-              location: "Manchester, UK",
-              member_count: 145,
-            },
-          };
-        }
-        if (
-          endpoint.includes("/talent-id/events") &&
-          endpoint.includes("/dashboard")
-        ) {
-          return {
-            registrants: [
-              {
-                id: "reg1",
-                first_name: "James",
-                last_name: "Wilson",
-                date_of_birth: "2008-03-12",
-                position: "GK",
-                bib_number: "12",
-                bib_color: "Red",
-                group_name: "Group A",
-                status: "checked_in",
-              },
-              {
-                id: "reg2",
-                first_name: "Thomas",
-                last_name: "Muller",
-                date_of_birth: "2009-09-01",
-                position: "FW",
-                bib_number: "7",
-                bib_color: "Blue",
-                group_name: "Group B",
-                status: "registered",
-              },
-              {
-                id: "reg3",
-                first_name: "Kevin",
-                last_name: "De Bruyne",
-                date_of_birth: "2008-06-28",
-                position: "MF",
-                bib_number: "17",
-                bib_color: "Yellow",
-                group_name: "Group A",
-                status: "checked_in",
-              },
-            ],
-            groups: [
-              { id: "g1", name: "Group A", coach: "Michael Thompson" },
-              { id: "g2", name: "Group B", coach: "Emma Hayes" },
-            ],
-            bibs: [
-              { id: "b1", number: "1", color: "Red", status: "available" },
-              { id: "b2", number: "2", color: "Red", status: "assigned" },
-            ],
-          };
-        }
-        if (endpoint.includes("/venues") && !endpoint.includes("/book")) {
-          if (endpoint.includes("/availability")) {
-            return { bookings: [] };
-          }
-          if (endpoint.includes("/bookings/my")) {
-            return [
-              {
-                id: "vb1",
-                venue_name: "Elite Training Center",
-                start_time: new Date().toISOString(),
-                end_time: new Date(Date.now() + 3600000).toISOString(),
-                status: "confirmed",
-              },
-            ];
-          }
-          return [
-            {
-              id: "v1",
-              name: "Main Stadium",
-              location: "Central London",
-              hourly_rate: 150,
-              facilities: ["Floodlights", "Changing Rooms", "WiFi"],
-              image_url: "images/pitch-placeholder.jpg",
-            },
-            {
-              id: "v2",
-              name: "Training Pitch A",
-              location: "Academy Grounds",
-              hourly_rate: 50,
-              facilities: ["Artificial Grass", "Toilets"],
-              image_url: "images/pitch-placeholder.jpg",
-            },
-          ];
-        }
-        if (endpoint.includes("/notifications")) {
-          return [
-            {
-              id: "n1",
-              title: "Monthly Newsletter",
-              segment: "All Members",
-              created_at: new Date().toISOString(),
-              status: "sent",
-            },
-            {
-              id: "n2",
-              title: "Upcoming Match - First Team",
-              segment: "Parents",
-              created_at: new Date().toISOString(),
-              status: "sent",
-            },
-            {
-              id: "n3",
-              title: "New Training Schedule",
-              segment: "Coaches",
-              created_at: new Date().toISOString(),
-              status: "sent",
-            },
-          ];
-        }
-        if (endpoint.includes("/events")) {
-          return this.getAdminDashboardFallback().events;
-        }
-        if (endpoint.includes("/players")) {
-          return this.getAdminDashboardFallback().players;
-        }
-        if (endpoint.includes("/teams")) {
-          return this.getAdminDashboardFallback().teams;
-        }
-        if (endpoint.includes("/payments/plans")) {
-          return [
-            {
-              id: "p1",
-              name: "Premium Academy Plan",
-              price: 50.0,
-              interval: "month",
-              description: "Full access to all training sessions",
-            },
-            {
-              id: "p2",
-              name: "Basic Development Plan",
-              price: 30.0,
-              interval: "month",
-              description: "Weekend training only",
-            },
-          ];
-        }
-        if (endpoint.includes("/players")) {
-          return this.getAdminDashboardFallback().players;
-        }
-        if (endpoint.includes("/payments/stripe/connect/status")) {
-          // Simulate "Real" Not Connected State for Demo
-          return {
-            connected: false,
-            charges_enabled: false,
-            details_submitted: false,
-            stripeAccountId: null,
-          };
-        }
-        if (endpoint.includes("/platform-admin/stats")) {
-          return {
-            success: true,
-            stats: {
-              total_users: 1250,
-              total_groups: 42,
-              active_plans: 38,
-              pending_invitations: 15,
-            },
-            recentSignups: 85,
-          };
-        }
-        if (endpoint.includes("/platform-admin/groups")) {
-          return {
-            success: true,
-            groups: [
-              {
-                id: "demo-club-id",
-                name: "Pro Group Demo",
-                sport: "Football",
-                owner_email: "demo-admin@clubhub.com",
-                member_count: 142,
-                created_at: "2024-01-01T00:00:00Z",
-              },
-              {
-                id: "club-2",
-                name: "Elite Academy",
-                sport: "Basketball",
-                owner_email: "owner2@example.com",
-                member_count: 85,
-                created_at: "2024-01-15T00:00:00Z",
-              },
-            ],
-            total: 2,
-            page: 1,
-          };
-        }
-        if (endpoint.includes("/platform-admin/users")) {
-          return {
-            success: true,
-            users: [
-              {
-                id: "u1",
-                first_name: "John",
-                last_name: "Smith",
-                email: "demo-admin@clubhub.com",
-                account_type: "group",
-                org_count: 1,
-                is_platform_admin: false,
-                created_at: "2024-01-01T00:00:00Z",
-              },
-              {
-                id: "u2",
-                first_name: "Michael",
-                last_name: "Thompson",
-                email: "demo-coach@clubhub.com",
-                account_type: "group",
-                org_count: 1,
-                is_platform_admin: false,
-                created_at: "2024-01-02T00:00:00Z",
-              },
-            ],
-            total: 2,
-            page: 1,
-          };
-        }
-        if (endpoint.includes("/platform-admin/activity")) {
-          return {
-            success: true,
-            activity: [
-              {
-                type: "group_created",
-                title: "New Group: Pro Group Demo",
-                user_email: "demo-admin@clubhub.com",
-                timestamp: "2024-01-01T10:00:00Z",
-              },
-              {
-                type: "user_registered",
-                title: "New User Registered: Michael Thompson",
-                user_email: "demo-coach@clubhub.com",
-                timestamp: "2024-01-02T11:00:00Z",
-              },
-            ],
-          };
-        }
-        if (endpoint.includes("/auth/profile") && options.method === "PUT") {
-          return {
-            success: true,
-            user: {
-              ...JSON.parse(localStorage.getItem("currentUser") || "{}"),
-              ...JSON.parse(options.body || "{}"),
-            },
-            message: "Profile updated successfully (Demo Mode)",
-          };
-        }
-        if (endpoint.includes("/players/dashboard")) {
-          return {
-            success: true,
-            player: {
-              id: "demo-player-id",
-              first_name: "Jordan",
-              last_name: "Smith",
-              email: "demo-player@clubhub.com",
-              position: "Midfielder",
-              date_of_birth: "2010-05-15",
-            },
-            groups: [
-              {
-                id: "demo-club-id",
-                name: "Pro Group Demo",
-                sport: "Football",
-                location: "London",
-              },
-            ],
-            teams: [
-              {
-                id: "t1",
-                name: "Under 15s Elite",
-                coach: "Michael Thompson",
-              },
-            ],
-            events: [
-              {
-                id: "e1",
-                title: "Weekly Training",
-                event_date: new Date(Date.now() + 86400000).toISOString(),
-                event_time: "18:00",
-                price: 15,
-              },
-              {
-                id: "e2",
-                title: "Weekend Match v Tigers",
-                event_date: new Date(Date.now() + 172800000).toISOString(),
-                event_time: "10:30",
-                price: 0,
-              },
-            ],
-            payments: [],
-            attendance: 92,
-          };
-        }
-        if (endpoint.includes("/players/family")) {
-          return [
-            {
-              id: "child-1",
-              first_name: "Leo",
-              last_name: "Smith",
-              date_of_birth: "2012-08-20",
-              sport: "Football",
-              club_id: "demo-club-id",
-              club_name: "Pro Group Demo",
-            },
-          ];
-        }
-        if (endpoint.includes("/events/bookings/my-bookings")) {
-          return [
-            {
-              id: "b1",
-              title: "Last Week Training",
-              event_date: new Date(Date.now() - 86400000 * 3).toISOString(),
-              booking_status: "confirmed",
-              event_type: "training",
-            },
-          ];
-        }
-        if (endpoint.includes("/notifications")) {
-          return [
-            {
-              id: "n1",
-              title: "Team Selection",
-              message: "You have been selected for the upcoming match!",
-              is_read: false,
-              created_at: new Date().toISOString(),
-            },
-          ];
-        }
-        if (endpoint.includes("/players/me/plan")) {
-          return {
-            id: "p1",
-            name: "Academy Plus",
-            amount: 4500,
-            interval: "month",
-          };
-        }
-        if (endpoint.includes("/api/health")) {
-          return { status: "healthy", service: "ClubHub API (Demo Mode)" };
-        }
-        if (endpoint.includes("/payments/plan/current")) {
-          return {
-            id: "p1",
-            name: "Pro Admin Plan",
-            amount: 9900,
-            interval: "year",
-            status: "active",
-          };
-        }
-        if (endpoint.includes("/auth/tours/complete")) {
-          return { success: true, message: "Tour completion saved (Demo)" };
-        }
-        if (endpoint.includes("/dashboard/admin")) {
-          // Return full dashboard fallback immediately for demo sessions
-          const fallback = this.getAdminDashboardFallback();
-          return fallback;
-        }
-        if (
-          endpoint.includes("/groups") &&
-          !endpoint.includes("/platform-admin")
-        ) {
-          return this.getAdminDashboardFallback().groups;
-        }
-        if (endpoint.includes("/auth/context")) {
-          const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-          const demoClubs = this.getAdminDashboardFallback().groups;
-          return {
-            success: true,
-            user: user,
-            currentGroup: {
-              id: user.groupId || "demo-club-id",
-              name: "Pro Group Demo",
-              role: "admin",
-              user_role: "admin",
-            },
-            groups: demoClubs,
-            organizations: demoClubs,
-            clubs: demoClubs,
-          };
-        }
-
-        if (endpoint.includes("/feed")) {
-          if (options.method === "POST") {
-            const body = JSON.parse(options.body || "{}");
-            return {
-              success: true,
-              post: {
-                id: "post_" + Date.now(),
-                user_name: "Demo Admin",
-                content: body.content,
-                created_at: new Date().toISOString(),
-                likes: 0,
-                comments: 0,
-              },
-            };
-          }
-          return [
-            {
-              id: "p1",
-              user_name: "Coach Michael",
-              content:
-                "Great training session today everyone! Keep up the hard work. ⚽",
-              created_at: new Date(Date.now() - 3600000).toISOString(),
-              likes: 12,
-              comments: 3,
-            },
-            {
-              id: "p2",
-              user_name: "Club Secretary",
-              content:
-                "Reminder: Tournament registration closes this Friday. Don't miss out!",
-              created_at: new Date(Date.now() - 86400000).toISOString(),
-              likes: 5,
-              comments: 1,
-            },
-          ];
-        }
-
-        if (endpoint.includes("/messages")) {
-          if (options.method === "POST") {
-            const body = JSON.parse(options.body || "{}");
-            return {
-              success: true,
-              message: {
-                id: "msg_" + Date.now(),
-                sender_name: "You",
-                content: body.content,
-                timestamp: new Date().toISOString(),
-              },
-            };
-          }
-          if (endpoint.split("/").length > 2) {
-            // Specific conversation
-            return [
-              {
-                id: "m1",
-                sender_name: "Coach Michael",
-                content: "Are you coming to practice tonight?",
-                timestamp: new Date(Date.now() - 7200000).toISOString(),
-              },
-              {
-                id: "m2",
-                sender_name: "You",
-                content: "Yes, I'll be there at 6!",
-                timestamp: new Date(Date.now() - 3600000).toISOString(),
-              },
-            ];
-          }
-          // Conversation list
-          return [
-            {
-              id: "c1",
-              name: "U15 Elite Squad",
-              last_message: "Coach Michael: See you tonight!",
-              timestamp: new Date().toISOString(),
-              unread_count: 2,
-            },
-            {
-              id: "c2",
-              name: "Jordan Smith",
-              last_message: "You: Thanks for the feedback!",
-              timestamp: new Date(Date.now() - 86400000).toISOString(),
-              unread_count: 0,
-            },
-          ];
-        }
-
-        if (endpoint.includes("/tournaments")) {
-          return {
-            success: true,
-            id: "mock_t_" + Date.now(),
-            message: "Tournament action mocked in demo mode",
-            tournament: { id: "mock_t_" + Date.now(), name: "Demo Tournament" },
-            bracket: [],
-            pitches: [],
-            standings: [],
-          };
-        }
-
-        // For other requests in demo mode, optionally skip or return fallback
-        console.warn(
-          `🛡️ Demo mode: No mock data for ${endpoint}, allowing real request but it might 403`,
-        );
       }
 
       console.log(`🌐 API Request: ${options.method || "GET"} ${url}`);
-
       const response = await fetch(url, config);
-
-      const contentType = response.headers.get("content-type");
-      let data;
-
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        const text = await response.text();
-        try {
-          data = JSON.parse(text);
-        } catch {
-          data = { message: text };
-        }
-      }
-
-      if (!response.ok) {
-        console.error(
-          `❌ API Error ${response.status} [${options.method || "GET"} ${endpoint}]:`,
-          {
-            data,
-            statusText: response.statusText,
-            payload: options.body
-              ? options.body instanceof FormData
-                ? "[FormData]"
-                : JSON.parse(options.body)
-              : "None",
-          },
-        );
-
-        // Don't trigger global auth error for login/register attempts or demo sessions
-        if (
-          (response.status === 401 || response.status === 403) &&
-          !endpoint.includes("/auth/login") &&
-          !endpoint.includes("/auth/register") &&
-          localStorage.getItem("isDemoSession") !== "true"
-        ) {
-          console.warn(
-            `Auth Error (${response.status}) on ${endpoint} - logging out`,
-          );
-          this.handleAuthError();
-          throw new Error("Authentication required");
-        }
-
-        throw new Error(
-          data.message ||
-            data.error ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
-      }
-
-      this.retryCount[requestId] = 0;
-      console.log(`✅ API Response: ${response.status}`);
-      return data;
+      return await this._handleResponse(response, endpoint, options);
     } catch (error) {
-      console.error(`❌ API Error: ${endpoint}`, error);
-
-      if (error.name === "TypeError" && error.message.includes("fetch")) {
-        if (this.retryCount[requestId] < this.maxRetries) {
-          this.retryCount[requestId]++;
-          console.log(
-            `🔄 Retrying request ${requestId} (${this.retryCount[requestId]}/${this.maxRetries})`,
-          );
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1000 * this.retryCount[requestId]),
-          );
-          return this.makeRequest(endpoint, options);
-        }
-        throw new Error(
-          "Cannot connect to server. Please check your internet connection.",
-        );
-      }
-
-      throw error;
+      return this._handleError(error, requestId, endpoint, options);
     }
   }
+
+  // Helper to handle all demo interceptions in one place
+  async _interceptDemoRequest(endpoint, options) {
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const method = options.method || "GET";
+
+    // --- AUTH CONTEXT ---
+    if (endpoint.includes("/auth/context")) {
+      const isSuper = user.is_platform_admin === true || user.role === "superadmin";
+      const role = user.activePlayerId ? "player" : user.role || "admin";
+      
+      let groups = [
+        { id: "demo-club-id", name: "Pro Group Demo", role: isSuper ? "owner" : role, user_role: isSuper ? "owner" : role },
+        { id: "demo-coach-org-2", name: "Secondary Academy", role: isSuper ? "owner" : "coach", user_role: isSuper ? "owner" : "coach" },
+        { id: "demo-player-org", name: "Elite Academy (Player)", role: isSuper ? "owner" : "player", user_role: isSuper ? "owner" : "player", player_id: "demo-player-id", player_name: "Jordan Smith" }
+      ];
+
+      if (isSuper) {
+        groups.push({ id: "org-3", name: "Westside United", role: "owner", user_role: "owner" });
+        groups.push({ id: "org-4", name: "London Lions", role: "owner", user_role: "owner" });
+      }
+
+      return {
+        success: true,
+        user: { ...user, is_active: true },
+        currentGroup: groups.find(g => g.id === (user.groupId || "demo-club-id")) || groups[0],
+        groups: groups
+      };
+    }
+
+    // --- GROUP SWITCHING ---
+    if (endpoint.includes("/auth/switch-group")) {
+      const body = JSON.parse(options.body || "{}");
+      user.groupId = body.groupId || "demo-club-id";
+      localStorage.setItem("currentUser", JSON.stringify(user));
+      return { success: true, message: "Group switched (Demo)", groupId: user.groupId };
+    }
+
+    // --- DASHBOARDS ---
+    if (endpoint.includes("/dashboard/admin")) return this.getAdminDashboardFallback();
+    if (endpoint.includes("/dashboard/player") || endpoint.includes("/players/dashboard")) return this.getPlayerDashboardFallback();
+    if (endpoint.includes("/dashboard/coach")) return this.getCoachDashboardFallback();
+
+    // --- PLATFORM ADMIN (SUPER ADMIN) ---
+    if (endpoint.includes("/platform-admin/stats")) {
+      return { stats: { total_users: 1242, total_groups: 86, active_plans: 64, pending_invitations: 12 }, recentSignups: 42 };
+    }
+    if (endpoint.includes("/platform-admin/groups")) {
+      return { 
+        total: 86, page: 1, 
+        groups: [
+          { id: "g1", name: "Elite Performance Academy", sport: "Football", owner_email: "academy@example.com", member_count: 142, created_at: "2023-01-15", status: "Active" },
+          { id: "g2", name: "London Lions FC", sport: "Football", owner_email: "info@londonlions.com", member_count: 88, created_at: "2023-03-22", status: "Active" },
+          { id: "g3", name: "Rising Stars Basketball", sport: "Basketball", owner_email: "coach@risingstars.org", member_count: 56, created_at: "2023-06-10", status: "Active" }
+        ] 
+      };
+    }
+    if (endpoint.includes("/platform-admin/users")) {
+      if (method === "GET") {
+        return { 
+          total: 1242, page: 1, 
+          users: [
+            { id: "u1", first_name: "John", last_name: "Doe", email: "john@example.com", account_type: "group", is_active: true },
+            { id: "u2", first_name: "Sarah", last_name: "Smith", email: "sarah@example.com", account_type: "adult", is_active: true },
+            { id: "u3", first_name: "Admin", last_name: "User", email: "admin@clubhub.com", account_type: "admin", is_active: true }
+          ] 
+        };
+      }
+      return { success: true, message: "Action completed (Demo)" };
+    }
+    if (endpoint.includes("/platform-admin/activity")) {
+      return { activity: [
+        { id: "a1", type: "user_signup", title: "New User: John Doe", user_email: "john@doe.com", timestamp: new Date().toISOString() },
+        { id: "a2", type: "group_created", title: "New Group: Elite Academy", user_email: "admin@elite.com", timestamp: new Date().toISOString() }
+      ]};
+    }
+
+    // --- SCOUTING & SEARCH ---
+    if (endpoint.includes("/scout/discover") || endpoint.includes("/search/players")) {
+      return { success: true, players: this.getAdminDashboardFallback().players };
+    }
+
+    // --- TOURNAMENTS ---
+    if (endpoint.includes("/tournaments/schedule")) {
+      return { success: true, fixtures: [{ id: "f1", team1: "U18 Elite", team2: "Academy Blues", time: "10:00", pitch: "Pitch 1" }]};
+    }
+    if (endpoint.includes("/tournaments")) return { success: true, message: "Tournament action mocked", tournament: { id: "t1", name: "Demo Cup" }};
+
+    // --- FEED & MESSAGES ---
+    if (endpoint.includes("/feed")) {
+      if (method === "POST") return { success: true, post: { id: "p_" + Date.now(), user_name: "Demo User", content: JSON.parse(options.body).content, created_at: new Date().toISOString() }};
+      return [{ id: "p1", user_name: "Coach Mike", content: "Great session today!", created_at: new Date().toISOString(), likes: 5, comments: 2 }];
+    }
+    if (endpoint.includes("/messages")) {
+      if (method === "POST") return { success: true, message: { id: "m_" + Date.now(), sender_name: "You", content: JSON.parse(options.body).content, timestamp: new Date().toISOString() }};
+      return [{ id: "c1", name: "Team Chat", last_message: "Coach: See you at 6!", timestamp: new Date().toISOString(), unread_count: 1 }];
+    }
+
+    // --- OTHER FALLBACKS ---
+    if (endpoint.includes("/auth/profile")) return { success: true, profile: { ...user, first_name: user.first_name || "Demo", last_name: user.last_name || "User" }};
+    if (endpoint.includes("/auth/settings")) return { success: true, theme: "dark", emailNotifications: true };
+    if (endpoint.includes("/notifications")) return [{ id: "n1", title: "Welcome", message: "Thanks for joining ClubHub Demo!", is_read: false, created_at: new Date().toISOString() }];
+    if (endpoint.includes("/api/health")) return { status: "healthy", service: "ClubHub Demo" };
+
+    return null; // Fall through to real fetch if no mock found
+  }
+
+  async _handleResponse(response, endpoint, options) {
+    const contentType = response.headers.get("content-type");
+    let data;
+
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text };
+      }
+    }
+
+    if (!response.ok) {
+      // Don't trigger logout for 401/403 in demo mode
+      if ((response.status === 401 || response.status === 403) && localStorage.getItem("isDemoSession") !== "true") {
+        console.warn("🔐 Session expired, logging out...");
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("currentUser");
+        if (!window.location.pathname.includes("index.html") && !window.location.pathname.includes("signup.html")) {
+          window.location.href = "index.html";
+        }
+      }
+      throw { status: response.status, ...data };
+    }
+
+    return data;
+  }
+
+  _handleError(error, requestId, endpoint, options) {
+    console.error(`❌ API Error [${endpoint}]:`, error);
+    throw error;
+  }
+
 
   // =========================== ITEM SHOP METHODS ===========================
 
@@ -2933,6 +2199,7 @@ class ApiService {
           date_of_birth: "2006-05-15",
           monthly_fee: 50.0,
           team_name: "Under 18s Elite",
+          team_id: "t1"
         },
         {
           id: "p2",
@@ -2945,6 +2212,7 @@ class ApiService {
           date_of_birth: "2007-08-22",
           monthly_fee: 50.0,
           team_name: "Under 18s Elite",
+          team_id: "t1"
         },
         {
           id: "p3",
@@ -2957,93 +2225,52 @@ class ApiService {
           date_of_birth: "1987-06-24",
           monthly_fee: 500.0,
           team_name: "Under 16s Development",
-        },
-        {
-          id: "p4",
-          first_name: "Harry",
-          last_name: "Kane",
-          email: "harry@example.com",
-          position: "Striker",
-          payment_status: "paid",
-          attendance_rate: 98,
-          date_of_birth: "1993-07-28",
-          monthly_fee: 250.0,
-          team_name: "Under 18s Elite",
-        },
-        {
-          id: "p5",
-          first_name: "Marcus",
-          last_name: "Rashford",
-          email: "marcus@example.com",
-          position: "Winger",
-          payment_status: "late",
-          attendance_rate: 92,
-          date_of_birth: "1997-10-31",
-          monthly_fee: 150.0,
-          team_name: "First Team",
-        },
-        {
-          id: "p6",
-          first_name: "Bukayo",
-          last_name: "Saka",
-          email: "saka@example.com",
-          position: "Winger",
-          payment_status: "paid",
-          attendance_rate: 97,
-          date_of_birth: "2001-09-05",
-          monthly_fee: 120.0,
-          team_name: "First Team",
-        },
-        {
-          id: "p7",
-          first_name: "Jude",
-          last_name: "Bellingham",
-          email: "jude@example.com",
-          position: "Midfielder",
-          payment_status: "paid",
-          attendance_rate: 99,
-          date_of_birth: "2003-06-29",
-          monthly_fee: 200.0,
-          team_name: "First Team",
-        },
+          team_id: "t2"
+        }
       ],
       staff: [
         {
           id: "demo-coach-id",
           first_name: "Michael",
           last_name: "Thompson",
-          role: "coach",
+          role: "Head Coach",
           email: "demo-coach@clubhub.com",
           phone: "+44 7700 900111",
           join_date: "2023-01-10",
-        },
-        {
-          id: "s2",
-          first_name: "Pep",
-          last_name: "Guardiola",
-          role: "Technical Director",
-          email: "pep@example.com",
-          phone: "+44 7700 900222",
-          join_date: "2022-06-15",
+          verified_scout: true
         },
         {
           id: "s3",
           first_name: "Jürgen",
           last_name: "Klopp",
-          role: "Lead Coach",
+          role: "Technical Lead",
           email: "klopp@example.com",
           phone: "+44 7700 900333",
-          join_date: "2021-11-20",
+          join_date: "2021-11-20"
+        }
+      ],
+      teams: [
+        { id: "t1", name: "Under 18s Elite", members: 22, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["demo-player-id", "p2"], sport: "Football", ageGroup: "U18" },
+        { id: "t2", name: "Under 16s Development", members: 18, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["p3"], sport: "Football", ageGroup: "U16" },
+        { id: "t3", name: "First Team", members: 25, coach: "Jürgen Klopp", coachId: "s3", players: [], sport: "Football", ageGroup: "Senior" }
+      ],
+      tournaments: [
+        {
+          id: "tour1",
+          name: "Elite Performance Cup 2025",
+          format: "knockout",
+          status: "upcoming",
+          teams_count: 8,
+          start_date: new Date(Date.now() + 86400000 * 30).toISOString()
         },
         {
-          id: "s4",
-          first_name: "Emma",
-          last_name: "Hayes",
-          role: "Head of Women's Football",
-          email: "emma@example.com",
-          phone: "+44 7700 900444",
-          join_date: "2023-03-01",
-        },
+          id: "tour2",
+          name: "Junior League Championship",
+          format: "league",
+          status: "in_progress",
+          teams_count: 12,
+          start_date: new Date(Date.now() - 86400000 * 5).toISOString()
+        }
       ],
       events: [
         {
@@ -3066,54 +2293,8 @@ class ApiService {
           type: "training",
           status: "upcoming",
           team_name: "Under 18s Elite",
-        },
-        {
-          id: "e3",
-          title: "Monthly Coaches Meeting",
-          date: new Date(Date.now() + 86400000 * 14)
-            .toISOString()
-            .split("T")[0],
-          time: "10:00",
-          location: "Grouphouse Boardroom",
-          type: "meeting",
-          status: "upcoming",
-        },
-        {
-          id: "e4",
-          title: "Pro Group vs City Lions",
-          date: new Date(Date.now() + 86400000 * 4).toISOString().split("T")[0],
-          time: "15:00",
-          location: "Away: City Stadium",
-          type: "match",
-          status: "upcoming",
-          team_name: "First Team",
-        },
-      ],
-      teams: [
-        { id: "t1", name: "Under 18s Elite", members: 22, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["demo-player-id", "p2", "p4"], sport: "Football", ageGroup: "U18" },
-        { id: "t2", name: "Under 16s Development", members: 18, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["p3"], sport: "Football", ageGroup: "U16" },
-        { id: "t3", name: "First Team", members: 25, coach: "Jürgen Klopp", coachId: "s3", players: ["p5", "p6", "p7"], sport: "Football", ageGroup: "Senior" },
-        { id: "t4", name: "Under 14s Academy", members: 16, coach: "Michael Thompson", coachId: "demo-coach-id", players: [], sport: "Football", ageGroup: "U14" },
-        { id: "t5", name: "Under 12s Juniors", members: 14, coach: "Emma Hayes", coachId: "s4", players: [], sport: "Football", ageGroup: "U12" },
-        { id: "t6", name: "Women's First Team", members: 20, coach: "Emma Hayes", coachId: "s4", players: [], sport: "Football", ageGroup: "Senior" },
-        { id: "t7", name: "Blue Dragons U15", members: 15, coach: "Michael Thompson", coachId: "demo-coach-id", players: [], sport: "Football", ageGroup: "U15" },
-        { id: "t8", name: "Red Eagles U15", members: 15, coach: "Michael Thompson", coachId: "demo-coach-id", players: [], sport: "Football", ageGroup: "U15" },
-        { id: "t9", name: "Green Harriers U15", members: 15, coach: "Michael Thompson", coachId: "demo-coach-id", players: [], sport: "Football", ageGroup: "U15" },
-        { id: "t10", name: "Yellow Lions U15", members: 15, coach: "Michael Thompson", coachId: "demo-coach-id", players: [], sport: "Football", ageGroup: "U15" },
-        { id: "t11", name: "Purple Cobras U15", members: 15, coach: "Michael Thompson", coachId: "demo-coach-id", players: [], sport: "Football", ageGroup: "U15" },
-        { id: "t12", name: "Orange Tigers U15", members: 15, coach: "Michael Thompson", coachId: "demo-coach-id", players: [], sport: "Football", ageGroup: "U15" },
-        { id: "t13", name: "Silver Sharks U15", members: 15, coach: "Michael Thompson", coachId: "demo-coach-id", players: [], sport: "Football", ageGroup: "U15" },
-        { id: "t14", name: "Golden Hawks U15", members: 15, coach: "Michael Thompson", coachId: "demo-coach-id", players: [], sport: "Football", ageGroup: "U15" },
-        { id: "t15", name: "Shadow Wolves U13", members: 14, coach: "Emma Hayes", coachId: "s4", players: [], sport: "Football", ageGroup: "U13" },
-        { id: "t16", name: "Ice Phantoms U13", members: 14, coach: "Emma Hayes", coachId: "s4", players: [], sport: "Football", ageGroup: "U13" },
-        { id: "t17", name: "Flame Knights U13", members: 14, coach: "Emma Hayes", coachId: "s4", players: [], sport: "Football", ageGroup: "U13" },
-        { id: "t18", name: "Volt Runners U13", members: 14, coach: "Emma Hayes", coachId: "s4", players: [], sport: "Football", ageGroup: "U13" },
-        { id: "t19", name: "Titan Giants U17", members: 18, coach: "Jürgen Klopp", coachId: "s3", players: [], sport: "Football", ageGroup: "U17" },
-        { id: "t20", name: "Swift Arrows U17", members: 18, coach: "Jürgen Klopp", coachId: "s3", players: [], sport: "Football", ageGroup: "U17" },
-        { id: "t21", name: "Thunder Strikers U17", members: 18, coach: "Jürgen Klopp", coachId: "s3", players: [], sport: "Football", ageGroup: "U17" },
-        { id: "t22", name: "Rapid Rangers U17", members: 18, coach: "Jürgen Klopp", coachId: "s3", players: [], sport: "Football", ageGroup: "U17" },
-        { id: "t23", name: "Elite Reserves", members: 20, coach: "Pep Guardiola", coachId: "s2", players: [], sport: "Football", ageGroup: "Senior" },
-        { id: "t24", name: "Youth Academy B", members: 15, coach: "Pep Guardiola", coachId: "s2", players: [], sport: "Football", ageGroup: "U14" }
+          team_id: "t1"
+        }
       ],
       payments: [
         {
@@ -3124,79 +2305,34 @@ class ApiService {
           date: new Date().toISOString(),
           player_name: "David Williams",
           method: "Stripe",
-        },
-        {
-          id: "pay2",
-          amount: 120,
-          status: "pending",
-          description: "Tournament Fee - Elite Cup",
-          date: new Date().toISOString(),
-          player_name: "Jordan Smith",
-          method: "Invoice",
-        },
-        {
-          id: "pay3",
-          amount: 500,
-          status: "paid",
-          description: "Annual Membership",
-          date: new Date().toISOString(),
-          player_name: "Leo Messi",
-          method: "Stripe",
-        },
-        {
-          id: "pay4",
-          amount: 150,
-          status: "overdue",
-          description: "New Kit Bundle",
-          date: new Date(Date.now() - 86400000 * 15).toISOString(),
-          player_name: "Marcus Rashford",
-          method: "Direct Debit",
-        },
+        }
       ],
-      products: [
+      feed: [
         {
-          id: "prod1",
-          name: "Official Group Jersey",
-          price: 45.0,
-          stock_quantity: 50,
-          description:
-            "High-quality replica home jersey with breathable fabric.",
-        },
-        {
-          id: "prod2",
-          name: "Training Tracksuit",
-          price: 65.0,
-          stock_quantity: 20,
-          description:
-            "Comfortable fleece-lined tracksuit for winter training.",
-        },
-        {
-          id: "prod3",
-          name: "Group Water Bottle",
-          price: 12.5,
-          stock_quantity: 100,
-          description: "BPA-free 750ml bottle with club crest.",
-        },
+          id: "f1",
+          title: "New Tactical Analysis Tool Launched",
+          excerpt: "Analyze your team's performance with our new professional-grade tactical board.",
+          content: "We're excited to announce the rollout of our new tactical analysis board for all coaches.",
+          imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800",
+          date: new Date().toISOString(),
+          author: "ClubHub Admin",
+          type: "announcement",
+          roles: ["coach", "admin"]
+        }
       ],
-      campaigns: [
+      messages: [
         {
-          id: "camp1",
-          name: "Summer Camp Early Bird",
-          subject: "Register now and save £20!",
-          target_group: "All Members",
-          status: "sent",
-          sent_at: new Date().toISOString(),
-          open_rate: 68,
-          click_rate: 12,
-        },
-        {
-          id: "camp2",
-          name: "Kit Order Reminder",
-          subject: "Last chance to order your new season kit",
-          target_group: "Parents",
-          status: "draft",
-          created_at: new Date().toISOString(),
-        },
+          id: "m2",
+          threadId: "t2",
+          senderId: "demo-coach-id",
+          senderName: "Michael Thompson",
+          subject: "Training Session Change",
+          body: "Hi team, training tomorrow is moved to 6 PM at Field B.",
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          priority: "normal",
+          type: "team",
+          category: "Schedule"
+        }
       ],
       listings: [
         {
@@ -3204,20 +2340,10 @@ class ApiService {
           title: "Under 14s Striker Needed",
           listing_type: "recruitment",
           position: "Forward",
-          description:
-            "We are looking for a clinical finisher to join our U14 Academy squad.",
+          description: "We are looking for a clinical finisher to join our U14 Academy squad.",
           salary: "Scholarship",
           status: "active",
-        },
-        {
-          id: "list2",
-          title: "U18 Goalkeeper Assistant",
-          listing_type: "job",
-          position: "Coach",
-          description: "Part-time role assisting our lead goalkeeper coach.",
-          salary: "£20/hour",
-          status: "active",
-        },
+        }
       ],
       statistics: {
         total_groups: 1,
@@ -3228,91 +2354,7 @@ class ApiService {
         monthly_revenue: 7100,
         pending_payments: 4,
         attendance_avg: 94,
-      },
-      feed: [
-        {
-          id: "f1",
-          title: "New Tactical Analysis Tool Launched",
-          excerpt: "Analyze your team's performance with our new professional-grade tactical board.",
-          content: "We're excited to announce the rollout of our new tactical analysis board for all coaches. This tool allows for real-time player positioning and strategy mapping.",
-          imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800",
-          date: new Date().toISOString(),
-          author: "ClubHub Admin",
-          type: "announcement",
-          roles: ["coach", "admin"]
-        },
-        {
-          id: "f2",
-          title: "Elite Scouting: Assessing Modern Wingers",
-          excerpt: "Professional scout Michael Thompson shares his top 5 metrics for assessing world-class wingers.",
-          content: "When I'm at a match, the first thing I look for is spatial awareness and the ability to transition quickly from defense to attack...",
-          imageUrl: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800",
-          date: new Date(Date.now() - 86400000).toISOString(),
-          author: "Michael Thompson",
-          type: "blog",
-          roles: ["scout", "coach", "admin"]
-        },
-        {
-          id: "f3",
-          title: "Summer League Registration Now Open!",
-          excerpt: "The annual Summer League is back. Secure your spot early and get a 10% discount on entry fees.",
-          content: "Registration for the 2025 Summer League officially begins today. We're expecting our largest turnout yet with over 50 teams across 4 age divisions.",
-          imageUrl: "https://images.unsplash.com/photo-1543351611-58f69d7c1781?auto=format&fit=crop&q=80&w=800",
-          date: new Date(Date.now() - 172800000).toISOString(),
-          author: "Tournament Director",
-          type: "update",
-          roles: ["player", "parent", "coach", "admin"]
-        },
-        {
-          id: "f4",
-          title: "Scouting Growth: New Metrics for Players",
-          excerpt: "We've added 'Growth Index' to all player profiles. See how you compare to the national average.",
-          content: "The new Growth Index takes into account physical development, technical proficiency, and tactical awareness to give scouts a holistic view.",
-          imageUrl: "https://images.unsplash.com/photo-1517603951030-1474131f20bd?auto=format&fit=crop&q=80&w=800",
-          date: new Date(Date.now() - 259200000).toISOString(),
-          author: "Platform Analytics",
-          type: "update",
-          roles: ["player", "scout"]
-        }
-      ],
-      messages: [
-        {
-          id: "m1",
-          threadId: "t1",
-          senderId: "system",
-          senderName: "ClubHub Admin",
-          subject: "Platform Update: Scout Verifications",
-          body: "Attention all scouts: Professional verification is now mandatory for accessing U16 performance data. Please update your credentials by the end of the month.",
-          timestamp: new Date().toISOString(),
-          priority: "high",
-          type: "announcement",
-          category: "Security"
-        },
-        {
-          id: "m2",
-          threadId: "t2",
-          senderId: "demo-coach-id",
-          senderName: "Michael Thompson",
-          subject: "Training Session Change",
-          body: "Hi team, training tomorrow is moved to 6 PM at Field B. Check the app for the exact pitch location.",
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          priority: "normal",
-          type: "team",
-          category: "Schedule"
-        },
-        {
-          id: "m3",
-          threadId: "t3",
-          senderId: "superadmin@clubhub.com",
-          senderName: "Platform Director",
-          subject: "Welcome to the New Scouting Ecosystem",
-          body: "We are thrilled to have you as part of our verified scouting network. Your access to the talent pool is now active.",
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          priority: "normal",
-          type: "direct",
-          category: "Onboarding"
-        }
-      ]
+      }
     };
   }
 

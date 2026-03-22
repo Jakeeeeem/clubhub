@@ -176,27 +176,55 @@
 
 /* --- Hamburger (Menu Trigger) --- */
 .side-menu-trigger {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     border-radius: 12px;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     color: var(--text-main);
     margin-right: 1rem;
     background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .side-menu-trigger:hover {
     background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(220, 38, 38, 0.3);
     transform: scale(1.05);
 }
 
-.side-menu-trigger i {
-    font-size: 1.25rem;
-    font-style: normal;
+.hamburger-box {
+    width: 20px;
+    height: 14px;
+    display: inline-block;
+    position: relative;
+}
+
+.hamburger-inner, .hamburger-inner::before, .hamburger-inner::after {
+    width: 20px;
+    height: 2px;
+    background-color: currentColor;
+    border-radius: 4px;
+    position: absolute;
+    transition: transform 0.15s ease;
+}
+
+.hamburger-inner {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.hamburger-inner::before {
+    content: "";
+    top: -6px;
+}
+
+.hamburger-inner::after {
+    content: "";
+    bottom: -6px;
 }
 
 /* --- Profile Dropdown --- */
@@ -205,7 +233,7 @@
     top: calc(100% + 12px);
     right: 1.5rem;
     width: 300px;
-    background: rgba(15, 15, 18, 0.95);
+    background: rgba(15, 15, 18, 0.98);
     backdrop-filter: blur(40px) saturate(180%);
     -webkit-backdrop-filter: blur(40px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -312,14 +340,16 @@
 .pro-sidebar {
     position: fixed;
     top: 0;
-    left: -var(--sidebar-width);
-    width: var(--sidebar-width);
+    left: -280px;
+    left: -var(--sidebar-width, 280px);
+    width: 280px;
+    width: var(--sidebar-width, 280px);
     height: 100vh;
-    background: var(--glass-bg);
+    background: rgba(10, 10, 12, 0.98);
     backdrop-filter: blur(40px) saturate(180%);
     -webkit-backdrop-filter: blur(40px) saturate(180%);
     border-right: 1px solid var(--glass-border);
-    z-index: 3000;
+    z-index: 4000;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
@@ -328,18 +358,19 @@
 }
 
 .pro-sidebar.active {
-    transform: translateX(var(--sidebar-width));
+    transform: translateX(280px);
+    transform: translateX(var(--sidebar-width, 280px));
 }
 
 .sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    z-index: 2500;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 3500;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s;
+    transition: all 0.4s;
 }
 
 .sidebar-overlay.active {
@@ -481,8 +512,147 @@
     }
 }
 
-@media (min-width: 769px) {
-    .mobile-only {
+/* --- Responsive Tables (Card Mode) --- */
+@media (max-width: 768px) {
+    table {
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    table thead {
         display: none !important;
     }
+
+    table tr {
+        display: block !important;
+        margin-bottom: 1.25rem !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px !important;
+        padding: 1rem !important;
+        position: relative !important;
+    }
+
+    table td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        text-align: right !important;
+        padding: 0.75rem 0.5rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        font-size: 0.9rem !important;
+    }
+
+    table td:last-child {
+        border-bottom: 0 !important;
+    }
+
+    table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-align: left;
+        margin-right: 1rem;
+    }
+
+    /* Swipeable Headlines (Dashboard Nav) */
+    .dashboard-nav {
+        display: flex !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        scroll-snap-type: x mandatory !important;
+        gap: 0.5rem !important;
+        padding: 0.5rem 0 !important;
+        margin: 1.5rem -1rem !important;
+        padding: 0.5rem 1rem !important;
+        scrollbar-width: none !important;
+    }
+
+    .dashboard-nav::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .dashboard-nav button, 
+    .dashboard-nav .btn-special {
+        flex: 0 0 auto !important;
+        scroll-snap-align: start !important;
+        padding: 0.6rem 1.25rem !important;
+        font-size: 0.85rem !important;
+        white-space: nowrap !important;
+        border-radius: 100px !important;
+    }
+
+    /* Fix for common grid layouts on mobile */
+    .dashboard-grid, .stats-grid, .account-types-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+}
+
+/* Custom Scrollbar for Desktop (Premium) */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* --- Unified Navigation Overrides --- */
+/* Hide older/inconsistent dashboard nav elements to ensure a singular experience */
+#appBottomNav, 
+.app-bottom-nav,
+.mobile-nav-toggle,
+.old-sidebar,
+.app-top-tabs-container,
+#appTopTabs {
+    display: none !important;
+}
+
+/* Ensure Unified Header has priority */
+.pro-header {
+    z-index: 3000 !important;
+}
+
+/* Improve Side Menu Trigger (Hamburger) Hit Area */
+.side-menu-trigger {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background 0.2s, transform 0.1s;
+    margin-right: 0.5rem;
+}
+
+.side-menu-trigger:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.side-menu-trigger:active {
+    transform: scale(0.94);
+}
+
+/* Standardize Sidebar Width across all screens */
+:root {
+    --sidebar-width: 280px;
+}
+
+.pro-sidebar {
+    width: var(--sidebar-width);
 }
