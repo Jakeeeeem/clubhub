@@ -335,8 +335,27 @@ const UnifiedNav = {
   },
 
   toggleSidebar(show) {
+    // Do not open/close the mobile sidebar on desktop viewports
+    const isDesktop =
+      typeof window !== "undefined" && window.innerWidth >= 1025;
+    if (isDesktop) {
+      // On desktop, don't open the mobile sidebar. If caller requested `show`,
+      // surface the profile dropdown instead (common desktop behavior).
+      if (show) {
+        this.toggleProfileDropdown(true);
+      } else {
+        const sidebarEl = document.getElementById("pro-sidebar");
+        const overlayEl = document.getElementById("sidebar-overlay");
+        if (sidebarEl) sidebarEl.classList.remove("active");
+        if (overlayEl) overlayEl.classList.remove("active");
+      }
+      return;
+    }
+
     const sidebar = document.getElementById("pro-sidebar");
     const overlay = document.getElementById("sidebar-overlay");
+    if (!sidebar || !overlay) return;
+
     if (show) {
       sidebar.classList.add("active");
       overlay.classList.add("active");
