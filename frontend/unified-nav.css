@@ -41,6 +41,11 @@
         visibility: hidden !important;
         pointer-events: none !important;
     }
+
+    /* Reduce large top paddings that were added for fixed header on mobile */
+    .main, .dashboard-main, .dashboard.container, .dashboard-container {
+        padding-top: 18px !important;
+    }
 }
 
 /* --- Global Header (Standardized) --- */
