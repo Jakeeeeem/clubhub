@@ -3871,7 +3871,7 @@
             if (addPlayerToTeamForm) {
                 addPlayerToTeamForm.addEventListener('submit', handleAddPlayerToTeam);
             }
-            // Club profile form
+            // Group profile form
             const groupProfileForm = document.getElementById('groupProfileForm');
             if (groupProfileForm) {
                 groupProfileForm.addEventListener('submit', handleClubProfileUpdate);
@@ -4532,7 +4532,7 @@
                 // 2. General Applications Table
                 if (clubApplications && clubApplications.length > 0) {
                     html += `
-                    <h3 style="margin-bottom: 1rem;">General Club Applications</h3>
+                    <h3 style="margin-bottom: 1rem;">General Group Applications</h3>
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
@@ -4985,7 +4985,7 @@
                                         <td>
                                             <span style="font-weight:500; text-transform: capitalize;">${member.role.replace('-', ' ')}</span>
                                             ${member.club_verified_scout ?
-                            '<br><span style="font-size: 0.65rem; color: #22c55e; font-weight: bold;">✓ Club Verified Scout</span>' :
+                            '<br><span style="font-size: 0.65rem; color: #22c55e; font-weight: bold;">✓ Group Verified Scout</span>' :
                             ''}
                                         </td>
                                         <td>${teamDisplay}</td>
@@ -4995,7 +4995,7 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons" onclick="event.stopPropagation()">
-                                                <button class="btn-icon" title="${member.club_verified_scout ? 'Revoke Scout Verification' : 'Verify as Club Scout'}" 
+                                                <button class="btn-icon" title="${member.club_verified_scout ? 'Revoke Scout Verification' : 'Verify as Group Scout'}" 
                                                         onclick="handleToggleScoutVerification('${member.id}', ${!member.club_verified_scout})">
                                                     ${member.club_verified_scout ? '🛡️' : '🔍'}
                                                 </button>
@@ -6064,7 +6064,7 @@
             // Populate Teams
             const teamSelect = document.getElementById('eventTeamSelect');
             if (teamSelect) {
-                teamSelect.innerHTML = '<option value="">-- All Club Members --</option>';
+                teamSelect.innerHTML = '<option value="">-- All Group Members --</option>';
                 const teams = AppState.teams || [];
                 teams.forEach(t => {
                     const opt = document.createElement('option');
@@ -6286,7 +6286,7 @@
                     await apiService.updateClubProfile(profileData);
                 }
 
-                showNotification('✅ Club profile saved successfully!', 'success');
+                showNotification('✅ Group profile saved successfully!', 'success');
             } catch (err) {
                 console.error('Failed to save club profile:', err);
                 showNotification('❌ Failed to save club profile: ' + err.message, 'error');
@@ -9635,7 +9635,7 @@
                 <form id="addProductForm">
                     <div class="form-group">
                         <label for="productName">Product Name</label>
-                        <input type="text" id="productName" required placeholder="e.g. Club Training Kit">
+                        <input type="text" id="productName" required placeholder="e.g. Group Training Kit">
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
@@ -9743,18 +9743,64 @@
                     <!-- Dynamic Field: Team Selection -->
                     <div class="form-group">
                         <label for="eventTeam">Assign to Team</label>
-                        <select id="eventTeam">
-                            <option value="">All Club (No Specific Team)</option>
+                        <select id="eventTeam" onchange="loadPlayersForAssignment(this.value)">
+                            <option value="">All Group (No Specific Team)</option>
                             <!-- Populated via JS -->
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label for="eventDescription">Description / Notes</label>
-                        <textarea id="eventDescription" rows="3"></textarea>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="eventRecurrence">Recurrence</label>
+                            <select id="eventRecurrence" onchange="toggleRecurrenceEnd(this.value)">
+                                <option value="none">One-off Event</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="bi-weekly">Bi-weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="recurrenceEndContainer" style="display: none;">
+                            <label for="eventRecurrenceEnd">Repeat Until</label>
+                            <input type="date" id="eventRecurrenceEnd">
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">📅 Create Event</button>
+                    <div class="form-group">
+                        <label>Notification Notice</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <select id="eventNotificationLead">
+                                <option value="0">Immediately</option>
+                                <option value="7">7 Days Before</option>
+                                <option value="4">4 Days Before</option>
+                                <option value="2">2 Days Before</option>
+                                <option value="1">1 Day Before</option>
+                            </select>
+                            <input type="time" id="eventNotificationTime" value="09:00">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="eventRequirePayment" style="width: 20px; height: 20px;">
+                            <label for="eventRequirePayment" style="margin: 0;">Require Payment</label>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="eventMandatoryReason" style="width: 20px; height: 20px;">
+                            <label for="eventMandatoryReason" style="margin: 0;">Mandatory 'No' Reason</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="eventImage">Event Image (Optional)</label>
+                        <input type="file" id="eventImage" accept="image/*" class="btn btn-secondary" style="width: 100%;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventDescription">Description / Notes</label>
+                        <textarea id="eventDescription" rows="3" placeholder="Tell the team more about this event..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">📅 Create Event</button>
                 </form>
             </div>
         </div>
@@ -10568,7 +10614,7 @@
                         throw new Error(response.error || 'Failed to save profile');
                     }
 
-                    showNotification('✅ Club profile updated successfully!', 'success');
+                    showNotification('✅ Group profile updated successfully!', 'success');
 
                     // Force refresh context so next getContext() gets fresh data
                     await apiService.refreshContext();

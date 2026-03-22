@@ -579,23 +579,37 @@
                 automatically.</p>
 
             <form id="autoScheduleForm" onsubmit="runAutoSchedule(event)">
-                <div class="form-group">
-                    <label>Tournament Stage</label>
-                    <select name="stageId" id="scheduleStageSelect" required>
-                        <!-- Populated by JS -->
-                    </select>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Number of Pitches</label>
+                        <input type="number" name="pitchCount" value="2" min="1" max="20" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tournament Stage</label>
+                        <select name="stageId" id="scheduleStageSelect" required>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Start Time (Tournament Day One)</label>
-                    <input type="time" name="startTime" value="09:00" required>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Start Time (Daily)</label>
+                        <input type="time" name="startTime" value="09:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Time (Daily)</label>
+                        <input type="time" name="endTime" value="18:00" required>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Match Duration (Minutes)</label>
-                    <input type="number" name="matchDuration" value="20" min="5">
-                </div>
-                <div class="form-group">
-                    <label>Break/Changeover (Minutes)</label>
-                    <input type="number" name="breakDuration" value="5" min="0">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Match Duration (Mins)</label>
+                        <input type="number" name="matchDuration" value="20" min="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Break/Changeover (Mins)</label>
+                        <input type="number" name="breakDuration" value="5" min="0">
+                    </div>
                 </div>
 
                 <div class="card" style="background: rgba(255,166,0,0.1); border: 1px solid orange; margin: 1.5rem 0;">

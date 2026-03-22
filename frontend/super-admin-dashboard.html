@@ -1581,7 +1581,7 @@ Location: ${group.location || 'N/A'}
                             <thead>
                                 <tr>
                                     <th>Applicant</th>
-                                    <th>Club</th>
+                                    <th>Group</th>
                                     <th>Documents</th>
                                     <th>Notes</th>
                                     <th>Date</th>
@@ -1598,7 +1598,7 @@ Location: ${group.location || 'N/A'}
                                         <td>${req.club_name || 'Individual'}</td>
                                         <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                             ${req.id_card_url ? `<a href="${req.id_card_url}" target="_blank" class="badge badge-admin">ID Card</a>` : ''}
-                                            ${req.club_letter_url ? `<a href="${req.club_letter_url}" target="_blank" class="badge badge-coach">Club Letter</a>` : ''}
+                                            ${req.club_letter_url ? `<a href="${req.club_letter_url}" target="_blank" class="badge badge-coach">Group Letter</a>` : ''}
                                         </td>
                                         <td><span style="font-size: 0.8rem;">${req.notes || '-'}</span></td>
                                         <td>${new Date(req.created_at).toLocaleDateString()}</td>

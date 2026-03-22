@@ -128,7 +128,7 @@
             <button onclick="showPlayerSection('subscriptions')">📅 Subscriptions</button>
             <div class="dropdown-divider"></div>
             <button onclick="showPlayerSection('shop')">🛒 Group Shop</button>
-            <button onclick="showPlayerSection('item-shop')">🎁 Merchandise</button>
+            <button onclick="showPlayerSection('merch')">🎁 Merchandise</button>
           </div>
         </div>
 
@@ -335,7 +335,7 @@
                 <h4 style="margin-bottom: 1rem; font-family: var(--font-heading);">Filter Feed</h4>
                 <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2rem;">
                   <button class="btn btn-secondary btn-small btn-block active">All Updates</button>
-                  <button class="btn btn-secondary btn-small btn-block">Clubs & Teams</button>
+                  <button class="btn btn-secondary btn-small btn-block">Groups & Teams</button>
                   <button class="btn btn-secondary btn-small btn-block">Scouting Blogs</button>
                   <button class="btn btn-secondary btn-small btn-block">Announcements</button>
                 </div>
@@ -608,12 +608,12 @@
         <!-- My Clubs -->
         <div id="player-my-clubs" class="dashboard-section">
           <div class="card">
-            <h3>My Clubs</h3>
+            <h3>My Groups</h3>
             <div class="card-grid" id="playerClubsContainer"></div>
           </div>
 
           <div class="card">
-            <h3>Club Staff</h3>
+            <h3>Group Staff</h3>
             <div class="table-responsive">
               <table class="table">
                 <thead>
@@ -621,7 +621,7 @@
                     <th>Staff Name</th>
                     <th>Role</th>
                     <th>Contact</th>
-                    <th>Club</th>
+                    <th>Group</th>
                   </tr>
                 </thead>
                 <tbody id="clubStaffTableBody"></tbody>
@@ -725,18 +725,18 @@
         <!-- Club Finder -->
         <div id="player-club-finder" class="dashboard-section">
           <div class="card">
-            <h3>Find Clubs</h3>
+            <h3>Find Groups</h3>
             <div class="search-filters">
               <div class="form-group">
-                <label for="clubSearchInput">Search Clubs</label>
+                <label for="clubSearchInput">Search Groups</label>
                 <input type="text" id="clubSearchInput" placeholder="Search by name or location..."
                   onkeyup="filterClubs()">
               </div>
               <div class="form-group">
-                <label for="clubTypeFilter">Club Type</label>
+                <label for="clubTypeFilter">Group Type</label>
                 <select id="clubTypeFilter" onchange="filterClubs()">
                   <option value="">All Types</option>
-                  <option value="club">Club</option>
+                  <option value="club">Group</option>
                   <option value="event">Event Organizer</option>
                   <option value="tournament">Tournament Organizer</option>
                 </select>

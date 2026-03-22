@@ -5042,6 +5042,8 @@ input:focus + .toggle-slider {
     padding: 0 1rem;
     align-items: center;
     gap: 1.5rem;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
 }
 
 @media (max-width: 900px) {
@@ -5064,6 +5066,7 @@ input:focus + .toggle-slider {
     cursor: pointer;
     position: relative;
     transition: var(--transition);
+    scroll-snap-align: center;
 }
 
 .top-app-tab.active {

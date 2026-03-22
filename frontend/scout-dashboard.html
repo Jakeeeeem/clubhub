@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scout Dashboard | ClubHub</title>
+    <title>Scout Hub | ClubHub</title>
 
     <!-- Meta Tags -->
     <meta name="description" content="Professional scouting and talent discovery platform">
@@ -88,16 +88,50 @@
                         <h1 class="neon-text">Talent Discovery</h1>
                         <p style="color: var(--text-muted);">Browse identified elite talent across all registered groups.</p>
                     </div>
-                    <div style="display: flex; gap: 1rem;">
-                        <input type="text" id="playerSearch" placeholder="Search by name, position or group..." 
-                            style="min-width: 300px; padding: 0.8rem 1.2rem; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03);">
-                        <select id="positionFilter" class="glass-btn" style="min-width: 150px; padding: 0 1rem;">
-                            <option value="">All Positions</option>
-                            <option value="GK">Goalkeeper</option>
-                            <option value="DEF">Defender</option>
-                            <option value="MID">Midfielder</option>
-                            <option value="FWD">Forward</option>
-                        </select>
+                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%;">
+                        <div style="display: flex; gap: 1rem; width: 100%;">
+                            <input type="text" id="playerSearch" placeholder="Search by name, position or group..." 
+                                style="flex: 1; padding: 0.8rem 1.2rem; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03);">
+                            <select id="positionFilter" class="glass-btn" style="min-width: 150px; padding: 0 1rem;">
+                                <option value="">All Positions</option>
+                                <option value="GK">Goalkeeper</option>
+                                <option value="DEF">Defender</option>
+                                <option value="MID">Midfielder</option>
+                                <option value="FWD">Forward</option>
+                            </select>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                            <div class="form-group" style="margin: 0;">
+                                <select id="catchmentFilter" class="glass-btn" style="width: 100%;">
+                                    <option value="">Any Distance</option>
+                                    <option value="10">Within 10 miles</option>
+                                    <option value="25">Within 25 miles</option>
+                                    <option value="50">Within 50 miles</option>
+                                    <option value="100">Within 100 miles</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <select id="ageFilter" class="glass-btn" style="width: 100%;">
+                                    <option value="">Any Age</option>
+                                    <option value="U7">U7 - U9</option>
+                                    <option value="U10">U10 - U12</option>
+                                    <option value="U13">U13 - U15</option>
+                                    <option value="U16">U16 - U18</option>
+                                    <option value="U21">U21</option>
+                                    <option value="Senior">Senior</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <select id="competitionFilter" class="glass-btn" style="width: 100%;">
+                                    <option value="">Any Competition</option>
+                                    <option value="Academy">Professional Academy</option>
+                                    <option value="Elite">Elite Grassroots</option>
+                                    <option value="Standard">Standard Grassroots</option>
+                                    <option value="School">School / College</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary btn-small" onclick="loadTalentPool()">Apply Advanced Filters</button>
+                        </div>
                     </div>
                 </div>
 
@@ -197,7 +231,7 @@
                 <div class="dashboard-header" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <h1 class="neon-text">Messages</h1>
-                        <p style="color: var(--text-muted);">Direct communication with club administrators and players/parents.</p>
+                        <p style="color: var(--text-muted);">Direct communication with group administrators and players/parents.</p>
                     </div>
                 </div>
 
