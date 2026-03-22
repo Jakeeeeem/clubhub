@@ -7,9 +7,11 @@ const UnifiedNav = {
         this.renderSidebar();
         this.renderBottomNav();
         this.renderHeaderAddons();
+        this.renderProfileDropdown();
         this.bindEvents();
         this.updateHeaderState();
         this.renderMenu();
+        this.autoLabelTables();
     },
 
     renderSidebar() {
@@ -18,19 +20,9 @@ const UnifiedNav = {
         const sidebarHTML = `
             <div class="sidebar-overlay" id="sidebar-overlay"></div>
             <aside class="pro-sidebar" id="pro-sidebar">
-                <div class="sidebar-header">
-                    <div class="sidebar-user-card">
-                        <div class="sidebar-avatar" id="sidebar-avatar">?</div>
-                        <div>
-                            <div class="sidebar-name" id="sidebar-name">User Name</div>
-                            <div id="sidebar-role" style="font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Member</div>
-                        </div>
-                        
-                        <div class="sidebar-mode-switcher">
-                            <div class="mode-tab active" id="mode-group" onclick="UnifiedNav.switchMode('group')">Group Hub</div>
-                            <div class="mode-tab" id="mode-player" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
-                        </div>
-                    </div>
+                <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1rem;">
+                    <span style="font-weight: 800; opacity: 0.8;">MENU</span>
+                    <button onclick="UnifiedNav.toggleSidebar(false)" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem; line-height: 1;">&times;</button>
                 </div>
 
                 <nav class="sidebar-nav" id="sidebar-nav-content">
@@ -106,17 +98,100 @@ const UnifiedNav = {
         const headerContainer = document.querySelector('.pro-header .nav-container');
         if (!headerContainer) return;
         
+        // 1. ADD HAMBURGER (Left)
+        const logoArea = headerContainer.querySelector('.logo-area');
+        if (logoArea && !document.getElementById('side-menu-trigger')) {
+            const hamburgerHTML = `
+                <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
+                    <i>☰</i>
+                </div>
+            `;
+            logoArea.insertAdjacentHTML('beforebegin', hamburgerHTML);
+        }
+        
+        // 2. Role Switcher in Header (Desktop Only)
         const headerActions = headerContainer.querySelector('.header-actions');
         if (headerActions && !document.getElementById('header-mode-toggle')) {
             const toggleHTML = `
-                <div class="header-mode-toggle desktop-only" id="header-mode-toggle" style="margin-left: auto; margin-right: 1.5rem;">
-                    <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Group Hub</div>
-                    <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
+                <div class="header-mode-toggle desktop-only" id="header-mode-toggle" style="margin-left: auto; margin-right: 1rem;">
+                    <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Group</div>
+                    <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player</div>
                 </div>
             `;
             headerActions.insertAdjacentHTML('beforebegin', toggleHTML);
-            this.updateModeUI();
         }
+        
+        // 3. Update Profile Trigger for Dropdown
+        const profileTrigger = document.querySelector('.user-profile-trigger');
+        if (profileTrigger) {
+            profileTrigger.removeAttribute('onclick');
+            profileTrigger.onclick = (e) => {
+                e.stopPropagation();
+                this.toggleProfileDropdown();
+            };
+        }
+    },
+
+    renderProfileDropdown() {
+        if (document.getElementById('pro-dropdown')) return;
+        const dropdownHTML = `
+            <div class="pro-dropdown" id="pro-dropdown">
+                <div class="dropdown-user-info">
+                    <div class="dropdown-avatar" id="dropdown-avatar">?</div>
+                    <div class="dropdown-meta">
+                        <div class="dropdown-name" id="dropdown-name">User Name</div>
+                        <div class="dropdown-role" id="dropdown-role">Member</div>
+                    </div>
+                </div>
+                
+                <div class="dropdown-divider"></div>
+                
+                <div class="dropdown-mode-switcher">
+                    <div class="dropdown-mode-pill active" id="drop-mode-group" onclick="UnifiedNav.switchMode('group')">Group Hub</div>
+                    <div class="dropdown-mode-pill" id="drop-mode-player" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
+                </div>
+                
+                <div class="dropdown-divider"></div>
+                
+                <a href="player-settings.html" class="dropdown-link"><i>⚙️</i> Account Settings</a>
+                <a href="#" class="dropdown-link" onclick="handleLogout(); return false;" style="color: #ef4444;"><i>🚪</i> Logout</a>
+            </div>
+        `;
+        const headerActions = document.querySelector('.header-actions');
+        if (headerActions) headerActions.insertAdjacentHTML('beforeend', dropdownHTML);
+    },
+
+    toggleProfileDropdown(show) {
+        const dropdown = document.getElementById('pro-dropdown');
+        if (!dropdown) return;
+        
+        if (show === false) {
+            dropdown.classList.remove('active');
+        } else {
+            const isActive = dropdown.classList.contains('active');
+            // Close others if opening
+            if (!isActive) {
+                dropdown.classList.add('active');
+                this.syncUserData();
+            } else {
+                dropdown.classList.remove('active');
+            }
+        }
+    },
+
+    autoLabelTables() {
+        document.querySelectorAll('table').forEach(table => {
+            const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+            if (headers.length === 0) return;
+            table.querySelectorAll('tbody tr').forEach(row => {
+                row.querySelectorAll('td').forEach((td, index) => {
+                    if (headers[index] && !td.getAttribute('data-label')) {
+                        td.setAttribute('data-label', headers[index]);
+                    }
+                });
+            });
+        });
+        console.log('📋 Tables auto-labeled for mobile view');
     },
 
     bindEvents() {
@@ -124,6 +199,9 @@ const UnifiedNav = {
         if (overlay) {
             overlay.addEventListener('click', () => this.toggleSidebar(false));
         }
+
+        // Close dropdown on click outside
+        document.addEventListener('click', () => this.toggleProfileDropdown(false));
     },
 
     toggleSidebar(show) {
@@ -151,16 +229,15 @@ const UnifiedNav = {
         else if (type === 'scout') role = 'Talent Scout';
         else if (type === 'admin') role = 'Group Admin';
 
-        const avatarEl = document.getElementById('sidebar-avatar');
-        const nameEl = document.getElementById('sidebar-name');
-        const roleEl = document.getElementById('sidebar-role');
+        const avatarEl = document.getElementById('dropdown-avatar');
+        const nameEl = document.getElementById('dropdown-name');
+        const roleEl = document.getElementById('dropdown-role');
         
         if (avatarEl) avatarEl.textContent = initial;
         if (nameEl) nameEl.textContent = name;
         if (roleEl) roleEl.textContent = role;
 
-        const isPlayer = window.location.href.includes('player-dashboard.html');
-        this.updateModeUI(isPlayer ? 'player' : 'group');
+        this.updateModeUI();
     },
 
     updateModeUI(mode) {
@@ -168,20 +245,20 @@ const UnifiedNav = {
             mode = window.location.href.includes('player-dashboard.html') ? 'player' : 'group';
         }
 
-        // Update Sidebar
-        const groupTab = document.getElementById('mode-group');
-        const playerTab = document.getElementById('mode-player');
-        if (groupTab && playerTab) {
-            groupTab.classList.toggle('active', mode !== 'player');
-            playerTab.classList.toggle('active', mode === 'player');
+        // 1. Header Pills
+        const gPill = document.getElementById('header-mode-group-pill');
+        const pPill = document.getElementById('header-mode-player-pill');
+        if (gPill && pPill) {
+            gPill.classList.toggle('active', mode === 'group');
+            pPill.classList.toggle('active', mode === 'player');
         }
 
-        // Update Header
-        const groupPill = document.getElementById('header-mode-group-pill');
-        const playerPill = document.getElementById('header-mode-player-pill');
-        if (groupPill && playerPill) {
-            groupPill.classList.toggle('active', mode !== 'player');
-            playerPill.classList.toggle('active', mode === 'player');
+        // 2. Dropdown Pills
+        const dgPill = document.getElementById('drop-mode-group');
+        const dpPill = document.getElementById('drop-mode-player');
+        if (dgPill && dpPill) {
+            dgPill.classList.toggle('active', mode === 'group');
+            dpPill.classList.toggle('active', mode === 'player');
         }
     },
 

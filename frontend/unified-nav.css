@@ -174,7 +174,141 @@
     background: rgba(255,255,255,0.08);
 }
 
-/* --- Unified Sidebar (Drawer) --- */
+/* --- Hamburger (Menu Trigger) --- */
+.side-menu-trigger {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.2s;
+    color: var(--text-main);
+    margin-right: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.side-menu-trigger:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.side-menu-trigger i {
+    font-size: 1.25rem;
+    font-style: normal;
+}
+
+/* --- Profile Dropdown --- */
+.pro-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 1.5rem;
+    width: 300px;
+    background: rgba(15, 15, 18, 0.95);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 1.5rem;
+    z-index: 5000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.98);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.pro-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.dropdown-user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.dropdown-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--primary), #991b1b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.dropdown-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.dropdown-role {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 1rem -1.5rem;
+}
+
+.dropdown-mode-switcher {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 14px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.dropdown-mode-pill {
+    padding: 0.6rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.dropdown-mode-pill.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.dropdown-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.dropdown-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
 .pro-sidebar {
     position: fixed;
     top: 0;
@@ -182,14 +316,14 @@
     width: var(--sidebar-width);
     height: 100vh;
     background: var(--glass-bg);
-    backdrop-filter: blur(30px) saturate(150%);
-    -webkit-backdrop-filter: blur(30px) saturate(150%);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
     border-right: 1px solid var(--glass-border);
     z-index: 3000;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
-    padding: 1.5rem;
+    padding: 0;
     box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
 }
 
@@ -211,96 +345,6 @@
 .sidebar-overlay.active {
     opacity: 1;
     visibility: visible;
-}
-
-.sidebar-header {
-    margin-bottom: 2.5rem;
-}
-
-.sidebar-user-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 1.25rem;
-    padding: 2rem 1.5rem;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 28px;
-    margin-bottom: 2.5rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.sidebar-user-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(220, 38, 38, 0.05) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-.sidebar-avatar {
-    width: 72px;
-    height: 72px;
-    border-radius: 22px;
-    background: linear-gradient(135deg, var(--primary), #991b1b);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: white;
-    box-shadow: 0 12px 24px rgba(220, 38, 38, 0.25);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-name {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: #fff;
-    margin-top: 0.25rem;
-}
-
-/* --- Premium Segmented Mode Switcher --- */
-.sidebar-mode-switcher {
-    width: 100%;
-    margin-top: 1.5rem;
-    display: flex;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 3px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    position: relative;
-}
-
-.mode-tab {
-    flex: 1;
-    padding: 9px;
-    border-radius: 11px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.5);
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-align: center;
-    z-index: 1;
-    position: relative;
-}
-
-.mode-tab.active {
-    color: #fff;
-    background: var(--primary);
-    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-}
-
-.mode-tab:not(.active):hover {
-    color: rgba(255, 255, 255, 0.8);
-    background: rgba(255, 255, 255, 0.03);
 }
 
 /* --- Nav Menu in Sidebar --- */
