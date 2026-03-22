@@ -248,6 +248,9 @@ async function runMigrations() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='agree_third_party') THEN
           ALTER TABLE users ADD COLUMN agree_third_party BOOLEAN DEFAULT FALSE;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='agree_privacy') THEN
+          ALTER TABLE users ADD COLUMN agree_privacy BOOLEAN DEFAULT FALSE;
+        END IF;
 
       END $$;
     `);

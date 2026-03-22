@@ -483,6 +483,8 @@ router.post(
         clubId,
         monthlyFee,
         userId,
+        payment_plan_id,
+        plan_price,
       } = req.body;
 
       // Verify club exists and user owns it
@@ -532,11 +534,14 @@ router.post(
         }
       }
 
-      // 🔥 FIX: Include user_id in the insert query
+      // 🔥 FIX: Include user_id, payment_plan_id, and plan_price in the insert query
       const result = await query(
         `
-      INSERT INTO players (first_name, last_name, email, phone, date_of_birth, position, club_id, monthly_fee, user_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO players (
+        first_name, last_name, email, phone, date_of_birth, position, club_id, 
+        monthly_fee, user_id, payment_plan_id, plan_price, plan_start_date
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_DATE)
       RETURNING *
     `,
         [
@@ -548,7 +553,9 @@ router.post(
           position || null,
           clubId,
           monthlyFee || 0,
-          playerUserId, // ← This is the key fix!
+          playerUserId,
+          payment_plan_id || null,
+          plan_price !== undefined ? plan_price : null,
         ],
       );
 
@@ -929,6 +936,9 @@ router.get("/:id/stats", authenticateToken, async (req, res) => {
       SELECT 
         COUNT(pr.id) as matches_played,
         AVG(pr.rating) as average_rating,
+        SUM(COALESCE(pr.goals, 0)) as total_goals,
+        SUM(COALESCE(pr.assists, 0)) as total_assists,
+        SUM(COALESCE(pr.minutes_played, 0)) as total_minutes,
         COUNT(CASE WHEN mr.result = 'win' THEN 1 END) as wins,
         COUNT(CASE WHEN mr.result = 'loss' THEN 1 END) as losses,
         COUNT(CASE WHEN mr.result = 'draw' THEN 1 END) as draws

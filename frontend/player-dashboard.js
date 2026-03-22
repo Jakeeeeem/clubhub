@@ -1981,6 +1981,12 @@ function renderCurrentPlan() {
     startDate +
     status +
     "</div>";
+
+  // Also update overview stats
+  const priceEl = byId("playerPlanPrice");
+  const nameEl = byId("playerPlanName");
+  if (priceEl) priceEl.textContent = formatCurrency(cp.amount || cp.price || 0);
+  if (nameEl) nameEl.textContent = cp.name || "Active Plan";
 }
 
 async function assignOrUpdatePlan() {

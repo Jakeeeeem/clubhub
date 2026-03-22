@@ -1710,6 +1710,9 @@ class ApiService {
           : [],
       phone: userData.phone ? String(userData.phone).trim() : undefined,
       dateOfBirth: userData.dateOfBirth || userData.dob || undefined,
+      agreeTerms: !!userData.agreeTerms,
+      agreePrivacy: !!userData.agreePrivacy,
+      agreeThirdParty: !!userData.agreeThirdParty,
       profile: userData.profile || {},
     };
 

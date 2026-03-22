@@ -5,111 +5,115 @@ const emailService = require("./email-service");
  * Checks for upcoming events and sends reminders based on the notification schedule.
  */
 async function checkEventReminders() {
-  console.log("🔔 Checking for event reminders...");
+  console.log("🔔 Checking for scheduled notifications...");
   try {
-    // 1. Get upcoming events that have a notification schedule
+    // 1. Get pending notifications that are due
     const result = await query(`
-      SELECT e.id, e.title, e.event_date, e.event_time, e.location, e.notification_schedule, 
-             e.club_id, e.team_id, t.name as team_name, c.name as club_name
-      FROM events e
+      SELECT 
+        sn.id as notification_id,
+        sn.notification_type,
+        sn.scheduled_at,
+        e.id as event_id,
+        e.title,
+        e.event_date,
+        e.event_time,
+        e.location,
+        e.club_id,
+        e.team_id,
+        t.name as team_name,
+        c.name as club_name
+      FROM scheduled_notifications sn
+      JOIN events e ON sn.event_id = e.id
       LEFT JOIN teams t ON e.team_id = t.id
       LEFT JOIN organizations c ON e.club_id = c.id
-      WHERE e.notification_schedule IS NOT NULL 
-      AND e.event_date >= CURRENT_DATE
+      WHERE sn.status = 'pending' 
+        AND sn.scheduled_at <= NOW()
     `);
 
-    const events = result.rows;
-    for (const event of events) {
-      const schedule = event.notification_schedule; // Array like ["7d", "1d"]
-      if (!Array.isArray(schedule)) continue;
+    const notifications = result.rows;
+    if (notifications.length === 0) {
+      console.log("✅ No pending notifications due at this time.");
+      return;
+    }
 
-      for (const leadTime of schedule) {
-        // leadTime examples: "7d", "4d", "2d", "1d"
-        const days = parseInt(leadTime);
-        if (isNaN(days)) continue;
+    console.log(`📡 Found ${notifications.length} notifications to process.`);
 
-        // Calculate the target notification date
-        const eventDate = new Date(event.event_date);
-        const targetDate = new Date(eventDate);
-        targetDate.setDate(targetDate.getDate() - days);
+    for (const notif of notifications) {
+      try {
+        // Get recipients
+        let recipients = [];
 
-        const now = new Date();
-        const todayStr = now.toISOString().split("T")[0];
-        const targetDateStr = targetDate.toISOString().split("T")[0];
+        // Priority 1: Specific Assignments
+        const assignedResult = await query(
+          `
+          SELECT u.email, u.first_name 
+          FROM event_players ep 
+          JOIN players p ON ep.player_id = p.id 
+          JOIN users u ON p.user_id = u.id 
+          WHERE ep.event_id = $1
+        `,
+          [notif.event_id],
+        );
 
-        // If today is the day to send the notification
-        if (todayStr === targetDateStr) {
-          // Check if already sent for this event and leadTime
-          const logResult = await query(
-            "SELECT 1 FROM event_reminder_log WHERE event_id = $1 AND lead_time = $2",
-            [event.id, leadTime],
+        if (assignedResult.rows.length > 0) {
+          recipients = assignedResult.rows;
+        } else if (notif.team_id) {
+          // Priority 2: All team members
+          const teamResult = await query(
+            `
+            SELECT u.email, u.first_name 
+            FROM team_players tp 
+            JOIN players p ON tp.player_id = p.id 
+            JOIN users u ON p.user_id = u.id 
+            WHERE tp.team_id = $1
+          `,
+            [notif.team_id],
           );
-
-          if (logResult.rows.length === 0) {
-            console.log(
-              `📡 Sending ${leadTime} reminder for event: ${event.title}`,
-            );
-
-            // Get recipients and their names
-            let recipients = [];
-
-            // Priority 1: Specific Assignments
-            const assignedResult = await query(
-              `
-              SELECT u.email, u.first_name 
-              FROM event_players ep 
-              JOIN players p ON ep.player_id = p.id 
-              JOIN users u ON p.user_id = u.id 
-              WHERE ep.event_id = $1
-            `,
-              [event.id],
-            );
-
-            if (assignedResult.rows.length > 0) {
-              recipients = assignedResult.rows;
-            } else if (event.team_id) {
-              // Priority 2: All team members
-              const teamResult = await query(
-                `
-                SELECT u.email, u.first_name 
-                FROM team_players tp 
-                JOIN players p ON tp.player_id = p.id 
-                JOIN users u ON p.user_id = u.id 
-                WHERE tp.team_id = $1
-              `,
-                [event.team_id],
-              );
-              recipients = teamResult.rows;
-            }
-
-            if (recipients.length > 0) {
-              // Send emails
-              const humanLeadTime = leadTime
-                .replace("d", " days")
-                .replace("h", " hours");
-
-              for (const recipient of recipients) {
-                await emailService.sendEventReminderEmail({
-                  email: recipient.email,
-                  firstName: recipient.first_name,
-                  eventTitle: event.title,
-                  eventDate: event.event_date,
-                  eventTime: event.event_time,
-                  location: event.location,
-                  teamName: event.team_name || "the team",
-                  clubName: event.club_name || "ClubHub",
-                  leadTime: humanLeadTime,
-                });
-              }
-
-              // Log as sent
-              await query(
-                "INSERT INTO event_reminder_log (event_id, lead_time) VALUES ($1, $2)",
-                [event.id, leadTime],
-              );
-            }
-          }
+          recipients = teamResult.rows;
         }
+
+        if (recipients.length > 0) {
+          // Determine the lead time for display (optional, could be passed in payload)
+          // For now, we'll try to derive it from scheduled_at vs event_date or just use a generic term
+          const eventDate = new Date(notif.event_date);
+          const scheduledAt = new Date(notif.scheduled_at);
+          const diffDays = Math.round((eventDate - scheduledAt) / (1000 * 60 * 60 * 24));
+          const humanLeadTime = diffDays > 0 ? `${diffDays} days` : "upcoming";
+
+          for (const recipient of recipients) {
+            await emailService.sendEventReminderEmail({
+              email: recipient.email,
+              firstName: recipient.first_name,
+              eventTitle: notif.title,
+              eventDate: notif.event_date,
+              eventTime: notif.event_time,
+              location: notif.location,
+              teamName: notif.team_name || "the team",
+              clubName: notif.club_name || "ClubHub",
+              leadTime: humanLeadTime,
+            });
+          }
+
+          // Mark as sent
+          await query(
+            "UPDATE scheduled_notifications SET status = 'sent', sent_at = NOW(), updated_at = NOW() WHERE id = $1",
+            [notif.notification_id],
+          );
+          console.log(`✅ Sent notification ${notif.notification_id} for event: ${notif.title}`);
+        } else {
+          // No recipients found, mark as failed or just skip
+          await query(
+            "UPDATE scheduled_notifications SET status = 'failed', error_message = 'No recipients found', updated_at = NOW() WHERE id = $1",
+            [notif.notification_id],
+          );
+          console.warn(`⚠️ No recipients for notification ${notif.notification_id}`);
+        }
+      } catch (notifError) {
+        console.error(`❌ Failed to process notification ${notif.notification_id}:`, notifError);
+        await query(
+          "UPDATE scheduled_notifications SET status = 'failed', error_message = $1, updated_at = NOW() WHERE id = $1",
+          [notifError.message, notif.notification_id],
+        ).catch(err => console.error("Critical: Failed to log failure:", err));
       }
     }
   } catch (error) {

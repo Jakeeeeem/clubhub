@@ -1038,6 +1038,10 @@
                                             <tr>
                                                 <th>Player</th>
                                                 <th>Position</th>
+                                                <th style="text-align: center;">M</th>
+                                                <th style="text-align: center;">G</th>
+                                                <th style="text-align: center;">A</th>
+                                                <th style="text-align: center;">Min</th>
                                                 <th>Age</th>
                                                 <th>Status</th>
                                                 <th style="text-align: right;">Actions</th>
@@ -4387,6 +4391,7 @@
                 `;
 
                 AppState.paymentPlans = plans;
+                if (typeof hydrateAddPlayerPlanSelect === 'function') hydrateAddPlayerPlanSelect();
             } catch (error) {
                 console.error('Failed to load payment plans:', error);
                 container.innerHTML = `
@@ -8111,6 +8116,10 @@
                 try {
                     const stats = await apiService.getTeamStats(teamId);
                     renderTeamStats(stats);
+                    // Refresh roster with stats
+                    if (stats.players && stats.players.length > 0) {
+                        renderRoster(stats.players);
+                    }
                     renderRecentResults(stats.recent_form || team.recent_matches || []);
                 } catch (err) {
                     console.warn('Failed to load deep stats, showing basic results');
@@ -8178,6 +8187,10 @@
                         </div>
                     </td>
                     <td>${p.team_position || p.position || '-'}</td>
+                    <td style="text-align: center; font-weight: 600;">${p.matches_played || 0}</td>
+                    <td style="text-align: center; font-weight: 700; color: var(--accent-color);">${p.total_goals || 0}</td>
+                    <td style="text-align: center; font-weight: 700; color: #4ade80;">${p.total_assists || 0}</td>
+                    <td style="text-align: center; opacity: 0.8;">${p.total_minutes || 0}'</td>
                     <td>${calculateAge(p.date_of_birth)}</td>
                     <td>
                         <span class="status-badge status-${p.payment_status || 'pending'}">
@@ -8765,6 +8778,7 @@
         };
 
         function initAddPlayerModalControls() {
+            // Sport selection logic
             const sportSelect = document.getElementById('playerSport');
             if (sportSelect) {
                 sportSelect.addEventListener('change', () => updateSportFields('playerSport', 'playerPosition', 'positionOptions', 'playerPositionLabel'));
@@ -8772,6 +8786,14 @@
             const editSportSelect = document.getElementById('editPlayerSport');
             if (editSportSelect) {
                 editSportSelect.addEventListener('change', () => updateSportFields('editPlayerSport', 'editPlayerPosition', 'editPositionOptions', 'editPlayerPositionLabel'));
+            }
+
+            // Payment plan logic (formerly in the first version of this function)
+            if (typeof hydrateAddPlayerPlanSelect === 'function') {
+                hydrateAddPlayerPlanSelect();
+            }
+            if (typeof initAddPlayerFeeField === 'function') {
+                initAddPlayerFeeField();
             }
         }
 

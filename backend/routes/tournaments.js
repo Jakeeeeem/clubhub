@@ -177,8 +177,8 @@ router.get(
         ),
         query(
           `SELECT m.*,
-                  ht.team_name AS home_team,
-                  at.team_name AS away_team,
+                  ht.team_name AS home_team_name,
+                  at.team_name AS away_team_name,
                   p.name AS pitch_name
            FROM tournament_matches m
            LEFT JOIN tournament_teams ht ON m.home_team_id = ht.id
@@ -349,16 +349,14 @@ router.post(
 
         // 2. Fetch Teams (Filtered by group if provided)
         let teamsQuery =
-          'SELECT * FROM tournament_teams WHERE event_id = $1 AND status = "approved"';
+          "SELECT * FROM tournament_teams WHERE event_id = $1 AND status = 'approved'";
         let teamsParams = [eventId];
         if (groupId) {
           teamsQuery += " AND current_group_id = $2";
           teamsParams.push(groupId);
         }
 
-        // Fix: Use correct quoting for status and group check
-        teamsQuery = teamsQuery.replace(/"/g, "'");
-
+        // Fetch Teams (Filtered by group if provided)
         const teamsRes = await client.query(teamsQuery, teamsParams);
         const teams = teamsRes.rows;
 
@@ -780,8 +778,8 @@ router.get("/:id/bracket", authenticateToken, async (req, res) => {
       query(
         `
         SELECT m.*, 
-               ht.team_name as home_name, 
-               at.team_name as away_name,
+               ht.team_name as home_team_name, 
+               at.team_name as away_team_name,
                p.name as pitch_name
         FROM tournament_matches m
         LEFT JOIN tournament_teams ht ON m.home_team_id = ht.id

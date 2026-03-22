@@ -288,6 +288,7 @@ router.post(
         requireDeclineReason,
         notificationSchedule,
         assignedPlayers,
+        tournamentSettings,
       } = req.body;
 
       // Ensure reason is boolean
@@ -345,9 +346,10 @@ router.post(
               team_id, opponent, created_by, 
               recurrence_pattern, recurrence_end_date, recurrence_id,
               require_decline_reason, notification_schedule,
+              tournament_settings,
               created_at, updated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW(), NOW())
             RETURNING *
           `,
             [
@@ -369,11 +371,41 @@ router.post(
               recurrenceGroupId,
               requireDeclineReason,
               JSON.stringify(notificationSchedule || []),
+              JSON.stringify(tournamentSettings || {}),
             ],
           );
 
           const newEvent = result.rows[0];
           createdEvents.push(newEvent);
+
+          // 🗓️ Schedule Notifications (7, 4, 2, 1 day logic)
+          if (notificationSchedule && Array.isArray(notificationSchedule)) {
+            for (const schedule of notificationSchedule) {
+              // schedule e.g. "immediate", "7_days", "4_days", "2_days", "1_day"
+              let scheduledAt = new Date(date);
+              let shouldCreate = true;
+
+              if (schedule === "7_days" || schedule === "7d") scheduledAt.setDate(scheduledAt.getDate() - 7);
+              else if (schedule === "4_days" || schedule === "4d") scheduledAt.setDate(scheduledAt.getDate() - 4);
+              else if (schedule === "2_days" || schedule === "2d") scheduledAt.setDate(scheduledAt.getDate() - 2);
+              else if (schedule === "1_day" || schedule === "1d") scheduledAt.setDate(scheduledAt.getDate() - 1);
+              else if (schedule === "immediate") scheduledAt = new Date(); // Right now
+              else shouldCreate = false;
+
+              if (shouldCreate) {
+                // Ensure we don't schedule in the past if it's already past the notice period
+                if (scheduledAt < new Date() && schedule !== "immediate") {
+                    scheduledAt = new Date(); // Default to now if missed
+                }
+
+                await client.query(
+                  `INSERT INTO scheduled_notifications (event_id, notification_type, scheduled_at, status)
+                   VALUES ($1, $2, $3, $4)`,
+                  [newEvent.id, 'reminder', scheduledAt, 'pending']
+                );
+              }
+            }
+          }
 
           // Handle Specific Player Assignments
           if (
@@ -470,39 +502,90 @@ router.put(
         price,
         capacity,
         opponent,
+        notificationSchedule, 
+        tournamentSettings,
+        requireDeclineReason,
       } = req.body;
 
-      const result = await query(
-        `
-      UPDATE events SET 
-        title = $1,
-        description = $2,
-        event_type = $3,
-        event_date = $4,
-        event_time = $5,
-        location = $6,
-        price = $7,
-        capacity = $8,
-        opponent = $9,
-        updated_at = NOW()
-      WHERE id = $10
-      RETURNING *
-    `,
-        [
-          title,
-          description || null,
-          eventType,
-          eventDate,
-          eventTime || null,
-          location || null,
-          price || event.price,
-          capacity || null,
-          opponent || null,
-          req.params.id,
-        ],
-      );
+      let updatedEvent;
 
-      const updatedEvent = result.rows[0];
+      await withTransaction(async (client) => {
+        const result = await client.query(
+          `
+        UPDATE events SET 
+          title = $1,
+          description = $2,
+          event_type = $3,
+          event_date = $4,
+          event_time = $5,
+          location = $6,
+          price = $7,
+          capacity = $8,
+          opponent = $9,
+          notification_schedule = $10,
+          tournament_settings = $11,
+          require_decline_reason = $12,
+          updated_at = NOW()
+        WHERE id = $13
+        RETURNING *
+      `,
+          [
+            title,
+            description || null,
+            eventType,
+            eventDate,
+            eventTime || null,
+            location || null,
+            price || event.price,
+            capacity || null,
+            opponent || null,
+            JSON.stringify(notificationSchedule || []),
+            JSON.stringify(tournamentSettings || {}),
+            requireDeclineReason || false,
+            req.params.id,
+          ],
+        );
+
+        updatedEvent = result.rows[0];
+
+        // 🗓️ Manage Notifications on Update
+        if (notificationSchedule !== undefined) {
+          // 1. Delete existing PENDING notifications for this event
+          // (We don't want to re-send ones that already went out)
+          await client.query(
+            "DELETE FROM scheduled_notifications WHERE event_id = $1 AND status = 'pending'",
+            [req.params.id],
+          );
+
+          // 2. Re-create new ones based on the updated schedule
+          if (Array.isArray(notificationSchedule)) {
+            for (const sched of notificationSchedule) {
+              let scheduledAt = new Date(eventDate);
+              let shouldCreate = true;
+
+              if (sched === "7_days" || sched === "7d") scheduledAt.setDate(scheduledAt.getDate() - 7);
+              else if (sched === "4_days" || sched === "4d") scheduledAt.setDate(scheduledAt.getDate() - 4);
+              else if (sched === "2_days" || sched === "2d") scheduledAt.setDate(scheduledAt.getDate() - 2);
+              else if (sched === "1_day" || sched === "1d") scheduledAt.setDate(scheduledAt.getDate() - 1);
+              else if (sched === "immediate") scheduledAt = new Date();
+              else shouldCreate = false;
+
+              if (shouldCreate) {
+                // Don't schedule in past
+                if (scheduledAt < new Date() && sched !== "immediate") {
+                  scheduledAt = new Date();
+                }
+
+                await client.query(
+                  `INSERT INTO scheduled_notifications (event_id, notification_type, scheduled_at, status)
+                   VALUES ($1, $2, $3, $4)`,
+                  [req.params.id, 'reminder', scheduledAt, 'pending']
+                );
+              }
+            }
+          }
+        }
+      });
 
       res.json({
         message: "Event updated successfully",
@@ -570,6 +653,12 @@ router.delete(
         await client.query("DELETE FROM match_results WHERE event_id = $1", [
           req.params.id,
         ]);
+
+        // Delete scheduled notifications
+        await client.query(
+          "DELETE FROM scheduled_notifications WHERE event_id = $1",
+          [req.params.id],
+        );
 
         // Delete event
         await client.query("DELETE FROM events WHERE id = $1", [req.params.id]);
@@ -1111,6 +1200,23 @@ router.post(
 
       const playerId = playerResult.rows[0].id;
 
+      // 💳 PAYMENT CHECK
+      if (availability === "yes" && event.price > 0) {
+        // Check if user has already paid (confirmed booking)
+        const bookingResult = await query(
+          "SELECT id FROM event_bookings WHERE event_id = $1 AND user_id = $2 AND booking_status = 'confirmed'",
+          [event.id, req.user.id]
+        );
+        
+        if (bookingResult.rows.length === 0) {
+           return res.status(402).json({ 
+             error: "Payment required", 
+             message: `This event costs £${event.price}. You must pay before confirming your availability.`,
+             eventId: event.id
+           });
+        }
+      }
+
       // 🔥 MANDATORY DECLINE REASON CHECK
       if (
         availability === "no" &&
@@ -1618,6 +1724,17 @@ router.post("/:id/result", authenticateToken, async (req, res) => {
     }
 
     const event = eventCheck.rows[0];
+
+    // 🛂 SCORE ENTRY PERMISSION CHECK
+    if (event.event_type === 'tournament' && (req.user.userType === 'coach' || req.user.role === 'coach')) {
+       const settings = typeof event.tournament_settings === 'string' ? JSON.parse(event.tournament_settings) : event.tournament_settings;
+       if (settings && settings.restrict_coach_scores) {
+          return res.status(403).json({ 
+            error: "Restriction active", 
+            message: "Scorelines for this tournament are entered by referees only." 
+          });
+       }
+    }
 
     // Use transaction to ensure data integrity
     await withTransaction(async (client) => {
