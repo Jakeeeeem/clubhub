@@ -267,6 +267,38 @@
     top: -6px;
 }
 
+/* Final desktop-safe overrides (placed at end to win cascade) */
+@media (min-width:1025px) {
+    .pro-header, header.header {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        width: auto !important;
+        z-index: 10 !important;
+        height: auto !important;
+        background: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-bottom: 1px solid transparent !important;
+        box-shadow: none !important;
+        padding: 0 3rem !important;
+        display: block !important;
+        align-items: center !important;
+    }
+
+    .pro-header .nav-container, header.header .nav, header.header .nav-container {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 1rem !important;
+    }
+
+    /* Ensure main content is not pushed down excessively */
+    .main, .dashboard-main, .dashboard.container, .dashboard-container {
+        padding-top: 18px !important;
+    }
+}
+
 .hamburger-inner::after {
     content: "";
     bottom: -6px;

@@ -550,8 +550,13 @@ const UnifiedNav = {
 
   updateHeaderState() {
     window.addEventListener("scroll", () => {
-      const header = document.querySelector(".pro-header");
+      const header = document.querySelector(".pro-header, header.header");
       if (!header) return;
+      // Only apply compacting styles on small viewports where header is fixed
+      const isDesktop =
+        typeof window !== "undefined" && window.innerWidth >= 1025;
+      if (isDesktop) return; // desktop headers remain static
+
       if (window.scrollY > 30) {
         header.style.height = "68px";
         header.style.background = "rgba(10, 10, 12, 0.95)";
