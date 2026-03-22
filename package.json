@@ -2,4 +2,8 @@
   "dependencies": {
     "nodemailer": "^7.0.5"
   }
+  ,"scripts": {
+    "seed:camps": "node scripts/seed-camps.js",
+    "seed:tournaments": "node scripts/seed-tournaments.js"
+  }
 }

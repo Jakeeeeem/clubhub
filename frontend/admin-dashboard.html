@@ -1718,7 +1718,7 @@
                         <div class="info-box">
                             <strong>📋 Role Permissions:</strong>
                             <ul>
-                                <li><strong>Admin:</strong> Full organization management</li>
+                                <li><strong>Admin:</strong> Full group management</li>
                                 <li><strong>Coach:</strong> Assigned teams & player oversight</li>
                                 <li><strong>Staff:</strong> Shop, Marketing & Transactions</li>
                                 <li><strong>Viewer:</strong> Dashboard and data visibility only</li>
@@ -2164,7 +2164,7 @@
                 <!-- EXISTING PLAYER SECTION -->
                 <div id="existingPlayerSection" class="modal-tab-content-box">
                     <div class="form-group">
-                        <label for="playerSelect">Select Player from Organization</label>
+                        <label for="playerSelect">Select Player from Group</label>
                         <select id="playerSelect">
                             <option value="">Loading players...</option>
                         </select>
@@ -3767,7 +3767,7 @@
 
                     // If no clubs found and not platform admin or demo, redirect to create-org
                     if (AppState.clubs.length === 0 && !isPlatformAdmin && !isDemoMode) {
-                        console.log('⚠️ No organizations found for user, redirecting...');
+                        console.log('⚠️ No groups found for user, redirecting...');
                         setTimeout(() => {
                             window.location.href = 'create-group.html';
                         }, 500);
@@ -3816,8 +3816,8 @@
                     tourService.start('admin_main', [
                         {
                             target: '#org-switcher-container',
-                            title: 'Club Switcher',
-                            text: 'Manage multiple organizations? Use this dropdown to quickly switch between your different clubs.',
+                            title: 'Group Switcher',
+                            text: 'Manage multiple groups? Use this dropdown to quickly switch between your different groups.',
                             position: 'bottom'
                         },
                         {
@@ -3829,13 +3829,13 @@
                         {
                             target: '#stripeAccessBtn',
                             title: 'Finance & Payouts',
-                            text: 'Access your Stripe dashboard to monitor transactions and manage payouts for your organization.',
+                            text: 'Access your Stripe dashboard to monitor transactions and manage payouts for your group.',
                             position: 'bottom'
                         },
                         {
                             target: '#nav-group-mgmt',
                             title: 'Management Hub',
-                            text: 'Access all aspects of your club from players and teams to league standings and tournaments.',
+                            text: 'Access all aspects of your group from players and teams to league standings and tournaments.',
                             position: 'bottom'
                         }
                     ]);
@@ -5659,7 +5659,7 @@
                 const players = await apiService.getPlayers(groupId);
 
                 if (players.length === 0) {
-                    select.innerHTML = '<option value="">No players found in organization</option>';
+                    select.innerHTML = '<option value="">No players found in group</option>';
                     return;
                 }
 
@@ -6115,7 +6115,7 @@
             }
 
             if (!groupId) {
-                showNotification('Error: Could not determine Organization/Club ID. Please refresh the page.', 'error');
+                showNotification('Error: Could not determine Group/Club ID. Please refresh the page.', 'error');
                 return;
             }
 
@@ -6301,7 +6301,7 @@
             }
 
             if (!groupId) {
-                showNotification('Error: Could not determine Organization/Club ID.', 'error');
+                showNotification('Error: Could not determine Group/Club ID.', 'error');
                 return;
             }
 
@@ -6874,7 +6874,7 @@
             const groupId = await getActiveGroupId();
 
             if (!groupId) {
-                showNotification('No active organization/club found. Please select or create one first.', 'error');
+                showNotification('No active group/club found. Please select or create one first.', 'error');
                 input.value = '';
                 return;
             }
@@ -9309,7 +9309,7 @@
         }
 
         async function clearDummyData() {
-            if (!confirm('🚨 Are you sure? This will PERMANENTLY delete all payment plans, invoices, and payment records for this organization. This cannot be undone.')) return;
+            if (!confirm('🚨 Are you sure? This will PERMANENTLY delete all payment plans, invoices, and payment records for this group. This cannot be undone.')) return;
 
             try {
                 showLoading(true);
@@ -10083,7 +10083,7 @@
                     const inviteData = {
                         email: player.email,
                         clubRole: player.role || 'player',
-                        message: `Reminder: You've been invited to join our organization.`,
+                        message: `Reminder: You've been invited to join our group.`,
                         organizationId: AppState.currentOrganization?.id,
                         groupId: AppState.currentOrganization?.id,
                         isPublic: false
@@ -10388,7 +10388,7 @@
                     const inviteData = {
                         email,
                         clubRole: role,
-                        message: message || `You've been invited to join our organization as a ${role}.`,
+                        message: message || `You've been invited to join our group as a ${role}.`,
                         teamId: teamId, // Optional, null if not selected
                         organizationId: orgId,
                         groupId: orgId, // Ensure groupId is passed for backend compatibility
@@ -10681,8 +10681,8 @@
                     console.log('💾 Saving with org ID:', orgId);
 
                     if (!orgId) {
-                        console.error('❌ No organization ID available.');
-                        showNotification('❌ No active organization found.', 'error');
+                        console.error('❌ No group ID available.');
+                        showNotification('❌ No active group found.', 'error');
                         return;
                     }
 

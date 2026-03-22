@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Camp Admin</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 20px
+        }
+
+        button,
+        input,
+        select {
+            margin: 6px 0;
+            padding: 8px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Camp Admin</h1>
+    <label>Event ID (camp): <input id="eventId" placeholder="paste event id" style="width:360px"></label>
+
+    <section>
+        <h2>Groups</h2>
+        <div>
+            <input id="groupName" placeholder="New group name" />
+            <input id="groupCoach" placeholder="Coach ID (optional)" />
+            <button id="createGroup">Create Group</button>
+        </div>
+        <div>
+            <button id="loadGroups">Load Groups</button>
+            <pre id="groupsList" style="background:#f6f6f6;padding:10px"></pre>
+        </div>
+    </section>
+
+    <section>
+        <h2>Bibs</h2>
+        <input id="bibPlayerId" placeholder="Player ID" />
+        <input id="bibNumber" placeholder="Bib Number" />
+        <input id="bibColor" placeholder="Bib Color" />
+        <button id="assignBib">Assign/Update Bib</button>
+    </section>
+
+    <section>
+        <h2>Assign Player to Group</h2>
+        <input id="assignPlayerId" placeholder="Player ID" />
+        <input id="assignGroupId" placeholder="Group ID" />
+        <button id="assignToGroup">Assign</button>
+    </section>
+
+    <section>
+        <h2>Export / Check-in</h2>
+        <button id="exportCsv">Export Attendees CSV</button>
+        <input id="checkinPlayer" placeholder="Player ID to check-in" />
+        <button id="checkinBtn">Check-in</button>
+    </section>
+
+    <script src="/camp-admin.js"></script>
+</body>
+
+</html>

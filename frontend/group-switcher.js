@@ -410,8 +410,8 @@ class GroupSwitcher {
         }, 500);
       }
     } catch (error) {
-      console.error("Failed to switch organization:", error);
-      showNotification("Failed to switch organization", "error");
+      console.error("Failed to switch group:", error);
+      showNotification("Failed to switch group", "error");
     }
   }
 }

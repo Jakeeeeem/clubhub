@@ -86,14 +86,17 @@ function showCoachSection(sectionId) {
 
   // Remove active class from all nav items (sidebar + mobile)
   const navItems = document.querySelectorAll(
-    ".sidebar-nav .nav-item, .app-top-tabs .tab-item, .app-bottom-nav .nav-link"
+    ".sidebar-nav .nav-item, .app-top-tabs .tab-item, .app-bottom-nav .nav-link",
   );
   navItems.forEach((item) => {
     item.classList.remove("active");
-    
+
     // Check if this item is the one being activated (matching sectionId in onclick)
-    if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(`'${sectionId}'`)) {
-      item.classList.add('active');
+    if (
+      item.getAttribute("onclick") &&
+      item.getAttribute("onclick").includes(`'${sectionId}'`)
+    ) {
+      item.classList.add("active");
     }
   });
 
@@ -130,7 +133,8 @@ function showCoachSection(sectionId) {
       loadMessengerConversations();
       break;
     case "tactical-board":
-      if (typeof initializeTacticalBoard === 'function') initializeTacticalBoard();
+      if (typeof initializeTacticalBoard === "function")
+        initializeTacticalBoard();
       break;
     case "profile":
       loadCoachProfile();
@@ -1044,7 +1048,7 @@ async function saveFormation() {
     AppState.currentOrgId ||
     (await window.apiService.getContext())?.currentOrganization?.id;
   if (!orgId) {
-    showNotification("Cannot save: Organization context missing", "error");
+    showNotification("Cannot save: Group context missing", "error");
     return;
   }
 
@@ -1273,29 +1277,33 @@ window.postToCommunityAsCoach = postToCommunityAsCoach;
 async function loadCommunityFeed() {
   const container = document.getElementById("communityFeedContainer");
   if (!container) return;
-  container.innerHTML = '<div class="stat-card">Loading community feed...</div>';
+  container.innerHTML =
+    '<div class="stat-card">Loading community feed...</div>';
 
   try {
     const items = await apiService.getFeedItems();
-    
+
     if (!items || items.length === 0) {
-      container.innerHTML = '<div class="empty-state"><h4>No updates found</h4><p>Check back later for new announcements and blogs.</p></div>';
+      container.innerHTML =
+        '<div class="empty-state"><h4>No updates found</h4><p>Check back later for new announcements and blogs.</p></div>';
       return;
     }
 
-    container.innerHTML = items.map(item => `
+    container.innerHTML = items
+      .map(
+        (item) => `
       <div class="glass-card community-card" style="margin-bottom: 2rem; overflow: hidden; padding: 0;">
-        ${item.image ? `<div class="community-image-wrapper"><img src="${item.image}" alt="${item.title}" class="community-image"></div>` : ''}
+        ${item.image ? `<div class="community-image-wrapper"><img src="${item.image}" alt="${item.title}" class="community-image"></div>` : ""}
         <div style="padding: 1.5rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <div class="feed-avatar" style="width: 32px; height: 32px; font-size: 0.8rem; background: var(--builder-accent); display:flex; align-items:center; justify-content:center; border-radius:50%;">${item.author?.charAt(0) || 'A'}</div>
+              <div class="feed-avatar" style="width: 32px; height: 32px; font-size: 0.8rem; background: var(--builder-accent); display:flex; align-items:center; justify-content:center; border-radius:50%;">${item.author?.charAt(0) || "A"}</div>
               <div>
-                <div style="font-weight: 600; font-size: 0.9rem;">${item.author || 'Club Admin'}</div>
+                <div style="font-weight: 600; font-size: 0.9rem;">${item.author || "Club Admin"}</div>
                 <div style="font-size: 0.7rem; color: var(--text-muted);">${formatDate(item.date)}</div>
               </div>
             </div>
-            <span class="feed-tag">${item.type || 'Update'}</span>
+            <span class="feed-tag">${item.type || "Update"}</span>
           </div>
           <h2 style="font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 1rem;">${item.title}</h2>
           <div style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem;">${item.content}</div>
@@ -1306,10 +1314,13 @@ async function loadCommunityFeed() {
           </div>
         </div>
       </div>
-    `).join('');
+    `,
+      )
+      .join("");
   } catch (err) {
     console.error("Feed load failed:", err);
-    container.innerHTML = '<p class="error-text">Error loading community feed.</p>';
+    container.innerHTML =
+      '<p class="error-text">Error loading community feed.</p>';
   }
 }
 
@@ -1319,16 +1330,19 @@ async function loadMessengerConversations() {
 
   try {
     const messages = await apiService.getMessages();
-    
+
     if (!messages || messages.length === 0) {
-      listContainer.innerHTML = '<div style="padding: 3rem; text-align: center; color: var(--text-muted);">No messages found.</div>';
+      listContainer.innerHTML =
+        '<div style="padding: 3rem; text-align: center; color: var(--text-muted);">No messages found.</div>';
       return;
     }
 
-    listContainer.innerHTML = messages.map(m => `
-      <div class="message-item ${m.unread ? 'unread' : ''}" onclick="openMessageThread('${m.id}')" id="msg-item-${m.id}" style="padding:1rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:1rem; align-items:center;">
+    listContainer.innerHTML = messages
+      .map(
+        (m) => `
+      <div class="message-item ${m.unread ? "unread" : ""}" onclick="openMessageThread('${m.id}')" id="msg-item-${m.id}" style="padding:1rem; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:1rem; align-items:center;">
         <div class="message-avatar" style="width:40px; height:40px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700;">
-          ${m.sender?.charAt(0) || 'U'}
+          ${m.sender?.charAt(0) || "U"}
         </div>
         <div class="message-info" style="flex:1;">
           <div class="message-header" style="display:flex; justify-content:space-between;">
@@ -1338,10 +1352,13 @@ async function loadMessengerConversations() {
           <div class="message-preview" style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${m.content}</div>
         </div>
       </div>
-    `).join('');
+    `,
+      )
+      .join("");
   } catch (err) {
     console.error("Messages load failed:", err);
-    listContainer.innerHTML = '<p class="error-text">Error loading messages.</p>';
+    listContainer.innerHTML =
+      '<p class="error-text">Error loading messages.</p>';
   }
 }
 
@@ -1350,21 +1367,23 @@ async function openMessageThread(messageId) {
   if (!viewContainer) return;
 
   // Highlight active
-  document.querySelectorAll('.message-item').forEach(el => el.classList.remove('active'));
+  document
+    .querySelectorAll(".message-item")
+    .forEach((el) => el.classList.remove("active"));
   const activeItem = document.getElementById(`msg-item-${messageId}`);
-  if (activeItem) activeItem.classList.add('active');
+  if (activeItem) activeItem.classList.add("active");
 
   try {
     const messages = await apiService.getMessages();
-    const thread = messages.find(m => m.id === messageId);
-    
+    const thread = messages.find((m) => m.id === messageId);
+
     if (!thread) return;
 
     viewContainer.innerHTML = `
       <div class="message-thread" style="display:flex; flex-direction:column; height:100%;">
         <div class="thread-header" style="padding:1.5rem; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
           <div style="display: flex; align-items: center; gap: 1rem;">
-            <div class="message-avatar" style="width: 40px; height: 40px; border-radius:50%; background: rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-weight:700;">${thread.sender?.charAt(0) || 'U'}</div>
+            <div class="message-avatar" style="width: 40px; height: 40px; border-radius:50%; background: rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-weight:700;">${thread.sender?.charAt(0) || "U"}</div>
             <div>
               <div style="font-weight: 700;">${thread.sender}</div>
               <div style="font-size: 0.75rem; color: var(--text-muted);">Active Conversation</div>
@@ -1376,7 +1395,7 @@ async function openMessageThread(messageId) {
           <div class="message-bubble received" style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px; max-width:80%; margin-bottom:1rem;">
             ${thread.content}
             <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.4rem; text-align: left;">
-              ${thread.timestamp ? new Date(thread.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+              ${thread.timestamp ? new Date(thread.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
             </div>
           </div>
         </div>
