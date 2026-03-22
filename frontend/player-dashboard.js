@@ -2330,9 +2330,21 @@ window.submitAvailability = function (eventId) {
   modal.id = "availabilityModal";
   modal.style.display = "block";
 
-  const requireReasonMsg = event.require_decline_reason
-    ? `<p style="font-size: 0.8rem; color: var(--primary); margin-bottom: 0.5rem;">Note: The coach requires a reason if you select "No".</p>`
-    : "";
+  const requireReason = !!event.require_decline_reason;
+  const declineReasonHtml = `
+    <div id="declineReasonContainer" class="form-group" style="display: none; margin-top: 1rem;">
+        <label for="declineReason">Reason for not attending ${requireReason ? '<span style="color: var(--primary);">*</span>' : '(Optional)'}</label>
+        <select id="declineReason" class="form-control" style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff;">
+            <option value="">Select a reason...</option>
+            <option value="injury">Injury</option>
+            <option value="illness">Illness</option>
+            <option value="work">Work Commitment</option>
+            <option value="holiday">Holiday/Vacation</option>
+            <option value="transport">Transport Issues</option>
+            <option value="other">Other (Specify in notes)</option>
+        </select>
+    </div>
+  `;
 
   modal.innerHTML = `
     <div class="modal-content" style="max-width: 500px;">
@@ -2342,6 +2354,7 @@ window.submitAvailability = function (eventId) {
         </div>
         <form id="availabilityForm" onsubmit="window.handleAvailabilitySubmission(event)">
             <input type="hidden" id="availabilityEventId" value="${event.id}">
+            <input type="hidden" id="requireReasonFlag" value="${requireReason}">
             
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label>Are you attending?</label>
@@ -2364,10 +2377,11 @@ window.submitAvailability = function (eventId) {
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="availabilityNotes">Reason / Notes</label>
-                ${requireReasonMsg}
-                <textarea id="availabilityNotes" rows="3" placeholder="Provide any details (e.g., 'Running late', 'Injured')..."></textarea>
+            ${declineReasonHtml}
+
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="availabilityNotes">Additional Notes</label>
+                <textarea id="availabilityNotes" rows="3" placeholder="Any additional information..."></textarea>
             </div>
 
             <div class="form-actions" style="margin-top: 1.5rem;">
@@ -2378,7 +2392,7 @@ window.submitAvailability = function (eventId) {
   `;
   document.body.appendChild(modal);
 
-  // Add event listener to radios to highlight selected
+  // Add event listener to radios to highlight selected and show/hide reason
   const radios = modal.querySelectorAll('input[name="availability"]');
   radios.forEach((radio) => {
     radio.addEventListener("change", (e) => {
@@ -2386,6 +2400,11 @@ window.submitAvailability = function (eventId) {
         .querySelectorAll(".checkbox-group label")
         .forEach((l) => (l.style.borderColor = "var(--border-color)"));
       e.target.parentElement.style.borderColor = "var(--primary)";
+
+      const declineContainer = modal.querySelector("#declineReasonContainer");
+      if (declineContainer) {
+        declineContainer.style.display = e.target.value === "no" ? "block" : "none";
+      }
     });
   });
 };
@@ -2393,18 +2412,19 @@ window.submitAvailability = function (eventId) {
 window.handleAvailabilitySubmission = async function (e) {
   e.preventDefault();
   try {
-    const eventId = byId("availabilityEventIdInput").value;
+    const eventId = byId("availabilityEventId")?.value || byId("availabilityEventIdInput")?.value;
     const availability = document.querySelector(
       'input[name="availability"]:checked',
     )?.value;
     const reason = byId("declineReason")?.value;
-    const notes = byId("availabilityNotes").value;
+    const notes = byId("availabilityNotes")?.value;
+    const requireReason = byId("requireReasonFlag")?.value === "true";
 
     if (!availability)
       return showNotification("Please select your availability", "error");
 
-    if (availability === "no" && !reason) {
-      return showNotification("Please provide a reason for declining", "error");
+    if (availability === "no" && requireReason && !reason) {
+      return showNotification("A reason is required for not attending.", "error");
     }
 
     const price = Number(window.currentAvailabilityEventPrice || 0);

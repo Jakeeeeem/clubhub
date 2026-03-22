@@ -1032,25 +1032,9 @@
                                     <button class="btn btn-secondary btn-small"
                                         onclick="inviteCoachToTeam(currentTeamId)">✉️ Invite Coach</button>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Player</th>
-                                                <th>Position</th>
-                                                <th style="text-align: center;">M</th>
-                                                <th style="text-align: center;">G</th>
-                                                <th style="text-align: center;">A</th>
-                                                <th style="text-align: center;">Min</th>
-                                                <th>Age</th>
-                                                <th>Status</th>
-                                                <th style="text-align: right;">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="teamRosterBody">
-                                            <!-- Populated via JS -->
-                                        </tbody>
-                                    </table>
+                                <div id="teamRosterContainer" style="margin-top: 1.5rem;">
+                                    <!-- Populated via JS as a card grid -->
+                                    <div style="text-align:center; padding: 4rem; opacity: 0.5;">Loading roster...</div>
                                 </div>
                             </div>
                             <!-- Recent Results -->
@@ -8112,18 +8096,26 @@
                 renderRoster(AppState.currentTeamRoster);
                 renderTeamEvents(team.upcoming_events || []);
 
-                // Fetch and render Stats
+                // Fetch and render Stats & Availability
                 try {
-                    const stats = await apiService.getTeamStats(teamId);
+                    const [stats, availability] = await Promise.all([
+                        apiService.getTeamStats(teamId),
+                        apiService.getTeamAvailabilityVotes(teamId)
+                    ]);
+                    
                     renderTeamStats(stats);
-                    // Refresh roster with stats
+                    
+                    // Refresh roster with stats AND availability
                     if (stats.players && stats.players.length > 0) {
-                        renderRoster(stats.players);
+                        // Pass availability to roster renderer
+                        renderRoster(stats.players, availability);
                     }
+                    
                     renderRecentResults(stats.recent_form || team.recent_matches || []);
                 } catch (err) {
                     console.warn('Failed to load deep stats, showing basic results');
                     renderRecentResults(team.recent_matches || []);
+                    renderRoster(AppState.currentTeamRoster);
                 }
 
             } catch (error) {
@@ -8169,42 +8161,98 @@
             `;
         }
 
-        function renderRoster(players) {
-            const tbody = document.getElementById('teamRosterBody');
-            if (!tbody) return;
+        function renderRoster(players, availabilityData = null) {
+            const container = document.getElementById('teamRosterContainer'); // We'll change the container ID in HTML too
+            if (!container) return;
 
             if (players.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">No players in this team yet.</td></tr>';
+                container.innerHTML = '<div style="text-align:center; padding: 4rem; opacity: 0.5;">No players in this team yet.</div>';
                 return;
             }
 
-            tbody.innerHTML = players.map(p => `
-                <tr style="cursor: pointer;" onclick="viewPlayerStats('${p.id}', '${p.first_name} ${p.last_name}')">
-                    <td>
-                        <div style="display:flex; flex-direction:column;">
-                            <span style="font-weight:bold; color: var(--accent-color);">${p.first_name} ${p.last_name}</span>
-                            <span style="font-size:0.8rem; opacity:0.7;">#${p.jersey_number || '-'}</span>
+            // Get Nearest Event for availability symbols
+            const nextEvent = availabilityData && availabilityData.events && availabilityData.events.length > 0 ? availabilityData.events[0] : null;
+            const responses = availabilityData ? availabilityData.responses || [] : [];
+            const responseMap = {};
+            if (nextEvent) {
+                responses.filter(r => r.event_id === nextEvent.id).forEach(r => {
+                    responseMap[r.player_id] = r.availability;
+                });
+            }
+
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem;">
+                    ${players.map(p => {
+                        let statusSymbol = '<span style="opacity:0.2;">⚪</span>';
+                        if (nextEvent) {
+                            const status = responseMap[p.id];
+                            if (status === 'going' || status === 'confirmed') statusSymbol = '<span style="color:#22c55e;">✅</span>';
+                            else if (status === 'declined' || status === 'unavailable') statusSymbol = '<span style="color:#ef4444;">❌</span>';
+                            else if (status === 'maybe') statusSymbol = '<span style="color:#eab308;">❓</span>';
+                        }
+                        
+                        const initials = (p.first_name[0] + (p.last_name ? p.last_name[0] : '')).toUpperCase();
+
+                        return `
+                        <div class="glass-card player-stat-card" style="padding: 1.25rem; display: flex; align-items: center; gap: 1.25rem; transition: all 0.2s; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);" onclick="viewPlayerStats('${p.id}', '${p.first_name} ${p.last_name}')">
+                            <div class="player-avatar" style="width: 56px; height: 56px; border-radius: 50%; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.3); flex-shrink: 0;">
+                                ${initials}
+                            </div>
+                            
+                            <div style="flex: 1; overflow: hidden;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
+                                    <div style="font-weight: 700; font-size: 1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">
+                                        ${p.first_name} ${p.last_name}
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--accent-color); background: rgba(220,67,67,0.1); padding: 0.1rem 0.4rem; border-radius: 4px;">#${p.jersey_number || '-'}</span>
+                                        ${statusSymbol}
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.75rem; color: #888; margin-bottom: 0.75rem;">${p.team_position || p.position || 'Player'}</div>
+                                
+                                <div style="display: flex; gap: 1rem; align-items: center;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.6rem; text-transform: uppercase; opacity: 0.5; margin-bottom: 2px;">Match</div>
+                                        <div style="font-weight: 800; color: var(--accent-color);">${p.matches_played || 0}</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.6rem; text-transform: uppercase; opacity: 0.5; margin-bottom: 2px;">Goals</div>
+                                        <div style="font-weight: 800; color: #fff;">${p.total_goals || 0}</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.6rem; text-transform: uppercase; opacity: 0.5; margin-bottom: 2px;">Ast</div>
+                                        <div style="font-weight: 800; color: #fff;">${p.total_assists || 0}</div>
+                                    </div>
+                                    <div style="text-align: center; margin-left: auto;">
+                                        <button class="btn btn-secondary_outline btn-small" style="font-weight:bold; border-style:dashed; min-width: 38px; height: 38px; border-radius: 50%; padding: 0;" 
+                                                onclick="event.stopPropagation(); quickAddStats('${p.id}', '${p.first_name} ${p.last_name}')">
+                                            —
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-hover-actions" style="position: absolute; top: 0.75rem; right: 0.75rem; display: flex; gap: 0.5rem; opacity: 0; transition: opacity 0.2s;">
+                                <button class="btn btn-small" style="width: 28px; height: 28px; padding: 0; background: rgba(255,255,255,0.05);" onclick="event.stopPropagation(); editPlayer('${p.id}')">✏️</button>
+                                <button class="btn btn-small btn-danger" style="width: 28px; height: 28px; padding: 0;" onclick="event.stopPropagation(); removePlayerFromTeam('${p.id}', '${currentTeamId}')">×</button>
+                            </div>
                         </div>
-                    </td>
-                    <td>${p.team_position || p.position || '-'}</td>
-                    <td style="text-align: center; font-weight: 600;">${p.matches_played || 0}</td>
-                    <td style="text-align: center; font-weight: 700; color: var(--accent-color);">${p.total_goals || 0}</td>
-                    <td style="text-align: center; font-weight: 700; color: #4ade80;">${p.total_assists || 0}</td>
-                    <td style="text-align: center; opacity: 0.8;">${p.total_minutes || 0}'</td>
-                    <td>${calculateAge(p.date_of_birth)}</td>
-                    <td>
-                        <span class="status-badge status-${p.payment_status || 'pending'}">
-                            ${p.payment_status || 'Active'}
-                        </span>
-                    </td>
-                    <td style="text-align: right;">
-                        <button class="btn btn-small btn-secondary_outline" onclick="event.stopPropagation(); editPlayer('${p.id}')">✏️ Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="event.stopPropagation(); removePlayerFromTeam('${p.id}', '${currentTeamId}')">
-                            ❌ Remove
-                        </button>
-                    </td>
-                </tr>
-                `).join('');
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            
+            // Add CSS for hover actions if not present
+            if (!document.getElementById('rosterStyles')) {
+                const style = document.createElement('style');
+                style.id = 'rosterStyles';
+                style.textContent = `
+                    .player-stat-card:hover .card-hover-actions { opacity: 1 !important; }
+                    .player-stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); }
+                `;
+                document.head.appendChild(style);
+            }
         }
 
         async function viewPlayerStats(playerId, playerName) {
@@ -8289,6 +8337,102 @@
                 `;
             }).join('');
         }
+
+        window.quickAddStats = async function(playerId, playerName) {
+            // Check if we have recent matches
+            const recentMatches = AppState.currentTeamRecentMatches || [];
+            if (recentMatches.length === 0) {
+                showNotification('No recent matches found to record stats for.', 'warning');
+                return;
+            }
+
+            // Create or show a small modal for match selection
+            removeIfExists('quickStatsModal');
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'quickStatsModal';
+            modal.style.display = 'block';
+
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 450px; border-radius: 20px;">
+                    <div class="modal-header" style="border:none;">
+                        <h2>Analysis: ${playerName}</h2>
+                        <button class="close" onclick="closeModal('quickStatsModal')">&times;</button>
+                    </div>
+                    <form id="quickStatsForm" style="padding: 1.5rem;">
+                        <div class="form-group" style="margin-bottom: 1.25rem;">
+                            <label style="font-size: 0.8rem; opacity: 0.6; display:block; margin-bottom: 0.5rem;">Select Match</label>
+                            <select id="quickStatsEventId" class="form-control" style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff;">
+                                ${recentMatches.map((m, i) => `<option value="${m.id}">${m.title} (${new Date(m.event_date).toLocaleDateString()})</option>`).join('')}
+                            </select>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                            <div class="form-group">
+                                <label style="font-size: 0.8rem; opacity: 0.6; display:block; margin-bottom: 0.5rem;">Match Rating (1-10)</label>
+                                <input type="number" id="quickStatsRating" value="7" min="1" max="10" style="width: 100%; border-radius: 10px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.8rem; opacity: 0.6; display:block; margin-bottom: 0.5rem;">Minutes Played</label>
+                                <input type="number" id="quickStatsMinutes" value="90" min="0" style="width: 100%; border-radius: 10px;">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                            <div class="form-group">
+                                <label style="font-size: 0.8rem; opacity: 0.6; display:block; margin-bottom: 0.5rem;">Goals</label>
+                                <input type="number" id="quickStatsGoals" value="0" min="0" style="width: 100%; border-radius: 10px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.8rem; opacity: 0.6; display:block; margin-bottom: 0.5rem;">Assists</label>
+                                <input type="number" id="quickStatsAssists" value="0" min="0" style="width: 100%; border-radius: 10px;">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label style="font-size: 0.8rem; opacity: 0.6; display:block; margin-bottom: 0.5rem;">Performance Feedback</label>
+                            <textarea id="quickStatsNotes" rows="3" placeholder="Great work today..." style="width: 100%; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 0.8rem;"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; border-radius: 12px; font-weight: 700;">Save Stats</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('quickStatsForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const eventId = document.getElementById('quickStatsEventId').value;
+                const matchObj = recentMatches.find(m => m.id === eventId);
+                
+                const stats = {
+                    home_score: matchObj.home_score || 0,
+                    away_score: matchObj.away_score || 0,
+                    result: matchObj.result || 'draw',
+                    playerStats: [{
+                        playerId: playerId,
+                        rating: parseInt(document.getElementById('quickStatsRating').value),
+                        goals: parseInt(document.getElementById('quickStatsGoals').value),
+                        assists: parseInt(document.getElementById('quickStatsAssists').value),
+                        minutesPlayed: parseInt(document.getElementById('quickStatsMinutes').value),
+                        notes: document.getElementById('quickStatsNotes').value
+                    }]
+                };
+
+                try {
+                    showLoading(true);
+                    await apiService.recordMatchResult(eventId, stats);
+                    showNotification(`Stats recorded for ${playerName}!`, 'success');
+                    closeModal('quickStatsModal');
+                    if (currentTeamId) await loadTeamDetails(currentTeamId);
+                } catch (error) {
+                    console.error('Failed to save quick stats:', error);
+                    showNotification('Error: ' + error.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            };
+        };
 
         async function showRecordResultModal(eventId, eventTitle) {
             document.getElementById('resultEventId').value = eventId;
