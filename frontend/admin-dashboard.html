@@ -18,6 +18,7 @@
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="group-switcher.css">
+    <link rel="stylesheet" href="unified-nav.css">
     <style>
         /* CRITICAL: Dashboard section visibility - inline to bypass caching */
         .dashboard-section {
@@ -152,47 +153,50 @@
 </head>
 
 <body>
-    <header class="header">
-        <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text neon-text">ClubHub</span>
+    <header class="pro-header">
+        <div class="nav-container">
+            <div class="logo-area" onclick="window.location.href='index.html'">
+                <img src="images/logo.png" alt="Logo" class="logo-img">
+                <span class="logo-text">ClubHub</span>
             </div>
 
-            <!-- Mode Toggle -->
-            <div class="mode-toggle-container">
-                <span class="mode-label active" id="group-label">Group</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="mode-toggle" />
-                    <span class="toggle-slider"></span>
-                </label>
-                <span class="mode-label" id="player-label">Player</span>
+            <div class="header-actions">
+                <div class="action-btn desktop-only" onclick="showSection('club-messenger')">
+                    <i>💬</i>
+                    <span class="badge">2</span>
+                </div>
+                <div class="action-btn" onclick="showSection('notifications')">
+                    <i>🔔</i>
+                    <span class="badge">5</span>
+                </div>
+                
+                <div class="user-profile-trigger" onclick="UnifiedNav.toggleSidebar(true)">
+                    <span class="user-name desktop-only" id="adminNameDisplayNav">Admin</span>
+                    <div class="user-avatar-sm" id="adminAvatarNav">A</div>
+                    <i style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;">▼</i>
+                </div>
             </div>
-
-            <!-- Mode Toggle -->
-            <div class="user-info">
-                <!-- Group Switcher -->
-                <div id="group-switcher-container"></div>
-
-                <span id="adminNameDisplay">Hello, Admin!</span>
-                <div class="user-avatar" id="adminAvatar">A</div>
-                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
-            </div>
-        </nav>
+        </div>
     </header>
     <!-- App Top Tabs (Mobile Headlines) -->
-    <div class="app-top-tabs mobile-only" id="mobileTabs">
-        <a href="#" class="tab-item active" onclick="showSection('overview'); return false;">Overview</a>
-        <a href="#" class="tab-item" onclick="showSection('players'); return false;">Players</a>
-        <a href="#" class="tab-item" onclick="showSection('teams'); return false;">Teams</a>
-        <a href="#" class="tab-item" onclick="showSection('staff'); return false;">Staff</a>
-        <a href="#" class="tab-item" onclick="showSection('events'); return false;">Events</a>
-        <a href="#" class="tab-item" onclick="showSection('tournaments'); return false;">Tournaments</a>
-        <a href="#" class="tab-item" onclick="showSection('tactical-board'); return false;">Tactics</a>
-        <a href="#" class="tab-item" onclick="showSection('finances'); return false;">Finance</a>
-        <a href="#" class="tab-item" onclick="showSection('listings'); return false;">Listings</a>
-        <a href="#" class="tab-item" onclick="showSection('item-shop'); return false;">Shop</a>
-    </div>
+    <nav class="pro-bottom-nav mobile-only">
+        <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;">
+            <i>📊</i>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" class="bottom-nav-link" onclick="showSection('club-messenger'); return false;">
+            <i>💬</i>
+            <span>Messages</span>
+        </a>
+        <a href="scouting.html" class="bottom-nav-link">
+            <i>🔍</i>
+            <span>Scout</span>
+        </a>
+        <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
+            <i>🍔</i>
+            <span>More</span>
+        </a>
+    </nav>
 
     <main class="main">
         <div class="dashboard container dashboard-container">
@@ -13615,6 +13619,7 @@
     </div> <!-- End .dashboard-content -->
     </div> <!-- End .dashboard-container -->
     </main>
+    <script src="unified-nav.js"></script>
 </body>
 
 </html>

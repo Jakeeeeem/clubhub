@@ -18,6 +18,7 @@
 
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="group-switcher.css">
+  <link rel="stylesheet" href="unified-nav.css">
   <script src="https://js.stripe.com/v3/"></script>
   <script src="api-service.js"></script>
   <script src="group-switcher.js"></script>
@@ -44,50 +45,47 @@
       }
     }
   </script>
-  <header class="header">
-    <nav class="nav container">
-      <div class="logo" onclick="window.location.href='index.html'">
-        <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+  <header class="pro-header">
+    <div class="nav-container">
+      <div class="logo-area" onclick="window.location.href='index.html'">
+        <img src="images/logo.png" alt="Logo" class="logo-img">
         <span class="logo-text">ClubHub</span>
       </div>
 
-      <!-- Mode Toggle -->
-      <div class="mode-toggle-container">
-        <span class="mode-label" id="club-label">Club</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="mode-toggle" checked />
-          <span class="toggle-slider"></span>
-        </label>
-        <span class="mode-label active" id="player-label">Player</span>
+      <div class="header-actions">
+        <div class="action-btn" onclick="showPlayerSection('notifications')">
+          <i>🔔</i>
+          <span class="badge">3</span>
+        </div>
+        
+        <div class="user-profile-trigger" onclick="UnifiedNav.toggleSidebar(true)">
+          <span class="user-name desktop-only" id="playerNameDisplayNav">Player</span>
+          <div class="user-avatar-sm" id="playerAvatarNav">P</div>
+          <i style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;">▼</i>
+        </div>
       </div>
-
-      <!-- Organization Switcher -->
-      <div id="org-switcher-container"></div>
-
-      <div class="nav-buttons" id="loggedInNav">
-        <!-- Populated by JS -->
-      </div>
-    </nav>
+    </div>
   </header>
 
   <!-- Mobile Top Tabs (Threads Style) -->
-  <div class="app-top-tabs mobile-only">
-    <div class="tabs-container">
-      <div class="tab-item active" onclick="showPlayerSection('overview')">Overview</div>
-      <div class="tab-item" onclick="showPlayerSection('club-feed')">Feed</div>
-      <div class="tab-item" onclick="showPlayerSection('club-messenger')">Messenger</div>
-      <div class="tab-item" onclick="showPlayerSection('teams')">Teams</div>
-      <div class="tab-item" onclick="showPlayerSection('my-clubs')">Groups</div>
-      <div class="tab-item" onclick="showPlayerSection('documents')">Documents</div>
-      <div class="tab-item" onclick="showPlayerSection('polls')">Polls</div>
-      <div class="tab-item" onclick="showPlayerSection('profile')">Profile</div>
-      <div class="tab-item" onclick="showPlayerSection('family')">Family</div>
-      <div class="tab-item" onclick="showPlayerSection('payments')">Payments</div>
-      <div class="tab-item" onclick="showPlayerSection('club-finder')">Find Groups</div>
-      <div class="tab-item" onclick="showPlayerSection('event-finder')">Find Events</div>
-      <div class="tab-item" onclick="showPlayerSection('tournament-manager')">Tournaments</div>
-    </div>
-  </div>
+  <nav class="pro-bottom-nav mobile-only">
+    <a href="#" class="bottom-nav-link active" onclick="showPlayerSection('overview'); return false;">
+      <i>📊</i>
+      <span>Dashboard</span>
+    </a>
+    <a href="#" class="bottom-nav-link" onclick="showPlayerSection('club-messenger'); return false;">
+      <i>💬</i>
+      <span>Messages</span>
+    </a>
+    <a href="scouting.html" class="bottom-nav-link">
+      <i>🔍</i>
+      <span>Explore</span>
+    </a>
+    <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
+      <i>🍔</i>
+      <span>More</span>
+    </a>
+  </nav>
 
 
   <main class="main">
@@ -1656,6 +1654,7 @@
   <script src="training.js"></script>
   <!-- PWA Install Handler -->
   <script src="pwa-install.js"></script>
+  <script src="unified-nav.js"></script>
 </body>
 
 </html>
