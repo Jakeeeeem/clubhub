@@ -35,6 +35,12 @@
     .header-center { position: static !important; transform: none !important; }
     .desktop-only { display: inline-flex !important; }
     .mobile-only { display: none !important; }
+    /* Ensure mobile navigation UI is fully hidden on larger screens */
+    .pro-sidebar, .sidebar-overlay, .pro-bottom-nav {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
 }
 
 /* --- Global Header (Standardized) --- */

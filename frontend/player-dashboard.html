@@ -19,6 +19,14 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="group-switcher.css">
   <link rel="stylesheet" href="unified-nav.css">
+    <style>
+      /* Small desktop-specific padding fixes for Player dashboard to match previous layout */
+      @media (min-width:1025px) {
+        .dashboard-header { padding: 18px 0 !important; }
+        .dashboard.container { margin-top: 0 !important; }
+        .dashboard-container { padding-top: 8px !important; }
+      }
+    </style>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="api-service.js"></script>
   <script src="group-switcher.js"></script>
