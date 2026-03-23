@@ -63,9 +63,14 @@
     .desktop-only { display: none !important; }
     .mobile-only { display: block !important; }
     
-    /* Show mobile-specific UI components */
-    .pro-sidebar, .sidebar-overlay, .pro-bottom-nav, .side-menu-trigger {
+    /* Ensure mobile-specific UI components are available but not necessarily visible */
+    .pro-sidebar, .sidebar-overlay {
         display: block !important;
+        /* Toggle state is handled by .active class and base styles below */
+    }
+    
+    .pro-bottom-nav, .side-menu-trigger {
+        display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
         pointer-events: auto !important;
@@ -439,22 +444,25 @@
     z-index: 4500;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.5s ease;
+    transition: all 0.5s ease;
+    pointer-events: none;
 }
 
 .sidebar-overlay.active {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
 }
 
-/* Mobile Sidebar - Open All The Way */
-@media (max-width: 768px) {
+/* Mobile Sidebar - Open All The Way (Standardize on 991px breakpoint) */
+@media (max-width: 991px) {
     :root {
         --sidebar-width: 100%;
     }
     
     .pro-sidebar {
         border-right: none;
+        left: -100%; /* Ensure it starts off-screen */
     }
     
     .pro-sidebar.active {
@@ -576,14 +584,9 @@
     font-size: 1.25rem;
 }
 
-/* Media Queries */
-@media (max-width: 768px) {
+@media (max-width: 991px) {
     .pro-bottom-nav {
         display: flex;
-    }
-    
-    .desktop-only {
-        display: none !important;
     }
     
     .pro-header {
@@ -705,7 +708,7 @@
 }
 
 /* On mobile, standard desktop headers should be hidden gracefully */
-@media (max-width: 768px) {
+@media (max-width: 991px) {
     .header nav, 
     #header-nav,
     .nav-buttons,

@@ -2739,7 +2739,7 @@
 
     <!-- Add Event Modal -->
     <div id="addEventModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
                 <h2>📅 Create New Event</h2>
                 <button class="close" onclick="closeModal('addEventModal')">&times;</button>
@@ -2752,7 +2752,7 @@
                     </div>
                     <div class="form-group">
                         <label for="eventType">Event Type *</label>
-                        <select id="eventType" required>
+                        <select id="eventType" required onchange="handleEventTypeChange()">
                             <option value="">Select Type</option>
                             <option value="training">Training Session</option>
                             <option value="match">Match</option>
@@ -2762,47 +2762,65 @@
                             <option value="trial">Trial Session</option>
                         </select>
                     </div>
-                    <label for="eventTeamSelect">Assign to Team</label>
-                    <select id="eventTeamSelect" onchange="loadPlayersForAssignment(this.value)">
-                        <option value="">-- All Group Members --</option>
-                    </select>
-                </div>
-                <div class="form-group" id="opponentContainer" style="display: none;">
-                    <label for="eventOpponent">Opponent</label>
-                    <input type="text" id="eventOpponent" placeholder="e.g., Riverside FC">
-                </div>
-                <div class="form-group">
-                    <label for="eventLocation">Location</label>
-                    <input type="text" id="eventLocation" placeholder="Event venue">
-                </div>
-                <div class="form-group">
-                    <label for="eventDate">Date *</label>
-                    <input type="date" id="eventDate" required>
-                </div>
-                <div class="form-group">
-                    <label for="eventTime">Time *</label>
-                    <input type="time" id="eventTime" required>
-                </div>
-                <div class="form-group">
-                    <label for="eventPrice">Price (£)</label>
-                    <input type="number" id="eventPrice" step="0.01" min="0" value="0">
-                    <small>Set to 0 for free events</small>
-                </div>
-                <div class="form-group">
-                    <label for="eventCapacity">Capacity</label>
-                    <input type="number" id="eventCapacity" min="1" placeholder="Unlimited">
-                </div>
-                <div class="form-group full-width">
-                    <label for="eventDescription">Description</label>
-                    <textarea id="eventDescription" rows="3" placeholder="Event details and information..."></textarea>
+                    <div class="form-group">
+                        <label for="eventTeamSelect">Assign to Team</label>
+                        <select id="eventTeamSelect" onchange="loadPlayersForAssignment(this.value)">
+                            <option value="">-- All Group Members --</option>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- RECURRENCE SECTION (Phase 1) -->
-                <div
-                    style="grid-column: 1 / -1; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; margin: 0.5rem 0; border: 1px dashed rgba(255,255,255,0.1);">
-                    <h4
-                        style="margin: 0 0 1rem 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">
-                        🔄 Recurrence & Settings</h4>
+                <div class="form-grid" style="margin-top: 1rem;">
+                    <div class="form-group" id="opponentContainer" style="display: none;">
+                        <label for="eventOpponent">Opponent</label>
+                        <input type="text" id="eventOpponent" placeholder="e.g., Riverside FC">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventLocation">Location</label>
+                        <input type="text" id="eventLocation" placeholder="Event venue">
+                    </div>
+                </div>
+
+                <div class="form-grid" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label for="eventDate">Date *</label>
+                        <input type="date" id="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventTime">Time *</label>
+                        <input type="time" id="eventTime" required>
+                    </div>
+                </div>
+
+                <div class="form-grid" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label for="eventPrice">Price (£)</label>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <input type="number" id="eventPrice" step="0.01" min="0" value="0" style="flex: 1;">
+                            <label class="checkbox-label" style="margin: 0; white-space: nowrap; display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="eventRequirePayment"> <span>Require payment</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventCapacity">Capacity</label>
+                        <input type="number" id="eventCapacity" min="1" placeholder="Unlimited">
+                    </div>
+                </div>
+
+                <div class="form-group full-width" style="margin-top: 1rem;">
+                    <label for="eventImage">Event Image (Optional)</label>
+                    <input type="file" id="eventImage" accept="image/*" class="form-control" style="background: rgba(255,255,255,0.05);">
+                </div>
+
+                <div class="form-group full-width" style="margin-top: 1rem;">
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription" rows="2" placeholder="Event details and information..."></textarea>
+                </div>
+
+                <!-- RECURRENCE SECTION -->
+                <div style="grid-column: 1 / -1; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; margin: 1.5rem 0; border: 1px solid rgba(255,255,255,0.1);">
+                    <h4 style="margin: 0 0 1rem 0; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">🔄 Recurrence & Logic</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label for="recurrencePattern">Pattern</label>
@@ -2820,71 +2838,56 @@
                     </div>
 
                     <div style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-                        <label class="checkbox-label"
-                            style="margin-bottom: 0.5rem; display: flex; align-items: center;">
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem;">
                             <input type="checkbox" id="requireDeclineReason">
-                            <span style="font-size: 0.85rem;">✍️ Require reason if player declines</span>
+                            <span style="font-size: 0.85rem;">Mandatory 'reason not attending' if a player says no</span>
                         </label>
                     </div>
                 </div>
 
-                <!-- ASSIGNMENT SECTION (Phase 1) -->
-                <div style="grid-column: 1 / -1; margin-top: 0.5rem;" id="eventAssignmentSection">
-                    <label style="display: block; margin-bottom: 0.75rem; font-weight: 600;">👥 Assign
-                        Specific
-                        Players (Optional)</label>
-                    <div id="eventPlayerCheckboxes"
-                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid var(--border-color);">
-                        <p
-                            style="opacity: 0.4; font-size: 0.8rem; grid-column: 1/-1; text-align: center; padding: 1rem;">
-                            Select a team first to see players...</p>
-                    </div>
-                    <small style="display: block; margin-top: 0.5rem; opacity: 0.6;">Leave empty to invite
-                        all team
-                        members.</small>
-                </div>
-
-                <!-- NOTIFICATIONS (Phase 1) -->
-                <div style="grid-column: 1 / -1; margin-top: 1rem;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                        <label style="font-weight: 600; margin: 0;">🔔 Notification Schedule</label>
+                <!-- NOTIFICATIONS -->
+                <div style="grid-column: 1 / -1; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <label style="font-weight: 600; margin: 0;">🔔 Invitation & Reminders</label>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="font-size: 0.8rem; opacity: 0.6;">Send at:</span>
-                            <input type="time" id="notificationTime" value="09:00"
-                                style="padding: 0.25rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: white;">
+                            <span style="font-size: 0.8rem; opacity: 0.6;">Notice Time:</span>
+                            <input type="time" id="notificationTime" value="09:00" style="padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: white;">
                         </div>
                     </div>
-                    <div
-                        style="display: flex; gap: 1.5rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 10px;">
-                        <label class="checkbox-label" style="margin: 0;">
-                            <input type="checkbox" name="notifSchedule" value="7d"> <span>7 Days</span>
+                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                        <label class="checkbox-label" style="margin: 0; display: flex; align-items: center; gap: 0.5rem; color: var(--accent-color);">
+                            <input type="checkbox" id="notifyPlayers" checked> <span>Send immediately</span>
                         </label>
-                        <label class="checkbox-label" style="margin: 0;">
-                            <input type="checkbox" name="notifSchedule" value="4d"> <span>4 Days</span>
+                        <label class="checkbox-label" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="notifSchedule" value="7d"> <span>7 days notice</span>
                         </label>
-                        <label class="checkbox-label" style="margin: 0;">
-                            <input type="checkbox" name="notifSchedule" value="2d" checked> <span>2 Days</span>
+                        <label class="checkbox-label" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="notifSchedule" value="4d"> <span>4 days notice</span>
                         </label>
-                        <label class="checkbox-label" style="margin: 0;">
-                            <input type="checkbox" name="notifSchedule" value="1d" checked> <span>1 Day</span>
+                        <label class="checkbox-label" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="notifSchedule" value="2d"> <span>2 days notice</span>
+                        </label>
+                        <label class="checkbox-label" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="notifSchedule" value="1d"> <span>1 day notice</span>
                         </label>
                     </div>
                 </div>
 
-                <div class="form-group full-width">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="notifyPlayers" checked>
-                        <span style="font-weight: 600; color: var(--accent-color);">🚀 Send immediate
-                            announcement</span>
-                    </label>
+                <!-- ASSIGNMENT -->
+                <div style="grid-column: 1 / -1; margin-bottom: 2rem;">
+                    <label style="display: block; margin-bottom: 0.75rem; font-weight: 600;">👥 Invite Specific Players (Optional)</label>
+                    <div id="eventPlayerCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; max-height: 200px; overflow-y: auto; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid var(--border-color);">
+                        <p style="opacity: 0.4; font-size: 0.8rem; grid-column: 1/-1; text-align: center; padding: 1rem;">Select a team first to see players...</p>
+                    </div>
+                    <small style="display: block; margin-top: 0.5rem; opacity: 0.6;">Leave empty to invite all group members.</small>
                 </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" style="padding: 1rem 2rem;">📅 Create Event</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')">Cancel</button>
+                </div>
+            </form>
         </div>
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">📅 Create Event</button>
-            <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')">Cancel</button>
-        </div>
-        </form>
     </div>
     </div>
 
@@ -9758,130 +9761,6 @@
             </div>
         </div>
 
-        <!-- Create Event Modal with Dynamic Type Logic -->
-        <div id="addEventModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>📅 Create New Event</h2>
-                    <button class="close" onclick="closeModal('addEventModal')">&times;</button>
-                </div>
-                <form id="createEventForm">
-                    <div class="form-group">
-                        <label for="eventTitle">Event Title</label>
-                        <input type="text" id="eventTitle" required placeholder="e.g. Weekly Training">
-                    </div>
-                    <div class="form-group">
-                        <label for="eventType">Event Type</label>
-                        <select id="eventType" required onchange="handleEventTypeChange()">
-                            <option value="training">Training Session</option>
-                            <option value="match">Match / Game</option>
-                            <option value="tournament">Tournament</option>
-                            <option value="camp">Camp</option>
-                            <option value="social">Social Event</option>
-                            <option value="talent-id">Talent ID / Trial</option>
-                        </select>
-                    </div>
-
-                    <!-- Dynamic Field: Opponent (Match only) -->
-                    <div class="form-group" id="eventOpponentGroup" style="display: none;">
-                        <label for="eventOpponent">Opponent Name</label>
-                        <input type="text" id="eventOpponent" placeholder="e.g. Manchester City U15">
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label for="eventDate">Date</label>
-                            <input type="date" id="eventDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="eventTime">Time</label>
-                            <input type="time" id="eventTime" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="eventLocation">Location Name</label>
-                        <input type="text" id="eventLocation" required placeholder="e.g. Training Ground Pitch 1">
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label for="eventLat">Latitude (for Geofencing)</label>
-                            <input type="number" id="eventLat" step="any" placeholder="e.g. 51.5074">
-                        </div>
-                        <div class="form-group">
-                            <label for="eventLng">Longitude (for Geofencing)</label>
-                            <input type="number" id="eventLng" step="any" placeholder="e.g. -0.1278">
-                        </div>
-                    </div>
-
-                    <!-- Dynamic Field: Team Selection -->
-                    <div class="form-group">
-                        <label for="eventTeam">Assign to Team</label>
-                        <select id="eventTeam" onchange="loadPlayersForAssignment(this.value)">
-                            <option value="">All Group (No Specific Team)</option>
-                            <!-- Populated via JS -->
-                        </select>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label for="eventRecurrence">Recurrence</label>
-                            <select id="eventRecurrence" onchange="toggleRecurrenceEnd(this.value)">
-                                <option value="none">One-off Event</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="bi-weekly">Bi-weekly</option>
-                                <option value="monthly">Monthly</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="recurrenceEndContainer" style="display: none;">
-                            <label for="eventRecurrenceEnd">Repeat Until</label>
-                            <input type="date" id="eventRecurrenceEnd">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Notification Notice</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                            <select id="eventNotificationLead">
-                                <option value="0">Immediately</option>
-                                <option value="7">7 Days Before</option>
-                                <option value="4">4 Days Before</option>
-                                <option value="2">2 Days Before</option>
-                                <option value="1">1 Day Before</option>
-                            </select>
-                            <input type="time" id="eventNotificationTime" value="09:00">
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
-                        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="eventRequirePayment" style="width: 20px; height: 20px;">
-                            <label for="eventRequirePayment" style="margin: 0;">Require Payment</label>
-                        </div>
-                        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
-                            <input type="checkbox" id="eventMandatoryReason" style="width: 20px; height: 20px;">
-                            <label for="eventMandatoryReason" style="margin: 0;">Mandatory 'No' Reason</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label for="eventImage">Event Image (Optional)</label>
-                        <input type="file" id="eventImage" accept="image/*" class="btn btn-secondary"
-                            style="width: 100%;">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="eventDescription">Description / Notes</label>
-                        <textarea id="eventDescription" rows="3"
-                            placeholder="Tell the team more about this event..."></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">📅 Create
-                        Event</button>
-                </form>
-            </div>
-        </div>
         <script>
             // Tournament Logic
             async function loadTournamentDashboard(eventId) {

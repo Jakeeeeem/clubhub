@@ -375,23 +375,25 @@
 
                 <div class="form-group"
                     style="margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem;">
-                    <input type="checkbox" id="agreeTerms"
-                        style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
+                    <input type="checkbox" id="agreeTerms" disabled
+                        style="width: 20px; height: 20px; cursor: not-allowed; accent-color: var(--primary);">
                     <label for="agreeTerms"
                         style="font-size: 0.9rem; color: var(--text-main); cursor: pointer; line-height: 1.5;">
                         I agree to the <a href="#" onclick="showTermsModal(); return false;"
-                            style="color: var(--primary); text-decoration: underline;">Terms & Conditions</a> *
+                            style="color: var(--primary); text-decoration: underline; font-weight: 700;">Terms & Conditions</a> *
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">(Click to read and unlock)</div>
                     </label>
                 </div>
 
                 <div class="form-group"
                     style="margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.75rem;">
-                    <input type="checkbox" id="agreePrivacy"
-                        style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
+                    <input type="checkbox" id="agreePrivacy" disabled
+                        style="width: 20px; height: 20px; cursor: not-allowed; accent-color: var(--primary);">
                     <label for="agreePrivacy"
                         style="font-size: 0.9rem; color: var(--text-main); cursor: pointer; line-height: 1.5;">
                         I have read and agree to the <a href="#" onclick="showPrivacyModal(); return false;"
-                            style="color: var(--primary); text-decoration: underline;">Privacy Policy</a> *
+                            style="color: var(--primary); text-decoration: underline; font-weight: 700;">Privacy Policy</a> *
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">(Click to read and unlock)</div>
                     </label>
                 </div>
 
@@ -400,8 +402,8 @@
                         style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
                     <label for="agreeThirdParty"
                         style="font-size: 0.9rem; color: var(--text-muted); cursor: pointer; line-height: 1.5;">
-                        I consent to my data being securely shared with verified 3rd party scouts, professional groups,
-                        and platform partners for recruitment opportunities.
+                        <strong>Third Party Consent:</strong> I consent to my data being securely shared with verified 3rd party scouts, professional groups,
+                        and platform partners for recruitment opportunities and performance analytics.
                     </label>
                 </div>
             </div>
@@ -769,37 +771,60 @@
     </script>
     <!-- T&C Modal -->
     <div id="termsModal" class="modal">
-        <div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h2 class="neon-text">Terms & Conditions</h2>
                 <span class="close" onclick="closeModal('termsModal')">&times;</span>
             </div>
-            <div style="padding: 2rem; color: var(--text-muted); line-height: 1.6;">
-                <iframe src="terms.html" style="width: 100%; height: 60vh; border: none; background: white; border-radius: 12px;"></iframe>
+            <div style="flex: 1; overflow-y: auto; padding: 1.5rem; background: #fff; border-radius: 8px; margin: 1rem;">
+                <iframe src="terms.html" style="width: 100%; height: 50vh; border: none;"></iframe>
+            </div>
+            <div style="padding: 1.5rem; border-top: 1px solid var(--border-color); text-align: center;">
+                <button class="btn btn-primary" onclick="unlockedTerms()">I Have Read & Agree to Terms</button>
             </div>
         </div>
     </div>
 
     <!-- Privacy Modal -->
     <div id="privacyModal" class="modal">
-        <div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
             <div class="modal-header">
                 <h2 class="neon-text">Privacy Policy</h2>
                 <span class="close" onclick="closeModal('privacyModal')">&times;</span>
             </div>
-            <div style="padding: 2rem; color: var(--text-muted); line-height: 1.6;">
-                <iframe src="privacy.html" style="width: 100%; height: 60vh; border: none; background: white; border-radius: 12px;"></iframe>
+            <div style="flex: 1; overflow-y: auto; padding: 1.5rem; background: #fff; border-radius: 8px; margin: 1rem;">
+                <iframe src="privacy.html" style="width: 100%; height: 50vh; border: none;"></iframe>
+            </div>
+            <div style="padding: 1.5rem; border-top: 1px solid var(--border-color); text-align: center;">
+                <button class="btn btn-primary" onclick="unlockedPrivacy()">I Have Read & Agree to Privacy Policy</button>
             </div>
         </div>
     </div>
 
     <script src="pwa-install.js"></script>
     <script>
+        let hasReadTerms = false;
+        let hasReadPrivacy = false;
+
         function showTermsModal() {
             document.getElementById('termsModal').style.display = 'block';
         }
         function showPrivacyModal() {
             document.getElementById('privacyModal').style.display = 'block';
+        }
+        function unlockedTerms() {
+            hasReadTerms = true;
+            const cb = document.getElementById('agreeTerms');
+            cb.disabled = false;
+            cb.style.cursor = 'pointer';
+            closeModal('termsModal');
+        }
+        function unlockedPrivacy() {
+            hasReadPrivacy = true;
+            const cb = document.getElementById('agreePrivacy');
+            cb.disabled = false;
+            cb.style.cursor = 'pointer';
+            closeModal('privacyModal');
         }
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
