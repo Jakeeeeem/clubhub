@@ -56,117 +56,57 @@
     </nav>
 
     <main class="main home-main">
-        <!-- Premium Landing Hero (Visible when logged out) -->
-        <section class="welcome-hero landing-hero" id="landingHero">
-            <div class="container welcome-container" style="padding: 10rem 2rem 6rem; text-align: center;">
-                <div style="position: relative; z-index: 2;">
-                    <span class="badge"
-                        style="background: rgba(220, 38, 38, 0.1); color: var(--primary); padding: 0.5rem 1rem; border-radius: 100px; font-size: 0.85rem; font-weight: 700; border: 1px solid rgba(220, 38, 38, 0.2); margin-bottom: 2rem; display: inline-block; text-transform: uppercase; letter-spacing: 1px;">
-                        The New Standard in Sports Tech</span>
-                    <h1 class="hero-title"
-                        style="font-size: clamp(2.5rem, 8vw, 5rem); line-height: 1.05; font-weight: 900; margin-bottom: 1.5rem; letter-spacing: -2px; font-family: 'Outfit';">
-                        The Complete Ecosystem for <br>
-                        <span
-                            style="background: linear-gradient(135deg, var(--primary) 0%, #ff4d4d 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Grassroots
-                            Sport</span>
-                    </h1>
-                    <p class="hero-subtitle"
-                        style="font-size: 1.25rem; color: var(--text-muted); max-width: 800px; margin: 0 auto 3rem; line-height: 1.6;">
-                        Connecting players, parents, coaches and groups on a single professional platform.
-                        Recruit talent, manage schedules, and automate payments with ease.
-                    </p>
-                    <div class="cta-group" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                        <button class="btn btn-primary btn-large" onclick="showSignupOptions()"
-                            style="padding: 1.25rem 3rem; font-size: 1.1rem; border-radius: 100px;">Get Started For
-                            Free</button>
-                        <button class="btn btn-secondary btn-large"
-                            onclick="document.getElementById('benefits').scrollIntoView({behavior: 'smooth'})"
-                            style="padding: 1.25rem 3rem; font-size: 1.1rem; border-radius: 100px;">Explore
-                            Features</button>
+        <!-- Main Hero Section (Restored Old Design) -->
+        <section class="welcome-hero landing-hero" id="landingHero"
+            style="position: relative; padding: 10rem 0 6rem; background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4)), url('images/players-hero.jpg'); background-size: cover; background-position: center; min-height: 100vh; display: flex; align-items: center; text-align: center;">
+            <div class="container" style="position: relative; z-index: 10; width: 100%;">
+                
+                <p style="text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: #fff; margin-bottom: 2rem; font-size: 0.9rem; opacity: 0.9;">
+                    LEAGUES • CLUBS • VENUES • TOURNAMENT PROVIDERS • COACHES
+                </p>
+
+                <h1 class="hero-title" style="font-size: clamp(3rem, 10vw, 6rem); font-weight: 900; margin-bottom: 1.5rem; font-family: 'Outfit'; color: #fff; line-height: 1.1;">
+                    Welcome to <span style="color: var(--primary);">ClubHub</span>
+                </h1>
+
+                <p class="hero-subtitle" style="font-size: 1.25rem; color: #f8fafc; max-width: 800px; margin: 0 auto 2.5rem; font-weight: 500;">
+                    The Complete Ecosystem for Grassroots Sports
+                </p>
+
+                <!-- Free Platform Badge -->
+                <div style="display: inline-flex; align-items: center; gap: 0.75rem; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); padding: 0.75rem 1.5rem; border-radius: 100px; border: 1px solid rgba(220, 38, 38, 0.3); margin-bottom: 3.5rem; box-shadow: 0 0 20px rgba(220, 38, 38, 0.2);">
+                    <span style="background: rgba(220, 38, 38, 0.2); padding: 5px; border-radius: 50%; color: #dc2626; font-size: 0.9rem;">✨</span>
+                    <span style="font-weight: 700; font-size: 0.9rem; color: #fff;">100% Free Platform — <span style="color: #cbd5e1; font-weight: 400;">Free to Create an Account</span></span>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="cta-group" style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 5rem;">
+                    <button class="btn btn-primary" onclick="showSignupOptions()"
+                        style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 100px; min-width: 220px; text-transform: none;">Get Started</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('benefits').scrollIntoView({behavior: 'smooth'})"
+                        style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 100px; min-width: 220px; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); text-transform: none;">Learn More</button>
+                </div>
+
+                <!-- Three Role Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                    <!-- card 1 -->
+                    <div class="glass-card" style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
+                        <h3 style="margin-bottom: 1rem; color: #fff; font-size: 1.35rem;">For Organizations</h3>
+                        <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Complete club management with player tracking, event organization, and financial tools</p>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Dashboard Hero (Removed) -->
-        <section id="dashboardHero" style="display: none !important;"></section>
-
-        <!-- Find Groups Recruiting Section (USP) -->
-uiting Section (USP) -->
-        <section
-            style="background: linear-gradient(135deg, rgba(177, 3, 45, 0.05) 0%, rgba(13, 13, 13, 0.98) 50%); padding: 4rem 0; border-top: 1px solid rgba(177, 3, 45, 0.15); border-bottom: 1px solid rgba(177, 3, 45, 0.15);">
-            <div class="container">
-                <div style="text-align: center; margin-bottom: 3rem;">
-                    <h2
-                        style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, var(--primary), #d30436); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
-                        🔍 Find Groups Recruiting Now
-                    </h2>
-                    <p style="font-size: 1.2rem; color: #cbd5e1; max-width: 600px; margin: 0 auto;">
-                        Discover groups actively looking for players. <br> No signup required to search!
-                    </p>
-                </div>
-
-                <!-- Search Bar -->
-                <div style="max-width: 800px; margin: 0 auto 3rem;">
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <input type="text" id="groupSearchInput"
-                            placeholder="Search by group name, sport, or location..."
-                            style="flex: 1; min-width: 250px; padding: 1rem 1.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: var(--input-radius); color: #fff; font-size: 1rem;"
-                            onkeyup="searchRecruitingGroups()">
-                        <button class="btn btn-primary" onclick="searchRecruitingGroups()" style="padding: 1rem 2rem;">
-                            Search
-                        </button>
+                    <!-- card 2 -->
+                    <div class="glass-card" style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
+                        <h3 style="margin-bottom: 1rem; color: #fff; font-size: 1.35rem;">For Players</h3>
+                        <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Join clubs, book events, track progress, and manage payments seamlessly</p>
                     </div>
-                </div>
-
-                <!-- Results Grid -->
-                <div id="recruitingGroupsGrid"
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; justify-content: center;">
-                    <!-- Populated by JavaScript -->
-                    <div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;">
-                        <p style="font-size: 1.1rem;">🔍 Start searching to find groups recruiting players...</p>
-                        <a href="group-finder.html" class="btn btn-text"
-                            style="color: var(--primary); margin-top: 1rem; display: inline-block;">Or browse the full
-                            Group Directory →</a>
+                    <!-- card 3 -->
+                    <div class="glass-card" style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
+                        <h3 style="margin-bottom: 1rem; color: #fff; font-size: 1.35rem;">For Coaches</h3>
+                        <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Team management, tactical planning, and performance tracking tools</p>
                     </div>
                 </div>
 
             </div>
-        </section>
-
-        <section class="hero-platforms">
-            <a href="signup.html?type=group" class="platform-col org">
-                <div class="platform-content">
-                    <h2 class="platform-title">Groups</h2>
-                    <p class="platform-tagline">Manage your group. Recruit talent. Drive revenue.</p>
-                    <span class="platform-btn">Start Managing</span>
-                </div>
-            </a>
-
-            <a href="signup.html?type=adult" class="platform-col player">
-                <div class="platform-content">
-                    <h2 class="platform-title">Players</h2>
-                    <p class="platform-tagline">Build your CV. Find your next group. Join the community.</p>
-                    <span class="platform-btn">Join Now</span>
-                </div>
-            </a>
-
-            <a href="signup.html?type=coach" class="platform-col coach">
-                <div class="platform-content">
-                    <h2 class="platform-title">Coaches</h2>
-                    <p class="platform-tagline">Manage teams. Track progress. Master the game.</p>
-                    <span class="platform-btn">Start Coaching</span>
-                </div>
-            </a>
-
-            <a href="signup.html?type=league" class="platform-col league">
-                <div class="platform-content">
-                    <h2 class="platform-title">Leagues</h2>
-                    <h2 class="platform-title">Leagues/Venues</h2>
-                    <p class="platform-tagline">Schedule fixtures. Manage bookings. Run the show.</p>
-                    <span class="platform-btn">Organize Now</span>
-                </div>
-            </a>
         </section>
 
         <!-- Why Choose ClubHub -->
@@ -638,92 +578,6 @@ uiting Section (USP) -->
             }
         }
 
-        // Search for groups with active recruitment listings
-        async function searchRecruitingGroups() {
-            const searchTerm = document.getElementById('groupSearchInput').value.trim();
-            const grid = document.getElementById('recruitingGroupsGrid');
-
-            // Enforce minimum 3 characters
-            if (searchTerm.length < 3) {
-                // If search is empty or too short, you might want to show nothing or a prompt
-                if (searchTerm.length === 0) {
-                    // Optionally show a default list or clear
-                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;"><p>🔍 Start searching to find groups (min 3 chars)...</p></div>';
-                    return;
-                }
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;"><p>Please enter at least 3 characters to search.</p></div>';
-                return;
-            }
-
-            try {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem;"><p>🔍 Searching...</p></div>';
-
-                // Use the shared apiService (it handles production URLs automatically)
-                let groups = await apiService.getGroups(searchTerm);
-
-                // Dummy data removed as per request to show only real groups
-
-
-                if (!groups || groups.length === 0) {
-                    grid.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 2rem;">
-                            <p style="font-size: 1.1rem;">No groups found matching "${searchTerm}"</p>
-                            <p style="margin-top: 0.5rem;">Try a different search term or browse all groups</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                grid.innerHTML = groups.map(group => {
-                    const logoSrc = group.logo_url || 'images/placeholder-logo-profile.png';
-                    return `
-                    <div class="glass-card" style="cursor: pointer; padding: 1.5rem; transition: transform 0.2s;" 
-                         onclick="window.location.href='group-detail.html?id=${group.id || group._id}'">
-                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                            <img src="${logoSrc}" 
-                                 style="width: 50px; height: 50px; min-width: 50px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); background: #1e293b;"
-                                 onerror="this.src='images/placeholder-logo-profile.png'">
-                            <div>
-                                <h3 style="margin-bottom: 0.25rem; color: var(--primary); line-height: 1.2; font-size: 1.1rem;">${group.name}</h3>
-                                <span style="background: rgba(177, 3, 45, 0.08); color: var(--primary); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">
-                                    ${group.sport || 'Sport'}
-                                </span>
-                            </div>
-                        </div>
-                        <div style="margin-bottom: 1rem;">
-                            ${group.available_positions && group.available_positions.length > 0
-                            ? `<div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                    ${group.available_positions.slice(0, 3).map(p =>
-                                `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem;">
-                                            ${p.position || p.title}
-                                        </span>`
-                            ).join('')}
-                                    ${group.available_positions.length > 3 ? `<span style="font-size: 0.8rem; color: #94a3b8;">+${group.available_positions.length - 3} more</span>` : ''}
-                                   </div>`
-                            : `<p style="color: #cbd5e1; font-size: 0.9rem; line-height: 1.5;">${group.description ? group.description.substring(0, 100) + '...' : 'Recruiting players now'}</p>`
-                        }
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                            <span style="color: #64748b; font-size: 0.85rem;">
-                                📍 ${group.location || 'Location TBD'}
-                            </span>
-                            <span style="color: #22c55e; font-size: 0.85rem; font-weight: 600;">
-                                ✓ Recruiting
-                            </span>
-                        </div>
-                    </div>
-                    `;
-                }).join('');
-
-            } catch (error) {
-                console.error('Search error:', error);
-                grid.innerHTML = `
-                    < div style = "grid-column: 1/-1; text-align: center; color: #ef4444; padding: 2rem;" >
-                        <p>Failed to load groups. Please try again.</p>
-                    </div >
-                    `;
-            }
-        }
 
         // Simple compatibility layer
         document.addEventListener('DOMContentLoaded', function () {
@@ -749,24 +603,6 @@ uiting Section (USP) -->
             window.closeModal = (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
         }
 
-        // Horizontal Parallax for Hero Platforms
-        document.addEventListener('DOMContentLoaded', () => {
-            const platforms = document.querySelector('.hero-platforms');
-            if (platforms) {
-                platforms.addEventListener('scroll', () => {
-                    const scrollLeft = platforms.scrollLeft;
-                    const cols = platforms.querySelectorAll('.platform-col');
-                    cols.forEach((col) => {
-                        const colLeft = col.offsetLeft;
-                        const colWidth = col.offsetWidth;
-                        const center = colLeft + (colWidth / 2);
-                        const platformCenter = platforms.scrollLeft + (platforms.offsetWidth / 2);
-                        const offset = (scrollLeft - colLeft) * 0.3; // Speed factor
-                        col.style.setProperty('--parallax-offset', `${offset} px`);
-                    });
-                });
-            }
-        });
 
         // Toggle password visibility
         function togglePasswordVisibility(inputId, button) {
