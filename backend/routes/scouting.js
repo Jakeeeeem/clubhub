@@ -204,4 +204,85 @@ router.post("/verify-me", authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * @route   GET /api/scouting/watchlist
+ * @desc    Get current scout's watchlist
+ */
+router.get("/watchlist", authenticateToken, async (req, res) => {
+    try {
+        const result = await query(
+            `
+            SELECT w.*, p.first_name, p.last_name, p.position, p.date_of_birth,
+                   (p.first_name || ' ' || p.last_name) as player_name,
+                   o.name as club_name
+            FROM scout_watchlist w
+            JOIN players p ON w.player_id = p.id
+            LEFT JOIN organizations o ON p.club_id = o.id
+            WHERE w.scout_id = $1
+            ORDER BY w.created_at DESC
+        `,
+            [req.user.id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to fetch watchlist" });
+    }
+});
+
+/**
+ * @route   POST /api/scouting/watchlist
+ * @desc    Add player to watchlist
+ */
+router.post("/watchlist", authenticateToken, async (req, res) => {
+    const { playerId, rating, notes } = req.body;
+    try {
+        const result = await query(
+            `
+            INSERT INTO scout_watchlist (scout_id, player_id, rating, notes)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (scout_id, player_id) 
+            DO UPDATE SET rating = EXCLUDED.rating, notes = EXCLUDED.notes
+            RETURNING *
+        `,
+            [req.user.id, playerId, rating, notes]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to update watchlist" });
+    }
+});
+
+/**
+ * @route   DELETE /api/scouting/watchlist/:playerId
+ * @desc    Remove player from watchlist
+ */
+router.delete("/watchlist/:playerId", authenticateToken, async (req, res) => {
+    try {
+        await query(
+            "DELETE FROM scout_watchlist WHERE scout_id = $1 AND player_id = $2",
+            [req.user.id, req.params.playerId]
+        );
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).json({ error: "Failed to remove from watchlist" });
+    }
+});
+
+/**
+ * @route   GET /api/scouting/medical/:id
+ * @desc    Get medical info (Admin/Verified Scout only)
+ */
+router.get("/medical/:id", authenticateToken, async (req, res) => {
+    try {
+        const result = await query(
+            "SELECT medical_info, emergency_contact FROM players WHERE id = $1",
+            [req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch medical info" });
+    }
+});
+
 module.exports = router;

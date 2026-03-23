@@ -12,6 +12,39 @@ async function handleLogin(e) {
       return;
     }
 
+    const demoMode = document.getElementById("demoMode")?.checked;
+    
+    if (demoMode) {
+      console.log("🛡️ DEMO BYPASS: Logging in with master demo account...");
+      try {
+          // Perform REAL login with the seeded demo credentials
+          const response = await apiService.login("admin@demo.com", "Demo@123");
+          
+          localStorage.setItem("authToken", response.token);
+          localStorage.setItem("currentUser", JSON.stringify(response.user));
+          apiService.setToken(response.token);
+          localStorage.setItem("isDemoSession", "true"); // Still mark as demo for UI hints
+          
+          showNotification("Entering Master Demo Environment...", "success");
+          
+          const redirectUrl = await determineUserRedirect(response.user);
+          setTimeout(() => {
+              window.location.href = redirectUrl;
+          }, 1000);
+          return;
+      } catch (demoError) {
+          console.error("❌ Demo login failed:", demoError);
+          showNotification("Demo credentials not found. Ensure DB is seeded.", "warning");
+          // Fallback to purely frontend mock if DB login fails
+          localStorage.setItem("isDemoSession", "true");
+          window.location.href = "admin-dashboard.html";
+          return;
+      }
+    }
+
+    // NORMAL LOGIN
+    localStorage.removeItem("isDemoSession"); // Ensure we clear demo mode for real logins
+
     console.log("🔑 Attempting login for:", email);
 
     const response = await apiService.login(email, password);

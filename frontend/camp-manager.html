@@ -83,22 +83,22 @@
         </div>
 
         <!-- Bib Stock Section -->
-        <div class="card" style="margin: 2rem 0; background: rgba(220, 38, 38, 0.05); border: 1px dashed var(--primary);">
+        <div id="bibManagementSection" class="card" style="margin: 2rem 0; background: rgba(220, 38, 38, 0.05); border: 1px dashed var(--primary); display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3 style="margin: 0;">🎽 Numbered Bib Stock</h3>
-                <button class="btn btn-secondary btn-sm" onclick="addBibStockRow()">+ Add Stock</button>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-secondary btn-sm" onclick="addBibStockRow()">+ Add Stock</button>
+                    <button class="btn btn-sm" onclick="toggleBibManagement(false)" style="background: rgba(255,255,255,0.1);">Disable</button>
+                </div>
             </div>
             <div id="bibStockContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
-                <!-- Initial Stock Examples -->
-                <div class="bib-stock-pill" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-weight: bold; color: #3b82f6;">Blue</span>
-                    <input type="number" value="1" style="width: 40px; background: transparent; border: none; color: white; text-align: center; font-weight: 800;">
-                </div>
-                <div class="bib-stock-pill" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-weight: bold; color: #f97316;">Orange</span>
-                    <input type="number" value="8" style="width: 40px; background: transparent; border: none; color: white; text-align: center; font-weight: 800;">
-                </div>
+                <!-- Stock pills -->
             </div>
+        </div>
+
+        <div id="bibTogglePlaceholder" class="card" style="margin: 2rem 0; text-align: center; border: 1px dashed var(--border-color); display: block;">
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">Bib tracking is currently disabled.</p>
+            <button class="btn btn-secondary btn-sm" onclick="toggleBibManagement(true)">Enable Bib Stock Tracking</button>
         </div>
 
         <div class="card" style="margin: 2rem 0;">
@@ -131,7 +131,9 @@
 
             <div class="tabs" style="margin-bottom: 2rem;">
                 <button class="tab active" onclick="showTab('attendees')">Attendees</button>
-                <button class="tab" onclick="showTab('groups')">Groups & Bibs</button>
+                <button class="tab" onclick="showTab('groups')">Groups & Coaching</button>
+                <button class="tab" onclick="showTab('waitlist')">Waitlist</button>
+                <button class="tab" onclick="showTab('staff')">Camp Staff</button>
             </div>
 
             <!-- Attendees Tab -->
@@ -156,13 +158,47 @@
             <div id="groups-tab" class="tab-content" style="display: none;">
                 <div class="card" style="margin-bottom: 2rem;">
                     <h3>Create New Group</h3>
-                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. U12 Elite)" style="flex:1;">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 1rem; margin-top: 1rem;">
+                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. U12 Elite)">
+                        <select id="newGroupCoach">
+                            <option value="">Assign Coach (Optional)</option>
+                            <!-- Coaches loaded here -->
+                        </select>
                         <button class="btn btn-primary" onclick="createGroup()">Create</button>
                     </div>
                 </div>
                 <div id="groupsContainer" class="card-grid">
                     <!-- Groups will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Waitlist Tab -->
+            <div id="waitlist-tab" class="tab-content" style="display: none;">
+                <div class="card" style="padding: 0;">
+                    <table class="data-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Player</th>
+                                <th>Signed Up</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="waitlistBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Staff Tab -->
+            <div id="staff-tab" class="tab-content" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 class="neon-text">Camp Staff & Volunteers</h2>
+                    <button class="btn btn-primary btn-sm" onclick="openInviteStaffModal()">+ Invite Staff</button>
+                </div>
+                <div id="staffGrid" class="card-grid">
+                    <!-- Staff cards -->
                 </div>
             </div>
         </div>
@@ -188,7 +224,7 @@
     <!-- Assign Modal -->
     <div id="assignModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
+            <span class="close" onclick="closeModal('assignModal')">&times;</span>
             <h2 id="modalTitle">Assign Player</h2>
             <p id="modalPlayerName" style="color: var(--text-muted);"></p>
 
@@ -199,38 +235,67 @@
                         <option value="">-- No Group --</option>
                     </select>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>Bib Color</label>
-                        <select id="assignBibColor" onchange="checkBibStock(this.value)">
-                            <option value="Red">Red</option>
-                            <option value="Blue">Blue</option>
-                            <option value="Yellow">Yellow</option>
-                            <option value="Green">Green</option>
-                            <option value="Orange">Orange</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Bib Number</label>
-                        <input type="number" id="assignBibNumber" placeholder="e.g. 10">
+                <div id="bibAssignmentFields">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Bib Color</label>
+                            <select id="assignBibColor" onchange="checkBibStock(this.value)">
+                                <option value="Red">Red</option>
+                                <option value="Blue">Blue</option>
+                                <option value="Yellow">Yellow</option>
+                                <option value="Green">Green</option>
+                                <option value="Orange">Orange</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Bib Number</label>
+                            <input type="number" id="assignBibNumber" placeholder="e.g. 10">
+                        </div>
                     </div>
                 </div>
                 <div id="stockInquiry" style="font-size: 0.8rem; color: #f59e0b; margin-top: -0.5rem; margin-bottom: 1rem; display: none;">
                     ⚠️ Note: Minimal stock for this color.
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Save
-                    Assignment</button>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Save Assignment</button>
             </form>
         </div>
     </div>
 
-    <style>
-        @keyframes scanline {
-            0% { top: 0; }
-            50% { top: 100%; }
-            100% { top: 0; }
-        }
-    </style>
+    <!-- Medical Info Modal -->
+    <div id="medicalModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeModal('medicalModal')">&times;</span>
+            <h2 class="neon-text">Player Medical & Emergency Info</h2>
+            <div id="medicalInfoContent" style="margin-top: 1.5rem;">
+                <!-- Filled by JS -->
+            </div>
+            <button class="btn btn-secondary" onclick="closeModal('medicalModal')" style="width: 100%; margin-top: 2rem;">Close</button>
+        </div>
+    </div>
+
+    <!-- Invite Staff Modal -->
+    <div id="campInviteStaffModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <span class="close" onclick="closeModal('campInviteStaffModal')">&times;</span>
+            <h2 class="neon-text">Invite Camp Staff</h2>
+            <form onsubmit="handleInviteStaff(event)" style="margin-top: 1.5rem;">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="staffEmail" required placeholder="coach@clubhub.com">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="staffRole">
+                        <option value="coach">Head Coach</option>
+                        <option value="assistant">Assistant Coach</option>
+                        <option value="volunteer">Volunteer</option>
+                        <option value="scout">Scout</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Send Invitation</button>
+            </form>
+        </div>
+    </div>
 
     <script src="api-service.js"></script>
     <script src="group-switcher.js"></script>
@@ -238,22 +303,57 @@
         let currentEventId = null;
         let attendees = [];
         let groups = [];
+        let waitlist = [];
+        let staff = [];
         let currentPlayerId = null;
+
+        window.closeModal = function(id) {
+            document.getElementById(id).style.display = 'none';
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const user = JSON.parse(localStorage.getItem('currentUser'));
             if (!user) { window.location.href = 'login.html'; return; }
 
             loadCamps();
+            
+            // Bib tracking preference
+            const tracking = localStorage.getItem('camp_bib_tracking_enabled') === 'true';
+            toggleBibManagement(tracking);
         });
 
-        async function loadCamps() {
-            const orgId = localStorage.getItem('currentOrganizationId');
-            const camps = await apiService.makeRequest(`/events?clubId=${orgId}&eventType=camp`);
+        function toggleBibManagement(enabled) {
+            localStorage.setItem('camp_bib_tracking_enabled', enabled);
+            document.getElementById('bibManagementSection').style.display = enabled ? 'block' : 'none';
+            document.getElementById('bibTogglePlaceholder').style.display = enabled ? 'none' : 'block';
+            if (enabled && document.getElementById('bibStockContainer').children.length === 0) {
+                addStockPill('Blue', 10);
+                addStockPill('Orange', 10);
+            }
+        }
 
-            const select = document.getElementById('campSelect');
-            select.innerHTML = '<option value="">-- Select Camp --</option>' +
-                camps.map(c => `<option value="${c.id}">${c.title} (${new Date(c.event_date).toLocaleDateString()})</option>`).join('');
+        function addStockPill(color, qty) {
+            const container = document.getElementById('bibStockContainer');
+            const html = `
+                <div class="bib-stock-pill" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-weight: bold; color: ${color.toLowerCase()};">${color}</span>
+                    <input type="number" value="${qty}" style="width: 40px; background: transparent; border: none; color: white; text-align: center; font-weight: 800;">
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        async function loadCamps() {
+            try {
+                const orgId = localStorage.getItem('currentOrganizationId');
+                const camps = await apiService.makeRequest(`/events?clubId=${orgId}&eventType=camp`);
+
+                const select = document.getElementById('campSelect');
+                select.innerHTML = '<option value="">-- Select Camp --</option>' +
+                    camps.map(c => `<option value="${c.id}">${c.title} (${new Date(c.event_date).toLocaleDateString()})</option>`).join('');
+            } catch (err) {
+                console.error('Failed to load camps', err);
+            }
         }
 
         async function loadCampData() {
@@ -264,27 +364,33 @@
             }
 
             try {
-                // Fetch attendees and groups
-                const [playersRes, groupsRes] = await Promise.all([
+                const [playersRes, groupsRes, waitlistRes, staffRes] = await Promise.all([
                     apiService.makeRequest(`/events/${currentEventId}/players`),
-                    apiService.makeRequest(`/events/${currentEventId}/groups`)
+                    apiService.makeRequest(`/events/${currentEventId}/groups`),
+                    apiService.makeRequest(`/events/${currentEventId}/waitlist`).catch(() => []),
+                    apiService.makeRequest(`/events/${currentEventId}/staff`).catch(() => [])
                 ]);
 
                 attendees = playersRes;
                 groups = groupsRes;
+                waitlist = waitlistRes || [];
+                staff = staffRes || [];
 
                 updateStats();
                 displayAttendees();
                 displayGroups();
+                displayWaitlist();
+                displayStaff();
 
-                // Update assignment select
-                const assignSelect = document.getElementById('assignGroupSelect');
-                assignSelect.innerHTML = '<option value="">-- No Group --</option>' +
-                    groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+                // Update coaching selection in Create Group
+                const coachSelect = document.getElementById('newGroupCoach');
+                const coaches = staff.filter(s => s.role === 'coach' || s.role === 'assistant');
+                coachSelect.innerHTML = '<option value="">Assign Coach (Optional)</option>' +
+                    coaches.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
                 document.getElementById('campContent').style.display = 'block';
             } catch (err) {
-                console.error(err);
+                console.error('Failed to load camp data', err);
             }
         }
 
@@ -297,6 +403,8 @@
 
         function displayAttendees() {
             const body = document.getElementById('attendeesBody');
+            const tracking = localStorage.getItem('camp_bib_tracking_enabled') === 'true';
+
             body.innerHTML = attendees.map(a => `
                 <tr>
                     <td>
@@ -304,15 +412,18 @@
                         <div style="font-size:0.8rem; color:var(--text-muted);">${a.email}</div>
                     </td>
                     <td>${a.group_name || 'Unassigned'}</td>
-                    <td>${a.bib_number ? `<span class="badge" style="background:${a.bib_color.toLowerCase()}">${a.bib_color} #${a.bib_number}</span>` : '-'}</td>
+                    <td>${tracking && a.bib_number ? `<span class="badge" style="background:${a.bib_color.toLowerCase()}">${a.bib_color} #${a.bib_number}</span>` : (tracking ? '-' : 'N/A')}</td>
                     <td>
                         <span class="status-pill ${a.checked_in ? 'status-present' : 'status-absent'}">
                             ${a.checked_in ? 'Present' : 'Absent'}
                         </span>
                     </td>
                     <td>
-                        <button class="btn btn-primary btn-sm" onclick="openAssignModal('${a.id}', '${a.first_name} ${a.last_name}')">Assign</button>
-                        ${!a.checked_in ? `<button class="btn btn-secondary btn-sm" onclick="checkIn('${a.id}')">Check In</button>` : ''}
+                        <div style="display: flex; gap: 0.4rem;">
+                            <button class="btn btn-primary btn-sm" onclick="openAssignModal('${a.id}', '${a.first_name} ${a.last_name}')">Assign</button>
+                            <button class="btn btn-secondary btn-sm" onclick="openMedicalModal('${a.id}')">🏥 Info</button>
+                            ${!a.checked_in ? `<button class="btn btn-primary btn-sm" style="background:#22c55e;" onclick="checkIn('${a.id}')">Check In</button>` : ''}
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -322,28 +433,88 @@
             const container = document.getElementById('groupsContainer');
             container.innerHTML = groups.map(g => `
                 <div class="card">
-                    <h3>${g.name}</h3>
-                    <p style="color:var(--text-muted);">${attendees.filter(a => a.group_id === g.id).length} Players Assigned</p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h3 style="margin:0">${g.name}</h3>
+                        <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">${attendees.filter(a => a.group_id === g.id).length} Players</span>
+                    </div>
+                    <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                        👤 Coach: <span style="color: white; font-weight: 600;">${g.coach_name || 'None Assigned'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayWaitlist() {
+            const body = document.getElementById('waitlistBody');
+            if (waitlist.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">No one on the waitlist.</td></tr>';
+                return;
+            }
+            body.innerHTML = waitlist.map((w, index) => `
+                <tr>
+                    <td>#${index + 1}</td>
+                    <td>
+                        <div style="font-weight:bold;">${w.first_name} ${w.last_name}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">${w.email}</div>
+                    </td>
+                    <td>${new Date(w.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="approveFromWaitlist('${w.id}')">Approve Entry</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function displayStaff() {
+            const grid = document.getElementById('staffGrid');
+            if (staff.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No staff assigned yet.</p>';
+                return;
+            }
+            grid.innerHTML = staff.map(s => `
+                <div class="card">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="width: 45px; height: 45px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem;">
+                            ${(s.name || 'S').charAt(0)}
+                        </div>
+                        <div>
+                            <h4 style="margin:0">${s.name || 'Staff Member'}</h4>
+                            <span style="font-size: 0.75rem; color: var(--primary); text-transform: uppercase; font-weight: 800;">${s.role}</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">📧 ${s.email}</p>
                 </div>
             `).join('');
         }
 
         async function createGroup() {
             const name = document.getElementById('newGroupName').value;
+            const coachId = document.getElementById('newGroupCoach').value;
             if (!name) return;
-            await apiService.createCampGroup(currentEventId, { name });
-            document.getElementById('newGroupName').value = '';
-            loadCampData();
+            try {
+                await apiService.makeRequest(`/events/${currentEventId}/groups`, {
+                    method: 'POST',
+                    body: JSON.stringify({ name, coachId })
+                });
+                document.getElementById('newGroupName').value = '';
+                loadCampData();
+            } catch (err) {
+                alert('Failed to create group');
+            }
         }
 
         function openAssignModal(playerId, playerName) {
             currentPlayerId = playerId;
             document.getElementById('modalPlayerName').textContent = playerName;
-            document.getElementById('assignModal').style.display = 'block';
-        }
+            
+            const assignSelect = document.getElementById('assignGroupSelect');
+            assignSelect.innerHTML = '<option value="">-- No Group --</option>' +
+                groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
 
-        function closeModal() {
-            document.getElementById('assignModal').style.display = 'none';
+            const tracking = localStorage.getItem('camp_bib_tracking_enabled') === 'true';
+            document.getElementById('bibAssignmentFields').style.display = tracking ? 'block' : 'none';
+
+            document.getElementById('assignModal').style.display = 'block';
         }
 
         async function finishAssignment(e) {
@@ -351,25 +522,81 @@
             const groupId = document.getElementById('assignGroupSelect').value;
             const bibColor = document.getElementById('assignBibColor').value;
             const bibNumber = document.getElementById('assignBibNumber').value;
+            const tracking = localStorage.getItem('camp_bib_tracking_enabled') === 'true';
 
             try {
                 if (groupId) {
                     await apiService.assignPlayerToCampGroup(currentEventId, { playerId: currentPlayerId, groupId });
                 }
-                if (bibNumber) {
+                if (tracking && bibNumber) {
                     await apiService.assignCampBib(currentEventId, { playerId: currentPlayerId, bibColor, bibNumber });
                 }
-                alert('Assignment preserved!');
-                closeModal();
+                alert('Assignment updated!');
+                closeModal('assignModal');
                 loadCampData();
             } catch (err) {
                 alert('Save failed: ' + err.message);
             }
         }
 
+        async function openMedicalModal(playerId) {
+            const p = attendees.find(a => a.id === playerId);
+            if (!p) return;
+            const content = document.getElementById('medicalInfoContent');
+            content.innerHTML = `
+                <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;">🚨 Emergency Contact</h4>
+                    <p><strong>Name:</strong> ${p.emergency_contact_name || 'N/A'}</p>
+                    <p><strong>Phone:</strong> ${p.emergency_contact_phone || 'N/A'}</p>
+                </div>
+                <div style="background: rgba(239, 68, 68, 0.05); padding: 1rem; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);">
+                    <h4 style="color: #ef4444; margin-bottom: 0.5rem;">💊 Medical Info / Allergies</h4>
+                    <p>${p.medical_info || 'No medical conditions reported.'}</p>
+                </div>
+            `;
+            document.getElementById('medicalModal').style.display = 'block';
+        }
+
+        function openInviteStaffModal() {
+            document.getElementById('campInviteStaffModal').style.display = 'block';
+        }
+
+        async function handleInviteStaff(event) {
+            event.preventDefault();
+            const email = document.getElementById('staffEmail').value;
+            const role = document.getElementById('staffRole').value;
+
+            try {
+                await apiService.makeRequest(`/events/${currentEventId}/invite-staff`, {
+                    method: 'POST',
+                    body: JSON.stringify({ email, role })
+                });
+                alert('Staff invitation sent!');
+                closeModal('campInviteStaffModal');
+                loadCampData();
+            } catch (error) {
+                alert('Failed to send invitation');
+            }
+        }
+
+        async function approveFromWaitlist(playerId) {
+            if (!confirm('Move this player to the main attendee list?')) return;
+            try {
+                await apiService.makeRequest(`/events/${currentEventId}/waitlist/${playerId}/approve`, { method: 'POST' });
+                alert('Player approved!');
+                loadCampData();
+            } catch (error) {
+                alert('Approval failed');
+            }
+        }
+
         async function checkIn(playerId) {
-            await apiService.checkInPlayer(currentEventId, { playerId, method: 'manual' });
-            loadCampData();
+            try {
+                await apiService.checkInPlayer(currentEventId, { playerId, method: 'manual' });
+                loadCampData();
+            } catch (err) {
+                alert('Check-in failed');
+            }
         }
 
         function openQRScanner() {
@@ -384,9 +611,7 @@
             const qrId = document.getElementById('manualQrId').value;
             if (!qrId) return;
             try {
-                // Simulate check-in with registration ID
                 await apiService.checkInPlayer(currentEventId, { playerId: qrId, method: 'qr' });
-                showNotification('Check-in Successful!', 'success');
                 closeQRModal();
                 loadCampData();
             } catch (err) {
@@ -397,16 +622,7 @@
         function addBibStockRow() {
             const color = prompt("Enter Bib Color:");
             const qty = prompt("Enter Stock Quantity:");
-            if (!color || !qty) return;
-
-            const container = document.getElementById('bibStockContainer');
-            const html = `
-                <div class="bib-stock-pill" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-weight: bold; color: ${color.toLowerCase()};">${color}</span>
-                    <input type="number" value="${qty}" style="width: 40px; background: transparent; border: none; color: white; text-align: center; font-weight: 800;">
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', html);
+            if (color && qty) addStockPill(color, qty);
         }
 
         function checkBibStock(color) {
@@ -416,36 +632,41 @@
             
             if (match) {
                 const qty = parseInt(match.querySelector('input').value);
-                if (qty <= 1) {
-                    stockInquiry.style.display = 'block';
-                } else {
-                    stockInquiry.style.display = 'none';
-                }
+                if (qty <= 1) stockInquiry.style.display = 'block';
+                else stockInquiry.style.display = 'none';
             } else {
                 stockInquiry.style.display = 'none';
             }
         }
 
         async function exportData() {
-            const blob = await apiService.exportAttendeeData(currentEventId);
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `camp_attendees_${currentEventId}.csv`;
-            a.click();
+            try {
+                const blob = await apiService.exportAttendeeData(currentEventId);
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `camp_attendees_${currentEventId}.csv`;
+                a.click();
+            } catch (err) {
+                alert('Export failed');
+            }
         }
 
         function showTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            event.target.classList.add('active');
-            document.getElementById(`${tabName}-tab`).style.display = 'block';
-        }
+            
+            if (event && event.target) event.target.classList.add('active');
+            else {
+                 const btn = Array.from(document.querySelectorAll('.tab')).find(b => b.textContent.toLowerCase().includes(tabName));
+                 if (btn) btn.classList.add('active');
+            }
 
-        function showNotification(msg, type) {
-            alert(msg); // Placeholder for better UI non-blocking notif
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
         }
     </script>
 </body>
+</html>
+dy>
 
 </html>

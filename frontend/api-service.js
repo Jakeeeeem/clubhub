@@ -15,6 +15,25 @@ class ApiService {
     this.testConnection();
     this.context = null;
 
+    // Scouting Methods
+    this.getScoutWatchlist = () => this.makeRequest("/scouting/watchlist");
+    this.toggleWatchlist = (playerId, notes = "") => 
+        this.makeRequest("/scouting/watchlist", {
+            method: "POST",
+            body: JSON.stringify({ playerId, notes })
+        });
+    this.removeFromWatchlist = (playerId) => 
+        this.makeRequest(`/scouting/watchlist/${playerId}`, { method: "DELETE" });
+    this.getPlayerMedicalInfo = (playerId) => 
+        this.makeRequest(`/scouting/medical/${playerId}`);
+
+    // Tournament Methods
+    this.autoScheduleTournament = (id, options) => 
+        this.makeRequest(`/tournaments/${id}/auto-schedule`, {
+            method: "POST",
+            body: JSON.stringify(options)
+        });
+
     // Cache for feed and messages in demo mode
     this._mockFeed = null;
     this._mockMessages = null;
@@ -289,6 +308,16 @@ class ApiService {
     }
 
     // --- SCOUTING & SEARCH ---
+    if (endpoint.includes("/scouting/watchlist")) {
+        const fb = this.getAdminDashboardFallback();
+        if (method === "GET") return fb.scouting.watchlist;
+        return { success: true, message: "Watchlist updated (Demo)" };
+    }
+    if (endpoint.includes("/scouting/medical")) {
+        const fb = this.getAdminDashboardFallback();
+        const pId = endpoint.split("/").pop();
+        return fb.scouting.medical[pId] || { allergies: "None", asthma: false };
+    }
     if (endpoint.includes("/scout/discover") || endpoint.includes("/search/players")) {
       return { success: true, players: this.getAdminDashboardFallback().players };
     }
@@ -298,6 +327,29 @@ class ApiService {
       let mockEvents = JSON.parse(localStorage.getItem("demo_mock_events") || "[]");
       let mockTournaments = JSON.parse(localStorage.getItem("demo_mock_tournaments") || "[]");
       
+      if (endpoint.includes("/pitches")) {
+          return this.getAdminDashboardFallback().pitches;
+      }
+      if (endpoint.includes("/bracket")) {
+          return {
+              stages: [{ id: "s1", name: "Finals", sequence: 1 }],
+              matches: [
+                  { id: "m1", round_number: 1, home_team_name: "U18 Elite", away_team_name: "Arsenal Youth", home_score: 2, away_score: 1, status: "completed" }
+              ]
+          };
+      }
+      if (endpoint.includes("/matches")) {
+          return [
+              { id: "m1", home_team_name: "U18 Elite", away_team_name: "Arsenal Youth", home_score: 2, away_score: 1, status: "completed", pitch_name: "Main Stadium", start_time: new Date().toISOString() }
+          ];
+      }
+      if (endpoint.includes("/groups")) {
+          if (method === "POST") return { success: true, id: "new-group" };
+          return [
+              { id: "g1", name: "Group A", teams: ["U18 Elite", "Arsenal Youth"] }
+          ];
+      }
+
       if (method === "POST") {
         const payload = JSON.parse(options.body || "{}");
         const newItem = { 
@@ -2388,6 +2440,25 @@ class ApiService {
           salary: "Scholarship",
           status: "active",
         }
+      ],
+      scouting: {
+        watchlist: ["demo-player-id", "p2"],
+        reports: [
+          { player_id: "demo-player-id", scout: "Michael Thompson", rating: 4, notes: "Great pace and finishing." },
+          { player_id: "p2", scout: "Michael Thompson", rating: 3, notes: "Solid midfielder but needs work on endurance." }
+        ],
+        medical: {
+            "demo-player-id": { allergies: "Peanuts", asthma: false, emergency_contact: { name: "John Williams", phone: "07700 900555" } },
+            "p2": { allergies: "None", asthma: true, emergency_contact: { name: "Sarah Smith", phone: "07700 900666" } }
+        }
+      },
+      tactics: [
+          { id: "t1", name: "Modern 4-3-3", formation: "4-3-3", coach: "Michael Thompson" },
+          { id: "t2", name: "Diamond 4-4-2", formation: "4-4-2", coach: "Michael Thompson" }
+      ],
+      pitches: [
+          { id: "pitch1", name: "Main Stadium", type: "Grass", size: "11v11" },
+          { id: "pitch2", name: "Field A", type: "4G", size: "9v9" }
       ],
       statistics: {
         total_groups: 1,

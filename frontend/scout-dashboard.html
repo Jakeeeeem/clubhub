@@ -391,8 +391,51 @@
         }
 
         async function loadWatchlist() {
-            // Placeholder for watchlist logic
-            console.log("⭐ Loading watchlist...");
+            const grid = document.getElementById('watchlistGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p class="loading-text">Loading your watchlist...</p></div>';
+
+            try {
+                // Fetch watchlist from scouting API
+                const watchlist = await apiService.makeRequest('/scouting/watchlist').catch(() => []);
+                
+                if (!watchlist || watchlist.length === 0) {
+                    grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p style="opacity: 0.5;">Your watchlist is currently empty. Start discovering talent!</p></div>';
+                    return;
+                }
+
+                grid.innerHTML = watchlist.map(item => `
+                    <div class="glass-card" style="padding: 1.5rem; border: 1px solid var(--border-color); position: relative; overflow: hidden; height: 100%; display: flex; flex-direction: column;">
+                        <span class="badge" style="position: absolute; top: 1rem; right: 1rem; background: var(--primary-glass); color: var(--primary);">⭐ Tracked</span>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="user-avatar-sm" style="width: 50px; height: 50px; font-size: 1.2rem; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center;">
+                                ${(item.player_name || 'P').charAt(0)}
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.1rem;">${item.player_name}</h3>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${item.position || 'Player'} | ${item.age || 'N/A'}</div>
+                                <div style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">${item.club_name || 'Academy'}</div>
+                            </div>
+                        </div>
+                        <div style="flex-grow: 1;">
+                            <div style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted);">
+                                <b>Latest Rating:</b> ${item.rating || 'N/A'}/10
+                            </div>
+                            <p style="font-size: 0.8rem; line-height: 1.5; opacity: 0.8; margin-bottom: 1rem;">
+                                ${item.notes || 'No recent notes added for this player.'}
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: auto;">
+                            <button class="btn btn-primary btn-small" style="flex: 1;" onclick="requestContact('${item.id}')">Contact</button>
+                            <button class="btn btn-secondary btn-small" onclick="removeFromWatchlist('${item.id}')">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load watchlist:', error);
+                grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p style="color: var(--primary);">Error loading watchlist. Please try again.</p></div>';
+            }
         }
 
         async function loadTalentPool() {

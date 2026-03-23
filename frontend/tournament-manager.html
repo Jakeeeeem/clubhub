@@ -280,16 +280,18 @@
                         <button class="tab" onclick="showTab('pitches')">Pitches</button>
                         <button class="tab" onclick="showTab('matches')">Matches</button>
                         <button class="tab" onclick="showTab('bracket')">Bracket</button>
+                        <button class="tab" onclick="showTab('staff')">Staff</button>
                     </div>
 
                     <!-- Teams Tab -->
                     <div id="teams-tab" class="tab-content active">
-                        <div style="margin-bottom: 1rem;">
-                            <button class="btn btn-primary" onclick="generateFixtures('knockout')">Generate Knockout
-                                Bracket</button>
-                            <button class="btn btn-secondary" onclick="generateFixtures('league')">Generate League
-                                Format</button>
-                        </div>
+                    <div style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center;">
+                        <button class="btn btn-primary" onclick="generateFixtures('knockout')">Generate Knockout Bracket</button>
+                        <button class="btn btn-secondary" onclick="generateFixtures('league')">Generate League Format</button>
+                        <div style="flex: 1;"></div>
+                        <button class="btn btn-special" onclick="openInviteTeamModal()">+ Invite Team</button>
+                        <button class="btn btn-secondary" onclick="printTournament()">🖨️ Print Layout</button>
+                    </div>
                         <div id="teamsGrid" class="team-grid">
                             <!-- Teams will be loaded here -->
                         </div>
@@ -321,26 +323,62 @@
                     <div id="pitches-tab" class="tab-content" style="display: none;">
                         <div class="card" style="margin-bottom: 2rem;">
                             <h3>Pitch Configuration</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Configure pitches for each format.
+                                Adding multiple pitches will automatically name them (e.g., Pitch-1, Pitch-2).</p>
                             <div
-                                style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 1rem; margin-top: 1rem;">
-                                <input type="text" id="pitchNameInput" placeholder="Pitch Name (e.g. Pitch 1)">
-                                <select id="pitchTypeInput">
-                                    <option value="Grass">Grass</option>
-                                    <option value="3G">3G Artifical</option>
-                                    <option value="4G">4G Artifical</option>
-                                    <option value="Indoor">Indoor</option>
-                                </select>
-                                <select id="pitchSizeInput">
-                                    <option value="11v11">11v11</option>
-                                    <option value="9v9">9v9</option>
-                                    <option value="7v7">7v7</option>
-                                    <option value="5v5">5v5</option>
-                                </select>
-                                <button class="btn btn-primary" onclick="addPitch()">Add Pitch</button>
+                                style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto; gap: 1rem; margin-top: 1rem; align-items: flex-end;">
+                                <div class="form-group">
+                                    <label>Format</label>
+                                    <select id="pitchFormatInput">
+                                        <option value="5v5">5v5</option>
+                                        <option value="6v6">6v6</option>
+                                        <option value="7v7">7v7</option>
+                                        <option value="9v9">9v9</option>
+                                        <option value="11v11">11v11</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Number of Pitches</label>
+                                    <input type="number" id="pitchCountInput" value="1" min="1" max="20">
+                                </div>
+                                <div class="form-group">
+                                    <label>Surface</label>
+                                    <select id="pitchSurfaceInput">
+                                        <option value="Grass">Grass</option>
+                                        <option value="3G">3G</option>
+                                        <option value="4G">4G</option>
+                                        <option value="Indoor">Indoor</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Time From</label>
+                                    <input type="time" id="pitchTimeFrom" value="09:00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Time To</label>
+                                    <input type="time" id="pitchTimeTo" value="17:00">
+                                </div>
+                                <button class="btn btn-primary" onclick="addPitchGroup()" style="height: 42px;">Add
+                                    Pitches</button>
                             </div>
                         </div>
                         <div id="pitchesGrid" class="team-grid">
                             <!-- Pitches will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Staff Tab -->
+                    <div id="staff-tab" class="tab-content" style="display: none;">
+                        <div class="card" style="margin-bottom: 2rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h3>Tournament Staff</h3>
+                                <button class="btn btn-primary" onclick="openInviteStaffModal()">+ Invite Staff</button>
+                            </div>
+                            <p style="color: var(--text-muted); margin-top: 0.5rem;">Invite Admins, Referees, and Team
+                                Managers to help manage the tournament.</p>
+                        </div>
+                        <div id="staffGrid" class="team-grid">
+                            <!-- Staff will be loaded here -->
                         </div>
                     </div>
 
@@ -591,34 +629,61 @@
                         </select>
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>Start Time (Daily)</label>
-                        <input type="time" name="startTime" value="09:00" required>
-                    </div>
-                    <div class="form-group">
-                        <label>End Time (Daily)</label>
-                        <input type="time" name="endTime" value="18:00" required>
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>Match Duration (Mins)</label>
-                        <input type="number" name="matchDuration" value="20" min="5">
-                    </div>
-                    <div class="form-group">
-                        <label>Break/Changeover (Mins)</label>
-                        <input type="number" name="breakDuration" value="5" min="0">
-                    </div>
-                </div>
-
-                <div class="card" style="background: rgba(255,166,0,0.1); border: 1px solid orange; margin: 1.5rem 0;">
-                    <p style="margin:0; font-size: 0.9rem;"><strong>Note:</strong> Matches will be distributed across
-                        all active pitches starting from the selected time.</p>
-                </div>
-
+                <!-- ... other fields ... -->
                 <button type="submit" class="btn btn-primary" style="width: 100%;">⚡ Run Scheduler</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Invite Staff Modal -->
+    <div id="inviteStaffModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeModal('inviteStaffModal')">&times;</span>
+            <h2 class="neon-text">Invite Tournament Staff</h2>
+            <form onsubmit="handleInviteStaff(event)" style="margin-top: 2rem;">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="staffEmail" required placeholder="staff@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="staffRole">
+                        <option value="referee">Referee</option>
+                        <option value="admin">Tournament Admin</option>
+                        <option value="coordinator">Coordinator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Assign to Pitches (Optional)</label>
+                    <div id="staffPitchList" style="max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px;">
+                        <!-- Pitches populated via JS -->
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Send Invitation</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invite Team Modal -->
+    <div id="inviteTeamModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeModal('inviteTeamModal')">&times;</span>
+            <h2 class="neon-text">Invite Team</h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Send a registration link to a team manager.</p>
+            <form onsubmit="handleInviteTeam(event)" style="margin-top: 2rem;">
+                <div class="form-group">
+                    <label>Manager Email</label>
+                    <input type="email" id="inviteTeamEmail" required placeholder="manager@team.com">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Send Direct Invite</button>
+            </form>
+            <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                <label style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">Or share public link:</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="publicTournamentLink" readonly style="flex: 1; font-size: 0.8rem; background: rgba(0,0,0,0.1);" value="https://clubhubsports.io/register-team?id=...">
+                    <button class="btn btn-secondary btn-small" onclick="copyTournamentLink()">Copy</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -767,6 +832,7 @@
                 displayMatches(data.matches);
                 renderBracket(data.matches, data.teams);
                 renderTable(data.teams, data.matches); // Call the new function here
+                loadStaff();
 
                 // Update group filter select
                 const groupSelect = document.getElementById('groupFixtureSelect');
@@ -1054,34 +1120,168 @@
         // --- Pitch Methods ---
         function displayPitches(pitches) {
             const grid = document.getElementById('pitchesGrid');
-            if (pitches.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No pitches configured yet.</p>';
+            if (!pitches || pitches.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); background: rgba(0,0,0,0.1); border-radius: 12px;">No pitches configured yet.</p>';
                 return;
             }
 
             grid.innerHTML = pitches.map(p => `
-                <div class="card">
-                    <h3>${p.name}</h3>
-                    <p><strong>Type:</strong> ${p.pitch_type}</p>
-                    <p><strong>Size:</strong> ${p.pitch_size}</p>
-                    <span class="badge" style="background: ${p.is_active ? '#22c55e' : '#6b7280'}">${p.is_active ? 'Active' : 'Inactive'}</span>
+                <div class="card" style="border-left: 4px solid var(--primary);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h3 style="margin:0">${p.name}</h3>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                ${p.pitch_size} | ${p.pitch_type}
+                            </div>
+                        </div>
+                        <button onclick="removePitch('${p.id}')" style="background: none; border: none; color: #f87171; cursor: pointer; opacity: 0.6;">✕</button>
+                    </div>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span>🕒 Available:</span>
+                            <span style="color: var(--primary); font-weight: 600;">${p.available_from || '09:00'} - ${p.available_to || '17:00'}</span>
+                        </div>
+                        <span class="badge" style="background: ${p.is_active ? '#22c55e20' : '#374151'}; color: ${p.is_active ? '#4ade80' : '#9ca3af'}; border: 1px solid ${p.is_active ? '#22c55e' : 'transparent'};">
+                            ${p.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                    </div>
                 </div>
             `).join('');
         }
 
-        async function addPitch() {
-            const name = document.getElementById('pitchNameInput').value;
-            const type = document.getElementById('pitchTypeInput').value;
-            const size = document.getElementById('pitchSizeInput').value;
-            if (!name) return;
+        async function addPitchGroup() {
+            const format = document.getElementById('pitchFormatInput').value;
+            const count = parseInt(document.getElementById('pitchCountInput').value);
+            const surface = document.getElementById('pitchSurfaceInput').value;
+            const timeFrom = document.getElementById('pitchTimeFrom').value;
+            const timeTo = document.getElementById('pitchTimeTo').value;
 
             try {
-                await apiService.createTournamentPitch(currentTournamentId, { name, pitch_type: type, pitch_size: size });
-                document.getElementById('pitchNameInput').value = '';
+                // Loop to create X number of pitches
+                for (let i = 1; i <= count; i++) {
+                    const name = `Pitch-${i} (${format})`;
+                    await apiService.makeRequest(`/tournaments/${currentTournamentId}/pitches`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            name,
+                            pitch_type: surface,
+                            pitch_size: format,
+                            available_from: timeFrom,
+                            available_to: timeTo
+                        })
+                    });
+                }
                 loadTournament();
             } catch (error) {
-                alert('Failed to add pitch');
+                alert('Failed to add pitches');
             }
+        }
+
+        async function removePitch(pitchId) {
+            if (!confirm('Are you sure you want to remove this pitch?')) return;
+            try {
+                await apiService.makeRequest(`/tournaments/pitches/${pitchId}`, {
+                    method: 'DELETE'
+                });
+                loadTournament();
+            } catch (error) {
+                alert('Failed to remove pitch');
+            }
+        }
+
+        // --- Staff Methods ---
+        async function loadStaff() {
+            try {
+                const data = await apiService.makeRequest(`/tournaments/${currentTournamentId}/staff`).catch(() => []);
+                const grid = document.getElementById('staffGrid');
+
+                if (data.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); background: rgba(0,0,0,0.1); border-radius: 12px;">No staff assigned yet.</p>';
+                } else {
+                    grid.innerHTML = data.map(s => `
+                        <div class="card">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                    ${(s.name || 'S').charAt(0)}
+                                </div>
+                                <div>
+                                    <h4 style="margin:0">${s.name || 'Staff Member'}</h4>
+                                    <span style="font-size: 0.75rem; color: var(--primary); text-transform: uppercase; font-weight: 800;">${s.role}</span>
+                                </div>
+                            </div>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem;">📧 ${s.email}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Load staff error:', error);
+            }
+        }
+
+        function openInviteStaffModal() {
+            // Populate pitch list for assignment
+            const list = document.getElementById('staffPitchList');
+            if (tournamentData.pitches && tournamentData.pitches.length > 0) {
+                list.innerHTML = tournamentData.pitches.map(p => `
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; font-size: 0.85rem; cursor: pointer;">
+                        <input type="checkbox" name="staffPitch" value="${p.id}"> ${p.name}
+                    </label>
+                `).join('');
+            } else {
+                list.innerHTML = '<p style="font-size: 0.8rem; padding: 1rem; opacity: 0.5;">Add pitches first to assign staff.</p>';
+            }
+            document.getElementById('inviteStaffModal').style.display = 'block';
+        }
+
+        async function handleInviteStaff(event) {
+            event.preventDefault();
+            const email = document.getElementById('staffEmail').value;
+            const role = document.getElementById('staffRole').value;
+            const selectedPitches = Array.from(document.querySelectorAll('input[name="staffPitch"]:checked')).map(cb => cb.value);
+
+            try {
+                await apiService.makeRequest(`/tournaments/${currentTournamentId}/invite-staff`, {
+                    method: 'POST',
+                    body: JSON.stringify({ email, role, pitches: selectedPitches })
+                });
+                alert('Staff invitation sent!');
+                closeModal('inviteStaffModal');
+                loadStaff();
+            } catch (error) {
+                alert('Failed to send invitation');
+            }
+        }
+
+        function openInviteTeamModal() {
+            const url = `${window.location.origin}/tournament-listing.html?id=${currentTournamentId}`;
+            document.getElementById('publicTournamentLink').value = url;
+            document.getElementById('inviteTeamModal').style.display = 'block';
+        }
+
+        async function handleInviteTeam(event) {
+            event.preventDefault();
+            const email = document.getElementById('inviteTeamEmail').value;
+            try {
+                await apiService.makeRequest(`/tournaments/${currentTournamentId}/invite-team`, {
+                    method: 'POST',
+                    body: JSON.stringify({ email })
+                });
+                alert('Team invitation sent!');
+                closeModal('inviteTeamModal');
+            } catch (err) {
+                alert('Failed to invite team');
+            }
+        }
+
+        function copyTournamentLink() {
+            const el = document.getElementById('publicTournamentLink');
+            el.select();
+            document.execCommand('copy');
+            alert('Link copied to clipboard!');
+        }
+
+        window.printTournament = function() {
+            window.print();
         }
 
         // --- Auto-Schedule Methods ---
@@ -1404,8 +1604,16 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
 
-            event.target.classList.add('active');
+            // Find the button that was clicked
+            const btn = Array.from(document.querySelectorAll('.tab')).find(b => b.textContent.toLowerCase() === tabName);
+            if (btn) btn.classList.add('active');
+            else if (event && event.target) event.target.classList.add('active');
+
             document.getElementById(`${tabName}-tab`).style.display = 'block';
+
+            if (tabName === 'staff') {
+                loadStaff();
+            }
         }
 
         function getStatusColor(status) {

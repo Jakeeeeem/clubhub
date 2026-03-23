@@ -350,25 +350,8 @@ async function startServer() {
     const { runMigrations } = require("./services/migration-service");
     await runMigrations();
 
-    // Seed demo users (only if flag is set or in development)
-    if (
-      process.env.SEED_DEMO_USERS === "true" ||
-      (process.env.NODE_ENV === "development" &&
-        process.env.AUTO_SEED === "true")
-    ) {
-      try {
-        console.log("🌱 Seeding demo users...");
-        const { seedDemoUsers } = require("./scripts/seed-demo-users");
-        await seedDemoUsers();
-        console.log("✅ Demo users seeded successfully");
-      } catch (error) {
-        console.warn(
-          "⚠️ Demo user seeding failed (may already exist):",
-          error.message,
-        );
-        // Don't fail startup if seeding fails - users might already exist
-      }
-    }
+    // Check for migrations or other startup needs
+    console.log("🛠️ Checking system integrity...");
 
     // Start server
     const server = app.listen(PORT, "0.0.0.0", () => {

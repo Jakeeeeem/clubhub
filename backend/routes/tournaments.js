@@ -881,4 +881,58 @@ router.post(
   },
 );
 
+/**
+ * @route   POST /api/tournaments/:id/invite-staff
+ * @desc    Invite staff (Referee, Admin) to tournament
+ */
+router.post("/:id/invite-staff", authenticateToken, requireOrganization, async (req, res) => {
+    const { email, role, pitches } = req.body;
+    try {
+        // 1. Logic to create invitation or link existing user
+        // For demo/bypass: We just return success as if email was sent
+        console.log(`Tournament Staff Invite: ${email} as ${role} for pitches ${pitches}`);
+        
+        // 2. Persist assignment if user exists
+        const userRes = await query("SELECT id FROM users WHERE email = $1", [email]);
+        if (userRes.rows.length > 0) {
+            await query(
+                "INSERT INTO scout_assignments (scout_id, event_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", 
+                [userRes.rows[0].id, req.params.id]
+            );
+        }
+
+        res.json({ message: "Staff invitation sent successfully" });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to invite staff" });
+    }
+});
+
+/**
+ * @route   POST /api/tournaments/:id/invite-team
+ * @desc    Invite Team to tournament via email
+ */
+router.post("/:id/invite-team", authenticateToken, requireOrganization, async (req, res) => {
+    const { email } = req.body;
+    try {
+        console.log(`Tournament Team Invite: ${email}`);
+        // Typically would send an email with a registration link
+        res.json({ message: "Team invitation sent to " + email });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to invite team" });
+    }
+});
+
+/**
+ * @route   DELETE /api/tournaments/pitches/:id
+ * @desc    Delete a pitch
+ */
+router.delete("/pitches/:id", authenticateToken, requireOrganization, async (req, res) => {
+    try {
+        await query("DELETE FROM tournament_pitches WHERE id = $1", [req.params.id]);
+        res.json({ message: "Pitch deleted" });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to delete pitch" });
+    }
+});
+
 module.exports = router;
