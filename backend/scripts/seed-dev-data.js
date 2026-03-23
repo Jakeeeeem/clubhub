@@ -68,7 +68,7 @@ async function seedData() {
     await client.query(`
       INSERT INTO listings (organization_id, title, description, positions, status, created_at, updated_at)
       VALUES 
-        ($1, 'Looking for Prop', 'We need a strong prop for the First XV.', '["Prop", "Forward"]', 'active', NOW(), NOW())
+        ($1, 'Looking for Prop', 'We need a strong prop for the First XV.', '{"Prop", "Forward"}', 'active', NOW(), NOW())
     `, [ORG_ID]);
 
     console.log('✅ Seeding complete!');

@@ -22,12 +22,12 @@ async function seedMasterDemo() {
       await client.query(`
                 INSERT INTO organizations (id, name, slug, types, location, sport, is_active)
                 VALUES 
-                ($1, 'Elite Pro Academy', 'elite-pro', '["academy"]', 'London, UK', 'Football', true),
-                ($2, 'London United Sunday League', 'london-united', '["league"]', 'London, UK', 'Football', true),
-                ($3, 'St. Georges Park Venue', 'st-georges', '["venue"]', 'Burton, UK', 'Football', true),
-                ($4, 'Global Scouting Network', 'gsn', '["scouting"]', 'Manchester, UK', 'Football', true),
-                ($5, 'Premier Youth League', 'pyl', '["league"]', 'Birmingham, UK', 'Football', true),
-                ($6, 'Manchester Talent Hub', 'mth', '["academy"]', 'Manchester, UK', 'Football', true)
+                ($1, 'Elite Pro Academy', 'elite-pro', '{"academy"}', 'London, UK', 'Football', true),
+                ($2, 'London United Sunday League', 'london-united', '{"league"}', 'London, UK', 'Football', true),
+                ($3, 'St. Georges Park Venue', 'st-georges', '{"venue"}', 'Burton, UK', 'Football', true),
+                ($4, 'Global Scouting Network', 'gsn', '{"scouting"}', 'Manchester, UK', 'Football', true),
+                ($5, 'Premier Youth League', 'pyl', '{"league"}', 'Birmingham, UK', 'Football', true),
+                ($6, 'Manchester Talent Hub', 'mth', '{"academy"}', 'Manchester, UK', 'Football', true)
                 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
             `, orgIds);
       
