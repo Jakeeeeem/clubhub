@@ -11,40 +11,36 @@
     --primary: #dc2626; /* Brand Red */
 }
 
-/* Prevent unified nav from overriding desktop headers introduced today.
-   On larger screens, keep original site header behavior. */
-@media (min-width:1025px) {
+/* Desktop Overrides (Standardize 992px Breakpoint) */
+@media (min-width: 992px) {
     .pro-header, header.header {
         position: static !important;
         top: auto !important;
         left: auto !important;
         width: auto !important;
-        z-index: auto !important;
-        height: auto !important;
+        z-index: 10 !important;
         background: none !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
-        border-bottom: none !important;
+        border-bottom: 1px solid transparent !important;
         display: block !important;
-        align-items: stretch !important;
-        padding: 0 3rem !important; /* increase left/right spacing on desktop */
-        transition: none !important;
+        padding: 0 3rem !important;
     }
 
-    .pro-header .nav-container { display: block !important; }
-    .header-center { position: static !important; transform: none !important; }
+    .pro-header .nav-container { display: flex !important; }
     .desktop-only { display: inline-flex !important; }
     .mobile-only { display: none !important; }
-    /* Ensure mobile navigation UI is fully hidden on larger screens */
-    .pro-sidebar, .sidebar-overlay, .pro-bottom-nav {
+
+    /* Force Hide Mobile UI on Desktop (992px+) */
+    .pro-sidebar, .sidebar-overlay, .pro-bottom-nav, .side-menu-trigger {
         display: none !important;
         visibility: hidden !important;
+        opacity: 0 !important;
         pointer-events: none !important;
     }
 
-    /* Reduce large top paddings that were added for fixed header on mobile */
     .main, .dashboard-main, .dashboard.container, .dashboard-container {
-        padding-top: 18px !important;
+        padding-top: 20px !important;
     }
 }
 
@@ -268,36 +264,7 @@
 }
 
 /* Final desktop-safe overrides (placed at end to win cascade) */
-@media (min-width:1025px) {
-    .pro-header, header.header {
-        position: static !important;
-        top: auto !important;
-        left: auto !important;
-        width: auto !important;
-        z-index: 10 !important;
-        height: auto !important;
-        background: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        border-bottom: 1px solid transparent !important;
-        box-shadow: none !important;
-        padding: 0 3rem !important;
-        display: block !important;
-        align-items: center !important;
-    }
-
-    .pro-header .nav-container, header.header .nav, header.header .nav-container {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        gap: 1rem !important;
-    }
-
-    /* Ensure main content is not pushed down excessively */
-    .main, .dashboard-main, .dashboard.container, .dashboard-container {
-        padding-top: 18px !important;
-    }
-}
+/* Removed redundant desktop override block */
 
 .hamburger-inner::after {
     content: "";

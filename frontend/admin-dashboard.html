@@ -152,7 +152,7 @@
     <script src="tactical-logic.js"></script>
 </head>
 
-<body>
+<body class="dashboard-page">
     <header class="header">
         <nav class="nav container">
             <div class="logo" onclick="window.location.href='index.html'">
@@ -288,33 +288,7 @@
                 </div>
             </div>
 
-            <!-- App Mode Navigation (Mobile/App View) -->
-            <div class="app-top-tabs-container" id="appTopTabs">
-                <!-- Horizontally Scrollable Tabs -->
-            </div>
-
-            <div class="app-bottom-nav" id="appBottomNav">
-                <button class="nav-item active" onclick="switchAppNav('home')">
-                    <span class="icon">🏠</span>
-                    <span>Home</span>
-                </button>
-                <button class="nav-item" onclick="switchAppNav('management')">
-                    <span class="icon">👥</span>
-                    <span>Team</span>
-                </button>
-                <button class="nav-item" onclick="switchAppNav('operations')">
-                    <span class="icon">📅</span>
-                    <span>Calendar</span>
-                </button>
-                <button class="nav-item" onclick="switchAppNav('growth')">
-                    <span class="icon">🚀</span>
-                    <span>Growth</span>
-                </button>
-                <button class="nav-item" onclick="switchAppNav('finance')">
-                    <span class="icon">💷</span>
-                    <span>More</span>
-                </button>
-            </div>
+            <!-- App Mode Navigation removed (Replaced by Unified Bottom Nav) -->
 
             <div class="dashboard-content">
                 <!-- Overview Section -->

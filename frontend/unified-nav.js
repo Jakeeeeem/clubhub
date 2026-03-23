@@ -4,23 +4,34 @@
 const UnifiedNav = {
   init() {
     console.log("🚀 Unified Nav Initializing...");
-    // Detect desktop vs mobile. On desktop we should NOT inject mobile sidebar/bottom-nav
-    const isDesktop =
-      typeof window !== "undefined" && window.innerWidth >= 1025;
+    
+    // Standardize breakpoints: 992px+ is desktop (small laptops/tablets in landscape)
+    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
+    
+    // Check if this is a dashboard page that wants to keep its own desktop header
+    const isDashboard = window.location.pathname.includes('dashboard') || 
+                       document.body.classList.contains('dashboard-page') ||
+                       document.querySelector('.dashboard-container');
 
     if (!isDesktop) {
       this.renderSidebar();
       this.renderBottomNav();
       this.renderMenu();
+      this.renderMobileHeaderElements();
     } else {
-      // Ensure the existing desktop header contains the switcher/profile UI
-      this.ensureHeaderElements();
+      // On desktop, only modify the header if it's NOT a dashboard
+      // as per user request: "leave bdesktop header nav for dashboards alon"
+      if (!isDashboard) {
+        this.ensureHeaderElements();
+      } else {
+        console.log("📂 Dashboard detected: Leaving desktop header alone.");
+        // We still want the profile dropdown logic to work if the dashboard header 
+        // has the standard trigger IDs
+        this.renderProfileDropdown();
+      }
     }
 
-    // Profile dropdown and other safe addons are ok to render on all sizes (they attach to header if present)
-    this.renderProfileDropdown();
     this.bindEvents();
-    this.updateHeaderState();
     this.syncUserData();
     this.autoLabelTables();
 
@@ -147,6 +158,27 @@ const UnifiedNav = {
       }
     };
     checkSwitcher();
+  },
+
+  /**
+   * Adds essential mobile buttons (Hamburger) to any header
+   */
+  renderMobileHeaderElements() {
+    const header = document.querySelector("header.header, .pro-header");
+    if (!header) return;
+
+    let nav = header.querySelector(".nav-container, .nav");
+    if (!nav) return;
+
+    // Add Hamburger if missing (Mobile only)
+    if (!nav.querySelector("#side-menu-trigger") && !nav.querySelector(".side-menu-trigger")) {
+      const trigger = document.createElement("div");
+      trigger.className = "side-menu-trigger mobile-only";
+      trigger.id = "side-menu-trigger";
+      trigger.onclick = () => UnifiedNav.toggleSidebar(true);
+      trigger.innerHTML = `<i class="fa fa-bars"></i>`;
+      nav.insertBefore(trigger, nav.firstChild);
+    }
   },
 
   /**
@@ -285,8 +317,13 @@ const UnifiedNav = {
                 </div>
             </div>
         `;
-    const header = document.querySelector(".pro-header .nav-container");
-    if (header) header.insertAdjacentHTML("beforeend", dropdownHTML);
+    // Try to attach to a header container if possible, otherwise body
+    const container = document.querySelector(".pro-header .nav-container, header.header .nav, header.header .nav-container");
+    if (container) {
+      container.insertAdjacentHTML("beforeend", dropdownHTML);
+    } else {
+      document.body.insertAdjacentHTML("beforeend", dropdownHTML);
+    }
   },
 
   toggleProfileDropdown(show) {
@@ -335,15 +372,14 @@ const UnifiedNav = {
   },
 
   toggleSidebar(show) {
-    // Do not open/close the mobile sidebar on desktop viewports
-    const isDesktop =
-      typeof window !== "undefined" && window.innerWidth >= 1025;
+    // Standardize breakpoints: 992px+ is desktop
+    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
     if (isDesktop) {
-      // On desktop, don't open the mobile sidebar. If caller requested `show`,
-      // surface the profile dropdown instead (common desktop behavior).
+      // On desktop, we don't open the sidebar. Surface the profile dropdown instead.
       if (show) {
         this.toggleProfileDropdown(true);
       } else {
+        // If closing, ensure active classes are removed
         const sidebarEl = document.getElementById("pro-sidebar");
         const overlayEl = document.getElementById("sidebar-overlay");
         if (sidebarEl) sidebarEl.classList.remove("active");
@@ -552,19 +588,16 @@ const UnifiedNav = {
     window.addEventListener("scroll", () => {
       const header = document.querySelector(".pro-header, header.header");
       if (!header) return;
-      // Only apply compacting styles on small viewports where header is fixed
-      const isDesktop =
-        typeof window !== "undefined" && window.innerWidth >= 1025;
+      // Standardize breakpoints: 992px+ is desktop
+      const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
       if (isDesktop) return; // desktop headers remain static
 
       if (window.scrollY > 30) {
-        header.style.height = "68px";
-        header.style.background = "rgba(10, 10, 12, 0.95)";
-        header.style.borderBottomColor = "rgba(255, 255, 255, 0.15)";
+        header.style.height = "72px";
+        header.style.background = "rgba(10, 10, 12, 0.98)";
       } else {
         header.style.height = "80px";
-        header.style.background = "rgba(10, 10, 12, 0.7)";
-        header.style.borderBottomColor = "rgba(255, 255, 255, 0.08)";
+        header.style.background = "rgba(10, 10, 12, 0.8)";
       }
     });
   },
