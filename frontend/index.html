@@ -109,6 +109,79 @@
             </div>
         </section>
 
+        <!-- Recruitment Section (Restored) -->
+        <section
+            style="background: #0d0d0d; padding: 5rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+            <div class="container">
+                <div style="text-align: center; margin-bottom: 3.5rem;">
+                    <p style="font-size: 1.2rem; color: #fff; max-width: 600px; margin: 0 auto 0.5rem; font-weight: 500;">
+                        Discover clubs actively looking for players.
+                    </p>
+                    <p style="font-size: 1.2rem; color: #fff; max-width: 600px; margin: 0 auto; font-weight: 500;">
+                        No signup required to search!
+                    </p>
+                </div>
+
+                <!-- Search Bar -->
+                <div style="max-width: 800px; margin: 0 auto 3rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <input type="text" id="groupSearchInput"
+                            placeholder="Search by club name, sport, or location..."
+                            style="flex: 1; min-width: 250px; padding: 1.2rem 1.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: #fff; font-size: 1rem;"
+                            onkeyup="searchRecruitingGroups()">
+                        <button class="btn btn-primary" onclick="searchRecruitingGroups()" style="padding: 1rem 2.5rem; border-radius: 100px;">
+                            Search
+                        </button>
+                    </div>
+                    <div style="text-align: center; margin-top: 2rem; color: #64748b; font-size: 0.9rem;">
+                        <p style="margin-bottom: 0.5rem;">🔍 Start searching to find clubs recruiting players...</p>
+                        <p style="opacity: 0.8;">Currently showing clubs with active recruitment listings</p>
+                    </div>
+                </div>
+
+                <!-- Results Grid -->
+                <div id="recruitingGroupsGrid"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; justify-content: center;">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Platform Columns (Restored) -->
+        <section class="hero-platforms">
+            <a href="signup.html?type=group" class="platform-col org">
+                <div class="platform-content">
+                    <h2 class="platform-title">Groups</h2>
+                    <p class="platform-tagline">Manage your group. Recruit talent. Drive revenue.</p>
+                    <span class="platform-btn">Start Managing</span>
+                </div>
+            </a>
+
+            <a href="signup.html?type=adult" class="platform-col player">
+                <div class="platform-content">
+                    <h2 class="platform-title">Players</h2>
+                    <p class="platform-tagline">Build your CV. Find your next group. Join the community.</p>
+                    <span class="platform-btn">Join Now</span>
+                </div>
+            </a>
+
+            <a href="signup.html?type=coach" class="platform-col coach">
+                <div class="platform-content">
+                    <h2 class="platform-title">Coaches</h2>
+                    <p class="platform-tagline">Manage teams. Track progress. Master the game.</p>
+                    <span class="platform-btn">Start Coaching</span>
+                </div>
+            </a>
+
+            <a href="signup.html?type=league" class="platform-col league">
+                <div class="platform-content">
+                    <h2 class="platform-title">Leagues/Venues</h2>
+                    <p class="platform-tagline">Schedule fixtures. Manage bookings. Run the show.</p>
+                    <span class="platform-btn">Organize Now</span>
+                </div>
+            </a>
+        </section>
+
         <!-- Why Choose ClubHub -->
         <section class="benefits" id="benefits">
             <div class="container" style="position: relative; z-index: 5;">
