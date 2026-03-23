@@ -91,7 +91,6 @@
     z-index: 3500 !important; /* Above everything */
     display: flex !important;
     align-items: center !important;
-    padding: 0 2rem !important;
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
@@ -104,9 +103,9 @@ header.header .nav-container,
     justify-content: space-between !important;
     width: 100% !important;
     height: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 0 2rem !important;
 }
 
 .header-center {
