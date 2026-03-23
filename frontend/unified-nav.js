@@ -44,64 +44,43 @@ const UnifiedNav = {
    * without overwriting the entire header markup.
    */
   ensureHeaderElements() {
-    const header = document.querySelector("header.header, .pro-header");
-    if (!header) return;
-
-    // Create a nav container if missing
-    let nav = header.querySelector(".nav-container, .nav");
-    if (!nav) {
-      nav = document.createElement("div");
-      nav.className = "nav-container";
-      // move existing header content into nav if there is content
-      while (header.firstChild) nav.appendChild(header.firstChild);
-      header.appendChild(nav);
+    let header = document.querySelector(".pro-header, header.header");
+    if (!header) {
+      header = document.createElement("header");
+      header.className = "pro-header";
+      document.body.prepend(header);
     }
 
-    // Logo area
-    if (!nav.querySelector(".logo-area") && !nav.querySelector(".logo")) {
-      const logo = document.createElement("div");
-      logo.className = "logo-area";
-      logo.setAttribute("onclick", "window.location.href='index.html'");
-      logo.innerHTML = `<img src="images/logo.png" alt="Logo" class="logo-img"><span class="logo-text">ClubHub</span>`;
-      nav.insertBefore(logo, nav.firstChild);
-    }
-
-    // Mode toggle (desktop only)
-    if (!nav.querySelector("#header-mode-toggle")) {
-      const center = document.createElement("div");
-      center.className = "header-center desktop-only";
-      center.innerHTML = `
-                <div class="header-mode-toggle" id="header-mode-toggle">
-                    <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Group Hub</div>
-                    <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
-                </div>`;
-      // insert after logo if present
-      const logo = nav.querySelector(".logo-area, .logo");
-      if (logo && logo.nextSibling) nav.insertBefore(center, logo.nextSibling);
-      else nav.appendChild(center);
-    }
-
-    // Header actions / profile target
-    if (
-      !nav.querySelector("#profileTrigger") &&
-      !nav.querySelector("#profile-switcher-trigger")
-    ) {
-      const actions = document.createElement("div");
-      actions.className = "header-actions";
-      actions.style.display = "flex";
-      actions.style.alignItems = "center";
-      actions.style.gap = "1rem";
-      actions.innerHTML = `
-                <div class="action-btn desktop-only" onclick="showPlayerSection ? showPlayerSection('notifications') : showSection('notifications')">
-                    <i class="fa fa-bell-o"></i>
-                    <span class="badge" id="header-notif-badge" style="display:none">0</span>
+    if (!header.querySelector(".nav-container")) {
+      header.innerHTML = `
+                <div class="nav-container nav container">
+                    <div class="dash-header-left">
+                        <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 32px; width: 32px;">
+                            <span class="logo-text neon-text" style="font-weight: 800; font-size: 1.2rem;">ClubHub</span>
+                        </div>
+                        
+                        <div class="mode-toggle-container">
+                            <span class="mode-label active" id="group-label">Group</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="mode-toggle" onchange="UnifiedNav.handleGlobalModeToggle(this)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="mode-label" id="player-label">Player</span>
+                        </div>
+                        
+                        <div id="org-switcher-container"></div>
+                    </div>
+                    
+                    <div class="dash-header-right">
+                        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
+                            <span class="user-name desktop-only" id="header-user-name">Loading...</span>
+                            <div class="user-avatar-sm" id="header-user-avatar">?</div>
+                        </div>
+                        <button class="btn btn-secondary btn-small desktop-only" onclick="handleAuthError()">Logout</button>
+                    </div>
                 </div>
-                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
-                    <span class="user-name desktop-only" id="header-user-name">Loading...</span>
-                    <div class="user-avatar-sm" id="header-user-avatar">?</div>
-                    <i class="fa fa-chevron-down desktop-only" style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;"></i>
-                </div>`;
-      nav.appendChild(actions);
+            `;
     }
   },
 
@@ -562,16 +541,22 @@ const UnifiedNav = {
                 <a href="#" class="sidebar-link active" onclick="showSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Dashboard</a>
                 <a href="#" class="sidebar-link" onclick="showSection('players'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> Players</a>
                 <a href="#" class="sidebar-link" onclick="showSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> Teams</a>
+                <a href="#" class="sidebar-link" onclick="showSection('scout-approvals'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> Scout Approvals</a>
                 
                 <div class="nav-group-title">Operations</div>
+                <a href="#" class="sidebar-link" onclick="showSection('tactical-board'); UnifiedNav.toggleSidebar(false); return false;"><i>🏟️</i> Tactics Board</a>
+                <a href="#" class="sidebar-link" onclick="showSection('form-builder'); UnifiedNav.toggleSidebar(false); return false;"><i>📋</i> Form Builder</a>
                 <a href="#" class="sidebar-link" onclick="showSection('events'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> Events</a>
                 <a href="#" class="sidebar-link" onclick="showSection('tournaments'); UnifiedNav.toggleSidebar(false); return false;"><i>🏆</i> Tournaments</a>
                 
-                <div class="nav-group-title">Recruitment</div>
-                <a href="scouting.html" class="sidebar-link"><i>🔍</i> Scout Hub</a>
+                <div class="nav-group-title">Programs</div>
+                <a href="#" class="sidebar-link" onclick="showSection('training-manager'); UnifiedNav.toggleSidebar(false); return false;"><i>🎯</i> Training Hub</a>
+                <a href="#" class="sidebar-link" onclick="showSection('camp-manager'); UnifiedNav.toggleSidebar(false); return false;"><i>🏕️</i> Camp Manager</a>
+                <a href="#" class="sidebar-link" onclick="showSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>📍</i> Venue Booking</a>
                 
                 <div class="nav-group-title">Finance</div>
                 <a href="#" class="sidebar-link" onclick="showSection('finances'); UnifiedNav.toggleSidebar(false); return false;"><i>💰</i> Finances</a>
+                <a href="#" class="sidebar-link" onclick="showSection('shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛒</i> Item Shop</a>
             `;
     }
 

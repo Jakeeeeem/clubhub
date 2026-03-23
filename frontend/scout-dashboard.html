@@ -53,21 +53,30 @@
 <body>
     <header class="header">
         <nav class="nav container" id="loggedInNav">
-            <div class="logo" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 40px;">
-                <span class="logo-text neon-text">ClubHub</span>
+            <div class="dash-header-left">
+                <div class="logo" onclick="window.location.href='index.html'">
+                    <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                    <span class="logo-text neon-text">ClubHub</span>
+                </div>
+
+                <!-- Mode Toggle (Aligned Left) -->
+                <div class="mode-toggle-container">
+                    <span class="mode-label active" id="group-label">Group</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mode-toggle" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="mode-label" id="player-label">Player</span>
+                </div>
             </div>
 
-            <div class="header-actions" style="display: flex; align-items: center; gap: 1.5rem;">
-                <div id="scoutStatusBadge">
-                    <!-- Dynamic badge -->
+            <div class="dash-header-right">
+                <div id="scoutStatusBadge"></div>
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
+                    <span class="user-name desktop-only" id="scoutNameDisplay">Professional Scout</span>
+                    <div class="user-avatar-sm" id="userInitial">S</div>
                 </div>
-                <!-- Profile Switcher -->
-                <button id="profile-switcher-trigger" class="glass-btn">
-                    <div class="profiel-icon" id="userInitial">S</div>
-                    <span id="scoutNameDisplay">Professional Scout</span>
-                </button>
-                <button onclick="handleLogout()" class="btn btn-secondary btn-small">Logout</button>
+                <button onclick="handleLogout()" class="btn btn-secondary btn-small desktop-only">Logout</button>
             </div>
         </nav>
     </header>

@@ -384,27 +384,30 @@
 </head>
 
 <body>
-    <header class="pro-header">
-        <div class="nav-container">
-            <div class="logo-area" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="Logo" class="logo-img">
-                <span class="logo-text">ClubHub</span>
+    <header class="header">
+        <nav class="nav container">
+            <div class="dash-header-left">
+                <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <img src="images/logo.png" alt="Logo" class="logo-image" style="height: 32px;">
+                    <span class="logo-text neon-text" style="font-weight: 800; font-size: 1.2rem;">ClubHub</span>
+                </div>
+                
+                <div id="org-switcher-container"></div>
             </div>
 
-            <div class="header-actions">
-                <div id="org-switcher-container"></div>
-                
-                <div class="notification-trigger">
+            <div class="dash-header-right">
+                <div class="notification-trigger" style="margin-right: 1rem; opacity: 0.7;">
                     <i>🔔</i>
                     <span class="badge">3</span>
                 </div>
 
-                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleSidebar(true)">
-                    <span class="user-name desktop-only" id="adminName">Platform Admin</span>
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)" style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem;">
+                    <span class="user-name desktop-only" id="adminName" style="font-weight: 500;">Platform Admin</span>
                     <div class="user-avatar-sm" id="adminAvatar">PA</div>
                 </div>
+                <button onclick="handleLogout()" class="btn btn-secondary btn-small desktop-only" style="margin-left: 0.5rem;">Logout</button>
             </div>
-        </div>
+        </nav>
     </header>
 
     <nav class="pro-bottom-nav mobile-only">

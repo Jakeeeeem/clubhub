@@ -42,6 +42,34 @@
     .main, .dashboard-main, .dashboard.container, .dashboard-container {
         padding-top: 20px !important;
     }
+
+    /* Dashboard Header Left/Right alignment */
+    .dash-header-left {
+        display: flex !important;
+        align-items: center !important;
+        gap: 1.5rem !important;
+    }
+
+    .dash-header-right {
+        display: flex !important;
+        align-items: center !important;
+        gap: 1rem !important;
+        margin-left: auto !important; /* Forces right alignment in flex nav */
+    }
+}
+
+/* Mobile Breakpoint (0-991px) */
+@media (max-width: 991px) {
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block !important; }
+    
+    /* Show mobile-specific UI components */
+    .pro-sidebar, .sidebar-overlay, .pro-bottom-nav, .side-menu-trigger {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
 }
 
 /* --- Global Header (Standardized) --- */
@@ -701,4 +729,193 @@
         padding-top: 90px !important;
         padding-bottom: 80px !important;
     }
+}
+
+/* --- Tactics & Form Builder Grid Bases (Desktop) --- */
+.planner-layout, .form-builder-grid {
+    display: grid !important;
+    gap: 1.5rem !important;
+    min-height: 750px !important;
+}
+
+.planner-layout {
+    grid-template-columns: 280px 1fr 100px !important;
+}
+
+.form-builder-grid {
+    grid-template-columns: 280px 1fr 300px !important;
+}
+
+@media (max-width: 991px) {
+    .planner-layout, .form-builder-grid {
+        grid-template-columns: 1fr !important;
+        height: auto !important;
+        min-height: auto !important;
+    }
+}
+
+/* ============================================================================
+   MOBILE UI/UX ENHANCEMENTS (Pro & Cool)
+   ============================================================================ */
+
+/* --- Responsive Layouts (Forms & Tactics) --- */
+@media (max-width: 991px) {
+    /* Form Builder Grid */
+    #form-builder > .card > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+
+    #form-builder .card[style*="height: fit-content"] {
+        order: 2; /* Move My Forms and Palette below Canvas */
+    }
+
+    #adminFieldCanvas {
+        min-height: 400px !important;
+    }
+
+    /* Tactics Board Layout */
+    .planner-layout {
+        grid-template-columns: 1fr !important;
+        height: auto !important;
+        gap: 1.5rem !important;
+    }
+
+    .pitch-container {
+        height: 500px !important;
+        order: 1;
+    }
+
+    .roster-sidebar {
+        height: 400px !important;
+        order: 2;
+    }
+
+    .equipment-drawer {
+        flex-direction: row !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow-x: auto !important;
+        padding: 0.75rem !important;
+        order: 3;
+        justify-content: flex-start !important;
+        gap: 2rem !important;
+    }
+
+    .equipment-drawer h4 { display: none; }
+    .equipment-drawer .btn-icon { margin-left: auto; }
+
+    /* Horizontal Scroll for Tabs */
+    .dashboard-nav, .tabs, .modal-tabs {
+        display: flex !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        padding-bottom: 5px !important;
+        -webkit-overflow-scrolling: touch;
+        gap: 0.5rem !important;
+        border-bottom: 1px solid var(--glass-border) !important;
+    }
+
+    .dashboard-nav button, .tab-btn, .modal-tab-btn {
+        flex: 0 0 auto !important;
+    }
+
+    /* Stats Grid stacking */
+    .stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
+    }
+}
+
+/* --- Premium Table Styles --- */
+.table-responsive {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.2);
+    margin: 1.5rem 0;
+}
+
+.data-table, table.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9rem;
+}
+
+.data-table th, table.table th {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    padding: 1.25rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.data-table td, table.table td {
+    padding: 1.25rem 1rem;
+    color: var(--text-main);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* --- Tournament Card Enhancements --- */
+.tournament-card, .event-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.tournament-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(220, 38, 38, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.tournament-card .format-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--primary);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+/* --- Scrollbar Customization --- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }

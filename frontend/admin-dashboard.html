@@ -127,6 +127,12 @@
             background-color: #f59e0b;
             box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
         }
+
+        .player-position.selected {
+            border-color: #4ade80 !important;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.6) !important;
+            transform: translate(-50%, -50%) scale(1.1) !important;
+        }
     </style>
     <script>
         // Immediate Environment Check to prevent flash of content
@@ -147,37 +153,38 @@
     <script src="api-service.js"></script>
     <script src="dialog-service.js"></script>
     <script src="workspace-manager.js"></script>
-    <link rel="stylesheet" href="tour-service.css">
-    <script src="tour-service.js"></script>
     <script src="tactical-logic.js"></script>
 </head>
 
 <body class="dashboard-page">
     <header class="header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text neon-text">ClubHub</span>
-            </div>
+            <div class="dash-header-left">
+                <div class="logo" onclick="window.location.href='index.html'">
+                    <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                    <span class="logo-text neon-text">ClubHub</span>
+                </div>
 
-            <!-- Mode Toggle -->
-            <div class="mode-toggle-container">
-                <span class="mode-label active" id="group-label">Group</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="mode-toggle" />
-                    <span class="toggle-slider"></span>
-                </label>
-                <span class="mode-label" id="player-label">Player</span>
-            </div>
+                <!-- Mode Toggle (Aligned Left) -->
+                <div class="mode-toggle-container">
+                    <span class="mode-label active" id="group-label">Group</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mode-toggle" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="mode-label" id="player-label">Player</span>
+                </div>
 
-            <!-- Mode Toggle -->
-            <div class="user-info">
-                <!-- Group Switcher -->
+                <!-- Group Switcher (Aligned Left) -->
                 <div id="group-switcher-container"></div>
+            </div>
 
-                <span id="adminNameDisplay">Hello, Admin!</span>
-                <div class="user-avatar" id="adminAvatar">A</div>
-                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+            <div class="dash-header-right">
+                <div class="user-info">
+                    <span id="adminNameDisplay" class="desktop-only">Hello, Admin!</span>
+                    <div class="user-avatar-sm" id="adminAvatar" onclick="UnifiedNav.toggleProfileDropdown(true)" style="cursor: pointer;">A</div>
+                </div>
+                <button class="btn btn-secondary btn-small desktop-only" onclick="logout()">Logout</button>
             </div>
         </nav>
     </header>
@@ -1194,8 +1201,7 @@
                         </div>
                     </div>
 
-                    <div class="planner-layout"
-                        style="display: grid; grid-template-columns: 280px 1fr 100px; gap: 1.5rem; height: 750px;">
+                    <div class="planner-layout">
                         <!-- Player Roster Sidebar -->
                         <div class="roster-sidebar"
                             style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
@@ -1451,7 +1457,7 @@
                         <button class="btn btn-primary" onclick="newForm()">+ New Form</button>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 280px 1fr 300px; gap: 1.5rem; min-height: 600px;">
+                    <div class="form-builder-grid">
                         <!-- Left: My Forms -->
                         <div class="card" style="background: rgba(255,255,255,0.02); height: fit-content;">
                             <h4
@@ -7039,24 +7045,23 @@
                             <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Host leagues, knockouts, and cup competitions for your club.</p>
                             <button class="btn btn-primary" onclick="openCreateTournamentModal()">➕ Create Your First Tournament</button>
                         </div>`;
-                } else {
                     container.innerHTML = tourneys.map(t => {
-                        const displayName = t.name || t.title || 'Tournament';
-                        const rawType = t.type || (t.tournament_settings?.type) || 'Tournament';
-                        const status = t.status || 'active';
+                        const displayName = t.name || t.title || 'Untitled Tournament';
+                        const format = t.format || t.type || 'League';
+                        const status = t.status || 'Active';
+                        const teamsCount = t.teams_count || t.teams?.length || 0;
+                        
                         return `
-                        <div class="card tournament-card" onclick="viewTournament('${t.id}')">
-                            <div class="tournament-card-header">
-                                <span class="badge badge-primary">${rawType.toUpperCase()}</span>
-                                <span class="tournament-trophy">🏆</span>
-                            </div>
-                            <div class="tournament-card-body">
-                                <h3>${displayName}</h3>
-                                <div class="tournament-meta">
-                                    <span>👥 ${t.teams_count || 0} Teams</span>
-                                    <span class="status-dot ${status === 'active' ? 'dot-success' : 'dot-warning'}"></span>
-                                    <span>${status}</span>
-                                </div>
+                        <div class="tournament-card" onclick="viewTournament('${t.id}')" style="cursor: pointer;">
+                            <span class="format-badge">${format}</span>
+                            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏆</div>
+                            <h3 style="margin-bottom: 0.75rem; font-weight: 700;">${displayName}</h3>
+                            <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                                <span>👥 ${teamsCount} Teams registered</span>
+                                <span style="display: flex; align-items: center; gap: 4px;">
+                                    <span class="status-dot ${status.toLowerCase() === 'active' || status.toLowerCase() === 'in_progress' ? 'dot-success' : 'dot-warning'}"></span>
+                                    ${status}
+                                </span>
                             </div>
                         </div>
                     `}).join('');
@@ -8088,6 +8093,10 @@
                 case 'email-campaigns':
                     console.log('Loading email campaigns...');
                     if (typeof loadCampaigns === 'function') loadCampaigns();
+                    break;
+                case 'tactical-board':
+                    console.log('Initializing tactical board...');
+                    if (typeof initializeTacticalBoard === 'function') initializeTacticalBoard();
                     break;
                 default:
                     console.log(`No specific loader for section: ${sectionId} `);
@@ -12732,9 +12741,55 @@
                 const board = document.getElementById('tacticalBoard');
                 if (!board) return;
 
+                // Set up board drop zone for equipment
+                board.ondragover = (e) => e.preventDefault();
+                board.ondrop = (e) => {
+                    e.preventDefault();
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    if (data.id && !data.fromPitch && ['cone', 'ball', 'pole', 'marker'].includes(data.id)) {
+                        const rect = board.getBoundingClientRect();
+                        const x = ((e.clientX - rect.left) / rect.width) * 100;
+                        const y = ((e.clientY - rect.top) / rect.height) * 100;
+                        addEquipmentToBoard(data.id, x, y);
+                    }
+                };
+
                 await populateTacticalTeams();
-                setFormation();
+                
+                // Load saved state if exists
+                const saved = localStorage.getItem('tactical_backup');
+                if (saved) {
+                    tacticalFrames = JSON.parse(saved);
+                    currentFrameIdx = 0;
+                    loadFrame(0);
+                    updateFrameIndicator();
+                } else {
+                    setFormation();
+                }
+                
                 loadTacticalRoster();
+            };
+
+            function addEquipmentToBoard(type, x, y) {
+                const board = document.getElementById('tacticalBoard');
+                const el = document.createElement('div');
+                el.className = 'equipment-item draggable';
+                el.style.left = x + '%';
+                el.style.top = y + '%';
+                el.style.transform = 'translate(-50%, -50%)';
+                el.style.position = 'absolute';
+                el.style.fontSize = '2rem';
+                el.dataset.equipId = type;
+                el.innerHTML = getEquipEmoji(type);
+                setupDraggable(el);
+                board.appendChild(el);
+                saveCurrentFrameState();
+            }
+
+            window.saveFormation = function () {
+                saveCurrentFrameState();
+                localStorage.setItem('tactical_backup', JSON.stringify(tacticalFrames));
+                showNotification('Tactical strategy saved successfully!', 'success');
             };
 
             async function populateTacticalTeams() {
@@ -12838,54 +12893,104 @@
                 const positions = TacticalLogic.getFormationPositions(formation);
 
                 positions.forEach((pos, index) => {
-                    const playerEl = document.createElement('div');
-                    playerEl.className = 'player-position';
-                    playerEl.style.left = `${pos.x}%`;
-                    playerEl.style.top = `${pos.y}%`;
-                    playerEl.style.transform = 'translate(-50%, -50%)';
-                    playerEl.dataset.index = index;
-                    playerEl.dataset.role = pos.role;
-                    playerEl.textContent = pos.role;
-                    playerEl.draggable = true;
-
-                    const label = document.createElement('div');
-                    label.className = 'player-label';
-                    label.textContent = 'Empty';
-                    playerEl.appendChild(label);
-
-                    // Drag & Drop Events
-                    playerEl.ondragover = (e) => {
-                        e.preventDefault();
-                        playerEl.classList.add('drag-over');
-                    };
-                    playerEl.ondragleave = () => playerEl.classList.remove('drag-over');
-                    playerEl.ondrop = (e) => {
-                        e.preventDefault();
-                        playerEl.classList.remove('drag-over');
-                        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                        assignPlayerToSlot(playerEl, data.id, data.first, data.last);
-                    };
-
-                    playerEl.ondragstart = (e) => {
-                        if (!playerEl.dataset.playerId) {
-                            e.preventDefault();
-                            return;
-                        }
-                        const labelText = playerEl.querySelector('.player-label').textContent;
-                        const first = labelText.split(' ')[0];
-                        const last = labelText.split(' ')[1] || '';
-                        e.dataTransfer.setData('text/plain', JSON.stringify({
-                            id: playerEl.dataset.playerId,
-                            first,
-                            last,
-                            fromPitch: true,
-                            index: playerEl.dataset.index
-                        }));
-                    };
-
-                    playerEl.onclick = () => selectPosition(playerEl);
+                    const playerEl = createPlayerPosition({
+                        index,
+                        role: pos.role,
+                        x: pos.x + '%',
+                        y: pos.y + '%',
+                        label: 'Empty'
+                    });
                     board.appendChild(playerEl);
                 });
+            };
+
+            function createPlayerPosition(config) {
+                const el = document.createElement('div');
+                el.className = 'player-position';
+                el.style.left = config.x;
+                el.style.top = config.y;
+                el.style.transform = 'translate(-50%, -50%)';
+                el.dataset.index = config.index;
+                el.dataset.role = config.role;
+                el.textContent = config.role;
+                el.draggable = true;
+
+                if (config.playerId) {
+                    el.dataset.playerId = config.playerId;
+                    el.dataset.first = config.first;
+                    el.dataset.last = config.last;
+                    el.textContent = config.first.charAt(0) + (config.last ? config.last.charAt(0) : '');
+                    el.style.background = 'radial-gradient(circle at 30% 30%, #4ade80 0%, #16a34a 100%)';
+                }
+
+                const label = document.createElement('div');
+                label.className = 'player-label';
+                label.textContent = config.label || 'Empty';
+                el.appendChild(label);
+
+                // Events
+                el.onclick = () => selectPosition(el);
+                setupDraggable(el);
+
+                el.ondragover = (e) => {
+                    e.preventDefault();
+                    el.classList.add('drag-over');
+                };
+                el.ondragleave = () => el.classList.remove('drag-over');
+                el.ondrop = (e) => {
+                    e.preventDefault();
+                    el.classList.remove('drag-over');
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    assignPlayerToSlot(el, data.id, data.first, data.last);
+                };
+
+                el.ondragstart = (e) => {
+                    if (!el.dataset.playerId) {
+                        e.preventDefault();
+                        return;
+                    }
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        id: el.dataset.playerId,
+                        first: el.dataset.first,
+                        last: el.dataset.last,
+                        fromPitch: true,
+                        index: el.dataset.index
+                    }));
+                };
+
+                return el;
+            }
+
+            let currentSelectedSlot = null;
+
+            function selectPosition(el) {
+                // Clear previous selection
+                document.querySelectorAll('.player-position.selected').forEach(p => p.classList.remove('selected'));
+                
+                if (currentSelectedSlot === el) {
+                    currentSelectedSlot = null;
+                    return;
+                }
+                
+                currentSelectedSlot = el;
+                el.classList.add('selected');
+                
+                // If the slot already has a player, we might show details (optional)
+                const name = el.querySelector('.player-label').textContent;
+                if (name !== 'Empty') {
+                    showNotification(`Selected ${name}`, 'info');
+                }
+            }
+
+            window.assignPlayerToSelected = function (id, first, last) {
+                if (!currentSelectedSlot) {
+                    showNotification('Please select a position on the pitch first!', 'warning');
+                    return;
+                }
+                
+                assignPlayerToSlot(currentSelectedSlot, id, first, last);
+                currentSelectedSlot.classList.remove('selected');
+                currentSelectedSlot = null;
             };
 
             let tacticalFrames = [[]];
@@ -12941,37 +13046,31 @@
                 const state = tacticalFrames[idx];
 
                 state.forEach((item, i) => {
-                    const el = document.createElement('div');
-                    el.className = item.type === 'player' ? 'player-position' : 'equipment-item draggable';
-                    el.style.left = item.x;
-                    el.style.top = item.y;
-                    el.style.transform = 'translate(-50%, -50%)';
-                    el.dataset.index = i;
-                    el.draggable = true;
-
                     if (item.type === 'player') {
-                        el.dataset.role = item.role;
-                        el.dataset.playerId = item.id;
-                        el.dataset.first = item.first;
-                        el.dataset.last = item.last;
-                        el.textContent = item.first.charAt(0) + (item.last ? item.last.charAt(0) : '');
-
-                        const label = document.createElement('div');
-                        label.className = 'player-label';
-                        label.textContent = item.label || 'Empty';
-                        el.appendChild(label);
-
-                        if (item.id) {
-                            el.style.background = 'radial-gradient(circle at 30% 30%, #4ade80 0%, #16a34a 100%)';
-                        }
+                        const el = createPlayerPosition({
+                            index: i,
+                            role: item.role,
+                            x: item.x,
+                            y: item.y,
+                            label: item.label,
+                            playerId: item.id,
+                            first: item.first,
+                            last: item.last
+                        });
+                        board.appendChild(el);
                     } else {
+                        const el = document.createElement('div');
+                        el.className = 'equipment-item draggable';
+                        el.style.left = item.x;
+                        el.style.top = item.y;
+                        el.style.transform = 'translate(-50%, -50%)';
+                        el.dataset.index = i;
                         el.dataset.equipId = item.id;
-                        el.style.fontSize = '1.5rem';
+                        el.style.fontSize = '2rem';
                         el.innerHTML = getEquipEmoji(item.id);
+                        setupDraggable(el);
+                        board.appendChild(el);
                     }
-
-                    setupDraggable(el);
-                    board.appendChild(el);
                 });
             }
 
@@ -13009,8 +13108,14 @@
 
             function setupDraggable(el) {
                 el.onmousedown = function (e) {
+                    // Prevent conflict with click selection
+                    const startTime = Date.now();
+                    const startX = e.pageX;
+                    const startY = e.pageY;
+
                     const board = document.getElementById('tacticalBoard');
                     const rect = board.getBoundingClientRect();
+                    el.style.zIndex = 1000;
 
                     function moveAt(pageX, pageY) {
                         let x = ((pageX - rect.left) / rect.width) * 100;
@@ -13019,13 +13124,32 @@
                         el.style.top = Math.max(2, Math.min(98, y)) + '%';
                     }
 
-                    function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
+                    function onMouseMove(e) {
+                        moveAt(e.pageX, e.pageY);
+                    }
+
                     document.addEventListener('mousemove', onMouseMove);
-                    document.onmouseup = function () {
+
+                    document.onmouseup = function (e) {
                         document.removeEventListener('mousemove', onMouseMove);
                         document.onmouseup = null;
-                        saveCurrentFrameState();
+                        el.style.zIndex = '';
+                        
+                        const duration = Date.now() - startTime;
+                        const dist = Math.sqrt(Math.pow(e.pageX - startX, 2) + Math.pow(e.pageY - startY, 2));
+                        
+                        // Only save if it was a real drag, not just a click
+                        if (dist > 5) {
+                            saveCurrentFrameState();
+                        }
                     };
+                };
+
+                // Prevent browser default drag behavior on elements we want to move manually
+                el.ondragstart = function (e) {
+                    if (el.classList.contains('equipment-item')) {
+                        return false; 
+                    }
                 };
             }
 

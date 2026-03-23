@@ -293,20 +293,58 @@ class ApiService {
       return { success: true, players: this.getAdminDashboardFallback().players };
     }
 
-    // --- TOURNAMENTS ---
-    if (endpoint.includes("/tournaments/schedule")) {
-      return { success: true, fixtures: [{ id: "f1", team1: "U18 Elite", team2: "Academy Blues", time: "10:00", pitch: "Pitch 1" }]};
+    // --- TOURNAMENTS & EVENTS ---
+    if (endpoint.includes("/tournaments") || endpoint.includes("/events")) {
+      let mockEvents = JSON.parse(localStorage.getItem("demo_mock_events") || "[]");
+      let mockTournaments = JSON.parse(localStorage.getItem("demo_mock_tournaments") || "[]");
+      
+      if (method === "POST") {
+        const payload = JSON.parse(options.body || "{}");
+        const newItem = { 
+          id: "demo_" + Date.now(), 
+          ...payload, 
+          created_at: new Date().toISOString() 
+        };
+        
+        if (endpoint.includes("/tournaments")) {
+          mockTournaments.push(newItem);
+          localStorage.setItem("demo_mock_tournaments", JSON.stringify(mockTournaments));
+          return { success: true, message: "Tournament created (Demo)", tournament: newItem };
+        } else {
+          mockEvents.push(newItem);
+          localStorage.setItem("demo_mock_events", JSON.stringify(mockEvents));
+          return { success: true, message: "Event created (Demo)", event: newItem };
+        }
+      }
+      
+      if (method === "GET") {
+        if (endpoint.includes("/tournaments/schedule")) {
+          return { success: true, fixtures: [{ id: "f1", team1: "U18 Elite", team2: "Academy Blues", time: "10:00", pitch: "Pitch 1" }]};
+        }
+        if (endpoint.includes("/tournaments")) {
+          const fallbackTournaments = this.getAdminDashboardFallback().tournaments || [];
+          return [...fallbackTournaments, ...mockTournaments];
+        }
+        const fallbackEvents = this.getAdminDashboardFallback().events || [];
+        return [...fallbackEvents, ...mockEvents];
+      }
     }
-    if (endpoint.includes("/tournaments")) return { success: true, message: "Tournament action mocked", tournament: { id: "t1", name: "Demo Cup" }};
 
-    // --- FEED & MESSAGES ---
-    if (endpoint.includes("/feed")) {
-      if (method === "POST") return { success: true, post: { id: "p_" + Date.now(), user_name: "Demo User", content: JSON.parse(options.body).content, created_at: new Date().toISOString() }};
-      return [{ id: "p1", user_name: "Coach Mike", content: "Great session today!", created_at: new Date().toISOString(), likes: 5, comments: 2 }];
-    }
-    if (endpoint.includes("/messages")) {
-      if (method === "POST") return { success: true, message: { id: "m_" + Date.now(), sender_name: "You", content: JSON.parse(options.body).content, timestamp: new Date().toISOString() }};
-      return [{ id: "c1", name: "Team Chat", last_message: "Coach: See you at 6!", timestamp: new Date().toISOString(), unread_count: 1 }];
+    // --- FORMS & SURVEYS ---
+    if (endpoint.includes("/forms")) {
+      let mockForms = JSON.parse(localStorage.getItem("demo_mock_forms") || "[]");
+      if (method === "POST") {
+        const payload = JSON.parse(options.body || "{}");
+        const newForm = { id: "form_" + Date.now(), ...payload, created_at: new Date().toISOString() };
+        mockForms.push(newForm);
+        localStorage.setItem("demo_mock_forms", JSON.stringify(mockForms));
+        return { success: true, message: "Form created (Demo)", form: newForm };
+      }
+      return [
+        { id: "f1", title: "New Player Registration", description: "Standard induction form", responses: 12 },
+        { id: "f2", title: "Summer Camp Waiver", description: "Legal parent consent form", responses: 45 },
+        ...mockForms
+      ];
     }
 
     // --- OTHER FALLBACKS ---
@@ -314,6 +352,10 @@ class ApiService {
     if (endpoint.includes("/auth/settings")) return { success: true, theme: "dark", emailNotifications: true };
     if (endpoint.includes("/notifications")) return [{ id: "n1", title: "Welcome", message: "Thanks for joining ClubHub Demo!", is_read: false, created_at: new Date().toISOString() }];
     if (endpoint.includes("/api/health")) return { status: "healthy", service: "ClubHub Demo" };
+    if (endpoint.includes("/products")) {
+       if (method === "POST") return { success: true, message: "Product created (Demo)" };
+       return this.getAdminDashboardFallback().products || [];
+    }
 
     return null; // Fall through to real fetch if no mock found
   }
@@ -1327,7 +1369,9 @@ class ApiService {
 
   async getEvents(groupId = null) {
     if (localStorage.getItem("isDemoSession") === "true") {
-      return this.getAdminDashboardFallback().events;
+      const fallbackEvents = this.getAdminDashboardFallback().events || [];
+      const mockEvents = JSON.parse(localStorage.getItem("demo_mock_events") || "[]");
+      return [...fallbackEvents, ...mockEvents];
     }
     try {
       const endpoint = groupId
@@ -3036,17 +3080,22 @@ class ApiService {
   async voteOnPoll(pollId, optionId) {
     return await this.makeRequest(`/polls/${pollId}/vote`, {
       method: "POST",
-      body: JSON.stringify({ optionId }),
     });
   }
 
   // =========================== TOURNAMENTS ===========================
-  async getTournaments(groupId) {
+  async getTournaments(groupId = null) {
+    if (localStorage.getItem("isDemoSession") === "true") {
+      const fallbackTournaments = this.getAdminDashboardFallback().tournaments || [];
+      const mockTournaments = JSON.parse(localStorage.getItem("demo_mock_tournaments") || "[]");
+      return [...fallbackTournaments, ...mockTournaments];
+    }
     try {
       const events = await this.getEvents(groupId);
-      return (events || []).filter(
-        (e) => e.event_type === "tournament" || e.type === "tournament",
-      );
+      const directTournaments = await this.makeRequest("/tournaments");
+      // Combine events of type tournament and direct tournament records
+      const eventTournaments = events.filter((e) => e.event_type === "tournament" || e.type === "tournament");
+      return [...eventTournaments, ...directTournaments];
     } catch (error) {
       console.warn("getTournaments failed", error);
       return [];

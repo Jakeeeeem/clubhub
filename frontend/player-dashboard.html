@@ -63,33 +63,32 @@
   </script>
   <header class="header">
     <nav class="nav container">
-      <div class="logo" onclick="window.location.href='index.html'">
-        <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-        <span class="logo-text">ClubHub</span>
+      <div class="dash-header-left">
+        <div class="logo" onclick="window.location.href='index.html'">
+          <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+          <span class="logo-text neon-text">ClubHub</span>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="mode-toggle-container">
+          <span class="mode-label" id="club-label">Club</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="mode-toggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="mode-label active" id="player-label">Player</span>
+        </div>
+
+        <!-- Organization Switcher (Aligned Left) -->
+        <div id="org-switcher-container"></div>
       </div>
 
-      <!-- Mode Toggle -->
-      <div class="mode-toggle-container">
-        <span class="mode-label" id="club-label">Club</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="mode-toggle" checked />
-          <span class="toggle-slider"></span>
-        </label>
-        <span class="mode-label active" id="player-label">Player</span>
-      </div>
-
-      <!-- Organization Switcher -->
-      <div id="org-switcher-container"></div>
-
-      <div class="header-actions" style="display:flex; align-items:center; gap:1rem;">
-        <div id="org-switcher-container-inner"></div>
+      <div class="dash-header-right">
         <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
           <span class="user-name desktop-only" id="header-user-name">Loading...</span>
           <div class="user-avatar-sm" id="header-user-avatar">?</div>
         </div>
-        <div class="nav-buttons" id="loggedInNav">
-          <!-- Populated by JS -->
-        </div>
+        <button onclick="logout()" class="btn btn-secondary btn-small desktop-only">Logout</button>
       </div>
     </nav>
   </header>
