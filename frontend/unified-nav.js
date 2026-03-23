@@ -181,7 +181,7 @@ const UnifiedNav = {
                     <span class="logo-text">ClubHub</span>
                 </div>
 
-                <div class="header-center desktop-only">
+                <div class="mode-toggle-container desktop-only">
                     <div class="header-mode-toggle" id="header-mode-toggle">
                         <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Group Hub</div>
                         <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
@@ -189,12 +189,12 @@ const UnifiedNav = {
                 </div>
 
                 <div class="header-actions">
-                    <div class="action-btn desktop-only" onclick="showPlayerSection ? showPlayerSection('notifications') : showSection('notifications')">
+                    <div class="action-btn desktop-only" onclick="typeof showPlayerSection !== 'undefined' ? showPlayerSection('notifications') : (typeof showSection !== 'undefined' ? showSection('notifications') : null)">
                         <i class="fa fa-bell-o"></i>
                         <span class="badge" id="header-notif-badge" style="display:none">0</span>
                     </div>
 
-                    <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleSidebar(true)">
+                    <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
                         <span class="user-name desktop-only" id="header-user-name">Loading...</span>
                         <div class="user-avatar-sm" id="header-user-avatar">?</div>
                         <i class="fa fa-chevron-down desktop-only" style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;"></i>
@@ -585,6 +585,14 @@ const UnifiedNav = {
         header.style.background = "rgba(10, 10, 12, 0.8)";
       }
     });
+  },
+
+  handleGlobalModeToggle(input) {
+    if (input.checked) {
+      this.switchMode("player");
+    } else {
+      this.switchMode("group");
+    }
   },
 };
 

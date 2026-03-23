@@ -95,20 +95,22 @@
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.pro-header .nav-container {
+.pro-header .nav-container,
+header.header .nav,
+header.header .nav-container,
+.nav.container {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
     width: 100% !important;
     height: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .header-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
+    display: none !important;
 }
 
 .pro-header .logo-area {
@@ -215,7 +217,14 @@
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
 
-/* --- Mode Switcher (Pills) --- */
+/* --- Mode Switcher (Aligned Left) --- */
+.mode-toggle-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    margin: 0 1.5rem !important;
+}
+
 .header-mode-toggle {
     display: flex;
     background: rgba(0, 0, 0, 0.3);
