@@ -12,6 +12,11 @@ const UnifiedNav = {
     const isDashboard = window.location.pathname.includes('dashboard') || 
                        document.body.classList.contains('dashboard-page') ||
                        document.querySelector('.dashboard-container');
+    
+    // Explicitly check for landing page to avoid overwriting its custom header
+    const isLandingPage = window.location.pathname.endsWith('index.html') || 
+                         window.location.pathname.endsWith('/') || 
+                         window.location.pathname === '';
 
     if (!isDesktop) {
       this.renderSidebar();
@@ -19,12 +24,13 @@ const UnifiedNav = {
       this.renderMenu();
       this.renderMobileHeaderElements();
     } else {
-      // On desktop, only modify the header if it's NOT a dashboard
+      // On desktop, only modify the header if it's NOT a dashboard AND NOT the landing page
       // as per user request: "leave bdesktop header nav for dashboards alon"
-      if (!isDashboard) {
+      // and "revert to how it was [index page]"
+      if (!isDashboard && !isLandingPage) {
         this.ensureHeaderElements();
       } else {
-        console.log("📂 Dashboard detected: Leaving desktop header alone.");
+        console.log("📂 Dashboard or Landing Page detected: Leaving desktop header alone.");
         // We still want the profile dropdown logic to work if the dashboard header 
         // has the standard trigger IDs
         this.renderProfileDropdown();

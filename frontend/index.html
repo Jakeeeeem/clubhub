@@ -807,13 +807,7 @@
             // Check if enhanced login handler exists
             if (typeof checkAuthStatus === 'function') {
                 checkAuthStatus().then(isLoggedIn => {
-                    if (isLoggedIn) {
-                        if (landingHero) landingHero.style.display = 'none';
-                        if (dashboardHero) dashboardHero.style.display = 'block';
-                    } else {
-                        if (landingHero) landingHero.style.display = 'block';
-                        if (dashboardHero) dashboardHero.style.display = 'none';
-                    }
+                    // Reverted: Always stay as landing page on index
                 });
                 console.log('Enhanced login handler detected');
             } else {
