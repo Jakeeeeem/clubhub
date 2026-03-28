@@ -84,14 +84,14 @@ function showCoachSection(sectionId) {
     section.style.display = "none";
   });
 
-  // Remove active class from all nav items (sidebar + mobile)
+  // Remove active class from all nav items
   const navItems = document.querySelectorAll(
-    ".sidebar-nav .nav-item, .app-top-tabs .tab-item, .app-bottom-nav .nav-link",
+    ".sidebar-nav .nav-item, .app-top-tabs .tab-item, .app-bottom-nav .nav-link, .nav-pill",
   );
   navItems.forEach((item) => {
     item.classList.remove("active");
 
-    // Check if this item is the one being activated (matching sectionId in onclick)
+    // Check if this item is the one being activated
     if (
       item.getAttribute("onclick") &&
       item.getAttribute("onclick").includes(`'${sectionId}'`)
@@ -105,14 +105,14 @@ function showCoachSection(sectionId) {
   if (targetSection) {
     targetSection.classList.add("active");
     targetSection.style.display = "block";
-  } else {
-    console.error(`❌ Section 'coach-${sectionId}' not found!`);
   }
 
   // Handle section-specific loaders
   switch (sectionId) {
     case "overview":
       loadCoachStats();
+      loadCoachFeed();
+      loadCoachDailyPlanner();
       break;
     case "teams":
       loadCoachTeams();
@@ -122,9 +122,6 @@ function showCoachSection(sectionId) {
       break;
     case "events":
       loadCoachEvents();
-      break;
-    case "item-shop":
-      if (typeof loadCoachProducts === "function") loadCoachProducts();
       break;
     case "feed":
       loadCommunityFeed();
@@ -139,15 +136,6 @@ function showCoachSection(sectionId) {
     case "profile":
       loadCoachProfile();
       break;
-    case "tournament-manager":
-      loadCoachTournaments();
-      break;
-  }
-
-  // Close sidebar on mobile
-  if (window.innerWidth <= 768) {
-    const sidebar = document.querySelector(".sidebar");
-    if (sidebar) sidebar.classList.remove("open");
   }
 }
 
@@ -604,7 +592,116 @@ function loadCoachStats() {
     document.getElementById("coachTotalPlayers").textContent = totalPlayers;
 
   loadRecentMatches();
-  loadTodaySchedule();
+  loadCoachDailyPlanner();
+}
+
+/**
+ * Loads the premium coach activity feed
+ */
+async function loadCoachFeed() {
+  const container = document.getElementById("coachFeedContainer");
+  if (!container) return;
+
+  try {
+    const feedItems = await apiService.getFeedItems().catch(() => []);
+    
+    let html = "";
+    
+    // Initial welcome item
+    html += `
+      <div class="premium-feed-item">
+        <div class="feed-header">
+          <div class="author-info">
+            <div class="author-avatar" style="background: var(--accent-cyan);">CH</div>
+            <div>
+              <div style="font-weight: 700;">ClubHub System</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Platform Update • Today</div>
+            </div>
+          </div>
+        </div>
+        <div class="feed-content">
+          <p>Welcome to the premium Coach Hub. Your activity feed now consolidates all team updates, scouting alerts, and platform announcements in one place.</p>
+        </div>
+      </div>
+    `;
+
+    if (feedItems.length > 0) {
+      html += feedItems.map(item => `
+        <div class="premium-feed-item">
+          <div class="feed-header">
+            <div class="author-info">
+              <div class="author-avatar" style="background: var(--primary);">${(item.author || "P").charAt(0)}</div>
+              <div>
+                <div style="font-weight: 700;">${escapeHTML(item.author || "Member")}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${formatDate(item.date)}</div>
+              </div>
+            </div>
+          </div>
+          <div class="feed-content">
+            <h4 style="margin: 0 0 0.5rem 0;">${escapeHTML(item.title)}</h4>
+            <p>${escapeHTML(item.content || item.summary)}</p>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      html += `
+        <div style="padding: 3rem; text-align: center; opacity: 0.5;">
+          <p>No recent activity. Start by sharing an update with your teams.</p>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+  } catch (err) {
+    console.error("Coach feed error:", err);
+    container.innerHTML = '<p style="color: var(--text-muted);">Activity feed unavailable.</p>';
+  }
+}
+
+/**
+ * Loads the daily schedule for coaches
+ */
+function loadCoachDailyPlanner() {
+  const container = document.getElementById("coachDailyPlannerContainer");
+  if (!container) return;
+
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  
+  const sessions = (AppState.events || [])
+    .filter(e => e.event_date === todayStr || e.date === todayStr)
+    .sort((a, b) => (a.event_time || "").localeCompare(b.event_time || ""));
+
+  if (sessions.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No sessions scheduled for today.</p>';
+    return;
+  }
+
+  container.innerHTML = sessions.map(session => {
+    const time = session.event_time ? session.event_time.slice(0, 5) : (session.time || "TBA");
+    const typeLabel = session.event_type || session.type || "Event";
+    
+    return `
+      <div class="planner-day-row">
+        <div class="day-indicator" style="background: rgba(255,255,255,0.03);">
+          <div class="day-number" style="font-size: 0.9rem;">${time}</div>
+        </div>
+        <div class="event-details">
+          <div class="event-title" style="font-size: 0.9rem;">${escapeHTML(session.title)}</div>
+          <div style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">${typeLabel}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function createCoachPost() {
+  const content = document.getElementById("coachPostInput")?.value;
+  if (!content) return;
+  
+  showNotification("Announcement shared with your squads!", "success");
+  document.getElementById("coachPostInput").value = "";
+  // In real app, re-fetch or prepend
 }
 
 function loadRecentMatches() {

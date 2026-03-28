@@ -552,6 +552,11 @@ async function checkAuthStatus() {
 
 // Update navigation based on auth status
 function updateNavigation(isLoggedIn, user = null) {
+  // SHIELD: Prevent legacy navigation from corrupting the unified premium navigation
+  if (window.UNIFIED_NAV_ENABLED) {
+    console.log("🛡️ Unified Navigation Shield active: Suppressing legacy navigation update.");
+    return;
+  }
   const loggedInNav = document.getElementById("loggedInNav");
   const loggedOutNav = document.getElementById("loggedOutNav");
 
@@ -608,6 +613,13 @@ function updateNavigation(isLoggedIn, user = null) {
 // Enhanced initialization with invite support
 document.addEventListener("DOMContentLoaded", async function () {
   console.log("🚀 Enhanced login handler loading...");
+
+  // SHIELD: Prevent legacy redirects from hijacking the modern dashboard experience
+  if (window.UNIFIED_NAV_ENABLED) {
+    console.log("🛡️ Unified Navigation Shield active: Suppressing legacy auth redirects.");
+    setupFormEventListeners();
+    return;
+  }
 
   // Check authentication status
   const isLoggedIn = await checkAuthStatus();

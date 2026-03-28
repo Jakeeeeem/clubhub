@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Player Dashboard - ClubHub</title>
 
   <!-- PWA Meta Tags -->
@@ -12,9 +12,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/png" href="/images/logo.png">
-  <link rel="apple-touch-icon" href="/images/logo.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="images/logo.png">
+  <link rel="apple-touch-icon" href="images/logo.png">
 
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="group-switcher.css">
@@ -61,45 +61,8 @@
       }
     }
   </script>
-  <header class="header">
-    <nav class="nav container">
-      <div class="dash-header-left">
-        <div class="logo" onclick="window.location.href='index.html'">
-          <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-          <span class="logo-text neon-text">ClubHub</span>
-        </div>
-
-        <!-- Mode Toggle -->
-        <div class="mode-toggle-container">
-          <span class="mode-label" id="club-label">Club</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="mode-toggle" checked />
-            <span class="toggle-slider"></span>
-          </label>
-          <span class="mode-label active" id="player-label">Player</span>
-        </div>
-
-        <!-- Organization Switcher (Aligned Left) -->
-        <div id="org-switcher-container"></div>
-      </div>
-
-      <div class="dash-header-right">
-        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
-          <span class="user-name desktop-only" id="header-user-name">Loading...</span>
-          <div class="user-avatar-sm" id="header-user-avatar">?</div>
-        </div>
-        <button onclick="logout()" class="btn btn-secondary btn-small desktop-only">Logout</button>
-      </div>
-    </nav>
-  </header>
-
-  <!-- Mobile Top Tabs (Threads Style) -->
-  <nav class="pro-bottom-nav mobile-only">
-    <div class="nav-container" id="pro-bottom-nav-content">
-      <!-- Populated by UnifiedNav.renderBottomNav() -->
-    </div>
-  </nav>
-
+  <script>window.UNIFIED_NAV_ENABLED = true;</script>
+  <header class="header pro-header"></header>
 
   <main class="main">
     <div class="dashboard container dashboard-container">
@@ -148,31 +111,14 @@
         <div class="nav-dropdown-container" id="nav-group-finance">
           <button class="nav-item dropdown-trigger">
             💳 Shop & Finance ▾
-          </button>
-          <div class="nav-dropdown-menu">
-            <button onclick="showPlayerSection('payments')">💸 Payments</button>
-            <button onclick="showPlayerSection('subscriptions')">📅 Subscriptions</button>
-            <div class="dropdown-divider"></div>
-            <button onclick="showPlayerSection('shop')">🛒 Group Shop</button>
-            <button onclick="showPlayerSection('merch')">🎁 Merchandise</button>
-          </div>
-        </div>
-
-        <!-- Discovery -->
-        <div class="nav-dropdown-container" id="nav-group-discover">
-          <button class="nav-item dropdown-trigger">
-            🌍 Discover ▾
-          </button>
-          <div class="nav-dropdown-menu">
-            <button onclick="showPlayerSection('club-finder')">🔍 Find Groups</button>
-            <button onclick="showPlayerSection('event-finder')">📅 Find Events</button>
-            <div class="dropdown-divider"></div>
-            <button onclick="showPlayerSection('venue-booking')">🏟️ Book Venue</button>
-            <button onclick="showPlayerSection('league-management')">🥇 Leagues</button>
-            <button onclick="showPlayerSection('training-manager')">🎯 Training</button>
-            <button onclick="showPlayerSection('tournament-manager')">⚔️ Tournaments</button>
-          </div>
-        </div>
+      <!-- Simplified App-like Navigation -->
+      <div class="nav-pill-group desktop-only">
+        <button class="nav-pill active" onclick="showPlayerSection('overview')">🗓️ Planner</button>
+        <button class="nav-pill" onclick="showPlayerSection('club-feed')">📱 Feed</button>
+        <button class="nav-pill" onclick="showPlayerSection('club-messenger')">💬 Messages</button>
+        <button class="nav-pill" onclick="showPlayerSection('career')">🏅 Career</button>
+        <button class="nav-pill" onclick="showPlayerSection('finance')">💳 Finance</button>
+        <button class="nav-pill" onclick="showPlayerSection('discover')">🌍 Discover</button>
       </div>
 
       <div class="dashboard-content">
@@ -412,150 +358,97 @@
         </div>
 
         <div id="player-overview" class="dashboard-section active">
-          <!-- Next Match Hero (Unified) -->
-          <div class="glass-panel next-match-hero"
-            style="padding: 2rem; text-align: center; margin-bottom: 2rem; position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(106, 92, 255, 0.1), rgba(0, 209, 255, 0.05));">
-            <div
-              style="text-transform: uppercase; font-size: 0.7rem; letter-spacing: 2px; color: var(--accent-cyan); margin-bottom: 0.75rem; font-weight: 700;">
-              Upcoming Match</div>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 1rem;">
-              <div class="team-vs">
-                <div style="font-size: 1.8rem; font-family: var(--font-heading); font-weight: 800;">Your Team</div>
+          <div class="dashboard-layout-sidebar">
+            <!-- Main Column: Activity Feed -->
+            <div class="feed-column">
+              <div class="section-header" style="margin-bottom: 2rem;">
+                <h2 class="neon-text">Activity Feed</h2>
+                <p>Latest updates from your coaches and groups</p>
               </div>
-              <div style="font-size: 1rem; font-weight: 800; color: var(--accent-red);">VS</div>
-              <div class="team-vs">
-                <div style="font-size: 1.8rem; font-family: var(--font-heading); font-weight: 800;">Opponent</div>
-              </div>
-            </div>
-            <div class="match-details"
-              style="display: flex; justify-content: center; gap: 1.5rem; color: var(--text-muted); font-size: 0.85rem;">
-              <span>📅 Sat, 14 Mar</span>
-              <span>⏰ 10:30 AM</span>
-              <span>📍 Pitch 4</span>
-            </div>
-          </div>
 
-          <!-- Quick Actions Grid (Unified) -->
-          <div style="margin-bottom: 2rem;">
-            <h3 style="font-family: var(--font-heading); font-size: 1.2rem; margin-bottom: 1.2rem;">Quick Actions</h3>
-            <div class="quick-actions-grid"
-              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.75rem;">
-              <div class="quick-action-btn accent-purple" onclick="showPlayerSection('overview')">
-                <div class="icon-wrapper" style="width: 44px; height: 44px; font-size: 1.2rem;">📊</div>
-                <span style="font-size: 0.8rem;">Stats</span>
-              </div>
-              <div class="quick-action-btn accent-cyan" onclick="showPlayerSection('training-manager')">
-                <div class="icon-wrapper" style="width: 44px; height: 44px; font-size: 1.2rem;">🏃</div>
-                <span style="font-size: 0.8rem;">Training</span>
-              </div>
-              <div class="quick-action-btn accent-red" onclick="showPlayerSection('club-messenger')">
-                <div class="icon-wrapper" style="width: 44px; height: 44px; font-size: 1.2rem;">💬</div>
-                <span style="font-size: 0.8rem;">Messages</span>
-              </div>
-              <div class="quick-action-btn accent-purple">
-                <div class="icon-wrapper" style="width: 44px; height: 44px; font-size: 1.2rem;">🎥</div>
-                <span style="font-size: 0.8rem;">Match Video</span>
-              </div>
-              <div class="quick-action-btn accent-cyan">
-                <div class="icon-wrapper" style="width: 44px; height: 44px; font-size: 1.2rem;">⚡</div>
-                <span style="font-size: 0.8rem;">Performance</span>
-              </div>
-              <div class="quick-action-btn accent-red" onclick="showPlayerSection('teams')">
-                <div class="icon-wrapper" style="width: 44px; height: 44px; font-size: 1.2rem;">👥</div>
-                <span style="font-size: 0.8rem;">Teams</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="stats-grid" style="margin-bottom: 2rem;">
-            <div class="stat-card glass-card">
-              <span class="stat-number" id="playerClubs">0</span>
-              <span class="stat-label">Active Groups</span>
-            </div>
-            <div class="stat-card glass-card">
-              <span class="stat-number" id="playerTeams">0</span>
-              <span class="stat-label">Teams</span>
-            </div>
-            <div class="stat-card glass-card">
-              <span class="stat-number" id="playerEvents">0</span>
-              <span class="stat-label">Upcoming Events</span>
-            </div>
-            <div class="stat-card glass-card">
-              <span class="stat-number" id="playerAttendance">0</span>
-              <span class="stat-label">Attendance</span>
-            </div>
-            <div class="stat-card glass-card" onclick="showPlayerSection('subscriptions')"
-              style="cursor: pointer; border: 1px solid rgba(74, 222, 128, 0.2);">
-              <span class="stat-number" id="playerPlanPrice">£0.00</span>
-              <span class="stat-label" id="playerPlanName">No Plan</span>
-            </div>
-          </div>
-
-          <div class="card-grid">
-            <!-- Scouting & Growth Widget -->
-            <div class="glass-card scout-growth-widget"
-              style="padding: 1.5rem; background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(10, 10, 12, 0.8)); border: 1px solid rgba(220, 38, 38, 0.2); grid-column: span 2;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
-                <div>
-                  <h3 style="color: var(--primary); margin-bottom: 0.25rem; font-family: var(--font-heading);">📈
-                    Scouting
-                    & Growth</h3>
-                  <p style="color: var(--text-muted); font-size: 0.85rem;">Your professional trajectory and market
-                    performance.</p>
+              <!-- Post Creator (Coach/Admin Only usually, but let's keep it for demo) -->
+              <div class="premium-feed-item" style="padding: 1rem; margin-bottom: 2rem;">
+                <div style="display: flex; gap: 1rem;">
+                  <div class="author-avatar">Me</div>
+                  <textarea id="plannerPostContent" class="chat-input" 
+                    style="width: 100%; height: 80px; border: none; background: transparent; color: white; resize: none;" 
+                    placeholder="Share an update or video..."></textarea>
                 </div>
-                <div style="text-align: right;">
-                  <div
-                    style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
-                    Current Valuation</div>
-                  <div style="font-size: 1.5rem; font-weight: 800; color: #4ade80;">£12,500</div>
-                  <div style="font-size: 0.75rem; color: #4ade80; opacity: 0.8;">▲ 12.4% this month</div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem; gap: 0.5rem;">
+                  <button class="btn btn-secondary btn-small">📷 Video/Photo</button>
+                  <button class="btn btn-primary btn-small" onclick="postToPlannerFeed()">Post</button>
                 </div>
               </div>
 
-              <div class="growth-metric-card"
-                style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">PROGRESSION INDEX</div>
-                <div style="height: 60px; display: flex; align-items: flex-end; gap: 4px; padding-bottom: 4px;">
-                  <div style="flex: 1; height: 30%; background: var(--primary); opacity: 0.3; border-radius: 2px;">
+              <div id="plannerFeedContainer">
+                <!-- Activity items will be loaded here via JS -->
+                <div class="premium-feed-item">
+                  <div class="feed-header">
+                    <div class="author-info">
+                      <div class="author-avatar">JD</div>
+                      <div>
+                        <div style="font-weight: 700;">Coach John Doe</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">2 hours ago</div>
+                      </div>
+                    </div>
                   </div>
-                  <div style="flex: 1; height: 45%; background: var(--primary); opacity: 0.4; border-radius: 2px;">
+                  <div class="feed-content">
+                    <p>Great session today everyone! Check out the highlights from the tactical drill. Focus on the defensive positioning.</p>
                   </div>
-                  <div style="flex: 1; height: 40%; background: var(--primary); opacity: 0.5; border-radius: 2px;">
+                  <div class="feed-media">
+                    <div style="aspect-ratio: 16/9; background: #1a1a1a; display: flex; align-items: center; justify-content: center; position: relative;">
+                      <div style="font-size: 3rem; color: white; opacity: 0.5;">▶️</div>
+                      <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Match Highlights: Tactical Drill</div>
+                    </div>
                   </div>
-                  <div style="flex: 1; height: 60%; background: var(--primary); opacity: 0.7; border-radius: 2px;">
-                  </div>
-                  <div style="flex: 1; height: 75%; background: var(--primary); opacity: 0.8; border-radius: 2px;">
-                  </div>
-                  <div style="flex: 1; height: 100%; background: var(--primary); border-radius: 2px;"></div>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.65rem;">
-                  <span>Jan</span>
-                  <span>Current</span>
-                </div>
-              </div>
-
-              <!-- Scout Visibility -->
-              <div class="growth-metric-card"
-                style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">SCOUT VISIBILITY</div>
-                <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem;">89 / 100</div>
-                <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;">
-                  <div style="width: 89%; height: 100%; background: var(--accent-cyan); border-radius: 2px;"></div>
-                </div>
-                <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem;">4 Verified scouts viewed
-                  your profile this week.</p>
               </div>
             </div>
-          </div>
 
-          <div class="glass-card" style="padding: 1.5rem;">
-            <h3>Recent Activity</h3>
-            <div id="playerRecentActivity"></div>
-          </div>
+            <!-- Sidebar: Daily Planner -->
+            <div class="planner-sidebar">
+              <div class="planner-widget">
+                <h3 style="margin-bottom: 1.5rem; font-family: var(--font-heading);">📅 Your Schedule</h3>
+                <div id="dailyPlannerContainer">
+                  <!-- Planner items loaded via JS -->
+                  <div class="planner-day-row">
+                    <div class="day-indicator">
+                      <div class="day-number">24</div>
+                      <div class="day-name">Mar</div>
+                    </div>
+                    <div class="event-details">
+                      <div class="event-time">18:00 - 19:30</div>
+                      <div class="event-title">Elite Training Session</div>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);">Main Pitch, Elite Academy</div>
+                    </div>
+                  </div>
+                  <div class="planner-day-row">
+                    <div class="day-indicator">
+                      <div class="day-number">26</div>
+                      <div class="day-name">Mar</div>
+                    </div>
+                    <div class="event-details">
+                      <div class="event-time">19:00 - 20:00</div>
+                      <div class="event-title">Tactical Webinar</div>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);">Online (Zoom)</div>
+                    </div>
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-block" style="margin-top: 1rem;" onclick="showPlayerSection('event-finder')">Find More Events</button>
+              </div>
 
-          <div class="glass-card" style="padding: 1.5rem;">
-            <h3>Upcoming Events</h3>
-            <div id="playerUpcomingEvents"></div>
+              <!-- Growth Widget (Smaller) -->
+              <div class="glass-card" style="margin-top: 2rem; padding: 1.5rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--accent-cyan);">📈 Player Growth</h4>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1rem;">
+                  <span style="font-size: 1.5rem; font-weight: 800;">88/100</span>
+                  <span style="color: #4ade80; font-size: 0.8rem;">+12% vs last month</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;">
+                  <div style="width: 88%; height: 100%; background: #4ade80; border-radius:3px;"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -584,61 +477,6 @@
         </div>
       </div>
 
-      <!-- Tournament Manager Section -->
-      <div id="player-tournament-manager" class="dashboard-section">
-        <!-- List View -->
-        <div id="playerTournamentListView" class="card">
-          <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
-            ⚔️ My Tournaments
-          </h3>
-          <div id="playerTournamentListContainer" class="card-grid">
-            <p style="color: var(--text-muted);">Loading tournaments...</p>
-          </div>
-        </div>
-
-        <!-- Detail View (Initially Hidden) -->
-        <div id="playerTournamentDetailView" class="dashboard-detail-view" style="display: none;">
-          <div class="detail-header"
-            style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <button class="btn-text" onclick="closePlayerTournamentDetail()"
-                style="margin-bottom: 1rem; color: var(--primary);">← Back to Tournaments</button>
-              <h2 id="playerDetailTournamentName" class="neon-text">Tournament Name</h2>
-            </div>
-          </div>
-
-          <!-- Tournament Content Tabs -->
-          <div class="dashboard-nav"
-            style="margin-bottom: 2rem; background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 12px; display: inline-flex; gap: 0.5rem;">
-            <button class="nav-item active" onclick="switchPlayerTournamentTab(this, 'bracket')">🌳 Bracket</button>
-            <button class="nav-item" onclick="switchPlayerTournamentTab(this, 'fixtures')">📅 Fixtures</button>
-            <button class="nav-item" onclick="switchPlayerTournamentTab(this, 'standings')">🏆 Standings</button>
-          </div>
-
-          <!-- Bracket Tab -->
-          <div id="player-tab-bracket" class="player-tournament-tab">
-            <div class="card" style="padding: 0; min-height: 600px; overflow-x: auto;">
-              <div id="playerTournamentBracketVisual" class="bracket-tree">
-                <!-- Brackets rendered here -->
-              </div>
-            </div>
-          </div>
-
-          <!-- Fixtures Tab -->
-          <div id="player-tab-fixtures" class="player-tournament-tab" style="display: none;">
-            <div class="card">
-              <div id="playerTournamentFixturesList"></div>
-            </div>
-          </div>
-
-          <!-- Standings Tab -->
-          <div id="player-tab-standings" class="player-tournament-tab" style="display: none;">
-            <div class="card">
-              <div id="playerTournamentStandingsContainer"></div>
-            </div>
-          </div>
-        </div>
-      </div>
 
 
       <!-- My Clubs -->
@@ -1386,16 +1224,6 @@
   <!-- User Info & Logout -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const loggedInNav = document.getElementById('loggedInNav');
-      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-
-      if (user && user.email && loggedInNav) {
-        const firstName = user.firstName || user.first_name || user.email.split('@')[0];
-        loggedInNav.innerHTML = `
-          <span style="color: #fff; margin-right: 1rem;">Hello, ${firstName}!</span>
-          <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
-        `;
-      }
 
       // Start Player Tour
       setTimeout(() => {
@@ -1685,11 +1513,18 @@
     </div>
   </div>
 
-  <!-- Player dashboard scripts -->
+  <!-- Mobile Bottom Nav -->
+  <nav class="pro-bottom-nav mobile-only">
+    <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
+  </nav>
+
+  <!-- Core Dependencies -->
+  <script src="api-service.js"></script>
+  <script src="enhanced-login-handler.js"></script>
   <script src="training.js"></script>
-  <!-- PWA Install Handler -->
   <script src="pwa-install.js"></script>
   <script src="unified-nav.js"></script>
+  <script src="player-dashboard.js"></script>
 </body>
 
 </html>

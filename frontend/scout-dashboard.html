@@ -3,12 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Scout Hub | ClubHub</title>
 
-    <!-- Meta Tags -->
+    <!-- PWA Meta Tags -->
     <meta name="description" content="Professional scouting and talent discovery platform">
-    <meta name="theme-color" content="#dc2626">
+    <meta name="theme-color" content="#dc4343">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="apple-touch-icon" href="images/logo.png">
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="group-switcher.css">
@@ -47,45 +53,25 @@
             border-color: var(--primary-glass-border);
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
         }
+
+        .pot-high { background: #4ade80 !important; }
+        .pot-low { background: #3b82f6 !important; }
+
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .dashboard-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <header class="header">
-        <nav class="nav container" id="loggedInNav">
-            <div class="dash-header-left">
-                <div class="logo" onclick="window.location.href='index.html'">
-                    <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                    <span class="logo-text neon-text">ClubHub</span>
-                </div>
-
-                <!-- Mode Toggle (Aligned Left) -->
-                <div class="mode-toggle-container">
-                    <span class="mode-label active" id="group-label">Group</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="mode-toggle" />
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="mode-label" id="player-label">Player</span>
-                </div>
-            </div>
-
-            <div class="dash-header-right">
-                <div id="scoutStatusBadge"></div>
-                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
-                    <span class="user-name desktop-only" id="scoutNameDisplay">Professional Scout</span>
-                    <div class="user-avatar-sm" id="userInitial">S</div>
-                </div>
-                <button onclick="handleLogout()" class="btn btn-secondary btn-small desktop-only">Logout</button>
-            </div>
-        </nav>
-    </header>
-
-    <nav class="pro-bottom-nav mobile-only">
-        <div class="bottom-nav-container" id="pro-bottom-nav-content">
-            <!-- Loaded by unified-nav.js -->
-        </div>
-    </nav>
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
+    <header class="header pro-header"></header>
 
     <main class="main dashboard-main" style="padding-top: 100px;">
         <div class="container dashboard-container">
@@ -116,7 +102,7 @@
                                 onkeyup="loadTalentPool()"
                                 style="flex: 1; padding: 0.8rem 1.2rem; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03);">
                         </div>
-                        <div
+                        <div class="filters-grid"
                             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
                             <select id="positionFilter" class="glass-btn" onchange="loadTalentPool()">
                                 <option value="">All Positions</option>
@@ -307,10 +293,7 @@
         </div>
     </main>
 
-    <!-- Core Dependencies -->
-    <script src="api-service.js"></script>
-    <script src="enhanced-login-handler.js"></script>
-
+    <script>
         // Scout Specific Logic
         document.addEventListener('DOMContentLoaded', async () => {
             const isLoggedIn = await checkAuthStatus();
@@ -464,10 +447,11 @@
                 grid.innerHTML = players.map(player => {
                     const marketValue = (Math.random() * 20 + 5).toFixed(1);
                     const pot = Math.floor(Math.random() * 30 + 65);
+                    const potClass = pot > 85 ? 'pot-high' : 'pot-low';
                     
                     return `
                     <div class="glass-card player-card-compact" style="padding: 1.5rem; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top:0; left:0; width:4px; height:100%; background: ${pot > 85 ? '#4ade80' : '#3b82f6'};"></div>
+                        <div class="pot-indicator ${potClass}" style="position: absolute; top:0; left:0; width:4px; height:100%;"></div>
                         <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
                             <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), #991b1b); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: white; border: 1px solid rgba(255,255,255,0.1);">
                                 ${player.first_name?.charAt(0) || 'P'}
@@ -477,7 +461,7 @@
                                     <h4 style="margin: 0; font-family: 'Outfit'; font-size: 1.1rem;">${player.first_name} ${player.last_name}</h4>
                                     ${pot > 90 ? '<span style="font-size: 0.6rem; background: gold; color: black; padding: 2px 5px; border-radius: 4px; font-weight: 900;">ELITE</span>' : ''}
                                 </div>
-                                <span style="font-size: 0.75rem; color: var(--text-muted);">${player.position || 'Unknown'} • U${player.age || '??'}</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">${player.position || 'Unknown'} • U${player.age || '??'}</span>
                             </div>
                         </div>
                         
@@ -559,6 +543,7 @@
 
         async function loadScoutingAnalytics() {
             const container = document.getElementById('analyticsContainer');
+            if (!container) return;
             container.innerHTML = '<p class="loading-text">Calculating coverage stats...</p>';
 
             try {
@@ -681,7 +666,14 @@
             showNotification('Loading professional scout briefing...', 'info');
         }
     </script>
-    <!-- PWA Install Handler -->
+
+    <nav class="pro-bottom-nav mobile-only">
+        <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
+    </nav>
+
+    <!-- Core Dependencies -->
+    <script src="api-service.js"></script>
+    <script src="enhanced-login-handler.js"></script>
     <script src="pwa-install.js"></script>
     <script src="unified-nav.js"></script>
 </body>

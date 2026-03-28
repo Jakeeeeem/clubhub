@@ -601,6 +601,123 @@ function loadPlayerOverview() {
   loadRecentActivity();
   loadPerformanceSummary();
   loadOverviewFeed();
+  loadDailyPlanner();
+  loadPlannerFeed();
+}
+
+/**
+ * Loads the daily planner widget with upcoming events
+ */
+function loadDailyPlanner() {
+  const container = document.getElementById("dailyPlannerContainer");
+  if (!container) return;
+
+  const now = new Date();
+  const upcoming = (PlayerDashboardState.events || [])
+    .filter(e => e.event_date && new Date(e.event_date) >= now)
+    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
+    .slice(0, 4);
+
+  if (upcoming.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No events scheduled.</p>';
+    return;
+  }
+
+  container.innerHTML = upcoming.map(event => {
+    const date = new Date(event.event_date);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'short' });
+    const time = event.event_time ? event.event_time.slice(0, 5) : "TBA";
+
+    return `
+      <div class="planner-day-row">
+        <div class="day-indicator">
+          <div class="day-number">${day}</div>
+          <div class="day-name">${month}</div>
+        </div>
+        <div class="event-details">
+          <div class="event-time">${time}</div>
+          <div class="event-title">${escapeHTML(event.title)}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(event.location || "TBA")}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/**
+ * Loads the premium activity feed for the planner overview
+ */
+async function loadPlannerFeed() {
+  const container = document.getElementById("plannerFeedContainer");
+  if (!container) return;
+
+  try {
+    // For demo/planner mode, we'll use a mix of real data and dummy premium items
+    const feedItems = await apiService.getFeedItems().catch(() => []);
+    
+    let html = "";
+    
+    // Add a dummy video post if feed is empty or for demo flair
+    html += `
+      <div class="premium-feed-item">
+        <div class="feed-header">
+          <div class="author-info">
+            <div class="author-avatar" style="background: var(--accent-cyan);">CH</div>
+            <div>
+              <div style="font-weight: 700;">ClubHub Academy</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Trending • Welcome</div>
+            </div>
+          </div>
+        </div>
+        <div class="feed-content">
+          <p>Welcome to your new Planner Dashboard! This is where you'll find all your training videos, coach notes, and performance updates.</p>
+        </div>
+        <div class="feed-media">
+          <div style="aspect-ratio: 16/9; background: linear-gradient(45deg, #050505, #1a1a1a); display: flex; align-items: center; justify-content: center; position: relative;">
+            <div style="font-size: 4rem; color: var(--accent-purple); opacity: 0.8;">🎥</div>
+            <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.8); padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700;">Getting Started: Tutorial</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (feedItems.length > 0) {
+      html += feedItems.map(item => `
+        <div class="premium-feed-item">
+          <div class="feed-header">
+            <div class="author-info">
+              <div class="author-avatar">${(item.author || "C").charAt(0)}</div>
+              <div>
+                <div style="font-weight: 700;">${escapeHTML(item.author || "Coach")}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${formatDate(item.date)}</div>
+              </div>
+            </div>
+            <span class="feed-tag" style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">${item.type || 'Update'}</span>
+          </div>
+          <div class="feed-content">
+            <h4 style="margin: 0 0 0.5rem 0;">${escapeHTML(item.title)}</h4>
+            <p>${escapeHTML(item.content || item.summary)}</p>
+          </div>
+          ${item.image ? `<div class="feed-media"><img src="${item.image}" alt="Feed Image"></div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    container.innerHTML = html;
+  } catch (err) {
+    console.error("Planner feed failed:", err);
+    container.innerHTML = '<p style="color: var(--text-muted);">Daily updates loading...</p>';
+  }
+}
+
+function postToPlannerFeed() {
+  const content = document.getElementById("plannerPostContent")?.value;
+  if (!content) return;
+  
+  showNotification("Post shared to your feed!", "success");
+  document.getElementById("plannerPostContent").value = "";
+  // In a real app we'd save to DB and prepend to list
 }
 
 async function loadOverviewFeed() {
@@ -2867,14 +2984,14 @@ function showPlayerSection(sectionId) {
 
   // Remove active class from all nav buttons in grouped nav
   document
-    .querySelectorAll(".dashboard-nav-grouped button")
+    .querySelectorAll(".dashboard-nav-grouped button, .nav-pill")
     .forEach((b) => b.classList.remove("active"));
 
   const target = byId("player-" + sectionId);
   if (target) target.classList.add("active");
 
   // Sync with Mobile Tabs and Bottom Nav (Threads Style)
-  const allNavLinks = document.querySelectorAll(".nav-link, .tab-item");
+  const allNavLinks = document.querySelectorAll(".nav-link, .tab-item, .nav-pill");
   allNavLinks.forEach((link) => {
     link.classList.remove("active");
     if (
@@ -2895,7 +3012,7 @@ function showPlayerSection(sectionId) {
 
   // Find and highlight active button & parent dropdown
   const btn = document.querySelector(
-    ".dashboard-nav-grouped button[onclick*=\"showPlayerSection('" +
+    "button[onclick*=\"showPlayerSection('" +
       sectionId +
       "')\"]",
   );

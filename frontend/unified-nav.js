@@ -1,48 +1,96 @@
 /**
  * Unified Pro Navigation Controller
  */
+
+// Initialize on load
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    // If DOM is already ready, init with a small delay for other dependencies
+    setTimeout(() => UnifiedNav.init(), 100);
+} else {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => UnifiedNav.init(), 100);
+    });
+}
+
 const UnifiedNav = {
   init() {
     console.log("🚀 Unified Nav Initializing...");
     
-    // Standardize breakpoints: 992px+ is desktop (small laptops/tablets in landscape)
-    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
+    // Always start with a cleanup to ensure a premium state
+    this.cleanupLegacyArtifacts();
     
-    // Check if this is a dashboard page that wants to keep its own desktop header
+    // Standardize breakpoints
+    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
     const isDashboard = window.location.pathname.includes('dashboard') || 
                        document.body.classList.contains('dashboard-page') ||
-                       document.querySelector('.dashboard-container');
-    
-    // Explicitly check for landing page to avoid overwriting its custom header
+                       document.querySelector('.dashboard-container') ||
+                       document.querySelector('.dashboard-main');
     const isLandingPage = window.location.pathname.endsWith('index.html') || 
                          window.location.pathname.endsWith('/') || 
                          window.location.pathname === '';
 
     if (!isDesktop) {
+      console.log("📱 Mobile View Detected");
+      this.renderHeader();
       this.renderSidebar();
       this.renderBottomNav();
       this.renderMenu();
       this.renderMobileHeaderElements();
     } else {
-      // On desktop, only modify the header if it's NOT a dashboard AND NOT the landing page
-      // as per user request: "leave bdesktop header nav for dashboards alon"
-      // and "revert to how it was [index page]"
+      console.log("💻 Desktop View Detected");
       if (!isDashboard && !isLandingPage) {
         this.ensureHeaderElements();
       } else {
-        console.log("📂 Dashboard or Landing Page detected: Leaving desktop header alone.");
-        // We still want the profile dropdown logic to work if the dashboard header 
-        // has the standard trigger IDs
+        this.renderHeader();
+        this.renderMenu();
+        this.renderBottomNav();
         this.renderProfileDropdown();
+        this.updateHeaderState();
       }
     }
-
+    
     this.bindEvents();
     this.syncUserData();
     this.autoLabelTables();
 
     // Ensure sidebar is closed initially if present
     this.toggleSidebar(false);
+  },
+
+  cleanupLegacyArtifacts() {
+    console.log("🧹 UnifiedNav: Purging legacy artifacts...");
+    
+    // 1. Remove specific legacy IDs that might have been injected
+    ['loggedInNav', 'loggedOutNav', 'scoutStatusBadge'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.closest('.pro-header')) {
+        console.log(`🗑️ Removing rogue element: #${id}`);
+        el.remove();
+      }
+    });
+
+    // 2. Remove legacy welcome banners
+    document.querySelectorAll('.welcome-banner, .user-info').forEach(el => {
+      if (!el.closest('.pro-header')) {
+         console.log("🗑️ Removing legacy welcome banner");
+         el.remove();
+      }
+    });
+
+    // 3. Absolute purge of any top-level text nodes containing "Hello,"
+    // This handles the "Ghost" injected by legacy scripts
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    const nodesToRemove = [];
+    while(walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.textContent.includes("Hello,") && !node.parentElement.closest('.pro-header')) {
+        nodesToRemove.push(node);
+      }
+    }
+    nodesToRemove.forEach(node => {
+      console.log("🗑️ Purging legacy text node:", node.textContent.trim());
+      node.remove();
+    });
   },
 
   /**
@@ -219,11 +267,12 @@ const UnifiedNav = {
     if (!bottomNavContainer) return;
 
     const url = window.location.href;
-    const isPlayer = url.includes("player-dashboard.html");
-    const isSuperAdmin = url.includes("super-admin-dashboard.html");
-    const isCoach = url.includes("coach-dashboard.html");
-    const isScout =
-      url.includes("scout-dashboard.html") || url.includes("scouting.html");
+    const userRole = localStorage.getItem('userType') || '';
+    const isPlayer = url.includes("player-dashboard.html") || userRole === 'player';
+    const isSuperAdmin = url.includes("super-admin-dashboard.html") || userRole === 'platform_admin';
+    const isCoach = url.includes("coach-dashboard.html") || userRole === 'coach';
+    const isScout = url.includes("scout-dashboard.html") || url.includes("scouting.html") || userRole === 'scout';
+    const isAdmin = url.includes("admin-dashboard.html") || userRole === 'admin';
 
     let navHtml = "";
 
@@ -474,11 +523,11 @@ const UnifiedNav = {
 
   renderMenu() {
     const url = window.location.href;
-    const isPlayer = url.includes("player-dashboard.html");
-    const isSuperAdmin = url.includes("super-admin-dashboard.html");
-    const isCoach = url.includes("coach-dashboard.html");
-    const isScout =
-      url.includes("scout-dashboard.html") || url.includes("scouting.html");
+    const userRole = localStorage.getItem('userType') || '';
+    const isPlayer = url.includes("player-dashboard.html") || userRole === 'player';
+    const isSuperAdmin = url.includes("super-admin-dashboard.html") || userRole === 'platform_admin';
+    const isCoach = url.includes("coach-dashboard.html") || userRole === 'coach';
+    const isScout = url.includes("scout-dashboard.html") || url.includes("scouting.html") || userRole === 'scout';
 
     const nav = document.getElementById("sidebar-nav-content");
     if (!nav) return;

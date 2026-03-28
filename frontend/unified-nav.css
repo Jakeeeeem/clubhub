@@ -554,38 +554,74 @@ header.header .nav-container,
     color: var(--primary);
 }
 
-/* --- Bottom Nav (Mobile Only) --- */
+/* --- Bottom Navigation --- */
 .pro-bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 64px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid var(--glass-border);
-    display: none;
+    z-index: 1001;
+    background: rgba(10,10,12,0.95);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: none; /* Hidden by default on desktop */
+}
+
+@media (max-width: 991px) {
+    .pro-bottom-nav, .mobile-only {
+        display: block !important;
+    }
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+.bottom-nav-container {
+    display: flex;
     justify-content: space-around;
     align-items: center;
-    z-index: 2000;
-    padding-bottom: env(safe-area-inset-bottom);
+    width: 100%;
+    height: 100%;
 }
 
 .bottom-nav-link {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 4px;
-    color: var(--text-muted);
+    color: rgba(255, 255, 255, 0.5);
     text-decoration: none;
-    font-size: 0.65rem;
-    font-weight: 600;
-    transition: all 0.2s;
+    font-size: 0.7rem;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    flex: 1;
+    height: 100%;
+}
+
+.bottom-nav-link i {
+    font-size: 1.4rem;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bottom-nav-link.active {
     color: var(--primary);
+}
+
+.bottom-nav-link.active i {
+    color: var(--primary);
+    transform: translateY(-2px) scale(1.1);
+}
+
+.bottom-nav-link:active {
+    transform: scale(0.92);
+}
+
+/* Hide PWA floating button when bottom nav is present */
+@media (max-width: 991px) {
+    #pwa-floating-btn, .pwa-floating-install {
+        display: none !important;
+    }
 }
 
 .bottom-nav-link i {
@@ -683,9 +719,16 @@ header.header .nav-container,
         border-radius: 100px !important;
     }
 
-    /* Fix for common grid layouts on mobile */
-    .dashboard-grid, .stats-grid, .account-types-grid {
+    /* Fix for common grid layouts on mobile - Force stack despite inline styles */
+    .dashboard-grid, .stats-grid, .account-types-grid, .card-grid, .filters-grid {
         grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    /* Fix for scout specific filters and dashboard headers */
+    .dashboard-header, .filters-bar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
         gap: 1rem !important;
     }
 }

@@ -710,6 +710,12 @@ async function getActiveGroupId() {
 
 // Navigation Functions
 function updateNavigation() {
+  // 🛡️ SHIELD: If Unified Nav is enabled, do not touch the DOM
+  if (window.UNIFIED_NAV_ENABLED || window.UnifiedNav) {
+    console.log("🛡️ Unified Navigation Active: Skipping legacy update.");
+    return;
+  }
+
   const navButtons = document.getElementById("navButtons");
   const loggedInNav = document.getElementById("loggedInNav");
 
