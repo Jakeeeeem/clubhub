@@ -16,6 +16,11 @@ const UnifiedNav = {
   init() {
     console.log("🚀 UnifiedNav: Initializing standard navigation...");
     
+    // Perform Mobile UX Sweep to fix layouts
+    if (typeof this.performMobileUXSweep === 'function') {
+        this.performMobileUXSweep();
+    }
+
     // Standardize breakpoints: 992px+ is desktop
     const isDesktop = window.matchMedia('(min-width: 992px)').matches;
     const isDashboard = window.location.pathname.includes('dashboard.html');
@@ -835,6 +840,52 @@ const UnifiedNav = {
     nav.innerHTML = menuHtml;
   },
 
+
+  /**
+   * Automatically fixes common mobile UX issues like missing table labels
+   */
+  performMobileUXSweep() {
+    const isMobile = window.innerWidth <= 991;
+    if (!isMobile) return;
+
+    // 1. Process all tables to ensure card-mode works
+    this.autoLabelTables();
+
+    // 2. Add padding to main content for mobile bottom nav if it exists
+    const main = document.querySelector('main, .dashboard-container');
+    if (main) {
+      if (!main.style.paddingBottom || parseInt(main.style.paddingBottom) < 100) {
+        main.style.paddingBottom = '100px';
+      }
+    }
+
+    // 3. Fix full-screen height issues on iOS
+    document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    window.addEventListener('resize', () => {
+      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    });
+  },
+
+  /**
+   * Scans tables and adds data-label attributes for mobile card view
+   */
+  autoLabelTables() {
+    const tables = document.querySelectorAll('table:not(.no-sweep), .data-table, .modern-table');
+    tables.forEach(table => {
+      const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+      if (headers.length === 0) return;
+
+      const rows = table.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        cells.forEach((cell, index) => {
+          if (headers[index] && !cell.getAttribute('data-label')) {
+            cell.setAttribute('data-label', headers[index]);
+          }
+        });
+      });
+    });
+  },
 
   updateHeaderState() {
     // 1. Synchronize the mode toggle checkbox

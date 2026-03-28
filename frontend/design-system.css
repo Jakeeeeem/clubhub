@@ -82,20 +82,72 @@ body.clubhub-unified {
     }
 
     /* Standardize Touch Targets */
-    .btn, .nav-item, .bottom-nav-link, .sidebar-link, .quick-action-btn {
-        min-height: 48px;
+    .btn, .nav-item, .bottom-nav-link, .sidebar-link, .quick-action-btn, .tab {
+        min-height: 52px;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 0.75rem 1.25rem;
     }
 
-    /* Global Table Responsiveness */
-    .table-responsive {
+    /* Global Table Responsiveness - Modern Card Pattern */
+    .table-responsive, table.data-table, table.modern-table {
+        display: block;
         width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        margin-bottom: 1.5rem;
         border-radius: var(--radius-md);
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .table-responsive thead, table.data-table thead, table.modern-table thead {
+        display: none; /* Hide headers on tiny screens for card view */
+    }
+
+    .table-responsive tr, table.data-table tr, table.modern-table tr {
+        display: block;
+        margin-bottom: 1.5rem;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .table-responsive td, table.data-table td, table.modern-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0.5rem;
+        border: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        text-align: right;
+    }
+
+    .table-responsive td:last-child, table.data-table td:last-child, table.modern-table td:last-child {
+        border-bottom: none !important;
+    }
+
+    .table-responsive td::before, table.data-table td::before, table.modern-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        letter-spacing: 1px;
+        color: rgba(255, 255, 255, 0.4);
+        text-align: left;
+        margin-right: 1rem;
+    }
+
+    /* Refined Mobile Typography */
+    h1 { font-size: 2.25rem !important; }
+    h2 { font-size: 1.75rem !important; }
+    .section-title { font-size: 1.2rem !important; }
+
+    /* Touch-friendly inputs */
+    input, select, textarea {
+        font-size: 16px !important; /* Prevents iOS auto-zoom */
+        padding: 1rem !important;
+        min-height: 52px;
     }
 }
 
