@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Club Details - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="design-system.css">
+    <link rel="stylesheet" href="unified-nav.css">
     <style>
         :root {
             --glass: rgba(255, 255, 255, 0.03);
@@ -140,24 +142,23 @@
 
 <body>
     <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content"
-                style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;">
-                <div class="logo" onclick="window.location.href='index.html'"
-                    style="cursor: pointer; display: flex; align-items: center; gap: 0.75rem;">
-                    <img src="images/logo.png" alt="ClubHub" style="width: 32px; height: 32px;">
-                    <span class="logo-text"
-                        style="font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;">Club<span
-                            style="color: var(--primary);">Hub</span></span>
-                </div>
-                <nav class="nav">
-                    <a href="index.html" class="nav-link"
-                        style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500;">←
-                        Back</a>
-                </nav>
+    <header class="header pro-header">
+        <nav class="nav container">
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
+                <span class="logo-text neon-text">ClubHub</span>
             </div>
-        </div>
+
+            <div id="org-switcher-container"></div>
+            
+            <div class="header-actions">
+                <div id="notification-bell-container"></div>
+                <!-- Profile will be injected by UnifiedNav -->
+                <div id="loggedOutNav" class="nav-buttons">
+                    <button class="btn btn-secondary" onclick="window.location.href='index.html#loginModal'">Login</button>
+                </div>
+            </div>
+        </nav>
     </header>
 
     <!-- Club Header -->
@@ -311,6 +312,7 @@
     </section>
 
     <script src="api-service.js"></script>
+    <script src="unified-nav.js"></script>
     <script>
         // Get club ID from URL
         const urlParams = new URLSearchParams(window.location.search);

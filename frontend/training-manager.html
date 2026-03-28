@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Training Manager - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="design-system.css">
+    <link rel="stylesheet" href="unified-nav.css">
     <link rel="stylesheet" href="group-switcher.css">
     <style>
         .dashboard-grid {
@@ -59,20 +61,18 @@
 </head>
 
 <body>
-    <header class="header">
+    <header class="header pro-header">
         <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'">
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
                 <span class="logo-text neon-text">ClubHub</span>
             </div>
 
-            <div class="user-info">
-                <!-- Organization Switcher -->
-                <div id="org-switcher-container"></div>
-
-                <span id="adminNameDisplay">Hello, Admin!</span>
-                <div class="user-avatar" id="adminAvatar">A</div>
-                <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+            <div id="org-switcher-container"></div>
+            
+            <div class="header-actions">
+                <div id="notification-bell-container"></div>
+                <!-- Profile will be injected by UnifiedNav -->
             </div>
         </nav>
     </header>
@@ -86,27 +86,16 @@
                 </div>
             </div>
 
-            <!-- Dashboard Navigation -->
-            <div class="dashboard-nav">
+            <!-- Dashboard Navigation - Injected by UnifiedNav as Sidebar/BottomNav on mobile -->
+            <div class="dashboard-nav desktop-only">
                 <button onclick="window.location.href='admin-dashboard.html'">Overview</button>
-                <button onclick="window.location.href='admin-dashboard.html#club-profile'">Profile</button>
                 <button onclick="window.location.href='admin-dashboard.html#players'">Players</button>
                 <button onclick="window.location.href='admin-dashboard.html#teams'">Teams</button>
-                <button onclick="window.location.href='admin-dashboard.html#staff'">Staff</button>
-                <button onclick="window.location.href='admin-dashboard.html#events'">Events</button>
                 <button onclick="window.location.href='admin-dashboard.html#finances'">Finances</button>
-                <button onclick="window.location.href='admin-dashboard.html#listings'">Listings</button>
-                <button onclick="window.location.href='admin-dashboard.html#item-shop'">Shop</button>
-                <button onclick="window.location.href='admin-dashboard.html#marketing-hub'">Marketing</button>
-                <button onclick="window.location.href='admin-dashboard.html#tactical'">Tactical</button>
-                <div class="nav-divider"
-                    style="width: 1px; height: 30px; background: var(--border-color); margin: 0 10px;"></div>
+                <div class="nav-divider"></div>
                 <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
                 <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
                 <button class="btn-special active">🎯 Training</button>
-                <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️
-                    Tournaments</button>
-                <button onclick="window.location.href='email-campaigns.html'" class="btn-special">📧 Email</button>
             </div>
 
             <div class="dashboard-content">
@@ -306,6 +295,7 @@
     </div>
 
     <script src="api-service.js"></script>
+    <script src="unified-nav.js"></script>
     <script src="script.js"></script>
     <script src="enhanced-login-handler.js"></script>
     <script src="group-switcher.js"></script>
@@ -625,7 +615,5 @@
             }
         }
     </script>
-    <script src="group-switcher.js"></script>
-</body>
 
 </html>
