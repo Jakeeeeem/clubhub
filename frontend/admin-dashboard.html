@@ -43,13 +43,13 @@
         <nav class="nav container" id="loggedInNav">
             <div class="dash-header-left">
                 <div class="logo" onclick="window.location.href='index.html'" style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
-                    <img src="images/logo.png" alt="ClubHub" class="logo-image">
+                    <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
                     <span class="logo-text neon-text">ClubHub</span>
                 </div>
                 <div class="mode-toggle-container">
                     <span class="mode-label active" id="group-label">Group</span>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="mode-toggle" onchange="if(this.checked)window.location.href='player-dashboard.html'">
+                        <input type="checkbox" id="mode-toggle" onchange="UnifiedNav.handleGlobalModeToggle(this)">
                         <span class="toggle-slider"></span>
                     </label>
                     <span class="mode-label" id="player-label">Player</span>
@@ -57,11 +57,11 @@
                 <div id="org-switcher-container"></div>
             </div>
             <div class="dash-header-right">
-                <span class="user-name desktop-only" id="adminGreeting">Hello, Admin!</span>
                 <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav && UnifiedNav.toggleProfileDropdown(true)">
+                    <span class="user-name desktop-only" id="header-user-name">Loading...</span>
                     <div class="user-avatar-sm" id="header-user-avatar">A</div>
                 </div>
-                <button class="btn btn-secondary btn-small desktop-only" onclick="handleLogout ? handleLogout() : (window.location.href='index.html')">Logout</button>
+                <button class="btn btn-secondary btn-small desktop-only" onclick="handleAuthError()">Logout</button>
             </div>
         </nav>
     </header>
@@ -168,9 +168,70 @@
                 </div>
             </div>
 
-            <div id="admin-finances" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
-                <h2 class="neon-text">Financial Insights</h2>
-                <p style="color:var(--text-muted);">Revenue summary and pending payments.</p>
+            <div id="admin-finances" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <div class="section-title">💰 Stripe Connect Hub</div>
+                
+                <div class="glass-card" style="padding:2rem; text-align:center; max-width:600px; margin:0 auto;">
+                    <div id="stripe-status-loading">
+                        <p style="color:var(--text-muted);">Checking Stripe connection status...</p>
+                    </div>
+
+                    <div id="stripe-onboarding-box" style="display:none;">
+                        <div style="font-size:3rem; margin-bottom:1rem;">💳</div>
+                        <h3 style="margin-bottom:0.5rem; color:#fff;">Connect with Stripe</h3>
+                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">To start accepting payments from members and parents, you need to link your club to a Stripe account.</p>
+                        <button class="btn btn-primary" onclick="startStripeOnboarding()" id="connect-stripe-btn" style="padding:0.8rem 2rem;">
+                            <i class="fa fa-plug" style="margin-right:0.5rem;"></i> Connect with Stripe
+                        </button>
+                    </div>
+
+                    <div id="stripe-connected-box" style="display:none;">
+                        <div style="font-size:3rem; margin-bottom:1rem;">✅</div>
+                        <h3 style="margin-bottom:0.5rem; color:#fff;">Stripe Connected</h3>
+                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Your club is ready to receive payments. Payments are automatically synced to your Stripe dashboard.</p>
+                        
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+                             <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+                                 <span style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Payouts</span>
+                                 <span id="payout-status" style="font-weight:700; color:#4ade80;">Enabled</span>
+                             </div>
+                             <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+                                 <span style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Status</span>
+                                 <span id="account-status" style="font-weight:700; color:#4ade80;">Verified</span>
+                             </div>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                            <button class="btn btn-secondary" onclick="manageStripeAccount()" style="width:100%;">
+                                <i class="fa fa-external-link" style="margin-right:0.5rem;"></i> Go to Stripe Dashboard
+                            </button>
+                            <button class="btn btn-text" onclick="checkStripeStatus()" style="font-size:0.8rem; opacity:0.6;">Refresh Status</button>
+                        </div>
+                    </div>
+
+                    <div id="stripe-error-box" style="display:none;">
+                         <div style="color:#f87171; margin-bottom:1rem;"><i class="fa fa-exclamation-triangle" style="font-size:2rem;"></i></div>
+                         <h3 style="color:#fff;">Stripe Connection Error</h3>
+                         <p id="stripe-error-msg" style="color:var(--text-muted); margin:0.5rem 0 1.5rem; font-size:0.9rem;">Failed to connect to Stripe service.</p>
+                         <button class="btn btn-secondary" onclick="checkStripeStatus()">Try Again</button>
+                    </div>
+                </div>
+
+                <!-- Financial Stats Preview below -->
+                <div class="dash-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:2rem;">
+                    <div class="glass-card" style="padding:1.5rem;">
+                         <div class="section-title">📊 Revenue Overview</div>
+                         <div style="height:150px; display:flex; align-items:center; justify-content:center; border:1px dashed rgba(255,255,255,0.1); border-radius:12px; color:var(--text-muted); font-size:0.85rem;">
+                             Revenue chart will appear here
+                         </div>
+                    </div>
+                    <div class="glass-card" style="padding:1.5rem;">
+                         <div class="section-title">🔔 Recent Transactions</div>
+                         <div id="financeTransactions" style="font-size:0.85rem; color:var(--text-muted);">
+                             No recent transactions found.
+                         </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -215,15 +276,92 @@
             }
         });
 
-        function showSection(id) {
-            document.querySelectorAll('.dashboard-section').forEach(s => {
-                s.style.display = 'none';
-                s.classList.remove('active');
-            });
-            const t = document.getElementById('admin-' + id);
-            if (t) {
-                t.style.display = 'block';
-                t.classList.add('active');
+        function showSection(sectionId) {
+            console.log("Showing section:", sectionId);
+            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
+            const target = document.getElementById(sectionId);
+            if (target) {
+                target.style.display = 'block';
+                // Initialize section specific logic
+                if (sectionId === 'admin-finances') {
+                    checkStripeStatus();
+                }
+            } else {
+                console.warn("Section not found:", sectionId);
+            }
+        }
+
+        // --- Stripe Connect Logic ---
+        async function checkStripeStatus() {
+            const loading = document.getElementById('stripe-status-loading');
+            const onboardBox = document.getElementById('stripe-onboarding-box');
+            const connectedBox = document.getElementById('stripe-connected-box');
+            const errorBox = document.getElementById('stripe-error-box');
+
+            loading.style.display = 'block';
+            onboardBox.style.display = 'none';
+            connectedBox.style.display = 'none';
+            errorBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/payments/stripe/connect/status', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const data = await response.json();
+
+                loading.style.display = 'none';
+                if (data.connected) {
+                    connectedBox.style.display = 'block';
+                    document.getElementById('payout-status').textContent = data.payouts_enabled ? 'Enabled' : 'Pending';
+                    document.getElementById('account-status').textContent = data.details_submitted ? 'Verified' : 'Incomplete';
+                } else {
+                    onboardBox.style.display = 'block';
+                }
+            } catch (err) {
+                console.error("Stripe status check failed:", err);
+                loading.style.display = 'none';
+                errorBox.style.display = 'block';
+                document.getElementById('stripe-error-msg').textContent = "Connection refused. Please ensure backend is running.";
+            }
+        }
+
+        async function startStripeOnboarding() {
+            try {
+                const btn = document.getElementById('connect-stripe-btn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Redirecting...';
+
+                const response = await fetch('/api/payments/stripe/connect/onboard', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    throw new Error(data.error || "Failed to get onboarding URL");
+                }
+            } catch (err) {
+                alert("Error starting onboarding: " + err.message);
+                const btn = document.getElementById('connect-stripe-btn');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-plug"></i> Connect with Stripe';
+            }
+        }
+
+        async function manageStripeAccount() {
+             try {
+                const response = await fetch('/api/payments/stripe/connect/login-link', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                const data = await response.json();
+                if (data.url) window.location.href = data.url;
+            } catch (err) {
+                alert("Error opening Stripe dashboard: " + err.message);
             }
         }
     </script>

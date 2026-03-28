@@ -14,23 +14,17 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 
 const UnifiedNav = {
   init() {
-    console.log("🚀 Unified Nav Initializing...");
+    console.log("🚀 UnifiedNav: Initializing standard navigation...");
     
-    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
-    const isDashboard = window.location.pathname.includes('dashboard') || 
-                       document.body.classList.contains('dashboard-page') ||
-                       !!document.querySelector('.dashboard-container') ||
-                       !!document.querySelector('.dashboard-main');
-    const isLandingPage = window.location.pathname.endsWith('index.html') || 
-                         window.location.pathname.endsWith('/') || 
-                         window.location.pathname === '';
+    // Standardize breakpoints: 992px+ is desktop
+    const isDesktop = window.matchMedia('(min-width: 992px)').matches;
+    const isDashboard = window.location.pathname.includes('dashboard.html');
+    const isLandingPage = window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname === '';
 
     if (!isDesktop) {
       // ── MOBILE ──────────────────────────────────────────────────────────────
-      // On mobile we replace the header with the compact unified bar,
-      // add the slide-out sidebar and the bottom nav tab bar.
       console.log("📱 Mobile: rendering unified nav");
-      this.cleanupLegacyArtifacts(); // only strip legacy elements on mobile
+      this.cleanupLegacyArtifacts(); 
       this.renderHeader();
       this.renderSidebar();
       this.renderBottomNav();
@@ -38,17 +32,21 @@ const UnifiedNav = {
       this.renderMobileHeaderElements();
     } else {
       // ── DESKTOP ─────────────────────────────────────────────────────────────
-      // On desktop dashboards we LEAVE the existing header HTML untouched.
-      // The original header already contains the Group/Player toggle, org
-      // switcher, greeting and avatar — we only top-up the dynamic data.
-      console.log("💻 Desktop: leaving dashboard header intact");
+      console.log("💻 Desktop: standardizing dashboard header");
+      this.cleanupLegacyArtifacts();
+      
+      // Always ensure full header structure on dashboards
       if (isDashboard || isLandingPage) {
-        // Just wire up the profile dropdown and refresh user data
+        this.ensureDashboardHeader(); // Optimized ensure for desktop
         this.renderProfileDropdown();
+        this.renderHeaderSwitcher(); 
+        this.renderStripeHeaderButton(); 
+        this.renderHeaderNotifications(); 
         this.updateHeaderState();
       } else {
-        // Non-dashboard desktop pages (e.g. settings pages)
         this.ensureHeaderElements();
+        this.renderHeaderSwitcher();
+        this.renderHeaderNotifications();
       }
     }
     
@@ -56,6 +54,214 @@ const UnifiedNav = {
     this.syncUserData();
     this.autoLabelTables();
     this.toggleSidebar(false);
+  },
+
+  /**
+   * Dynamically renders the appropriate switcher (Org or Family)
+   */
+  renderHeaderSwitcher() {
+    const container = document.getElementById("org-switcher-container");
+    if (!container) return;
+
+    const userType = localStorage.getItem('userType');
+    const isPlayerMode = window.location.href.includes('player-dashboard.html');
+
+    if (isPlayerMode || userType === 'player') {
+      console.log("👨‍👩‍👧‍👦 Rendering Family Switcher");
+      this.renderFamilySwitcher(container);
+    } else {
+      console.log("🏢 Rendering Group Switcher");
+      this.renderGroupSwitcher(container);
+    }
+  },
+
+  renderGroupSwitcher(container) {
+    if (typeof GroupSwitcher !== "undefined") {
+      GroupSwitcher.render(container);
+    } else {
+      const script = document.createElement("script");
+      script.src = "group-switcher.js";
+      script.onload = () => {
+        if (typeof GroupSwitcher !== "undefined") GroupSwitcher.render(container);
+      };
+      document.head.appendChild(script);
+    }
+  },
+
+  renderFamilySwitcher(container) {
+    // Ported from player-dashboard.js logic
+    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const firstName = user.firstName || user.first_name || "User";
+    const family = JSON.parse(localStorage.getItem('userFamily') || '[]');
+    const activeId = localStorage.getItem('activePlayerId');
+    
+    const activePlayer = family.find(f => f.id == activeId);
+    const displayName = activePlayer ? activePlayer.first_name : "Main Profile";
+    const displayInitial = activePlayer ? activePlayer.first_name.charAt(0) : firstName.charAt(0);
+
+    container.innerHTML = `
+      <div class="profile-switcher" style="position: relative; margin-left: 1rem;">
+        <button class="profile-switcher-trigger" id="profile-switcher-trigger" style="display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 10px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; min-width: 140px; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="profile-avatar" style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
+              ${displayInitial}
+            </div>
+            <span style="font-weight: 600;">${displayName}</span>
+          </div>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        
+        <div class="profile-switcher-dropdown" id="profile-switcher-dropdown" style="position: absolute; top: calc(100% + 8px); left: 0; min-width: 240px; background: #1e1e1e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.25s; z-index: 1100; overflow: hidden; backdrop-filter: blur(10px);">
+          <div style="padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.4);">Switch Profile</div>
+          <div class="profile-list" style="max-height: 300px; overflow-y: auto;">
+            <button class="profile-item ${!activeId ? 'active' : ''}" onclick="UnifiedNav.switchFamilyProfile(null)" style="width:100%; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:none; border:none; color:white; cursor:pointer; text-align:left;">
+               <div style="width:28px; height:28px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700;">${firstName.charAt(0)}</div>
+               <div>
+                 <div style="font-weight:600; font-size:0.9rem;">${firstName} (Main)</div>
+               </div>
+            </button>
+            ${family.map(child => `
+              <button class="profile-item ${activeId == child.id ? 'active' : ''}" onclick="UnifiedNav.switchFamilyProfile('${child.id}')" style="width:100%; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:none; border:none; color:white; cursor:pointer; text-align:left;">
+                 <div style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-weight:700;">${child.first_name.charAt(0)}</div>
+                 <div>
+                   <div style="font-weight:600; font-size:0.9rem;">${child.first_name} ${child.last_name}</div>
+                 </div>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Bind dropdown toggle
+    const trigger = document.getElementById('profile-switcher-trigger');
+    const dropdown = document.getElementById('profile-switcher-dropdown');
+    if (trigger && dropdown) {
+      trigger.onclick = (e) => {
+        e.stopPropagation();
+        const isOpen = dropdown.style.visibility === 'visible';
+        dropdown.style.opacity = isOpen ? '0' : '1';
+        dropdown.style.visibility = isOpen ? 'hidden' : 'visible';
+        dropdown.style.transform = isOpen ? 'translateY(-10px)' : 'translateY(0)';
+      };
+      document.addEventListener('click', () => {
+        dropdown.style.opacity = '0';
+        dropdown.style.visibility = 'hidden';
+        dropdown.style.transform = 'translateY(-10px)';
+      });
+    }
+  },
+
+  switchFamilyProfile(id) {
+    console.log("🔄 Switching family profile to:", id);
+    if (id) {
+      localStorage.setItem('activePlayerId', id);
+    } else {
+      localStorage.removeItem('activePlayerId');
+    }
+    window.location.reload();
+  },
+
+  renderHeaderNotifications() {
+    // Try both standard and legacy selectors for maximum compatibility
+    const rightSide = document.querySelector(".dash-header-right") || document.querySelector(".nav-right") || document.querySelector("header");
+    if (!rightSide || rightSide.querySelector(".notification-wrapper")) return;
+
+    const bellHTML = `
+      <div class="notification-wrapper desktop-only" style="position: relative; margin-right: 1rem; display: flex; align-items: center;">
+        <button class="notification-bell" onclick="UnifiedNav.toggleNotifications()" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; opacity: 0.8; transition: opacity 0.2s; padding: 0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span id="header-notif-badge" class="badge" style="display:none; position: absolute; top: -4px; right: -4px; background: var(--primary); color: white; border-radius: 50%; width: 14px; height: 14px; font-size: 9px; align-items: center; justify-content: center; font-weight: 800;">0</span>
+        </button>
+        <div id="notificationDropdown" class="notification-dropdown" style="position: absolute; top: calc(100% + 15px); right: 0; width: 320px; background: #0a0a0c; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 1.25rem; z-index: 6000; display: none; transform-origin: top right; backdrop-filter: blur(20px);">
+           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 style="margin: 0; font-size: 0.9rem; font-weight: 700;">Notifications</h3>
+              <button onclick="UnifiedNav.markAllRead()" style="background: none; border: none; color: var(--primary); font-size: 0.7rem; cursor: pointer; font-weight: 600;">Mark all read</button>
+           </div>
+           <div id="notification-list" style="max-height: 400px; overflow-y: auto;">
+              <div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 2rem 0;">No new notifications</div>
+           </div>
+        </div>
+      </div>
+    `;
+    rightSide.insertAdjacentHTML("afterbegin", bellHTML);
+    this.loadNotifications();
+  },
+
+  toggleNotifications() {
+     const dropdown = document.getElementById('notificationDropdown');
+     if (!dropdown) return;
+     const isOpen = dropdown.style.display === 'block';
+     dropdown.style.display = isOpen ? 'none' : 'block';
+     if (!isOpen) {
+        // Close profile dropdown if open
+        this.toggleProfileDropdown(false);
+     }
+  },
+
+  async loadNotifications() {
+     const list = document.getElementById('notification-list');
+     const badge = document.getElementById('header-notif-badge');
+     if (!list) return;
+
+     try {
+        if (typeof apiService === 'undefined') return;
+        const res = await apiService.makeRequest('/notifications');
+        const notifs = res || [];
+        const unreadCount = notifs.filter(n => !n.read).length;
+
+        if (unreadCount > 0) {
+           badge.textContent = unreadCount;
+           badge.style.display = 'flex';
+        } else {
+           badge.style.display = 'none';
+        }
+
+        if (notifs.length > 0) {
+           list.innerHTML = notifs.slice(0, 5).map(n => `
+             <div style="padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="window.location.href='${n.link || '#'}'">
+                <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 2px;">${n.title}</div>
+                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">${n.message}</div>
+             </div>
+           `).join('');
+        }
+     } catch (e) {
+        console.warn("Could not load notifications for header", e);
+     }
+  },
+
+  markAllRead() {
+     const badge = document.getElementById('header-notif-badge');
+     if (badge) badge.style.display = 'none';
+     const list = document.getElementById('notification-list');
+     if (list) list.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 2rem 0;">No new notifications</div>';
+  },
+
+  renderStripeHeaderButton() {
+    const rightSide = document.querySelector(".dash-header-right") || document.querySelector(".nav-right") || document.querySelector("header");
+    if (!rightSide || rightSide.querySelector(".stripe-header-btn")) return;
+
+    // Check if user is admin
+    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const isAdmin = user.userType === 'admin' || user.userType === 'organization';
+    const isDashboard = window.location.pathname.includes('admin-dashboard.html');
+
+    if (isAdmin && isDashboard) {
+      const stripeBtnHTML = `
+        <div class="stripe-header-btn desktop-only" style="margin-right: 1rem;">
+          <button class="btn btn-stripe btn-small" onclick="typeof manageStripeAccount === 'function' ? manageStripeAccount() : console.log('💳 Stripe Dashboard')" style="background: #635bff; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13.962 10.935c0-1.212-1.046-1.309-1.973-1.309-1.353 0-2.321.31-2.321.31l-.22-1.552s.934-.367 2.592-.367c2.321 0 3.737 1.026 3.737 3.056 0 3.339-4.57 3.514-4.57 5.163 0 .726.65 1.045 1.636 1.045 1.418 0 2.503-.424 2.503-.424l.23 1.572s-1.162.53-2.88.53c-2.122 0-3.538-.986-3.538-2.936.01-3.6 4.804-3.66 4.804-5.088zM4.613 14.63c.18-1.52.92-2.14 1.94-2.14 1.34 0 2.3.26 2.3.26l.24-1.56s-1.25-.45-2.79-.45C4.213 10.74 3 12.18 3 14.73c0 3.03 2.1 3.54 4.13 3.54 1.7 0 3.1-.48 3.1-.48l.24-1.61s-1.45.66-3.1.66c-1.8 0-2.91-.71-2.757-2.21zm10.79 3.09h1.91v-6.85h-1.91v6.85zm0-8.54h1.91V7.27h-1.91v1.91zm2.34 8.54h1.91v-6.85h-1.91v6.85zm0-8.54h1.91V7.27h-1.91v1.91zm2.34 8.54h1.91v-3.7c0-2.02.8-3.15 2.14-3.15.22 0 .43.02.61.06v-1.74c-.17-.03-.38-.05-.61-.05-1.55 0-2.14.73-2.14.73V10.87h-1.91v6.85z"/>
+            </svg>
+            Stripe Dashboard
+          </button>
+        </div>
+      `;
+      rightSide.insertAdjacentHTML("afterbegin", stripeBtnHTML);
+    }
   },
 
   cleanupLegacyArtifacts() {
@@ -72,19 +278,18 @@ const UnifiedNav = {
 
     // 2. Remove legacy welcome banners
     document.querySelectorAll('.welcome-banner, .user-info').forEach(el => {
-      if (!el.closest('.pro-header')) {
+      if (!el.closest('.pro-header') && !el.classList.contains('dash-header-left')) {
          console.log("🗑️ Removing legacy welcome banner");
          el.remove();
       }
     });
 
     // 3. Absolute purge of any top-level text nodes containing "Hello,"
-    // This handles the "Ghost" injected by legacy scripts
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
     const nodesToRemove = [];
     while(walker.nextNode()) {
       const node = walker.currentNode;
-      if (node.textContent.includes("Hello,") && !node.parentElement.closest('.pro-header')) {
+      if (node.textContent.includes("Hello,") && !node.parentElement.closest('.pro-header') && !node.parentElement.closest('.dashboard-container')) {
         nodesToRemove.push(node);
       }
     }
@@ -95,48 +300,53 @@ const UnifiedNav = {
   },
 
   /**
-   * Ensure desktop headers include the logo, mode switcher and profile targets
-   * without overwriting the entire header markup.
+   * Ensure desktop headers include everything needed for a premium dashboard experience
    */
-  ensureHeaderElements() {
+  ensureDashboardHeader() {
     let header = document.querySelector(".pro-header, header.header");
     if (!header) {
       header = document.createElement("header");
       header.className = "pro-header";
       document.body.prepend(header);
     }
+    header.classList.add("unified-header");
 
-    if (!header.querySelector(".nav-container")) {
+    // Force exact structure if incomplete
+    if (!header.querySelector(".dash-header-left") || !header.querySelector(".dash-header-right")) {
       header.innerHTML = `
-                <div class="nav-container nav container">
-                    <div class="dash-header-left">
-                        <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
-                            <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 32px; width: 32px;">
-                            <span class="logo-text neon-text" style="font-weight: 800; font-size: 1.2rem;">ClubHub</span>
-                        </div>
-                        
-                        <div class="mode-toggle-container">
-                            <span class="mode-label active" id="group-label">Group</span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="mode-toggle" onchange="UnifiedNav.handleGlobalModeToggle(this)">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span class="mode-label" id="player-label">Player</span>
-                        </div>
-                        
-                        <div id="org-switcher-container"></div>
-                    </div>
-                    
-                    <div class="dash-header-right">
-                        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
-                            <span class="user-name desktop-only" id="header-user-name">Loading...</span>
-                            <div class="user-avatar-sm" id="header-user-avatar">?</div>
-                        </div>
-                        <button class="btn btn-secondary btn-small desktop-only" onclick="handleAuthError()">Logout</button>
-                    </div>
+        <div class="nav-container nav container">
+            <div class="dash-header-left">
+                <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                    <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 32px; width: 32px;">
+                    <span class="logo-text neon-text" style="font-weight: 800; font-size: 1.2rem;">ClubHub</span>
                 </div>
-            `;
+                
+                <div class="mode-toggle-container">
+                    <span class="mode-label active" id="group-label">Group</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mode-toggle" onchange="UnifiedNav.handleGlobalModeToggle(this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="mode-label" id="player-label">Player</span>
+                </div>
+                
+                <div id="org-switcher-container"></div>
+            </div>
+            
+            <div class="dash-header-right">
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
+                    <span class="user-name desktop-only" id="header-user-name">Loading...</span>
+                    <div class="user-avatar-sm" id="header-user-avatar">?</div>
+                </div>
+                <button class="btn btn-secondary btn-small desktop-only" onclick="handleAuthError()" style="margin-left: 0.5rem;">Logout</button>
+            </div>
+        </div>
+      `;
     }
+  },
+
+  ensureHeaderElements() {
+    this.ensureDashboardHeader();
   },
 
   renderSidebar() {
@@ -625,13 +835,38 @@ const UnifiedNav = {
     nav.innerHTML = menuHtml;
   },
 
+
   updateHeaderState() {
+    // 1. Synchronize the mode toggle checkbox
+    const modeToggle = document.getElementById("mode-toggle");
+    if (modeToggle) {
+      modeToggle.checked = window.location.href.includes("player-dashboard.html");
+      const groupLabel = document.getElementById("group-label");
+      const playerLabel = document.getElementById("player-label");
+      if (groupLabel && playerLabel) {
+        groupLabel.classList.toggle("active", !modeToggle.checked);
+        playerLabel.classList.toggle("active", modeToggle.checked);
+      }
+    }
+
+    // 2. Add scroll listener for aesthetic changes
     window.addEventListener("scroll", () => {
       const header = document.querySelector(".pro-header, header.header");
       if (!header) return;
-      // Standardize breakpoints: 992px+ is desktop
+      
       const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
-      if (isDesktop) return; // desktop headers remain static
+      if (isDesktop) {
+        if (window.scrollY > 50) {
+          header.style.background = "rgba(10, 10, 12, 0.95)";
+          header.style.backdropFilter = "blur(15px)";
+          header.style.boxShadow = "0 4px 30px rgba(0, 0, 0, 0.3)";
+        } else {
+          header.style.background = "rgba(10, 10, 12, 0.8)";
+          header.style.backdropFilter = "blur(10px)";
+          header.style.boxShadow = "none";
+        }
+        return;
+      }
 
       if (window.scrollY > 30) {
         header.style.height = "72px";
@@ -641,9 +876,14 @@ const UnifiedNav = {
         header.style.background = "rgba(10, 10, 12, 0.8)";
       }
     });
+
+    // 3. Ensure dynamic elements are rendered
+    this.renderHeaderSwitcher();
+    this.renderHeaderNotifications();
   },
 
   handleGlobalModeToggle(input) {
+    console.log("🔀 Global Mode Toggle:", input.checked ? "Player" : "Group");
     if (input.checked) {
       this.switchMode("player");
     } else {
@@ -653,5 +893,9 @@ const UnifiedNav = {
 };
 
 // Initialize on load
-document.addEventListener("DOMContentLoaded", () => UnifiedNav.init());
-window.UnifiedNav = UnifiedNav; // Global access
+if (typeof window !== 'undefined') {
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => UnifiedNav.init(), 100);
+  });
+  window.UnifiedNav = UnifiedNav; // Global access
+}
