@@ -1,87 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Super Admin | ClubHub</title>
-
-    <!-- PWA Meta Tags -->
-    <meta name="description" content="Platform administration and system monitoring">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin — ClubHub Platform</title>
     <meta name="theme-color" content="#dc4343">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="images/logo.png">
-    <link rel="apple-touch-icon" href="images/logo.png">
-
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="group-switcher.css">
-    <link rel="stylesheet" href="unified-nav.css">
     <link rel="stylesheet" href="design-system.css">
-    
+    <link rel="stylesheet" href="unified-nav.css">
     <style>
-        .platform-header {
-            background: linear-gradient(135deg, #dc4343, #ff6b6b);
-            padding: 2.5rem;
-            border-radius: 20px;
-            margin-bottom: 2.5rem;
-            color: white;
-            box-shadow: 0 10px 30px rgba(220, 67, 67, 0.2);
-        }
-
-        @media (max-width: 768px) {
-            .stats-grid, .dashboard-grid {
-                grid-template-columns: 1fr !important;
-            }
-        }
+        .feed-entry { display:flex; gap:1rem; padding:1rem 0; border-bottom:1px solid rgba(255,255,255,0.05); align-items:flex-start; }
+        .feed-entry:last-child { border-bottom:none; }
+        .feed-icon { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+        .feed-meta { flex:1; }
+        .feed-meta strong { display:block; font-size:0.9rem; color:#f1f5f9; margin-bottom:2px; }
+        .feed-meta span { font-size:0.78rem; color:var(--text-muted); }
+        .feed-time { font-size:0.72rem; color:rgba(255,255,255,0.3); white-space:nowrap; }
+        .stat-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:1.5rem; }
+        .stat-card .stat-label { font-size:0.72rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+        .stat-card .stat-number { font-size:2.2rem; font-weight:900; color:#fff; display:block; margin-top:0.25rem; }
+        .stat-card .stat-change { font-size:0.78rem; margin-top:0.25rem; color:#4ade80; }
+        .quick-action-btn { display:flex; align-items:center; gap:0.75rem; width:100%; padding:0.85rem 1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; color:#f1f5f9; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; text-align:left; }
+        .quick-action-btn:hover { background:rgba(220,38,38,0.08); border-color:rgba(220,38,38,0.3); }
+        .org-row { display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+        .org-row:last-child { border-bottom:none; }
+        @media(max-width:768px){ .dash-grid { grid-template-columns:1fr !important; } .stats-row { grid-template-columns:1fr 1fr !important; } }
     </style>
 </head>
-
 <body>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
-    <header class="header pro-header"></header>
 
-    <main class="main dashboard-main" style="padding-top: 100px;">
+    <header class="header">
+        <nav class="nav container" id="loggedInNav">
+            <div class="dash-header-left">
+                <div class="logo" onclick="window.location.href='index.html'" style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+                    <img src="images/logo.png" alt="ClubHub" class="logo-image">
+                    <span class="logo-text neon-text">ClubHub</span>
+                </div>
+                <span style="padding:3px 10px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.3);border-radius:6px;font-size:0.72rem;font-weight:800;letter-spacing:1px;color:#f87171;">PLATFORM ADMIN</span>
+            </div>
+            <div class="dash-header-right">
+                <span class="user-name desktop-only" id="superAdminGreeting">Hello, Admin!</span>
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav && UnifiedNav.toggleProfileDropdown(true)">
+                    <div class="user-avatar-sm" id="header-user-avatar">A</div>
+                </div>
+                <button class="btn btn-secondary btn-small desktop-only" onclick="handleLogout ? handleLogout() : (window.location.href='index.html')">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main dashboard-main">
         <div class="container dashboard-container">
-            <div class="platform-header">
-                <h1 style="font-weight: 800; letter-spacing: -1px; margin-bottom: 0.5rem;">Mission Control</h1>
-                <p style="opacity: 0.9;">System-wide monitoring, organization management, and security.</p>
+
+            <div style="margin-bottom:1.5rem;">
+                <h1 class="neon-text" style="font-size:1.6rem;margin:0;">Platform Control</h1>
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-top:0.25rem;">Full platform overview — organisations, users, revenue, and system health</p>
             </div>
 
-            <div class="stats-grid" style="margin-bottom: 2.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-                <div class="stat-card">
-                    <span class="stat-label">TOTAL GROUPS</span>
-                    <span class="stat-number" id="totalOrgs">0</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">TOTAL USERS</span>
-                    <span class="stat-number" id="totalSystemUsers">0</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">SYSTEM UPTIME</span>
-                    <span class="stat-number" id="systemUptime">99.9%</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">STORAGE USED</span>
-                    <span class="stat-number">1.2 TB</span>
-                </div>
-            </div>
+            <!-- Dashboard Sections -->
+            <div id="super-admin-overview" class="dashboard-section active">
 
-            <div class="dashboard-nav-grouped desktop-only" style="margin-bottom: 2.5rem;">
-                <button class="nav-item active" onclick="showSuperSection('monitoring')">📈 Monitoring</button>
-                <button class="nav-item" onclick="showSuperSection('orgs')">🏰 Organizations</button>
-                <button class="nav-item" onclick="showSuperSection('users')">👥 Users</button>
-                <button class="nav-item" onclick="showSuperSection('logs')">📋 System Logs</button>
-            </div>
-
-            <div id="super-monitoring" class="dashboard-section active">
-                <div class="glass-card" style="height: 400px; display: flex; align-items: center; justify-content: center;">
-                    <p class="loading-text">Initializing real-time system metrics...</p>
+            <!-- Platform Stats -->
+            <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
+                <div class="stat-card">
+                    <span class="stat-label">Organisations</span>
+                    <span class="stat-number" id="totalOrgs">142</span>
+                    <div class="stat-change">↑ 8 this month</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Total Users</span>
+                    <span class="stat-number" id="totalUsers">4,821</span>
+                    <div class="stat-change">↑ 234 this month</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">MRR</span>
+                    <span class="stat-number" id="platformMRR">£18.4k</span>
+                    <div class="stat-change">↑ 9% vs last month</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">System Health</span>
+                    <span class="stat-number" style="color:#4ade80;">99.8%</span>
+                    <div class="stat-change">Uptime — last 30d</div>
                 </div>
             </div>
 
+            <div class="dash-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;">
+
+                <!-- Platform Feed -->
+                <div>
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                            <span style="font-size:1rem;font-weight:700;color:#fff;">🌐 Platform Activity</span>
+                            <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">Live log</span>
+                        </div>
+                        <div id="platformFeed">
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">🏢</div>
+                                <div class="feed-meta">
+                                    <strong>New org registered — Riverside FC Academy</strong>
+                                    <span>Manchester · Football · 72 members imported</span>
+                                </div>
+                                <span class="feed-time">3m ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(96,165,250,0.1);color:#60a5fa;">💳</div>
+                                <div class="feed-meta">
+                                    <strong>Subscription upgraded — Pro Plan</strong>
+                                    <span>Northside Rugby Club · £149/mo → £299/mo</span>
+                                </div>
+                                <span class="feed-time">28m ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(251,191,36,0.1);color:#fbbf24;">⚠️</div>
+                                <div class="feed-meta">
+                                    <strong>Payment failed — City Athletics</strong>
+                                    <span>Monthly billing · Card declined · Auto-retry in 24h</span>
+                                </div>
+                                <span class="feed-time">1h ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">👤</div>
+                                <div class="feed-meta">
+                                    <strong>New super-admin account created</strong>
+                                    <span>Dan Harris · Eastside Sports Complex</span>
+                                </div>
+                                <span class="feed-time">2h ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(167,139,250,0.1);color:#a78bfa;">🔒</div>
+                                <div class="feed-meta">
+                                    <strong>Security alert — Multiple failed logins</strong>
+                                    <span>IP: 185.220.x.x · Blocked after 5 attempts</span>
+                                </div>
+                                <span class="feed-time">3h ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">🏢</div>
+                                <div class="feed-meta">
+                                    <strong>New org registered — West Coast Swim Club</strong>
+                                    <span>Bristol · Swimming · Trial plan</span>
+                                </div>
+                                <span class="feed-time">Yesterday</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Org Table -->
+                    <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
+                        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                            <span style="font-size:1rem;font-weight:700;color:#fff;">🏢 Recent Organisations</span>
+                            <button class="btn btn-secondary btn-small" style="margin-left:auto;">View All</button>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+                            <thead>
+                                <tr style="color:var(--text-muted);text-align:left;">
+                                    <th style="padding:0.5rem 0;font-weight:600;">Organisation</th>
+                                    <th style="padding:0.5rem 0;font-weight:600;">Plan</th>
+                                    <th style="padding:0.5rem 0;font-weight:600;">Members</th>
+                                    <th style="padding:0.5rem 0;font-weight:600;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:0.65rem 0;color:#f1f5f9;">Riverside FC Academy</td>
+                                    <td style="padding:0.65rem 0;color:var(--text-muted);">Pro</td>
+                                    <td style="padding:0.65rem 0;color:var(--text-muted);">72</td>
+                                    <td style="padding:0.65rem 0;"><span style="background:rgba(74,222,128,0.15);color:#4ade80;padding:2px 8px;border-radius:6px;font-size:0.75rem;">Active</span></td>
+                                </tr>
+                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:0.65rem 0;color:#f1f5f9;">Northside Rugby Club</td>
+                                    <td style="padding:0.65rem 0;color:var(--text-muted);">Elite</td>
+                                    <td style="padding:0.65rem 0;color:var(--text-muted);">148</td>
+                                    <td style="padding:0.65rem 0;"><span style="background:rgba(74,222,128,0.15);color:#4ade80;padding:2px 8px;border-radius:6px;font-size:0.75rem;">Active</span></td>
+                                </tr>
+                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:0.65rem 0;color:#f1f5f9;">City Athletics</td>
+                                    <td style="padding:0.65rem 0;color:var(--text-muted);">Starter</td>
+                                    <td style="padding:0.65rem 0;color:var(--text-muted);">31</td>
+                                    <td style="padding:0.65rem 0;"><span style="background:rgba(239,68,68,0.15);color:#f87171;padding:2px 8px;border-radius:6px;font-size:0.75rem;">Payment Due</span></td>
+                                </tr>
+                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:0.65rem 0;color:#f1f5f9;">West Coast Swim Club</td>
+                                    <td style="padding:0.65rem 0;color:var(--text-muted);">Trial</td>
+                                    <td style="padding:0.65rem 0;color:var(--text-muted);">14</td>
+                                    <td style="padding:0.65rem 0;"><span style="background:rgba(251,191,36,0.15);color:#fbbf24;padding:2px 8px;border-radius:6px;font-size:0.75rem;">Trial</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right -->
+                <div style="display:flex;flex-direction:column;gap:1.5rem;">
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">⚡ Platform Actions</div>
+                        <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                            <button class="quick-action-btn">🏢 Manage Organisations</button>
+                            <button class="quick-action-btn">👤 User Management</button>
+                            <button class="quick-action-btn">💰 Billing & Revenue</button>
+                            <button class="quick-action-btn">🔒 Security Logs</button>
+                            <button class="quick-action-btn">📊 Analytics</button>
+                            <button class="quick-action-btn">⚙️ Platform Settings</button>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Snapshot -->
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">💰 Revenue (March)</div>
+                        <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                            <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                                <span style="color:var(--text-muted);">MRR</span>
+                                <span style="color:#4ade80;font-weight:700;">£18,420</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                                <span style="color:var(--text-muted);">New subs (Mar)</span>
+                                <span style="color:#f1f5f9;font-weight:700;">+£1,240</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                                <span style="color:var(--text-muted);">Churn</span>
+                                <span style="color:#f87171;font-weight:700;">-£320</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                                <span style="color:var(--text-muted);">Outstanding</span>
+                                <span style="color:#fbbf24;font-weight:700;">£890</span>
+                            </div>
+                            <div style="height:1px;background:rgba(255,255,255,0.05);margin:0.25rem 0;"></div>
+                            <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+                                <span style="color:var(--text-muted);">Paying orgs</span>
+                                <span style="color:#f1f5f9;font-weight:700;">138 / 142</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Super Admin Sections -->
+            <div id="super-admin-groups" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">Global Organisations</h2>
+                <p style="color:var(--text-muted);">Manage all clubs, academies and schools.</p>
+                <div style="margin-top:2rem;">
+                    <button class="btn btn-primary" onclick="window.location.href='groups-manager.html'">Open Full Manager</button>
+                </div>
+            </div>
+
+            <div id="super-admin-users" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">User Directory</h2>
+                <p style="color:var(--text-muted);">Platform-wide user search and management.</p>
+            </div>
+
+            <div id="super-admin-activity" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">System Logs</h2>
+                <p style="color:var(--text-muted);">Full audit trail of platform events.</p>
+            </div>
         </div>
     </main>
 
@@ -89,30 +263,37 @@
         <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
     </nav>
 
-    <!-- Core Dependencies -->
     <script src="api-service.js"></script>
     <script src="enhanced-login-handler.js"></script>
-    <script src="super-admin-dashboard.js"></script>
     <script src="pwa-install.js"></script>
     <script src="unified-nav.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const isLoggedIn = await checkAuthStatus();
-            if (!isLoggedIn) {
-                window.location.href = 'index.html';
-                return;
+            if (typeof checkAuthStatus === 'function') {
+                const ok = await checkAuthStatus();
+                if (!ok) { window.location.href = 'index.html'; return; }
             }
-            // Super Admin specific init logic here
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            if (user && user.firstName) {
+                const el = document.getElementById('superAdminGreeting');
+                if (el) el.textContent = `Hello, ${user.firstName}!`;
+                const av = document.getElementById('header-user-avatar');
+                if (av) av.textContent = (user.firstName || 'A').charAt(0).toUpperCase();
+            }
         });
 
-        function showSuperSection(sectionId) {
-            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
-            const target = document.getElementById(`super-${sectionId}`);
-            if (target) target.style.display = 'block';
+        function showSection(id) {
+            document.querySelectorAll('.dashboard-section').forEach(s => {
+                s.style.display = 'none';
+                s.classList.remove('active');
+            });
+            const t = document.getElementById('super-admin-' + id);
+            if (t) {
+                t.style.display = 'block';
+                t.classList.add('active');
+            }
         }
     </script>
-
 </body>
-
 </html>

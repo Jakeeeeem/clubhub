@@ -1,155 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Coach Hub | ClubHub</title>
-
-    <!-- PWA Meta Tags -->
-    <meta name="description" content="Manage your team, track player performance, and plan training sessions">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach Dashboard — ClubHub</title>
     <meta name="theme-color" content="#dc4343">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="images/logo.png">
-    <link rel="apple-touch-icon" href="images/logo.png">
-
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="group-switcher.css">
+    <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="unified-nav.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="tour-service.css">
     <style>
-        @media (max-width: 768px) {
-            .card-grid, .stats-grid, .dashboard-grid {
-                grid-template-columns: 1fr !important;
-            }
-            .dashboard-header {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-            }
-        }
+        .feed-entry { display:flex; gap:1rem; padding:1rem 0; border-bottom:1px solid rgba(255,255,255,0.05); align-items:flex-start; }
+        .feed-entry:last-child { border-bottom:none; }
+        .feed-icon { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+        .feed-meta { flex:1; }
+        .feed-meta strong { display:block; font-size:0.9rem; color:#f1f5f9; margin-bottom:2px; }
+        .feed-meta span { font-size:0.78rem; color:var(--text-muted); }
+        .feed-time { font-size:0.72rem; color:rgba(255,255,255,0.3); white-space:nowrap; }
+        .stat-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:1.5rem; }
+        .stat-card .stat-label { font-size:0.72rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+        .stat-card .stat-number { font-size:2.2rem; font-weight:900; color:#fff; display:block; margin-top:0.25rem; }
+        .stat-card .stat-change { font-size:0.78rem; margin-top:0.25rem; color:#4ade80; }
+        .quick-action-btn { display:flex; align-items:center; gap:0.75rem; width:100%; padding:0.85rem 1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; color:#f1f5f9; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; text-align:left; }
+        .quick-action-btn:hover { background:rgba(220,38,38,0.08); border-color:rgba(220,38,38,0.3); }
+        .player-row { display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+        .player-row:last-child { border-bottom:none; }
+        .player-av { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; background:rgba(220,38,38,0.15); color:#f87171; }
+        @media(max-width:768px){ .dash-grid { grid-template-columns:1fr !important; } .stats-row { grid-template-columns:1fr 1fr !important; } }
     </style>
 </head>
-
 <body>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
-    <header class="header pro-header"></header>
 
-    <main class="main dashboard-main" style="padding-top: 100px;">
+    <header class="header">
+        <nav class="nav container" id="loggedInNav">
+            <div class="dash-header-left">
+                <div class="logo" onclick="window.location.href='index.html'" style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+                    <img src="images/logo.png" alt="ClubHub" class="logo-image">
+                    <span class="logo-text neon-text">ClubHub</span>
+                </div>
+                <div class="mode-toggle-container">
+                    <span class="mode-label active" id="group-label">Group</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mode-toggle" onchange="if(this.checked)window.location.href='player-dashboard.html'">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="mode-label" id="player-label">Player</span>
+                </div>
+                <div id="org-switcher-container"></div>
+            </div>
+            <div class="dash-header-right">
+                <span class="user-name desktop-only" id="coachGreeting">Hello, Coach!</span>
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav && UnifiedNav.toggleProfileDropdown(true)">
+                    <div class="user-avatar-sm" id="header-user-avatar">C</div>
+                </div>
+                <button class="btn btn-secondary btn-small desktop-only" onclick="handleLogout ? handleLogout() : (window.location.href='index.html')">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main dashboard-main">
         <div class="container dashboard-container">
-            <div class="dashboard-header" style="margin-bottom: 2rem;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1.5rem;">
-                    <div>
-                        <h1 class="neon-text display-org-name">Coaching Hub</h1>
-                        <p style="color: var(--text-muted);">Welcome back, Coach! Here's your squad's status.</p>
-                    </div>
-                    
-                    <!-- Simplified Navigation Pills -->
-                    <div class="nav-pill-group desktop-only">
-                        <button class="nav-pill active" onclick="showCoachSection('overview')">Overview</button>
-                        <button class="nav-pill" onclick="showCoachSection('teams')">Teams</button>
-                        <button class="nav-pill" onclick="showCoachSection('players')">Roster</button>
-                        <button class="nav-pill" onclick="showCoachSection('events')">Schedule</button>
-                        <button class="nav-pill" onclick="showCoachSection('tactical-board')">Tactics</button>
-                        <button class="nav-pill" onclick="showCoachSection('messenger')">Messages</button>
-                    </div>
-                </div>
+
+            <div style="margin-bottom:1.5rem;">
+                <h1 class="neon-text" style="font-size:1.6rem;margin:0;">Coach Centre</h1>
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-top:0.25rem;">Team management, session planner, and player insights.</p>
             </div>
 
-            <!-- Overview Section (Planner Mode) -->
             <div id="coach-overview" class="dashboard-section active">
-                <div class="dashboard-layout-sidebar">
-                    <!-- Central Activity Feed -->
-                    <div class="feed-column">
-                        <!-- Coach Post Creator -->
-                        <div class="premium-feed-item" style="padding: 1.5rem; border-bottom: 1px solid var(--border-color);">
-                            <div style="display: flex; gap: 1rem; align-items: center;">
-                                <div class="author-avatar" style="background: var(--primary);">C</div>
-                                <div style="flex: 1;">
-                                    <textarea id="coachPostInput" 
-                                              placeholder="Update your players or share training tips..." 
-                                              style="width: 100%; background: transparent; border: none; color: white; resize: none; font-size: 1.1rem; outline: none;"
-                                              rows="2"></textarea>
+
+            <!-- Stats -->
+            <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
+                <div class="stat-card">
+                    <span class="stat-label">Squad Size</span>
+                    <span class="stat-number" id="squadSize">22</span>
+                    <div class="stat-change">↑ 2 new this month</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Next Session</span>
+                    <span class="stat-number" style="font-size:1.4rem;">Tue 18:00</span>
+                    <div class="stat-change" style="color:#60a5fa;">14 confirmed</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Avg Attendance</span>
+                    <span class="stat-number">78%</span>
+                    <div class="stat-change">↑ 5% vs last month</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Pending Reviews</span>
+                    <span class="stat-number" style="color:#f59e0b;">3</span>
+                    <div class="stat-change" style="color:#f59e0b;">Player feedback due</div>
+                </div>
+            </div>
+
+            <div class="dash-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;">
+
+                <!-- Left: Feed -->
+                <div>
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                            <span style="font-size:1rem;font-weight:700;color:#fff;">📋 Squad Activity</span>
+                            <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">Live updates</span>
+                        </div>
+                        <div id="coachFeed">
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">✅</div>
+                                <div class="feed-meta">
+                                    <strong>Marcus Thompson confirmed attendance</strong>
+                                    <span>Tuesday training · Under 16s</span>
                                 </div>
+                                <span class="feed-time">5m ago</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 1rem; align-items: center;">
-                                <div style="display: flex; gap: 1rem; color: var(--text-muted); font-size: 1.2rem;">
-                                    <span style="cursor: pointer;" title="Add Video">🎥</span>
-                                    <span style="cursor: pointer;" title="Add Image">🖼️</span>
-                                    <span style="cursor: pointer;" title="Poll">📊</span>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(251,191,36,0.1);color:#fbbf24;">📝</div>
+                                <div class="feed-meta">
+                                    <strong>Player review submitted — Liam Brown</strong>
+                                    <span>Performance rating: 4.2/5 · Good positioning</span>
                                 </div>
-                                <button class="btn btn-primary btn-small" onclick="createCoachPost()">Post to Team</button>
+                                <span class="feed-time">32m ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(239,68,68,0.1);color:#f87171;">❌</div>
+                                <div class="feed-meta">
+                                    <strong>Absence reported — Kyle Adams</strong>
+                                    <span>Tuesday training · Family commitment</span>
+                                </div>
+                                <span class="feed-time">1h ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(96,165,250,0.1);color:#60a5fa;">📨</div>
+                                <div class="feed-meta">
+                                    <strong>New player application — Ethan Reid</strong>
+                                    <span>Under 18s · Midfielder · Awaiting review</span>
+                                </div>
+                                <span class="feed-time">2h ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(167,139,250,0.1);color:#a78bfa;">🏃</div>
+                                <div class="feed-meta">
+                                    <strong>Training plan updated — Endurance block</strong>
+                                    <span>4 weeks · April–May cycle · 18 drills</span>
+                                </div>
+                                <span class="feed-time">Yesterday</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">🏆</div>
+                                <div class="feed-meta">
+                                    <strong>Match result logged — Won 3-1 vs City FC</strong>
+                                    <span>Saturday league · Man of the match: M. Thompson</span>
+                                </div>
+                                <span class="feed-time">3 days ago</span>
                             </div>
                         </div>
-
-                        <div id="coachFeedContainer">
-                            <div class="loading-spinner" style="margin: 2rem auto;"></div>
-                        </div>
                     </div>
 
-                    <!-- Right Sidebar: Daily Planner -->
-                    <div class="planner-column">
-                        <div class="planner-widget">
-                            <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-                                📅 Today's Schedule
-                            </h3>
-                            <div id="coachDailyPlannerContainer">
-                                <p style="color: var(--text-muted); font-size: 0.85rem;">Loading your day...</p>
+                    <!-- Session Planner Preview -->
+                    <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
+                        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                            <span style="font-size:1rem;font-weight:700;color:#fff;">📅 Upcoming Sessions</span>
+                            <button class="btn btn-secondary btn-small" style="margin-left:auto;">Plan Session</button>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                            <div style="padding:0.75rem;background:rgba(255,255,255,0.03);border-radius:10px;border-left:3px solid #dc2626;display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-size:0.85rem;font-weight:600;color:#f1f5f9;">Tuesday Evening Training</div>
+                                    <div style="font-size:0.75rem;color:var(--text-muted);">Tue 1 Apr · 18:00–19:30 · Astro Pitch 2</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#4ade80;font-weight:600;">14 ✓</span>
                             </div>
-                            <button class="btn btn-secondary btn-small" style="width: 100%; margin-top: 1.5rem;" onclick="showCoachSection('events')">
-                                Full Schedule
-                            </button>
+                            <div style="padding:0.75rem;background:rgba(255,255,255,0.03);border-radius:10px;border-left:3px solid #3b82f6;display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-size:0.85rem;font-weight:600;color:#f1f5f9;">Saturday Fixture — Riverside Cup</div>
+                                    <div style="font-size:0.75rem;color:var(--text-muted);">Sat 5 Apr · 10:00 · Riverside Stadium</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#60a5fa;font-weight:600;">18 ✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div style="display:flex;flex-direction:column;gap:1.5rem;">
+                    <!-- Quick Actions -->
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">⚡ Quick Actions</div>
+                        <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                            <button class="quick-action-btn">🏃 Plan Training Session</button>
+                            <button class="quick-action-btn">📝 Write Player Review</button>
+                            <button class="quick-action-btn">📨 Message Squad</button>
+                            <button class="quick-action-btn">📊 View Squad Stats</button>
+                            <button class="quick-action-btn">👤 Review Application</button>
+                        </div>
+                    </div>
+
+                    <!-- Squad Summary -->
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">👥 My Squad</div>
+                        <div id="squadList">
+                            <div class="player-row">
+                                <div class="player-av">MT</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">Marcus Thompson</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">Forward</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#4ade80;">✓</span>
+                            </div>
+                            <div class="player-row">
+                                <div class="player-av">LB</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">Liam Brown</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">Midfielder</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#4ade80;">✓</span>
+                            </div>
+                            <div class="player-row">
+                                <div class="player-av">KA</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">Kyle Adams</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">Defender</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#f87171;">✗</span>
+                            </div>
+                            <div class="player-row">
+                                <div class="player-av">JW</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">James Wilson</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">Goalkeeper</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#4ade80;">✓</span>
+                            </div>
+                            <div style="padding-top:0.75rem;text-align:center;">
+                                <button class="btn btn-secondary btn-small" style="width:100%;">View Full Squad</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Messaging Section -->
-            <div id="coach-messenger" class="dashboard-section" style="display: none;">
-                <div class="dashboard-header" style="margin-bottom: 2rem;">
-                    <h1 class="neon-text">Messenger</h1>
-                    <p style="color: var(--text-muted);">Direct communication with players, scouts, and group staff.</p>
-                </div>
-                <div class="messaging-container" style="height: 70vh;">
-                    <div class="message-sidebar">
-                        <div id="messengerListItems" class="message-list"></div>
-                    </div>
-                    <div class="message-view" id="messageViewContainer">
-                        <div class="message-view-empty">
-                            <p>Select a contact to start messaging</p>
-                        </div>
-                    </div>
+            <!-- Other Coach Sections -->
+            <div id="coach-players" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">Squad Manager</h2>
+                <p style="color:var(--text-muted);">Detailed player stats, attendance and performance reviews.</p>
+                <div style="margin-top:2rem;">
+                    <button class="btn btn-primary" onclick="window.location.href='training-manager.html'">Go to Training Manager</button>
                 </div>
             </div>
 
-            <!-- Other placeholders for JS logic -->
-            <div id="coach-teams" class="dashboard-section" style="display: none;">
-                <div class="card">
-                    <h3>My Teams</h3>
-                    <div id="coachTeamsList"></div>
-                </div>
+            <div id="coach-messenger" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">Squad Messenger</h2>
+                <p style="color:var(--text-muted);">Secure communications with your players and parents.</p>
             </div>
-            <div id="coach-players" class="dashboard-section" style="display: none;">
-                <div class="card">
-                    <h3>Active Rosters</h3>
-                    <div id="coachPlayersList"></div>
-                </div>
-            </div>
-            <div id="coach-events" class="dashboard-section" style="display: none;">
-                <div class="card">
-                    <h3>Training & Match Schedule</h3>
-                    <div id="coachEventsList"></div>
-                </div>
-            </div>
-            <div id="coach-tactical-board" class="dashboard-section" style="display: none;">
-                <div class="card card-glass-red" style="padding: 1.5rem;">
-                    <h3>🏟️ Lineup Planner</h3>
-                    <div id="tacticalBoard" style="height: 600px; background: #1a472a; border-radius: 24px;"></div>
+
+            <div id="coach-tournament-manager" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">Events & Matches</h2>
+                <p style="color:var(--text-muted);">Fixture lists and tournament participation.</p>
+                <div style="margin-top:2rem;">
+                    <button class="btn btn-primary" onclick="window.location.href='tournament-manager.html'">Open Events Tool</button>
                 </div>
             </div>
         </div>
@@ -159,47 +269,38 @@
         <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
     </nav>
 
-    <!-- Core Dependencies -->
     <script src="api-service.js"></script>
     <script src="enhanced-login-handler.js"></script>
+    <script src="group-switcher.js"></script>
     <script src="pwa-install.js"></script>
     <script src="unified-nav.js"></script>
-    <script src="group-switcher.js"></script>
-    <script src="coach-dashboard.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const isLoggedIn = await checkAuthStatus();
-            if (!isLoggedIn) {
-                window.location.href = 'index.html';
-                return;
+            if (typeof checkAuthStatus === 'function') {
+                const ok = await checkAuthStatus();
+                if (!ok) { window.location.href = 'index.html'; return; }
             }
-
-            const user = JSON.parse(localStorage.getItem('currentUser'));
-            if (user) {
-                document.getElementById('coachNameDisplay').textContent = user.firstName || user.first_name || 'Coach';
-                document.getElementById('userInitial').textContent = (user.firstName || user.first_name || 'C').charAt(0).toUpperCase();
-            }
-
-            // Sync toggle state
-            const toggle = document.getElementById('mode-toggle');
-            if (toggle) {
-                toggle.checked = false;
-                toggle.addEventListener('change', (e) => {
-                    if (e.target.checked) {
-                        window.location.href = 'player-dashboard.html';
-                    }
-                });
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            if (user && user.firstName) {
+                const el = document.getElementById('coachGreeting');
+                if (el) el.textContent = `Hello, ${user.firstName}!`;
+                const av = document.getElementById('header-user-avatar');
+                if (av) av.textContent = (user.firstName || 'C').charAt(0).toUpperCase();
             }
         });
 
-        function showCoachSection(sectionId) {
-            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
-            const target = document.getElementById(`coach-${sectionId}`);
-            if (target) target.style.display = 'block';
+        function showCoachSection(id) {
+            document.querySelectorAll('.dashboard-section').forEach(s => {
+                s.style.display = 'none';
+                s.classList.remove('active');
+            });
+            const t = document.getElementById('coach-' + id);
+            if (t) {
+                t.style.display = 'block';
+                t.classList.add('active');
+            }
         }
     </script>
-
 </body>
-
 </html>

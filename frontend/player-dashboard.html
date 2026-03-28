@@ -60,9 +60,34 @@
         }
       }
     }
+    window.UNIFIED_NAV_ENABLED = true;
   </script>
-  <script>window.UNIFIED_NAV_ENABLED = true;</script>
-  <header class="header pro-header"></header>
+  <header class="header">
+    <nav class="nav container" id="loggedInNav">
+      <div class="dash-header-left">
+        <div class="logo" onclick="window.location.href='index.html'" style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+          <img src="images/logo.png" alt="ClubHub" class="logo-image">
+          <span class="logo-text neon-text">ClubHub</span>
+        </div>
+        <div class="mode-toggle-container">
+          <span class="mode-label" id="group-label">Group</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="mode-toggle" onchange="if(!this.checked) window.location.href='admin-dashboard.html'" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="mode-label active" id="player-label">Player</span>
+        </div>
+        <div id="org-switcher-container"></div>
+      </div>
+      <div class="dash-header-right">
+        <span class="user-name desktop-only" id="playerGreeting">Hello, Player!</span>
+        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav && UnifiedNav.toggleProfileDropdown(true)">
+          <div class="user-avatar-sm" id="header-user-avatar">P</div>
+        </div>
+        <button class="btn btn-secondary btn-small desktop-only" onclick="handleLogout ? handleLogout() : (window.location.href='index.html')">Logout</button>
+      </div>
+    </nav>
+  </header>
 
   <main class="main">
     <div class="dashboard container dashboard-container">
@@ -71,6 +96,7 @@
         <h1 class="neon-text display-org-name">Player Dashboard</h1>
         <p>Manage your sporting activities within <span class="display-org-name">your group</span></p>
       </div>
+
 
       <!-- Dashboard Navigation -->
       <!-- Grouped Dashboard Navigation -->
@@ -111,14 +137,13 @@
         <div class="nav-dropdown-container" id="nav-group-finance">
           <button class="nav-item dropdown-trigger">
             💳 Shop & Finance ▾
-      <!-- Simplified App-like Navigation -->
-      <div class="nav-pill-group desktop-only">
-        <button class="nav-pill active" onclick="showPlayerSection('overview')">🗓️ Planner</button>
-        <button class="nav-pill" onclick="showPlayerSection('club-feed')">📱 Feed</button>
-        <button class="nav-pill" onclick="showPlayerSection('club-messenger')">💬 Messages</button>
-        <button class="nav-pill" onclick="showPlayerSection('career')">🏅 Career</button>
-        <button class="nav-pill" onclick="showPlayerSection('finance')">💳 Finance</button>
-        <button class="nav-pill" onclick="showPlayerSection('discover')">🌍 Discover</button>
+          </button>
+          <div class="nav-dropdown-menu">
+            <button onclick="showPlayerSection('club-finder')">🏢 Club Finder</button>
+            <button onclick="showPlayerSection('venue-booking')">🏟️ Book Venues</button>
+            <button onclick="showPlayerSection('event-finder')">📅 Find Events</button>
+          </div>
+        </div>
       </div>
 
       <div class="dashboard-content">
@@ -270,7 +295,7 @@
 
         <!-- Overview -->
         <!-- 🧵 Club Feed Section (Blog Roll Style) -->
-        <div id="club-feed" class="dashboard-section" style="display: none;">
+        <div id="player-club-feed" class="dashboard-section" style="display: none;">
           <div class="section-header" style="margin-bottom: 2rem;">
             <h1 class="neon-text">Community Feed</h1>
             <p>Stay updated with the latest news, blogs, and announcements.</p>
@@ -326,7 +351,7 @@
         </div>
 
         <!-- 💬 Premium Messaging Section -->
-        <div id="club-messenger" class="dashboard-section" style="display: none;">
+        <div id="player-club-messenger" class="dashboard-section" style="display: none;">
           <div class="section-header"
             style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
             <div>
@@ -358,6 +383,30 @@
         </div>
 
         <div id="player-overview" class="dashboard-section active">
+          <!-- Player Stats Row -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.75rem;">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;">
+              <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">My Groups</div>
+              <div style="font-size:2rem;font-weight:900;color:#fff;margin-top:0.25rem;" id="playerGroupCount">2</div>
+              <div style="font-size:0.78rem;color:#4ade80;margin-top:0.2rem;">Active memberships</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;">
+              <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Next Session</div>
+              <div style="font-size:1.3rem;font-weight:900;color:#fff;margin-top:0.25rem;">Tue 18:00</div>
+              <div style="font-size:0.78rem;color:#60a5fa;margin-top:0.2rem;">Training · Astro Pitch 2</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;">
+              <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Attendance</div>
+              <div style="font-size:2rem;font-weight:900;color:#fff;margin-top:0.25rem;">84%</div>
+              <div style="font-size:0.78rem;color:#4ade80;margin-top:0.2rem;">↑ 4% this month</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;">
+              <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Subscription</div>
+              <div style="font-size:1.3rem;font-weight:900;color:#4ade80;margin-top:0.25rem;" id="playerSubStatus">Paid ✓</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;">Next due: 1 May</div>
+            </div>
+          </div>
+
           <div class="dashboard-layout-sidebar">
             <!-- Main Column: Activity Feed -->
             <div class="feed-column">
@@ -365,6 +414,7 @@
                 <h2 class="neon-text">Activity Feed</h2>
                 <p>Latest updates from your coaches and groups</p>
               </div>
+
 
               <!-- Post Creator (Coach/Admin Only usually, but let's keep it for demo) -->
               <div class="premium-feed-item" style="padding: 1rem; margin-bottom: 2rem;">

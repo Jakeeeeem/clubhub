@@ -16,44 +16,45 @@ const UnifiedNav = {
   init() {
     console.log("🚀 Unified Nav Initializing...");
     
-    // Always start with a cleanup to ensure a premium state
-    this.cleanupLegacyArtifacts();
-    
-    // Standardize breakpoints
     const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
     const isDashboard = window.location.pathname.includes('dashboard') || 
                        document.body.classList.contains('dashboard-page') ||
-                       document.querySelector('.dashboard-container') ||
-                       document.querySelector('.dashboard-main');
+                       !!document.querySelector('.dashboard-container') ||
+                       !!document.querySelector('.dashboard-main');
     const isLandingPage = window.location.pathname.endsWith('index.html') || 
                          window.location.pathname.endsWith('/') || 
                          window.location.pathname === '';
 
     if (!isDesktop) {
-      console.log("📱 Mobile View Detected");
+      // ── MOBILE ──────────────────────────────────────────────────────────────
+      // On mobile we replace the header with the compact unified bar,
+      // add the slide-out sidebar and the bottom nav tab bar.
+      console.log("📱 Mobile: rendering unified nav");
+      this.cleanupLegacyArtifacts(); // only strip legacy elements on mobile
       this.renderHeader();
       this.renderSidebar();
       this.renderBottomNav();
       this.renderMenu();
       this.renderMobileHeaderElements();
     } else {
-      console.log("💻 Desktop View Detected");
-      if (!isDashboard && !isLandingPage) {
-        this.ensureHeaderElements();
-      } else {
-        this.renderHeader();
-        this.renderMenu();
-        this.renderBottomNav();
+      // ── DESKTOP ─────────────────────────────────────────────────────────────
+      // On desktop dashboards we LEAVE the existing header HTML untouched.
+      // The original header already contains the Group/Player toggle, org
+      // switcher, greeting and avatar — we only top-up the dynamic data.
+      console.log("💻 Desktop: leaving dashboard header intact");
+      if (isDashboard || isLandingPage) {
+        // Just wire up the profile dropdown and refresh user data
         this.renderProfileDropdown();
         this.updateHeaderState();
+      } else {
+        // Non-dashboard desktop pages (e.g. settings pages)
+        this.ensureHeaderElements();
       }
     }
     
     this.bindEvents();
     this.syncUserData();
     this.autoLabelTables();
-
-    // Ensure sidebar is closed initially if present
     this.toggleSidebar(false);
   },
 

@@ -1,681 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Scout Hub | ClubHub</title>
-
-    <!-- PWA Meta Tags -->
-    <meta name="description" content="Professional scouting and talent discovery platform">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scout Dashboard — ClubHub</title>
     <meta name="theme-color" content="#dc4343">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="images/logo.png">
-    <link rel="apple-touch-icon" href="images/logo.png">
-
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="group-switcher.css">
+    <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="unified-nav.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-
     <style>
-        .verified-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(34, 197, 94, 0.1);
-            color: #4ade80;
-            padding: 4px 12px;
-            border-radius: 100px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            border: 1px solid rgba(34, 197, 94, 0.2);
-        }
-
-        .rating-stars {
-            color: #fbbf24;
-            font-size: 0.9rem;
-        }
-
-        .player-card-compact {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .player-card-compact:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary-glass-border);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-        }
-
-        .pot-high { background: #4ade80 !important; }
-        .pot-low { background: #3b82f6 !important; }
-
-        @media (max-width: 768px) {
-            .filters-grid {
-                grid-template-columns: 1fr !important;
-            }
-            .dashboard-header {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-            }
-        }
+        .feed-entry { display:flex; gap:1rem; padding:1rem 0; border-bottom:1px solid rgba(255,255,255,0.05); align-items:flex-start; }
+        .feed-entry:last-child { border-bottom:none; }
+        .feed-icon { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+        .feed-meta { flex:1; }
+        .feed-meta strong { display:block; font-size:0.9rem; color:#f1f5f9; margin-bottom:2px; }
+        .feed-meta span { font-size:0.78rem; color:var(--text-muted); }
+        .feed-time { font-size:0.72rem; color:rgba(255,255,255,0.3); white-space:nowrap; }
+        .stat-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:1.5rem; }
+        .stat-card .stat-label { font-size:0.72rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+        .stat-card .stat-number { font-size:2.2rem; font-weight:900; color:#fff; display:block; margin-top:0.25rem; }
+        .stat-card .stat-change { font-size:0.78rem; margin-top:0.25rem; color:#4ade80; }
+        .quick-action-btn { display:flex; align-items:center; gap:0.75rem; width:100%; padding:0.85rem 1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; color:#f1f5f9; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; text-align:left; }
+        .quick-action-btn:hover { background:rgba(220,38,38,0.08); border-color:rgba(220,38,38,0.3); }
+        .talent-card { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+        .talent-card:last-child { border-bottom:none; }
+        .rating-badge { padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; background:rgba(251,191,36,0.15); color:#fbbf24; }
+        @media(max-width:768px){ .dash-grid { grid-template-columns:1fr !important; } .stats-row { grid-template-columns:1fr 1fr !important; } }
     </style>
 </head>
-
 <body>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
-    <header class="header pro-header"></header>
 
-    <main class="main dashboard-main" style="padding-top: 100px;">
+    <header class="header">
+        <nav class="nav container" id="loggedInNav">
+            <div class="dash-header-left">
+                <div class="logo" onclick="window.location.href='index.html'" style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
+                    <img src="images/logo.png" alt="ClubHub" class="logo-image">
+                    <span class="logo-text neon-text">ClubHub</span>
+                </div>
+                <div class="mode-toggle-container">
+                    <span class="mode-label active" id="group-label">Group</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mode-toggle" onchange="if(this.checked)window.location.href='player-dashboard.html'">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="mode-label" id="player-label">Player</span>
+                </div>
+                <div id="org-switcher-container"></div>
+            </div>
+            <div class="dash-header-right">
+                <span class="user-name desktop-only" id="scoutGreeting">Hello, Scout!</span>
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav && UnifiedNav.toggleProfileDropdown(true)">
+                    <div class="user-avatar-sm" id="header-user-avatar">S</div>
+                </div>
+                <button class="btn btn-secondary btn-small desktop-only" onclick="handleLogout ? handleLogout() : (window.location.href='index.html')">Logout</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main dashboard-main">
         <div class="container dashboard-container">
 
-            <!-- Desktop Sidebar Navigation (Horizontal for Premium Feel) -->
-            <div class="dashboard-nav-grouped desktop-only" style="margin-bottom: 2.5rem; display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 10px;">
-                <button class="nav-item active" onclick="showScoutSection('discovery')">🔍 Discover</button>
-                <button class="nav-item" onclick="showScoutSection('watchlist')">⭐ Watchlist</button>
-                <button class="nav-item" onclick="showScoutSection('reports')">📝 Reports</button>
-                <button class="nav-item" onclick="showScoutSection('analytics')">📊 Analytics</button>
-                <button class="nav-item" onclick="showScoutSection('feed')">🧵 Feed</button>
-                <button class="nav-item" onclick="showScoutSection('messenger')">💬 Messenger</button>
-                <button class="nav-item" onclick="showScoutSection('verification')">🛡️ Verification</button>
+            <div style="margin-bottom:1.5rem;">
+                <h1 class="neon-text" style="font-size:1.6rem;margin:0;">Scout Hub</h1>
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-top:0.25rem;">Talent identification, player watchlists, and recruitment reports.</p>
             </div>
 
-            <!-- Discovery Section -->
+            <!-- Dashboard Sections -->
             <div id="scout-discovery" class="dashboard-section active">
-                <div class="dashboard-header"
-                    style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
+                <!-- Platform Stats -->
+                <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
+                    <div class="stat-card">
+                        <span class="stat-label">Watchlist</span>
+                        <span class="stat-number">18</span>
+                        <div class="stat-change">↑ 4 added this week</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Reports Filed</span>
+                        <span class="stat-number">34</span>
+                        <div class="stat-change">↑ 8 this month</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Matches Attended</span>
+                        <span class="stat-number">12</span>
+                        <div class="stat-change">This season</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Top Prospects</span>
+                        <span class="stat-number" style="color:#fbbf24;">5</span>
+                        <div class="stat-change" style="color:#fbbf24;">Rated 4.5+ stars</div>
+                    </div>
+                </div>
+
+                <div class="dash-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;">
+                    <!-- Activity Feed -->
                     <div>
-                        <h1 class="neon-text">Talent Discovery</h1>
-                        <p style="color: var(--text-muted);">Browse identified elite talent across all registered
-                            groups.</p>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 600px;">
-                        <div style="display: flex; gap: 1rem; width: 100%;">
-                            <input type="text" id="playerSearch" placeholder="Search by name, position or group..."
-                                onkeyup="loadTalentPool()"
-                                style="flex: 1; padding: 0.8rem 1.2rem; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03);">
-                        </div>
-                        <div class="filters-grid"
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem;">
-                            <select id="positionFilter" class="glass-btn" onchange="loadTalentPool()">
-                                <option value="">All Positions</option>
-                                <option value="GK">Goalkeeper</option>
-                                <option value="DEF">Defender</option>
-                                <option value="MID">Midfielder</option>
-                                <option value="FWD">Forward</option>
-                            </select>
-                            <select id="ageFilter" class="glass-btn" onchange="loadTalentPool()">
-                                <option value="">Any Age</option>
-                                <option value="U14">U14</option>
-                                <option value="U16">U16</option>
-                                <option value="U18">U18</option>
-                                <option value="U21">U21</option>
-                            </select>
-                            <select id="sportFilter" class="glass-btn" onchange="loadTalentPool()">
-                                <option value="">All Sports</option>
-                                <option value="football">Football</option>
-                                <option value="basketball">Basketball</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="discoveryGrid" class="card-grid"
-                    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
-                    <!-- Populated by JS -->
-                    <div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;">
-                        <p class="loading-text">Scanning for potential talent...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Watchlist Section -->
-            <div id="scout-watchlist" class="dashboard-section" style="display: none;">
-                <div class="dashboard-header" style="margin-bottom: 2rem;">
-                    <h1 class="neon-text">My Watchlist</h1>
-                    <p style="color: var(--text-muted);">Players you are currently tracking for potential recruitment.</p>
-                </div>
-                <div id="watchlistGrid" class="card-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
-                    <div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;">
-                        <p style="opacity: 0.5;">Your watchlist is currently empty. Start discovering talent!</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reports Section -->
-            <div id="scout-reports" class="dashboard-section" style="display: none;">
-                <div class="dashboard-header" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h1 class="neon-text">Scouting Reports</h1>
-                        <p style="color: var(--text-muted);">Your professional analysis and player assessments.</p>
-                    </div>
-                    <button class="btn btn-primary btn-small" onclick="showNotification('Create report feature coming soon...', 'info')">+ New Report</button>
-                </div>
-                <div id="reportsGrid" class="card-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Analytics Section -->
-            <div id="scout-analytics" class="dashboard-section" style="display: none;">
-                <div class="dashboard-header" style="margin-bottom: 2rem;">
-                    <h1 class="neon-text">Coverage Analytics</h1>
-                    <p style="color: var(--text-muted);">Real-time data on talent distribution and scouting intensity.</p>
-                </div>
-                <div id="analyticsContainer">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Verification Section -->
-            <div id="scout-verification" class="dashboard-section" style="display: none;">
-                <div class="dashboard-header" style="margin-bottom: 2rem;">
-                    <h1 class="neon-text">Scout Verification</h1>
-                    <p style="color: var(--text-muted);">Upgrade your status to access sensitive data and advanced
-                        analytics.</p>
-                </div>
-
-                <div class="glass-card"
-                    style="max-width: 800px; padding: 2.5rem; border: 1px solid var(--primary-glass-border);">
-                    <div id="verificationStatusCard">
-                        <h3>Status: <span id="currentStatusText" style="color: var(--primary);">Unverified</span></h3>
-                        <p style="margin: 1.5rem 0; color: var(--text-muted); line-height: 1.7;">
-                            Verified scouts are granted professional credentials within the ClubHub ecosystem.
-                            This allows you to view direct contact details for parents (for youth players) and players,
-                            access historical performance data, and view market valuations.
-                        </p>
-
-                        <form id="scoutVerificationForm" onsubmit="handleScoutVerification(event)">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
-                                <div class="form-group">
-                                    <label>Professional ID / Passport URL</label>
-                                    <input type="url" name="id_card_url" placeholder="Link to ID image or PDF"
-                                        required
-                                        style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                        <div class="glass-card" style="padding:1.5rem;">
+                            <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                                <span style="font-size:1rem;font-weight:700;color:#fff;">🔍 Scouting Activity</span>
+                            </div>
+                            <div id="scoutFeed">
+                                <div class="feed-entry">
+                                    <div class="feed-icon" style="background:rgba(251,191,36,0.1);color:#fbbf24;">⭐</div>
+                                    <div class="feed-meta">
+                                        <strong>Added to watchlist — Jaylen Okafor</strong>
+                                        <span>U19 · Midfielder · Elite FC · Rating: 4.7/5</span>
+                                    </div>
+                                    <span class="feed-time">15m ago</span>
                                 </div>
-                                <div class="form-group">
-                                    <label>Club Recommendation / License URL</label>
-                                    <input type="url" name="club_letter_url" placeholder="Link to license or letter"
-                                        required
-                                        style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white;">
+                                <div class="feed-entry">
+                                    <div class="feed-icon" style="background:rgba(96,165,250,0.1);color:#60a5fa;">📋</div>
+                                    <div class="feed-meta">
+                                        <strong>Report submitted — Riverside Cup final</strong>
+                                        <span>3 players evaluated · 1 flagged as prospect</span>
+                                    </div>
+                                    <span class="feed-time">2h ago</span>
                                 </div>
                             </div>
-                            <div class="form-group" style="margin-bottom: 2rem;">
-                                <label>Additional Notes</label>
-                                <textarea name="notes" placeholder="Tell us about your scouting experience..."
-                                    style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white; min-height: 100px;"></textarea>
+                        </div>
+
+                        <!-- Fixtures Table -->
+                        <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
+                            <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                                <span style="font-size:1rem;font-weight:700;color:#fff;">📅 Upcoming Fixtures</span>
+                                <button class="btn btn-secondary btn-small" style="margin-left:auto;" onclick="showScoutSection('fixtures')">View All</button>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-large">Submit for Verification</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 🧵 Community Feed Section -->
-            <div id="scout-feed" class="dashboard-section" style="display: none;">
-                <div class="dashboard-header" style="margin-bottom: 2rem;">
-                    <h1 class="neon-text">Community Feed</h1>
-                    <p style="color: var(--text-muted);">Stay updated with the latest news, scouting blogs, and talent
-                        updates.</p>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2.5rem; align-items: start;">
-                    <div id="communityFeedContainer" class="community-feed">
-                        <!-- Blog roll items -->
-                        <div class="stat-card">Loading community feed...</div>
+                            <p style="color:var(--text-muted);font-size:0.875rem;">Loading match schedule...</p>
+                        </div>
                     </div>
 
-                    <aside class="feed-sidebar">
-                        <div class="glass-card" style="padding: 1.5rem; position: sticky; top: 120px;">
-                            <h4 style="margin-bottom: 1rem; font-family: var(--font-heading);">Market Insights</h4>
-                            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem;">
-                                <div class="stat-card" style="padding: 0.75rem; background: rgba(34, 197, 94, 0.05);">
-                                    <span style="display: block; font-size: 0.65rem; color: var(--text-muted);">TALENT
-                                        LIQUIDITY</span>
-                                    <strong style="color: #4ade80;">High (+15%)</strong>
+                    <!-- Right Column -->
+                    <div style="display:flex;flex-direction:column;gap:1.5rem;">
+                        <div class="glass-card" style="padding:1.5rem;">
+                            <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">⚡ Quick Actions</div>
+                            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                                <button class="quick-action-btn" onclick="window.location.href='scouting.html'"><i>🔍</i> Discover Players</button>
+                                <button class="quick-action-btn" onclick="showScoutSection('reports')"><i>📋</i> New Scout Report</button>
+                                <button class="quick-action-btn" onclick="showScoutSection('watchlist')"><i>⭐</i> My Watchlist</button>
+                            </div>
+                        </div>
+
+                        <!-- Talent Preview -->
+                        <div class="glass-card" style="padding:1.5rem;">
+                            <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">⭐ Top Prospects</div>
+                            <div id="watchlistPreview">
+                                <div class="talent-card">
+                                    <div style="flex:1;"><div style="font-size:0.85rem;font-weight:600;color:#f1f5f9;">Marcus Thompson</div><div style="font-size:0.72rem;color:var(--text-muted);">Forward · U18</div></div>
+                                    <span class="rating-badge">⭐ 5.0</span>
                                 </div>
-                                <div class="stat-card" style="padding: 0.75rem; background: rgba(59, 130, 246, 0.05);">
-                                    <span style="display: block; font-size: 0.65rem; color: var(--text-muted);">ACTIVE
-                                        SCOUTS</span>
-                                    <strong style="color: #60a5fa;">412 👥</strong>
+                                <div style="padding-top:0.75rem;text-align:center;">
+                                    <button class="btn btn-secondary btn-small" style="width:100%;" onclick="showScoutSection('watchlist')">View Watchlist</button>
                                 </div>
                             </div>
-                            <h4 style="margin-bottom: 1rem; font-family: var(--font-heading);">Trending Tags</h4>
-                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                                <span class="feed-tag">#Under16Elite</span>
-                                <span class="feed-tag">#BallControl</span>
-                                <span class="feed-tag">#GoalCreators</span>
-                            </div>
-                        </div>
-                    </aside>
-                </div>
-            </div>
-
-            <!-- 💬 Messaging Section -->
-            <div id="scout-messenger" class="dashboard-section" style="display: none;">
-                <div class="dashboard-header"
-                    style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h1 class="neon-text">Messages</h1>
-                        <p style="color: var(--text-muted);">Direct communication with group administrators and
-                            players/parents.</p>
-                    </div>
-                </div>
-
-                <div class="messaging-container" style="height: 70vh;">
-                    <div class="message-sidebar">
-                        <div class="sidebar-header">
-                            <input type="text" class="chat-input" placeholder="Search contacts..." style="width: 100%;">
-                        </div>
-                        <div id="messengerListItems" class="message-list">
-                            <!-- Message items will be loaded here -->
-                            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
-                                Loading conversations...
-                            </div>
-                        </div>
-                    </div>
-                    <div class="message-view" id="messageViewContainer">
-                        <div class="message-view-empty">
-                            <div style="font-size: 3rem; opacity: 0.2;">💬</div>
-                            <p>Select a contact to start messaging</p>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Other Scout Sections -->
+            <div id="scout-watchlist" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">My Watchlist</h2>
+                <p style="color:var(--text-muted);">Track and compare your top scouting prospects.</p>
+            </div>
+
+            <div id="scout-fixtures" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">Match Fixtures</h2>
+                <p style="color:var(--text-muted);">Browse upcoming matches and assign scouting targets.</p>
+            </div>
+
+            <div id="scout-reports" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">Scout Reports</h2>
+                <p style="color:var(--text-muted);">Draft and submit professional player evaluation reports.</p>
+            </div>
+
+            <div id="scout-messenger" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">Communications</h2>
+                <p style="color:var(--text-muted);">Secure messaging with clubs and colleagues.</p>
+            </div>
         </div>
     </main>
-
-    <script>
-        // Scout Specific Logic
-        document.addEventListener('DOMContentLoaded', async () => {
-            const isLoggedIn = await checkAuthStatus();
-            if (!isLoggedIn) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            const user = JSON.parse(localStorage.getItem('currentUser'));
-            if (user) {
-                document.getElementById('scoutNameDisplay').textContent = `${user.firstName || user.first_name} ${user.lastName || user.last_name}`;
-                document.getElementById('userInitial').textContent = (user.firstName || user.first_name || 'S').charAt(0);
-
-                // Set verification status
-                updateVerificationUI(user);
-            }
-
-            // Initialize Discovery
-            loadTalentPool();
-        });
-
-        function updateVerificationUI(user) {
-            const badgeContainer = document.getElementById('scoutStatusBadge');
-            const statusText = document.getElementById('currentStatusText');
-
-            if (user.isVerifiedScout || user.scout_verified || user.is_verified_scout) {
-                badgeContainer.innerHTML = '<span class="verified-badge">✓ Verified Scout</span>';
-                if (statusText) statusText.innerHTML = '<span style="color: #4ade80;">Verified Professional</span>';
-            } else if (user.scout_verification_status === 'pending') {
-                badgeContainer.innerHTML = '<span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #60a5fa;">⏳ Verification Pending</span>';
-                if (statusText) statusText.innerHTML = '<span style="color: #60a5fa;">Review in Progress</span>';
-                
-                // Update form to show pending state
-                const formArea = document.getElementById('verificationStatusCard');
-                if (formArea) {
-                    formArea.innerHTML = `
-                        <div style="text-align: center; padding: 2rem;">
-                            <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">⏳</span>
-                            <h3>Verification Pending</h3>
-                            <p style="color: var(--text-muted); margin-top: 1rem;">Your documents are being reviewed by the ClubHub team. This usually takes 24-48 hours.</p>
-                        </div>
-                    `;
-                }
-            } else {
-                badgeContainer.innerHTML = '<span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted);">Standard Scout</span>';
-            }
-        }
-
-        function showScoutSection(sectionId) {
-            console.log(`🚀 Scout switching to section: ${sectionId}`);
-
-            // Hide all
-            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
-            
-            // Show target
-            const target = document.getElementById(`scout-${sectionId}`);
-            if (target) {
-                target.style.display = 'block';
-            }
-
-            // Update desktop nav buttons
-            document.querySelectorAll('.dashboard-nav-grouped .nav-item').forEach(btn => {
-                const text = btn.textContent.toLowerCase();
-                if (text.includes(sectionId)) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-
-            // Load section data
-            if (sectionId === 'discovery') loadTalentPool();
-            if (sectionId === 'watchlist') loadWatchlist();
-            if (sectionId === 'reports') loadScoutingReports();
-            if (sectionId === 'analytics') loadScoutingAnalytics();
-            if (sectionId === 'feed') loadCommunityFeed();
-            if (sectionId === 'messenger') loadMessengerConversations();
-        }
-
-        async function loadWatchlist() {
-            const grid = document.getElementById('watchlistGrid');
-            if (!grid) return;
-            
-            grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p class="loading-text">Loading your watchlist...</p></div>';
-
-            try {
-                // Fetch watchlist from scouting API
-                const watchlist = await apiService.makeRequest('/scouting/watchlist').catch(() => []);
-                
-                if (!watchlist || watchlist.length === 0) {
-                    grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p style="opacity: 0.5;">Your watchlist is currently empty. Start discovering talent!</p></div>';
-                    return;
-                }
-
-                grid.innerHTML = watchlist.map(item => `
-                    <div class="glass-card" style="padding: 1.5rem; border: 1px solid var(--border-color); position: relative; overflow: hidden; height: 100%; display: flex; flex-direction: column;">
-                        <span class="badge" style="position: absolute; top: 1rem; right: 1rem; background: var(--primary-glass); color: var(--primary);">⭐ Tracked</span>
-                        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                            <div class="user-avatar-sm" style="width: 50px; height: 50px; font-size: 1.2rem; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center;">
-                                ${(item.player_name || 'P').charAt(0)}
-                            </div>
-                            <div>
-                                <h3 style="margin: 0; font-size: 1.1rem;">${item.player_name}</h3>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">${item.position || 'Player'} | ${item.age || 'N/A'}</div>
-                                <div style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">${item.club_name || 'Academy'}</div>
-                            </div>
-                        </div>
-                        <div style="flex-grow: 1;">
-                            <div style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--text-muted);">
-                                <b>Latest Rating:</b> ${item.rating || 'N/A'}/10
-                            </div>
-                            <p style="font-size: 0.8rem; line-height: 1.5; opacity: 0.8; margin-bottom: 1rem;">
-                                ${item.notes || 'No recent notes added for this player.'}
-                            </p>
-                        </div>
-                        <div style="display: flex; gap: 0.5rem; margin-top: auto;">
-                            <button class="btn btn-primary btn-small" style="flex: 1;" onclick="requestContact('${item.id}')">Contact</button>
-                            <button class="btn btn-secondary btn-small" onclick="removeFromWatchlist('${item.id}')">✕</button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('Failed to load watchlist:', error);
-                grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p style="color: var(--primary);">Error loading watchlist. Please try again.</p></div>';
-            }
-        }
-
-        async function loadTalentPool() {
-            const grid = document.getElementById('discoveryGrid');
-            const searchInput = document.getElementById('playerSearch');
-            const search = searchInput ? searchInput.value : '';
-            const pos = document.getElementById('positionFilter') ? document.getElementById('positionFilter').value : '';
-            const age = document.getElementById('ageFilter') ? document.getElementById('ageFilter').value : '';
-            const sport = document.getElementById('sportFilter') ? document.getElementById('sportFilter').value : '';
-
-            try {
-                const filters = {};
-                if (search) filters.query = search;
-                if (pos) filters.position = pos;
-                if (age) filters.age = age;
-                if (sport) filters.sport = sport;
-
-                // Load real talent pool via API
-                const players = await apiService.makeRequest(`/players/scout?${new URLSearchParams(filters)}`);
-
-                if (!players || players.length === 0) {
-                    grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p style="opacity: 0.5;">No elite talent currently matches your criteria.</p></div>';
-                    return;
-                }
-
-                grid.innerHTML = players.map(player => {
-                    const marketValue = (Math.random() * 20 + 5).toFixed(1);
-                    const pot = Math.floor(Math.random() * 30 + 65);
-                    const potClass = pot > 85 ? 'pot-high' : 'pot-low';
-                    
-                    return `
-                    <div class="glass-card player-card-compact" style="padding: 1.5rem; position: relative; overflow: hidden;">
-                        <div class="pot-indicator ${potClass}" style="position: absolute; top:0; left:0; width:4px; height:100%;"></div>
-                        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
-                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), #991b1b); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: white; border: 1px solid rgba(255,255,255,0.1);">
-                                ${player.first_name?.charAt(0) || 'P'}
-                            </div>
-                            <div style="flex: 1;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <h4 style="margin: 0; font-family: 'Outfit'; font-size: 1.1rem;">${player.first_name} ${player.last_name}</h4>
-                                    ${pot > 90 ? '<span style="font-size: 0.6rem; background: gold; color: black; padding: 2px 5px; border-radius: 4px; font-weight: 900;">ELITE</span>' : ''}
-                                </div>
-                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">${player.position || 'Unknown'} • U${player.age || '??'}</span>
-                            </div>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem;">
-                            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                                <span style="display: block; opacity: 0.5; font-size: 0.6rem; letter-spacing: 1px;">VALUE</span>
-                                <strong style="color: #4ade80;">£${marketValue}M</strong>
-                            </div>
-                            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                                <span style="display: block; opacity: 0.5; font-size: 0.6rem; letter-spacing: 1px;">POTENTIAL</span>
-                                <strong style="color: #60a5fa;">${pot}%</strong>
-                            </div>
-                        </div>
-
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button class="btn btn-primary btn-small" style="flex: 1; font-weight: 700;" onclick="viewFullReport('${player.id}')">Full Intel</button>
-                            <button class="glass-btn btn-small" style="padding: 0 12px;" onclick="requestContact('${player.id}')">Enquire</button>
-                        </div>
-                    </div>
-                `;}).join('');
-
-            } catch (error) {
-                console.error('Error loading talent pool:', error);
-                grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p style="color: var(--primary);">Unable to connect to scouting database. Check recruitment API.</p></div>';
-            }
-        }
-
-        async function loadScoutingReports() {
-            const grid = document.getElementById('reportsGrid');
-            grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p class="loading-text">Fetching professional reports...</p></div>';
-            
-            try {
-                const reports = await apiService.getScoutingReports();
-
-                if (!reports || reports.length === 0) {
-                    grid.innerHTML = '<div class="glass-card" style="padding: 3rem; text-align: center; grid-column: 1/-1;"><p style="opacity: 0.5;">No scouting reports found for your account.</p></div>';
-                    return;
-                }
-
-                grid.innerHTML = reports.map(r => `
-                    <div class="glass-card" style="padding: 1.5rem; border: 1px solid var(--primary-glass-border);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                            <div>
-                                <h3 style="margin: 0; font-family: 'Outfit';">${r.player_name}</h3>
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Reported by ${r.scout_name}</p>
-                            </div>
-                            <div class="rating-stars">
-                                ${'★'.repeat(r.overall_rating || 0)}${'☆'.repeat(5 - (r.overall_rating || 0))}
-                            </div>
-                        </div>
-                        
-                        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                            <div style="flex: 1; text-align: center; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 8px;">
-                                <span style="display: block; font-size: 0.6rem; opacity: 0.5;">TECH</span>
-                                <strong>${r.technical_ability || 0}/5</strong>
-                            </div>
-                            <div style="flex: 1; text-align: center; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 8px;">
-                                <span style="display: block; font-size: 0.6rem; opacity: 0.5;">TACT</span>
-                                <strong>${r.tactical_awareness || 0}/5</strong>
-                            </div>
-                            <div style="flex: 1; text-align: center; padding: 0.5rem; background: rgba(255,255,255,0.02); border-radius: 8px;">
-                                <span style="display: block; font-size: 0.6rem; opacity: 0.5;">PHYS</span>
-                                <strong>${r.physical_presence || 0}/5</strong>
-                            </div>
-                        </div>
-
-                        <p style="font-size: 0.9rem; font-style: italic; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">"${r.notes || 'No notes provided.'}"</p>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-                            <span>${new Date(r.created_at).toLocaleDateString()}</span>
-                            <button class="btn-link" style="color: var(--primary);">Full Details →</button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                grid.innerHTML = '<p class="text-error">Failed to load reports.</p>';
-            }
-        }
-
-        async function loadScoutingAnalytics() {
-            const container = document.getElementById('analyticsContainer');
-            if (!container) return;
-            container.innerHTML = '<p class="loading-text">Calculating coverage stats...</p>';
-
-            try {
-                const analytics = await apiService.getScoutingAnalytics();
-                container.innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-                        <div class="glass-card" style="padding: 2rem; text-align: center;">
-                            <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">TOTAL REPORTS</span>
-                            <div style="font-size: 2.5rem; font-weight: 800; color: var(--primary);">${analytics.total_reports || 0}</div>
-                        </div>
-                        <div class="glass-card" style="padding: 2rem; text-align: center;">
-                            <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">VERIFIED SCOUTS</span>
-                            <div style="font-size: 2.5rem; font-weight: 800; color: #22c55e;">${analytics.verified_scouts || 0}</div>
-                        </div>
-                        <div class="glass-card" style="padding: 2rem; text-align: center;">
-                            <span style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">PLAYER COVERAGE</span>
-                            <div style="font-size: 2.5rem; font-weight: 800; color: #3b82f6;">${analytics.players_with_reports || 0}</div>
-                        </div>
-                    </div>
-                `;
-            } catch (error) {
-                container.innerHTML = '<p class="text-error">Failed to load analytics data.</p>';
-            }
-        }
-
-        async function handleScoutVerification(e) {
-            e.preventDefault();
-            const form = e.target;
-            const btn = form.querySelector('button');
-            const data = Object.fromEntries(new FormData(form).entries());
-
-            try {
-                btn.disabled = true;
-                btn.textContent = 'Submitting...';
-
-                await apiService.submitScoutVerification(data);
-
-                showNotification('Verification request sent successfully!', 'success');
-                
-                const user = JSON.parse(localStorage.getItem('currentUser'));
-                user.scout_verification_status = 'pending';
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                
-                updateVerificationUI(user);
-            } catch (error) {
-                showNotification('Submission failed: ' + error.message, 'error');
-                btn.disabled = false;
-                btn.textContent = 'Submit for Verification';
-            }
-        }
-
-        async function requestContact(playerId) {
-            try {
-                const user = JSON.parse(localStorage.getItem('currentUser'));
-                if (!user.isVerifiedScout && !user.scout_verified && !user.is_verified_scout) {
-                    showNotification('You must be a Verified Scout to request direct contact.', 'warning');
-                    showScoutSection('verification');
-                    return;
-                }
-
-                await apiService.requestScoutContact(user.id, playerId);
-                showNotification('Contact request sent! The player\'s group will contact you soon.', 'success');
-            } catch (error) {
-                showNotification('Failed to send request: ' + error.message, 'error');
-            }
-        }
-
-        async function loadCommunityFeed() {
-            const container = document.getElementById('communityFeedContainer');
-            if (!container) return;
-            
-            try {
-                const user = JSON.parse(localStorage.getItem('currentUser'));
-                const orgId = user.groupId || 'demo-club-id';
-                const feed = await apiService.getFeed(orgId);
-                
-                if (!feed || feed.length === 0) {
-                    container.innerHTML = '<p style="text-align:center; opacity:0.5; padding: 2rem;">No community updates found.</p>';
-                    return;
-                }
-                
-                container.innerHTML = feed.map(item => `
-                    <div class="glass-card" style="padding: 1.5rem; margin-bottom: 1rem;">
-                        <h4 style="margin: 0 0 0.5rem 0;">${item.title}</h4>
-                        <p style="font-size: 0.9rem; color: var(--text-muted);">${item.content}</p>
-                        <small style="opacity: 0.5;">${new Date(item.created_at).toLocaleDateString()}</small>
-                    </div>
-                `).join('');
-            } catch (error) {
-                container.innerHTML = '<p class="text-error">Failed to load feed items.</p>';
-            }
-        }
-
-        async function loadMessengerConversations() {
-            const listContainer = document.getElementById('messengerListItems');
-            if (!listContainer) return;
-            
-            try {
-                const user = JSON.parse(localStorage.getItem('currentUser'));
-                const orgId = user.groupId || 'demo-club-id';
-                const convos = await apiService.getMessengerConversations(orgId);
-                
-                if (!convos || convos.length === 0) {
-                    listContainer.innerHTML = '<p style="text-align:center; opacity:0.5; padding: 2rem;">No active conversations.</p>';
-                    return;
-                }
-                
-                listContainer.innerHTML = convos.map(c => `
-                    <div class="message-item" onclick="loadMessages('${c.id}')">
-                        <strong>${c.participant_name || 'Group Chat'}</strong>
-                        <p style="font-size: 0.8rem; margin: 0; opacity: 0.7;">${c.last_message || 'No messages yet'}</p>
-                    </div>
-                `).join('');
-            } catch (error) {
-                listContainer.innerHTML = '<p class="text-error">Failed to load conversations.</p>';
-            }
-        }
-
-        function viewFullReport(playerId) {
-            showNotification('Loading professional scout briefing...', 'info');
-        }
-    </script>
 
     <nav class="pro-bottom-nav mobile-only">
         <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
     </nav>
 
-    <!-- Core Dependencies -->
     <script src="api-service.js"></script>
     <script src="enhanced-login-handler.js"></script>
+    <script src="group-switcher.js"></script>
     <script src="pwa-install.js"></script>
     <script src="unified-nav.js"></script>
-</body>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            if (user && user.firstName) {
+                const el = document.getElementById('scoutGreeting');
+                if (el) el.textContent = `Hello, ${user.firstName}!`;
+                const av = document.getElementById('header-user-avatar');
+                if (av) av.textContent = (user.firstName || 'S').charAt(0).toUpperCase();
+            }
+        });
 
+        function showScoutSection(id) {
+            document.querySelectorAll('.dashboard-section').forEach(s => {
+                s.style.display = 'none';
+                s.classList.remove('active');
+            });
+            const t = document.getElementById('scout-' + id);
+            if (t) {
+                t.style.display = 'block';
+                t.classList.add('active');
+            }
+        }
+    </script>
+</body>
 </html>

@@ -2987,8 +2987,11 @@ function showPlayerSection(sectionId) {
     .querySelectorAll(".dashboard-nav-grouped button, .nav-pill")
     .forEach((b) => b.classList.remove("active"));
 
-  const target = byId("player-" + sectionId);
-  if (target) target.classList.add("active");
+  const target = byId("player-" + sectionId) || byId(sectionId);
+  if (target) {
+    target.classList.add("active");
+    target.style.display = "block"; // Ensure it's visible if manually hidden
+  }
 
   // Sync with Mobile Tabs and Bottom Nav (Threads Style)
   const allNavLinks = document.querySelectorAll(".nav-link, .tab-item, .nav-pill");
