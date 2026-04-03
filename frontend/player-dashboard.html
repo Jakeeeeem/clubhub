@@ -62,32 +62,7 @@
     }
     window.UNIFIED_NAV_ENABLED = true;
   </script>
-  <header class="header">
-    <nav class="nav container" id="loggedInNav">
-      <div class="dash-header-left">
-        <div class="logo" onclick="window.location.href='index.html'" style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
-          <img src="images/logo.png" alt="ClubHub" class="logo-image">
-          <span class="logo-text neon-text">ClubHub</span>
-        </div>
-        <div class="mode-toggle-container">
-          <span class="mode-label" id="group-label">Group</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="mode-toggle" onchange="if(!this.checked) window.location.href='admin-dashboard.html'" checked>
-            <span class="toggle-slider"></span>
-          </label>
-          <span class="mode-label active" id="player-label">Player</span>
-        </div>
-        <div id="org-switcher-container"></div>
-      </div>
-      <div class="dash-header-right">
-        <span class="user-name desktop-only" id="playerGreeting">Hello, Player!</span>
-        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav && UnifiedNav.toggleProfileDropdown(true)">
-          <div class="user-avatar-sm" id="header-user-avatar">P</div>
-        </div>
-        <button class="btn btn-secondary btn-small desktop-only" onclick="handleLogout ? handleLogout() : (window.location.href='index.html')">Logout</button>
-      </div>
-    </nav>
-  </header>
+  <!-- Unified Navigation will inject the Header and Sidebar automatically -->
 
   <main class="main">
     <div class="dashboard container dashboard-container">
@@ -97,54 +72,7 @@
         <p>Manage your sporting activities within <span class="display-org-name">your group</span></p>
       </div>
 
-
-      <!-- Dashboard Navigation -->
-      <!-- Grouped Dashboard Navigation -->
-      <div class="dashboard-nav-grouped desktop-only">
-        <button class="nav-item active" onclick="showPlayerSection('overview')">
-          📊 Overview
-        </button>
-
-        <!-- Career Group -->
-        <div class="nav-dropdown-container" id="nav-group-career">
-          <button class="nav-item dropdown-trigger">
-            🏅 My Career ▾
-          </button>
-          <div class="nav-dropdown-menu">
-            <button onclick="showPlayerSection('teams')">🏃 My Teams</button>
-            <button onclick="showPlayerSection('my-clubs')">🏰 My Groups</button>
-            <button onclick="showPlayerSection('documents')">📄 Documents</button>
-            <button onclick="showPlayerSection('polls')">🗳️ Polls</button>
-          </div>
-        </div>
-
-        <!-- Family & Profile -->
-        <div class="nav-dropdown-container" id="nav-group-family">
-          <button class="nav-item dropdown-trigger">
-            👥 Profile & Family ▾
-          </button>
-          <div class="nav-dropdown-menu">
-            <button onclick="showPlayerSection('profile')">👤 My Profile</button>
-            <button onclick="showPlayerSection('family')">👨‍👩‍👧‍👦 My Family</button>
-            <div class="dropdown-divider"></div>
-            <button
-              onclick="localStorage.setItem('lastDashboard', 'player-dashboard.html'); window.location.href='player-settings.html'">⚙️
-              Settings</button>
-          </div>
-        </div>
-
-        <!-- Finance & Shop -->
-        <div class="nav-dropdown-container" id="nav-group-finance">
-          <button class="nav-item dropdown-trigger">
-            💳 Shop & Finance ▾
-          </button>
-          <div class="nav-dropdown-menu">
-            <button onclick="showPlayerSection('club-finder')">🏢 Club Finder</button>
-            <button onclick="showPlayerSection('venue-booking')">🏟️ Book Venues</button>
-            <button onclick="showPlayerSection('event-finder')">📅 Find Events</button>
-          </div>
-        </div>
-      </div>
+      <div class="dashboard-content">
 
       <div class="dashboard-content">
         <!-- Profile Section -->

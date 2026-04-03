@@ -5629,3 +5629,90 @@ input:focus + .toggle-slider {
     text-transform: uppercase;
 }
 
+
+/* =============================================
+   TACTICAL BOARD PRO STYLES
+   ============================================= */
+.pitch-container {
+    background: #1a472a;
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.5);
+    position: relative;
+    user-select: none;
+}
+
+.player-pin, .equipment-pin {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    transform: translate(-50%, -50%);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+}
+
+.player-pin {
+    background: var(--primary);
+    border: 2px solid #fff;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.player-pin:active, .equipment-pin:active {
+    cursor: grabbing;
+    transform: translate(-50%, -50%) scale(1.1);
+    z-index: 100;
+}
+
+.equipment-pin {
+    width: auto;
+    height: auto;
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+}
+
+.equipment-tray .eq-item {
+    padding: 0.5rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: var(--transition);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.equipment-tray .eq-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--primary);
+    transform: translateY(-3px);
+}
+
+.tactical-sidebar select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.5rem;
+    color: #fff;
+    width: 100%;
+}
+
+#currentFrameLabel {
+    background: var(--primary-glass);
+    border: 1px solid var(--primary-glass-border);
+    border-radius: 6px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

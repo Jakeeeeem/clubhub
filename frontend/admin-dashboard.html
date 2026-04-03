@@ -38,33 +38,7 @@
 <body>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
 
-    <!-- ═══ HEADER (Desktop: full nav | Mobile: replaced by unified-nav.js) ═══ -->
-    <header class="header">
-        <nav class="nav container" id="loggedInNav">
-            <div class="dash-header-left">
-                <div class="logo" onclick="window.location.href='index.html'" style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
-                    <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                    <span class="logo-text neon-text">ClubHub</span>
-                </div>
-                <div class="mode-toggle-container">
-                    <span class="mode-label active" id="group-label">Group</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="mode-toggle" onchange="UnifiedNav.handleGlobalModeToggle(this)">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="mode-label" id="player-label">Player</span>
-                </div>
-                <div id="org-switcher-container"></div>
-            </div>
-            <div class="dash-header-right">
-                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav && UnifiedNav.toggleProfileDropdown(true)">
-                    <span class="user-name desktop-only" id="header-user-name">Loading...</span>
-                    <div class="user-avatar-sm" id="header-user-avatar">A</div>
-                </div>
-                <button class="btn btn-secondary btn-small desktop-only" onclick="handleAuthError()">Logout</button>
-            </div>
-        </nav>
-    </header>
+    <!-- Unified Navigation will inject the Header and Sidebar automatically -->
 
     <main class="main dashboard-main">
         <div class="container dashboard-container">
@@ -72,11 +46,11 @@
             <!-- Page Title -->
             <div style="margin-bottom:1.5rem;">
                 <h1 class="neon-text" style="font-size:1.6rem;margin:0;" id="dashOrgName">Admin Dashboard</h1>
-                <p style="color:var(--text-muted);font-size:0.88rem;margin-top:0.25rem;">Manage your organisation's members, events, and revenue</p>
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-top:0.25rem;">Manage your group's members, events, and revenue</p>
             </div>
 
             <!-- Dashboard Sections -->
-            <div id="admin-overview" class="dashboard-section active">
+            <div id="overview" class="dashboard-section active">
                 <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
                     <div class="stat-card">
                         <span class="stat-label">Total Members</span>
@@ -130,7 +104,7 @@
                         <!-- Members Preview -->
                         <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
                             <div class="section-title">👥 Recent Members
-                                <button class="btn btn-secondary btn-small" style="margin-left:auto;" onclick="showAdminSection('members')">View All</button>
+                                <button class="btn btn-secondary btn-small" style="margin-left:auto;" onclick="showSection('members')">View All</button>
                             </div>
                             <!-- Table... -->
                             <p style="color:var(--text-muted);font-size:0.875rem;">Loading members list...</p>
@@ -151,24 +125,38 @@
                 </div>
             </div>
 
-            <!-- Other Admin Sections -->
-            <div id="admin-members" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
-                <h2 class="neon-text">Members Management</h2>
-                <p style="color:var(--text-muted);">Accessing full member records...</p>
-                <div style="margin-top:2rem;">
-                    <button class="btn btn-primary" onclick="window.location.href='members.html'">Go to Full Members Tool</button>
+            <div id="members" class="dashboard-section" style="display:none;">
+                <div class="glass-card" style="padding:1.5rem;">
+                    <div class="section-title">👥 Member Management
+                        <button class="btn btn-primary btn-small" style="margin-left:auto;" onclick="openModal('addMemberModal')">+ Add Member</button>
+                    </div>
+                    <div id="membersListContainer">
+                        <p style="color:var(--text-muted); font-size:0.875rem;">Loading members...</p>
+                    </div>
                 </div>
             </div>
 
-            <div id="admin-events" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+            <!-- Teams Section -->
+            <div id="teams" class="dashboard-section" style="display:none;">
+                <div class="glass-card" style="padding:1.5rem;">
+                    <div class="section-title">🛡️ Team Management
+                        <button class="btn btn-primary btn-small" style="margin-left:auto;" onclick="openModal('createTeamModal')">+ Create Team</button>
+                    </div>
+                    <div id="teamsListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1rem;">
+                        <!-- Teams will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="events" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
                 <h2 class="neon-text">Events & Tournament Manager</h2>
-                <p style="color:var(--text-muted);">View and manage organization schedules.</p>
+                <p style="color:var(--text-muted);">View and manage group schedules.</p>
                 <div style="margin-top:2rem;">
                     <button class="btn btn-primary" onclick="window.location.href='tournament-manager.html'">Open Tournament Manager</button>
                 </div>
             </div>
 
-            <div id="admin-finances" class="dashboard-section" style="display:none; padding:1.5rem;">
+            <div id="finances" class="dashboard-section" style="display:none; padding:1.5rem;">
                 <div class="section-title">💰 Stripe Connect Hub</div>
                 
                 <div class="glass-card" style="padding:2rem; text-align:center; max-width:600px; margin:0 auto;">
@@ -179,7 +167,7 @@
                     <div id="stripe-onboarding-box" style="display:none;">
                         <div style="font-size:3rem; margin-bottom:1rem;">💳</div>
                         <h3 style="margin-bottom:0.5rem; color:#fff;">Connect with Stripe</h3>
-                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">To start accepting payments from members and parents, you need to link your club to a Stripe account.</p>
+                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">To start accepting payments from members and parents, you need to link your group to a Stripe account.</p>
                         <button class="btn btn-primary" onclick="startStripeOnboarding()" id="connect-stripe-btn" style="padding:0.8rem 2rem;">
                             <i class="fa fa-plug" style="margin-right:0.5rem;"></i> Connect with Stripe
                         </button>
@@ -188,7 +176,7 @@
                     <div id="stripe-connected-box" style="display:none;">
                         <div style="font-size:3rem; margin-bottom:1rem;">✅</div>
                         <h3 style="margin-bottom:0.5rem; color:#fff;">Stripe Connected</h3>
-                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Your club is ready to receive payments. Payments are automatically synced to your Stripe dashboard.</p>
+                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Your group is ready to receive payments. Payments are automatically synced to your Stripe dashboard.</p>
                         
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
                              <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
@@ -241,7 +229,35 @@
         <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
     </nav>
 
-    <!-- Scripts -->
+    <!-- Create Team Modal -->
+    <div id="createTeamModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <span class="close" onclick="closeModal('createTeamModal')">&times;</span>
+            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create New Team</h2>
+            <form id="createTeamForm" onsubmit="handleCreateTeam(event)">
+                <div class="form-group">
+                    <label>Team Name</label>
+                    <input type="text" name="teamName" placeholder="e.g. Under 14s A" required>
+                </div>
+                <div class="form-group">
+                    <label>Assign Head Coach</label>
+                    <select name="coachId" id="coachSelect">
+                        <option value="">-- Select Coach --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Registration Form (Jotform)</label>
+                    <select name="formId" id="formSelect">
+                        <option value="">-- No custom form --</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createTeamModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Team</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <script src="api-service.js"></script>
     <script src="enhanced-login-handler.js"></script>
     <script src="group-switcher.js"></script>
@@ -255,39 +271,125 @@
                 const ok = await checkAuthStatus();
                 if (!ok) { window.location.href = 'index.html'; return; }
             }
-            // Personalise header
-            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            if (user && user.firstName) {
-                const el = document.getElementById('adminGreeting');
-                if (el) el.textContent = `Hello, ${user.firstName}!`;
-                const av = document.getElementById('header-user-avatar');
-                if (av) av.textContent = (user.firstName || 'A').charAt(0).toUpperCase();
+
+            // Route to section if hash exists
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                showSection(hash);
             }
-            // Try to load live stats; fall back to demo values already in HTML
-            if (typeof apiService !== 'undefined') {
-                try {
-                    const stats = await apiService.get('/api/admin/stats');
-                    if (stats && stats.totalMembers !== undefined) {
-                        document.getElementById('totalMembers').textContent = stats.totalMembers;
-                        document.getElementById('monthlyRevenue').textContent = '£' + (stats.monthlyRevenue || 0).toLocaleString();
-                        document.getElementById('activeEvents').textContent = stats.activeEvents || 0;
-                    }
-                } catch(e) { /* keep demo data */ }
-            }
+
+            // Load initial data
+            loadDashboardStats();
+            loadTeams();
+            loadAvailableCoaches();
+            loadAvailableForms();
         });
+
+        async function loadDashboardStats() {
+            if (typeof apiService === 'undefined') return;
+            try {
+                const stats = await apiService.get('/api/admin/stats');
+                if (stats) {
+                    if (stats.totalMembers !== undefined) document.getElementById('totalMembers').textContent = stats.totalMembers;
+                    if (stats.monthlyRevenue !== undefined) document.getElementById('monthlyRevenue').textContent = '£' + stats.monthlyRevenue.toLocaleString();
+                    if (stats.activeEvents !== undefined) document.getElementById('activeEvents').textContent = stats.activeEvents;
+                }
+            } catch(e) { console.warn("Live stats fail, using demo data"); }
+        }
+
+        async function loadTeams() {
+            const container = document.getElementById('teamsListContainer');
+            if (!container) return;
+            try {
+                const { teams } = await apiService.get('/api/teams');
+                if (!teams || teams.length === 0) {
+                    container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
+                    return;
+                }
+                container.innerHTML = teams.map(t => `
+                    <div class="glass-card" style="padding:1.25rem; border:1px solid rgba(255,255,255,0.05);">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <h3 style="font-size:1.1rem; margin-bottom:0.25rem;">${t.name}</h3>
+                            <span class="badge" style="background:rgba(96,165,250,0.1); color:#60a5fa; font-size:0.7rem;">${t.player_count || 0} Players</span>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Coach: ${t.coach_name || 'Unassigned'}</p>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="btn btn-secondary btn-small" style="flex:1;" onclick="viewTeam('${t.id}')">Manage</button>
+                            <button class="btn btn-text btn-small" onclick="deleteTeam('${t.id}')">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) {
+                container.innerHTML = '<p style="color:#f87171;">Failed to load teams.</p>';
+            }
+        }
+
+        async function loadAvailableCoaches() {
+            const select = document.getElementById('coachSelect');
+            if (!select) return;
+            try {
+                const { coaches } = await apiService.get('/api/members?role=coach');
+                coaches.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = `${c.first_name} ${c.last_name}`;
+                    select.appendChild(opt);
+                });
+            } catch(e) {}
+        }
+
+        async function loadAvailableForms() {
+            const select = document.getElementById('formSelect');
+            if (!select) return;
+            try {
+                const { forms } = await apiService.get('/api/forms');
+                forms.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.id;
+                    opt.textContent = f.title;
+                    select.appendChild(opt);
+                });
+            } catch(e) {}
+        }
+
+        async function handleCreateTeam(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                name: formData.get('teamName'),
+                coach_id: formData.get('coachId') || null,
+                form_id: formData.get('formId') || null
+            };
+
+            try {
+                await apiService.post('/api/teams', data);
+                closeModal('createTeamModal');
+                loadTeams();
+                if (typeof showAlert === 'function') showAlert('Team created successfully!', 'Success', 'success');
+            } catch(err) {
+                alert("Failed to create team: " + err.message);
+            }
+        }
+
+        function openModal(id) {
+            const m = document.getElementById(id);
+            if (m) m.style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            if (m) m.style.display = 'none';
+        }
 
         function showSection(sectionId) {
             console.log("Showing section:", sectionId);
+            window.location.hash = sectionId;
             document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
             const target = document.getElementById(sectionId);
             if (target) {
                 target.style.display = 'block';
-                // Initialize section specific logic
-                if (sectionId === 'admin-finances') {
-                    checkStripeStatus();
-                }
-            } else {
-                console.warn("Section not found:", sectionId);
+                if (sectionId === 'finances') checkStripeStatus();
+                if (sectionId === 'teams') loadTeams();
             }
         }
 

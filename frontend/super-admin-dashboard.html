@@ -74,10 +74,9 @@
 
             <!-- Platform Stats -->
             <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                <div class="stat-card">
-                    <span class="stat-label">Organisations</span>
-                    <span class="stat-number" id="totalOrgs">142</span>
-                    <div class="stat-change">↑ 8 this month</div>
+                <div class="stat-card glass-card">
+                    <span class="stat-label">Groups</span>
+                    <span class="stat-value" id="globalStats-totalGroups">0</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Total Users</span>
@@ -109,7 +108,7 @@
                             <div class="feed-entry">
                                 <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">🏢</div>
                                 <div class="feed-meta">
-                                    <strong>New org registered — Riverside FC Academy</strong>
+                                    <strong>New group registered — Riverside FC Academy</strong>
                                     <span>Manchester · Football · 72 members imported</span>
                                 </div>
                                 <span class="feed-time">3m ago</span>
@@ -149,7 +148,7 @@
                             <div class="feed-entry">
                                 <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">🏢</div>
                                 <div class="feed-meta">
-                                    <strong>New org registered — West Coast Swim Club</strong>
+                                    <strong>New group registered — West Coast Swim Club</strong>
                                     <span>Bristol · Swimming · Trial plan</span>
                                 </div>
                                 <span class="feed-time">Yesterday</span>
@@ -160,13 +159,13 @@
                     <!-- Org Table -->
                     <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
                         <div style="display:flex;align-items:center;margin-bottom:1rem;">
-                            <span style="font-size:1rem;font-weight:700;color:#fff;">🏢 Recent Organisations</span>
+                            <span style="font-size:1rem;font-weight:700;color:#fff;">🏢 Recent Groups</span>
                             <button class="btn btn-secondary btn-small" style="margin-left:auto;">View All</button>
                         </div>
                         <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
                             <thead>
                                 <tr style="color:var(--text-muted);text-align:left;">
-                                    <th style="padding:0.5rem 0;font-weight:600;">Organisation</th>
+                                    <th style="padding:0.5rem 0;font-weight:600;">Group</th>
                                     <th style="padding:0.5rem 0;font-weight:600;">Plan</th>
                                     <th style="padding:0.5rem 0;font-weight:600;">Members</th>
                                     <th style="padding:0.5rem 0;font-weight:600;">Status</th>
@@ -207,7 +206,7 @@
                     <div class="glass-card" style="padding:1.5rem;">
                         <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">⚡ Platform Actions</div>
                         <div style="display:flex;flex-direction:column;gap:0.6rem;">
-                            <button class="quick-action-btn">🏢 Manage Organisations</button>
+                            <button class="quick-action-btn">🏢 Manage Groups</button>
                             <button class="quick-action-btn">👤 User Management</button>
                             <button class="quick-action-btn">💰 Billing & Revenue</button>
                             <button class="quick-action-btn">🔒 Security Logs</button>
@@ -238,7 +237,7 @@
                             </div>
                             <div style="height:1px;background:rgba(255,255,255,0.05);margin:0.25rem 0;"></div>
                             <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
-                                <span style="color:var(--text-muted);">Paying orgs</span>
+                                <span style="color:var(--text-muted);">Paying groups</span>
                                 <span style="color:#f1f5f9;font-weight:700;">138 / 142</span>
                             </div>
                         </div>
@@ -247,8 +246,8 @@
             </div>
 
             <!-- Other Super Admin Sections -->
-            <div id="super-admin-groups" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
-                <h2 class="neon-text">Global Organisations</h2>
+            <div id="super-groups" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
+                <h2 class="neon-text">Global Groups</h2>
                 <p style="color:var(--text-muted);">Manage all clubs, academies and schools.</p>
                 <div style="margin-top:2rem;">
                     <button class="btn btn-primary" onclick="window.location.href='groups-manager.html'">Open Full Manager</button>

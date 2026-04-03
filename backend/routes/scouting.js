@@ -96,25 +96,75 @@ router.post("/assignments", authenticateToken, async (req, res) => {
 
 /**
  * @route   POST /api/scouting/contact-requests
- * @desc    Request contact with a player (parental approval required)
+ * @desc    Request contact with a player (parental approval required for minors)
  */
 router.post("/contact-requests", authenticateToken, async (req, res) => {
   const { playerId, eventId, delayType } = req.body;
   const scoutId = req.user.id;
 
   try {
-    const result = await query(
-      `
-            INSERT INTO scout_contact_requests (scout_id, player_id, event_id, delay_type)
-            VALUES ($1, $2, $3, $4) RETURNING *
-        `,
-      [scoutId, playerId, eventId || null, delayType || "24hr"],
+    // 1. Get player age and parent info
+    const playerResult = await query(
+      `SELECT p.date_of_birth, p.user_id, u.parent_user_id 
+       FROM players p 
+       LEFT JOIN users u ON p.user_id = u.id 
+       WHERE p.id = $1`,
+      [playerId]
     );
 
-    // TODO: Trigger notification to parent
+    if (playerResult.rows.length === 0) {
+      return res.status(404).json({ error: "Player not found" });
+    }
 
-    res.status(201).json(result.rows[0]);
+    const player = playerResult.rows[0];
+    const dob = new Date(player.date_of_birth);
+    const age = new Date().getFullYear() - dob.getFullYear();
+    const isMinor = age < 18;
+
+    let finalDelayType = delayType || "24hr";
+    let status = "pending";
+
+    if (isMinor) {
+      finalDelayType = "parental_approval_required";
+      console.log(`🛡️ Parental Gating Triggered: Player ${playerId} is a minor (${age}).`);
+    }
+
+    // 2. Insert request
+    const result = await query(
+      `
+            INSERT INTO scout_contact_requests (scout_id, player_id, event_id, delay_type, status)
+            VALUES ($1, $2, $3, $4, $5) RETURNING *
+        `,
+      [scoutId, playerId, eventId || null, finalDelayType, status],
+    );
+
+    const request = result.rows[0];
+
+    // 3. Notify parent if minor, otherwise notify player
+    const targetUserId = isMinor ? (player.parent_user_id || player.user_id) : player.user_id;
+    
+    if (targetUserId) {
+        await query(
+            `INSERT INTO notifications (user_id, title, message, type, link) 
+             VALUES ($1, $2, $3, $4, $5)`,
+            [
+                targetUserId,
+                isMinor ? "Parental Approval Required" : "Scouting Contact Request",
+                isMinor 
+                  ? "A verified scout has requested contact with your child. Please review and approve in your dashboard."
+                  : "A verified scout has requested to contact you regarding a recent performance.",
+                "scouting",
+                isMinor ? "player-dashboard.html?section=notifications" : "player-dashboard.html?section=notifications"
+            ]
+        );
+    }
+
+    res.status(201).json({
+        ...request,
+        requires_parental_approval: isMinor
+    });
   } catch (err) {
+    console.error("Scouting contact error:", err);
     res.status(500).json({ error: "Failed to create contact request" });
   }
 });

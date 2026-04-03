@@ -31,16 +31,39 @@
     .desktop-only { display: inline-flex !important; }
     .mobile-only { display: none !important; }
 
-    /* Force Hide Mobile UI on Desktop (992px+) */
-    .pro-sidebar, .sidebar-overlay, .pro-bottom-nav, .side-menu-trigger {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
+    /* Force Sidebar to be visible on Desktop dashboards */
+    .pro-sidebar {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        left: 0 !important;
+        transform: none !important;
+        position: fixed !important;
+        width: 280px !important;
+        transition: none !important;
     }
 
+    .sidebar-overlay {
+        display: none !important;
+    }
+
+    .pro-bottom-nav, .side-menu-trigger {
+        display: none !important;
+    }
+
+    /* Shift main content to make room for sidebar */
     .main, .dashboard-main, .dashboard.container, .dashboard-container {
-        padding-top: 20px !important;
+        padding-top: 100px !important;
+        padding-left: 310px !important; /* Sidebar width + gap */
+        max-width: none !important;
+        width: auto !important;
+        margin-left: 0 !important;
+    }
+
+    .pro-header, header.header {
+        left: 280px !important; /* Start after sidebar */
+        width: calc(100% - 280px) !important;
+        padding: 0 2rem !important;
     }
 
     /* Dashboard Header Left/Right alignment */
@@ -599,17 +622,19 @@ header.header .nav-container,
     height: 100%;
 }
 
-.bottom-nav-link i {
+.bottom-nav-link i, .bottom-nav-link svg {
     font-size: 1.4rem;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0.6;
 }
 
 .bottom-nav-link.active {
     color: var(--primary);
 }
 
-.bottom-nav-link.active i {
+.bottom-nav-link.active i, .bottom-nav-link.active svg {
     color: var(--primary);
+    opacity: 1;
     transform: translateY(-2px) scale(1.1);
 }
 
@@ -692,31 +717,53 @@ header.header .nav-container,
     }
 
     /* Swipeable Headlines (Dashboard Nav) */
-    .dashboard-nav {
+    .dashboard-nav, .top-headline-tabs {
         display: flex !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         scroll-snap-type: x mandatory !important;
-        gap: 0.5rem !important;
-        padding: 0.5rem 0 !important;
-        margin: 1.5rem -1rem !important;
-        padding: 0.5rem 1rem !important;
+        gap: 0.75rem !important;
+        padding: 0.75rem 1rem !important;
+        margin: 0 !important;
+        background: rgba(10, 10, 12, 0.8) !important;
+        backdrop-filter: blur(20px) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
         scrollbar-width: none !important;
+        position: sticky !important;
+        top: 80px !important;
+        z-index: 1000 !important;
     }
 
-    .dashboard-nav::-webkit-scrollbar {
+    .dashboard-nav::-webkit-scrollbar, .top-headline-tabs::-webkit-scrollbar {
         display: none !important;
     }
 
-    .dashboard-nav button, 
-    .dashboard-nav .btn-special {
+    .headline-tab, .dashboard-nav button {
         flex: 0 0 auto !important;
         scroll-snap-align: start !important;
-        padding: 0.6rem 1.25rem !important;
+        padding: 0.5rem 1rem !important;
         font-size: 0.85rem !important;
+        font-weight: 700 !important;
         white-space: nowrap !important;
         border-radius: 100px !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        color: rgba(255, 255, 255, 0.6) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .headline-tab.active, .dashboard-nav button.active {
+        background: #fff !important;
+        color: #000 !important;
+        transform: scale(1.05);
+    }
+
+    .tab-icon {
+        font-size: 1rem;
     }
 
     /* Fix for common grid layouts on mobile - Force stack despite inline styles */

@@ -7,7 +7,71 @@
     <title>Scouting Dashboard - ClubHub</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="unified-nav.css">
+    <link rel="stylesheet" href="design-system.css">
     <style>
+        .pitch-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 2/3;
+            background: #1a3a22; /* Deep grass green */
+            border-radius: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+            margin-top: 1.5rem;
+        }
+
+        .pitch-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .tactical-player {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 800;
+            cursor: grab;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 2px solid white;
+            transform: translate(-50%, -50%); /* Center on coordinate */
+            z-index: 10;
+        }
+
+        .tactical-player:active {
+            cursor: grabbing;
+        }
+
+        .tactical-player .label {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            margin-top: 4px;
+        }
+        
+        @media (min-width: 768px) {
+            .pitch-container {
+                aspect-ratio: 3/2; /* Landscape for desktop */
+            }
+        }
         .report-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -71,6 +135,7 @@
         <div class="tabs" style="margin: 2rem 0;">
             <button class="tab active" onclick="showTab('discovery')">Player Discovery</button>
             <button class="tab" id="reportsTab" onclick="showTab('reports')">Scouting Reports</button>
+            <button class="tab" id="tacticsTab" onclick="showTab('tactics')">Tactical Board</button>
             <button class="tab" id="analyticsTab" onclick="showTab('analytics')"
                 style="display: none;">Analytics</button>
         </div>
@@ -154,6 +219,38 @@
             </div>
         </div>
 
+        <!-- Tactics Tab -->
+        <div id="tactics-tab" class="tab-content" style="display: none;">
+            <div class="glass-card" style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3 class="neon-text" style="font-size: 1.25rem;">Formation Planner</h3>
+                        <p style="color: var(--text-muted); font-size: 0.8rem;">Drag players or use quick-taps for formations</p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary btn-small" onclick="applyFormation('4-4-2')">4-4-2</button>
+                        <button class="btn btn-secondary btn-small" onclick="applyFormation('4-3-3')">4-3-3</button>
+                        <button class="btn btn-secondary btn-small" onclick="applyFormation('3-5-2')">3-5-2</button>
+                    </div>
+                </div>
+
+                <div class="pitch-container" id="tacticalPitch">
+                    <svg class="pitch-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <!-- Outer line -->
+                        <rect x="5" y="5" width="90" height="90" fill="none" stroke="white" stroke-width="0.5" />
+                        <!-- Halfway line -->
+                        <line x1="5" y1="50" x2="95" y2="50" stroke="white" stroke-width="0.5" />
+                        <!-- Center circle -->
+                        <circle cx="50" cy="50" r="10" fill="none" stroke="white" stroke-width="0.5" />
+                        <!-- Penalty areas -->
+                        <rect x="25" y="5" width="50" height="15" fill="none" stroke="white" stroke-width="0.5" />
+                        <rect x="25" y="80" width="50" height="15" fill="none" stroke="white" stroke-width="0.5" />
+                    </svg>
+                    <div id="playersLayer"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Analytics Tab -->
         <div id="analytics-tab" class="tab-content" style="display: none;">
             <div class="card">
@@ -166,6 +263,7 @@
     </main>
 
     <script src="api-service.js"></script>
+    <script src="tactical-logic.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             await checkVerificationStatus();
@@ -406,6 +504,64 @@
                 });
             }
         }
+
+        // --- Tactical Board Logic ---
+        function applyFormation(formation) {
+            if (typeof TacticalLogic === 'undefined') return;
+            const positions = TacticalLogic.getFormationPositions(formation);
+            renderPlayers(positions);
+        }
+
+        function renderPlayers(positions) {
+            const layer = document.getElementById('playersLayer');
+            layer.innerHTML = '';
+            
+            positions.forEach((p, index) => {
+                const playerEl = document.createElement('div');
+                playerEl.className = 'tactical-player';
+                playerEl.style.left = `${p.x}%`;
+                playerEl.style.top = `${p.y}%`;
+                playerEl.innerHTML = `<span>${p.role}</span><div class="label">Player ${index + 1}</div>`;
+                
+                // Simple drag logic
+                playerEl.onmousedown = function(e) {
+                    let shiftX = e.clientX - playerEl.getBoundingClientRect().left - 20;
+                    let shiftY = e.clientY - playerEl.getBoundingClientRect().top - 20;
+
+                    function moveAt(pageX, pageY) {
+                        const pitch = document.getElementById('tacticalPitch').getBoundingClientRect();
+                        let left = ((pageX - shiftX - pitch.left) / pitch.width) * 100;
+                        let top = ((pageY - shiftY - pitch.top) / pitch.height) * 100;
+                        
+                        // Bounds
+                        left = Math.max(5, Math.min(95, left));
+                        top = Math.max(5, Math.min(95, top));
+                        
+                        playerEl.style.left = left + '%';
+                        playerEl.style.top = top + '%';
+                    }
+
+                    function onMouseMove(e) {
+                        moveAt(e.pageX, e.pageY);
+                    }
+
+                    document.addEventListener('mousemove', onMouseMove);
+
+                    playerEl.onmouseup = function() {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        playerEl.onmouseup = null;
+                    };
+                };
+
+                playerEl.ondragstart = function() { return false; };
+                layer.appendChild(playerEl);
+            });
+        }
+
+        // Initial render
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => applyFormation('4-3-3'), 500);
+        });
     </script>
 
     <!-- App Top Tabs (Mobile Headlines) -->

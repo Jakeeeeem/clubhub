@@ -1,16 +1,4 @@
-/**
- * Unified Pro Navigation Controller
- */
-
-// Initialize on load
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    // If DOM is already ready, init with a small delay for other dependencies
-    setTimeout(() => UnifiedNav.init(), 100);
-} else {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => UnifiedNav.init(), 100);
-    });
-}
+// Initialization moved to the end of the file to ensure const UnifiedNav is defined
 
 const UnifiedNav = {
   init() {
@@ -37,12 +25,14 @@ const UnifiedNav = {
       this.renderMobileHeaderElements();
     } else {
       // ── DESKTOP ─────────────────────────────────────────────────────────────
-      console.log("💻 Desktop: standardizing dashboard header");
+      console.log("💻 Desktop: standardizing dashboard navigation");
       this.cleanupLegacyArtifacts();
       
-      // Always ensure full header structure on dashboards
+      // Standardize the whole structure for dashboards (Header + Sidebar)
       if (isDashboard || isLandingPage) {
-        this.ensureDashboardHeader(); // Optimized ensure for desktop
+        this.ensureDashboardHeader(); 
+        this.renderSidebar(); // Enforce desktop sidebar
+        this.renderMenu();    // Enforce desktop menu
         this.renderProfileDropdown();
         this.renderHeaderSwitcher(); 
         this.renderStripeHeaderButton(); 
@@ -62,7 +52,7 @@ const UnifiedNav = {
   },
 
   /**
-   * Dynamically renders the appropriate switcher (Org or Family)
+   * Dynamically renders the appropriate switcher (Group or Family)
    */
   renderHeaderSwitcher() {
     const container = document.getElementById("org-switcher-container");
@@ -327,7 +317,7 @@ const UnifiedNav = {
                 </div>
                 
                 <div class="mode-toggle-container">
-                    <span class="mode-label active" id="group-label">Group</span>
+                    <span class="mode-label active" id="group-label">Groups</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="mode-toggle" onchange="UnifiedNav.handleGlobalModeToggle(this)">
                         <span class="toggle-slider"></span>
@@ -348,6 +338,9 @@ const UnifiedNav = {
         </div>
       `;
     }
+    
+    // Inject Top Tabs if on a dashboard
+    this.renderTopTabs();
   },
 
   ensureHeaderElements() {
@@ -371,6 +364,11 @@ const UnifiedNav = {
                 <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1rem 1rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
                     <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.5rem;">Switch Group</div>
                     <div id="sidebar-switcher-target"></div>
+                </div>
+
+                <div class="sidebar-profile-switcher-area" id="sidebar-profile-switcher" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: none;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.5rem;">Active Profile</div>
+                    <div id="profile-switcher-target"></div>
                 </div>
 
                 <nav class="sidebar-nav" id="sidebar-nav-content">
@@ -453,7 +451,7 @@ const UnifiedNav = {
 
                 <div class="mode-toggle-container desktop-only">
                     <div class="header-mode-toggle" id="header-mode-toggle">
-                        <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Group Hub</div>
+                        <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Groups Hub</div>
                         <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
                     </div>
                 </div>
@@ -474,6 +472,99 @@ const UnifiedNav = {
         `;
 
     this.updateModeUI();
+    this.renderTopTabs();
+  },
+
+  /**
+   * Render Swipable Top Tabs (Headlines)
+   * Inspired by Threads/Premium app UX
+   */
+  renderTopTabs() {
+    const header = document.querySelector(".pro-header, header.header");
+    if (!header) return;
+
+    // Don't render on landing page
+    if (window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname === '') return;
+
+    let existingTabs = document.getElementById('top-headline-tabs');
+    if (existingTabs) return;
+
+    const url = window.location.href;
+    const userRole = localStorage.getItem('userType') || '';
+    const isPlayer = url.includes("player-dashboard.html") || userRole === 'player';
+    const isCoach = url.includes("coach-dashboard.html") || userRole === 'coach';
+    const isScout = url.includes("scout-dashboard.html") || userRole === 'scout';
+    const isSuperAdmin = url.includes("super-admin-dashboard.html") || userRole === 'platform_admin';
+    const isAdmin = url.includes("admin-dashboard.html") || userRole === 'admin';
+
+    let tabs = [];
+    if (isPlayer) {
+      tabs = [
+        { id: 'overview', label: 'Overview', icon: '📊' },
+        { id: 'teams', label: 'My Teams', icon: '⚽' },
+        { id: 'club-messenger', label: 'Chat', icon: '💬' },
+        { id: 'notifications', label: 'Activity', icon: '🔔' },
+        { id: 'my-clubs', label: 'Groups', icon: '🏰' },
+        { id: 'payments', label: 'Finance', icon: '💳' }
+      ];
+    } else if (isCoach) {
+      tabs = [
+        { id: 'overview', label: 'Dashboard', icon: '📊' },
+        { id: 'teams', label: 'Teams', icon: '🛡️' },
+        { id: 'players', label: 'Squad', icon: '👥' },
+        { id: 'tactical-board', label: 'Tactical', icon: '📋' },
+        { id: 'messenger', label: 'Messenger', icon: '💬' },
+        { id: 'scouting', label: 'Scouting', icon: '🔍' },
+        { id: 'tournament-manager', label: 'Events', icon: '🏆' }
+      ];
+    } else if (isScout) {
+      tabs = [
+        { id: 'discovery', label: 'Discover', icon: '🔍' },
+        { id: 'watchlist', label: 'Watchlist', icon: '⭐' },
+        { id: 'messenger', label: 'Chat', icon: '💬' },
+        { id: 'reports', label: 'Reports', icon: '📝' }
+      ];
+    } else if (isAdmin) {
+      tabs = [
+        { id: 'overview', label: 'Overview', icon: '📊' },
+        { id: 'players', label: 'Players', icon: '🏃' },
+        { id: 'teams', label: 'Teams', icon: '🛡️' },
+        { id: 'events', label: 'Events', icon: '📅' },
+        { id: 'finances', label: 'Finance', icon: '💰' },
+        { id: 'staff', label: 'Staff', icon: '👔' }
+      ];
+    } else if (isSuperAdmin) {
+      tabs = [
+        { id: 'overview', label: 'Console', icon: '📊' },
+        { id: 'groups', label: 'Groups', icon: '🏢' },
+        { id: 'users', label: 'Global Users', icon: '👥' },
+        { id: 'activity', label: 'System Logs', icon: '📜' }
+      ];
+    }
+
+    if (tabs.length === 0) return;
+
+    const tabsHTML = `
+      <div id="top-headline-tabs" class="top-headline-tabs">
+        <div class="tabs-scroll-container">
+          ${tabs.map(tab => `
+            <button class="headline-tab ${tab.id === 'overview' ? 'active' : ''}" 
+                    onclick="${isPlayer ? 'showPlayerSection' : (isCoach ? 'showCoachSection' : (isScout ? 'showScoutSection' : 'showSection'))}('${tab.id}'); UnifiedNav.setActiveTab(this);">
+              <span class="tab-icon">${tab.icon}</span>
+              <span class="tab-label">${tab.label}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    header.insertAdjacentHTML('afterend', tabsHTML);
+  },
+
+  setActiveTab(btn) {
+    document.querySelectorAll('.headline-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   },
 
   renderBottomNav() {
@@ -492,46 +583,95 @@ const UnifiedNav = {
 
     let navHtml = "";
 
-    if (isPlayer) {
+    if (isPlayerMode || isPlayer) {
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showPlayerSection('overview'); return false;"><i>🏠</i><span>Home</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showPlayerSection('teams'); return false;"><i>🛡️</i><span>Teams</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showPlayerSection('club-messenger'); return false;"><i>💬</i><span>Chat</span></a>
-                <a href="scouting.html" class="bottom-nav-link"><i>🌟</i><span>Talent</span></a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>🍔</i><span>More</span></a>
+                <a href="#" class="bottom-nav-link active" onclick="showPlayerSection('overview'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showPlayerSection('teams'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showPlayerSection('club-messenger'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showPlayerSection('notifications'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                </a>
             `;
     } else if (isCoach) {
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showCoachSection('overview'); return false;"><i>🏠</i><span>Home</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showCoachSection('players'); return false;"><i>👥</i><span>Squad</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showCoachSection('messenger'); return false;"><i>💬</i><span>Chat</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showCoachSection('tournament-manager'); return false;"><i>🏆</i><span>Events</span></a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>🍔</i><span>More</span></a>
+                <a href="#" class="bottom-nav-link active" onclick="showCoachSection('overview'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showCoachSection('players'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showCoachSection('messenger'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showCoachSection('notifications'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                </a>
             `;
     } else if (isScout) {
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showScoutSection('discovery'); return false;"><i>🔍</i><span>Discover</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showScoutSection('watchlist'); return false;"><i>⭐</i><span>Watch</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showScoutSection('messenger'); return false;"><i>💬</i><span>Chat</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showScoutSection('reports'); return false;"><i>📝</i><span>Reports</span></a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>🍔</i><span>More</span></a>
+                <a href="#" class="bottom-nav-link active" onclick="showScoutSection('discovery'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showScoutSection('watchlist'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showScoutSection('messenger'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showScoutSection('notifications'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                </a>
             `;
     } else if (isSuperAdmin) {
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;"><i>🏠</i><span>Panel</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('groups'); return false;"><i>🏢</i><span>Groups</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('users'); return false;"><i>👥</i><span>Users</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('activity'); return false;"><i>📜</i><span>Logs</span></a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>🍔</i><span>More</span></a>
+                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showSection('groups'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3"></path><path d="M19 21V11"></path><path d="M5 21V11"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showSection('users'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showSection('activity'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                </a>
             `;
     } else {
-      // General Group Admin
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;"><i>🏠</i><span>Home</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('players'); return false;"><i>🏃</i><span>Players</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('events'); return false;"><i>📅</i><span>Events</span></a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('finances'); return false;"><i>💰</i><span>Finance</span></a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;"><i>🍔</i><span>More</span></a>
+                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showSection('players'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showSection('events'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="showSection('finances'); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </a>
+                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                </a>
             `;
     }
 
@@ -622,25 +762,18 @@ const UnifiedNav = {
   },
 
   toggleSidebar(show) {
-    // Standardize breakpoints: 992px+ is desktop
-    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
-    if (isDesktop) {
-      // On desktop, we don't open the sidebar. Surface the profile dropdown instead.
-      if (show) {
-        this.toggleProfileDropdown(true);
-      } else {
-        // If closing, ensure active classes are removed
-        const sidebarEl = document.getElementById("pro-sidebar");
-        const overlayEl = document.getElementById("sidebar-overlay");
-        if (sidebarEl) sidebarEl.classList.remove("active");
-        if (overlayEl) overlayEl.classList.remove("active");
-      }
-      return;
-    }
-
     const sidebar = document.getElementById("pro-sidebar");
     const overlay = document.getElementById("sidebar-overlay");
     if (!sidebar || !overlay) return;
+
+    // Standardize breakpoints: 992px+ is desktop
+    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
+    
+    if (isDesktop && show) {
+       // On desktop, we can use the trigger for profile if sidebar is already persistent
+       this.toggleProfileDropdown(true);
+       return;
+    }
 
     if (show) {
       sidebar.classList.add("active");
@@ -649,6 +782,12 @@ const UnifiedNav = {
     } else {
       sidebar.classList.remove("active");
       overlay.classList.remove("active");
+    }
+
+    if (show) {
+        const notifDropdown = document.getElementById('notificationDropdown');
+        if (notifDropdown) notifDropdown.style.display = 'none';
+        this.toggleProfileDropdown(false);
     }
   },
 
@@ -752,18 +891,27 @@ const UnifiedNav = {
 
     if (isPlayer) {
       menuHtml = `
-                <div class="nav-group-title">Main</div>
-                <a href="#" class="sidebar-link active" onclick="showPlayerSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Dashboard</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('club-messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Messenger</a>
+                <div class="nav-group-title">Main Hub</div>
+                <a href="#" class="sidebar-link active" onclick="showPlayerSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Overview</a>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('club-messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Club Chat</a>
                 
-                <div class="nav-group-title">Career</div>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> My Teams</a>
+                <div class="nav-group-title">My Career</div>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> My Teams</a>
                 <a href="#" class="sidebar-link" onclick="showPlayerSection('my-clubs'); UnifiedNav.toggleSidebar(false); return false;"><i>🏰</i> My Groups</a>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('documents'); UnifiedNav.toggleSidebar(false); return false;"><i>📄</i> Documents</a>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('polls'); UnifiedNav.toggleSidebar(false); return false;"><i>🗳️</i> Club Polls</a>
                 <a href="scouting.html" class="sidebar-link"><i>🔍</i> Scouting</a>
+
+                <div class="nav-group-title">Family & Profile</div>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('profile'); UnifiedNav.toggleSidebar(false); return false;"><i>👤</i> My Profile</a>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('family'); UnifiedNav.toggleSidebar(false); return false;"><i>👨‍👩‍👧‍👦</i> My Family</a>
                 
-                <div class="nav-group-title">Finance</div>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('payments'); UnifiedNav.toggleSidebar(false); return false;"><i>💳</i> Payments</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('item-shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🎁</i> Shop</a>
+                <div class="nav-group-title">Shop & Marketplace</div>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('club-finder'); UnifiedNav.toggleSidebar(false); return false;"><i>🏢</i> Club Finder</a>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>🏟️</i> Book Venues</a>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('event-finder'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> Find Events</a>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('item-shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛍️</i> Item Shop</a>
+                <a href="#" class="sidebar-link" onclick="showPlayerSection('payments'); UnifiedNav.toggleSidebar(false); return false;"><i>💳</i> Finance</a>
             `;
     } else if (isSuperAdmin) {
       menuHtml = `
@@ -808,26 +956,27 @@ const UnifiedNav = {
             `;
     } else {
       menuHtml = `
-                <div class="nav-group-title">Management</div>
-                <a href="#" class="sidebar-link active" onclick="showSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Dashboard</a>
-                <a href="#" class="sidebar-link" onclick="showSection('players'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> Players</a>
-                <a href="#" class="sidebar-link" onclick="showSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> Teams</a>
+                <div class="nav-group-title">Core Management</div>
+                <a href="#" class="sidebar-link active" onclick="showSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Overview</a>
+                <a href="#" class="sidebar-link" onclick="showSection('players'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> Player List</a>
+                <a href="#" class="sidebar-link" onclick="showSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> Squads & Teams</a>
+                <a href="#" class="sidebar-link" onclick="showSection('messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Admin Chat</a>
+                
+                <div class="nav-group-title">Advanced Operations</div>
                 <a href="#" class="sidebar-link" onclick="showSection('scout-approvals'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> Scout Approvals</a>
+                <a href="#" class="sidebar-link" onclick="showSection('tactical-board'); UnifiedNav.toggleSidebar(false); return false;"><i>📋</i> Tactics Board</a>
+                <a href="#" class="sidebar-link" onclick="showSection('form-builder'); UnifiedNav.toggleSidebar(false); return false;"><i>📝</i> Custom Forms</a>
+                <a href="#" class="sidebar-link" onclick="showSection('email-campaigns'); UnifiedNav.toggleSidebar(false); return false;"><i>📧</i> Email Campaigns</a>
                 
-                <div class="nav-group-title">Operations</div>
-                <a href="#" class="sidebar-link" onclick="showSection('tactical-board'); UnifiedNav.toggleSidebar(false); return false;"><i>🏟️</i> Tactics Board</a>
-                <a href="#" class="sidebar-link" onclick="showSection('form-builder'); UnifiedNav.toggleSidebar(false); return false;"><i>📋</i> Form Builder</a>
-                <a href="#" class="sidebar-link" onclick="showSection('events'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> Events</a>
+                <div class="nav-group-title">Events & Bookings</div>
+                <a href="#" class="sidebar-link" onclick="showSection('events'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> Event Manager</a>
                 <a href="#" class="sidebar-link" onclick="showSection('tournaments'); UnifiedNav.toggleSidebar(false); return false;"><i>🏆</i> Tournaments</a>
-                
-                <div class="nav-group-title">Programs</div>
                 <a href="#" class="sidebar-link" onclick="showSection('training-manager'); UnifiedNav.toggleSidebar(false); return false;"><i>🎯</i> Training Hub</a>
-                <a href="#" class="sidebar-link" onclick="showSection('camp-manager'); UnifiedNav.toggleSidebar(false); return false;"><i>🏕️</i> Camp Manager</a>
-                <a href="#" class="sidebar-link" onclick="showSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>📍</i> Venue Booking</a>
+                <a href="#" class="sidebar-link" onclick="showSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>📍</i> Venue Portal</a>
                 
-                <div class="nav-group-title">Finance</div>
-                <a href="#" class="sidebar-link" onclick="showSection('finances'); UnifiedNav.toggleSidebar(false); return false;"><i>💰</i> Finances</a>
-                <a href="#" class="sidebar-link" onclick="showSection('shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛒</i> Item Shop</a>
+                <div class="nav-group-title">Business & Shop</div>
+                <a href="#" class="sidebar-link" onclick="showSection('finances'); UnifiedNav.toggleSidebar(false); return false;"><i>💰</i> Financials</a>
+                <a href="#" class="sidebar-link" onclick="showSection('shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛒</i> Club Shop</a>
             `;
     }
 
@@ -838,6 +987,52 @@ const UnifiedNav = {
         `;
 
     nav.innerHTML = menuHtml;
+
+    // Show/Hide profile switcher based on mode
+    const profileArea = document.getElementById("sidebar-profile-switcher");
+    if (profileArea) {
+      profileArea.style.display = isPlayer ? "block" : "none";
+      if (isPlayer) this.renderProfileSwitcher();
+    }
+  },
+
+  renderProfileSwitcher() {
+    const target = document.getElementById("profile-switcher-target");
+    if (!target) return;
+
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const activePlayerId = localStorage.getItem("activePlayerId");
+    const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
+    
+    if (family.length === 0 && !activePlayerId) {
+        target.innerHTML = `<div style="padding: 0.5rem; color: rgba(255,255,255,0.4); font-size: 0.8rem;">Single Profile Mode</div>`;
+        return;
+    }
+
+    const firstName = user.firstName || user.first_name || "User";
+    const initials = firstName.charAt(0).toUpperCase();
+
+    let switcherHtml = `
+        <div class="mini-profile-list" style="display: flex; flex-direction: column; gap: 4px;">
+            <div class="profile-pill ${!activePlayerId ? 'active' : ''}" onclick="if(typeof switchProfile !== 'undefined') switchProfile(null); else location.reload();" style="display: flex; align-items: center; gap: 0.75rem; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s; ${!activePlayerId ? 'background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3);' : 'background: rgba(255,255,255,0.03); border: 1px solid transparent;'}">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: white;">${initials}</div>
+                <div style="flex: 1; font-size: 0.85rem; font-weight: 600; color: ${!activePlayerId ? 'white' : 'rgba(255,255,255,0.6)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Main Profile</div>
+            </div>
+    `;
+
+    family.forEach(member => {
+        const isActive = activePlayerId == member.id;
+        const mInitials = (member.first_name || "F").charAt(0).toUpperCase();
+        switcherHtml += `
+            <div class="profile-pill ${isActive ? 'active' : ''}" onclick="if(typeof switchToChildProfile !== 'undefined') switchToChildProfile('${member.id}', '${member.club_id || ''}'); else location.reload();" style="display: flex; align-items: center; gap: 0.75rem; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s; ${isActive ? 'background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3);' : 'background: rgba(255,255,255,0.03); border: 1px solid transparent;'}">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: ${member.club_id ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'rgba(255,255,255,0.1)'}; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: white;">${mInitials}</div>
+                <div style="flex: 1; font-size: 0.85rem; font-weight: 600; color: ${isActive ? 'white' : 'rgba(255,255,255,0.6)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${member.first_name}</div>
+            </div>
+        `;
+    });
+
+    switcherHtml += `</div>`;
+    target.innerHTML = switcherHtml;
   },
 
 

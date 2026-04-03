@@ -147,9 +147,10 @@
                         <table class="registrants-table">
                             <thead>
                                 <tr>
+                                    <th>ID</th>
                                     <th>Name</th>
+                                    <th>Phone</th>
                                     <th>Age</th>
-                                    <th>Position</th>
                                     <th>Bib</th>
                                     <th>Group</th>
                                     <th>Status</th>
@@ -347,19 +348,45 @@
 
             try {
                 const data = await apiService.makeRequest(`/talent-id/events/${eventId}/dashboard`);
+                console.log("DEBUG: Talent ID Dashboard Data:", data);
+                
+                // Consolidate Registrants: Start with everyone who registered
+                let consolidatedRegistrants = [...data.registrants];
+                const registeredIds = new Set(consolidatedRegistrants.map(r => r.user_id || r.id));
+
+                // Add group players who haven't registered
+                if (data.groups) {
+                    data.groups.forEach(group => {
+                        if (group.players) {
+                            group.players.forEach(player => {
+                                const playerId = player.id || player.player_id;
+                                if (!registeredIds.has(playerId)) {
+                                    consolidatedRegistrants.push({
+                                        ...player,
+                                        status: 'No Reg',
+                                        group_name: group.name,
+                                        is_placeholder: true
+                                    });
+                                    registeredIds.add(playerId);
+                                }
+                            });
+                        }
+                    });
+                }
+
                 dashboardData = data;
 
                 // Update stats
-                document.getElementById('totalRegistrants').textContent = data.registrants.length;
-                document.getElementById('checkedIn').textContent = data.registrants.filter(r => r.status === 'checked_in').length;
-                document.getElementById('groupsCount').textContent = data.groups.length;
-                document.getElementById('bibsCount').textContent = data.bibs.filter(b => b.status === 'available').length;
+                document.getElementById('totalRegistrants').textContent = consolidatedRegistrants.length;
+                document.getElementById('checkedIn').textContent = consolidatedRegistrants.filter(r => r.status === 'checked_in').length;
+                document.getElementById('groupsCount').textContent = data.groups?.length || 0;
+                document.getElementById('bibsCount').textContent = data.bibs?.filter(b => b.status === 'available').length || 0;
 
                 // Display data
-                displayRegistrants(data.registrants);
-                displayGroups(data.groups);
-                displayBibs(data.bibs);
-                displaySchedule(data.schedule);
+                displayRegistrants(consolidatedRegistrants);
+                displayGroups(data.groups || []);
+                displayBibs(data.bibs || []);
+                displaySchedule(data.schedule || []);
 
                 document.getElementById('dashboardContent').style.display = 'block';
             } catch (error) {
@@ -369,26 +396,37 @@
         }
 
         function displayRegistrants(registrants) {
+            console.log("DEBUG: Displaying Registrants:", registrants);
             const tbody = document.getElementById('registrantsBody');
 
-            if (registrants.length === 0) {
+            if (!registrants || registrants.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7">No registrants yet</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = registrants.map(reg => `
-                <tr>
-                    <td><strong>${reg.first_name} ${reg.last_name}</strong></td>
-                    <td>${calculateAge(reg.date_of_birth)}</td>
-                    <td>${reg.position || 'N/A'}</td>
-                    <td>${reg.bib_number ? `<span class="bib-badge" style="background: ${getBibColor(reg.bib_color)}">${reg.bib_color} #${reg.bib_number}</span>` : '-'}</td>
-                    <td>${reg.group_name || '-'}</td>
-                    <td>${reg.status === 'checked_in' ? '<span class="badge" style="background: #22c55e;">Checked In</span>' : '<span class="badge">Registered</span>'}</td>
-                    <td>
-                        ${reg.status !== 'checked_in' ? `<button class="btn btn-sm" onclick="checkIn('${reg.id}')">Check In</button>` : ''}
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = registrants.map(reg => {
+                let statusBadge = '<span class="badge">Registered</span>';
+                if (reg.status === 'checked_in') {
+                    statusBadge = '<span class="badge" style="background: #22c55e;">Checked In</span>';
+                } else if (reg.status === 'No Reg' || reg.status === 'no_reg') {
+                    statusBadge = '<span class="badge" style="background: #ef4444;">No Reg</span>';
+                }
+
+                return `
+                    <tr>
+                        <td style="font-family: monospace; color: var(--text-muted);">#${reg.id ? reg.id.toString().substring(0, 6) : 'N/A'}</td>
+                        <td><strong>${reg.first_name} ${reg.last_name}</strong></td>
+                        <td>${reg.phone || reg.phone_number || '-'}</td>
+                        <td>${calculateAge(reg.date_of_birth)}</td>
+                        <td>${reg.bib_number ? `<span class="bib-badge" style="background: ${getBibColor(reg.bib_color)}">${reg.bib_color} #${reg.bib_number}</span>` : '-'}</td>
+                        <td>${reg.group_name || '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            ${reg.status !== 'checked_in' ? `<button class="btn btn-sm" onclick="checkIn('${reg.id}')">Check In</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function displayGroups(groups) {

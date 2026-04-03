@@ -195,6 +195,44 @@ async function saveCoachProfile() {
   }
 }
 
+async function loadCoachPlayers() {
+  const container = document.getElementById("coach-players-list");
+  const tacticalPinsContainer = document.getElementById("availablePlayerPins");
+  
+  if (!container && !tacticalPinsContainer) return;
+
+  try {
+    const { players } = await apiService.get("/api/coach/squad");
+    
+    // 1. Populate squad list
+    if (container) {
+      container.innerHTML = players.map(p => `
+        <div class="player-row">
+          <div class="player-av">${(p.first_name || 'P').charAt(0)}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;">${p.first_name} ${p.last_name}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${p.position || 'Unknown'}</div>
+          </div>
+          <button class="btn btn-secondary btn-small" onclick="viewPlayerProfile('${p.id}')">View</button>
+        </div>
+      `).join('');
+    }
+
+    // 2. Populate tactical pins
+    if (tacticalPinsContainer) {
+      tacticalPinsContainer.innerHTML = players.map(p => `
+        <div class="player-pin-source" draggable="true" 
+             ondragstart="event.dataTransfer.setData('text/plain', JSON.stringify({source:'tray', type:'player', label:'${p.last_name || p.first_name}'}))"
+             style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.4rem; font-size:0.7rem; text-align:center; cursor:grab;">
+          ${(p.first_name || 'P').charAt(0)}${(p.last_name || '').charAt(0)}
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    console.error("Squad load error:", err);
+  }
+}
+
 async function loadCoachTournaments() {
   const container = document.getElementById("coach-tournament-manager");
   if (!container) return;
@@ -216,7 +254,7 @@ async function loadCoachTournaments() {
     if (!orgId) {
       if (grid)
         grid.innerHTML =
-          '<p style="padding: 2rem; opacity: 0.6;">Please select a club to view tournaments.</p>';
+          '<p style="padding: 2rem; opacity: 0.6;">Please select a group to view tournaments.</p>';
       return;
     }
 
@@ -228,7 +266,7 @@ async function loadCoachTournaments() {
       if (grid)
         grid.innerHTML = `
                 <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
-                    <p style="color: var(--text-muted);">No active tournaments found for this club.</p>
+                    <p style="color: var(--text-muted);">No active tournaments found for this group.</p>
                 </div>
             `;
       return;
@@ -492,7 +530,7 @@ async function loadCoachProducts() {
 
   const clubFilter = document.getElementById("shopClubFilter");
 
-  // Get clubs coach is part of
+  // Get groups coach is part of
   const coachClubs = AppState.clubs || [];
 
   if (clubFilter && clubFilter.options.length <= 1) {
@@ -511,7 +549,7 @@ async function loadCoachProducts() {
     if (selectedClubId) {
       products = await apiService.getProducts(selectedClubId);
     } else {
-      // Fetch products for all clubs
+      // Fetch products for all groups
       const productPromises = coachClubs.map((c) =>
         apiService.getProducts(c.id),
       );

@@ -231,6 +231,58 @@ router.get("/:id", optionalAuth, async (req, res) => {
 });
 
 /**
+ * @route POST /api/clubs/:id/claim
+ * @desc Initiates the automated claim process for a club
+ */
+router.post("/:id/claim", authenticateToken, async (req, res) => {
+  try {
+    const clubId = req.params.id;
+    const userId = req.user.id;
+
+    // 1. Check if club exists and is not already claimed
+    const clubResult = await query(
+      "SELECT * FROM organizations WHERE id = $1",
+      [clubId]
+    );
+
+    if (clubResult.rows.length === 0) {
+      return res.status(404).json({ error: "Club not found" });
+    }
+
+    const club = clubResult.rows[0];
+
+    // If club already has an owner_id that isn't null/placeholder, it might be claimed
+    // In our system, platform-generated clubs might have a null owner or a system owner
+    if (club.owner_id && club.status === 'active' && !club.is_platform_generated) {
+      return res.status(400).json({ error: "This club has already been claimed." });
+    }
+
+    // 2. Mark as pending claim
+    await query(
+      "UPDATE organizations SET status = 'pending_claim', metadata = jsonb_set(COALESCE(metadata, '{}'), '{claim_requested_by}', $1) WHERE id = $2",
+      [JSON.stringify(userId), clubId]
+    );
+
+    // 3. Log the claim request
+    console.log(`📩 Claim request for ${club.name} (ID: ${clubId}) by User ${userId}`);
+
+    // 4. Send verification email (Mock logic - in production uses EmailService)
+    // We assume a verification link will be sent to the club's contact email if available,
+    // or the requester is asked to provide proof.
+    
+    res.json({ 
+      success: true, 
+      message: "Claim request submitted. Our team will verify your relationship with the group and send a confirmation email within 24 hours.",
+      status: "pending_claim"
+    });
+
+  } catch (error) {
+    console.error("Club claim error:", error);
+    res.status(500).json({ error: "Failed to process claim request" });
+  }
+});
+
+/**
  * @route GET /api/clubs/:id/teams
  * @desc Get all teams for a club
  */

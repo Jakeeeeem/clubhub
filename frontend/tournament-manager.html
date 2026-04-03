@@ -289,6 +289,16 @@
 
                     <!-- Bracket Tab -->
                     <div id="bracket-tab" class="tab-content" style="display: none;">
+                        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div>
+                                <h3 style="margin:0;">Knockout Bracket</h3>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Drag teams from the Rounds or use Magic Schedule</p>
+                            </div>
+                            <div style="display: flex; gap: 0.75rem;">
+                                <button class="btn btn-secondary btn-small" onclick="handleAutoSchedule()" style="border-color: var(--primary);">🪄 Magic Schedule</button>
+                                <button class="btn btn-text btn-small" onclick="handleResetBracket()" style="color: #f87171;">Reset</button>
+                            </div>
+                        </div>
                         <div id="bracketContainer" class="bracket">
                             <!-- Bracket will be rendered here -->
                         </div>
@@ -1178,6 +1188,74 @@
             } catch (error) {
                 alert('Failed to remove pitch');
             }
+        }
+
+        // --- Magic Auto-Scheduler ---
+        function handleAutoSchedule() {
+            if (typeof showAlert === 'function') {
+                showAlert("Shuffling teams and generating Round 1 match-ups...", "Magic Schedule", "info");
+            }
+
+            // 1. Get all approved teams from the sidebar
+            const teamNodes = Array.from(document.querySelectorAll('#unassignedTeamsList .team-item'))
+                .map(el => ({
+                    id: el.getAttribute('draggable-id') || Math.random().toString(36).substr(2, 9),
+                    name: el.querySelector('span').textContent.trim()
+                }));
+
+            if (teamNodes.length < 2) {
+                alert("Need at least 2 teams to schedule.");
+                return;
+            }
+
+            // 2. Shuffle
+            for (let i = teamNodes.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [teamNodes[i], teamNodes[j]] = [teamNodes[j], teamNodes[i]];
+            }
+
+            // 3. Fill Round 1 slots
+            const r1Matches = document.querySelectorAll('.bracket-round[data-round="1"] .bracket-match');
+            let teamIdx = 0;
+
+            r1Matches.forEach(match => {
+                const slots = match.querySelectorAll('.bracket-team');
+
+                // Slot 1
+                if (teamIdx < teamNodes.length) {
+                    fillSlot(slots[0], teamNodes[teamIdx]);
+                    teamIdx++;
+                }
+
+                // Slot 2
+                if (teamIdx < teamNodes.length) {
+                    fillSlot(slots[1], teamNodes[teamIdx]);
+                    teamIdx++;
+                }
+            });
+
+            if (typeof showAlert === 'function') {
+                showAlert("Magic Schedule complete! Don't forget to save.", "Success", "success");
+            }
+        }
+
+        function fillSlot(slotEl, teamData) {
+            slotEl.innerHTML = `<span>${teamData.name}</span><strong>0</strong>`;
+            slotEl.dataset.teamId = teamData.id;
+            slotEl.classList.remove('empty-slot');
+            // Remove from sidebar if found
+            const sideItem = document.querySelector(`.team-item[draggable-id="${teamData.id}"]`);
+            if (sideItem) sideItem.style.display = 'none';
+        }
+
+        function handleResetBracket() {
+            if (!confirm("Are you sure? This will clear all slots.")) return;
+            document.querySelectorAll('.bracket-team').forEach(slot => {
+                slot.innerHTML = '<span>Empty Slot</span>';
+                delete slot.dataset.teamId;
+                slot.classList.remove('winner');
+            });
+            document.querySelectorAll('.team-item').forEach(item => item.style.display = 'flex');
         }
 
         // --- Staff Methods ---

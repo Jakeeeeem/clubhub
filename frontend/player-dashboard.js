@@ -43,224 +43,7 @@ if (!window.AppState) {
   }
 }
 
-function setupNavButtons() {
-  const navContainer = document.getElementById("loggedInNav");
-  if (!navContainer) return;
-
-  // Initialize AppState from localStorage if not already set
-  if (!window.AppState || !window.AppState.currentUser) {
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      try {
-        window.AppState = {
-          currentUser: JSON.parse(storedUser),
-          isLoggedIn: true,
-        };
-        console.log(
-          "✅ AppState initialized from localStorage in setupNavButtons",
-        );
-      } catch (error) {
-        console.error("Failed to parse currentUser from localStorage:", error);
-      }
-    }
-  }
-
-  // Check again after initialization attempt
-  if (!window.AppState || !window.AppState.currentUser) {
-    console.warn("AppState.currentUser not ready yet, showing login button");
-    navContainer.innerHTML =
-      '<button class="btn btn-primary" onclick="window.location.href=\'index.html\'">Login</button>';
-    return;
-  }
-
-  const currentUser = window.AppState.currentUser;
-  const firstName = currentUser.first_name || currentUser.firstName || "User";
-  const lastInitial = (
-    currentUser.last_name ||
-    currentUser.lastName ||
-    ""
-  ).charAt(0);
-  const initials = (firstName.charAt(0) + lastInitial).toUpperCase();
-  const unreadCount = PlayerDashboardState.notifications.filter(
-    (n) => !n.is_read,
-  ).length;
-
-  // Admin dashboard structure:
-  // [Org Switcher] [Name] [Avatar] [Logout]
-  // Player dashboard needs:
-  // [Org Switcher] [Bell] [Family Switcher] [Name] [Avatar] [Logout]
-
-  const orgSwitcherContainer = document.getElementById(
-    "org-switcher-container",
-  );
-
-  // Family switcher - Re-enabled for Player dashboard
-  const profileSwitcher = true
-    ? `
-    <div class="profile-switcher" style="position: relative; margin-right: 0.5rem;">
-      <button class="profile-switcher-trigger" id="profile-switcher-trigger" style="display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 10px; padding: 8px 16px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; min-width: 160px; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
-          <div class="profile-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; box-shadow: 0 0 10px var(--primary-glow);">
-            ${!PlayerDashboardState.activePlayerId ? firstName.charAt(0) : PlayerDashboardState.family.find((f) => f.id == PlayerDashboardState.activePlayerId)?.first_name?.charAt(0) || "F"}
-          </div>
-          <span style="font-weight: 600;">${!PlayerDashboardState.activePlayerId ? "Main Profile" : PlayerDashboardState.family.find((f) => f.id == PlayerDashboardState.activePlayerId)?.first_name || "Family"}</span>
-        </div>
-        <svg width="14" height="14" viewBox="0 0 12 12" fill="none" style="opacity: 0.8; margin-left: 4px;">
-          <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-      </button>
-      
-      <div class="profile-switcher-dropdown" id="profile-switcher-dropdown" style="position: absolute; top: calc(100% + 8px); right: 0; min-width: 300px; background: #1e1e1e; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; overflow: hidden; backdrop-filter: blur(20px);">
-        <div style="padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: rgba(255,255,255,0.5);">
-          Switch Profile
-        </div>
-        <div class="profile-list" style="max-height: 400px; overflow-y: auto;">
-          <button class="profile-item ${!PlayerDashboardState.activePlayerId ? "active" : ""}" onclick="switchProfile(null)" style="width: 100%; display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: ${!PlayerDashboardState.activePlayerId ? "rgba(220,67,67,0.1)" : "transparent"}; border: none; color: white; cursor: pointer; transition: background 0.2s; text-align: left;">
-            <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; flex-shrink: 0;">
-              ${firstName.charAt(0)}
-            </div>
-            <div style="flex: 1;">
-              <div style="font-weight: 600; font-size: 0.95rem;">${firstName} ${currentUser.last_name || ""}</div>
-              <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">Main Profile</div>
-            </div>
-            ${!PlayerDashboardState.activePlayerId ? '<div style="color: var(--primary);"><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M3 8L6 11L13 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>' : ""}
-          </button>
-          ${PlayerDashboardState.family
-            .map((child) => {
-              const childAge = child.age || calculateAge(child.date_of_birth);
-              const hasClub = child.club_id && child.club_name;
-              const clubName = child.club_name || "No Club";
-              const clubInitial = clubName.charAt(0).toUpperCase();
-              const isActive = PlayerDashboardState.activePlayerId == child.id;
-
-              return `
-            <button class="profile-item ${isActive ? "active" : ""}" 
-                    onclick="switchToChildProfile('${child.id}', '${child.club_id || ""}')" 
-                    style="width: 100%; display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; background: ${isActive ? "rgba(220,67,67,0.1)" : "transparent"}; border: none; color: white; cursor: pointer; transition: background 0.2s; text-align: left;"
-                    >
-              <div style="width: 36px; height: 36px; border-radius: 50%; background: ${hasClub ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "rgba(255,255,255,0.1)"}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; flex-shrink: 0;">
-                ${child.first_name.charAt(0)}
-              </div>
-              <div style="flex: 1; overflow: hidden;">
-                <div style="font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${child.first_name} ${child.last_name}</div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-                  <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: ${hasClub ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)"}; padding: 0.2rem 0.5rem; border-radius: 4px; max-width: 65%; overflow: hidden;">
-                    ${
-                      hasClub
-                        ? `<span style="width: 14px; height: 14px; background: var(--primary); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; flex-shrink: 0;">${clubInitial}</span>
-                           <span style="font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clubName}</span>`
-                        : `<span style="font-size: 0.75rem;">⚠️ No Club</span>`
-                    }
-                  </div>
-                  ${hasClub ? `<span style="font-size: 0.75rem; color: rgba(255,255,255,0.6); font-weight: 500; white-space: nowrap; margin-left: 8px;">Age ${childAge}</span>` : ""}
-                </div>
-              </div>
-              ${isActive && hasClub ? '<div style="color: var(--primary);"><svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M3 8L6 11L13 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>' : ""}
-            </button>
-          `;
-            })
-            .join("")}
-        </div>
-        <div style="padding: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.1);">
-          <button onclick="showPlayerSection('family')" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; background: rgba(220,67,67,0.1); border: 1px solid rgba(220,67,67,0.3); color: var(--primary); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
-            Add Family Member
-          </button>
-        </div>
-      </div>
-    </div>
-  `
-    : "";
-
-  navContainer.innerHTML = `
-    <div class="user-info" style="display: flex; align-items: center; gap: 1.5rem;">
-      <!-- Placeholder for Org Switcher if we move it -->
-      <div id="moved-org-switcher"></div>
-
-      <div class="notification-wrapper" style="position: relative;">
-        <button class="notification-bell ${unreadCount > 0 ? "has-unread" : ""}" onclick="toggleNotifications()" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          ${unreadCount > 0 ? `<span class="unread-badge" style="position: absolute; top: -5px; right: -5px; background: red; color: white; font-size: 10px; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;">${unreadCount}</span>` : ""}
-        </button>
-        <div id="notificationDropdown" class="notification-dropdown">
-          <div class="dropdown-header">
-            <h3>Notifications</h3>
-            <button onclick="markAllNotificationsRead()" class="btn-text">Mark all read</button>
-          </div>
-          <div id="notificationList" class="notification-list">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-      </div>
-      
-      ${profileSwitcher}
-
-      <span class="user-name" style="font-weight: 600; font-size: 0.95rem;">Hello, ${firstName}!</span>
-      <div class="user-avatar" style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; box-shadow: 0 0 15px var(--primary-glow);">${initials}</div>
-      <button class="btn btn-secondary btn-small" onclick="logout()" style="padding: 0.5rem 1rem; font-weight: 600;">Logout</button>
-    </div>
-  `;
-
-  // Move Org Switcher into this flex container for perfect alignment
-  const movedContainer = document.getElementById("moved-org-switcher");
-  if (orgSwitcherContainer && movedContainer) {
-    movedContainer.appendChild(orgSwitcherContainer);
-    // Force re-render/init if class exists
-    if (typeof OrganizationSwitcher !== "undefined") {
-      orgSwitcherContainer.style.display = "block";
-    }
-  }
-
-  // Setup profile switcher dropdown toggle
-  const profileTrigger = document.getElementById("profile-switcher-trigger");
-  const profileDropdown = document.getElementById("profile-switcher-dropdown");
-
-  if (profileTrigger && profileDropdown) {
-    profileTrigger.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isOpen = profileDropdown.style.opacity === "1";
-
-      if (isOpen) {
-        profileDropdown.style.opacity = "0";
-        profileDropdown.style.visibility = "hidden";
-        profileDropdown.style.transform = "translateY(-10px)";
-      } else {
-        profileDropdown.style.opacity = "1";
-        profileDropdown.style.visibility = "visible";
-        profileDropdown.style.transform = "translateY(0)";
-      }
-    });
-
-    // Close on outside click
-    document.addEventListener("click", (e) => {
-      if (!e.target.closest(".profile-switcher")) {
-        profileDropdown.style.opacity = "0";
-        profileDropdown.style.visibility = "hidden";
-        profileDropdown.style.transform = "translateY(-10px)";
-      }
-    });
-
-    // Add hover effects to profile items
-    const profileItems = profileDropdown.querySelectorAll(".profile-item");
-    profileItems.forEach((item) => {
-      item.addEventListener("mouseenter", function () {
-        if (!this.classList.contains("active")) {
-          this.style.background = "rgba(255,255,255,0.05)";
-        }
-      });
-      item.addEventListener("mouseleave", function () {
-        if (!this.classList.contains("active")) {
-          this.style.background = "transparent";
-        }
-      });
-    });
-  }
-}
+// Removed redundant setupNavButtons - Now handled by UnifiedNav global controller
 
 /**
  * Switch to a child's profile and auto-switch organization if needed
@@ -322,8 +105,8 @@ async function switchToChildProfile(childId, childClubId) {
     // Refresh the current section
     showPlayerSection(PlayerDashboardState.activeSection || "overview");
 
-    // Update nav buttons to reflect new profile
-    setupNavButtons();
+    // Update profile switcher in UnifiedNav to reflect new profile
+    if (window.UnifiedNav) window.UnifiedNav.renderProfileSwitcher();
 
     showNotification("Switched to child's profile", "success");
   } catch (err) {
@@ -353,7 +136,7 @@ async function switchProfile(id) {
     showLoading(true);
     await loadPlayerDataWithFallback();
     showPlayerSection(PlayerDashboardState.activeSection);
-    setupNavButtons(); // Refresh dropdown
+    if (window.UnifiedNav) window.UnifiedNav.renderProfileSwitcher(); // Refresh sidebar profile switcher
     showNotification("Profile switched successfully", "success");
   } catch (err) {
     console.error("Failed to switch profile:", err);
@@ -403,8 +186,8 @@ async function initializePlayerDashboard() {
       console.log("📋 Restored active profile:", savedPlayerId);
     }
 
-    // Initial setup of nav buttons
-    setupNavButtons();
+    // Initial setup of nav buttons - Handled by UnifiedNav init
+    // setupNavButtons(); 
 
     showLoading(true);
 
@@ -448,8 +231,8 @@ async function initializePlayerDashboard() {
 
     await Promise.allSettled(additionalPromises);
 
-    // Refresh nav buttons after all data is loaded
-    setupNavButtons();
+    // Refresh nav buttons after all data is loaded - Handled by UnifiedNav
+    // setupNavButtons();
 
     console.log("Player dashboard initialized successfully");
   } catch (err) {
@@ -1755,6 +1538,7 @@ function displayClubs(clubs) {
                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                   <button class="btn btn-small btn-primary" onclick="event.stopPropagation(); applyToClub('${club.id}', '${escapeHTML((club.name || "").replace(/"/g, "&quot;"))}')">Apply</button>
                   <button class="btn btn-small btn-secondary" onclick="event.stopPropagation(); viewClubDetails('${club.id}')">View</button>
+                  <button class="btn btn-small" style="background: rgba(255, 140, 0, 0.1); color: #ff8c00; border: 1px solid rgba(255, 140, 0, 0.3);" onclick="event.stopPropagation(); handleClubClaim('${club.id}', '${escapeHTML((club.name || "").replace(/"/g, "&quot;"))}')">Claim</button>
                 </div>
               </td>
             </tr>
@@ -1765,6 +1549,30 @@ function displayClubs(clubs) {
       </table>
     </div>
   `;
+}
+
+async function handleClubClaim(clubId, clubName) {
+  const confirmed = await showConfirm(
+    `Are you an official representative of ${clubName}? This will initiate the verification process to grant you admin access.`,
+    "Claim Group",
+    "claim"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    showLoading(true);
+    const result = await apiService.makeRequest(`/clubs/${clubId}/claim`, {
+      method: "POST"
+    });
+
+    showNotification(result.message, "success");
+  } catch (err) {
+    console.error("Claim error:", err);
+    showNotification(err.message || "Failed to submit claim request", "error");
+  } finally {
+    showLoading(false);
+  }
 }
 
 function loadEventFinder() {

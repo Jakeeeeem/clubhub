@@ -292,7 +292,7 @@
                         style="font-size: 2rem; margin-bottom: 0.5rem; display: block; width: 100%; text-align: center;">
                         🏢</div>
                     <div style="text-align: center; width: 100%;">
-                        <strong style="display: block; margin-bottom: 0.25rem;">Group</strong>
+                        <strong style="display: block; margin-bottom: 0.25rem;">Group / Club</strong>
                         <span style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.1;">Manage teams and payments.</span>
                     </div>
                 </div>
@@ -381,7 +381,7 @@
                         style="font-size: 0.9rem; color: var(--text-main); cursor: pointer; line-height: 1.5;">
                         I agree to the <a href="#" onclick="showTermsModal(); return false;"
                             style="color: var(--primary); text-decoration: underline; font-weight: 700;">Terms & Conditions</a> *
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">(Click to read and unlock)</div>
+                        <div id="termsNotice" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">(You must open and read terms to unlock)</div>
                     </label>
                 </div>
 
@@ -393,7 +393,7 @@
                         style="font-size: 0.9rem; color: var(--text-main); cursor: pointer; line-height: 1.5;">
                         I have read and agree to the <a href="#" onclick="showPrivacyModal(); return false;"
                             style="color: var(--primary); text-decoration: underline; font-weight: 700;">Privacy Policy</a> *
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">(Click to read and unlock)</div>
+                        <div id="privacyNotice" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">(You must open and read policy to unlock)</div>
                     </label>
                 </div>
 
@@ -402,8 +402,8 @@
                         style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
                     <label for="agreeThirdParty"
                         style="font-size: 0.9rem; color: var(--text-muted); cursor: pointer; line-height: 1.5;">
-                        <strong>Third Party Consent:</strong> I consent to my data being securely shared with verified 3rd party scouts, professional groups,
-                        and platform partners for recruitment opportunities and performance analytics.
+                        <strong>3rd Party Data Sharing:</strong> I consent to my data being securely shared with verified scouts, professional clubs,
+                        and recruitment partners for career opportunities and performance analytics.
                     </label>
                 </div>
             </div>
@@ -817,6 +817,7 @@
             const cb = document.getElementById('agreeTerms');
             cb.disabled = false;
             cb.style.cursor = 'pointer';
+            document.getElementById('termsNotice').innerHTML = '<span style="color:#4ade80;">✓ Read - You can now check this box</span>';
             closeModal('termsModal');
         }
         function unlockedPrivacy() {
@@ -824,6 +825,7 @@
             const cb = document.getElementById('agreePrivacy');
             cb.disabled = false;
             cb.style.cursor = 'pointer';
+            document.getElementById('privacyNotice').innerHTML = '<span style="color:#4ade80;">✓ Read - You can now check this box</span>';
             closeModal('privacyModal');
         }
         function closeModal(id) {
