@@ -363,23 +363,77 @@ router.post(
         if (teams.length < 2) throw new Error("Not enough teams");
 
         if (type === "knockout") {
-          // Shuffle
+          // 1. Shuffle teams for initial pairing
           for (let i = teams.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [teams[i], teams[j]] = [teams[j], teams[i]];
           }
 
-          for (let i = 0; i < teams.length; i += 2) {
-            const home = teams[i];
-            const away = teams[i + 1];
+          // 2. Determine power-of-2 bracket size
+          const numTeams = teams.length;
+          const numRounds = Math.round(Math.log2(numTeams)); 
+          const bracketSize = Math.pow(2, numRounds);
+
+          // 3. Create all matches for all rounds (backwards from Final)
+          const matchesByRound = {};
+          
+          for (let r = numRounds; r >= 1; r--) {
+            matchesByRound[r] = [];
+            const matchesInRound = Math.pow(2, numRounds - r);
+            
+            for (let m = 0; m < matchesInRound; m++) {
+              const res = await client.query(
+                `INSERT INTO tournament_matches (stage_id, event_id, round_number, match_number, status)
+                 VALUES ($1, $2, $3, $4, 'scheduled') RETURNING id`,
+                [stageId, eventId, r, m]
+              );
+              matchesByRound[r].push(res.rows[0].id);
+            }
+          }
+
+          // 4. Link matches (Forward progression)
+          for (let r = 1; r < numRounds; r++) {
+            const currentRoundMatches = matchesByRound[r];
+            const nextRoundMatches = matchesByRound[r + 1];
+            
+            for (let i = 0; i < currentRoundMatches.length; i++) {
+              const matchId = currentRoundMatches[i];
+              const nextMatchIdx = Math.floor(i / 2);
+              const isHome = i % 2 === 0;
+              
+              await client.query(
+                `UPDATE tournament_matches 
+                 SET next_match_id = $1, progress_to_home = $2 
+                 WHERE id = $3`,
+                [nextRoundMatches[nextMatchIdx], isHome, matchId]
+              );
+            }
+          }
+
+          // 5. Fill Round 1 with teams
+          const round1MatchIds = matchesByRound[1];
+          for (let i = 0; i < round1MatchIds.length; i++) {
+            const matchId = round1MatchIds[i];
+            const homeTeam = teams[i * 2] || null;
+            const awayTeam = teams[i * 2 + 1] || null;
 
             await client.query(
-              `
-                        INSERT INTO tournament_matches (stage_id, event_id, home_team_id, away_team_id, round_number, match_number, status)
-                        VALUES ($1, $2, $3, $4, 1, $5, 'scheduled')
-                    `,
-              [stageId, eventId, home.id, away ? away.id : null, i / 2],
+              `UPDATE tournament_matches 
+               SET home_team_id = $1, away_team_id = $2 
+               WHERE id = $3`,
+              [homeTeam ? homeTeam.id : null, awayTeam ? awayTeam.id : null, matchId]
             );
+
+            // Handle automatic progression for Byes
+            if (homeTeam && !awayTeam) {
+               const matchRes = await client.query("SELECT next_match_id, progress_to_home FROM tournament_matches WHERE id = $1", [matchId]);
+               const match = matchRes.rows[0];
+               if (match.next_match_id) {
+                  const field = match.progress_to_home ? 'home_team_id' : 'away_team_id';
+                  await client.query(`UPDATE tournament_matches SET ${field} = $1 WHERE id = $2`, [homeTeam.id, match.next_match_id]);
+                  await client.query("UPDATE tournament_matches SET status = 'completed', home_score = 1, away_score = 0 WHERE id = $1", [matchId]);
+               }
+            }
           }
         } else if (type === "league") {
           // Round Robin - assign round numbers using round-robin algorithm

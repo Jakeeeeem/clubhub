@@ -1,8 +1,11 @@
 {
   "dependencies": {
-    "nodemailer": "^7.0.5"
-  }
-  ,"scripts": {
+    "dotenv": "^17.4.0",
+    "nodemailer": "^7.0.5",
+    "pg": "^8.20.0",
+    "pg-pool": "^3.13.0"
+  },
+  "scripts": {
     "seed:camps": "node scripts/seed-camps.js",
     "seed:tournaments": "node scripts/seed-tournaments.js"
   }
