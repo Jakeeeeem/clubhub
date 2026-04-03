@@ -87,7 +87,7 @@ router.post(
   requireOrganization,
   [
     body("title").trim().notEmpty(),
-    body("listing_type").isIn(["player", "staff", "trial", "other"]),
+    body("listing_type").isIn(["player", "staff", "trial", "other", "tournament"]),
     body("clubId").isUUID(),
   ],
   async (req, res) => {

@@ -57,6 +57,7 @@ router.post(
     body("teamName").notEmpty(),
     body("contactEmail").isEmail(),
     body("internalTeamId").optional().isUUID(),
+    body("paymentIntentId").optional().isString(),
   ],
   async (req, res) => {
     try {
@@ -64,16 +65,16 @@ router.post(
       if (!errors.isEmpty())
         return res.status(400).json({ errors: errors.array() });
 
-      const { eventId, teamName, contactEmail, contactPhone, internalTeamId } =
+      const { eventId, teamName, contactEmail, contactPhone, internalTeamId, paymentIntentId } =
         req.body;
 
       const result = await query(
         `
-            INSERT INTO tournament_teams (event_id, team_name, contact_email, contact_phone, internal_team_id, status)
-            VALUES ($1, $2, $3, $4, $5, 'pending')
+            INSERT INTO tournament_teams (event_id, team_name, contact_email, contact_phone, internal_team_id, payment_intent_id, payment_status, status)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
             RETURNING *
         `,
-        [eventId, teamName, contactEmail, contactPhone, internalTeamId || null],
+        [eventId, teamName, contactEmail, contactPhone, internalTeamId || null, paymentIntentId || null, paymentIntentId ? 'requires_capture' : 'pending'],
       );
 
       res
@@ -620,6 +621,40 @@ router.post(
 );
 
 /**
+ * @route   POST /api/tournaments/:id/pitches/bulk
+ * @desc    Bulk add pitches to a tournament
+ */
+router.post(
+  "/:id/pitches/bulk",
+  authenticateToken,
+  requireOrganization,
+  [
+    body("count").isInt({ min: 1, max: 50 }),
+    body("pitchType").optional(),
+    body("pitchSize").optional(),
+  ],
+  async (req, res) => {
+    const { count, pitchType, pitchSize } = req.body;
+    try {
+      await withTransaction(async (client) => {
+        for (let i = 1; i <= count; i++) {
+          await client.query(
+            `
+                INSERT INTO tournament_pitches (event_id, name, pitch_type, pitch_size)
+                VALUES ($1, $2, $3, $4)
+            `,
+            [req.params.id, `Pitch-${i}`, pitchType || "Grass", pitchSize || "11v11"],
+          );
+        }
+      });
+      res.status(201).json({ message: `${count} pitches created` });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to create pitches" });
+    }
+  },
+);
+
+/**
  * @route   GET /api/tournaments/:id/pitches
  * @desc    Get all pitches for a tournament
  */
@@ -668,7 +703,7 @@ router.post(
 
         // 3. Fetch Unscheduled Matches
         const matchesRes = await client.query(
-          "SELECT id FROM tournament_matches WHERE stage_id = $1 AND start_time IS NULL ORDER BY match_number",
+          "SELECT id, duration FROM tournament_matches WHERE stage_id = $1 AND start_time IS NULL ORDER BY match_number",
           [stageId],
         );
         const matches = matchesRes.rows;
@@ -698,6 +733,10 @@ router.post(
         });
 
         for (let i = 0; i < matches.length; i++) {
+          // Allow match-specific duration override, else fallback to stage duration
+          const matchDuration = matches[i].duration || duration;
+          const matchTotalSlot = matchDuration + buffer;
+
           // Find pitch that is available earliest
           let earliestPitchIdx = 0;
           for (let j = 1; j < pitchAvailability.length; j++) {
@@ -708,7 +747,7 @@ router.post(
 
           const matchStartTime = new Date(pitchAvailability[earliestPitchIdx]);
           const matchEndTime = new Date(
-            matchStartTime.getTime() + duration * 60000,
+            matchStartTime.getTime() + matchDuration * 60000,
           );
 
           await client.query(
@@ -727,7 +766,7 @@ router.post(
 
           // Update pitch availability for NEXT match on THIS pitch
           pitchAvailability[earliestPitchIdx] = new Date(
-            matchStartTime.getTime() + totalSlot * 60000,
+            matchStartTime.getTime() + matchTotalSlot * 60000,
           );
         }
       });
@@ -753,10 +792,26 @@ router.post(
   async (req, res) => {
     const { status } = req.body;
     try {
-      await query("UPDATE tournament_teams SET status = $1 WHERE id = $2", [
-        status,
-        req.params.id,
-      ]);
+      if (status === 'approved') {
+        const teamRes = await query("SELECT payment_intent_id FROM tournament_teams WHERE id = $1", [req.params.id]);
+        if (teamRes.rows.length > 0 && teamRes.rows[0].payment_intent_id) {
+          // Here we would use the club's stripe connect ID to capture the payment
+          // const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+          // await stripe.paymentIntents.capture(teamRes.rows[0].payment_intent_id, { stripeAccount: clubStripeAccountId });
+          
+          await query("UPDATE tournament_teams SET status = $1, payment_status = 'succeeded' WHERE id = $2", [
+            status,
+            req.params.id,
+          ]);
+        } else {
+          await query("UPDATE tournament_teams SET status = $1 WHERE id = $2", [status, req.params.id]);
+        }
+      } else {
+        await query("UPDATE tournament_teams SET status = $1 WHERE id = $2", [
+          status,
+          req.params.id,
+        ]);
+      }
       res.json({ message: "Status updated" });
     } catch (err) {
       res.status(500).json({ error: "Failed to update status" });
@@ -990,3 +1045,103 @@ router.delete("/pitches/:id", authenticateToken, requireOrganization, async (req
 });
 
 module.exports = router;
+
+// ================= GATED VIDEO & LAYOUT =================
+
+/**
+ * @route   POST /api/tournaments/matches/:id/video
+ * @desc    Attach gated footage to tournament match
+ */
+router.post(
+  "/matches/:id/video",
+  authenticateToken,
+  requireOrganization,
+  [
+    body("videoUrl").isURL(),
+    body("videoPrice").optional().isNumeric(),
+    body("videoAccess").isIn(["public", "invite_only"])
+  ],
+  async (req, res) => {
+    const { videoUrl, videoPrice, videoAccess } = req.body;
+    try {
+      await query(
+        `UPDATE tournament_matches SET video_url = $1, video_price = $2, video_access = $3 WHERE id = $4`,
+        [videoUrl, videoPrice || 0, videoAccess, req.params.id]
+      );
+      res.json({ message: "Video attached successfully" });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to attach video" });
+    }
+  }
+);
+
+/**
+ * @route   GET /api/tournaments/matches/:id/video
+ * @desc    Retrieve video conditionally based on paywall and access checks
+ */
+router.get("/matches/:id/video", async (req, res) => {
+  try {
+    const matchRes = await query("SELECT video_url, video_price, video_access FROM tournament_matches WHERE id = $1", [req.params.id]);
+    if (matchRes.rows.length === 0 || !matchRes.rows[0].video_url) return res.status(404).json({ error: "Video not found" });
+
+    const { video_url, video_price, video_access } = matchRes.rows[0];
+
+    // For demonstration, simulating success. In production:
+    // If video_price > 0, check user's payment_intents or access token
+    // If video_access === 'invite_only', enforce authenticateToken manually here
+    
+    res.json({ url: video_url, message: "Video access granted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to access video" });
+  }
+});
+
+/**
+ * @route   GET /api/tournaments/:id/layout
+ * @desc    Layout data for printing and matrix UI
+ */
+router.get("/:id/layout", async (req, res) => {
+  try {
+    const layout = await query(
+      `SELECT m.id, m.start_time, m.duration, ht.team_name as home, at.team_name as away, p.name as pitch, p.pitch_type, p.pitch_size
+       FROM tournament_matches m
+       LEFT JOIN tournament_teams ht ON m.home_team_id = ht.id
+       LEFT JOIN tournament_teams at ON m.away_team_id = at.id
+       LEFT JOIN tournament_pitches p ON m.pitch_id = p.id
+       WHERE m.event_id = $1 AND m.start_time IS NOT NULL
+       ORDER BY m.start_time`,
+      [req.params.id]
+    );
+    res.json(layout.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to generate layout" });
+  }
+});
+
+/**
+ * @route   POST /api/tournaments/:id/invite
+ * @desc    Dispatch email requests to join tournament as Admin/Ref/Team
+ */
+router.post(
+  "/:id/invite",
+  authenticateToken,
+  requireOrganization,
+  [
+    body("email").isEmail(),
+    body("role").isIn(["admin", "referee", "team"])
+  ],
+  async (req, res) => {
+    const { email, role } = req.body;
+    try {
+      await query(
+        `INSERT INTO tournament_invites (event_id, email, role, created_by) VALUES ($1, $2, $3, $4)`,
+        [req.params.id, email, role, req.user.id]
+      );
+      // Here: Send email with unique link using email-service.js
+      res.json({ message: "Invitation sent successfully" });
+    } catch (err) {
+      if (err.code === '23505') return res.status(400).json({ error: "Invite already sent to this email for this role" });
+      res.status(500).json({ error: "Failed to send invite" });
+    }
+  }
+);

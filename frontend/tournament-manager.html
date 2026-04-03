@@ -585,24 +585,24 @@
                         <input type="time" name="eventTime" value="09:00">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Location / Venue</label>
-                    <input type="text" name="location" placeholder="Stadium or Park name">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Location / Venue</label>
+                        <input type="text" name="location" placeholder="Stadium or Park name">
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Fee (£)</label>
+                        <input type="number" name="price" value="0.00" step="0.01" min="0">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Match Format</label>
-                    <select name="format">
-                        <option value="5v5">5-a-side</option>
-                        <option value="7v7">7-a-side</option>
-                        <option value="9v9">9-a-side</option>
-                        <option value="11v11">11-a-side</option>
-                    </select>
+                <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin: 0;">
+                        <input type="checkbox" name="is_public" style="width: auto; margin: 0; transform: scale(1.2);"> 
+                        <span style="font-weight: 600; color: #fff;">Make Globally Public</span>
+                    </label>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">List this tournament on the ClubHub Global Finder for any group/team to join.</p>
                 </div>
-                <div class="form-group">
-                    <label>Registration Fee</label>
-                    <input type="number" name="price" value="0" min="0">
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">Create
                     Tournament</button>
             </form>
         </div>
@@ -798,6 +798,7 @@
                     body: JSON.stringify({
                         ...data,
                         eventType: 'tournament',
+                        is_public: data.is_public === 'on', // Make Global
                         clubId: orgId,
                         tournament_settings: tournamentSettings,
                         requireDeclineReason: true // Mandatory for tournaments
@@ -807,7 +808,7 @@
                 alert('Tournament created successfully!');
                 closeCreateTournamentModal();
                 await loadTournaments();
-                document.getElementById('tournamentSelect').value = response.event.id;
+                document.getElementById('tournamentSelect').value = response.event ? response.event.id : response.id;
                 loadTournament();
             } catch (error) {
                 alert('Creation failed: ' + error.message);
@@ -1151,29 +1152,18 @@
         }
 
         async function addPitchGroup() {
-            const format = document.getElementById('pitchFormatInput').value;
-            const count = parseInt(document.getElementById('pitchCountInput').value);
-            const surface = document.getElementById('pitchSurfaceInput').value;
-            const timeFrom = document.getElementById('pitchTimeFrom').value;
-            const timeTo = document.getElementById('pitchTimeTo').value;
+            const countStr = document.getElementById('pitchCountInput').value;
+            const count = parseInt(countStr) || 1;
+            const pitchType = document.getElementById('pitchSurfaceInput').value;
+            const pitchSize = document.getElementById('pitchFormatInput').value;
 
             try {
-                // Loop to create X number of pitches
-                for (let i = 1; i <= count; i++) {
-                    const name = `Pitch-${i} (${format})`;
-                    await apiService.makeRequest(`/tournaments/${currentTournamentId}/pitches`, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            name,
-                            pitch_type: surface,
-                            pitch_size: format,
-                            available_from: timeFrom,
-                            available_to: timeTo
-                        })
-                    });
-                }
-                loadTournament();
-            } catch (error) {
+                await apiService.makeRequest(`/tournaments/${currentTournamentId}/pitches/bulk`, {
+                    method: 'POST',
+                    body: JSON.stringify({ count, pitchType, pitchSize })
+                });
+                loadTournament(); // refresh
+            } catch (err) {
                 alert('Failed to add pitches');
             }
         }

@@ -1329,6 +1329,25 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
     }
 
     let paymentDetails = null;
+    let stripeAccountId = null;
+
+    // Check if there is an event tied to this payment to route funds to the Club directly
+    const targetEventId = req.body.eventId || metadata.eventId;
+    if (targetEventId) {
+      try {
+        const eventRes = await query("SELECT club_id FROM events WHERE id = $1", [targetEventId]);
+        if (eventRes.rows.length > 0) {
+          const clubId = eventRes.rows[0].club_id;
+          const clubRes = await query("SELECT stripe_account_id FROM clubs WHERE id = $1", [clubId]);
+          if (clubRes.rows.length > 0 && clubRes.rows[0].stripe_account_id) {
+            stripeAccountId = clubRes.rows[0].stripe_account_id;
+            console.log(`Routing event payment to Connect Account: ${stripeAccountId}`);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching event for payment intent:", err);
+      }
+    }
 
     // Fetch payment details if paymentId is provided
     if (
@@ -1339,7 +1358,7 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
       try {
         const paymentResult = await query(
           `
-          SELECT p.*, pl.first_name, pl.last_name, pl.email, c.name as club_name
+          SELECT p.*, pl.first_name, pl.last_name, pl.email, c.name as club_name, c.stripe_account_id
           FROM payments p
           LEFT JOIN players pl ON p.player_id = pl.id
           LEFT JOIN clubs c ON p.club_id = c.id
@@ -1350,6 +1369,10 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
 
         if (paymentResult.rows.length > 0) {
           paymentDetails = paymentResult.rows[0];
+
+          if (paymentDetails.stripe_account_id && !stripeAccountId) {
+             stripeAccountId = paymentDetails.stripe_account_id;
+          }
 
           // Check if already paid
           if (paymentDetails.payment_status === "paid") {
@@ -1379,6 +1402,7 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
         },
         metadata: {
           paymentId: paymentId || "direct_payment",
+          eventId: targetEventId,
           playerName: paymentDetails
             ? `${paymentDetails.first_name} ${paymentDetails.last_name}`
             : metadata.playerName || "Customer",
@@ -1408,11 +1432,11 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
         description: paymentIntentData.description,
       });
 
-      const paymentIntent =
-        await stripe.paymentIntents.create(paymentIntentData);
+      const stripeOptions = stripeAccountId ? { stripeAccount: stripeAccountId } : {};
+      const paymentIntent = await stripe.paymentIntents.create(paymentIntentData, stripeOptions);
 
       console.log(
-        `Stripe Payment Intent created: ${paymentIntent.id} for £${numericAmount}`,
+        `Stripe Payment Intent created: ${paymentIntent.id} for £${numericAmount}`
       );
 
       res.json({
@@ -1423,6 +1447,7 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
         currency: "gbp",
         paymentDetails: paymentDetails,
         metadata: paymentIntentData.metadata,
+        stripeAccountUsed: stripeAccountId
       });
     } catch (stripeError) {
       console.error("Stripe API error:", stripeError);
@@ -2355,8 +2380,16 @@ router.post("/book-event", async (req, res) => {
     // Verify payment if provided
     if (paymentIntentId) {
       try {
+        let stripeOptions = {};
+        if (event.club_id) {
+           const clubRes = await query("SELECT stripe_account_id FROM clubs WHERE id = $1", [event.club_id]);
+           if (clubRes.rows.length > 0 && clubRes.rows[0].stripe_account_id) {
+               stripeOptions = { stripeAccount: clubRes.rows[0].stripe_account_id };
+           }
+        }
+        
         const paymentIntent =
-          await stripe.paymentIntents.retrieve(paymentIntentId);
+          await stripe.paymentIntents.retrieve(paymentIntentId, stripeOptions);
 
         if (paymentIntent.status !== "succeeded") {
           return res.status(400).json({

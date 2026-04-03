@@ -254,12 +254,21 @@
         </div>
 
         <!-- Results Grid -->
+        <h2 class="neon-text" style="font-size: 2rem; margin-bottom: 1.5rem; display: none;" id="clubsTitle">Groups & Clubs</h2>
         <div id="clubResultsGrid" class="card-grid"
+            style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); margin-bottom: 4rem;">
+            <!-- Loader shown initially -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 5rem 0;" id="clubLoader">
+                <div class="placeholder-glow" style="font-size: 1.2rem; color: var(--text-muted);">🔍 Discovering groups around you...</div>
+            </div>
+        </div>
+
+        <h2 class="neon-text" style="font-size: 2rem; margin-bottom: 1.5rem; display: none;" id="tournamentsTitle">Upcoming Global Tournaments</h2>
+        <div id="tournamentResultsGrid" class="card-grid"
             style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
             <!-- Loader shown initially -->
-            <div style="grid-column: 1/-1; text-align: center; padding: 5rem 0;">
-                <div class="placeholder-glow" style="font-size: 1.2rem; color: var(--text-muted);">🔍 Discovering groups
-                    around you...</div>
+            <div style="grid-column: 1/-1; text-align: center; padding: 5rem 0; display: none;" id="tournamentLoader">
+                <div class="placeholder-glow" style="font-size: 1.2rem; color: var(--text-muted);">🏆 Finding global tournaments...</div>
             </div>
         </div>
 
@@ -329,9 +338,43 @@
                 console.error("Club finder error:", err);
                 grid.innerHTML = '<p class="text-danger center">Failed to connect to club service. Refreshing...</p>';
             }
+
+            try {
+                document.getElementById('tournamentLoader').style.display = 'block';
+                // Fetch public tournaments
+                let tournaments = await apiService.makeRequest('/events?public=true&eventType=tournament');
+                
+                // Demo tournaments fallback if needed
+                if (!tournaments || tournaments.length === 0 && localStorage.getItem('isDemoSession') === 'true') {
+                    const fallback = new ApiService().getAdminDashboardFallback();
+                    tournaments = (fallback.tournaments || []).filter(t => t.is_public);
+                }
+
+                // Filter tournaments locally
+                const filteredTournaments = tournaments.filter(t => {
+                    const matchesQuery = !query || t.title.toLowerCase().includes(query) || (t.location && t.location.toLowerCase().includes(query));
+                    // Add more if needed
+                    return matchesQuery;
+                });
+
+                const tGrid = document.getElementById('tournamentResultsGrid');
+                if (filteredTournaments.length > 0) {
+                    document.getElementById('tournamentsTitle').style.display = 'block';
+                    tGrid.style.display = 'grid';
+                    renderTournaments(filteredTournaments);
+                } else {
+                    document.getElementById('tournamentsTitle').style.display = 'none';
+                    tGrid.style.display = 'none';
+                }
+            } catch (err) {
+                console.error("Tournament finder error:", err);
+            } finally {
+                document.getElementById('tournamentLoader').style.display = 'none';
+            }
         }
 
         function renderClubs(clubs) {
+            document.getElementById('clubsTitle').style.display = 'block';
             const grid = document.getElementById('clubResultsGrid');
             grid.innerHTML = clubs.map(club => {
                 const isUnclaimed = club.unclaimed === true;
@@ -350,7 +393,7 @@
                         <h3 class="club-name">${club.name}</h3>
                         <div class="club-meta">
                             <span>⚽ ${club.sport || 'Multi-Sports'}</span>
-                            <span>📍 ${club.location || 'United Kingdom'}</span>
+                            <span>📍 ${club.location || 'Global'}</span>
                         </div>
                         <div class="tag-list">
                             ${(club.available_positions || []).slice(0, 3).map(p => `<span class="tag">${p.age_group || 'Any'} ${p.position || 'Player'}</span>`).join('')}
@@ -358,13 +401,47 @@
                         </div>
                         
                         ${isUnclaimed ?
-                        `<button class="btn btn-secondary" style="width:100%; border-style: dashed;" onclick="claimClub('${club.name}')">Claim this Club</button>` :
-                        `<button class="btn btn-primary" style="width:100%;" onclick="window.location.href='club-detail.html?id=${club.id}'">View Club & Apply</button>`
+                        `<button class="btn btn-secondary" style="width:100%; border-style: dashed;" onclick="claimClub('${club.name}')">Claim this Group</button>` :
+                        `<button class="btn btn-primary" style="width:100%;" onclick="window.location.href='club-detail.html?id=${club.id}'">View Group & Apply</button>`
                     }
                     </div>
                 </div>
                 `;
             }).join('');
+        }
+
+        function renderTournaments(tournaments) {
+            const grid = document.getElementById('tournamentResultsGrid');
+            grid.innerHTML = tournaments.map(t => {
+                const dateRaw = t.event_date || t.date;
+                const formattedDate = dateRaw ? new Date(dateRaw).toLocaleDateString() : 'TBD';
+                
+                return `
+                <div class="club-card">
+                    <div class="club-banner" style="background: linear-gradient(135deg, rgba(177, 3, 45, 0.4), #0f172a); border-bottom: 2px solid var(--primary);">
+                        <div style="position: absolute; bottom: 10px; left: 20px; font-size: 2rem;">🏆</div>
+                        <span class="recruit-badge" style="background: var(--primary); color: white;">Global Tournament</span>
+                    </div>
+                    <div class="club-content">
+                        <h3 class="club-name">${t.title || 'Regional Tournament'}</h3>
+                        <div class="club-meta">
+                            <span>📅 ${formattedDate}</span>
+                            <span>📍 ${t.location || 'TBA'}</span>
+                        </div>
+                        <div class="tag-list">
+                            <span class="tag">${t.event_type || 'Football'}</span>
+                            ${t.price ? `<span class="tag">Entry: £${parseFloat(t.price).toFixed(2)}</span>` : '<span class="tag">Free Entry</span>'}
+                        </div>
+                        
+                        <button class="btn btn-primary" style="width:100%; background: linear-gradient(135deg, var(--primary), #d90429);" onclick="registerForTournament('${t.id}')">Submit Team Application</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function registerForTournament(tournamentId) {
+            window.location.href = `payment.html?eventId=${tournamentId}&type=tournament_reg`;
         }
 
         function getPlaceholderClubs() {

@@ -821,7 +821,7 @@ router.get("/:id/stats", authenticateToken, async (req, res) => {
       [teamId],
     );
 
-    // Get player performance stats
+    // Get player performance stats from the new detailed player_match_stats table
     const playerStats = await query(
       `
       SELECT 
@@ -829,17 +829,16 @@ router.get("/:id/stats", authenticateToken, async (req, res) => {
         p.first_name,
         p.last_name,
         tp.position,
-        COUNT(pr.id) as matches_played,
-        AVG(pr.rating) as average_rating,
-        SUM(COALESCE(pr.goals, 0)) as total_goals,
-        SUM(COALESCE(pr.assists, 0)) as total_assists,
-        SUM(COALESCE(pr.minutes_played, 0)) as total_minutes
+        COUNT(pms.id) as matches_played,
+        SUM(COALESCE(pms.goals, 0)) as total_goals,
+        SUM(COALESCE(pms.assists, 0)) as total_assists,
+        SUM(COALESCE(pms.minutes_played, 0)) as total_minutes
       FROM players p
       JOIN team_players tp ON p.id = tp.player_id
-      LEFT JOIN player_ratings pr ON p.id = pr.player_id
+      LEFT JOIN player_match_stats pms ON p.id = pms.player_id
       WHERE tp.team_id = $1
       GROUP BY p.id, p.first_name, p.last_name, tp.position
-      ORDER BY total_goals DESC, average_rating DESC NULLS LAST
+      ORDER BY total_goals DESC NULLS LAST
     `,
       [teamId],
     );
@@ -944,6 +943,60 @@ router.get("/:id/availability", authenticateToken, async (req, res) => {
     console.error("Get team availability error:", error);
     res.status(500).json({
       error: "Failed to fetch team availability",
+    });
+  }
+});
+
+// Get team dashboard stats (aggregations)
+router.get("/:id/dashboard", authenticateToken, async (req, res) => {
+  try {
+    const teamId = req.params.id;
+
+    // Top Scorer
+    const topScorerRes = await query(`
+      SELECT p.id, p.first_name, p.last_name, SUM(pms.goals) as total_goals
+      FROM players p
+      JOIN player_match_stats pms ON p.id = pms.player_id
+      JOIN match_results mr ON pms.match_result_id = mr.id
+      JOIN events e ON mr.event_id = e.id
+      WHERE e.team_id = $1
+      GROUP BY p.id, p.first_name, p.last_name
+      ORDER BY total_goals DESC
+      LIMIT 1
+    `, [teamId]);
+
+    // Most Assists
+    const topAssistsRes = await query(`
+      SELECT p.id, p.first_name, p.last_name, SUM(pms.assists) as total_assists
+      FROM players p
+      JOIN player_match_stats pms ON p.id = pms.player_id
+      JOIN match_results mr ON pms.match_result_id = mr.id
+      JOIN events e ON mr.event_id = e.id
+      WHERE e.team_id = $1
+      GROUP BY p.id, p.first_name, p.last_name
+      ORDER BY total_assists DESC
+      LIMIT 1
+    `, [teamId]);
+
+    // Recent Matches
+    const recentMatchesRes = await query(`
+      SELECT e.id, e.title, e.event_date, mr.home_score, mr.away_score, mr.result, mr.video_url
+      FROM events e
+      LEFT JOIN match_results mr ON e.id = mr.event_id
+      WHERE e.team_id = $1 AND e.event_type = 'match'
+      ORDER BY e.event_date DESC
+      LIMIT 5
+    `, [teamId]);
+
+    res.json({
+      top_scorer: topScorerRes.rows[0] || null,
+      top_assists: topAssistsRes.rows[0] || null,
+      recent_matches: recentMatchesRes.rows,
+    });
+  } catch (error) {
+    console.error("Get team dashboard error:", error);
+    res.status(500).json({
+      error: "Failed to fetch team dashboard",
     });
   }
 });

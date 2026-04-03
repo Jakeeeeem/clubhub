@@ -89,6 +89,9 @@ router.get("/", optionalAuth, async (req, res) => {
       paramCount++;
       queryText += ` AND e.club_id = $${paramCount}`;
       queryParams.push(clubId);
+    } else if (req.query.public === 'true') {
+      // Allow fetching global public events
+      queryText += ` AND e.is_public = true`;
     } else if (req.user) {
       // Enforce Isolation: If no clubId, limit to user's clubs/teams context
       paramCount++;
@@ -289,6 +292,7 @@ router.post(
         notificationSchedule,
         assignedPlayers,
         tournamentSettings,
+        imageUrl,
       } = req.body;
 
       // Ensure reason is boolean
@@ -346,10 +350,10 @@ router.post(
               team_id, opponent, created_by, 
               recurrence_pattern, recurrence_end_date, recurrence_id,
               require_decline_reason, notification_schedule,
-              tournament_settings,
+              tournament_settings, image_url,
               created_at, updated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW(), NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, NOW(), NOW())
             RETURNING *
           `,
             [
@@ -372,6 +376,7 @@ router.post(
               requireDeclineReason,
               JSON.stringify(notificationSchedule || []),
               JSON.stringify(tournamentSettings || {}),
+              imageUrl || null,
             ],
           );
 
@@ -415,7 +420,7 @@ router.post(
           ) {
             for (const playerId of assignedPlayers) {
               await client.query(
-                `INSERT INTO event_players (event_id, player_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+                `INSERT INTO event_invitations (event_id, player_id, invite_status) VALUES ($1, $2, 'pending') ON CONFLICT DO NOTHING`,
                 [newEvent.id, playerId],
               );
             }
@@ -2153,7 +2158,7 @@ router.post(
     body("notes").optional().trim(),
   ],
   async (req, res) => {
-    const { homeScore, awayScore, notes } = req.body;
+    const { homeScore, awayScore, notes, videoUrl, gameReview } = req.body;
     const eventId = req.params.id;
 
     try {
@@ -2182,13 +2187,15 @@ router.post(
         // Record result
         await client.query(
           `
-                    INSERT INTO match_results (event_id, home_score, away_score, result, match_notes, recorded_by)
-                    VALUES ($1, $2, $3, $4, $5, $6)
+                    INSERT INTO match_results (event_id, home_score, away_score, result, match_notes, recorded_by, video_url, game_review)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     ON CONFLICT (event_id) DO UPDATE SET
                         home_score = EXCLUDED.home_score,
                         away_score = EXCLUDED.away_score,
                         result = EXCLUDED.result,
                         match_notes = EXCLUDED.match_notes,
+                        video_url = EXCLUDED.video_url,
+                        game_review = EXCLUDED.game_review,
                         recorded_at = NOW()
                 `,
           [
@@ -2198,6 +2205,8 @@ router.post(
             matchResult,
             notes || null,
             req.user.id,
+            videoUrl || null,
+            gameReview || null,
           ],
         );
 
@@ -2214,6 +2223,65 @@ router.post(
       res.status(500).json({ error: "Failed to record match result" });
     }
   },
+);
+
+/**
+ * @route   POST /api/events/:id/player-stats
+ * @desc    Record individual player match statistics after a match
+ */
+router.post(
+  "/:id/player-stats",
+  authenticateToken,
+  requireOrganization,
+  [
+    body("stats").isArray().withMessage("Stats must be an array of player stat objects")
+  ],
+  async (req, res) => {
+    const { stats } = req.body;
+    const eventId = req.params.id;
+
+    try {
+      // 1. Find the match_result_id for this event
+      const matchRes = await query("SELECT id FROM match_results WHERE event_id = $1", [eventId]);
+      if (matchRes.rows.length === 0) {
+          return res.status(404).json({ error: "Match result not found. Add the match result scoreline first." });
+      }
+      
+      const matchResultId = matchRes.rows[0].id;
+
+      // 2. Insert all stats in transaction
+      await withTransaction(async (client) => {
+        // We will insert or update the player match stats
+        for (const stat of stats) {
+          await client.query(
+            `
+              INSERT INTO player_match_stats (match_result_id, player_id, minutes_played, goals, assists, individual_feedback)
+              VALUES ($1, $2, $3, $4, $5, $6)
+              ON CONFLICT (match_result_id, player_id) DO UPDATE SET
+                minutes_played = EXCLUDED.minutes_played,
+                goals = EXCLUDED.goals,
+                assists = EXCLUDED.assists,
+                individual_feedback = EXCLUDED.individual_feedback,
+                updated_at = NOW()
+            `,
+            [
+              matchResultId,
+              stat.playerId,
+              stat.minutesPlayed || 0,
+              stat.goals || 0,
+              stat.assists || 0,
+              stat.individualFeedback || null
+            ]
+          );
+        }
+      });
+
+      res.json({ success: true, message: "Player match stats recorded successfully" });
+    } catch (err) {
+      console.error("Match stats recording error:", err);
+      res.status(500).json({ error: "Failed to record player match stats" });
+    }
+  }
 );
 
 module.exports = router;

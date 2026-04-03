@@ -47,7 +47,7 @@ async function checkEventReminders() {
         const assignedResult = await query(
           `
           SELECT u.email, u.first_name 
-          FROM event_players ep 
+          FROM event_invitations ep 
           JOIN players p ON ep.player_id = p.id 
           JOIN users u ON p.user_id = u.id 
           WHERE ep.event_id = $1
