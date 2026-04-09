@@ -4,16 +4,17 @@ const UnifiedNav = {
   init() {
     console.log("🚀 UnifiedNav: Initializing standard navigation...");
     
-    // Perform Mobile UX Sweep to fix layouts
-    if (typeof this.performMobileUXSweep === 'function') {
-        this.performMobileUXSweep();
-    }
+    try {
+        // Perform Mobile UX Sweep to fix layouts
+        if (typeof this.performMobileUXSweep === 'function') {
+            this.performMobileUXSweep();
+        }
+    } catch (e) { console.warn("Sweep failed", e); }
 
-    // Standardize breakpoints: 992px+ is desktop
     const isDesktop = window.matchMedia('(min-width: 992px)').matches;
     const path = window.location.pathname.toLowerCase();
-    const isDashboard = path.includes('dashboard.html');
-    const isLandingPage = path.includes('index.html') || path.endsWith('/') || path === '' || (!isDashboard && !path.includes('.html'));
+    const isDashboard = path.includes('dashboard');
+    const isLandingPage = (path.includes('index.html') || path.endsWith('/') || path === '' || !path.includes('dashboard')) && !path.includes('settings');
     
     const token = localStorage.getItem('authToken');
     const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
@@ -30,57 +31,75 @@ const UnifiedNav = {
       document.body.classList.add('landing-view');
     }
 
-    if (!isDesktop) {
-      // ── MOBILE ──────────────────────────────────────────────────────────────
-      console.log("📱 Mobile: rendering unified nav");
-      this.cleanupLegacyArtifacts(); 
-      
-      if (isDashboard || (isLoggedIn && !isLandingPage)) {
-        this.renderHeader();
-        this.renderSidebar();
-        this.renderBottomNav();
-        this.renderMenu();
-        this.renderMobileHeaderElements();
-      } else if (isLandingPage) {
-        this.ensureLandingHeader(isLoggedIn, user);
-        this.toggleSidebar(false);
-      }
-    } else {
-      // ── DESKTOP ─────────────────────────────────────────────────────────────
-      console.log("💻 Desktop: standardizing navigation");
-      this.cleanupLegacyArtifacts();
-      
-      // Standardize the whole structure for dashboards (Header + Sidebar)
-      if (isDashboard) {
-        this.ensureDashboardHeader(); 
-        this.renderSidebar(); // Enforce desktop sidebar
-        this.renderMenu();    // Enforce desktop menu
-        this.renderProfileDropdown();
-        this.renderHeaderSwitcher(); 
-        this.renderStripeHeaderButton(); 
-        this.renderHeaderNotifications(); 
-        this.renderPwaInstallButton();
-        this.updateHeaderState();
-      } else if (isLandingPage) {
-        this.ensureLandingHeader(isLoggedIn, user);
-        this.renderPwaInstallButton();
-        // Remove sidebar if it exists from previous state (safety)
-        const sidebar = document.getElementById("pro-sidebar");
-        if (sidebar) sidebar.remove();
-        const overlay = document.getElementById("sidebar-overlay");
-        if (overlay) overlay.remove();
-      } else {
-        this.ensureHeaderElements();
-        this.renderHeaderSwitcher();
-        this.renderHeaderNotifications();
-        this.renderPwaInstallButton();
-      }
+    // ── STAGE 1: Core Layout ───────────────────────────────────────────
+    try {
+        if (!isDesktop) {
+          console.log("📱 Mobile View");
+          if (isDashboard || (isLoggedIn && !isLandingPage)) {
+            this.renderHeader();
+            this.renderSidebar();
+            this.renderBottomNav();
+            this.renderMenu();
+            this.renderMobileHeaderElements();
+          } else if (isLandingPage) {
+            this.ensureLandingHeader(isLoggedIn, user);
+            this.toggleSidebar(false);
+          }
+        } else {
+          console.log("💻 Desktop View");
+          if (isDashboard) {
+            if (!isLoggedIn) {
+                console.warn("🔒 Unauthenticated dashboard access. Redirecting to login...");
+                window.location.href = "login.html";
+                return;
+            }
+            this.ensureDashboardHeader(); 
+            this.renderSidebar();
+            this.renderMenu();
+          } else if (isLandingPage) {
+            this.ensureLandingHeader(isLoggedIn, user);
+            this.toggleSidebar(false);
+            const sidebar = document.getElementById("pro-sidebar");
+            if (sidebar) sidebar.remove();
+          } else {
+            this.ensureHeaderElements();
+          }
+        }
+    } catch (err) {
+        console.error("❌ Stage 1 (Core Layout) failed:", err);
     }
-    
-    this.bindEvents();
-    if (isLoggedIn) this.syncUserData();
-    this.autoLabelTables();
-    this.toggleSidebar(false);
+
+    // ── STAGE 2: Enhancements ──────────────────────────────────────────
+    const enhancements = [
+        { name: "ProfileDropdown", fn: () => isDashboard && isDesktop && this.renderProfileDropdown() },
+        { name: "HeaderSwitcher", fn: () => isDashboard && this.renderHeaderSwitcher() },
+        { name: "StripeButton", fn: () => isDashboard && this.renderStripeHeaderButton() },
+        { name: "Notifications", fn: () => isDashboard && this.renderHeaderNotifications() },
+        { name: "PwaInstall", fn: () => this.renderPwaInstallButton() },
+        { name: "HeaderState", fn: () => isDashboard && isDesktop && this.updateHeaderState() },
+        { name: "EventBinding", fn: () => this.bindEvents() }
+    ];
+
+    enhancements.forEach(task => {
+        try {
+            task.fn();
+        } catch (err) {
+            console.warn(`⚠️ Enhancement '${task.name}' failed:`, err);
+        }
+    });
+
+    // ── STAGE 3: Data Sync ─────────────────────────────────────────────
+    setTimeout(() => {
+        try {
+            console.log("🔄 Stage 3: Syncing User Data...");
+            this.syncUserData();
+            this.autoLabelTables();
+            if (typeof this.performMobileUXSweep === 'function') this.performMobileUXSweep();
+            console.log("✅ UnifiedNav Init Complete.");
+        } catch (err) {
+            console.error("❌ Stage 3 (Data Sync) failed:", err);
+        }
+    }, 150);
   },
 
   /**
@@ -461,43 +480,52 @@ const UnifiedNav = {
   },
 
   renderSidebar() {
-    if (document.getElementById("pro-sidebar")) return;
+    try {
+        if (document.getElementById("pro-sidebar")) {
+            console.log("♻️ Sidebar already exists, skipping recreation.");
+            return;
+        }
 
-    const sidebarHTML = `
-            <div class="sidebar-overlay" id="sidebar-overlay"></div>
-            <aside class="pro-sidebar" id="pro-sidebar">
-                <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <img src="images/logo.png" style="height: 24px; width: 24px;">
-                        <span style="font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px; opacity: 0.9;">CLUBHUB</span>
+        console.log("🏗️ Rendering Sidebar...");
+        const sidebarHTML = `
+                <div class="sidebar-overlay" id="sidebar-overlay"></div>
+                <aside class="pro-sidebar" id="pro-sidebar">
+                    <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <img src="images/logo.png" style="height: 24px; width: 24px;" onerror="this.src='https://via.placeholder.com/24'">
+                            <span style="font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px; opacity: 0.9;">CLUBHUB</span>
+                        </div>
+                        <button onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 4px 8px;">&times;</button>
                     </div>
-                    <button onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 4px 8px;">&times;</button>
-                </div>
 
-                <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1rem 1rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.5rem;">Switch Group</div>
-                    <div id="sidebar-switcher-target"></div>
-                </div>
-
-                <div class="sidebar-profile-switcher-area" id="sidebar-profile-switcher" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: none;">
-                    <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.5rem;">Active Profile</div>
-                    <div id="profile-switcher-target"></div>
-                </div>
-
-                <nav class="sidebar-nav" id="sidebar-nav-content">
-                    <!-- Dynamic rendering by renderMenu() -->
-                </nav>
-
-                <div class="sidebar-footer" style="padding: 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>⚙️</i> Settings</a>
-                        <a href="#" class="sidebar-link" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>🚪</i> Sign Out</a>
+                    <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1rem 1rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.5rem;">Switch Group</div>
+                        <div id="sidebar-switcher-target"></div>
                     </div>
-                </div>
-            </aside>
-        `;
-    document.body.insertAdjacentHTML("beforeend", sidebarHTML);
-    this.initSidebarSwitcher();
+
+                    <div class="sidebar-profile-switcher-area" id="sidebar-profile-switcher" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: none;">
+                        <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.5rem;">Active Profile</div>
+                        <div id="profile-switcher-target"></div>
+                    </div>
+
+                    <nav class="sidebar-nav" id="sidebar-nav-content">
+                        <!-- Dynamic rendering by renderMenu() -->
+                        <div style="padding: 2rem; text-align: center; opacity: 0.5;">Loading menu...</div>
+                    </nav>
+
+                    <div class="sidebar-footer" style="padding: 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>⚙️</i> Settings</a>
+                            <a href="#" class="sidebar-link" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>🚪</i> Sign Out</a>
+                        </div>
+                    </div>
+                </aside>
+            `;
+        document.body.insertAdjacentHTML("beforeend", sidebarHTML);
+        this.initSidebarSwitcher();
+    } catch (err) {
+        console.error("❌ Error rendering sidebar:", err);
+    }
   },
 
   initSidebarSwitcher() {
@@ -695,6 +723,9 @@ const UnifiedNav = {
     const isAdmin = url.includes("admin-dashboard.html") || userRole === 'admin';
 
     let navHtml = "";
+
+    const userType = localStorage.getItem('userType');
+    const isPlayerMode = url.includes('player-dashboard.html') || userType === 'player';
 
     if (isPlayerMode || isPlayer) {
       navHtml = `
@@ -1004,28 +1035,28 @@ const UnifiedNav = {
 
     if (isPlayer) {
       menuHtml = `
-                <div class="nav-group-title">Main Hub</div>
-                <a href="#" class="sidebar-link active" onclick="showPlayerSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Overview</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('club-messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Club Chat</a>
-                
-                <div class="nav-group-title">My Career</div>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> My Teams</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('my-clubs'); UnifiedNav.toggleSidebar(false); return false;"><i>🏰</i> My Groups</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('documents'); UnifiedNav.toggleSidebar(false); return false;"><i>📄</i> Documents</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('polls'); UnifiedNav.toggleSidebar(false); return false;"><i>🗳️</i> Club Polls</a>
-                <a href="scouting.html" class="sidebar-link"><i>🔍</i> Scouting</a>
+                    <div class="nav-group-title">Main Hub</div>
+                    <a href="#" class="sidebar-link active" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Overview</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Club Chat</a>
+                    
+                    <div class="nav-group-title">My Career</div>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> My Teams</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('my-clubs'); UnifiedNav.toggleSidebar(false); return false;"><i>🏰</i> My Groups</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('documents'); UnifiedNav.toggleSidebar(false); return false;"><i>📄</i> Documents</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('polls'); UnifiedNav.toggleSidebar(false); return false;"><i>🗳️</i> Club Polls</a>
+                    <a href="scouting.html" class="sidebar-link"><i>🔍</i> Scouting</a>
 
-                <div class="nav-group-title">Family & Profile</div>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('profile'); UnifiedNav.toggleSidebar(false); return false;"><i>👤</i> My Profile</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('family'); UnifiedNav.toggleSidebar(false); return false;"><i>👨‍👩‍👧‍👦</i> My Family</a>
-                
-                <div class="nav-group-title">Shop & Marketplace</div>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('club-finder'); UnifiedNav.toggleSidebar(false); return false;"><i>🏢</i> Club Finder</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>🏟️</i> Book Venues</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('event-finder'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> Find Events</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('item-shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛍️</i> Item Shop</a>
-                <a href="#" class="sidebar-link" onclick="showPlayerSection('payments'); UnifiedNav.toggleSidebar(false); return false;"><i>💳</i> Finance</a>
-            `;
+                    <div class="nav-group-title">Family & Profile</div>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('profile'); UnifiedNav.toggleSidebar(false); return false;"><i>👤</i> My Profile</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('family'); UnifiedNav.toggleSidebar(false); return false;"><i>👨‍👩‍👧‍👦</i> My Family</a>
+                    
+                    <div class="nav-group-title">Shop & Marketplace</div>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-finder'); UnifiedNav.toggleSidebar(false); return false;"><i>🏢</i> Club Finder</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>🏟️</i> Book Venues</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('event-finder'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> Find Events</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('item-shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛍️</i> Item Shop</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('payments'); UnifiedNav.toggleSidebar(false); return false;"><i>💳</i> Finance</a>
+                `;
     } else if (isSuperAdmin) {
       menuHtml = `
                 <div class="nav-group-title">Platform</div>
@@ -1067,31 +1098,31 @@ const UnifiedNav = {
                 <div class="nav-group-title">Network</div>
                 <a href="#" class="sidebar-link" onclick="showScoutSection('messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Messenger</a>
             `;
-    } else {
-      menuHtml = `
-                <div class="nav-group-title">Core Management</div>
-                <a href="#" class="sidebar-link active" onclick="showSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Overview</a>
-                <a href="#" class="sidebar-link" onclick="showSection('players'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> Player List</a>
-                <a href="#" class="sidebar-link" onclick="showSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> Squads & Teams</a>
-                <a href="#" class="sidebar-link" onclick="showSection('messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Admin Chat</a>
-                
-                <div class="nav-group-title">Advanced Operations</div>
-                <a href="#" class="sidebar-link" onclick="showSection('scout-approvals'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> Scout Approvals</a>
-                <a href="#" class="sidebar-link" onclick="showSection('tactical-board'); UnifiedNav.toggleSidebar(false); return false;"><i>📋</i> Tactics Board</a>
-                <a href="#" class="sidebar-link" onclick="showSection('form-builder'); UnifiedNav.toggleSidebar(false); return false;"><i>📝</i> Custom Forms</a>
-                <a href="#" class="sidebar-link" onclick="showSection('email-campaigns'); UnifiedNav.toggleSidebar(false); return false;"><i>📧</i> Email Campaigns</a>
-                
-                <div class="nav-group-title">Events & Bookings</div>
-                <a href="#" class="sidebar-link" onclick="showSection('events'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> Event Manager</a>
-                <a href="#" class="sidebar-link" onclick="showSection('tournaments'); UnifiedNav.toggleSidebar(false); return false;"><i>🏆</i> Tournaments</a>
-                <a href="#" class="sidebar-link" onclick="showSection('training-manager'); UnifiedNav.toggleSidebar(false); return false;"><i>🎯</i> Training Hub</a>
-                <a href="#" class="sidebar-link" onclick="showSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>📍</i> Venue Portal</a>
-                
-                <div class="nav-group-title">Business & Shop</div>
-                <a href="#" class="sidebar-link" onclick="showSection('finances'); UnifiedNav.toggleSidebar(false); return false;"><i>💰</i> Financials</a>
-                <a href="#" class="sidebar-link" onclick="showSection('shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛒</i> Club Shop</a>
-            `;
-    }
+        } else {
+          menuHtml = `
+                    <div class="nav-group-title">Core Management</div>
+                    <a href="#" class="sidebar-link active" onclick="if(typeof showSection === 'function') showSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Overview</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('players'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> Player List</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> Squads & Teams</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Admin Chat</a>
+                    
+                    <div class="nav-group-title">Advanced Operations</div>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('scout-approvals'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> Scout Approvals</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('tactical-board'); UnifiedNav.toggleSidebar(false); return false;"><i>📋</i> Tactics Board</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('form-builder'); UnifiedNav.toggleSidebar(false); return false;"><i>📝</i> Custom Forms</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('email-campaigns'); UnifiedNav.toggleSidebar(false); return false;"><i>📧</i> Email Campaigns</a>
+                    
+                    <div class="nav-group-title">Events & Bookings</div>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('events'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> Event Manager</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('tournaments'); UnifiedNav.toggleSidebar(false); return false;"><i>🏆</i> Tournaments</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('training-manager'); UnifiedNav.toggleSidebar(false); return false;"><i>🎯</i> Training Hub</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>📍</i> Venue Portal</a>
+                    
+                    <div class="nav-group-title">Business & Shop</div>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('finances'); UnifiedNav.toggleSidebar(false); return false;"><i>💰</i> Financials</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛒</i> Club Shop</a>
+                `;
+        }
 
     // Add Logout/Settings at the bottom of the list too for desktop
     menuHtml += `
