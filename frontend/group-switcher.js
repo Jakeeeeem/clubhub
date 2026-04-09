@@ -20,9 +20,12 @@ class GroupSwitcher {
   }
 
   async init() {
-    await this.loadGroups();
+    try {
+      await this.loadGroups();
+    } catch (err) {
+      console.error("Switcher: Failed to load groups:", err);
+    }
     this.render();
-    this.attachEventListeners();
   }
 
   async loadGroups() {
@@ -255,17 +258,27 @@ class GroupSwitcher {
     if (!this.trigger || !this.dropdown) return;
 
     // Toggle dropdown
-    this.trigger.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.toggleDropdown();
-    });
+    if (!this._handleTriggerClick) {
+        this._handleTriggerClick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log("GroupSwitcher: Trigger clicked, current isOpen:", this.isOpen);
+          this.toggleDropdown();
+        };
+    }
+    this.trigger.removeEventListener("click", this._handleTriggerClick);
+    this.trigger.addEventListener("click", this._handleTriggerClick);
 
     // Close on outside click
-    document.addEventListener("click", (e) => {
-      if (!e.target.closest(".group-switcher")) {
-        this.closeDropdown();
-      }
-    });
+    if (!this._handleOutsideClick) {
+        this._handleOutsideClick = (e) => {
+          if (!e.target.closest(".group-switcher")) {
+            this.closeDropdown();
+          }
+        };
+    }
+    document.removeEventListener("click", this._handleOutsideClick);
+    document.addEventListener("click", this._handleOutsideClick);
 
     // Handle group selection
     this.dropdown.addEventListener("click", async (e) => {

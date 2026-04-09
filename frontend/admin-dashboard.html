@@ -78,7 +78,6 @@
                 </div>
 
                 <div class="dash-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;">
-                    <!-- Activity Feed (Existing Content) -->
                     <div>
                         <div class="glass-card" style="padding:1.5rem;">
                             <div class="section-title">📋 Activity Feed
@@ -104,17 +103,14 @@
                             </div>
                         </div>
 
-                        <!-- Members Preview -->
                         <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
                             <div class="section-title">👥 Recent Members
                                 <button class="btn btn-secondary btn-small" style="margin-left:auto;" onclick="showSection('members')">View All</button>
                             </div>
-                            <!-- Table... -->
                             <p style="color:var(--text-muted);font-size:0.875rem;">Loading members list...</p>
                         </div>
                     </div>
 
-                    <!-- Right Column -->
                     <div style="display:flex;flex-direction:column;gap:1.5rem;">
                         <div class="glass-card" style="padding:1.5rem;">
                             <div class="section-title">⚡ Quick Actions</div>
@@ -128,6 +124,8 @@
                 </div>
             </div>
 
+            <!-- Members Section -->
+            <div id="members" class="dashboard-section" style="display:none; padding:1.5rem;">
                 <div class="glass-card" style="padding:1.5rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                         <h3 class="section-title" style="margin:0;">👥 Member Management</h3>
@@ -137,66 +135,40 @@
                         </div>
                     </div>
                     <div id="membersListContainer">
-                        <p style="color:var(--text-muted); font-size:0.875rem;">Loading members database...</p>
+                        <div class="table-responsive">
+                            <table style="width:100%; text-align:left; border-collapse:collapse;">
+                                <thead>
+                                    <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
+                                        <th style="padding:0.75rem 0;">Name</th>
+                                        <th style="padding:0.75rem 0;">Role</th>
+                                        <th style="padding:0.75rem 0;">Squad</th>
+                                        <th style="padding:0.75rem 0;">Status</th>
+                                        <th style="padding:0.75rem 0; text-align:right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="font-size:0.9rem;">
+                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:1rem 0;"> Marcus Thompson</td>
+                                        <td style="padding:1rem 0;">Player</td>
+                                        <td style="padding:1rem 0;">Under 16s</td>
+                                        <td style="padding:1rem 0;"><span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span></td>
+                                        <td style="padding:1rem 0; text-align:right;"><button class="btn btn-text btn-small" onclick="showNotification('Member details coming soon', 'info')">View</button></td>
+                                    </tr>
+                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                        <td style="padding:1rem 0;"> Sarah Davies</td>
+                                        <td style="padding:1rem 0;">Parent</td>
+                                        <td style="padding:1rem 0;">Under 12s</td>
+                                        <td style="padding:1rem 0;"><span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span></td>
+                                        <td style="padding:1rem 0; text-align:right;"><button class="btn btn-text btn-small" onclick="showNotification('Member details coming soon', 'info')">View</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Teams Section -->
-            <div id="teams" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">🛡️ Team Management</div>
-                <div class="glass-card" style="padding:1.5rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                        <span style="font-weight:600; color:var(--text-muted);">Manage club squads and coaching staff</span>
-                        <button class="btn btn-primary btn-small" onclick="openModal('createTeamModal')">+ Create Team</button>
-                    </div>
-                    <div id="teamsListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1rem;">
-                        <!-- Teams will be injected here -->
-                    </div>
-                </div>
-            </div>
-
-            <div id="events" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">📅 Calendar & Events</div>
-                <div class="glass-card" style="padding:1.5rem; text-align:center;">
-                    <div style="font-size:3rem; margin-bottom:1rem;">🗓️</div>
-                    <h3 style="margin-bottom:0.5rem;">Group Calendar</h3>
-                    <p style="color:var(--text-muted); margin-bottom:1.5rem;">Plan and manage your groups sessions, matches, and socials.</p>
-                    <button class="btn btn-primary" onclick="window.location.href='tournament-manager.html'">Open Calendar Manager</button>
-                </div>
-            </div>
-                    <div class="table-responsive">
-                        <table style="width:100%; text-align:left; border-collapse:collapse;">
-                            <thead>
-                                <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
-                                    <th style="padding:0.75rem 0;">Name</th>
-                                    <th style="padding:0.75rem 0;">Role</th>
-                                    <th style="padding:0.75rem 0;">Squad</th>
-                                    <th style="padding:0.75rem 0;">Status</th>
-                                    <th style="padding:0.75rem 0; text-align:right;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody style="font-size:0.9rem;">
-                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                    <td style="padding:1rem 0;"> Marcus Thompson</td>
-                                    <td style="padding:1rem 0;">Player</td>
-                                    <td style="padding:1rem 0;">Under 16s</td>
-                                    <td style="padding:1rem 0;"><span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span></td>
-                                    <td style="padding:1rem 0; text-align:right;"><button class="btn btn-text btn-small">Edit</button></td>
-                                </tr>
-                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                    <td style="padding:1rem 0;"> Sarah Davies</td>
-                                    <td style="padding:1rem 0;">Parent</td>
-                                    <td style="padding:1rem 0;">Under 12s</td>
-                                    <td style="padding:1rem 0;"><span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span></td>
-                                    <td style="padding:1rem 0; text-align:right;"><button class="btn btn-text btn-small">Edit</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
             <div id="teams" class="dashboard-section" style="display:none; padding:1.5rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                     <div class="section-title" style="margin:0;">⚽ Squads & Teams</div>
@@ -205,6 +177,17 @@
                 <div class="dash-grid" id="teamsListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
                     <!-- Dynamically loaded -->
                     <div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">Loading squads...</div>
+                </div>
+            </div>
+
+            <!-- Events Section -->
+            <div id="events" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <div class="section-title">📅 Calendar & Events</div>
+                <div class="glass-card" style="padding:1.5rem; text-align:center;">
+                    <div style="font-size:3rem; margin-bottom:1rem;">🗓️</div>
+                    <h3 style="margin-bottom:0.5rem;">Group Calendar</h3>
+                    <p style="color:var(--text-muted); margin-bottom:1.5rem;">Plan and manage your groups sessions, matches, and socials.</p>
+                    <button class="btn btn-primary" onclick="window.location.href='tournament-manager.html'">Open Calendar Manager</button>
                 </div>
             </div>
 
@@ -462,7 +445,8 @@
                 loadTeams();
                 if (typeof showAlert === 'function') showAlert('Team created successfully!', 'Success', 'success');
             } catch(err) {
-                alert("Failed to create team: " + err.message);
+                console.error("Team creation failed:", err);
+                showNotification("Failed to create team: " + err.message, "error");
             }
         }
 
@@ -501,13 +485,10 @@
             errorBox.style.display = 'none';
 
             try {
-                const response = await fetch('/api/payments/stripe/connect/status', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                });
-                const data = await response.json();
-
+                const data = await apiService.makeRequest('/payments/stripe/connect/status');
+                
                 loading.style.display = 'none';
-                if (data.connected) {
+                if (data && data.connected) {
                     connectedBox.style.display = 'block';
                     document.getElementById('payout-status').textContent = data.payouts_enabled ? 'Enabled' : 'Pending';
                     document.getElementById('account-status').textContent = data.details_submitted ? 'Verified' : 'Incomplete';
@@ -528,21 +509,17 @@
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Redirecting...';
 
-                const response = await fetch('/api/payments/stripe/connect/onboard', {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        'Content-Type': 'application/json'
-                    }
+                const data = await apiService.makeRequest('/payments/stripe/connect/onboard', {
+                    method: 'POST'
                 });
-                const data = await response.json();
-                if (data.url) {
+                
+                if (data && data.url) {
                     window.location.href = data.url;
                 } else {
-                    throw new Error(data.error || "Failed to get onboarding URL");
+                    throw new Error(data?.error || "Failed to get onboarding URL");
                 }
             } catch (err) {
-                alert("Error starting onboarding: " + err.message);
+                showNotification("Error starting onboarding: " + err.message, "error");
                 const btn = document.getElementById('connect-stripe-btn');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa fa-plug"></i> Connect with Stripe';
@@ -551,14 +528,17 @@
 
         async function manageStripeAccount() {
              try {
-                const response = await fetch('/api/payments/stripe/connect/login-link', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                const data = await apiService.makeRequest('/payments/stripe/connect/login-link', {
+                    method: 'POST'
                 });
-                const data = await response.json();
-                if (data.url) window.location.href = data.url;
+                if (data && data.url) {
+                    window.location.href = data.url;
+                } else {
+                    throw new Error(data?.error || "Failed to get management link");
+                }
             } catch (err) {
-                alert("Error opening Stripe dashboard: " + err.message);
+                console.error("Stripe management error:", err);
+                showNotification("Error opening Stripe dashboard: " + err.message, "error");
             }
         }
     </script>

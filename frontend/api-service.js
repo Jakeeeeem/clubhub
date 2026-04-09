@@ -404,9 +404,15 @@ class ApiService {
     if (endpoint.includes("/auth/settings")) return { success: true, theme: "dark", emailNotifications: true };
     if (endpoint.includes("/notifications")) return [{ id: "n1", title: "Welcome", message: "Thanks for joining ClubHub Demo!", is_read: false, created_at: new Date().toISOString() }];
     if (endpoint.includes("/api/health")) return { status: "healthy", service: "ClubHub Demo" };
-    if (endpoint.includes("/products")) {
-       if (method === "POST") return { success: true, message: "Product created (Demo)" };
-       return this.getAdminDashboardFallback().products || [];
+    // --- STRIPE CONNECT ---
+    if (endpoint.includes("/payments/stripe/connect/status")) {
+      return { success: true, connected: true, payouts_enabled: true, details_submitted: true };
+    }
+    if (endpoint.includes("/payments/stripe/connect/onboard")) {
+      return { success: true, url: "https://stripe.com/onboard-demo" };
+    }
+    if (endpoint.includes("/payments/stripe/connect/login-link") || endpoint.includes("/payments/stripe/connect/manage")) {
+      return { success: true, url: "https://dashboard.stripe.com/test/dashboard" };
     }
 
     return null; // Fall through to real fetch if no mock found

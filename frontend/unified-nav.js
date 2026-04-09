@@ -577,6 +577,7 @@ const UnifiedNav = {
                             <img src="images/logo.png" alt="Logo" style="width: 28px; height: 28px;">
                             <span style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px;">ClubHub</span>
                         </div>
+                        <div id="sidebar-switcher-target" style="margin-top: 1rem; width: 100%;"></div>
                     </div>
 
                     <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto;">
@@ -1383,4 +1384,109 @@ if (typeof window !== 'undefined') {
     setTimeout(() => UnifiedNav.init(), 100);
   });
   window.UnifiedNav = UnifiedNav; // Global access
+}
+
+/**
+ * Global Notification Helper (The "Alert UI")
+ * Standardizes notifications across all user types and dashboards
+ */
+window.showNotification = function(message, type = "info") {
+  const existingNotifications = document.querySelectorAll(".notification");
+  existingNotifications.forEach((n) => n.remove());
+
+  const notification = document.createElement("div");
+  notification.className = `notification notification-${type}`;
+  notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-icon">
+                ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+            </span>
+            <span class="notification-message">${message}</span>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+    `;
+
+  // Inject styles if missing (Premium version)
+  if (!document.querySelector("#notification-styles")) {
+    const styles = document.createElement("style");
+    styles.id = "notification-styles";
+    styles.textContent = `
+            .notification {
+                position: fixed;
+                top: 24px;
+                right: 24px;
+                min-width: 320px;
+                padding: 1.25rem;
+                border-radius: 12px;
+                color: white;
+                font-weight: 500;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1.5rem;
+                animation: navNotificationSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border: 1px solid rgba(255,255,255,0.15);
+                font-family: 'Outfit', sans-serif;
+            }
+            .notification-content { display: flex; align-items: center; gap: 1rem; }
+            .notification-icon { font-size: 1.2rem; filter: drop-shadow(0 0 5px rgba(255,255,255,0.3)); }
+            .notification-message { line-height: 1.4; font-size: 0.95rem; }
+            .notification-success { background: rgba(34, 197, 94, 0.95); }
+            .notification-error { background: rgba(239, 68, 68, 0.95); }
+            .notification-info { background: rgba(59, 130, 246, 0.95); }
+            .notification-close {
+                background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;
+                opacity: 0.6; transition: opacity 0.2s; padding: 4px; display: flex; align-items: center; justify-content: center;
+            }
+            .notification-close:hover { opacity: 1; }
+            @keyframes navNotificationSlideIn {
+                from { transform: translateX(120%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+    document.head.appendChild(styles);
+  }
+
+  document.body.appendChild(notification);
+  
+  // Auto-dismiss after 5 seconds
+  setTimeout(() => {
+    if (notification && notification.parentElement) {
+        notification.style.transform = "translateX(120%)";
+        notification.style.opacity = "0";
+        notification.style.transition = "all 0.4s ease";
+        setTimeout(() => {
+            if (notification && notification.parentElement) notification.remove();
+        }, 400);
+    }
+  }, 5000);
+};
+
+// Also expose as a static method for convenience
+UnifiedNav.showNotification = window.showNotification;
+
+// 🛡️ Override native alert to use our premium UI
+window.alert = function(msg) {
+    if (typeof window.showNotification === 'function') {
+        window.showNotification(msg, 'info');
+    } else {
+        console.warn("showNotification not available, using console:", msg);
+    }
+};
+
+// 🏗️ Auto-initialize Unified Navigation System
+if (window.UNIFIED_NAV_ENABLED || window.location.href.includes('dashboard')) {
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("🚀 UnifiedNav Auto-Init (DOMContentLoaded)");
+            UnifiedNav.init();
+        });
+    } else {
+        console.log("🚀 UnifiedNav Auto-Init (Immediate)");
+        UnifiedNav.init();
+    }
 }

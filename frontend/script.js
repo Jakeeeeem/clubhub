@@ -890,57 +890,7 @@ function toggleOrgOptions() {
   }
 }
 
-function showNotification(message, type = "info") {
-  const existingNotifications = document.querySelectorAll(".notification");
-  existingNotifications.forEach((n) => n.remove());
-
-  const notification = document.createElement("div");
-  notification.className = `notification notification-${type}`;
-  notification.innerHTML = `
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()">&times;</button>
-    `;
-
-  if (!document.querySelector("#notification-styles")) {
-    const styles = document.createElement("style");
-    styles.id = "notification-styles";
-    styles.textContent = `
-            .notification {
-                position: fixed;
-                top: 100px;
-                right: 20px;
-                padding: 1rem 1.5rem;
-                border-radius: 8px;
-                color: white;
-                font-weight: 600;
-                z-index: 3000;
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                animation: slideInRight 0.3s ease-out;
-                max-width: 400px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            }
-            .notification-success { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
-            .notification-error { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-            .notification-info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-            .notification button {
-                background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer;
-                padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-            }
-            @keyframes slideInRight {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        `;
-    document.head.appendChild(styles);
-  }
-
-  document.body.appendChild(notification);
-  setTimeout(() => {
-    if (notification.parentElement) notification.remove();
-  }, 5000);
-}
+// Notification helper moved to unified-nav.js for global availability
 
 function showLoading(show) {
   AppState.isLoading = show;
