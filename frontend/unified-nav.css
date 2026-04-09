@@ -52,22 +52,38 @@
     }
 
     /* Shift main content ONLY on dashboards */
-    .dashboard-view .main, 
-    .dashboard-view .dashboard-main, 
-    .dashboard-view .dashboard.container, 
-    .dashboard-view .dashboard-container {
-        padding-top: 100px !important;
-        padding-left: 310px !important; /* Sidebar width + gap */
-        max-width: none !important;
-        width: auto !important;
-        margin-left: 0 !important;
-    }
-
     .dashboard-view .pro-header, 
     .dashboard-view header.header {
+        position: fixed !important;
+        top: 0 !important;
         left: 280px !important; /* Start after sidebar */
         width: calc(100% - 280px) !important;
         padding: 0 2rem !important;
+        height: 72px !important;
+        display: flex !important;
+        align-items: center !important;
+        z-index: 100 !important;
+        background: var(--glass-bg) !important;
+        backdrop-filter: blur(10px) !important;
+        border-bottom: 1px solid var(--glass-border) !important;
+    }
+
+    /* Remove centering/max-width on dashboards to fix gap */
+    .dashboard-view .container,
+    .dashboard-view .dashboard-container {
+        max-width: none !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }
+
+    .dashboard-view .main, 
+    .dashboard-view .dashboard-main {
+        padding-top: 100px !important;
+        padding-left: 280px !important; /* Sidebar width */
+        width: 100% !important;
     }
 
     /* Dashboard Header Left/Right alignment */
@@ -130,9 +146,19 @@ header.header .nav-container,
     justify-content: space-between !important;
     width: 100% !important;
     height: 100% !important;
-    max-width: 1400px !important;
-    margin: 0 auto !important;
+    max-width: 1400px; /* Base for landing */
+    margin: 0 auto;
     padding: 0 2rem !important;
+}
+
+.dashboard-view .pro-header .nav-container,
+.dashboard-view header.header .nav,
+.dashboard-view header.header .nav-container,
+.dashboard-view .nav.container {
+    max-width: none !important;
+    margin: 0 !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
 }
 
 .header-center {

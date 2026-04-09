@@ -290,10 +290,10 @@ const UnifiedNav = {
     const rightSide = document.querySelector(".dash-header-right") || document.querySelector(".nav-right") || document.querySelector("header");
     if (!rightSide || rightSide.querySelector(".stripe-header-btn")) return;
 
-    // Check if user is admin
-    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    const isAdmin = user.userType === 'admin' || user.userType === 'organization';
-    const isDashboard = window.location.pathname.includes('admin-dashboard.html');
+    // Check if user is admin or account type is admin/platform_admin
+    const userRole = this.getUserRole();
+    const isAdmin = ['admin', 'platform_admin', 'organization'].includes(userRole);
+    const isDashboard = window.location.pathname.includes('dashboard');
 
     if (isAdmin && isDashboard) {
       const stripeBtnHTML = `
@@ -495,7 +495,7 @@ const UnifiedNav = {
                             <img src="images/logo.png" style="height: 24px; width: 24px;" onerror="this.src='https://via.placeholder.com/24'">
                             <span style="font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px; opacity: 0.9;">CLUBHUB</span>
                         </div>
-                        <button onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 4px 8px;">&times;</button>
+                        <button class="mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 4px 8px;">&times;</button>
                     </div>
 
                     <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1rem 1rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
@@ -933,6 +933,11 @@ const UnifiedNav = {
         if (notifDropdown) notifDropdown.style.display = 'none';
         this.toggleProfileDropdown(false);
     }
+  },
+
+  getUserRole() {
+    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    return user.account_type || user.userType || localStorage.getItem('userType') || 'member';
   },
 
   syncUserData() {
