@@ -31,6 +31,15 @@ const UnifiedNav = {
   init() {
     console.log("🚀 UnifiedNav: Initializing standard navigation...");
     
+    // Auto-inject Group Switcher CSS
+    if (!document.getElementById("group-switcher-css")) {
+      const link = document.createElement("link");
+      link.id = "group-switcher-css";
+      link.rel = "stylesheet";
+      link.href = "group-switcher.css";
+      document.head.appendChild(link);
+    }
+
     try {
         // Perform Mobile UX Sweep to fix layouts
         if (typeof this.performMobileUXSweep === 'function') {
@@ -139,24 +148,7 @@ const UnifiedNav = {
     }, 150);
   },
 
-  /**
-   * Dynamically renders the appropriate switcher (Group or Family)
-   */
-  renderHeaderSwitcher() {
-    const container = document.getElementById("org-switcher-container");
-    if (!container) return;
 
-    const userType = localStorage.getItem('userType');
-    const isPlayerMode = window.location.href.includes('player-dashboard.html');
-
-    if (isPlayerMode || userType === 'player') {
-      console.log("👨‍👩‍👧‍👦 Rendering Family Switcher");
-      this.renderFamilySwitcher(container);
-    } else {
-      console.log("🏢 Rendering Group Switcher");
-      this.renderGroupSwitcher(container);
-    }
-  },
 
   renderGroupSwitcher(container) {
     if (typeof GroupSwitcher !== "undefined") {
@@ -507,21 +499,22 @@ const UnifiedNav = {
 
     // Force exact structure if incomplete
     if (!header.querySelector(".dash-header-left") || !header.querySelector(".dash-header-right")) {
+      const isPlayer = window.location.href.includes("player-dashboard.html");
       header.innerHTML = `
         <div class="nav-container nav container">
             <div class="dash-header-left">
                 <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
-                    <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 32px; width: 32px;">
-                    <span class="logo-text neon-text" style="font-weight: 800; font-size: 1.2rem;">ClubHub</span>
+                    <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 42px; width: 42px; object-fit: contain;">
+                    <span class="logo-text" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.5rem; color: var(--primary); letter-spacing: -0.5px;">ClubHub</span>
                 </div>
                 
                 <div class="mode-toggle-container">
-                    <span class="mode-label active" id="group-label">Groups</span>
+                    <span class="mode-label ${!isPlayer ? 'active' : ''}" id="group-label" onclick="UnifiedNav.switchMode('group')">Groups</span>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="mode-toggle" onchange="UnifiedNav.handleGlobalModeToggle(this)">
+                        <input type="checkbox" id="mode-toggle" ${isPlayer ? 'checked' : ''} onchange="UnifiedNav.handleGlobalModeToggle(this)">
                         <span class="toggle-slider"></span>
                     </label>
-                    <span class="mode-label" id="player-label">Player</span>
+                    <span class="mode-label ${isPlayer ? 'active' : ''}" id="player-label" onclick="UnifiedNav.switchMode('player')">Player</span>
                 </div>
                 
                 <div id="org-switcher-container"></div>
@@ -618,33 +611,24 @@ const UnifiedNav = {
     checkSwitcher();
   },
 
-  /**
-   * Header Switcher
-   * Injects the Group Switcher into the header for dashboard users
-   */
   renderHeaderSwitcher() {
-    const headerLeft = document.querySelector(".dash-header-left") || document.querySelector(".nav-left") || document.querySelector(".logo-area");
+    const headerLeft = document.querySelector(".dash-header-left") || document.querySelector(".nav-left") || document.querySelector(".logo-area") || document.querySelector(".nav-container");
     if (!headerLeft || headerLeft.querySelector("#header-org-switcher")) return;
-
-    // Only show for admins/superadmins/coaches/scouts
-    const userRole = this.getUserRole();
-    if (userRole === 'player') return;
 
     const switcherContainer = document.createElement("div");
     switcherContainer.id = "header-org-switcher";
     switcherContainer.className = "header-org-switcher-wrapper";
     headerLeft.appendChild(switcherContainer);
 
-    if (typeof GroupSwitcher !== "undefined") {
-        GroupSwitcher.render(switcherContainer);
+    const userRole = this.getUserRole();
+    const isPlayerMode = window.location.href.includes('player-dashboard.html');
+
+    if (isPlayerMode || userRole === 'player') {
+      console.log("👨‍👩‍👧‍👦 Rendering Family Switcher in Header");
+      this.renderFamilySwitcher(switcherContainer);
     } else {
-        // Force load if missing
-        const script = document.createElement("script");
-        script.src = "group-switcher.js";
-        script.onload = () => {
-            if (typeof GroupSwitcher !== "undefined") GroupSwitcher.render(switcherContainer);
-        };
-        document.head.appendChild(script);
+      console.log("🏢 Rendering Group Switcher in Header");
+      this.renderGroupSwitcher(switcherContainer);
     }
   },
 
@@ -664,7 +648,7 @@ const UnifiedNav = {
       trigger.className = "side-menu-trigger mobile-only";
       trigger.id = "side-menu-trigger";
       trigger.onclick = () => UnifiedNav.toggleSidebar(true);
-      trigger.innerHTML = `<i class="fa fa-bars"></i>`;
+      trigger.innerHTML = ICONS.menu;
       nav.insertBefore(trigger, nav.firstChild);
     }
   },
@@ -682,7 +666,7 @@ const UnifiedNav = {
     header.innerHTML = `
             <div class="nav-container">
                 <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
-                    <i class="fa fa-bars"></i>
+                    ${ICONS.menu}
                 </div>
 
                 <div class="logo-area" onclick="window.location.href='index.html'">
@@ -1228,7 +1212,6 @@ const UnifiedNav = {
                     <a href="#" class="sidebar-link" data-tooltip="Club Shop" onclick="if(typeof showSection === 'function') showSection('shop'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.shop}<span>Club Shop</span></a>
                 `;
         }
-                `;
 
     nav.innerHTML = menuHtml;
 
@@ -1305,26 +1288,7 @@ const UnifiedNav = {
     });
   },
 
-  /**
-   * Scans tables and adds data-label attributes for mobile card view
-   */
-  autoLabelTables() {
-    const tables = document.querySelectorAll('table:not(.no-sweep), .data-table, .modern-table');
-    tables.forEach(table => {
-      const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
-      if (headers.length === 0) return;
 
-      const rows = table.querySelectorAll('tbody tr');
-      rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        cells.forEach((cell, index) => {
-          if (headers[index] && !cell.getAttribute('data-label')) {
-            cell.setAttribute('data-label', headers[index]);
-          }
-        });
-      });
-    });
-  },
 
   updateHeaderState() {
     // 1. Synchronize the mode toggle checkbox
@@ -1379,6 +1343,53 @@ const UnifiedNav = {
     } else {
       this.switchMode("group");
     }
+  },
+
+  updateModeUI() {
+    const isPlayer = window.location.href.includes("player-dashboard.html");
+    const mode = isPlayer ? "player" : "group";
+
+    // 1. Desktop Pills
+    const gPill = document.getElementById("header-mode-group-pill");
+    const pPill = document.getElementById("header-mode-player-pill");
+    if (gPill && pPill) {
+      gPill.classList.toggle("active", mode === "group");
+      pPill.classList.toggle("active", mode === "player");
+    }
+
+    // 2. Mobile Dropdown Pills (Legacy support)
+    const dgPill = document.getElementById("drop-mode-group");
+    const dpPill = document.getElementById("drop-mode-player");
+    if (dgPill && dpPill) {
+      dgPill.classList.toggle("active", mode === "group");
+      dpPill.classList.toggle("active", mode === "player");
+    }
+    
+    // 3. New Toggle Switch Support
+    const modeToggle = document.getElementById("mode-toggle");
+    if (modeToggle) {
+      modeToggle.checked = mode === "player";
+    }
+    const groupLabel = document.getElementById("group-label");
+    const playerLabel = document.getElementById("player-label");
+    if (groupLabel && playerLabel) {
+      groupLabel.classList.toggle("active", mode === "group");
+      playerLabel.classList.toggle("active", mode === "player");
+    }
+  },
+
+  autoLabelTables() {
+    const tables = document.querySelectorAll('table');
+    tables.forEach(table => {
+      const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
+      const rows = table.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        cells.forEach((cell, i) => {
+          if (headers[i]) cell.setAttribute('data-label', headers[i]);
+        });
+      });
+    });
   },
 };
 

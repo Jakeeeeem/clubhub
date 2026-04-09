@@ -4,27 +4,19 @@
  */
 
 class GroupSwitcher {
-  constructor() {
+  constructor(container = null) {
     this.currentGroup = null;
     this.groups = [];
     this.allGroups = []; // For filtering/searching
     this.isPlatformAdmin = false;
     this.isOpen = false;
-    this.container = null;
+    this.container = container;
     this.init();
   }
 
   static render(container) {
     if (!container) return;
-    const instance = new GroupSwitcher();
-    instance.container = container;
-    // We don't call init here because it's already called in constructor, 
-    // but constructor calls loadGroups which is async and then calls this.render()
-    // However, this.container might be null when that first render() happens.
-    // So we force a re-render after setting the container.
-    if (instance.groups.length > 0) {
-      instance.render();
-    }
+    return new GroupSwitcher(container);
   }
 
   async init() {
@@ -126,16 +118,13 @@ class GroupSwitcher {
     const container = this.container || document.getElementById("group-switcher-container");
     if (!container) return;
 
-    // ALWAYS show the group switcher, even if there are no groups
-    // This allows users to see "No Group" and create one
-
     const currentGroupName = this.currentGroup?.name || "No Group";
     const currentGroupRole =
       this.currentGroup?.user_role || this.currentGroup?.role || "";
 
     container.innerHTML = `
       <div class="group-switcher">
-        <button class="group-switcher-trigger" id="group-switcher-trigger">
+        <button class="group-switcher-trigger">
           <div class="group-switcher-current">
             <div class="group-avatar">
               ${
@@ -154,7 +143,7 @@ class GroupSwitcher {
           </svg>
         </button>
 
-        <div class="group-switcher-dropdown" id="group-switcher-dropdown">
+        <div class="group-switcher-dropdown">
           <div class="group-switcher-header">
             <span>${this.isPlatformAdmin ? "Search All Groups" : "Switch Group"}</span>
           </div>
@@ -163,13 +152,13 @@ class GroupSwitcher {
             this.isPlatformAdmin
               ? `
             <div class="group-switcher-search">
-              <input type="text" id="group-search-input" placeholder="Search platform..." autocomplete="off">
+              <input type="text" class="group-search-input" placeholder="Search platform..." autocomplete="off">
             </div>
           `
               : ""
           }
 
-          <div class="group-switcher-list" id="group-switcher-list">
+          <div class="group-switcher-list">
             ${
               this.groups.length === 0
                 ? `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
@@ -258,13 +247,15 @@ class GroupSwitcher {
   }
 
   attachEventListeners(container) {
-    const trigger = container ? container.querySelector("#group-switcher-trigger") : document.getElementById("group-switcher-trigger");
-    const dropdown = container ? container.querySelector("#group-switcher-dropdown") : document.getElementById("group-switcher-dropdown");
+    const parent = container || this.container || document;
+    this.trigger = parent.querySelector(".group-switcher-trigger");
+    this.dropdown = parent.querySelector(".group-switcher-dropdown");
+    this.listContainer = parent.querySelector(".group-switcher-list");
 
-    if (!trigger || !dropdown) return;
+    if (!this.trigger || !this.dropdown) return;
 
     // Toggle dropdown
-    trigger.addEventListener("click", (e) => {
+    this.trigger.addEventListener("click", (e) => {
       e.stopPropagation();
       this.toggleDropdown();
     });
@@ -277,7 +268,7 @@ class GroupSwitcher {
     });
 
     // Handle group selection
-    dropdown.addEventListener("click", async (e) => {
+    this.dropdown.addEventListener("click", async (e) => {
       const item = e.target.closest(".group-switcher-item");
       if (item && !item.disabled) {
         const groupId = item.dataset.groupId;
@@ -288,7 +279,7 @@ class GroupSwitcher {
 
     // Handle Search for Platform Admins
     if (this.isPlatformAdmin) {
-      const searchInput = document.getElementById("group-search-input");
+      const searchInput = this.dropdown.querySelector(".group-search-input");
       if (searchInput) {
         searchInput.addEventListener("input", (e) => {
           const query = e.target.value.toLowerCase();
@@ -307,40 +298,35 @@ class GroupSwitcher {
   }
 
   updateList() {
-    const listContainer = document.getElementById("group-switcher-list");
-    if (!listContainer) return;
+    if (!this.listContainer) return;
 
     if (this.groups.length === 0) {
-      listContainer.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No matching groups.</div>`;
+      this.listContainer.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No matching groups.</div>`;
     } else {
-      listContainer.innerHTML = this.groups
+      this.listContainer.innerHTML = this.groups
         .map((group) => this.renderGroupItem(group))
         .join("");
     }
   }
 
   toggleDropdown() {
-    const dropdown = document.getElementById("group-switcher-dropdown");
-    if (!dropdown) return;
+    if (!this.dropdown) return;
 
     this.isOpen = !this.isOpen;
-    dropdown.classList.toggle("open", this.isOpen);
+    this.dropdown.classList.toggle("open", this.isOpen);
 
-    const trigger = document.getElementById("group-switcher-trigger");
-    if (trigger) {
-      trigger.classList.toggle("open", this.isOpen);
+    if (this.trigger) {
+      this.trigger.classList.toggle("open", this.isOpen);
     }
   }
 
   closeDropdown() {
-    const dropdown = document.getElementById("group-switcher-dropdown");
-    if (dropdown) {
+    if (this.dropdown) {
       this.isOpen = false;
-      dropdown.classList.remove("open");
+      this.dropdown.classList.remove("open");
 
-      const trigger = document.getElementById("group-switcher-trigger");
-      if (trigger) {
-        trigger.classList.remove("open");
+      if (this.trigger) {
+        this.trigger.classList.remove("open");
       }
     }
   }
@@ -438,6 +424,6 @@ let groupSwitcher;
 document.addEventListener("DOMContentLoaded", () => {
   const container = document.getElementById("group-switcher-container");
   if (container) {
-    groupSwitcher = new GroupSwitcher();
+    groupSwitcher = new GroupSwitcher(container);
   }
 });
