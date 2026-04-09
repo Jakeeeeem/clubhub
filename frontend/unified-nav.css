@@ -99,6 +99,57 @@
         gap: 1rem !important;
         margin-left: auto !important; /* Forces right alignment in flex nav */
     }
+
+    /* COLLAPSED SIDEBAR STATES */
+    body.sidebar-collapsed .pro-sidebar {
+        width: 80px !important;
+    }
+
+    body.sidebar-collapsed .pro-header,
+    body.sidebar-collapsed header.header {
+        left: 80px !important;
+        width: calc(100% - 80px) !important;
+    }
+
+    body.sidebar-collapsed .main,
+    body.sidebar-collapsed .dashboard-main {
+        padding-left: 80px !important;
+    }
+
+    body.sidebar-collapsed .sidebar-header span,
+    body.sidebar-collapsed .sidebar-group-switcher-area div,
+    body.sidebar-collapsed .nav-group-title,
+    body.sidebar-collapsed .sidebar-link span,
+    body.sidebar-collapsed .sidebar-link {
+        text-indent: -9999px;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    body.sidebar-collapsed .sidebar-link i,
+    body.sidebar-collapsed .sidebar-link em {
+        text-indent: 0;
+        margin-right: 0 !important;
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-size: 1.25rem;
+    }
+
+    body.sidebar-collapsed .pro-sidebar-header {
+        padding: 1.25rem 0.5rem !important;
+        justify-content: center !important;
+    }
+
+    body.sidebar-collapsed .sidebar-group-switcher-area,
+    body.sidebar-collapsed .sidebar-profile-switcher-area {
+        padding: 0.5rem !important;
+    }
+
+    /* Transition for smooth experience */
+    .pro-sidebar, .main, .dashboard-main, .pro-header, header.header {
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
 }
 
 /* Mobile Breakpoint (0-991px) */
