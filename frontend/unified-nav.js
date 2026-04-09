@@ -557,16 +557,19 @@ const UnifiedNav = {
         const sidebarHTML = `
                 <div class="sidebar-overlay" id="sidebar-overlay"></div>
                 <aside class="pro-sidebar" id="pro-sidebar">
-                    <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="sidebar-header" style="display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem;">
+                        <button class="sidebar-burger" onclick="UnifiedNav.toggleSidebar(false)" style="background: none; border: none; color: white; cursor: pointer; padding: 0; display: flex; align-items: center; opacity: 0.7;">
+                            ${ICONS.menu}
+                        </button>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
                             <img src="images/logo.png" style="height: 24px; width: 24px;" onerror="this.src='https://via.placeholder.com/24'">
                             <span style="font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px; opacity: 0.9;">CLUBHUB</span>
                         </div>
                         <button class="mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 4px 8px;">&times;</button>
                     </div>
 
-                    <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1rem 1rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.5rem;">Switch Group</div>
+                    <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1.25rem 1.25rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.25rem;">Switch Group</div>
                         <div id="sidebar-switcher-target"></div>
                     </div>
 
@@ -580,10 +583,10 @@ const UnifiedNav = {
                         <div style="padding: 2rem; text-align: center; opacity: 0.5;">Loading menu...</div>
                     </nav>
 
-                    <div class="sidebar-footer" style="padding: 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
-                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>⚙️</i> Settings</a>
-                            <a href="#" class="sidebar-link" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>🚪</i> Sign Out</a>
+                    <div class="sidebar-footer" style="padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0;">${ICONS.nav.settings} Account Settings</a>
+                            <a href="#" class="sidebar-link" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0;">${ICONS.nav.logout} Sign Out</a>
                         </div>
                     </div>
                 </aside>
@@ -613,6 +616,36 @@ const UnifiedNav = {
       }
     };
     checkSwitcher();
+  },
+
+  /**
+   * Header Switcher
+   * Injects the Group Switcher into the header for dashboard users
+   */
+  renderHeaderSwitcher() {
+    const headerLeft = document.querySelector(".dash-header-left") || document.querySelector(".nav-left") || document.querySelector(".logo-area");
+    if (!headerLeft || headerLeft.querySelector("#header-org-switcher")) return;
+
+    // Only show for admins/superadmins/coaches/scouts
+    const userRole = this.getUserRole();
+    if (userRole === 'player') return;
+
+    const switcherContainer = document.createElement("div");
+    switcherContainer.id = "header-org-switcher";
+    switcherContainer.className = "header-org-switcher-wrapper";
+    headerLeft.appendChild(switcherContainer);
+
+    if (typeof GroupSwitcher !== "undefined") {
+        GroupSwitcher.render(switcherContainer);
+    } else {
+        // Force load if missing
+        const script = document.createElement("script");
+        script.src = "group-switcher.js";
+        script.onload = () => {
+            if (typeof GroupSwitcher !== "undefined") GroupSwitcher.render(switcherContainer);
+        };
+        document.head.appendChild(script);
+    }
   },
 
   /**
@@ -913,8 +946,8 @@ const UnifiedNav = {
                 </div>
                 
                 <div class="dropdown-links" style="margin-top: 1rem;">
-                    <a href="player-settings.html" class="dropdown-link"><i>⚙️</i> Account Settings</a>
-                    <a href="#" class="dropdown-link" style="color: #ef4444;" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;"><i>🚪</i> Sign Out</a>
+                    <a href="player-settings.html" class="dropdown-link">${ICONS.nav.settings} Account Settings</a>
+                    <a href="#" class="dropdown-link" style="color: #ef4444;" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;">${ICONS.nav.logout} Sign Out</a>
                 </div>
             </div>
         `;
@@ -1108,67 +1141,67 @@ const UnifiedNav = {
     if (isPlayer) {
       menuHtml = `
                     <div class="nav-group-title">Main Hub</div>
-                    <a href="#" class="sidebar-link active" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Overview</a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Club Chat</a>
+                    <a href="#" class="sidebar-link active" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('overview'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-messenger'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.chat}<span>Club Chat</span></a>
                     
                     <div class="nav-group-title">My Career</div>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> My Teams</a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('my-clubs'); UnifiedNav.toggleSidebar(false); return false;"><i>🏰</i> My Groups</a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('documents'); UnifiedNav.toggleSidebar(false); return false;"><i>📄</i> Documents</a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('polls'); UnifiedNav.toggleSidebar(false); return false;"><i>🗳️</i> Club Polls</a>
-                    <a href="scouting.html" class="sidebar-link"><i>🔍</i> Scouting</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('teams'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.teams}<span>My Teams</span></a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('my-clubs'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>My Groups</span></a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('documents'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>Documents</span></a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('polls'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>Club Polls</span></a>
+                    <a href="scouting.html" class="sidebar-link">${ICONS.nav.training}<span>Scouting</span></a>
 
                     <div class="nav-group-title">Family & Profile</div>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('profile'); UnifiedNav.toggleSidebar(false); return false;"><i>👤</i> My Profile</a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('family'); UnifiedNav.toggleSidebar(false); return false;"><i>👨‍👩‍👧‍👦</i> My Family</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('profile'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>My Profile</span></a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('family'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>My Family</span></a>
                     
                     <div class="nav-group-title">Shop & Marketplace</div>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-finder'); UnifiedNav.toggleSidebar(false); return false;"><i>🏢</i> Club Finder</a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>🏟️</i> Book Venues</a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('event-finder'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> Find Events</a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('item-shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛍️</i> Item Shop</a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('payments'); UnifiedNav.toggleSidebar(false); return false;"><i>💳</i> Finance</a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-finder'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>Club Finder</span></a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>Book Venues</span></a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('event-finder'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.events}<span>Find Events</span></a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('item-shop'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.shop}<span>Item Shop</span></a>
+                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('payments'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.finance}<span>Finance</span></a>
                 `;
     } else if (isSuperAdmin) {
       menuHtml = `
                 <div class="nav-group-title">Platform</div>
-                <a href="#" class="sidebar-link active" onclick="showSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Admin Console</a>
-                <a href="#" class="sidebar-link" onclick="showSection('groups'); UnifiedNav.toggleSidebar(false); return false;"><i>🏢</i> Groups</a>
-                <a href="#" class="sidebar-link" onclick="showSection('users'); UnifiedNav.toggleSidebar(false); return false;"><i>👥</i> Global Users</a>
+                <a href="#" class="sidebar-link active" onclick="showSection('overview'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Admin Console</span></a>
+                <a href="#" class="sidebar-link" onclick="showSection('groups'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>Groups</span></a>
+                <a href="#" class="sidebar-link" onclick="showSection('users'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>Global Users</span></a>
                 
                 <div class="nav-group-title">Operations</div>
-                <a href="#" class="sidebar-link" onclick="showSection('verifications'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> ID Verificaton</a>
-                <a href="#" class="sidebar-link" onclick="showSection('activity'); UnifiedNav.toggleSidebar(false); return false;"><i>📜</i> System Logs</a>
+                <a href="#" class="sidebar-link" onclick="showSection('verifications'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.approvals}<span>ID Verification</span></a>
+                <a href="#" class="sidebar-link" onclick="showSection('activity'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>System Logs</span></a>
                 
                 <div class="nav-group-title">System</div>
-                <a href="#" class="sidebar-link" onclick="showSection('stripe'); UnifiedNav.toggleSidebar(false); return false;"><i>💰</i> Stripe Hub</a>
+                <a href="#" class="sidebar-link" onclick="showSection('stripe'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.finance}<span>Stripe Hub</span></a>
             `;
     } else if (isCoach) {
       menuHtml = `
                 <div class="nav-group-title">Coaching</div>
-                <a href="#" class="sidebar-link active" onclick="showCoachSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Dashboard</a>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Messenger</a>
+                <a href="#" class="sidebar-link active" onclick="showCoachSection('overview'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Dashboard</span></a>
+                <a href="#" class="sidebar-link" onclick="showCoachSection('messenger'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.chat}<span>Messenger</span></a>
                 
                 <div class="nav-group-title">Squad</div>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> My Teams</a>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('players'); UnifiedNav.toggleSidebar(false); return false;"><i>👥</i> My Players</a>
+                <a href="#" class="sidebar-link" onclick="showCoachSection('teams'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.teams}<span>My Teams</span></a>
+                <a href="#" class="sidebar-link" onclick="showCoachSection('players'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>My Players</span></a>
                 
                 <div class="nav-group-title">Career</div>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('scouting'); UnifiedNav.toggleSidebar(false); return false;"><i>🔍</i> Scouting Hub</a>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('tournament-manager'); UnifiedNav.toggleSidebar(false); return false;"><i>🏆</i> Tournaments</a>
+                <a href="#" class="sidebar-link" onclick="showCoachSection('scouting'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.training}<span>Scouting Hub</span></a>
+                <a href="#" class="sidebar-link" onclick="showCoachSection('tournament-manager'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.trophy}<span>Tournaments</span></a>
             `;
     } else if (isScout) {
       menuHtml = `
                 <div class="nav-group-title">Talent Pool</div>
-                <a href="#" class="sidebar-link active" onclick="showScoutSection('discovery'); UnifiedNav.toggleSidebar(false); return false;"><i>🔍</i> Discover</a>
-                <a href="#" class="sidebar-link" onclick="showScoutSection('watchlist'); UnifiedNav.toggleSidebar(false); return false;"><i>⭐</i> Watchlist</a>
+                <a href="#" class="sidebar-link active" onclick="showScoutSection('discovery'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.training}<span>Discover</span></a>
+                <a href="#" class="sidebar-link" onclick="showScoutSection('watchlist'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.trophy}<span>Watchlist</span></a>
                 
                 <div class="nav-group-title">Analysis</div>
-                <a href="#" class="sidebar-link" onclick="showScoutSection('reports'); UnifiedNav.toggleSidebar(false); return false;"><i>📝</i> Scout Reports</a>
-                <a href="#" class="sidebar-link" onclick="showScoutSection('analytics'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> Market Stats</a>
+                <a href="#" class="sidebar-link" onclick="showScoutSection('reports'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>Scout Reports</span></a>
+                <a href="#" class="sidebar-link" onclick="showScoutSection('analytics'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Market Stats</span></a>
                 
                 <div class="nav-group-title">Network</div>
-                <a href="#" class="sidebar-link" onclick="showScoutSection('messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> Messenger</a>
+                <a href="#" class="sidebar-link" onclick="showScoutSection('messenger'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.chat}<span>Messenger</span></a>
             `;
         } else {
           menuHtml = `
@@ -1195,12 +1228,7 @@ const UnifiedNav = {
                     <a href="#" class="sidebar-link" data-tooltip="Club Shop" onclick="if(typeof showSection === 'function') showSection('shop'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.shop}<span>Club Shop</span></a>
                 `;
         }
-
-    // Add Settings at the bottom
-    menuHtml += `
-            <div class="nav-group-title"><span>Settings</span></div>
-            <a href="player-settings.html" class="sidebar-link">${ICONS.nav.settings}<span>Account Settings</span></a>
-        `;
+                `;
 
     nav.innerHTML = menuHtml;
 

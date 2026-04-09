@@ -10,7 +10,21 @@ class GroupSwitcher {
     this.allGroups = []; // For filtering/searching
     this.isPlatformAdmin = false;
     this.isOpen = false;
+    this.container = null;
     this.init();
+  }
+
+  static render(container) {
+    if (!container) return;
+    const instance = new GroupSwitcher();
+    instance.container = container;
+    // We don't call init here because it's already called in constructor, 
+    // but constructor calls loadGroups which is async and then calls this.render()
+    // However, this.container might be null when that first render() happens.
+    // So we force a re-render after setting the container.
+    if (instance.groups.length > 0) {
+      instance.render();
+    }
   }
 
   async init() {
@@ -109,7 +123,7 @@ class GroupSwitcher {
   }
 
   render() {
-    const container = document.getElementById("group-switcher-container");
+    const container = this.container || document.getElementById("group-switcher-container");
     if (!container) return;
 
     // ALWAYS show the group switcher, even if there are no groups
@@ -177,6 +191,9 @@ class GroupSwitcher {
         </div>
       </div>
     `;
+
+    // Re-attach listeners after rendering
+    this.attachEventListeners(container);
   }
 
   renderGroupItem(group) {
@@ -240,9 +257,9 @@ class GroupSwitcher {
     return roleMap[role] || role;
   }
 
-  attachEventListeners() {
-    const trigger = document.getElementById("group-switcher-trigger");
-    const dropdown = document.getElementById("group-switcher-dropdown");
+  attachEventListeners(container) {
+    const trigger = container ? container.querySelector("#group-switcher-trigger") : document.getElementById("group-switcher-trigger");
+    const dropdown = container ? container.querySelector("#group-switcher-dropdown") : document.getElementById("group-switcher-dropdown");
 
     if (!trigger || !dropdown) return;
 
