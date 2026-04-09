@@ -1275,7 +1275,7 @@ function recordMatchResult(eventId) {
   document.getElementById("resultModal").style.display = "block";
 }
 
-async function submitMatchResult(e) {
+async function handleSaveResult(e) {
   e.preventDefault();
   const eventId = document.getElementById("resultEventId").value;
   const homeScore = parseInt(document.getElementById("homeScore").value) || 0;
@@ -1330,7 +1330,7 @@ async function submitMatchResult(e) {
 
     showNotification("Match result and stats saved successfully!", "success");
     closeModal("resultModal");
-    initializeCoachDashboard(); // Refresh data
+    if (typeof loadCoachDashboard === 'function') loadCoachDashboard(); // Refresh data
   } catch (error) {
     console.error("Failed to save match result:", error);
     showNotification("Error saving result: " + error.message, "error");

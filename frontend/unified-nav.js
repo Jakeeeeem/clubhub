@@ -11,25 +11,47 @@ const UnifiedNav = {
 
     // Standardize breakpoints: 992px+ is desktop
     const isDesktop = window.matchMedia('(min-width: 992px)').matches;
-    const isDashboard = window.location.pathname.includes('dashboard.html');
-    const isLandingPage = window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname === '';
+    const path = window.location.pathname.toLowerCase();
+    const isDashboard = path.includes('dashboard.html');
+    const isLandingPage = path.includes('index.html') || path.endsWith('/') || path === '' || (!isDashboard && !path.includes('.html'));
+    
+    const token = localStorage.getItem('authToken');
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    const isLoggedIn = !!(token && user);
+
+    console.log(`📍 Nav Info: Desktop=${isDesktop}, Dashboard=${isDashboard}, Landing=${isLandingPage}, LoggedIn=${isLoggedIn}`);
+
+    // Manage body classes for CSS scoping
+    if (isDashboard) {
+      document.body.classList.add('dashboard-view');
+      document.body.classList.remove('landing-view');
+    } else {
+      document.body.classList.remove('dashboard-view');
+      document.body.classList.add('landing-view');
+    }
 
     if (!isDesktop) {
       // ── MOBILE ──────────────────────────────────────────────────────────────
       console.log("📱 Mobile: rendering unified nav");
       this.cleanupLegacyArtifacts(); 
-      this.renderHeader();
-      this.renderSidebar();
-      this.renderBottomNav();
-      this.renderMenu();
-      this.renderMobileHeaderElements();
+      
+      if (isDashboard || (isLoggedIn && !isLandingPage)) {
+        this.renderHeader();
+        this.renderSidebar();
+        this.renderBottomNav();
+        this.renderMenu();
+        this.renderMobileHeaderElements();
+      } else if (isLandingPage) {
+        this.ensureLandingHeader(isLoggedIn, user);
+        this.toggleSidebar(false);
+      }
     } else {
       // ── DESKTOP ─────────────────────────────────────────────────────────────
-      console.log("💻 Desktop: standardizing dashboard navigation");
+      console.log("💻 Desktop: standardizing navigation");
       this.cleanupLegacyArtifacts();
       
       // Standardize the whole structure for dashboards (Header + Sidebar)
-      if (isDashboard || isLandingPage) {
+      if (isDashboard) {
         this.ensureDashboardHeader(); 
         this.renderSidebar(); // Enforce desktop sidebar
         this.renderMenu();    // Enforce desktop menu
@@ -39,6 +61,14 @@ const UnifiedNav = {
         this.renderHeaderNotifications(); 
         this.renderPwaInstallButton();
         this.updateHeaderState();
+      } else if (isLandingPage) {
+        this.ensureLandingHeader(isLoggedIn, user);
+        this.renderPwaInstallButton();
+        // Remove sidebar if it exists from previous state (safety)
+        const sidebar = document.getElementById("pro-sidebar");
+        if (sidebar) sidebar.remove();
+        const overlay = document.getElementById("sidebar-overlay");
+        if (overlay) overlay.remove();
       } else {
         this.ensureHeaderElements();
         this.renderHeaderSwitcher();
@@ -48,7 +78,7 @@ const UnifiedNav = {
     }
     
     this.bindEvents();
-    this.syncUserData();
+    if (isLoggedIn) this.syncUserData();
     this.autoLabelTables();
     this.toggleSidebar(false);
   },
@@ -324,6 +354,60 @@ const UnifiedNav = {
   },
 
   /**
+   * Ensure landing page headers are clean and appropriate
+   */
+  ensureLandingHeader(isLoggedIn, user) {
+    let header = document.querySelector(".pro-header, header.header");
+    if (!header) return;
+
+    if (!isLoggedIn) {
+      header.innerHTML = `
+        <div class="nav-container nav container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 32px; width: 32px;">
+                <span class="logo-text neon-text" style="font-weight: 800; font-size: 1.2rem;">ClubHub</span>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="showModal('loginModal')">Login</button>
+                <button class="btn btn-primary" onclick="showSignupOptions()">Sign Up</button>
+            </div>
+        </div>
+      `;
+    } else {
+      const name = (user ? (user.firstName || user.first_name) : "User") || "User";
+      header.innerHTML = `
+        <div class="nav-container nav container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 32px; width: 32px;">
+                <span class="logo-text neon-text" style="font-weight: 800; font-size: 1.2rem;">ClubHub</span>
+            </div>
+            <div class="dash-header-right" style="display: flex; align-items: center; gap: 1rem;">
+                <span class="user-name desktop-only" style="color: white; font-weight: 600;">Hello, ${name}</span>
+                <button class="btn btn-primary btn-small" onclick="UnifiedNav.goToDashboard()">Dashboard</button>
+                <button class="btn btn-secondary btn-small" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout()">Logout</button>
+            </div>
+        </div>
+      `;
+    }
+  },
+
+  goToDashboard() {
+    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const type = user.account_type || user.userType || localStorage.getItem('userType');
+    
+    if (type === 'player') window.location.href = 'player-dashboard.html';
+    else if (type === 'coach') window.location.href = 'coach-dashboard.html';
+    else if (type === 'scout') window.location.href = 'scout-dashboard.html';
+    else if (type === 'platform_admin') window.location.href = 'super-admin-dashboard.html';
+    else window.location.href = 'admin-dashboard.html';
+  },
+
+  logout() {
+     localStorage.clear();
+     window.location.href = 'index.html';
+  },
+
+  /**
    * Ensure desktop headers include everything needed for a premium dashboard experience
    */
   ensureDashboardHeader() {
@@ -362,7 +446,7 @@ const UnifiedNav = {
                     <span class="user-name desktop-only" id="header-user-name">Loading...</span>
                     <div class="user-avatar-sm" id="header-user-avatar">?</div>
                 </div>
-                <button class="btn btn-secondary btn-small desktop-only" onclick="handleAuthError()" style="margin-left: 0.5rem;">Logout</button>
+                <button class="btn btn-secondary btn-small desktop-only" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout()" style="margin-left: 0.5rem;">Logout</button>
             </div>
         </div>
       `;
@@ -407,7 +491,7 @@ const UnifiedNav = {
                 <div class="sidebar-footer" style="padding: 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
                     <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                         <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>⚙️</i> Settings</a>
-                        <a href="#" class="sidebar-link" onclick="handleAuthError(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>🚪</i> Sign Out</a>
+                        <a href="#" class="sidebar-link" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.6rem 0.75rem;"><i>🚪</i> Sign Out</a>
                     </div>
                 </div>
             </aside>
@@ -732,7 +816,7 @@ const UnifiedNav = {
                 
                 <div class="dropdown-links" style="margin-top: 1rem;">
                     <a href="player-settings.html" class="dropdown-link"><i>⚙️</i> Account Settings</a>
-                    <a href="#" class="dropdown-link" style="color: #ef4444;" onclick="handleAuthError(); return false;"><i>🚪</i> Sign Out</a>
+                    <a href="#" class="dropdown-link" style="color: #ef4444;" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;"><i>🚪</i> Sign Out</a>
                 </div>
             </div>
         `;

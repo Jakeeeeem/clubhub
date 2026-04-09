@@ -37,6 +37,7 @@
     }
   </style>
   <script src="https://js.stripe.com/v3/"></script>
+  <script src="app-state.js"></script>
   <script src="api-service.js"></script>
   <script src="group-switcher.js"></script>
   <script src="workspace-manager.js"></script>
@@ -47,20 +48,6 @@
 
 <body class="clubhub-unified dashboard-page">
   <script>
-    // Global AppState initialization
-    window.AppState = window.AppState || {};
-    if (!window.AppState.currentUser) {
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        try {
-          window.AppState.currentUser = JSON.parse(storedUser);
-          window.AppState.isLoggedIn = true;
-          console.log('✅ Global AppState initialized');
-        } catch (e) {
-          console.error('AppState init error:', e);
-        }
-      }
-    }
     window.UNIFIED_NAV_ENABLED = true;
   </script>
   <!-- Unified Navigation will inject the Header and Sidebar automatically -->

@@ -31,8 +31,8 @@
     .desktop-only { display: inline-flex !important; }
     .mobile-only { display: none !important; }
 
-    /* Force Sidebar to be visible on Desktop dashboards */
-    .pro-sidebar {
+    /* Force Sidebar to be visible ONLY on move actual dashboards */
+    .dashboard-view .pro-sidebar {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
@@ -43,7 +43,7 @@
         transition: none !important;
     }
 
-    .sidebar-overlay {
+    .dashboard-view .sidebar-overlay {
         display: none !important;
     }
 
@@ -51,8 +51,11 @@
         display: none !important;
     }
 
-    /* Shift main content to make room for sidebar */
-    .main, .dashboard-main, .dashboard.container, .dashboard-container {
+    /* Shift main content ONLY on dashboards */
+    .dashboard-view .main, 
+    .dashboard-view .dashboard-main, 
+    .dashboard-view .dashboard.container, 
+    .dashboard-view .dashboard-container {
         padding-top: 100px !important;
         padding-left: 310px !important; /* Sidebar width + gap */
         max-width: none !important;
@@ -60,7 +63,8 @@
         margin-left: 0 !important;
     }
 
-    .pro-header, header.header {
+    .dashboard-view .pro-header, 
+    .dashboard-view header.header {
         left: 280px !important; /* Start after sidebar */
         width: calc(100% - 280px) !important;
         padding: 0 2rem !important;

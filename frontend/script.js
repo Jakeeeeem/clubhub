@@ -1,4 +1,5 @@
-const AppState = {
+// Use central AppState from app-state.js if available, otherwise define it
+window.AppState = window.AppState || {
   currentUser: null,
   userType: null,
   currentPage: "home",
@@ -13,6 +14,7 @@ const AppState = {
   isLoading: false,
   isLoggedIn: false,
 };
+const AppState = window.AppState;
 
 // Wait for all scripts to load before initializing
 let initializationAttempts = 0;
