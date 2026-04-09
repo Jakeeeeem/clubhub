@@ -7,6 +7,7 @@ const {
 } = require("../middleware/auth");
 const { body, validationResult } = require("express-validator");
 const emailService = require("../services/email-service");
+const StatsService = require("../services/stats-service");
 
 const router = express.Router();
 
@@ -510,48 +511,89 @@ router.put(
         notificationSchedule, 
         tournamentSettings,
         requireDeclineReason,
+        updateSeries, // Boolean: update all events in this series?
       } = req.body;
 
       let updatedEvent;
 
       await withTransaction(async (client) => {
-        const result = await client.query(
-          `
-        UPDATE events SET 
-          title = $1,
-          description = $2,
-          event_type = $3,
-          event_date = $4,
-          event_time = $5,
-          location = $6,
-          price = $7,
-          capacity = $8,
-          opponent = $9,
-          notification_schedule = $10,
-          tournament_settings = $11,
-          require_decline_reason = $12,
-          updated_at = NOW()
-        WHERE id = $13
-        RETURNING *
-      `,
-          [
-            title,
-            description || null,
-            eventType,
-            eventDate,
-            eventTime || null,
-            location || null,
-            price || event.price,
-            capacity || null,
-            opponent || null,
-            JSON.stringify(notificationSchedule || []),
-            JSON.stringify(tournamentSettings || {}),
-            requireDeclineReason || false,
-            req.params.id,
-          ],
-        );
-
-        updatedEvent = result.rows[0];
+        if (updateSeries && event.recurrence_id) {
+          // Update all FUTURE events in the series
+          await client.query(
+            `
+            UPDATE events SET 
+              title = $1,
+              description = $2,
+              event_type = $3,
+              event_time = $4,
+              location = $5,
+              price = $6,
+              capacity = $7,
+              opponent = $8,
+              notification_schedule = $9,
+              tournament_settings = $10,
+              require_decline_reason = $11,
+              updated_at = NOW()
+            WHERE recurrence_id = $12 AND event_date >= $13
+            `,
+            [
+              title,
+              description || null,
+              eventType,
+              eventTime || null,
+              location || null,
+              price || event.price,
+              capacity || null,
+              opponent || null,
+              JSON.stringify(notificationSchedule || []),
+              JSON.stringify(tournamentSettings || {}),
+              requireDeclineReason || false,
+              event.recurrence_id,
+              event.event_date
+            ]
+          );
+          
+          // Fetch the current one to return
+          const resCurrent = await client.query("SELECT * FROM events WHERE id = $1", [req.params.id]);
+          updatedEvent = resCurrent.rows[0];
+        } else {
+          const result = await client.query(
+            `
+          UPDATE events SET 
+            title = $1,
+            description = $2,
+            event_type = $3,
+            event_date = $4,
+            event_time = $5,
+            location = $6,
+            price = $7,
+            capacity = $8,
+            opponent = $9,
+            notification_schedule = $10,
+            tournament_settings = $11,
+            require_decline_reason = $12,
+            updated_at = NOW()
+          WHERE id = $13
+          RETURNING *
+        `,
+            [
+              title,
+              description || null,
+              eventType,
+              eventDate,
+              eventTime || null,
+              location || null,
+              price || event.price,
+              capacity || null,
+              opponent || null,
+              JSON.stringify(notificationSchedule || []),
+              JSON.stringify(tournamentSettings || {}),
+              requireDeclineReason || false,
+              req.params.id,
+            ],
+          );
+          updatedEvent = result.rows[0];
+        }
 
         // 🗓️ Manage Notifications on Update
         if (notificationSchedule !== undefined) {
@@ -634,39 +676,48 @@ router.delete(
       const event = eventResult.rows[0];
 
       // Check if user created the event or owns the club
-      if (event.created_by !== req.user.id && event.owner_id !== req.user.id) {
-        return res.status(403).json({
-          error: "Access denied",
-          message: "You can only delete your own events",
-        });
-      }
+      // Optionally delete series
+      const deleteSeries = req.query.series === 'true' || req.body.deleteSeries === true;
 
       // Delete event and related data in transaction
       await withTransaction(async (client) => {
-        // Delete event bookings
-        await client.query("DELETE FROM event_bookings WHERE event_id = $1", [
-          req.params.id,
-        ]);
+        const targetIds = [];
+        
+        if (deleteSeries && event.recurrence_id) {
+            const seriesResult = await client.query(
+                "SELECT id FROM events WHERE recurrence_id = $1 AND event_date >= $2",
+                [event.recurrence_id, event.event_date]
+            );
+            seriesResult.rows.forEach(r => targetIds.push(r.id));
+        } else {
+            targetIds.push(req.params.id);
+        }
 
-        // Delete availability responses
-        await client.query(
-          "DELETE FROM availability_responses WHERE event_id = $1",
-          [req.params.id],
-        );
+        for (const tid of targetIds) {
+            // Delete event bookings
+            await client.query("DELETE FROM event_bookings WHERE event_id = $1", [tid]);
 
-        // Delete match results
-        await client.query("DELETE FROM match_results WHERE event_id = $1", [
-          req.params.id,
-        ]);
+            // Delete availability responses
+            await client.query(
+              "DELETE FROM availability_responses WHERE event_id = $1",
+              [tid],
+            );
 
-        // Delete scheduled notifications
-        await client.query(
-          "DELETE FROM scheduled_notifications WHERE event_id = $1",
-          [req.params.id],
-        );
+            // Delete match results
+            await client.query("DELETE FROM match_results WHERE event_id = $1", [tid]);
 
-        // Delete event
-        await client.query("DELETE FROM events WHERE id = $1", [req.params.id]);
+            // Delete scheduled notifications
+            await client.query(
+              "DELETE FROM scheduled_notifications WHERE event_id = $1",
+              [tid],
+            );
+
+            // Delete invitations/assignments
+            await client.query("DELETE FROM event_invitations WHERE event_id = $1", [tid]);
+
+            // Delete event
+            await client.query("DELETE FROM events WHERE id = $1", [tid]);
+        }
       });
 
       res.json({
@@ -1252,6 +1303,11 @@ router.post(
         message: "Availability submitted successfully",
         response: result.rows[0],
       });
+
+      // 🔥 Background: Recalculate stats for the player
+      StatsService.updatePlayerStats(playerId).catch(err => 
+        console.error(`Stats update failed for player ${playerId}:`, err)
+      );
     } catch (error) {
       console.error("Submit availability error:", error);
       res.status(500).json({
@@ -1328,6 +1384,11 @@ router.post(
         message: "Availability overridden successfully",
         response: result.rows[0],
       });
+
+      // 🔥 Background: Recalculate stats for the player
+      StatsService.updatePlayerStats(playerId).catch(err => 
+        console.error(`Stats update failed for player ${playerId}:`, err)
+      );
     } catch (error) {
       console.error("Override availability error:", error);
       res.status(500).json({ error: "Failed to override availability" });
@@ -1904,6 +1965,15 @@ router.post("/:id/result", authenticateToken, async (req, res) => {
       success: true,
       message: "Match result and player statistics recorded successfully!",
     });
+
+    // 🔥 Background: Recalculate stats for ALL players in this match
+    if (playerStats && playerStats.length > 0) {
+      playerStats.forEach(stat => {
+        StatsService.updatePlayerStats(stat.playerId).catch(err => 
+          console.error(`Stats update failed for player ${stat.playerId}:`, err)
+        );
+      });
+    }
   } catch (error) {
     console.error("Detailed match record error:", error);
     res.status(500).json({ error: "Failed to record match data" });

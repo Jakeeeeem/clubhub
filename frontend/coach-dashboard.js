@@ -1371,12 +1371,130 @@ function editPlayerPosition(playerId) {
 
 // function recordMatchResult(eventId) - DUPLICATE REMOVED
 
-function manageEventPlayers(eventId) {
-  showNotification("Event attendance management coming soon!", "info");
+async function manageEventPlayers(eventId) {
+  const modal = document.getElementById('manageRosterModal');
+  const loading = document.getElementById('rosterLoading');
+  const container = document.getElementById('rosterListContainer');
+  const body = document.getElementById('rosterListBody');
+  
+  if (!modal) return;
+  modal.style.display = 'flex';
+  loading.style.display = 'block';
+  container.style.display = 'none';
+  window.currentRosterEventId = eventId;
+
+  try {
+    const responses = await apiService.get(`/api/events/${eventId}/availability`);
+    loading.style.display = 'none';
+    container.style.display = 'block';
+
+    if (!responses || responses.length === 0) {
+      body.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted);">No responses yet.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = responses.map(r => `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+        <td style="padding: 1rem;">
+          <div style="font-weight:600; color:#fff;">${r.first_name} ${r.last_name}</div>
+          <div style="font-size:0.75rem; color:var(--text-muted);">${r.email || ''}</div>
+        </td>
+        <td style="padding: 1rem; text-align: center;">
+          <span class="status-badge status-${r.availability === 'yes' ? 'paid' : r.availability === 'no' ? 'overdue' : 'pending'}">
+            ${r.availability.toUpperCase()}
+          </span>
+        </td>
+        <td style="padding: 1rem;">
+          <div style="font-size:0.85rem; color:${r.availability === 'no' ? '#f87171' : '#f1f5f9'};">
+            ${r.notes || (r.availability === 'no' ? '<span style="opacity:0.5;">No reason provided</span>' : '-')}
+          </div>
+          <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.25rem;">
+            ${new Date(r.updated_at).toLocaleString([], {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    loading.innerHTML = `<p style="color:#f87171;">Error: ${err.message}</p>`;
+  }
 }
 
-function editEvent(eventId) {
-  showNotification("Edit event feature coming soon!", "info");
+async function nudgeUnresponsive() {
+  const eventId = window.currentRosterEventId;
+  if (!eventId) return;
+  
+  try {
+    showLoading(true);
+    const result = await apiService.makeRequest(`/api/events/${eventId}/nudge`, { method: 'POST' });
+    showNotification(result.message || "Unresponsive players nudged!", "success");
+  } catch (err) {
+    showNotification("Failed to nudge: " + err.message, "error");
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function editEvent(eventId) {
+  const event = AppState.events.find(e => e.id === eventId);
+  if (!event) return;
+
+  const modal = document.getElementById('editEventModal');
+  const form = document.getElementById('editEventForm');
+  if (!modal || !form) return;
+
+  // Populate fields
+  form.eventId.value = event.id;
+  form.eventTitle.value = event.title;
+  form.eventDate.value = new Date(event.date || event.event_date).toISOString().split('T')[0];
+  form.eventTime.value = event.time || event.event_time;
+  form.location.value = event.location || '';
+  
+  // Show series option if it's a recurring event
+  const seriesOption = document.getElementById('seriesOption');
+  if (event.recurrence_id || event.recurring !== 'none') {
+    seriesOption.style.display = 'block';
+    form.recurrenceId.value = event.recurrence_id || '';
+  } else {
+    seriesOption.style.display = 'none';
+  }
+
+  modal.style.display = 'flex';
+}
+
+async function handleUpdateEvent(e) {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const eventId = formData.get('eventId');
+  
+  const updateData = {
+    title: formData.get('eventTitle'),
+    event_date: formData.get('eventDate'),
+    event_time: formData.get('eventTime'),
+    location: formData.get('location'),
+    updateSeries: formData.get('updateSeries') === 'on'
+  };
+
+  try {
+    showLoading(true);
+    await apiService.makeRequest(`/events/${eventId}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData),
+    });
+
+    showNotification(updateData.updateSeries ? "Event series updated!" : "Event updated!", "success");
+    closeModal('editEventModal');
+    
+    // Refresh data
+    if (typeof initializeCoachDashboard === 'function') {
+      await initializeCoachDashboard();
+    } else {
+      window.location.reload();
+    }
+  } catch (err) {
+    showNotification("Failed to update: " + err.message, "error");
+  } finally {
+    showLoading(false);
+  }
 }
 
 function filterEvents() {
