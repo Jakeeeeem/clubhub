@@ -37,11 +37,13 @@ const UnifiedNav = {
         this.renderHeaderSwitcher(); 
         this.renderStripeHeaderButton(); 
         this.renderHeaderNotifications(); 
+        this.renderPwaInstallButton();
         this.updateHeaderState();
       } else {
         this.ensureHeaderElements();
         this.renderHeaderSwitcher();
         this.renderHeaderNotifications();
+        this.renderPwaInstallButton();
       }
     }
     
@@ -256,6 +258,33 @@ const UnifiedNav = {
         </div>
       `;
       rightSide.insertAdjacentHTML("afterbegin", stripeBtnHTML);
+    }
+  },
+
+  renderPwaInstallButton() {
+    // Look for various header sections
+    const rightSide = document.querySelector(".dash-header-right") || 
+                      document.querySelector(".nav-right") || 
+                      document.querySelector(".header-actions") ||
+                      document.querySelector("header");
+                      
+    if (!rightSide || rightSide.querySelector(".pwa-install-btn")) return;
+
+    const pwaBtnHTML = `
+      <div class="pwa-install-wrapper desktop-only" style="margin-right: 1rem; display: flex; align-items: center;">
+        <button class="btn btn-secondary btn-small pwa-install-btn" onclick="typeof installPWA === 'function' ? installPWA() : console.log('📲 Install PWA')" style="display: none; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+          <img src="images/logo.png" alt="Install" style="width: 16px; height: 16px;">
+          <span class="pwa-install-text">Install App</span>
+        </button>
+      </div>
+    `;
+    
+    // For dashboards, we want to insert before profile or stripe
+    const profile = rightSide.querySelector(".user-profile-trigger");
+    if (profile) {
+      profile.insertAdjacentHTML("beforebegin", pwaBtnHTML);
+    } else {
+      rightSide.insertAdjacentHTML("afterbegin", pwaBtnHTML);
     }
   },
 

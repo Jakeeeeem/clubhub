@@ -5,6 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Group - ClubHub</title>
+    <meta name="description" content="Set up your group and start managing your team on ClubHub.">
+    <meta name="theme-color" content="#dc4343">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ClubHub">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
     <link rel="stylesheet" href="styles.css">
     <style>
         .create-group-container {
@@ -296,6 +305,7 @@
     </div>
 
     <script src="api-service.js"></script>
+    <script src="pwa-install.js"></script>
     <script src="dialog-service.js"></script>
     <script>
         let selectedLogoFile = null;
