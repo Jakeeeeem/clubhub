@@ -55,7 +55,7 @@
             <!-- Dashboard Sections -->
             <div id="overview" class="dashboard-section active">
                 <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                    <div class="stat-card" onclick="showSection('players')" style="cursor: pointer;">
+                    <div class="stat-card" onclick="showSection('members')" style="cursor: pointer;">
                         <span class="stat-label">Total Members</span>
                         <span class="stat-number" id="totalMembers">47</span>
                         <div class="stat-change">↑ 3 this month</div>
@@ -70,10 +70,10 @@
                         <span class="stat-number" id="activeEvents">6</span>
                         <div class="stat-change">2 upcoming this week</div>
                     </div>
-                    <div class="stat-card" onclick="showSection('members')" style="cursor: pointer;">
-                        <span class="stat-label">Pending Actions</span>
-                        <span class="stat-number" id="pendingTasks" style="color:#f59e0b;">4</span>
-                        <div class="stat-change" style="color:#f59e0b;">Requires attention</div>
+                    <div class="stat-card" onclick="showSection('scout-approvals')" style="cursor: pointer;">
+                        <span class="stat-label">Pending Scouts</span>
+                        <span class="stat-number" id="pendingScouts" style="color:#f59e0b;">3</span>
+                        <div class="stat-change" style="color:#f59e0b;">Requires verification</div>
                     </div>
                 </div>
 
@@ -128,22 +128,27 @@
                 </div>
             </div>
 
-            <div id="members" class="dashboard-section" style="display:none;">
                 <div class="glass-card" style="padding:1.5rem;">
-                    <div class="section-title">👥 Member Management
-                        <button class="btn btn-primary btn-small" style="margin-left:auto;" onclick="openModal('addMemberModal')">+ Add Member</button>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h3 class="section-title" style="margin:0;">👥 Member Management</h3>
+                        <div style="display:flex; gap:0.75rem;">
+                            <input type="text" placeholder="Search members..." style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.6rem 1rem; border-radius:10px; color:#fff; width:250px;">
+                            <button class="btn btn-primary btn-small" onclick="openModal('addMemberModal')">+ Add Member</button>
+                        </div>
                     </div>
                     <div id="membersListContainer">
-                        <p style="color:var(--text-muted); font-size:0.875rem;">Loading members...</p>
+                        <p style="color:var(--text-muted); font-size:0.875rem;">Loading members database...</p>
                     </div>
                 </div>
             </div>
 
             <!-- Teams Section -->
-            <div id="teams" class="dashboard-section" style="display:none;">
+            <div id="teams" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <div class="section-title">🛡️ Team Management</div>
                 <div class="glass-card" style="padding:1.5rem;">
-                    <div class="section-title">🛡️ Team Management
-                        <button class="btn btn-primary btn-small" style="margin-left:auto;" onclick="openModal('createTeamModal')">+ Create Team</button>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <span style="font-weight:600; color:var(--text-muted);">Manage club squads and coaching staff</span>
+                        <button class="btn btn-primary btn-small" onclick="openModal('createTeamModal')">+ Create Team</button>
                     </div>
                     <div id="teamsListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1rem;">
                         <!-- Teams will be injected here -->
@@ -151,11 +156,97 @@
                 </div>
             </div>
 
-            <div id="events" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
-                <h2 class="neon-text">Events & Tournament Manager</h2>
-                <p style="color:var(--text-muted);">View and manage group schedules.</p>
-                <div style="margin-top:2rem;">
-                    <button class="btn btn-primary" onclick="window.location.href='tournament-manager.html'">Open Tournament Manager</button>
+            <div id="events" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <div class="section-title">📅 Calendar & Events</div>
+                <div class="glass-card" style="padding:1.5rem; text-align:center;">
+                    <div style="font-size:3rem; margin-bottom:1rem;">🗓️</div>
+                    <h3 style="margin-bottom:0.5rem;">Group Calendar</h3>
+                    <p style="color:var(--text-muted); margin-bottom:1.5rem;">Plan and manage your groups sessions, matches, and socials.</p>
+                    <button class="btn btn-primary" onclick="window.location.href='tournament-manager.html'">Open Calendar Manager</button>
+                </div>
+            </div>
+                    <div class="table-responsive">
+                        <table style="width:100%; text-align:left; border-collapse:collapse;">
+                            <thead>
+                                <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
+                                    <th style="padding:0.75rem 0;">Name</th>
+                                    <th style="padding:0.75rem 0;">Role</th>
+                                    <th style="padding:0.75rem 0;">Squad</th>
+                                    <th style="padding:0.75rem 0;">Status</th>
+                                    <th style="padding:0.75rem 0; text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size:0.9rem;">
+                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:1rem 0;"> Marcus Thompson</td>
+                                    <td style="padding:1rem 0;">Player</td>
+                                    <td style="padding:1rem 0;">Under 16s</td>
+                                    <td style="padding:1rem 0;"><span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span></td>
+                                    <td style="padding:1rem 0; text-align:right;"><button class="btn btn-text btn-small">Edit</button></td>
+                                </tr>
+                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:1rem 0;"> Sarah Davies</td>
+                                    <td style="padding:1rem 0;">Parent</td>
+                                    <td style="padding:1rem 0;">Under 12s</td>
+                                    <td style="padding:1rem 0;"><span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span></td>
+                                    <td style="padding:1rem 0; text-align:right;"><button class="btn btn-text btn-small">Edit</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="teams" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <div class="section-title" style="margin:0;">⚽ Squads & Teams</div>
+                    <button class="btn btn-primary" onclick="openModal('createTeamModal')">+ Create Team</button>
+                </div>
+                <div class="dash-grid" id="teamsListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
+                    <!-- Dynamically loaded -->
+                    <div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">Loading squads...</div>
+                </div>
+            </div>
+
+            <div id="messenger" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <div class="section-title">💬 Admin Messenger</div>
+                <div class="glass-card" style="height:500px; display:flex; align-items:center; justify-content:center; flex-direction:column; color:var(--text-muted);">
+                    <i class="fa fa-comments" style="font-size:3rem; margin-bottom:1rem; opacity:0.3;"></i>
+                    <p>Select a conversation to start messaging</p>
+                    <button class="btn btn-secondary" style="margin-top:1rem;">New Message</button>
+                </div>
+            </div>
+
+            <div id="scout-approvals" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <div class="section-title">🎯 Scout Access Approvals</div>
+                <div class="glass-card" style="padding:2rem; text-align:center;">
+                    <p style="color:var(--text-muted); margin-bottom:1.5rem;">No pending scout approval requests at this time.</p>
+                    <button class="btn btn-secondary">View Past Approvals</button>
+                </div>
+            </div>
+
+            <div id="tactical-board" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <div class="section-title">📋 Tactical Strategy Board</div>
+                <div class="glass-card" style="height:400px; background:rgba(0,0,0,0.2) url('https://w0.peakpx.com/wallpaper/384/261/HD-wallpaper-football-pitch-soccer-field-top-view-soccer-concepts-soccer-background-football.jpg') center/cover; border-radius:12px; position:relative; overflow:hidden;">
+                    <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;">
+                        <button class="btn btn-primary">Launch Tactical Editor</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="shop" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <div class="section-title">🛍️ Club Shop Manager</div>
+                <div class="dash-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <h3 style="color:#fff; margin-bottom:1rem;">Current Inventory</h3>
+                        <p style="color:var(--text-muted);">Manage kits, training gear, and merchandise.</p>
+                        <button class="btn btn-secondary" style="margin-top:1rem; width:100%;">Manage Products</button>
+                    </div>
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <h3 style="color:#fff; margin-bottom:1rem;">Recent Orders</h3>
+                        <p style="color:var(--text-muted);">Track member purchases and fulfillment.</p>
+                        <button class="btn btn-secondary" style="margin-top:1rem; width:100%;">View Orders</button>
+                    </div>
                 </div>
             </div>
 

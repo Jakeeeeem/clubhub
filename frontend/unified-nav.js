@@ -122,7 +122,6 @@ const UnifiedNav = {
         { name: "StripeButton", fn: () => isDashboard && this.renderStripeHeaderButton() },
         { name: "Notifications", fn: () => isDashboard && this.renderHeaderNotifications() },
         { name: "PwaInstall", fn: () => this.renderPwaInstallButton() },
-        { name: "HeaderState", fn: () => isDashboard && isDesktop && this.updateHeaderState() },
         { name: "EventBinding", fn: () => this.bindEvents() }
     ];
 
@@ -491,8 +490,12 @@ const UnifiedNav = {
   },
 
   logout() {
-     localStorage.clear();
-     window.location.href = 'index.html';
+    console.log("👋 Logging out...");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("activePlayerId");
+    sessionStorage.clear();
+    window.location.href = "login.html";
   },
 
   /**
@@ -576,26 +579,11 @@ const UnifiedNav = {
                         </div>
                     </div>
 
-                    <div class="sidebar-mode-switcher" style="padding: 0 1.5rem 1rem;">
-                        <div class="mode-toggle-container" style="background: rgba(0,0,0,0.3); padding: 4px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
-                            <span class="mode-label ${!isPlayer ? 'active' : ''}" id="group-label" onclick="UnifiedNav.switchMode('group')" style="flex: 1; text-align: center; font-size: 0.75rem; font-weight: 700; padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; ${!isPlayer ? 'background: rgba(255,255,255,0.1); color: white;' : 'color: rgba(255,255,255,0.4);'}">Groups</span>
-                            <span class="mode-label ${isPlayer ? 'active' : ''}" id="player-label" onclick="UnifiedNav.switchMode('player')" style="flex: 1; text-align: center; font-size: 0.75rem; font-weight: 700; padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; ${isPlayer ? 'background: rgba(255,255,255,0.1); color: white;' : 'color: rgba(255,255,255,0.4);'}">Player</span>
+                    <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto;">
+                        <div id="sidebar-nav-content">
+                            <div style="padding: 2rem; text-align: center; opacity: 0.5;">Loading menu...</div>
                         </div>
                     </div>
-
-                    <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.25rem;">Switch Group</div>
-                        <div id="sidebar-switcher-target"></div>
-                    </div>
-
-                    <div class="sidebar-profile-switcher-area" id="sidebar-profile-switcher" style="padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: none;">
-                        <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.5rem;">Active Profile</div>
-                        <div id="profile-switcher-target"></div>
-                    </div>
-
-                    <nav class="sidebar-nav" id="sidebar-nav-content">
-                        <div style="padding: 2rem; text-align: center; opacity: 0.5;">Loading menu...</div>
-                    </nav>
 
                     <div class="sidebar-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
@@ -660,41 +648,6 @@ const UnifiedNav = {
     `;
   },
 
-  renderStripeHeaderButton(container) {
-    if (!container) return;
-    const userRole = this.getUserRole();
-    if (userRole === 'admin' || userRole === 'platform_admin') {
-      container.innerHTML = `
-        <button class="btn btn-text desktop-only" style="margin-right: 0.5rem; color: #635bff;" onclick="window.location.href='admin-dashboard.html#finances'; if(typeof showSection === 'function') showSection('finances');">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-        </button>
-      `;
-    }
-  },
-
-  renderPwaInstallButton() {
-     // Placeholder
-  },
-
-  renderDesktopSidebarToggle() {
-    const header = document.querySelector(".pro-header, header.header");
-    if (!header || document.getElementById('desktop-sidebar-burger')) return;
-    
-    const trigger = document.createElement("div");
-    trigger.id = "desktop-sidebar-burger";
-    trigger.className = "side-menu-trigger desktop-only";
-    trigger.style.cssText = "margin-right: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; transition: all 0.2s;";
-    trigger.innerHTML = ICONS.menu;
-    trigger.onclick = () => {
-        document.body.classList.toggle('sidebar-collapsed');
-        localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
-    };
-
-    const container = header.querySelector(".nav-container, .container, .nav");
-    if (container) {
-        container.insertBefore(trigger, container.firstChild);
-    }
-  },
 
   renderHeaderSwitcher() {
     const headerLeft = document.querySelector(".dash-header-left") || document.querySelector(".nav-left") || document.querySelector(".logo-area") || document.querySelector(".nav-container");
@@ -837,7 +790,7 @@ const UnifiedNav = {
     } else if (isAdmin) {
       tabs = [
         { id: 'overview', label: 'Overview', icon: '📊' },
-        { id: 'players', label: 'Players', icon: '🏃' },
+        { id: 'members', label: 'Members', icon: '🏃' },
         { id: 'teams', label: 'Teams', icon: '🛡️' },
         { id: 'events', label: 'Events', icon: '📅' },
         { id: 'finances', label: 'Finance', icon: '💰' },
@@ -889,7 +842,6 @@ const UnifiedNav = {
     const isSuperAdmin = url.includes("super-admin-dashboard.html") || userRole === 'platform_admin';
     const isCoach = url.includes("coach-dashboard.html") || userRole === 'coach';
     const isScout = url.includes("scout-dashboard.html") || url.includes("scouting.html") || userRole === 'scout';
-    const isAdmin = url.includes("admin-dashboard.html") || userRole === 'admin';
 
     let navHtml = "";
 
@@ -898,16 +850,16 @@ const UnifiedNav = {
 
     if (isPlayerMode || isPlayer) {
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showPlayerSection('overview'); return false;">
+                <a href="player-dashboard.html#player-overview" class="bottom-nav-link active" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showPlayerSection('teams'); return false;">
+                <a href="player-dashboard.html#player-teams" class="bottom-nav-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('teams'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showPlayerSection('club-messenger'); return false;">
+                <a href="player-dashboard.html#player-club-messenger" class="bottom-nav-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('club-messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showPlayerSection('notifications'); return false;">
+                <a href="player-dashboard.html#player-notifications" class="bottom-nav-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('notifications'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
@@ -916,16 +868,16 @@ const UnifiedNav = {
             `;
     } else if (isCoach) {
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showCoachSection('overview'); return false;">
+                <a href="coach-dashboard.html#coach-overview" class="bottom-nav-link active" onclick="if(typeof showCoachSection === 'function') { showCoachSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showCoachSection('players'); return false;">
+                <a href="coach-dashboard.html#coach-players" class="bottom-nav-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('players'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showCoachSection('messenger'); return false;">
+                <a href="coach-dashboard.html#coach-messenger" class="bottom-nav-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showCoachSection('notifications'); return false;">
+                <a href="coach-dashboard.html#coach-notifications" class="bottom-nav-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('notifications'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
@@ -934,16 +886,16 @@ const UnifiedNav = {
             `;
     } else if (isScout) {
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showScoutSection('discovery'); return false;">
+                <a href="scout-dashboard.html#discovery" class="bottom-nav-link active" onclick="if(typeof showScoutSection === 'function') { showScoutSection('discovery'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showScoutSection('watchlist'); return false;">
+                <a href="scout-dashboard.html#watchlist" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('watchlist'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showScoutSection('messenger'); return false;">
+                <a href="scout-dashboard.html#messenger" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showScoutSection('notifications'); return false;">
+                <a href="scout-dashboard.html#notifications" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('notifications'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
@@ -952,16 +904,16 @@ const UnifiedNav = {
             `;
     } else if (isSuperAdmin) {
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;">
+                <a href="super-admin-dashboard.html#overview" class="bottom-nav-link active" onclick="if(typeof showSection === 'function') { showSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('groups'); return false;">
+                <a href="super-admin-dashboard.html#groups" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('groups'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3"></path><path d="M19 21V11"></path><path d="M5 21V11"></path></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('users'); return false;">
+                <a href="super-admin-dashboard.html#users" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('users'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('activity'); return false;">
+                <a href="super-admin-dashboard.html#activity" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('activity'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
@@ -970,16 +922,16 @@ const UnifiedNav = {
             `;
     } else {
       navHtml = `
-                <a href="#" class="bottom-nav-link active" onclick="showSection('overview'); return false;">
+                <a href="admin-dashboard.html#overview" class="bottom-nav-link active" onclick="if(typeof showSection === 'function') { showSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('players'); return false;">
+                <a href="admin-dashboard.html#members" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('members'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('events'); return false;">
+                <a href="tournament-manager.html" class="bottom-nav-link">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="showSection('finances'); return false;">
+                <a href="admin-dashboard.html#finances" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('finances'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
@@ -1276,7 +1228,7 @@ const UnifiedNav = {
           menuHtml = `
                     <div class="nav-group-title"><span>Core Management</span></div>
                     <a href="admin-dashboard.html#overview" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') showSection('overview'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Overview</span></a>
-                    <a href="admin-dashboard.html#players" class="sidebar-link" data-tooltip="Player List" onclick="if(typeof showSection === 'function') showSection('players'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>Player List</span></a>
+                    <a href="admin-dashboard.html#members" class="sidebar-link" data-tooltip="Member List" onclick="if(typeof showSection === 'function') showSection('members'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>Member List</span></a>
                     <a href="admin-dashboard.html#teams" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') showSection('teams'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.teams}<span>Squads & Teams</span></a>
                     <a href="tournament-manager.html" class="sidebar-link" data-tooltip="Event Manager">${ICONS.nav.events}<span>Event Manager</span></a>
                     <a href="admin-dashboard.html#messenger" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') showSection('messenger'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.chat}<span>Admin Chat</span></a>
@@ -1423,70 +1375,6 @@ const UnifiedNav = {
     this.renderStripeHeaderButton();
   },
 
-  handleGlobalModeToggle(input) {
-    console.log("🔀 Global Mode Toggle:", input.checked ? "Player" : "Group");
-    if (input.checked) {
-      this.switchMode("player");
-    } else {
-      this.switchMode("group");
-    }
-  },
-
-  updateModeUI() {
-    const isPlayer = window.location.href.includes("player-dashboard.html");
-    const mode = isPlayer ? "player" : "group";
-
-    // 1. Desktop Pills
-    const gPill = document.getElementById("header-mode-group-pill");
-    const pPill = document.getElementById("header-mode-player-pill");
-    if (gPill && pPill) {
-      gPill.classList.toggle("active", mode === "group");
-      pPill.classList.toggle("active", mode === "player");
-    }
-
-    // 2. Mobile Dropdown Pills (Legacy support)
-    const dgPill = document.getElementById("drop-mode-group");
-    const dpPill = document.getElementById("drop-mode-player");
-    if (dgPill && dpPill) {
-      dgPill.classList.toggle("active", mode === "group");
-      dpPill.classList.toggle("active", mode === "player");
-    }
-    
-    // 3. New Toggle Switch Support
-    const modeToggle = document.getElementById("mode-toggle");
-    if (modeToggle) {
-      modeToggle.checked = mode === "player";
-    }
-    const groupLabel = document.getElementById("group-label");
-    const playerLabel = document.getElementById("player-label");
-    if (groupLabel && playerLabel) {
-      groupLabel.classList.toggle("active", mode === "group");
-      playerLabel.classList.toggle("active", mode === "player");
-    }
-  },
-
-  logout() {
-    console.log("👋 Logging out...");
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("activePlayerId");
-    sessionStorage.clear();
-    window.location.href = "login.html";
-  },
-
-  autoLabelTables() {
-    const tables = document.querySelectorAll('table');
-    tables.forEach(table => {
-      const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
-      const rows = table.querySelectorAll('tbody tr');
-      rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        cells.forEach((cell, i) => {
-          if (headers[i]) cell.setAttribute('data-label', headers[i]);
-        });
-      });
-    });
-  },
 };
 
 // Initialize on load

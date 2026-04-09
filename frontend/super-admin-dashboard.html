@@ -38,33 +38,6 @@
 <body>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
 
-    <header class="header">
-        <nav class="nav container" id="loggedInNav">
-            <div class="dash-header-left">
-                <div class="logo" onclick="window.location.href='index.html'" style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;">
-                    <img src="images/logo.png" alt="ClubHub" class="logo-image">
-                    <span class="logo-text neon-text">ClubHub</span>
-                </div>
-                <div class="mode-toggle-container">
-                    <span class="mode-label active" id="group-label">Group</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="mode-toggle" onchange="UnifiedNav.handleGlobalModeToggle(this)">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="mode-label" id="player-label">Player</span>
-                </div>
-                <span style="padding:3px 10px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.3);border-radius:6px;font-size:0.72rem;font-weight:800;letter-spacing:1px;color:#f87171;">PLATFORM ADMIN</span>
-            </div>
-            <div class="dash-header-right">
-                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav && UnifiedNav.toggleProfileDropdown(true)">
-                    <span class="user-name desktop-only" id="header-user-name">Loading...</span>
-                    <div class="user-avatar-sm" id="header-user-avatar">A</div>
-                </div>
-                <button class="btn btn-secondary btn-small desktop-only" onclick="handleLogout ? handleLogout() : (window.location.href='index.html')">Logout</button>
-            </div>
-        </nav>
-    </header>
-
     <main class="main dashboard-main">
         <div class="container dashboard-container">
 
