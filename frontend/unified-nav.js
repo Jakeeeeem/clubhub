@@ -502,6 +502,9 @@ const UnifiedNav = {
       const isPlayer = window.location.href.includes("player-dashboard.html");
       header.innerHTML = `
         <div class="nav-container nav container">
+            <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="margin-right: 1rem; cursor: pointer;">
+                ${ICONS.menu}
+            </div>
             <div class="dash-header-left">
                 <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
                     <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 42px; width: 42px; object-fit: contain;">
@@ -547,21 +550,29 @@ const UnifiedNav = {
         }
 
         console.log("🏗️ Rendering Sidebar...");
+        const isPlayer = window.location.href.includes("player-dashboard.html");
         const sidebarHTML = `
                 <div class="sidebar-overlay" id="sidebar-overlay"></div>
                 <aside class="pro-sidebar" id="pro-sidebar">
-                    <div class="sidebar-header" style="display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem;">
-                        <button class="sidebar-burger" onclick="UnifiedNav.toggleSidebar(false)" style="background: none; border: none; color: white; cursor: pointer; padding: 0; display: flex; align-items: center; opacity: 0.7;">
-                            ${ICONS.menu}
-                        </button>
-                        <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
-                            <img src="images/logo.png" style="height: 24px; width: 24px;" onerror="this.src='https://via.placeholder.com/24'">
-                            <span style="font-weight: 900; font-size: 1.1rem; letter-spacing: -0.5px; opacity: 0.9;">CLUBHUB</span>
+                    <button class="sidebar-burger" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; left: 1.25rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 8px; z-index: 10;">
+                        ${ICONS.menu}
+                    </button>
+                    
+                    <div class="sidebar-header" style="display: flex; align-items: center; gap: 1rem; padding: 4.5rem 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem; position: relative;">
+                        <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem;">
+                            <img src="images/logo.png" alt="Logo" style="width: 28px; height: 28px;">
+                            <span style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px;">ClubHub</span>
                         </div>
-                        <button class="mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 4px 8px;">&times;</button>
                     </div>
 
-                    <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1.25rem 1.25rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div class="sidebar-mode-switcher" style="padding: 0 1.5rem 1rem;">
+                        <div class="mode-toggle-container" style="background: rgba(0,0,0,0.3); padding: 4px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+                            <span class="mode-label ${!isPlayer ? 'active' : ''}" id="group-label" onclick="UnifiedNav.switchMode('group')" style="flex: 1; text-align: center; font-size: 0.75rem; font-weight: 700; padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; ${!isPlayer ? 'background: rgba(255,255,255,0.1); color: white;' : 'color: rgba(255,255,255,0.4);'}">Groups</span>
+                            <span class="mode-label ${isPlayer ? 'active' : ''}" id="player-label" onclick="UnifiedNav.switchMode('player')" style="flex: 1; text-align: center; font-size: 0.75rem; font-weight: 700; padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; ${isPlayer ? 'background: rgba(255,255,255,0.1); color: white;' : 'color: rgba(255,255,255,0.4);'}">Player</span>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-group-switcher-area" id="sidebar-group-switcher" style="padding: 0 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <div style="font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; margin-bottom: 0.5rem; margin-left: 0.25rem;">Switch Group</div>
                         <div id="sidebar-switcher-target"></div>
                     </div>
@@ -572,14 +583,13 @@ const UnifiedNav = {
                     </div>
 
                     <nav class="sidebar-nav" id="sidebar-nav-content">
-                        <!-- Dynamic rendering by renderMenu() -->
                         <div style="padding: 2rem; text-align: center; opacity: 0.5;">Loading menu...</div>
                     </nav>
 
-                    <div class="sidebar-footer" style="padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
-                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                            <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0;">${ICONS.nav.settings} Account Settings</a>
-                            <a href="#" class="sidebar-link" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0;">${ICONS.nav.logout} Sign Out</a>
+                    <div class="sidebar-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0; padding: 0.75rem 1rem;">${ICONS.nav.settings} <span>Settings</span></a>
+                            <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.75rem 1rem;">${ICONS.nav.logout} <span>Sign Out</span></a>
                         </div>
                     </div>
                 </aside>
@@ -609,6 +619,66 @@ const UnifiedNav = {
       }
     };
     checkSwitcher();
+  },
+
+  renderGroupSwitcher(container) {
+    if (!container) return;
+    if (typeof GroupSwitcher !== 'undefined') {
+        GroupSwitcher.render(container);
+    } else {
+        const script = document.createElement("script");
+        script.src = "group-switcher.js";
+        script.onload = () => {
+          if (typeof GroupSwitcher !== "undefined")
+            GroupSwitcher.render(container);
+        };
+        document.head.appendChild(script);
+    }
+  },
+
+  renderFamilySwitcher(container) {
+    if (!container) return;
+    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const name = user.firstName || user.first_name || "Member";
+    container.innerHTML = `
+        <div class="family-switcher-placeholder" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer;" onclick="showPlayerSection('family')">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800;">${name.charAt(0)}</div>
+            <span style="font-size: 0.85rem; font-weight: 600;">${name}</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+    `;
+  },
+
+  renderStripeHeaderButton() {
+     // Placeholder
+  },
+
+  renderHeaderNotifications() {
+     // Placeholder
+  },
+
+  renderPwaInstallButton() {
+     // Placeholder
+  },
+
+  renderDesktopSidebarToggle() {
+    const header = document.querySelector(".pro-header, header.header");
+    if (!header || document.getElementById('desktop-sidebar-burger')) return;
+    
+    const trigger = document.createElement("div");
+    trigger.id = "desktop-sidebar-burger";
+    trigger.className = "side-menu-trigger desktop-only";
+    trigger.style.cssText = "margin-right: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; transition: all 0.2s;";
+    trigger.innerHTML = ICONS.menu;
+    trigger.onclick = () => {
+        document.body.classList.toggle('sidebar-collapsed');
+        localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed'));
+    };
+
+    const container = header.querySelector(".nav-container, .container, .nav");
+    if (container) {
+        container.insertBefore(trigger, container.firstChild);
+    }
   },
 
   renderHeaderSwitcher() {
@@ -1376,6 +1446,15 @@ const UnifiedNav = {
       groupLabel.classList.toggle("active", mode === "group");
       playerLabel.classList.toggle("active", mode === "player");
     }
+  },
+
+  logout() {
+    console.log("👋 Logging out...");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("activePlayerId");
+    sessionStorage.clear();
+    window.location.href = "login.html";
   },
 
   autoLabelTables() {
