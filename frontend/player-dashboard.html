@@ -301,22 +301,22 @@
         <div id="player-overview" class="dashboard-section active">
           <!-- Player Stats Row -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.75rem;">
-            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;cursor:pointer;" onclick="showPlayerSection('my-clubs')">
               <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">My Groups</div>
               <div style="font-size:2rem;font-weight:900;color:#fff;margin-top:0.25rem;" id="playerGroupCount">2</div>
               <div style="font-size:0.78rem;color:#4ade80;margin-top:0.2rem;">Active memberships</div>
             </div>
-            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;cursor:pointer;" onclick="showPlayerSection('teams')">
               <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Next Session</div>
               <div style="font-size:1.3rem;font-weight:900;color:#fff;margin-top:0.25rem;">Tue 18:00</div>
               <div style="font-size:0.78rem;color:#60a5fa;margin-top:0.2rem;">Training · Astro Pitch 2</div>
             </div>
-            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;cursor:pointer;" onclick="showPlayerSection('teams')">
               <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Attendance</div>
               <div style="font-size:2rem;font-weight:900;color:#fff;margin-top:0.25rem;">84%</div>
               <div style="font-size:0.78rem;color:#4ade80;margin-top:0.2rem;">↑ 4% this month</div>
             </div>
-            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;">
+            <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;cursor:pointer;" onclick="showPlayerSection('subscriptions')">
               <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Subscription</div>
               <div style="font-size:1.3rem;font-weight:900;color:#4ade80;margin-top:0.25rem;" id="playerSubStatus">Paid ✓</div>
               <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;">Next due: 1 May</div>
@@ -1110,6 +1110,28 @@
         initializePlayerDashboard();
       } else {
         console.error('initializePlayerDashboard() not found');
+      }
+
+      // Route hash for direct section linking
+      const hash = window.location.hash;
+      if (hash && typeof showPlayerSection === 'function') {
+        if (hash.startsWith('#player-')) {
+          showPlayerSection(hash.substring(8));
+        } else {
+          showPlayerSection(hash.substring(1));
+        }
+      }
+    });
+
+    // Listen for hash changes to support browser navigation (back/forward)
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash;
+      if (hash && typeof showPlayerSection === 'function') {
+        if (hash.startsWith('#player-')) {
+          showPlayerSection(hash.substring(8));
+        } else {
+          showPlayerSection(hash.substring(1));
+        }
       }
     });
   </script>

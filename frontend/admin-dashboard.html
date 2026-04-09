@@ -55,22 +55,22 @@
             <!-- Dashboard Sections -->
             <div id="overview" class="dashboard-section active">
                 <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="showSection('players')" style="cursor: pointer;">
                         <span class="stat-label">Total Members</span>
                         <span class="stat-number" id="totalMembers">47</span>
                         <div class="stat-change">↑ 3 this month</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="showSection('finances')" style="cursor: pointer;">
                         <span class="stat-label">Revenue (30d)</span>
                         <span class="stat-number" id="monthlyRevenue">£3,840</span>
                         <div class="stat-change">↑ 12% vs last month</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="showSection('events')" style="cursor: pointer;">
                         <span class="stat-label">Active Events</span>
                         <span class="stat-number" id="activeEvents">6</span>
                         <div class="stat-change">2 upcoming this week</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="showSection('members')" style="cursor: pointer;">
                         <span class="stat-label">Pending Actions</span>
                         <span class="stat-number" id="pendingTasks" style="color:#f59e0b;">4</span>
                         <div class="stat-change" style="color:#f59e0b;">Requires attention</div>

@@ -237,19 +237,19 @@ const UnifiedNav = {
     window.location.reload();
   },
 
-  renderHeaderNotifications() {
-    // Try both standard and legacy selectors for maximum compatibility
-    const rightSide = document.querySelector(".dash-header-right") || document.querySelector(".nav-right") || document.querySelector("header");
-    if (!rightSide || rightSide.querySelector(".notification-wrapper")) return;
+  renderHeaderNotifications(container) {
+    // Use provided container or fallback to standard header areas
+    const target = container || document.getElementById('notif-header-btn-container') || document.querySelector(".dash-header-right") || document.querySelector(".nav-right");
+    if (!target || target.querySelector(".notification-wrapper")) return;
 
     const bellHTML = `
-      <div class="notification-wrapper desktop-only" style="position: relative; margin-right: 1rem; display: flex; align-items: center;">
-        <button class="notification-bell" onclick="UnifiedNav.toggleNotifications()" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; opacity: 0.8; transition: opacity 0.2s; padding: 0;">
+      <div class="notification-wrapper" style="position: relative; margin-right: 0.5rem; display: flex; align-items: center;">
+        <button class="notification-bell" onclick="UnifiedNav.toggleNotifications()" style="background: none; border: none; color: white; cursor: pointer; display: flex; align-items: center; opacity: 0.8; transition: opacity 0.2s; padding: 8px;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <span id="header-notif-badge" class="badge" style="display:none; position: absolute; top: -4px; right: -4px; background: var(--primary); color: white; border-radius: 50%; width: 14px; height: 14px; font-size: 9px; align-items: center; justify-content: center; font-weight: 800;">0</span>
+          <span id="header-notif-badge" class="badge" style="display:none; position: absolute; top: 0px; right: 0px; background: var(--primary); color: white; border-radius: 50%; width: 14px; height: 14px; font-size: 9px; align-items: center; justify-content: center; font-weight: 800;">0</span>
         </button>
         <div id="notificationDropdown" class="notification-dropdown" style="position: absolute; top: calc(100% + 15px); right: 0; width: 320px; background: #0a0a0c; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); padding: 1.25rem; z-index: 6000; display: none; transform-origin: top right; backdrop-filter: blur(20px);">
            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -262,7 +262,12 @@ const UnifiedNav = {
         </div>
       </div>
     `;
-    rightSide.insertAdjacentHTML("afterbegin", bellHTML);
+    
+    if (container) {
+       container.innerHTML = bellHTML;
+    } else {
+       target.insertAdjacentHTML("afterbegin", bellHTML);
+    }
     this.loadNotifications();
   },
 
@@ -315,9 +320,9 @@ const UnifiedNav = {
      if (list) list.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 2rem 0;">No new notifications</div>';
   },
 
-  renderStripeHeaderButton() {
-    const rightSide = document.querySelector(".dash-header-right") || document.querySelector(".nav-right") || document.querySelector("header");
-    if (!rightSide || rightSide.querySelector(".stripe-header-btn")) return;
+  renderStripeHeaderButton(container) {
+    const target = container || document.getElementById('stripe-header-btn-container') || document.querySelector(".dash-header-right") || document.querySelector(".nav-right");
+    if (!target || target.querySelector(".stripe-header-btn")) return;
 
     // Check if user is admin or account type is admin/platform_admin
     const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -330,20 +335,25 @@ const UnifiedNav = {
 
     if (isAdmin && isDashboard) {
       const btnColor = isConnected ? "#22c55e" : "#635bff";
-      const btnText = isConnected ? "Connected" : "Stripe Dashboard";
+      const btnText = isConnected ? "Connected" : "Stripe";
       const btnIcon = isConnected ? "✅" : `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M13.962 10.935c0-1.212-1.046-1.309-1.973-1.309-1.353 0-2.321.31-2.321.31l-.22-1.552s.934-.367 2.592-.367c2.321 0 3.737 1.026 3.737 3.056 0 3.339-4.57 3.514-4.57 5.163 0 .726.65 1.045 1.636 1.045 1.418 0 2.503-.424 2.503-.424l.23 1.572s-1.162.53-2.88.53c-2.122 0-3.538-.986-3.538-2.936.01-3.6 4.804-3.66 4.804-5.088zM4.613 14.63c.18-1.52.92-2.14 1.94-2.14 1.34 0 2.3.26 2.3.26l.24-1.56s-1.25-.45-2.79-.45C4.213 10.74 3 12.18 3 14.73c0 3.03 2.1 3.54 4.13 3.54 1.7 0 3.1-.48 3.1-.48l.24-1.61s-1.45.66-3.1.66c-1.8 0-2.91-.71-2.757-2.21zm10.79 3.09h1.91v-6.85h-1.91v6.85zm0-8.54h1.91V7.27h-1.91v1.91zm2.34 8.54h1.91v-6.85h-1.91v6.85zm0-8.54h1.91V7.27h-1.91v1.91zm2.34 8.54h1.91v-3.7c0-2.02.8-3.15 2.14-3.15.22 0 .43.02.61.06v-1.74c-.17-.03-.38-.05-.61-.05-1.55 0-2.14.73-2.14.73V10.87h-1.91v6.85z"/>
             </svg>`;
 
       const stripeBtnHTML = `
-        <div class="stripe-header-btn desktop-only" style="margin-right: 1rem;">
-          <button class="btn btn-small" onclick="typeof manageStripeAccount === 'function' ? manageStripeAccount() : console.log('💳 Stripe Dashboard')" style="background: ${btnColor}; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s;">
+        <div class="stripe-header-btn" style="margin-right: 0.5rem;">
+          <button class="btn btn-small" onclick="typeof manageStripeAccount === 'function' ? manageStripeAccount() : console.log('💳 Stripe Dashboard')" style="background: ${btnColor}; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: background 0.2s;">
             ${btnIcon}
-            ${btnText}
+            <span class="desktop-only">${btnText}</span>
           </button>
         </div>
       `;
-      rightSide.insertAdjacentHTML("afterbegin", stripeBtnHTML);
+      
+      if (container) {
+          container.innerHTML = stripeBtnHTML;
+      } else {
+          target.insertAdjacentHTML("afterbegin", stripeBtnHTML);
+      }
     }
   },
 
@@ -499,31 +509,27 @@ const UnifiedNav = {
 
     // Force exact structure if incomplete
     if (!header.querySelector(".dash-header-left") || !header.querySelector(".dash-header-right")) {
-      const isPlayer = window.location.href.includes("player-dashboard.html");
+      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const name = (user ? (user.firstName || user.first_name) : "User") || "User";
+      
       header.innerHTML = `
         <div class="nav-container nav container">
             <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="margin-right: 1rem; cursor: pointer;">
                 ${ICONS.menu}
             </div>
+            
             <div class="dash-header-left">
                 <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
                     <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 42px; width: 42px; object-fit: contain;">
                     <span class="logo-text" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.5rem; color: var(--primary); letter-spacing: -0.5px;">ClubHub</span>
                 </div>
-                
-                <div class="mode-toggle-container">
-                    <span class="mode-label ${!isPlayer ? 'active' : ''}" id="group-label" onclick="UnifiedNav.switchMode('group')">Groups</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="mode-toggle" ${isPlayer ? 'checked' : ''} onchange="UnifiedNav.handleGlobalModeToggle(this)">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="mode-label ${isPlayer ? 'active' : ''}" id="player-label" onclick="UnifiedNav.switchMode('player')">Player</span>
-                </div>
-                
-                <div id="org-switcher-container"></div>
+                <!-- Redundant switcher removed from here -->
             </div>
             
-            <div class="dash-header-right">
+            <div class="dash-header-right" id="header-actions-right">
+                <div id="stripe-header-btn-container"></div>
+                <div id="notif-header-btn-container"></div>
+                
                 <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
                     <span class="user-name desktop-only" id="header-user-name">Loading...</span>
                     <div class="user-avatar-sm" id="header-user-avatar">?</div>
@@ -532,6 +538,11 @@ const UnifiedNav = {
             </div>
         </div>
       `;
+      
+      // Inject components into containers
+      this.renderStripeHeaderButton(document.getElementById('stripe-header-btn-container'));
+      this.renderHeaderNotifications(document.getElementById('notif-header-btn-container'));
+      this.syncUserData();
     }
     
     // Inject Top Tabs if on a dashboard
@@ -649,12 +660,16 @@ const UnifiedNav = {
     `;
   },
 
-  renderStripeHeaderButton() {
-     // Placeholder
-  },
-
-  renderHeaderNotifications() {
-     // Placeholder
+  renderStripeHeaderButton(container) {
+    if (!container) return;
+    const userRole = this.getUserRole();
+    if (userRole === 'admin' || userRole === 'platform_admin') {
+      container.innerHTML = `
+        <button class="btn btn-text desktop-only" style="margin-right: 0.5rem; color: #635bff;" onclick="window.location.href='admin-dashboard.html#finances'; if(typeof showSection === 'function') showSection('finances');">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+        </button>
+      `;
+    }
   },
 
   renderPwaInstallButton() {
@@ -1195,91 +1210,91 @@ const UnifiedNav = {
     if (isPlayer) {
       menuHtml = `
                     <div class="nav-group-title">Main Hub</div>
-                    <a href="#" class="sidebar-link active" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('overview'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Overview</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-messenger'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.chat}<span>Club Chat</span></a>
+                    <a href="player-dashboard.html#player-overview" class="sidebar-link active" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('overview'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="player-dashboard.html#player-club-messenger" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-messenger'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.chat}<span>Club Chat</span></a>
                     
                     <div class="nav-group-title">My Career</div>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('teams'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.teams}<span>My Teams</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('my-clubs'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>My Groups</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('documents'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>Documents</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('polls'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>Club Polls</span></a>
+                    <a href="player-dashboard.html#player-teams" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('teams'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.teams}<span>My Teams</span></a>
+                    <a href="player-dashboard.html#player-my-clubs" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('my-clubs'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.venue}<span>My Groups</span></a>
+                    <a href="player-dashboard.html#player-documents" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('documents'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.forms}<span>Documents</span></a>
+                    <a href="player-dashboard.html#player-polls" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('polls'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.forms}<span>Club Polls</span></a>
                     <a href="scouting.html" class="sidebar-link">${ICONS.nav.training}<span>Scouting</span></a>
 
                     <div class="nav-group-title">Family & Profile</div>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('profile'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>My Profile</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('family'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>My Family</span></a>
+                    <a href="player-settings.html" class="sidebar-link">${ICONS.nav.players}<span>My Profile</span></a>
+                    <a href="player-dashboard.html#player-family" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('family'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>My Family</span></a>
                     
                     <div class="nav-group-title">Shop & Marketplace</div>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-finder'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>Club Finder</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>Book Venues</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('event-finder'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.events}<span>Find Events</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('item-shop'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.shop}<span>Item Shop</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('payments'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.finance}<span>Finance</span></a>
+                    <a href="club-finder.html" class="sidebar-link">${ICONS.nav.venue}<span>Club Finder</span></a>
+                    <a href="venue-booking.html" class="sidebar-link">${ICONS.nav.venue}<span>Book Venues</span></a>
+                    <a href="player-dashboard.html#player-event-finder" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('event-finder'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.events}<span>Find Events</span></a>
+                    <a href="player-dashboard.html#player-item-shop" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('item-shop'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.shop}<span>Item Shop</span></a>
+                    <a href="player-dashboard.html#player-payments" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('payments'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.finance}<span>Finance</span></a>
                 `;
     } else if (isSuperAdmin) {
       menuHtml = `
                 <div class="nav-group-title">Platform</div>
-                <a href="#" class="sidebar-link active" onclick="showSection('overview'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Admin Console</span></a>
-                <a href="#" class="sidebar-link" onclick="showSection('groups'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>Groups</span></a>
-                <a href="#" class="sidebar-link" onclick="showSection('users'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>Global Users</span></a>
+                <a href="super-admin-dashboard.html#overview" class="sidebar-link active" onclick="showSection('overview'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Admin Console</span></a>
+                <a href="super-admin-dashboard.html#groups" class="sidebar-link" onclick="showSection('groups'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.venue}<span>Groups</span></a>
+                <a href="super-admin-dashboard.html#users" class="sidebar-link" onclick="showSection('users'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>Global Users</span></a>
                 
                 <div class="nav-group-title">Operations</div>
-                <a href="#" class="sidebar-link" onclick="showSection('verifications'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.approvals}<span>ID Verification</span></a>
-                <a href="#" class="sidebar-link" onclick="showSection('activity'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>System Logs</span></a>
+                <a href="super-admin-dashboard.html#verifications" class="sidebar-link" onclick="showSection('verifications'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.approvals}<span>ID Verification</span></a>
+                <a href="super-admin-dashboard.html#activity" class="sidebar-link" onclick="showSection('activity'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.forms}<span>System Logs</span></a>
                 
                 <div class="nav-group-title">System</div>
-                <a href="#" class="sidebar-link" onclick="showSection('stripe'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.finance}<span>Stripe Hub</span></a>
+                <a href="super-admin-dashboard.html#stripe" class="sidebar-link" onclick="showSection('stripe'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.finance}<span>Stripe Hub</span></a>
             `;
     } else if (isCoach) {
       menuHtml = `
                 <div class="nav-group-title">Coaching</div>
-                <a href="#" class="sidebar-link active" onclick="showCoachSection('overview'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Dashboard</span></a>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('messenger'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.chat}<span>Messenger</span></a>
+                <a href="coach-dashboard.html#coach-overview" class="sidebar-link active" onclick="if(typeof showCoachSection === 'function') showCoachSection('overview'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Dashboard</span></a>
+                <a href="coach-dashboard.html#coach-messenger" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') showCoachSection('messenger'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.chat}<span>Messenger</span></a>
                 
                 <div class="nav-group-title">Squad</div>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('teams'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.teams}<span>My Teams</span></a>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('players'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>My Players</span></a>
+                <a href="coach-dashboard.html#coach-teams" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') showCoachSection('teams'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.teams}<span>My Teams</span></a>
+                <a href="coach-dashboard.html#coach-players" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') showCoachSection('players'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>My Players</span></a>
                 
                 <div class="nav-group-title">Career</div>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('scouting'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.training}<span>Scouting Hub</span></a>
-                <a href="#" class="sidebar-link" onclick="showCoachSection('tournament-manager'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.trophy}<span>Tournaments</span></a>
+                <a href="scouting.html" class="sidebar-link">${ICONS.nav.training}<span>Scouting Hub</span></a>
+                <a href="tournament-manager.html" class="sidebar-link">${ICONS.nav.trophy}<span>Tournaments</span></a>
             `;
     } else if (isScout) {
       menuHtml = `
                 <div class="nav-group-title">Talent Pool</div>
-                <a href="#" class="sidebar-link active" onclick="showScoutSection('discovery'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.training}<span>Discover</span></a>
-                <a href="#" class="sidebar-link" onclick="showScoutSection('watchlist'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.trophy}<span>Watchlist</span></a>
+                <a href="scout-dashboard.html#discovery" class="sidebar-link active" onclick="showScoutSection('discovery'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.training}<span>Discover</span></a>
+                <a href="scout-dashboard.html#watchlist" class="sidebar-link" onclick="showScoutSection('watchlist'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.trophy}<span>Watchlist</span></a>
                 
                 <div class="nav-group-title">Analysis</div>
-                <a href="#" class="sidebar-link" onclick="showScoutSection('reports'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>Scout Reports</span></a>
-                <a href="#" class="sidebar-link" onclick="showScoutSection('analytics'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Market Stats</span></a>
+                <a href="scout-dashboard.html#reports" class="sidebar-link" onclick="showScoutSection('reports'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.forms}<span>Scout Reports</span></a>
+                <a href="scout-dashboard.html#analytics" class="sidebar-link" onclick="showScoutSection('analytics'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Market Stats</span></a>
                 
                 <div class="nav-group-title">Network</div>
-                <a href="#" class="sidebar-link" onclick="showScoutSection('messenger'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.chat}<span>Messenger</span></a>
+                <a href="scout-dashboard.html#messenger" class="sidebar-link" onclick="showScoutSection('messenger'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.chat}<span>Messenger</span></a>
             `;
         } else {
           menuHtml = `
                     <div class="nav-group-title"><span>Core Management</span></div>
-                    <a href="#" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') showSection('overview'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Overview</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Player List" onclick="if(typeof showSection === 'function') showSection('players'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>Player List</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') showSection('teams'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.teams}<span>Squads & Teams</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Event Manager" onclick="if(typeof showSection === 'function') showSection('events'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.events}<span>Event Manager</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') showSection('messenger'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.chat}<span>Admin Chat</span></a>
+                    <a href="admin-dashboard.html#overview" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') showSection('overview'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="admin-dashboard.html#players" class="sidebar-link" data-tooltip="Player List" onclick="if(typeof showSection === 'function') showSection('players'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>Player List</span></a>
+                    <a href="admin-dashboard.html#teams" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') showSection('teams'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.teams}<span>Squads & Teams</span></a>
+                    <a href="tournament-manager.html" class="sidebar-link" data-tooltip="Event Manager">${ICONS.nav.events}<span>Event Manager</span></a>
+                    <a href="admin-dashboard.html#messenger" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') showSection('messenger'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.chat}<span>Admin Chat</span></a>
                     
                     <div class="nav-group-title"><span>Advanced Operations</span></div>
-                    <a href="#" class="sidebar-link" data-tooltip="Scout Approvals" onclick="if(typeof showSection === 'function') showSection('scout-approvals'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Tactics Board" onclick="if(typeof showSection === 'function') showSection('tactical-board'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.tactics}<span>Tactics Board</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Custom Forms" onclick="if(typeof showSection === 'function') showSection('form-builder'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>Custom Forms</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Email Campaigns" onclick="if(typeof showSection === 'function') showSection('email-campaigns'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.email}<span>Email Campaigns</span></a>
+                    <a href="admin-dashboard.html#scout-approvals" class="sidebar-link" data-tooltip="Scout Approvals" onclick="if(typeof showSection === 'function') showSection('scout-approvals'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
+                    <a href="admin-dashboard.html#tactical-board" class="sidebar-link" data-tooltip="Tactics Board" onclick="if(typeof showSection === 'function') showSection('tactical-board'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.tactics}<span>Tactics Board</span></a>
+                    <a href="form-builder.html" class="sidebar-link" data-tooltip="Custom Forms">${ICONS.nav.forms}<span>Custom Forms</span></a>
+                    <a href="email-campaigns.html" class="sidebar-link" data-tooltip="Email Campaigns">${ICONS.nav.email}<span>Email Campaigns</span></a>
                     
                     <div class="nav-group-title"><span>Events & Bookings</span></div>
-                    <a href="#" class="sidebar-link" data-tooltip="Tournaments" onclick="if(typeof showSection === 'function') showSection('tournaments'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.trophy}<span>Tournaments</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Training Hub" onclick="if(typeof showSection === 'function') showSection('training-manager'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.training}<span>Training Hub</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Venue Portal" onclick="if(typeof showSection === 'function') showSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>Venue Portal</span></a>
+                    <a href="tournament-manager.html" class="sidebar-link" data-tooltip="Tournaments">${ICONS.nav.trophy}<span>Tournaments</span></a>
+                    <a href="training-manager.html" class="sidebar-link" data-tooltip="Training Hub">${ICONS.nav.training}<span>Training Hub</span></a>
+                    <a href="venue-booking.html" class="sidebar-link" data-tooltip="Venue Portal">${ICONS.nav.venue}<span>Venue Portal</span></a>
                     
                     <div class="nav-group-title"><span>Business & Shop</span></div>
-                    <a href="#" class="sidebar-link" data-tooltip="Financials" onclick="if(typeof showSection === 'function') showSection('finances'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.finance}<span>Financials</span></a>
-                    <a href="#" class="sidebar-link" data-tooltip="Club Shop" onclick="if(typeof showSection === 'function') showSection('shop'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.shop}<span>Club Shop</span></a>
+                    <a href="admin-dashboard.html#finances" class="sidebar-link" data-tooltip="Financials" onclick="if(typeof showSection === 'function') showSection('finances'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.finance}<span>Financials</span></a>
+                    <a href="admin-dashboard.html#shop" class="sidebar-link" data-tooltip="Club Shop" onclick="if(typeof showSection === 'function') showSection('shop'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.shop}<span>Club Shop</span></a>
                 `;
         }
 
@@ -1402,8 +1417,10 @@ const UnifiedNav = {
     });
 
     // 3. Ensure dynamic elements are rendered
-    this.renderHeaderSwitcher();
+    // Disabled redundant header switcher as it is now in the sidebar
+    // this.renderHeaderSwitcher(); 
     this.renderHeaderNotifications();
+    this.renderStripeHeaderButton();
   },
 
   handleGlobalModeToggle(input) {

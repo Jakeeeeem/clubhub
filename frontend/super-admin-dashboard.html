@@ -78,21 +78,22 @@
 
             <!-- Platform Stats -->
             <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                <div class="stat-card glass-card">
+                <div class="stat-card" onclick="showSection('groups')" style="cursor: pointer;">
                     <span class="stat-label">Groups</span>
-                    <span class="stat-value" id="globalStats-totalGroups">0</span>
+                    <span class="stat-number" id="globalStats-totalGroups">142</span>
+                    <div class="stat-change">↑ 4 new this month</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="showSection('users')" style="cursor: pointer;">
                     <span class="stat-label">Total Users</span>
                     <span class="stat-number" id="totalUsers">4,821</span>
                     <div class="stat-change">↑ 234 this month</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="showSection('overview')" style="cursor: pointer;">
                     <span class="stat-label">MRR</span>
                     <span class="stat-number" id="platformMRR">£18.4k</span>
                     <div class="stat-change">↑ 9% vs last month</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="showSection('activity')" style="cursor: pointer;">
                     <span class="stat-label">System Health</span>
                     <span class="stat-number" style="color:#4ade80;">99.8%</span>
                     <div class="stat-change">Uptime — last 30d</div>
@@ -295,15 +296,36 @@
         });
 
         function showSection(id) {
+            console.log("SuperAdmin Mapping ID:", id);
+            window.location.hash = 'super-' + id;
+            
             document.querySelectorAll('.dashboard-section').forEach(s => {
                 s.style.display = 'none';
                 s.classList.remove('active');
             });
-            const t = document.getElementById('super-admin-' + id);
+            
+            // Handle mapping
+            let targetId = id;
+            if (id === 'overview') targetId = 'super-admin-overview';
+            else if (!id.startsWith('super-')) targetId = 'super-' + (id === 'groups' ? 'groups' : 'admin-' + id);
+            
+            const t = document.getElementById(targetId) || document.getElementById(id);
             if (t) {
                 t.style.display = 'block';
                 t.classList.add('active');
             }
+        }
+
+        // Handle direct links and back/forward
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.replace('#super-', '').replace('#super-admin-', '');
+            if (hash) showSection(hash);
+        });
+
+        // Initialize from hash
+        if (window.location.hash) {
+            const initialHash = window.location.hash.replace('#super-', '').replace('#super-admin-', '');
+            setTimeout(() => showSection(initialHash), 100);
         }
     </script>
 </body>

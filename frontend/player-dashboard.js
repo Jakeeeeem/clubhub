@@ -2786,6 +2786,11 @@ async function refreshClubData() {
 }
 
 function showPlayerSection(sectionId) {
+  // Update hash for deep-linking
+  if (window.location.hash !== '#player-' + sectionId && window.location.hash !== '#' + sectionId) {
+    window.location.hash = 'player-' + sectionId;
+  }
+
   document
     .querySelectorAll(".dashboard-section")
     .forEach((s) => s.classList.remove("active"));

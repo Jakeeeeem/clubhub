@@ -53,22 +53,22 @@
 
             <!-- Stats -->
             <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                <div class="stat-card">
+                <div class="stat-card" onclick="showCoachSection('players')" style="cursor: pointer;">
                     <span class="stat-label">Squad Size</span>
                     <span class="stat-number" id="squadSize">22</span>
                     <div class="stat-change">↑ 2 new this month</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="window.location.href='tournament-manager.html'" style="cursor: pointer;">
                     <span class="stat-label">Next Session</span>
                     <span class="stat-number" style="font-size:1.4rem;">Tue 18:00</span>
                     <div class="stat-change" style="color:#60a5fa;">14 confirmed</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="showCoachSection('teams')" style="cursor: pointer;">
                     <span class="stat-label">Avg Attendance</span>
                     <span class="stat-number">78%</span>
                     <div class="stat-change">↑ 5% vs last month</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="showCoachSection('players')" style="cursor: pointer;">
                     <span class="stat-label">Pending Reviews</span>
                     <span class="stat-number" style="color:#f59e0b;">3</span>
                     <div class="stat-change" style="color:#f59e0b;">Player feedback due</div>
