@@ -1,5 +1,32 @@
 // Initialization moved to the end of the file to ensure const UnifiedNav is defined
 
+// ─── ICON LIBRARY (Apple SF Symbol-style clean SVGs) ─────────────────────────
+const ICONS = {
+  // UI chrome icons
+  menu: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
+  close: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  // Nav icons — each wrapped in a semantic <i> tag for layout consistency
+  nav: {
+    overview:  `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></i>`,
+    players:   `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></i>`,
+    teams:     `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>`,
+    events:    `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></i>`,
+    chat:      `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></i>`,
+    approvals: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></i>`,
+    tactics:   `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></i>`,
+    forms:     `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></i>`,
+    email:     `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></i>`,
+    trophy:    `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1c0 2.76 2.24 5 5 5h10a5 5 0 0 0 5-5V6a2 2 0 0 0-2-2h-3"/><rect x="7" y="2" width="10" height="6" rx="1"/></svg></i>`,
+    training:  `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></i>`,
+    venue:     `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></i>`,
+    finance:   `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></i>`,
+    shop:      `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i>`,
+    settings:  `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></i>`,
+    logout:    `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></i>`,
+  }
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 const UnifiedNav = {
   init() {
     console.log("🚀 UnifiedNav: Initializing standard navigation...");
@@ -69,9 +96,13 @@ const UnifiedNav = {
         console.error("❌ Stage 1 (Core Layout) failed:", err);
     }
 
-    // Restore sidebar state
-    if (isDesktop && localStorage.getItem('sidebarCollapsed') === 'true') {
-        document.body.classList.add('sidebar-collapsed');
+    // Sidebar: CLOSED by default on desktop unless user explicitly opened it
+    if (isDesktop) {
+        const sidebarPref = localStorage.getItem('sidebarCollapsed');
+        if (sidebarPref !== 'false') {
+            // Default: collapsed
+            document.body.classList.add('sidebar-collapsed');
+        }
     }
 
     // ── STAGE 2: Enhancements ──────────────────────────────────────────
@@ -338,9 +369,12 @@ const UnifiedNav = {
 
   toggleDesktopSidebar() {
     const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-    localStorage.setItem('sidebarCollapsed', isCollapsed);
+    // Store 'false' when open (not default), 'true' when closed (default)
+    localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
     const icon = document.getElementById('desktop-toggle-icon');
-    if (icon) icon.textContent = isCollapsed ? '➲' : '☰';
+    if (icon) {
+      icon.innerHTML = isCollapsed ? ICONS.menu : ICONS.close;
+    }
   },
 
   renderPwaInstallButton() {
@@ -1139,33 +1173,33 @@ const UnifiedNav = {
         } else {
           menuHtml = `
                     <div class="nav-group-title"><span>Core Management</span></div>
-                    <a href="#" class="sidebar-link active" onclick="if(typeof showSection === 'function') showSection('overview'); UnifiedNav.toggleSidebar(false); return false;"><i>📊</i> <span>Overview</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('players'); UnifiedNav.toggleSidebar(false); return false;"><i>🏃</i> <span>Player List</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('teams'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> <span>Squads & Teams</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('messenger'); UnifiedNav.toggleSidebar(false); return false;"><i>💬</i> <span>Admin Chat</span></a>
+                    <a href="#" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') showSection('overview'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Player List" onclick="if(typeof showSection === 'function') showSection('players'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.players}<span>Player List</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') showSection('teams'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.teams}<span>Squads & Teams</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Event Manager" onclick="if(typeof showSection === 'function') showSection('events'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.events}<span>Event Manager</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') showSection('messenger'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.chat}<span>Admin Chat</span></a>
                     
                     <div class="nav-group-title"><span>Advanced Operations</span></div>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('scout-approvals'); UnifiedNav.toggleSidebar(false); return false;"><i>🛡️</i> <span>Scout Approvals</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('tactical-board'); UnifiedNav.toggleSidebar(false); return false;"><i>📋</i> <span>Tactics Board</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('form-builder'); UnifiedNav.toggleSidebar(false); return false;"><i>📝</i> <span>Custom Forms</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('email-campaigns'); UnifiedNav.toggleSidebar(false); return false;"><i>📧</i> <span>Email Campaigns</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Scout Approvals" onclick="if(typeof showSection === 'function') showSection('scout-approvals'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Tactics Board" onclick="if(typeof showSection === 'function') showSection('tactical-board'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.tactics}<span>Tactics Board</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Custom Forms" onclick="if(typeof showSection === 'function') showSection('form-builder'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.forms}<span>Custom Forms</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Email Campaigns" onclick="if(typeof showSection === 'function') showSection('email-campaigns'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.email}<span>Email Campaigns</span></a>
                     
                     <div class="nav-group-title"><span>Events & Bookings</span></div>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('events'); UnifiedNav.toggleSidebar(false); return false;"><i>📅</i> <span>Event Manager</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('tournaments'); UnifiedNav.toggleSidebar(false); return false;"><i>🏆</i> <span>Tournaments</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('training-manager'); UnifiedNav.toggleSidebar(false); return false;"><i>🎯</i> <span>Training Hub</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;"><i>📍</i> <span>Venue Portal</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Tournaments" onclick="if(typeof showSection === 'function') showSection('tournaments'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.trophy}<span>Tournaments</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Training Hub" onclick="if(typeof showSection === 'function') showSection('training-manager'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.training}<span>Training Hub</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Venue Portal" onclick="if(typeof showSection === 'function') showSection('venue-booking'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.venue}<span>Venue Portal</span></a>
                     
                     <div class="nav-group-title"><span>Business & Shop</span></div>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('finances'); UnifiedNav.toggleSidebar(false); return false;"><i>💰</i> <span>Financials</span></a>
-                    <a href="#" class="sidebar-link" onclick="if(typeof showSection === 'function') showSection('shop'); UnifiedNav.toggleSidebar(false); return false;"><i>🛒</i> <span>Club Shop</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Financials" onclick="if(typeof showSection === 'function') showSection('finances'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.finance}<span>Financials</span></a>
+                    <a href="#" class="sidebar-link" data-tooltip="Club Shop" onclick="if(typeof showSection === 'function') showSection('shop'); UnifiedNav.toggleSidebar(false); return false;">${ICONS.nav.shop}<span>Club Shop</span></a>
                 `;
         }
 
-    // Add Logout/Settings at the bottom of the list too for desktop
+    // Add Settings at the bottom
     menuHtml += `
             <div class="nav-group-title"><span>Settings</span></div>
-            <a href="player-settings.html" class="sidebar-link"><i>⚙️</i> <span>Account Settings</span></a>
+            <a href="player-settings.html" class="sidebar-link">${ICONS.nav.settings}<span>Account Settings</span></a>
         `;
 
     nav.innerHTML = menuHtml;
