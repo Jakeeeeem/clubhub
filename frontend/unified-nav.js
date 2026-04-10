@@ -105,12 +105,15 @@ const UnifiedNav = {
         console.error("❌ Stage 1 (Core Layout) failed:", err);
     }
 
-    // Sidebar: CLOSED by default on desktop unless user explicitly opened it
-    if (isDesktop) {
+    // Sidebar: CLOSED (collapsed) by default on desktop unless user explicitly opened it
+    if (isDesktop && isDashboard) {
         const sidebarPref = localStorage.getItem('sidebarCollapsed');
-        if (sidebarPref !== 'false') {
-            // Default: collapsed
+        // If never set OR set to true, default to collapsed
+        if (sidebarPref === null || sidebarPref === 'true') {
             document.body.classList.add('sidebar-collapsed');
+            localStorage.setItem('sidebarCollapsed', 'true');
+        } else {
+            document.body.classList.remove('sidebar-collapsed');
         }
     }
 
@@ -118,7 +121,7 @@ const UnifiedNav = {
     const enhancements = [
         { name: "ProfileDropdown", fn: () => isDashboard && isDesktop && this.renderProfileDropdown() },
         { name: "SidebarToggle", fn: () => isDashboard && isDesktop && this.renderDesktopSidebarToggle() },
-        { name: "HeaderSwitcher", fn: () => isDashboard && this.renderHeaderSwitcher() },
+        { name: "HeaderSwitcher", fn: () => isDashboard && !isDesktop && this.renderHeaderSwitcher() },
         { name: "StripeButton", fn: () => isDashboard && this.renderStripeHeaderButton() },
         { name: "Notifications", fn: () => isDashboard && this.renderHeaderNotifications() },
         { name: "PwaInstall", fn: () => this.renderPwaInstallButton() },
@@ -357,15 +360,23 @@ const UnifiedNav = {
   },
 
   renderDesktopSidebarToggle() {
-    const headerLeft = document.querySelector(".dash-header-left") || document.querySelector(".nav-left") || document.querySelector(".logo-area");
-    if (!headerLeft || headerLeft.querySelector(".desktop-sidebar-toggle")) return;
+    // Look for the best place to put the toggle in our fixed header
+    const target = document.querySelector(".dash-header-right") || document.querySelector(".nav-container");
+    if (!target || target.querySelector(".desktop-sidebar-toggle")) return;
 
     const toggleHTML = `
-      <button class="desktop-sidebar-toggle desktop-only btn btn-small btn-secondary" onclick="UnifiedNav.toggleDesktopSidebar()" style="margin-right: 1rem; padding: 6px 10px;">
-        <i id="desktop-toggle-icon">☰</i>
+      <button class="desktop-sidebar-toggle desktop-only btn btn-small" onclick="UnifiedNav.toggleDesktopSidebar()" style="margin-right: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 6px 10px; display: flex; align-items: center; justify-content: center; min-width: 36px;">
+        <i id="desktop-toggle-icon" style="font-style: normal;">☰</i>
       </button>
     `;
-    headerLeft.insertAdjacentElement("beforeend", document.createRange().createContextualFragment(toggleHTML).firstElementChild);
+    
+    // Insert at the beginning of actions
+    target.insertAdjacentHTML("afterbegin", toggleHTML);
+    
+    // Sync icon
+    const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+    const icon = document.getElementById('desktop-toggle-icon');
+    if (icon) icon.innerHTML = isCollapsed ? '☰' : '✕';
   },
 
   toggleDesktopSidebar() {
@@ -510,34 +521,41 @@ const UnifiedNav = {
     }
     header.classList.add("unified-header");
 
-    // Force exact structure if incomplete
-    if (!header.querySelector(".dash-header-left") || !header.querySelector(".dash-header-right")) {
-      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      const name = (user ? (user.firstName || user.first_name) : "User") || "User";
-      
-      header.innerHTML = `
-        <div class="nav-container nav container">
-            <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="margin-right: 1rem; cursor: pointer;">
-                ${ICONS.menu}
-            </div>
-            
-            <div class="dash-header-left">
-                <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
-                    <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 42px; width: 42px; object-fit: contain;">
-                    <span class="logo-text" style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.5rem; color: var(--primary); letter-spacing: -0.5px;">ClubHub</span>
-                </div>
-                <!-- Redundant switcher removed from here -->
-            </div>
-            
-            <div class="dash-header-right" id="header-actions-right">
-                <div id="stripe-header-btn-container"></div>
-                <div id="notif-header-btn-container"></div>
-                
-                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
-                    <span class="user-name desktop-only" id="header-user-name">Loading...</span>
-                    <div class="user-avatar-sm" id="header-user-avatar">?</div>
-                </div>
-                <button class="btn btn-secondary btn-small desktop-only" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout()" style="margin-left: 0.5rem;">Logout</button>
+    const isDesktop = window.innerWidth >= 992;
+    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const name = (user ? (user.firstName || user.first_name) : "User") || "User";
+
+    // Clean structure: Logo/Burger ONLY on mobile desktop header
+    header.innerHTML = `
+      <div class="nav-container nav container">
+          <!-- Logo area only visible on mobile top bar or if sidebar is disabled -->
+          <div class="logo-area-wrapper mobile-only" style="display: flex; align-items: center; gap: 1rem;">
+              <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="cursor: pointer;">
+                  ${ICONS.menu}
+              </div>
+              <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                  <img src="images/logo.png" alt="Logo" style="height: 32px; width: 32px; object-fit: contain;">
+                  <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--primary);">ClubHub</span>
+              </div>
+          </div>
+          
+          <div class="dash-header-left desktop-only">
+             <!-- Desktop header is intentionally clean. Info is in the sidebar. -->
+          </div>
+          
+          <div class="dash-header-right" id="header-actions-right" style="margin-left: auto;">
+              <div id="stripe-header-btn-container"></div>
+              <div id="notif-header-btn-container"></div>
+              
+              <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
+                  <span class="user-name desktop-only" id="header-user-name">${name}</span>
+                  <div class="user-avatar-sm" id="header-user-avatar">${name.charAt(0)}</div>
+              </div>
+              <button class="btn btn-secondary btn-small desktop-only" onclick="UnifiedNav.logout()" style="margin-left: 0.5rem;">Logout</button>
+          </div>
+      </div>
+    `;
+  },
             </div>
         </div>
       `;
@@ -568,7 +586,7 @@ const UnifiedNav = {
         const sidebarHTML = `
                 <div class="sidebar-overlay" id="sidebar-overlay"></div>
                 <aside class="pro-sidebar" id="pro-sidebar">
-                    <button class="sidebar-burger" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; left: 1.25rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 8px; z-index: 10;">
+                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; left: 1.25rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 8px; z-index: 10;">
                         ${ICONS.menu}
                     </button>
                     
@@ -721,7 +739,7 @@ const UnifiedNav = {
                 </div>
 
                 <div class="header-actions">
-                    <div class="action-btn desktop-only" onclick="typeof showPlayerSection !== 'undefined' ? showPlayerSection('notifications') : (typeof showSection !== 'undefined' ? showSection('notifications') : null)">
+                    <div class="action-btn desktop-only" style="margin-right: 1rem;" onclick="typeof showPlayerSection !== 'undefined' ? showPlayerSection('notifications') : (typeof showSection !== 'undefined' ? showSection('notifications') : null)">
                         <i class="fa fa-bell-o"></i>
                         <span class="badge" id="header-notif-badge" style="display:none">0</span>
                     </div>
@@ -731,6 +749,7 @@ const UnifiedNav = {
                         <div class="user-avatar-sm" id="header-user-avatar">?</div>
                         <i class="fa fa-chevron-down desktop-only" style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;"></i>
                     </div>
+                    <button class="btn btn-secondary btn-small desktop-only" onclick="UnifiedNav.logout()" style="margin-left: 0.5rem;">Logout</button>
                 </div>
             </div>
         `;
