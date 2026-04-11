@@ -6,6 +6,7 @@ const {
 } = require("../middleware/auth");
 const router = express.Router();
 const { body, validationResult } = require("express-validator");
+const emailService = require("../services/email-service");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
@@ -44,6 +45,13 @@ const upload = multer({
   },
 });
 
+// Helper: compute number of knockout rounds given N teams
+function computeNumRounds(numTeams) {
+  const n = Math.max(2, Number(numTeams) || 2);
+  return Math.ceil(Math.log2(n));
+}
+router.computeNumRounds = computeNumRounds;
+
 // ================= PUBLIC / TEAMS =================
 
 /**
@@ -65,8 +73,14 @@ router.post(
       if (!errors.isEmpty())
         return res.status(400).json({ errors: errors.array() });
 
-      const { eventId, teamName, contactEmail, contactPhone, internalTeamId, paymentIntentId } =
-        req.body;
+      const {
+        eventId,
+        teamName,
+        contactEmail,
+        contactPhone,
+        internalTeamId,
+        paymentIntentId,
+      } = req.body;
 
       const result = await query(
         `
@@ -74,7 +88,15 @@ router.post(
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
             RETURNING *
         `,
-        [eventId, teamName, contactEmail, contactPhone, internalTeamId || null, paymentIntentId || null, paymentIntentId ? 'requires_capture' : 'pending'],
+        [
+          eventId,
+          teamName,
+          contactEmail,
+          contactPhone,
+          internalTeamId || null,
+          paymentIntentId || null,
+          paymentIntentId ? "requires_capture" : "pending",
+        ],
       );
 
       res
@@ -99,8 +121,12 @@ router.post("/", authenticateToken, requireOrganization, async (req, res) => {
   try {
     let tournamentId;
     await withTransaction(async (client) => {
-      // Resolve club ID from user context
-      let clubId = req.user.groupId || req.user.clubId;
+      // Resolve club ID from user/org context (prefer injected orgContext)
+      let clubId =
+        (req.orgContext && req.orgContext.organization_id) ||
+        req.user.organization_id ||
+        req.user.groupId ||
+        req.user.clubId;
       if (!clubId) {
         const clubRes = await client.query(
           "SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1",
@@ -372,21 +398,21 @@ router.post(
 
           // 2. Determine power-of-2 bracket size
           const numTeams = teams.length;
-          const numRounds = Math.round(Math.log2(numTeams)); 
+          const numRounds = computeNumRounds(numTeams);
           const bracketSize = Math.pow(2, numRounds);
 
           // 3. Create all matches for all rounds (backwards from Final)
           const matchesByRound = {};
-          
+
           for (let r = numRounds; r >= 1; r--) {
             matchesByRound[r] = [];
             const matchesInRound = Math.pow(2, numRounds - r);
-            
+
             for (let m = 0; m < matchesInRound; m++) {
               const res = await client.query(
                 `INSERT INTO tournament_matches (stage_id, event_id, round_number, match_number, status)
                  VALUES ($1, $2, $3, $4, 'scheduled') RETURNING id`,
-                [stageId, eventId, r, m]
+                [stageId, eventId, r, m],
               );
               matchesByRound[r].push(res.rows[0].id);
             }
@@ -396,17 +422,17 @@ router.post(
           for (let r = 1; r < numRounds; r++) {
             const currentRoundMatches = matchesByRound[r];
             const nextRoundMatches = matchesByRound[r + 1];
-            
+
             for (let i = 0; i < currentRoundMatches.length; i++) {
               const matchId = currentRoundMatches[i];
               const nextMatchIdx = Math.floor(i / 2);
               const isHome = i % 2 === 0;
-              
+
               await client.query(
                 `UPDATE tournament_matches 
                  SET next_match_id = $1, progress_to_home = $2 
                  WHERE id = $3`,
-                [nextRoundMatches[nextMatchIdx], isHome, matchId]
+                [nextRoundMatches[nextMatchIdx], isHome, matchId],
               );
             }
           }
@@ -422,18 +448,33 @@ router.post(
               `UPDATE tournament_matches 
                SET home_team_id = $1, away_team_id = $2 
                WHERE id = $3`,
-              [homeTeam ? homeTeam.id : null, awayTeam ? awayTeam.id : null, matchId]
+              [
+                homeTeam ? homeTeam.id : null,
+                awayTeam ? awayTeam.id : null,
+                matchId,
+              ],
             );
 
             // Handle automatic progression for Byes
             if (homeTeam && !awayTeam) {
-               const matchRes = await client.query("SELECT next_match_id, progress_to_home FROM tournament_matches WHERE id = $1", [matchId]);
-               const match = matchRes.rows[0];
-               if (match.next_match_id) {
-                  const field = match.progress_to_home ? 'home_team_id' : 'away_team_id';
-                  await client.query(`UPDATE tournament_matches SET ${field} = $1 WHERE id = $2`, [homeTeam.id, match.next_match_id]);
-                  await client.query("UPDATE tournament_matches SET status = 'completed', home_score = 1, away_score = 0 WHERE id = $1", [matchId]);
-               }
+              const matchRes = await client.query(
+                "SELECT next_match_id, progress_to_home FROM tournament_matches WHERE id = $1",
+                [matchId],
+              );
+              const match = matchRes.rows[0];
+              if (match.next_match_id) {
+                const field = match.progress_to_home
+                  ? "home_team_id"
+                  : "away_team_id";
+                await client.query(
+                  `UPDATE tournament_matches SET ${field} = $1 WHERE id = $2`,
+                  [homeTeam.id, match.next_match_id],
+                );
+                await client.query(
+                  "UPDATE tournament_matches SET status = 'completed', home_score = 1, away_score = 0 WHERE id = $1",
+                  [matchId],
+                );
+              }
             }
           }
         } else if (type === "league") {
@@ -643,7 +684,12 @@ router.post(
                 INSERT INTO tournament_pitches (event_id, name, pitch_type, pitch_size)
                 VALUES ($1, $2, $3, $4)
             `,
-            [req.params.id, `Pitch-${i}`, pitchType || "Grass", pitchSize || "11v11"],
+            [
+              req.params.id,
+              `Pitch-${i}`,
+              pitchType || "Grass",
+              pitchSize || "11v11",
+            ],
           );
         }
       });
@@ -792,19 +838,66 @@ router.post(
   async (req, res) => {
     const { status } = req.body;
     try {
-      if (status === 'approved') {
-        const teamRes = await query("SELECT payment_intent_id FROM tournament_teams WHERE id = $1", [req.params.id]);
-        if (teamRes.rows.length > 0 && teamRes.rows[0].payment_intent_id) {
-          // Here we would use the club's stripe connect ID to capture the payment
-          // const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-          // await stripe.paymentIntents.capture(teamRes.rows[0].payment_intent_id, { stripeAccount: clubStripeAccountId });
-          
-          await query("UPDATE tournament_teams SET status = $1, payment_status = 'succeeded' WHERE id = $2", [
+      if (status === "approved") {
+        const teamRes = await query(
+          "SELECT payment_intent_id, event_id FROM tournament_teams WHERE id = $1",
+          [req.params.id],
+        );
+        const paymentIntentId = teamRes.rows[0]?.payment_intent_id;
+        const eventIdForTeam = teamRes.rows[0]?.event_id;
+
+        if (paymentIntentId) {
+          // Attempt to capture via Stripe if configured. This is best-effort and non-blocking.
+          try {
+            if (process.env.STRIPE_SECRET_KEY) {
+              let stripeClient = null;
+              try {
+                stripeClient = require("stripe")(process.env.STRIPE_SECRET_KEY);
+              } catch (e) {
+                console.warn(
+                  "Stripe SDK not available; skipping capture. Install 'stripe' to enable.",
+                );
+              }
+
+              if (stripeClient && eventIdForTeam) {
+                const ev = await query(
+                  "SELECT club_id FROM events WHERE id = $1",
+                  [eventIdForTeam],
+                );
+                const clubId = ev.rows[0]?.club_id;
+                if (clubId) {
+                  const orgRes = await query(
+                    "SELECT stripe_account_id FROM organizations WHERE id = $1",
+                    [clubId],
+                  );
+                  const clubStripeAccountId = orgRes.rows[0]?.stripe_account_id;
+                  if (clubStripeAccountId) {
+                    await stripeClient.paymentIntents.capture(paymentIntentId, {
+                      stripeAccount: clubStripeAccountId,
+                    });
+                  } else {
+                    console.log(
+                      "No stripe_account_id for club; capture skipped",
+                    );
+                  }
+                }
+              }
+            } else {
+              console.log("STRIPE_SECRET_KEY not configured; skipping capture");
+            }
+          } catch (stripeErr) {
+            console.error("Stripe capture attempt failed:", stripeErr);
+          }
+
+          await query(
+            "UPDATE tournament_teams SET status = $1, payment_status = 'succeeded' WHERE id = $2",
+            [status, req.params.id],
+          );
+        } else {
+          await query("UPDATE tournament_teams SET status = $1 WHERE id = $2", [
             status,
             req.params.id,
           ]);
-        } else {
-          await query("UPDATE tournament_teams SET status = $1 WHERE id = $2", [status, req.params.id]);
         }
       } else {
         await query("UPDATE tournament_teams SET status = $1 WHERE id = $2", [
@@ -938,11 +1031,11 @@ router.get("/:id/bracket", authenticateToken, async (req, res) => {
 });
 
 /**
- * @route   POST /api/tournaments/matches/:id/video
- * @desc    Upload full match video footage
+ * @route   POST /api/tournaments/matches/:id/video/upload
+ * @desc    Upload full match video footage (file upload)
  */
 router.post(
-  "/matches/:id/video",
+  "/matches/:id/video/upload",
   authenticateToken,
   requireOrganization,
   upload.single("video"),
@@ -953,11 +1046,16 @@ router.post(
       }
 
       // Check if match exists and belongs to correct org
+      const orgId =
+        (req.orgContext && req.orgContext.organization_id) ||
+        req.user.organization_id ||
+        req.user.groupId ||
+        req.user.clubId;
       const matchCheck = await query(
         `SELECT m.id FROM tournament_matches m 
          JOIN events e ON m.event_id = e.id 
          WHERE m.id = $1 AND e.club_id = $2`,
-        [req.params.id, req.user.organization_id],
+        [req.params.id, orgId],
       );
 
       if (matchCheck.rows.length === 0) {
@@ -994,85 +1092,140 @@ router.post(
  * @route   POST /api/tournaments/:id/invite-staff
  * @desc    Invite staff (Referee, Admin) to tournament
  */
-router.post("/:id/invite-staff", authenticateToken, requireOrganization, async (req, res) => {
+router.post(
+  "/:id/invite-staff",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
     const { email, role, pitches } = req.body;
     try {
-        // 1. Logic to create invitation or link existing user
-        // For demo/bypass: We just return success as if email was sent
-        console.log(`Tournament Staff Invite: ${email} as ${role} for pitches ${pitches}`);
-        
-        // 2. Persist assignment if user exists
-        const userRes = await query("SELECT id FROM users WHERE email = $1", [email]);
-        if (userRes.rows.length > 0) {
-            await query(
-                "INSERT INTO scout_assignments (scout_id, event_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", 
-                [userRes.rows[0].id, req.params.id]
-            );
-        }
+      // Persist assignment if user exists
+      const userRes = await query("SELECT id FROM users WHERE email = $1", [
+        email,
+      ]);
+      if (userRes.rows.length > 0) {
+        await query(
+          "INSERT INTO scout_assignments (scout_id, event_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+          [userRes.rows[0].id, req.params.id],
+        );
+      }
 
-        res.json({ message: "Staff invitation sent successfully" });
+      // Send an invitation email to the address provided
+      try {
+        const ev = await query(
+          "SELECT e.club_id, o.name as club_name FROM events e LEFT JOIN organizations o ON o.id = e.club_id WHERE e.id = $1",
+          [req.params.id],
+        );
+        const clubName = ev.rows[0]?.club_name || "Club";
+        const inviterName = req.user.name || req.user.email || "ClubHub";
+        const inviteLink = `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/tournaments/${req.params.id}/invite?role=${role}`;
+        await emailService.sendClubInviteEmail({
+          email,
+          clubName,
+          inviterName,
+          inviteLink,
+          personalMessage: `You were invited as ${role}`,
+          clubRole: role,
+        });
+      } catch (mailErr) {
+        console.warn("Failed to send invite email:", mailErr);
+      }
+
+      res.json({ message: "Staff invitation sent successfully" });
     } catch (err) {
-        res.status(500).json({ error: "Failed to invite staff" });
+      res.status(500).json({ error: "Failed to invite staff" });
     }
-});
+  },
+);
 
 /**
  * @route   POST /api/tournaments/:id/invite-team
  * @desc    Invite Team to tournament via email
  */
-router.post("/:id/invite-team", authenticateToken, requireOrganization, async (req, res) => {
+router.post(
+  "/:id/invite-team",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
     const { email } = req.body;
     try {
-        console.log(`Tournament Team Invite: ${email}`);
-        // Typically would send an email with a registration link
-        res.json({ message: "Team invitation sent to " + email });
+      // Send a team invitation email with registration/registration link
+      try {
+        const ev = await query(
+          "SELECT e.club_id, o.name as club_name FROM events e LEFT JOIN organizations o ON o.id = e.club_id WHERE e.id = $1",
+          [req.params.id],
+        );
+        const clubName = ev.rows[0]?.club_name || "Club";
+        const inviterName = req.user.name || req.user.email || "ClubHub";
+        const inviteLink = `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/tournaments/${req.params.id}/register`;
+        await emailService.sendClubInviteEmail({
+          email,
+          clubName,
+          inviterName,
+          inviteLink,
+          personalMessage: "Register your team to participate",
+          clubRole: "team",
+        });
+      } catch (mailErr) {
+        console.warn("Failed to send team invite email:", mailErr);
+      }
+
+      res.json({ message: "Team invitation sent to " + email });
     } catch (err) {
-        res.status(500).json({ error: "Failed to invite team" });
+      res.status(500).json({ error: "Failed to invite team" });
     }
-});
+  },
+);
 
 /**
  * @route   DELETE /api/tournaments/pitches/:id
  * @desc    Delete a pitch
  */
-router.delete("/pitches/:id", authenticateToken, requireOrganization, async (req, res) => {
+router.delete(
+  "/pitches/:id",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
     try {
-        await query("DELETE FROM tournament_pitches WHERE id = $1", [req.params.id]);
-        res.json({ message: "Pitch deleted" });
+      await query("DELETE FROM tournament_pitches WHERE id = $1", [
+        req.params.id,
+      ]);
+      res.json({ message: "Pitch deleted" });
     } catch (err) {
-        res.status(500).json({ error: "Failed to delete pitch" });
+      res.status(500).json({ error: "Failed to delete pitch" });
     }
-});
+  },
+);
 
-module.exports = router;
+// exported at end of file
 
 // ================= GATED VIDEO & LAYOUT =================
 
 /**
- * @route   POST /api/tournaments/matches/:id/video
- * @desc    Attach gated footage to tournament match
+ * @route   POST /api/tournaments/matches/:id/video/attach
+ * @desc    Attach gated footage metadata to tournament match
  */
 router.post(
-  "/matches/:id/video",
+  "/matches/:id/video/attach",
   authenticateToken,
   requireOrganization,
   [
     body("videoUrl").isURL(),
     body("videoPrice").optional().isNumeric(),
-    body("videoAccess").isIn(["public", "invite_only"])
+    body("videoAccess").isIn(["public", "invite_only"]),
   ],
   async (req, res) => {
     const { videoUrl, videoPrice, videoAccess } = req.body;
     try {
       await query(
         `UPDATE tournament_matches SET video_url = $1, video_price = $2, video_access = $3 WHERE id = $4`,
-        [videoUrl, videoPrice || 0, videoAccess, req.params.id]
+        [videoUrl, videoPrice || 0, videoAccess, req.params.id],
       );
       res.json({ message: "Video attached successfully" });
     } catch (err) {
       res.status(500).json({ error: "Failed to attach video" });
     }
-  }
+  },
 );
 
 /**
@@ -1081,15 +1234,19 @@ router.post(
  */
 router.get("/matches/:id/video", async (req, res) => {
   try {
-    const matchRes = await query("SELECT video_url, video_price, video_access FROM tournament_matches WHERE id = $1", [req.params.id]);
-    if (matchRes.rows.length === 0 || !matchRes.rows[0].video_url) return res.status(404).json({ error: "Video not found" });
+    const matchRes = await query(
+      "SELECT video_url, video_price, video_access FROM tournament_matches WHERE id = $1",
+      [req.params.id],
+    );
+    if (matchRes.rows.length === 0 || !matchRes.rows[0].video_url)
+      return res.status(404).json({ error: "Video not found" });
 
     const { video_url, video_price, video_access } = matchRes.rows[0];
 
     // For demonstration, simulating success. In production:
     // If video_price > 0, check user's payment_intents or access token
     // If video_access === 'invite_only', enforce authenticateToken manually here
-    
+
     res.json({ url: video_url, message: "Video access granted" });
   } catch (err) {
     res.status(500).json({ error: "Failed to access video" });
@@ -1110,7 +1267,7 @@ router.get("/:id/layout", async (req, res) => {
        LEFT JOIN tournament_pitches p ON m.pitch_id = p.id
        WHERE m.event_id = $1 AND m.start_time IS NOT NULL
        ORDER BY m.start_time`,
-      [req.params.id]
+      [req.params.id],
     );
     res.json(layout.rows);
   } catch (err) {
@@ -1126,22 +1283,24 @@ router.post(
   "/:id/invite",
   authenticateToken,
   requireOrganization,
-  [
-    body("email").isEmail(),
-    body("role").isIn(["admin", "referee", "team"])
-  ],
+  [body("email").isEmail(), body("role").isIn(["admin", "referee", "team"])],
   async (req, res) => {
     const { email, role } = req.body;
     try {
       await query(
         `INSERT INTO tournament_invites (event_id, email, role, created_by) VALUES ($1, $2, $3, $4)`,
-        [req.params.id, email, role, req.user.id]
+        [req.params.id, email, role, req.user.id],
       );
       // Here: Send email with unique link using email-service.js
       res.json({ message: "Invitation sent successfully" });
     } catch (err) {
-      if (err.code === '23505') return res.status(400).json({ error: "Invite already sent to this email for this role" });
+      if (err.code === "23505")
+        return res
+          .status(400)
+          .json({ error: "Invite already sent to this email for this role" });
       res.status(500).json({ error: "Failed to send invite" });
     }
-  }
+  },
 );
+
+module.exports = router;

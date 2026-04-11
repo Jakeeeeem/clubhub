@@ -103,6 +103,10 @@ async function injectOrgContext(req, res, next) {
       req.orgContext = null;
     } else {
       req.orgContext = memberResult.rows[0];
+      // Normalize organization id onto req.user for easier downstream checks
+      if (req.user && req.orgContext && req.orgContext.organization_id) {
+        req.user.organization_id = req.orgContext.organization_id;
+      }
     }
 
     next();

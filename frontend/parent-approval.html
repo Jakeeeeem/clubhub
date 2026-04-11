@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Parent Approval - ClubHub</title>
+    <style>
+        body {
+            font-family: Inter, Arial, Helvetica, sans-serif;
+            background: #050505;
+            color: #e6eef8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0
+        }
+
+        .card {
+            background: #0f1724;
+            padding: 28px;
+            border-radius: 12px;
+            max-width: 720px;
+            width: 92%;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, .6);
+            border: 1px solid rgba(255, 255, 255, 0.04)
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 20px
+        }
+
+        p {
+            color: #9fb0c8
+        }
+
+        .actions {
+            margin-top: 22px
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 600;
+            margin-right: 8px
+        }
+
+        .approve {
+            background: #16a34a
+        }
+
+        .deny {
+            background: #ef4444
+        }
+
+        .small {
+            font-size: 13px;
+            color: #94a3b8
+        }
+
+        #status {
+            margin-top: 16px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card" id="card">
+        <h1 id="title">Loading request...</h1>
+        <p id="summary">Please wait while we load the approval request.</p>
+
+        <div class="actions" id="actions" style="display:none">
+            <a id="approveBtn" class="btn approve">Approve</a>
+            <a id="denyBtn" class="btn deny">Deny</a>
+            <div id="status"></div>
+        </div>
+
+        <p class="small" style="margin-top:18px">This page is a secure one-click approval flow for parental consent. If
+            you have any concerns, contact support.</p>
+    </div>
+
+    <script>
+        (async function () {
+            function qs(key) {
+                const params = new URLSearchParams(window.location.search);
+                return params.get(key);
+            }
+            const token = qs('token');
+            const reqId = qs('req');
+            const actionFromQuery = qs('action');
+            const titleEl = document.getElementById('title');
+            const summaryEl = document.getElementById('summary');
+            const actionsEl = document.getElementById('actions');
+            const statusEl = document.getElementById('status');
+            const approveBtn = document.getElementById('approveBtn');
+            const denyBtn = document.getElementById('denyBtn');
+
+            if (!token) {
+                titleEl.textContent = 'Invalid request';
+                summaryEl.textContent = 'Missing approval token in the URL.';
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/api/scouting/contact-requests/by-token?token=${encodeURIComponent(token)}`);
+                if (!resp.ok) throw new Error('Not found');
+                const req = await resp.json();
+                const playerName = (req.player_first_name || '') + ' ' + (req.player_last_name || '');
+                const scoutName = (req.scout_first_name || '') + ' ' + (req.scout_last_name || '');
+                titleEl.textContent = `Approve contact request for ${playerName.trim()}`;
+                summaryEl.textContent = `${scoutName.trim()} requested to contact ${playerName.trim()}. Approve to reveal contact details to the scout.`;
+                actionsEl.style.display = 'block';
+
+                async function doApprove() {
+                    statusEl.textContent = 'Processing...';
+                    const r = await fetch('/api/scouting/contact-requests/approve-token', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }) });
+                    const j = await r.json();
+                    if (r.ok) {
+                        statusEl.textContent = 'Request approved. The scout has been notified.';
+                        approveBtn.style.display = 'none'; denyBtn.style.display = 'none';
+                    } else {
+                        statusEl.textContent = j.error || 'Failed to approve';
+                    }
+                }
+
+                async function doDeny() {
+                    const reason = prompt('Optional: provide a short reason for denying the request (will be sent to the scout)');
+                    statusEl.textContent = 'Processing...';
+                    const r = await fetch('/api/scouting/contact-requests/deny-token', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token, reason }) });
+                    const j = await r.json();
+                    if (r.ok) {
+                        statusEl.textContent = 'Request denied. The scout has been notified.';
+                        approveBtn.style.display = 'none'; denyBtn.style.display = 'none';
+                    } else {
+                        statusEl.textContent = j.error || 'Failed to deny';
+                    }
+                }
+
+                approveBtn.addEventListener('click', doApprove);
+                denyBtn.addEventListener('click', doDeny);
+
+                // Auto-action if provided via query (e.g., &action=deny)
+                if (actionFromQuery === 'deny') {
+                    // small delay for UX
+                    setTimeout(() => doDeny(), 400);
+                } else if (actionFromQuery === 'approve') {
+                    setTimeout(() => doApprove(), 400);
+                }
+
+            } catch (err) {
+                titleEl.textContent = 'Request unavailable';
+                summaryEl.textContent = 'The approval request could not be loaded or may have expired.';
+            }
+        })();
+    </script>
+</body>
+
+</html>

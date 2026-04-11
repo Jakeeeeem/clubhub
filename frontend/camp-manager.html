@@ -62,25 +62,11 @@
         }
     </style>
 </head>
-
-<body class="bg-dark">
-    <header class="header pro-header">
-        <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text neon-text">ClubHub</span>
-            </div>
-
-            <div id="org-switcher-container"></div>
-            
-            <div class="header-actions">
-                <div id="notification-bell-container"></div>
-                <!-- Profile will be injected by UnifiedNav -->
-            </div>
-        </nav>
-    </header>
-
-    <main class="main container" style="margin-top: 100px;">
+<body class="clubhub-unified dashboard-page">
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
+    <main class="main dashboard-main">
+        <div class="container dashboard-container">
+            <div class="dashboard-content">
         <div class="dashboard-header">
             <div>
                 <h1 class="neon-text">Camp Management</h1>
@@ -214,6 +200,8 @@
                     <!-- Staff cards -->
                 </div>
             </div>
+        </div>
+        </div>
         </div>
     </main>
 

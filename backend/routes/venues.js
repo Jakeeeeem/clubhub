@@ -154,7 +154,7 @@ router.post('/:id/book', authenticateToken, [
     try {
         const { id } = req.params;
         const { startTime, endTime, notes } = req.body;
-        const userId = req.user.userId;
+        const userId = req.user.id;
         
         // Check if venue exists
         const venueResult = await query('SELECT * FROM venues WHERE id = $1', [id]);
@@ -213,7 +213,8 @@ router.get('/bookings/my', authenticateToken, async (req, res) => {
             JOIN venues v ON vb.venue_id = v.id
             WHERE vb.user_id = $1
             ORDER BY vb.start_time DESC
-        `, [req.user.userId]);
+        `, [req.user.id]);
+        
         
         res.json(result.rows);
         

@@ -687,6 +687,41 @@ class EmailService {
     }
   }
 
+  // Send parental approval email (dedicated helper)
+  async sendParentalApprovalEmail({
+    to,
+    parentFirstName,
+    scoutName,
+    playerName,
+    approvalLink,
+    denyLink,
+  }) {
+    try {
+      const subject = `Parental approval requested for ${playerName}`;
+      const content = `
+        <h2>Parental Approval Needed</h2>
+        <p>Hi ${parentFirstName || ""},</p>
+        <p><strong>${scoutName}</strong> has requested contact with <strong>${playerName}</strong> via ClubHub. Please review the request and either approve or decline using the buttons below.</p>
+        <div style="text-align:center;margin-top:20px;">
+          <a href="${approvalLink}" class="btn" style="background:#16a34a;padding:12px 24px;border-radius:8px;color:#fff;text-decoration:none;margin-right:10px;">Approve</a>
+          <a href="${denyLink}" class="btn" style="background:#ef4444;padding:12px 24px;border-radius:8px;color:#fff;text-decoration:none;">Deny</a>
+        </div>
+        <p style="margin-top:20px;color:#94a3b8;font-size:13px;">If you didn't expect this request, you can ignore this email.</p>
+      `;
+
+      const html = this.getBaseHtmlTemplate(content);
+      return await this.sendEmail({
+        to,
+        subject,
+        html,
+        text: `A scout requested contact for ${playerName}. Review here: ${approvalLink}`,
+      });
+    } catch (err) {
+      console.error("❌ Failed to send parental approval email:", err);
+      throw err;
+    }
+  }
+
   // Generic email sending method
   async sendEmail({ to, subject, html, text, from, replyTo }) {
     try {

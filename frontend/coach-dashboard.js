@@ -5,11 +5,11 @@ let tacticalBoardData = {
 };
 
 async function initializeCoachDashboard() {
-  console.log("🚀 Initializing Coach Dashboard...");
+  console.log("ðŸš€ Initializing Coach Dashboard...");
 
   // Ensure we have dashboard data loaded into AppState
   if (!AppState.staff || AppState.staff.length === 0) {
-    console.log("📡 Fetching group data for Coach...");
+    console.log("ðŸ“¡ Fetching group data for Coach...");
     try {
       const activeClubId =
         AppState.currentUser?.clubId ||
@@ -26,14 +26,14 @@ async function initializeCoachDashboard() {
         AppState.payments = dashboardData.payments || [];
         AppState.statistics =
           dashboardData.stats || dashboardData.statistics || {};
-        console.log("✅ Data loaded into AppState:", {
+        console.log("âœ… Data loaded into AppState:", {
           staff: AppState.staff.length,
           teams: AppState.teams.length,
           players: AppState.players.length,
         });
       }
     } catch (error) {
-      console.error("❌ Failed to fetch coach dashboard dependencies:", error);
+      console.error("âŒ Failed to fetch coach dashboard dependencies:", error);
     }
   }
 
@@ -76,7 +76,7 @@ function loadCoachData() {
 
 // Section Navigation
 function showCoachSection(sectionId) {
-  console.log(`🚀 Coach switching to section: ${sectionId}`);
+  console.log(`ðŸš€ Coach switching to section: ${sectionId}`);
 
   // Hide all sections
   const sections = document.querySelectorAll(".dashboard-section");
@@ -87,16 +87,14 @@ function showCoachSection(sectionId) {
 
   // Remove active class from all nav items
   const navItems = document.querySelectorAll(
-    ".sidebar-nav .nav-item, .app-top-tabs .tab-item, .app-bottom-nav .nav-link, .nav-pill",
+    ".sidebar-nav .nav-item, .sidebar-link, .app-top-tabs .tab-item, .app-bottom-nav .nav-link, .nav-pill, .active-section-tab",
   );
   navItems.forEach((item) => {
     item.classList.remove("active");
 
     // Check if this item is the one being activated
-    if (
-      item.getAttribute("onclick") &&
-      item.getAttribute("onclick").includes(`'${sectionId}'`)
-    ) {
+    const onClick = item.getAttribute("onclick");
+    if (onClick && onClick.includes(`'${sectionId}'`)) {
       item.classList.add("active");
     }
   });
@@ -109,34 +107,40 @@ function showCoachSection(sectionId) {
   }
 
   // Handle section-specific loaders
-  switch (sectionId) {
-    case "overview":
-      loadCoachStats();
-      loadCoachFeed();
-      loadCoachDailyPlanner();
-      break;
-    case "teams":
-      loadCoachTeams();
-      break;
-    case "players":
-      loadCoachPlayers();
-      break;
-    case "events":
-      loadCoachEvents();
-      break;
-    case "feed":
-      loadCommunityFeed();
-      break;
-    case "messenger":
-      loadMessengerConversations();
-      break;
-    case "tactical-board":
-      if (typeof initializeTacticalBoard === "function")
-        initializeTacticalBoard();
-      break;
-    case "profile":
-      loadCoachProfile();
-      break;
+  try {
+    switch (sectionId) {
+      case "overview":
+        if (typeof loadCoachStats === "function") loadCoachStats();
+        if (typeof loadCoachFeed === "function") loadCoachFeed();
+        if (typeof loadCoachDailyPlanner === "function") loadCoachDailyPlanner();
+        break;
+      case "teams":
+        if (typeof loadCoachTeams === "function") loadCoachTeams();
+        break;
+      case "players":
+        if (typeof loadCoachPlayers === "function") loadCoachPlayers();
+        break;
+      case "tournament-manager":
+        if (typeof loadCoachTournaments === "function") loadCoachTournaments();
+        break;
+      case "events":
+        if (typeof loadCoachEvents === "function") loadCoachEvents();
+        break;
+      case "feed":
+        if (typeof loadCommunityFeed === "function") loadCommunityFeed();
+        break;
+      case "messenger":
+        if (typeof loadMessengerConversations === "function") loadMessengerConversations();
+        break;
+      case "tactical-board":
+        if (typeof initializeTacticalBoard === "function") initializeTacticalBoard();
+        break;
+      case "profile":
+        if (typeof loadCoachProfile === "function") loadCoachProfile();
+        break;
+    }
+  } catch (err) {
+    console.error(`Error loading section ${sectionId}:`, err);
   }
 }
 
@@ -191,7 +195,7 @@ async function saveCoachProfile() {
       showNotification("Profile updated successfully!", "success");
     }
   } catch (error) {
-    console.error("❌ Failed to update coach profile:", error);
+    console.error("âŒ Failed to update coach profile:", error);
     showNotification("Failed to update profile", "error");
   }
 }
@@ -292,14 +296,14 @@ async function loadCoachTournaments() {
           (t) => `
                 <div class="card tournament-card" style="background: rgba(255,255,255,0.03); cursor: pointer; transition: transform 0.2s;" onclick="viewCoachTournament('${t.id}')">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div style="width: 48px; height: 48px; background: #dc2626; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🏆</div>
+                        <div style="width: 48px; height: 48px; background: #dc2626; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">ðŸ†</div>
                         <span class="status-badge" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">${t.status || "Active"}</span>
                     </div>
                     <h4>${t.title}</h4>
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0;">${formatDate(t.event_date)}</p>
                     <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 0.75rem; color: var(--text-muted);">Competition Details</span>
-                        <i style="color: #dc2626;">→</i>
+                        <i style="color: #dc2626;">â†’</i>
                     </div>
                 </div>
             `,
@@ -424,11 +428,11 @@ function renderCoachBracket(matches) {
                         <div class="bracket-match-container ${idx < totalRounds - 1 ? (isUpper ? "upper" : "lower") : ""}">
                             <div class="bracket-match" style="border-left: 3px solid ${played ? "#dc2626" : "rgba(255,255,255,0.1)"};">
                                 <div class="match-team ${homeWon ? "winner" : ""}">
-                                    <span class="team-name">${m.home_team || "TBD"} ${m.team_id && currentTeams.some((t) => t.id === m.team_id) ? "⭐" : ""}</span>
+                                    <span class="team-name">${m.home_team || "TBD"} ${m.team_id && currentTeams.some((t) => t.id === m.team_id) ? "â­" : ""}</span>
                                     <span class="match-score">${played ? m.home_score : "-"}</span>
                                 </div>
                                 <div class="match-team ${awayWon ? "winner" : ""}">
-                                    <span class="team-name">${m.away_team || "TBD"} ${m.away_team_id && currentTeams.some((t) => t.id === m.away_team_id) ? "⭐" : ""}</span>
+                                    <span class="team-name">${m.away_team || "TBD"} ${m.away_team_id && currentTeams.some((t) => t.id === m.away_team_id) ? "â­" : ""}</span>
                                     <span class="match-score">${played ? m.away_score : "-"}</span>
                                 </div>
                             </div>
@@ -464,7 +468,7 @@ function renderCoachFixtures(matches) {
                     ${m.status === "completed" || m.status === "live" ? `${m.home_score} - ${m.away_score}` : "VS"}
                 </div>
                 <div style="font-size: 0.65rem; color: ${m.status === "live" ? "#dc2626" : "var(--text-muted)"}; margin-top: 6px; font-weight: 700; text-transform: uppercase;">
-                    ${m.status === "live" ? "● LIVE" : m.status}
+                    ${m.status === "live" ? "â— LIVE" : m.status}
                 </div>
             </div>
             <div style="flex: 1; text-align: left; font-weight: 600;">${m.away_team || "TBD"}</div>
@@ -582,10 +586,10 @@ async function loadCoachProducts() {
         (product) => `
             <div class="card product-card">
                 <div style="height: 120px; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
-                    <span style="font-size: 2.5rem;">📦</span>
+                    <span style="font-size: 2.5rem;">ðŸ“¦</span>
                 </div>
                 <h4>${product.name}</h4>
-                <p style="color: #dc2626; font-weight: bold; font-size: 1.1rem; margin: 0.5rem 0;">£${parseFloat(product.price).toFixed(2)}</p>
+                <p style="color: #dc2626; font-weight: bold; font-size: 1.1rem; margin: 0.5rem 0;">Â£${parseFloat(product.price).toFixed(2)}</p>
                 <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1rem; height: 3em; overflow: hidden;">${product.description || "No description"}</p>
                 <button class="btn btn-primary btn-small" style="width: 100%" onclick="buyCoachProduct('${product.id}', ${product.price}, '${product.name}')">Buy Now</button>
             </div>
@@ -601,7 +605,7 @@ async function loadCoachProducts() {
 
 async function buyCoachProduct(productId, price, name) {
   const confirmed = await showConfirm(
-    `Do you want to purchase ${name} for £${parseFloat(price).toFixed(2)}?`,
+    `Do you want to purchase ${name} for Â£${parseFloat(price).toFixed(2)}?`,
     "Purchase Confirmation",
     "confirm",
   );
@@ -638,13 +642,14 @@ function loadCoachStats() {
   if (eventsCountEl) eventsCountEl.textContent = upcomingSessions;
 
   // Some versions use different IDs - check for those too
-  if (document.getElementById("coachTotalTeams"))
-    document.getElementById("coachTotalTeams").textContent = teams.length;
-  if (document.getElementById("coachTotalPlayers"))
-    document.getElementById("coachTotalPlayers").textContent = totalPlayers;
+  const totalTeamsAlt = document.getElementById("coachTotalTeams");
+  if (totalTeamsAlt) totalTeamsAlt.textContent = teamsCount;
+  
+  const totalPlayersAlt = document.getElementById("coachTotalPlayers");
+  if (totalPlayersAlt) totalPlayersAlt.textContent = totalPlayers;
 
-  loadRecentMatches();
-  loadCoachDailyPlanner();
+  if (typeof loadRecentMatches === "function") loadRecentMatches();
+  if (typeof loadCoachDailyPlanner === "function") loadCoachDailyPlanner();
 }
 
 /**
@@ -667,7 +672,7 @@ async function loadCoachFeed() {
             <div class="author-avatar" style="background: var(--accent-cyan);">CH</div>
             <div>
               <div style="font-weight: 700;">ClubHub System</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">Platform Update • Today</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">Platform Update â€¢ Today</div>
             </div>
           </div>
         </div>
@@ -812,6 +817,7 @@ function loadTodaySchedule() {
 // Teams Management
 function loadCoachTeams() {
   const container = document.getElementById("coachTeamsContainer");
+  if (!container) return;
 
   if (currentTeams.length === 0) {
     container.innerHTML =
@@ -902,6 +908,7 @@ async function handleCreateTeam(e) {
 // Players Management
 function loadCoachPlayers() {
   const teamFilter = document.getElementById("teamFilter");
+  if (!teamFilter) return;
 
   // Populate team filter
   teamFilter.innerHTML =
@@ -914,10 +921,14 @@ function loadCoachPlayers() {
 }
 
 function filterCoachPlayers() {
-  const teamFilter = document.getElementById("teamFilter").value;
-  const searchTerm = document
-    .getElementById("playerSearchCoach")
-    .value.toLowerCase();
+  const teamFilterEl = document.getElementById("teamFilter");
+  const playerSearchEl = document.getElementById("playerSearchCoach");
+  const tableBody = document.getElementById("coachPlayersTableBody");
+
+  if (!tableBody) return;
+
+  const teamFilter = teamFilterEl ? teamFilterEl.value : "";
+  const searchTerm = playerSearchEl ? playerSearchEl.value.toLowerCase() : "";
 
   const teamIds = currentTeams.map((t) => t.id);
   let players = AppState.players || [];
@@ -947,10 +958,8 @@ function filterCoachPlayers() {
     );
   }
 
-  const tableBody = document.getElementById("coachPlayersTableBody");
-
   if (players.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="6">No players found</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; opacity:0.5;">No players found</td></tr>';
     return;
   }
 
@@ -986,7 +995,7 @@ function filterCoachPlayers() {
 
 // Events Management
 function loadCoachEvents() {
-    const container = document.getElementById("coachEventsContainer");
+    const container = document.getElementById("coachEventsListContainer");
     if (!container) return;
 
     const teamEvents = AppState.events.filter((e) =>
@@ -1060,7 +1069,7 @@ function loadCoachEvents() {
                         : `<button class="btn btn-small btn-secondary" onclick="manageEventPlayers('${event.id}')">Roster</button>`
                     }
                     <button class="btn btn-small btn-secondary" onclick="editEvent('${event.id}')">Edit</button>
-                    <button class="btn btn-small btn-text" style="color: var(--text-muted); margin-left: auto;" onclick="deleteEvent('${event.id}')">🗑️</button>
+                    <button class="btn btn-small btn-text" style="color: var(--text-muted); margin-left: auto;" onclick="deleteEvent('${event.id}')">ðŸ—‘ï¸</button>
                 </div>
             </div>
         `;
@@ -1653,9 +1662,9 @@ async function loadCommunityFeed() {
           <h2 style="font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 1rem;">${item.title}</h2>
           <div style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem;">${item.content}</div>
           <div style="display: flex; gap: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
-            <button class="btn-text" style="font-size: 0.85rem;">❤️ ${item.likes || 12}</button>
-            <button class="btn-text" style="font-size: 0.85rem;">💬 ${item.comments || 5}</button>
-            <button class="btn-text" style="font-size: 0.85rem; margin-left: auto;">🔗 Share</button>
+            <button class="btn-text" style="font-size: 0.85rem;">â¤ï¸ ${item.likes || 12}</button>
+            <button class="btn-text" style="font-size: 0.85rem;">ðŸ’¬ ${item.comments || 5}</button>
+            <button class="btn-text" style="font-size: 0.85rem; margin-left: auto;">ðŸ”— Share</button>
           </div>
         </div>
       </div>
@@ -1670,11 +1679,11 @@ async function loadCommunityFeed() {
 }
 
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SQUAD MESSENGER — delegates to the shared squad-messenger.js module
-// ────────────────────────────────────────────────────────────────────────────�// ─────────────────────────────────────────────────────────────────────────────
-// SQUAD MESSENGER — delegates to the shared squad-messenger.js module
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// SQUAD MESSENGER â€” delegates to the shared squad-messenger.js module
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// SQUAD MESSENGER â€” delegates to the shared squad-messenger.js module
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 let _messengerMounted = false;
 
@@ -1693,10 +1702,25 @@ async function loadMessengerConversations() {
   // Load messages and contacts
   await SquadMessenger.load();
 }
-ms.forEach(item => {
-    const name = item.querySelector("span")?.textContent?.toLowerCase() || "";
-    item.style.display = name.includes(query.toLowerCase()) ? "flex" : "none";
-  });
+
+/** DASHBOARD ENGINE STUBS **/
+function loadCoachFeed() { console.log("Feed module standby"); }
+function loadCoachDailyPlanner() { console.log("Planner module standby"); }
+function loadCommunityFeed() { console.log("Community feed standby"); }
+function loadCoachTournaments() { console.log("Tournament manager standby"); }
+
+function initializeTacticalBoard() {
+  console.log("Tactical Board initializing...");
+  const pitch = document.getElementById('activePitchArea');
+  if (pitch) {
+    pitch.innerHTML = `
+      <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:rgba(255,255,255,0.2); text-align:center; padding:2rem;">
+        <span style="font-size:3rem; margin-bottom:1rem;">📋</span>
+        <p>Tactical Board Engine Ready</p>
+        <button class="btn btn-primary btn-small" style="margin-top:1rem;" onclick="location.reload()">Start Session</button>
+      </div>
+    `;
+  }
 }
 
 function openNewMessage() {
@@ -1705,9 +1729,3 @@ function openNewMessage() {
   if (!email) return;
   showNotification("Feature coming soon: search and start new DMs from your squad list.", "info");
 }
-
-// Stop polling when navigating away
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) clearInterval(messengerState.pollingTimer);
-});
-

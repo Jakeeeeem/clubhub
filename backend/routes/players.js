@@ -386,6 +386,57 @@ router.get("/:id", authenticateToken, async (req, res) => {
       player.recent_payments = [];
     }
 
+    // Parental gating: redaction of contact info for minors when requested by verified scouts
+    try {
+      if (player.age < 18) {
+        // Allow full access to the parent (owner of player record)
+        if (req.user.id !== player.user_id) {
+          // Check if requester is club owner/admin/coach
+          let isAuthorized = false;
+          if (player.club_id) {
+            const clubResult = await query(queries.findClubById, [
+              player.club_id,
+            ]);
+            if (clubResult.rows.length > 0) {
+              const club = clubResult.rows[0];
+              if (club.owner_id === req.user.id) isAuthorized = true;
+              const staffResult = await query(
+                "SELECT role FROM staff WHERE user_id = $1 AND club_id = $2",
+                [req.user.id, player.club_id],
+              );
+              if (staffResult.rows.length > 0) {
+                const role = staffResult.rows[0].role;
+                if (role === "admin" || role === "coach") isAuthorized = true;
+              }
+            }
+          }
+
+          // If the requester is a verified scout, only reveal contact if approved
+          const scoutCheck = await query(
+            "SELECT is_verified_scout FROM staff WHERE user_id = $1",
+            [req.user.id],
+          );
+          const isScout =
+            scoutCheck.rows.length > 0 && scoutCheck.rows[0].is_verified_scout;
+
+          if (isScout && !isAuthorized) {
+            const approved = await query(
+              "SELECT 1 FROM scout_contact_requests WHERE scout_id = $1 AND player_id = $2 AND status = 'approved' LIMIT 1",
+              [req.user.id, req.params.id],
+            );
+            if (approved.rows.length === 0) {
+              // Redact contact fields
+              delete player.email;
+              delete player.phone;
+              player.contact_info_restricted = true;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Parental gating check failed:", err);
+    }
+
     res.json(player);
   } catch (error) {
     console.error("Get player error:", error);

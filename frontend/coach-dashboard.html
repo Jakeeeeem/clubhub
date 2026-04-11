@@ -52,22 +52,22 @@
             <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
                 <div class="stat-card" onclick="showCoachSection('players')" style="cursor: pointer;">
                     <span class="stat-label">Squad Size</span>
-                    <span class="stat-number" id="squadSize">22</span>
-                    <div class="stat-change">↑ 2 new this month</div>
+                    <span class="stat-number" id="totalPlayersCount">0</span>
+                    <div class="stat-change">Total Players</div>
                 </div>
-                <div class="stat-card" onclick="window.location.href='tournament-manager.html'" style="cursor: pointer;">
-                    <span class="stat-label">Next Session</span>
-                    <span class="stat-number" style="font-size:1.4rem;">Tue 18:00</span>
-                    <div class="stat-change" style="color:#60a5fa;">14 confirmed</div>
+                <div class="stat-card" onclick="showCoachSection('tournament-manager')" style="cursor: pointer;">
+                    <span class="stat-label">Upcoming Sessions</span>
+                    <span class="stat-number" id="upcomingSessionsCount">0</span>
+                    <div class="stat-change" style="color:#60a5fa;">Ready to plan</div>
                 </div>
                 <div class="stat-card" onclick="showCoachSection('teams')" style="cursor: pointer;">
-                    <span class="stat-label">Avg Attendance</span>
-                    <span class="stat-number">78%</span>
-                    <div class="stat-change">↑ 5% vs last month</div>
+                    <span class="stat-label">Managed Teams</span>
+                    <span class="stat-number" id="managedTeamsCount">0</span>
+                    <div class="stat-change">Active squads</div>
                 </div>
                 <div class="stat-card" onclick="showCoachSection('players')" style="cursor: pointer;">
                     <span class="stat-label">Pending Reviews</span>
-                    <span class="stat-number" style="color:#f59e0b;">3</span>
+                    <span class="stat-number" id="pendingReviewsCount" style="color:#f59e0b;">0</span>
                     <div class="stat-change" style="color:#f59e0b;">Player feedback due</div>
                 </div>
             </div>
@@ -216,26 +216,117 @@
             </div>
 
             <!-- Other Coach Sections -->
-            <div id="coach-players" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
-                <h2 class="neon-text">Squad Manager</h2>
-                <p style="color:var(--text-muted);">Detailed player stats, attendance and performance reviews.</p>
-                <div style="margin-top:2rem;">
-                    <button class="btn btn-primary" onclick="window.location.href='training-manager.html'">Go to Training Manager</button>
+            <!-- Players Section -->
+            <div id="coach-players" class="dashboard-section" style="display:none; padding:2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <h2 class="neon-text">Squad Manager</h2>
+                    <div style="display:flex; gap:1rem;">
+                        <input type="text" id="playerSearchCoach" placeholder="Search players..." class="form-control" style="width:250px;" oninput="filterCoachPlayers()">
+                        <select id="teamFilter" class="form-control" style="width:180px;" onchange="filterCoachPlayers()">
+                            <option value="">All Teams</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="window.location.href='training-manager.html'">Go to Training Manager</button>
+                    </div>
+                </div>
+                
+                <div class="glass-card" style="padding:0;">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Player Name</th>
+                                    <th>Team</th>
+                                    <th>Position</th>
+                                    <th>Age</th>
+                                    <th>Attendance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coachPlayersTableBody">
+                                <!-- Players will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teams Section -->
+            <div id="coach-teams" class="dashboard-section" style="display:none; padding:2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <h2 class="neon-text">My Teams</h2>
+                    <button class="btn btn-primary" onclick="openModal('createTeamModal')">+ Create Team</button>
+                </div>
+                
+                <div id="coachTeamsContainer" class="dash-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1.5rem;">
+                    <!-- Teams will be loaded here -->
                 </div>
             </div>
 
             <div id="coach-messenger" class="dashboard-section" style="display:none; padding:1rem;">
                 <!-- Squad Messenger — mounted by squad-messenger.js -->
-                <div id="coach-messenger-mount"></div>
+                <h2 class="neon-text" style="margin-bottom: 1.5rem;">Squad Messenger</h2>
+                <div id="coach-messenger-mount" class="glass-card" style="min-height: 500px; display: flex; align-items: center; justify-content: center;">
+                    <div class="loader">Loading Messenger...</div>
+                </div>
             </div>
 
-            <div id="coach-tournament-manager" class="dashboard-section" style="display:none;">
-
-                <div class="glass-card" style="padding:1.5rem;">
-                    <div class="section-title">📅 Event Management
-                        <button class="btn btn-primary btn-small" style="margin-left:auto;" onclick="openModal('addEventModal')">+ Create Event</button>
+            <!-- Tournament & Event Manager -->
+            <div id="coach-tournament-manager" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <!-- List View Container -->
+                <div id="coachTournamentListView">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h2 class="neon-text">Tournament & Event Center</h2>
+                        <button class="btn btn-primary" onclick="openModal('addEventModal')">+ Create Event</button>
                     </div>
-                    <div id="coachEventsContainer" style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;">
+                    
+                    <!-- Tournament Grid -->
+                    <div id="coachTournamentListContainer" class="dash-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
+                        <!-- Tournaments from backend load here -->
+                    </div>
+
+                    <!-- Sessions & Events Feed -->
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <h3 class="section-title">📅 Sessions Feed</h3>
+                        <div id="coachEventsListContainer" style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;">
+                            <!-- Individual events load here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail View Container -->
+                <div id="coachTournamentDetailView" style="display:none;">
+                    <div style="display:flex; align-items:center; gap:1.5rem; margin-bottom:1.5rem;">
+                        <button class="btn btn-secondary btn-small" onclick="closeCoachTournamentDetail()">&larr; Back</button>
+                        <h2 id="coachDetailTournamentName" class="neon-text">Tournament Detail</h2>
+                    </div>
+
+                    <div class="tabs" style="margin-bottom:1.5rem;">
+                        <button class="tab-btn active" id="tab-bracket" onclick="switchCoachTournamentTab(this, 'bracket')">Bracket</button>
+                        <button class="tab-btn" id="tab-fixtures" onclick="switchCoachTournamentTab(this, 'fixtures')">Fixtures</button>
+                        <button class="tab-btn" id="tab-standings" onclick="switchCoachTournamentTab(this, 'standings')">Standings</button>
+                    </div>
+
+                    <div id="coach-tab-bracket" class="tab-content active">
+                        <div id="coachTournamentBracketVisual" style="min-height:400px; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.2); border-radius:12px;">
+                            <!-- Bracket visualizes here -->
+                        </div>
+                    </div>
+                    <div id="coach-tab-fixtures" class="tab-content" style="display:none;">
+                        <div id="coachTournamentFixturesList"></div>
+                    </div>
+                    <div id="coach-tab-standings" class="tab-content" style="display:none;">
+                        <div id="coachTournamentStandingsContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="coach-events" class="dashboard-section" style="display:none; padding:2rem;">
+                <div class="glass-card" style="padding:1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h2 class="neon-text">Event Management</h2>
+                        <button class="btn btn-primary" onclick="openModal('addEventModal')">+ Create Event</button>
+                    </div>
+                    <div id="coachEventsListContainer" style="display:flex; flex-direction:column; gap:1rem;">
                         <p style="color:var(--text-muted); font-size:0.875rem;">Loading events...</p>
                     </div>
                 </div>
@@ -552,35 +643,11 @@
             if (hash) {
                 if (hash.startsWith('#coach-')) {
                     const section = hash.replace('#coach-', '');
-                    showCoachSection(section);
+                    if (typeof showCoachSection === 'function') {
+                        showCoachSection(section);
+                    }
                 }
             }
         });
-
-        // Global function for coach section switching
-        function showCoachSection(id) {
-            id = id.replace('coach-', '');
-            window.location.hash = 'coach-' + id;
-            document.querySelectorAll('.dashboard-section').forEach(s => {
-                s.style.display = 'none';
-                s.classList.remove('active');
-            });
-            const t = document.getElementById('coach-' + id);
-            if (t) {
-                t.style.display = 'block';
-                t.classList.add('active');
-            }
-        }
-
-        // Global access to modal functions
-        window.openModal = (id) => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'flex';
-        };
-        window.closeModal = (id) => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-        };
-    </script>
 </body>
 </html>
