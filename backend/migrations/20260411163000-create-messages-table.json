@@ -1,0 +1,4 @@
+{
+    "sql-up": "./sqls/20260411163000-create-messages-table-up.sql",
+    "sql-down": "./sqls/20260411163000-create-messages-table-down.sql"
+}

@@ -297,6 +297,11 @@
                          </div>
                     </div>
                 </div>
+                <div id="messenger" class="dashboard-section" style="display:none; padding:0.5rem;">
+                    <!-- Admin Messenger — mounted by squad-messenger.js -->
+                    <div id="admin-messenger-mount"></div>
+                </div>
+
             </div>
         </div>
     </main>
@@ -341,6 +346,7 @@
     <script src="group-switcher.js"></script>
     <script src="pwa-install.js"></script>
     <script src="unified-nav.js"></script>
+    <script src="squad-messenger.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -469,6 +475,13 @@
                 target.style.display = 'block';
                 if (sectionId === 'finances') checkStripeStatus();
                 if (sectionId === 'teams') loadTeams();
+                if (sectionId === 'messenger' && window.SquadMessenger) {
+                    if (!window._adminMessengerMounted) {
+                        SquadMessenger.mount('admin-messenger-mount');
+                        window._adminMessengerMounted = true;
+                    }
+                    SquadMessenger.load();
+                }
             }
         }
 

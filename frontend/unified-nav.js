@@ -521,53 +521,93 @@ const UnifiedNav = {
     }
     header.classList.add("unified-header");
 
-    const isDesktop = window.innerWidth >= 992;
     const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    const name = (user ? (user.firstName || user.first_name) : "User") || "User";
+    const name = (user.firstName || user.first_name || user.name || 'User').split(' ')[0];
+    const initial = name.charAt(0).toUpperCase();
 
-    // Clean structure: Logo/Burger ONLY on mobile desktop header
     header.innerHTML = `
-      <div class="nav-container nav container">
-          <!-- Logo area only visible on mobile top bar or if sidebar is disabled -->
-          <div class="logo-area-wrapper mobile-only" style="display: flex; align-items: center; gap: 1rem;">
-              <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="cursor: pointer;">
-                  ${ICONS.menu}
-              </div>
-              <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                  <img src="images/logo.png" alt="Logo" style="height: 32px; width: 32px; object-fit: contain;">
-                  <span style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--primary);">ClubHub</span>
-              </div>
+      <div class="nav-container nav container" style="display:flex; align-items:center; width:100%; gap:1.5rem;">
+
+        <!-- MOBILE: hamburger + logo -->
+        <div class="logo-area-wrapper mobile-only" style="display:flex; align-items:center; gap:0.75rem; flex-shrink:0;">
+          <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="cursor:pointer; display:flex; align-items:center;">
+            ${ICONS.menu}
           </div>
+          <div class="logo" onclick="window.location.href='index.html'" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+            <img src="images/logo.png" alt="Logo" style="height:28px; width:28px; object-fit:contain;">
+            <span style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.1rem; color:var(--primary);">ClubHub</span>
+          </div>
+        </div>
+
+        <!-- DESKTOP LEFT: Logo + Group Switcher (Unified Context) -->
+        <div class="dash-header-left desktop-only" style="display:flex; align-items:center; gap:1.5rem; flex-shrink:0;">
+          <div class="logo" onclick="window.location.href='index.html'" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; text-decoration:none;">
+            <img src="images/logo.png" alt="Logo" style="height:32px; width:32px; object-fit:contain;">
+            <span style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.2rem; color:var(--primary);">ClubHub</span>
+          </div>
+          <div id="header-org-switcher" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
+        </div>
+
+        <!-- CENTER: Mode Switcher (Groups vs Player) -->
+        <div class="dash-header-center desktop-only" style="flex:1; display:flex; justify-content:center;">
+          <div class="header-mode-toggle" id="header-mode-toggle" style="display:flex; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:4px;">
+            <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')" 
+                 style="padding:0.5rem 1rem; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer; transition:all 0.2s;">Groups Hub</div>
+            <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')" 
+                 style="padding:0.5rem 1rem; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer; transition:all 0.2s;">Player Pro</div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Actions -->
+        <div class="dash-header-right" id="header-actions-right" style="display:flex; align-items:center; gap:0.75rem; flex-shrink:0;">
+          <div id="stripe-header-btn-container" class="desktop-only"></div>
+          <div id="notif-header-btn-container"></div>
           
-          <div class="dash-header-left desktop-only">
-             <!-- Desktop header is intentionally clean. Info is in the sidebar. -->
+          <div class="user-profile-trigger desktop-only" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
+               style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.35rem 0.75rem; border-radius:999px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); transition:all 0.2s;">
+            <span class="user-name" id="header-user-name" style="font-size:0.85rem; font-weight:600;">${name}</span>
+            <div class="user-avatar-sm" id="header-user-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0;">${initial}</div>
+            <i class="fa fa-chevron-down" style="font-size:0.7rem; opacity:0.5;"></i>
           </div>
+
+          <button class="btn btn-secondary btn-small desktop-only" onclick="UnifiedNav.logout()" style="white-space:nowrap; border-radius:8px;">Logout</button>
           
-          <div class="dash-header-right" id="header-actions-right" style="margin-left: auto;">
-              <div id="stripe-header-btn-container"></div>
-              <div id="notif-header-btn-container"></div>
-              
-              <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
-                  <span class="user-name desktop-only" id="header-user-name">${name}</span>
-                  <div class="user-avatar-sm" id="header-user-avatar">${name.charAt(0)}</div>
-              </div>
-              <button class="btn btn-secondary btn-small desktop-only" onclick="UnifiedNav.logout()" style="margin-left: 0.5rem;">Logout</button>
+          <!-- mobile avatar only -->
+          <div class="mobile-only" style="display:flex; align-items:center; gap:0.5rem;" onclick="UnifiedNav.toggleSidebar(true)">
+            <div class="user-avatar-sm" style="width:32px; height:32px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem;">${initial}</div>
           </div>
+        </div>
       </div>
     `;
-    
-    // Inject components into containers
+
+    // Inject Stripe button and notifications
     this.renderStripeHeaderButton(document.getElementById('stripe-header-btn-container'));
     this.renderHeaderNotifications(document.getElementById('notif-header-btn-container'));
     this.syncUserData();
-    
-    // Inject Top Tabs if on a dashboard
+    this.updateModeUI();
+
+    // Inject Group Switcher (or Family Switcher for player page) into #header-org-switcher
+    const switcherSlot = document.getElementById('header-org-switcher');
+    if (switcherSlot && !switcherSlot.dataset.mounted) {
+      switcherSlot.dataset.mounted = '1';
+      const userRole = this.getUserRole();
+      const isPlayerPage = window.location.href.includes('player-dashboard.html');
+      
+      if (isPlayerPage || userRole === 'player') {
+        this.renderFamilySwitcher(switcherSlot);
+      } else {
+        this.renderGroupSwitcher(switcherSlot);
+      }
+    }
+
     this.renderTopTabs();
   },
 
   ensureHeaderElements() {
     this.ensureDashboardHeader();
   },
+
+
 
   renderSidebar() {
     try {
@@ -1242,21 +1282,23 @@ const UnifiedNav = {
     } else {
       menuHtml += `
         <div class="nav-group-title"><span>Core Management</span></div>
-        <a href="#" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') { showSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Overview</span></a>
-        <a href="#" class="sidebar-link" data-tooltip="Player List" onclick="if(typeof showSection === 'function') { showSection('players'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>Player List</span></a>
-        <a href="#" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') { showSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.teams}<span>Squads & Teams</span></a>
-        <a href="#" class="sidebar-link" data-tooltip="Event Manager" onclick="if(typeof showSection === 'function') { showSection('events'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.events}<span>Event Manager</span></a>
-        <a href="#" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') { showSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Admin Chat</span></a>
-        
+        <a href="admin-dashboard.html#overview" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') { showSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Overview</span></a>
+        <a href="admin-dashboard.html#players" class="sidebar-link" data-tooltip="Player List" onclick="if(typeof showSection === 'function') { showSection('players'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>Player List</span></a>
+        <a href="admin-dashboard.html#teams" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') { showSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.teams}<span>Squads & Teams</span></a>
+        <a href="admin-dashboard.html#events" class="sidebar-link" data-tooltip="Event Manager" onclick="if(typeof showSection === 'function') { showSection('events'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.events}<span>Event Manager</span></a>
+        <a href="admin-dashboard.html#messenger" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') { showSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Admin Chat</span></a>
+        <a href="admin-dashboard.html#staff" class="sidebar-link" data-tooltip="Staff" onclick="if(typeof showSection === 'function') { showSection('staff'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>Staff</span></a>
+
         <div class="nav-group-title"><span>Advanced Operations</span></div>
-        <a href="#" class="sidebar-link" data-tooltip="Scout Approvals" onclick="if(typeof showSection === 'function') { showSection('scout-approvals'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
-        <a href="#" class="sidebar-link" data-tooltip="Tactics Board" onclick="if(typeof showSection === 'function') { showSection('tactical-board'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.tactics}<span>Tactics Board</span></a>
-        <a href="#" class="sidebar-link" data-tooltip="Custom Forms" onclick="if(typeof showSection === 'function') { showSection('form-builder'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Custom Forms</span></a>
-        <a href="#" class="sidebar-link" data-tooltip="Email Campaigns" onclick="if(typeof showSection === 'function') { showSection('email-campaigns'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.email}<span>Email Campaigns</span></a>
+        <a href="admin-dashboard.html#scout-approvals" class="sidebar-link" data-tooltip="Scout Approvals" onclick="if(typeof showSection === 'function') { showSection('scout-approvals'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
+        <a href="admin-dashboard.html#tactical-board" class="sidebar-link" data-tooltip="Tactics Board" onclick="if(typeof showSection === 'function') { showSection('tactical-board'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.tactics}<span>Tactics Board</span></a>
+        <a href="admin-dashboard.html#form-builder" class="sidebar-link" data-tooltip="Custom Forms" onclick="if(typeof showSection === 'function') { showSection('form-builder'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Custom Forms</span></a>
+        <a href="admin-dashboard.html#email-campaigns" class="sidebar-link" data-tooltip="Email Campaigns" onclick="if(typeof showSection === 'function') { showSection('email-campaigns'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.email}<span>Email Campaigns</span></a>
         
         <div class="nav-group-title"><span>Events & Bookings</span></div>
         <a href="training-manager.html" class="sidebar-link" data-tooltip="Training Hub">${ICONS.nav.training}<span>Training Hub</span></a>
         <a href="venue-booking.html" class="sidebar-link" data-tooltip="Venue Portal">${ICONS.nav.venue}<span>Venue Portal</span></a>
+        <a href="tournament-manager.html" class="sidebar-link" data-tooltip="Tournament Manager">${ICONS.nav.trophy}<span>Tournaments</span></a>
         
         <div class="nav-group-title"><span>Business & Shop</span></div>
         <a href="admin-dashboard.html#finances" class="sidebar-link" data-tooltip="Financials" onclick="if(typeof showSection === 'function') { showSection('finances'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.finance}<span>Financials</span></a>

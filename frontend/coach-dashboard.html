@@ -165,7 +165,7 @@
                         <div style="display:flex;flex-direction:column;gap:0.6rem;">
                             <button class="quick-action-btn" onclick="openModal('addEventModal')">🏃 Plan Training Session</button>
                             <button class="quick-action-btn" onclick="showCoachSection('players')">📝 Write Player Review</button>
-                            <button class="quick-action-btn">📨 Message Squad</button>
+                            <button class="quick-action-btn" onclick="showCoachSection('messenger')">📨 Message Squad</button>
                             <button class="quick-action-btn" onclick="showCoachSection('players')">📊 View Squad Stats</button>
                             <button class="quick-action-btn">👤 Review Application</button>
                         </div>
@@ -224,12 +224,13 @@
                 </div>
             </div>
 
-            <div id="coach-messenger" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
-                <h2 class="neon-text">Squad Messenger</h2>
-                <p style="color:var(--text-muted);">Secure communications with your players and parents.</p>
+            <div id="coach-messenger" class="dashboard-section" style="display:none; padding:1rem;">
+                <!-- Squad Messenger — mounted by squad-messenger.js -->
+                <div id="coach-messenger-mount"></div>
             </div>
 
             <div id="coach-tournament-manager" class="dashboard-section" style="display:none;">
+
                 <div class="glass-card" style="padding:1.5rem;">
                     <div class="section-title">📅 Event Management
                         <button class="btn btn-primary btn-small" style="margin-left:auto;" onclick="openModal('addEventModal')">+ Create Event</button>
@@ -530,6 +531,7 @@
     <script src="group-switcher.js"></script>
     <script src="pwa-install.js"></script>
     <script src="unified-nav.js"></script>
+    <script src="squad-messenger.js"></script>
     <script src="coach-dashboard.js"></script>
 
     <script>

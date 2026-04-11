@@ -262,36 +262,10 @@
           </div>
         </div>
 
-        <!-- 💬 Premium Messaging Section -->
-        <div id="player-club-messenger" class="dashboard-section" style="display: none;">
-          <div class="section-header"
-            style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <h1 class="neon-text">Messages</h1>
-              <p>Direct communication with coaches, scouts, and admin.</p>
-            </div>
-            <button class="btn btn-primary" onclick="openNewMessageModal()">+ New Message</button>
-          </div>
-
-          <div class="messaging-container">
-            <div class="message-sidebar">
-              <div class="sidebar-header">
-                <input type="text" class="chat-input" placeholder="Search messages..." style="width: 100%;">
-              </div>
-              <div id="messengerListItems" class="message-list">
-                <!-- Message items will be loaded here -->
-                <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
-                  Loading conversations...
-                </div>
-              </div>
-            </div>
-            <div class="message-view" id="messageViewContainer">
-              <div class="message-view-empty">
-                <div style="font-size: 3rem; opacity: 0.2;">💬</div>
-                <p>Select a message to view the conversation</p>
-              </div>
-            </div>
-          </div>
+        <!-- 💬 Squad Messenger Section -->
+        <div id="player-club-messenger" class="dashboard-section" style="display: none; padding:0.5rem;">
+          <!-- Mounted dynamically by squad-messenger.js -->
+          <div id="player-messenger-mount"></div>
         </div>
 
         <div id="player-overview" class="dashboard-section active">
@@ -1502,7 +1476,44 @@
   <script src="training.js"></script>
   <script src="pwa-install.js"></script>
   <script src="unified-nav.js"></script>
+  <script src="squad-messenger.js"></script>
   <script src="player-dashboard.js"></script>
+  <script>
+    // Wire messenger section to shared SquadMessenger
+    let _playerMessengerMounted = false;
+    const _origShowPlayerSection = typeof showPlayerSection === 'function' ? showPlayerSection : null;
+    document.addEventListener('DOMContentLoaded', () => {
+      // Intercept section switching at the navigation layer
+      if (window.UnifiedNav && window.UnifiedNav.onSectionChange) {
+        const _orig = window.UnifiedNav.onSectionChange;
+        window.UnifiedNav.onSectionChange = (section) => {
+          _orig && _orig(section);
+          if (section === 'player-club-messenger' && window.SquadMessenger) {
+            if (!_playerMessengerMounted) {
+              SquadMessenger.mount('player-messenger-mount');
+              _playerMessengerMounted = true;
+            }
+            SquadMessenger.load();
+          }
+        };
+      }
+      // Also patch showPlayerSection directly if it exists
+      if (typeof showPlayerSection === 'function') {
+        const _orig2 = showPlayerSection;
+        window.showPlayerSection = function(sectionId) {
+          _orig2(sectionId);
+          const fullId = 'player-' + sectionId;
+          if ((sectionId === 'club-messenger' || fullId === 'player-club-messenger') && window.SquadMessenger) {
+            if (!_playerMessengerMounted) {
+              SquadMessenger.mount('player-messenger-mount');
+              _playerMessengerMounted = true;
+            }
+            SquadMessenger.load();
+          }
+        };
+      }
+    });
+  </script>
 </body>
 
 </html>

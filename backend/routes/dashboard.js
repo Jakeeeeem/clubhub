@@ -228,6 +228,96 @@ router.get(
     }
   },
 );
+// Get coach dashboard data
+router.get("/coach", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { coachId } = req.query; // If provided, could be for specific context
+    
+    console.log(`🔍 COACH Dashboard Init - User: ${userId}, Request CoachId: ${coachId}`);
+
+    // 1. Identify the coach record
+    const staffResult = await query(
+      "SELECT * FROM staff WHERE user_id = $1 OR id = $2 LIMIT 1",
+      [userId, coachId || null]
+    );
+    
+    if (staffResult.rows.length === 0) {
+      console.warn(`   ⚠️ No staff record found for user ${userId}`);
+      // Fallback empty data
+      return res.json({
+        clubs: [], teams: [], players: [], staff: [], events: [], statistics: {}
+      });
+    }
+
+    const coach = staffResult.rows[0];
+    const clubId = coach.club_id;
+    const clubIds = [clubId];
+
+    // 2. Get teams managed by this coach
+    const teamsResult = await query(
+      `SELECT t.*, COUNT(tp.player_id) as player_count
+       FROM teams t
+       LEFT JOIN team_players tp ON t.id = tp.team_id
+       WHERE t.coach_id = $1 OR t.club_id = ANY($2)
+       GROUP BY t.id
+       ORDER BY t.name`,
+      [coach.id, clubIds]
+    );
+    const teams = teamsResult.rows;
+    const managedTeamIds = teams.filter(t => t.coach_id === coach.id).map(t => t.id);
+
+    // 3. Get players (all club players if coach, or limited to their teams)
+    const playersResult = await query(
+      `SELECT p.* 
+       FROM players p
+       WHERE p.club_id = ANY($1)
+       ORDER BY p.first_name, p.last_name`,
+      [clubIds]
+    );
+
+    // 4. Get events for their teams + club events
+    const eventsResult = await query(
+      `SELECT e.*, c.name as club_name
+       FROM events e
+       LEFT JOIN organizations c ON e.club_id = c.id
+       WHERE (e.club_id = ANY($1) OR e.team_id = ANY($2))
+       AND e.event_date >= CURRENT_DATE - INTERVAL '30 days'
+       ORDER BY e.event_date ASC`,
+      [clubIds, managedTeamIds]
+    );
+
+    // 5. Get staff
+    const allStaffResult = await query(
+      "SELECT * FROM staff WHERE club_id = ANY($1)",
+      [clubIds]
+    );
+
+    // Statistics
+    const totalPlayers = playersResult.rows.length;
+    const squadSize = teams.find(t => t.coach_id === coach.id)?.player_count || 0;
+
+    res.json({
+      clubs: [], // Frontend might expect club objects here
+      teams: teams,
+      players: playersResult.rows,
+      staff: allStaffResult.rows,
+      events: eventsResult.rows,
+      statistics: {
+        total_players: totalPlayers,
+        squad_size: parseInt(squadSize),
+        managed_teams: managedTeamIds.length,
+        total_events: eventsResult.rows.length
+      }
+    });
+  } catch (error) {
+    console.error("Get coach dashboard error:", error);
+    res.status(500).json({
+      error: "Failed to fetch dashboard data",
+      details: error.message
+    });
+  }
+});
 
 // 🔥 FIXED: Get player dashboard data with profile/family support
 router.get("/player", authenticateToken, async (req, res) => {

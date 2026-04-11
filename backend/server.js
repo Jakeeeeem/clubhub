@@ -310,6 +310,7 @@ app.use("/api/email", require("./routes/email")); // Email service routes
 app.use("/api/tactical", require("./routes/tactical")); // Tactical formations system
 app.use("/api/forms", formRoutes); // Dynamic Form Builder
 app.use("/api/training", require("./routes/training")); // Training & Drills System
+app.use("/api/messages", require("./routes/messages"));
 
 // Handle 404 for API routes specifically
 app.use("/api/*", (req, res) => {
