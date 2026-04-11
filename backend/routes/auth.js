@@ -330,13 +330,15 @@ router.post("/register", registerValidation, async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Registration error:", error);
-    console.error("Error details:", {
-      message: error.message,
-      code: error.code,
-      detail: error.detail,
-      table: error.table,
-      column: error.column,
-    });
+    if (error) {
+      console.error("Error details:", {
+        message: error.message || "No message provided",
+        code: error.code,
+        detail: error.detail,
+        table: error.table,
+        column: error.column,
+      });
+    }
     res.status(500).json({
       error: "Registration failed",
       message: "An error occurred while creating your account",

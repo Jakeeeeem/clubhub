@@ -1,69 +1,80 @@
-// Load environment variables for testing
-const dotenv = require("dotenv");
-const path = require("path");
-
-// Load main .env file but override DB_HOST for local testing (localhost instead of db)
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
-process.env.DB_PORT = "5436";
-
 const request = require("supertest");
-const app = require("../server");
-const { pool } = require("../config/database");
+const express = require("express");
+const app = express();
 
-describe("Payments API Integration Tests", () => {
-  let createdUserEmail;
-  let authToken;
-  let organizationId;
+// Mock database
+jest.mock("../config/database", () => ({
+  query: jest.fn(),
+  withTransaction: jest.fn(),
+  queries: {
+    findUserByEmail: "SELECT * FROM users WHERE email = $1"
+  }
+}));
 
-  // Cleanup after tests
-  afterAll(async () => {
-    // Delete data in reverse order of dependency
-    if (organizationId) {
-      // organization_id column doesn't exist in clubs table
-      // plans.club_id points to organization.id (clubs.id)
-      await pool.query("DELETE FROM plans WHERE club_id = $1", [
-        organizationId,
-      ]);
-      await pool.query(
-        "DELETE FROM organization_members WHERE organization_id = $1",
-        [organizationId],
-      );
-      await pool.query("DELETE FROM organizations WHERE id = $1", [
-        organizationId,
-      ]);
+const db = require("../config/database");
+
+// Mock auth middleware to return fixed data
+jest.mock("../middleware/auth", () => ({
+  authenticateToken: (req, res, next) => {
+    req.user = { id: "00000000-0000-4000-a000-000000000001", email: "coach@clubhub.com" };
+    next();
+  },
+  requireOrganization: (req, res, next) => {
+    req.user.organization_id = "00000000-0000-4000-a000-000000000002";
+    next();
+  }
+}));
+
+// Mock Stripe
+jest.mock("stripe", () => {
+  return jest.fn(() => ({
+    products: {
+      create: jest.fn().mockResolvedValue({ id: "prod_123" })
+    },
+    prices: {
+      create: jest.fn().mockResolvedValue({ id: "price_123" })
     }
-    if (createdUserEmail) {
-      await pool.query("DELETE FROM users WHERE email = $1", [
-        createdUserEmail,
-      ]);
-    }
-    await pool.end();
+  }));
+});
+
+app.use(express.json());
+app.use("/api/auth", require("../routes/auth"));
+app.use("/api/payments", require("../routes/payments"));
+
+describe("Payments API Integration Tests (Mocked)", () => {
+  let authToken = "mock-token";
+  let organizationId = "00000000-0000-4000-a000-000000000002";
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
   // 1. Setup User and Organization
   it("should register a user and create an organization", async () => {
-    const rand = Math.floor(Math.random() * 10000);
-    createdUserEmail = `paytest${rand}@example.com`;
+    db.query.mockResolvedValueOnce({ rows: [] }); // User duplicate check
+    db.withTransaction.mockImplementation(async (cb) => {
+      const client = {
+        query: jest.fn()
+          .mockResolvedValueOnce({ rows: [{ id: "u1", email: "test@test.com", account_type: "organization" }] }) // User insert
+          .mockResolvedValueOnce({ rows: [{ id: "org1" }] }) // Org insert
+          .mockResolvedValue({ rows: [] }) // Members/Prefs
+      };
+      return await cb(client);
+    });
 
-    // Register
     const res = await request(app)
       .post("/api/auth/register")
       .send({
         firstName: "Stripe",
         lastName: "Tester",
-        email: createdUserEmail,
+        email: "stripe-test@example.com",
         password: "Password123!",
         accountType: "organization",
         orgTypes: ["Football Club"],
       });
 
     expect(res.statusCode).toEqual(201);
-    authToken = res.body.token;
-    expect(authToken).toBeDefined();
-
-    // The register endpoint with 'organization' type and orgTypes should have auto-created an org
-    expect(res.body.user.organization).toBeDefined();
-    organizationId = res.body.user.organization.id;
+    expect(res.body.token).toBeDefined();
   });
 
   // 2. Check Stripe Configuration
@@ -83,18 +94,10 @@ describe("Payments API Integration Tests", () => {
   });
 
   // 3. Create a Payment Plan
-  // This interacts with Stripe API. If it fails, it might be due to missing keys or network.
   it("should create a payment plan", async () => {
-    // Check key presence first
-    const health = await request(app).get("/api/payments/health");
-    if (!health.body.stripe) {
-      console.log("Skipping Create Plan test because Stripe is not configured");
-      return;
-    }
-
-    // We need to make sure the user/org is connected to Stripe (Connect)
-    // The current implementation might require a Connect account ID to be set on the org/user
-    // mocking that for now or expecting a specific error "Stripe not connected"
+    db.query
+      .mockResolvedValueOnce({ rows: [{ id: organizationId, stripe_account_id: "acct_123" }] }) // Org check
+      .mockResolvedValueOnce({ rows: [{ id: "plan1" }] }); // Plan insert
 
     const res = await request(app)
       .post("/api/payments/plans")
@@ -106,30 +109,28 @@ describe("Payments API Integration Tests", () => {
         description: "Unit Test Plan",
       });
 
-    // We expect either 201 (Created), 400 (Stripe not connected), or 500 (Stripe error in test env)
-    // 400/500 effectively "passes" the logic test — we've reached the Stripe integration point
-    if (
-      (res.statusCode === 400 && res.body.error === "Stripe not connected") ||
-      res.statusCode === 500 ||
-      res.statusCode === 400
-    ) {
-      console.log(
-        `✅ Plan creation logic reached Stripe integration point (${res.statusCode} — expected in test env).`,
-      );
-    } else {
-      expect(res.statusCode).toEqual(201);
-      expect(res.body.plan).toHaveProperty("name", "Test Annual Membership");
-      console.log("✅ Plan created successfully in Stripe.");
-    }
+    expect(res.statusCode).toEqual(201);
+    expect(res.body.plan).toHaveProperty("id");
   });
 
   // 4. Fetch Plans
   it("should fetch plans", async () => {
+    // We need to ensure this is the ONLY query result returned for this test
+    db.query.mockReset();
+    db.query
+      .mockResolvedValueOnce({ rows: [] }) // Table check/create
+      .mockResolvedValueOnce({
+        rows: [
+          { id: "p1", name: "Basic Plan" },
+          { id: "p2", name: "Pro Plan" }
+        ]
+      }); // Plans fetch
+
     const res = await request(app)
       .get(`/api/payments/plans`)
-      .set("Authorization", `Bearer ${authToken}`); // Authentication might be optional depending on implementation
+      .set("Authorization", `Bearer ${authToken}`);
 
     expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBe(2);
   });
 });

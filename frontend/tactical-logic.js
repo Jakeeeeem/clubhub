@@ -62,62 +62,65 @@ const TacticalBoard = {
             e.preventDefault();
         });
 
-    pitch.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const data = e.dataTransfer.getData('text/plain');
-        if (!data) return;
+        pitch.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const data = e.dataTransfer.getData('text/plain');
+            if (!data) return;
 
-        const rect = pitch.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
+            const rect = pitch.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-        try {
-            const parsed = JSON.parse(data);
-            if (parsed.source === 'tray') {
-                this.addElement(parsed.type, x, y, parsed.label);
-            } else if (parsed.source === 'pin') {
-                this.updateElementPos(parsed.id, x, y);
+            try {
+                const parsed = JSON.parse(data);
+                if (parsed.source === 'tray') {
+                    this.addElement(parsed.type, x, y, parsed.label);
+                } else if (parsed.source === 'pin') {
+                    this.updateElementPos(parsed.id, x, y);
+                }
+            } catch (err) {
+                // Support legacy dragging if needed
             }
-        } catch (err) {
-            // Legacy/Fallback
-            this.addElement(data, x, y);
-        }
-    });
-},
-
-setupEquipmentListeners() {
-    document.querySelectorAll('.eq-item, .player-pin-source').forEach(item => {
-        item.addEventListener('dragstart', (e) => {
-            const isPlayer = item.classList.contains('player-pin-source');
-            e.dataTransfer.setData('text/plain', JSON.stringify({
-                source: 'tray',
-                type: isPlayer ? 'player' : item.dataset.type,
-                label: isPlayer ? item.innerText : ''
-            }));
         });
-    });
-},
+    },
 
-addElement(type, x, y, label = '') {
-    const id = `${type}-${Date.now()}`;
-    const icons = { cone: '🟠', goal: '🥅', hurdle: '🚧', 'bib-blue': '👕', 'bib-red': '🔴' };
-    
-    const newEl = {
-        id,
-        type: type === 'player' ? 'player' : 'equipment',
-        x,
-        y: Math.min(y, 98)
-    };
+    setupEquipmentListeners() {
+        // Equipment tray items
+        document.querySelectorAll('.eq-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    source: 'tray',
+                    type: item.dataset.type || 'equipment',
+                    label: ''
+                }));
+            });
+        });
+    },
 
-    if (type === 'player') {
-        newEl.label = label || 'P';
-    } else {
-        newEl.icon = icons[type] || '⚙️';
-    }
+    addElement(type, x, y, label = '') {
+        const id = `${type}-${Date.now()}`;
+        const icons = { cone: '🟠', goal: '🥅', hurdle: '🚧', 'bib-blue': '👕', 'bib-red': '🔴' };
+        
+        const newEl = {
+            id,
+            type: type === 'player' ? 'player' : 'equipment',
+            x,
+            y: Math.min(y, 98)
+        };
 
-    this.frames[this.currentFrame].push(newEl);
-    this.render();
-},
+        if (type === 'player') {
+            newEl.label = label || 'P';
+        } else {
+            newEl.icon = icons[type] || '⚙️';
+        }
+
+        // Add to current and all subsequent frames
+        for (let i = this.currentFrame; i < this.frames.length; i++) {
+            this.frames[i].push(JSON.parse(JSON.stringify(newEl)));
+        }
+        
+        this.render();
+    },
 
     updateElementPos(id, x, y) {
         const element = this.frames[this.currentFrame].find(el => el.id === id);
@@ -157,18 +160,29 @@ addElement(type, x, y, label = '') {
             clearInterval(this.playbackInterval);
             this.isPlaying = false;
             document.getElementById('playAnimationBtn').innerHTML = '▶ Play';
+            
+            // Remove animating class
+            document.querySelectorAll('.tactical-pin').forEach(p => p.classList.remove('animating'));
         } else {
             this.isPlaying = true;
             document.getElementById('playAnimationBtn').innerHTML = '⏸ Stop';
+            
+            // Ensure first frame layout is set
+            this.render(); 
+            
             this.playbackInterval = setInterval(() => {
                 if (this.currentFrame >= this.frames.length - 1) {
                     this.currentFrame = 0;
+                    // Disable transition for the "jump" back to start
+                    document.querySelectorAll('.tactical-pin').forEach(p => p.classList.remove('animating'));
                 } else {
                     this.currentFrame++;
+                    // Enable transitions for movement
+                    document.querySelectorAll('.tactical-pin').forEach(p => p.classList.add('animating'));
                 }
                 this.render();
                 this.updateUI();
-            }, 800);
+            }, 1000);
         }
     },
 
@@ -200,33 +214,44 @@ addElement(type, x, y, label = '') {
         const pitch = document.getElementById('activePitchArea');
         if (!pitch) return;
         
-        pitch.innerHTML = '';
-        const elements = this.frames[this.currentFrame] || [];
-        
-        elements.forEach(el => {
-            const div = document.createElement('div');
-            div.className = el.type === 'player' ? 'player-pin' : 'equipment-pin';
-            div.style.left = `${el.x}%`;
-            div.style.top = `${el.y}%`;
-            div.draggable = true;
+        const currentElements = this.frames[this.currentFrame] || [];
+        const existingPins = Array.from(pitch.querySelectorAll('.tactical-pin'));
+        const existingIds = existingPins.map(p => p.dataset.id);
+        const currentIds = currentElements.map(el => el.id);
+
+        // Remove old pins
+        existingPins.forEach(pin => {
+            if (!currentIds.includes(pin.dataset.id)) {
+                pin.remove();
+            }
+        });
+
+        // Add or Update pins
+        currentElements.forEach(el => {
+            let pin = pitch.querySelector(`[data-id="${el.id}"]`);
             
-            if (el.type === 'player') {
-                div.innerHTML = `<span>${el.label}</span>`;
-                div.style.background = 'var(--primary)';
-                div.style.boxShadow = '0 0 10px rgba(220, 38, 38, 0.4)';
-            } else {
-                div.innerHTML = el.icon;
-                div.style.fontSize = '1.4rem';
+            if (!pin) {
+                pin = document.createElement('div');
+                pin.dataset.id = el.id;
+                pin.draggable = true;
+                pin.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', JSON.stringify({
+                        source: 'pin',
+                        id: el.id
+                    }));
+                });
+                pitch.appendChild(pin);
+            }
+
+            // Update properties
+            pin.className = `tactical-pin ${el.type === 'player' ? 'player-home' : 'equipment'}`;
+            if (this.isPlaying && this.currentFrame > 0) {
+                pin.classList.add('animating');
             }
             
-            div.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', JSON.stringify({
-                    source: 'pin',
-                    id: el.id
-                }));
-            });
-            
-            pitch.appendChild(div);
+            pin.style.left = `${el.x}%`;
+            pin.style.top = `${el.y}%`;
+            pin.innerHTML = el.type === 'player' ? `<span>${el.label}</span>` : el.icon;
         });
     },
 
@@ -238,27 +263,54 @@ addElement(type, x, y, label = '') {
     },
 
     async saveFormation() {
-        const scenarioData = {
-            name: "Tactical Sequence " + new Date().toLocaleTimeString(),
-            frames: this.frames,
-            formation: document.getElementById('tacticalFormationSelect')?.value || "Custom"
-        };
-        
         try {
-            console.log("💾 Saving tactical scenario:", scenarioData);
-            // In real app, call backend route
             if (typeof apiService !== 'undefined') {
                 await apiService.post('/api/tactical', {
-                    name: scenarioData.name,
-                    lineup: JSON.stringify(scenarioData.frames)
+                    name: "Tactical Sequence " + new Date().toLocaleTimeString(),
+                    lineup: JSON.stringify(this.frames),
+                    formation: document.getElementById('tacticalFormationSelect')?.value || "Custom"
                 });
                 alert("Scenario saved successfully!");
             }
         } catch (err) {
             console.error("Save error:", err);
+            alert("Failed to save scenario (Check console)");
+        }
+    },
+
+    async shareToFeed() {
+        try {
+            if (typeof apiService !== 'undefined') {
+                const formation = document.getElementById('tacticalFormationSelect')?.value || "Custom";
+                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                
+                await apiService.post('/feed', {
+                    type: 'tactical_update',
+                    title: `New Tactics: ${formation}`,
+                    content: `${user.first_name || 'Coach'} shared a new tactical sequence with ${this.frames.length} frames. Check the Tactical Board for the full walkthrough.`,
+                    roles: ['player', 'coach', 'admin']
+                });
+                
+                alert("Shared to feed successfully!");
+            }
+        } catch (err) {
+            console.error("Share error:", err);
+            alert("Failed to share to feed");
         }
     }
 };
 
-window.TacticalBoard = TacticalBoard;
-window.initializeTacticalBoard = () => TacticalBoard.init();
+if (typeof window !== "undefined") {
+  window.TacticalBoard = TacticalBoard;
+  window.initializeTacticalBoard = () => TacticalBoard.init();
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    FORMATIONS,
+    getFormationPositions: (f) => FORMATIONS[f] || FORMATIONS["4-4-2"],
+    normalizeCoordinate: (val) => Math.max(5, Math.min(95, val)),
+    snapToGrid: (val, step = 5) => Math.round(val / step) * step,
+    FORMATIONS
+  };
+}

@@ -360,17 +360,17 @@ const UnifiedNav = {
   },
 
   renderDesktopSidebarToggle() {
-    // Look for the best place to put the toggle in our fixed header
-    const target = document.querySelector(".dash-header-right") || document.querySelector(".nav-container");
+    // Insert toggle inside the sidebar header next to the logo
+    const target = document.querySelector(".sidebar-header");
     if (!target || target.querySelector(".desktop-sidebar-toggle")) return;
 
     const toggleHTML = `
-      <button class="desktop-sidebar-toggle desktop-only btn btn-small" onclick="UnifiedNav.toggleDesktopSidebar()" style="margin-right: 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 6px 10px; display: flex; align-items: center; justify-content: center; min-width: 36px;">
+      <button class="desktop-sidebar-toggle desktop-only btn btn-small" onclick="window.UnifiedNav.toggleDesktopSidebar()" style="margin-right: 0.75rem; background: transparent; border: none; color: rgba(255,255,255,0.7); padding: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.2s;">
         <i id="desktop-toggle-icon" style="font-style: normal;">☰</i>
       </button>
     `;
     
-    // Insert at the beginning of actions
+    // Insert at the beginning of sidebar header
     target.insertAdjacentHTML("afterbegin", toggleHTML);
     
     // Sync icon
@@ -555,16 +555,11 @@ const UnifiedNav = {
           </div>
       </div>
     `;
-  },
-            </div>
-        </div>
-      `;
-      
-      // Inject components into containers
-      this.renderStripeHeaderButton(document.getElementById('stripe-header-btn-container'));
-      this.renderHeaderNotifications(document.getElementById('notif-header-btn-container'));
-      this.syncUserData();
-    }
+    
+    // Inject components into containers
+    this.renderStripeHeaderButton(document.getElementById('stripe-header-btn-container'));
+    this.renderHeaderNotifications(document.getElementById('notif-header-btn-container'));
+    this.syncUserData();
     
     // Inject Top Tabs if on a dashboard
     this.renderTopTabs();
@@ -1182,50 +1177,50 @@ const UnifiedNav = {
     if (isPlayer) {
       menuHtml = `
                     <div class="nav-group-title">Main Hub</div>
-                    <a href="player-dashboard.html#player-overview" class="sidebar-link active" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('overview'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Overview</span></a>
-                    <a href="player-dashboard.html#player-club-messenger" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('club-messenger'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.chat}<span>Club Chat</span></a>
+                    <a href="player-dashboard.html#player-overview" class="sidebar-link active" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="player-dashboard.html#player-club-messenger" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('club-messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Club Chat</span></a>
                     
                     <div class="nav-group-title">My Career</div>
-                    <a href="player-dashboard.html#player-teams" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('teams'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.teams}<span>My Teams</span></a>
-                    <a href="player-dashboard.html#player-my-clubs" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('my-clubs'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.venue}<span>My Groups</span></a>
-                    <a href="player-dashboard.html#player-documents" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('documents'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.forms}<span>Documents</span></a>
-                    <a href="player-dashboard.html#player-polls" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('polls'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.forms}<span>Club Polls</span></a>
+                    <a href="player-dashboard.html#player-teams" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.teams}<span>My Teams</span></a>
+                    <a href="player-dashboard.html#player-my-clubs" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-clubs'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.venue}<span>My Groups</span></a>
+                    <a href="player-dashboard.html#player-documents" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('documents'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Documents</span></a>
+                    <a href="player-dashboard.html#player-polls" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('polls'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Club Polls</span></a>
                     <a href="scouting.html" class="sidebar-link">${ICONS.nav.training}<span>Scouting</span></a>
 
                     <div class="nav-group-title">Family & Profile</div>
                     <a href="player-settings.html" class="sidebar-link">${ICONS.nav.players}<span>My Profile</span></a>
-                    <a href="player-dashboard.html#player-family" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('family'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>My Family</span></a>
+                    <a href="player-dashboard.html#player-family" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('family'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>My Family</span></a>
                     
                     <div class="nav-group-title">Shop & Marketplace</div>
                     <a href="club-finder.html" class="sidebar-link">${ICONS.nav.venue}<span>Club Finder</span></a>
                     <a href="venue-booking.html" class="sidebar-link">${ICONS.nav.venue}<span>Book Venues</span></a>
-                    <a href="player-dashboard.html#player-event-finder" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('event-finder'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.events}<span>Find Events</span></a>
-                    <a href="player-dashboard.html#player-item-shop" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('item-shop'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.shop}<span>Item Shop</span></a>
-                    <a href="player-dashboard.html#player-payments" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') showPlayerSection('payments'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.finance}<span>Finance</span></a>
+                    <a href="player-dashboard.html#player-event-finder" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('event-finder'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.events}<span>Find Events</span></a>
+                    <a href="player-dashboard.html#player-item-shop" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('item-shop'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.shop}<span>Item Shop</span></a>
+                    <a href="player-dashboard.html#player-payments" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('payments'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.finance}<span>Finance</span></a>
                 `;
     } else if (isSuperAdmin) {
       menuHtml = `
                 <div class="nav-group-title">Platform</div>
-                <a href="super-admin-dashboard.html#overview" class="sidebar-link active" onclick="showSection('overview'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Admin Console</span></a>
-                <a href="super-admin-dashboard.html#groups" class="sidebar-link" onclick="showSection('groups'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.venue}<span>Groups</span></a>
-                <a href="super-admin-dashboard.html#users" class="sidebar-link" onclick="showSection('users'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>Global Users</span></a>
+                <a href="super-admin-dashboard.html#overview" class="sidebar-link active" onclick="if(typeof showSection === 'function') { showSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Admin Console</span></a>
+                <a href="super-admin-dashboard.html#groups" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('groups'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.venue}<span>Groups</span></a>
+                <a href="super-admin-dashboard.html#users" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('users'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>Global Users</span></a>
                 
                 <div class="nav-group-title">Operations</div>
-                <a href="super-admin-dashboard.html#verifications" class="sidebar-link" onclick="showSection('verifications'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.approvals}<span>ID Verification</span></a>
-                <a href="super-admin-dashboard.html#activity" class="sidebar-link" onclick="showSection('activity'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.forms}<span>System Logs</span></a>
+                <a href="super-admin-dashboard.html#verifications" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('verifications'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.approvals}<span>ID Verification</span></a>
+                <a href="super-admin-dashboard.html#activity" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('activity'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>System Logs</span></a>
                 
                 <div class="nav-group-title">System</div>
-                <a href="super-admin-dashboard.html#stripe" class="sidebar-link" onclick="showSection('stripe'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.finance}<span>Stripe Hub</span></a>
+                <a href="super-admin-dashboard.html#stripe" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('stripe'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.finance}<span>Stripe Hub</span></a>
             `;
     } else if (isCoach) {
       menuHtml = `
                 <div class="nav-group-title">Coaching</div>
-                <a href="coach-dashboard.html#coach-overview" class="sidebar-link active" onclick="if(typeof showCoachSection === 'function') showCoachSection('overview'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Dashboard</span></a>
-                <a href="coach-dashboard.html#coach-messenger" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') showCoachSection('messenger'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.chat}<span>Messenger</span></a>
+                <a href="coach-dashboard.html#coach-overview" class="sidebar-link active" onclick="if(typeof showCoachSection === 'function') { showCoachSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Dashboard</span></a>
+                <a href="coach-dashboard.html#coach-messenger" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Messenger</span></a>
                 
                 <div class="nav-group-title">Squad</div>
-                <a href="coach-dashboard.html#coach-teams" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') showCoachSection('teams'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.teams}<span>My Teams</span></a>
-                <a href="coach-dashboard.html#coach-players" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') showCoachSection('players'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>My Players</span></a>
+                <a href="coach-dashboard.html#coach-teams" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.teams}<span>My Teams</span></a>
+                <a href="coach-dashboard.html#coach-players" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('players'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>My Players</span></a>
                 
                 <div class="nav-group-title">Career</div>
                 <a href="scouting.html" class="sidebar-link">${ICONS.nav.training}<span>Scouting Hub</span></a>
@@ -1234,41 +1229,40 @@ const UnifiedNav = {
     } else if (isScout) {
       menuHtml = `
                 <div class="nav-group-title">Talent Pool</div>
-                <a href="scout-dashboard.html#discovery" class="sidebar-link active" onclick="showScoutSection('discovery'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.training}<span>Discover</span></a>
-                <a href="scout-dashboard.html#watchlist" class="sidebar-link" onclick="showScoutSection('watchlist'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.trophy}<span>Watchlist</span></a>
+                <a href="scout-dashboard.html#discovery" class="sidebar-link active" onclick="if(typeof showScoutSection === 'function') { showScoutSection('discovery'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.training}<span>Discover</span></a>
+                <a href="scout-dashboard.html#watchlist" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('watchlist'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.trophy}<span>Watchlist</span></a>
                 
                 <div class="nav-group-title">Analysis</div>
-                <a href="scout-dashboard.html#reports" class="sidebar-link" onclick="showScoutSection('reports'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.forms}<span>Scout Reports</span></a>
-                <a href="scout-dashboard.html#analytics" class="sidebar-link" onclick="showScoutSection('analytics'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Market Stats</span></a>
+                <a href="scout-dashboard.html#reports" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('reports'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Scout Reports</span></a>
+                <a href="scout-dashboard.html#analytics" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('analytics'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Market Stats</span></a>
                 
                 <div class="nav-group-title">Network</div>
-                <a href="scout-dashboard.html#messenger" class="sidebar-link" onclick="showScoutSection('messenger'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.chat}<span>Messenger</span></a>
+                <a href="scout-dashboard.html#messenger" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Messenger</span></a>
             `;
-        } else {
-          menuHtml = `
-                    <div class="nav-group-title"><span>Core Management</span></div>
-                    <a href="admin-dashboard.html#overview" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') showSection('overview'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.overview}<span>Overview</span></a>
-                    <a href="admin-dashboard.html#members" class="sidebar-link" data-tooltip="Member List" onclick="if(typeof showSection === 'function') showSection('members'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.players}<span>Member List</span></a>
-                    <a href="admin-dashboard.html#teams" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') showSection('teams'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.teams}<span>Squads & Teams</span></a>
-                    <a href="tournament-manager.html" class="sidebar-link" data-tooltip="Event Manager">${ICONS.nav.events}<span>Event Manager</span></a>
-                    <a href="admin-dashboard.html#messenger" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') showSection('messenger'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.chat}<span>Admin Chat</span></a>
-                    
-                    <div class="nav-group-title"><span>Advanced Operations</span></div>
-                    <a href="admin-dashboard.html#scout-approvals" class="sidebar-link" data-tooltip="Scout Approvals" onclick="if(typeof showSection === 'function') showSection('scout-approvals'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
-                    <a href="admin-dashboard.html#tactical-board" class="sidebar-link" data-tooltip="Tactics Board" onclick="if(typeof showSection === 'function') showSection('tactical-board'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.tactics}<span>Tactics Board</span></a>
-                    <a href="form-builder.html" class="sidebar-link" data-tooltip="Custom Forms">${ICONS.nav.forms}<span>Custom Forms</span></a>
-                    <a href="email-campaigns.html" class="sidebar-link" data-tooltip="Email Campaigns">${ICONS.nav.email}<span>Email Campaigns</span></a>
-                    
-                    <div class="nav-group-title"><span>Events & Bookings</span></div>
-                    <a href="tournament-manager.html" class="sidebar-link" data-tooltip="Tournaments">${ICONS.nav.trophy}<span>Tournaments</span></a>
-                    <a href="training-manager.html" class="sidebar-link" data-tooltip="Training Hub">${ICONS.nav.training}<span>Training Hub</span></a>
-                    <a href="venue-booking.html" class="sidebar-link" data-tooltip="Venue Portal">${ICONS.nav.venue}<span>Venue Portal</span></a>
-                    
-                    <div class="nav-group-title"><span>Business & Shop</span></div>
-                    <a href="admin-dashboard.html#finances" class="sidebar-link" data-tooltip="Financials" onclick="if(typeof showSection === 'function') showSection('finances'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.finance}<span>Financials</span></a>
-                    <a href="admin-dashboard.html#shop" class="sidebar-link" data-tooltip="Club Shop" onclick="if(typeof showSection === 'function') showSection('shop'); UnifiedNav.toggleSidebar(false);">${ICONS.nav.shop}<span>Club Shop</span></a>
-                `;
-        }
+    } else {
+      menuHtml += `
+        <div class="nav-group-title"><span>Core Management</span></div>
+        <a href="#" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') { showSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Overview</span></a>
+        <a href="#" class="sidebar-link" data-tooltip="Player List" onclick="if(typeof showSection === 'function') { showSection('players'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>Player List</span></a>
+        <a href="#" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') { showSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.teams}<span>Squads & Teams</span></a>
+        <a href="#" class="sidebar-link" data-tooltip="Event Manager" onclick="if(typeof showSection === 'function') { showSection('events'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.events}<span>Event Manager</span></a>
+        <a href="#" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') { showSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Admin Chat</span></a>
+        
+        <div class="nav-group-title"><span>Advanced Operations</span></div>
+        <a href="#" class="sidebar-link" data-tooltip="Scout Approvals" onclick="if(typeof showSection === 'function') { showSection('scout-approvals'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
+        <a href="#" class="sidebar-link" data-tooltip="Tactics Board" onclick="if(typeof showSection === 'function') { showSection('tactical-board'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.tactics}<span>Tactics Board</span></a>
+        <a href="#" class="sidebar-link" data-tooltip="Custom Forms" onclick="if(typeof showSection === 'function') { showSection('form-builder'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Custom Forms</span></a>
+        <a href="#" class="sidebar-link" data-tooltip="Email Campaigns" onclick="if(typeof showSection === 'function') { showSection('email-campaigns'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.email}<span>Email Campaigns</span></a>
+        
+        <div class="nav-group-title"><span>Events & Bookings</span></div>
+        <a href="training-manager.html" class="sidebar-link" data-tooltip="Training Hub">${ICONS.nav.training}<span>Training Hub</span></a>
+        <a href="venue-booking.html" class="sidebar-link" data-tooltip="Venue Portal">${ICONS.nav.venue}<span>Venue Portal</span></a>
+        
+        <div class="nav-group-title"><span>Business & Shop</span></div>
+        <a href="admin-dashboard.html#finances" class="sidebar-link" data-tooltip="Financials" onclick="if(typeof showSection === 'function') { showSection('finances'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.finance}<span>Financials</span></a>
+        <a href="admin-dashboard.html#shop" class="sidebar-link" data-tooltip="Club Shop" onclick="if(typeof showSection === 'function') { showSection('shop'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.shop}<span>Club Shop</span></a>
+      `;
+    }
 
     nav.innerHTML = menuHtml;
 

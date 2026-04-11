@@ -184,6 +184,29 @@ class ApiService {
     });
   }
 
+  async post(endpoint, body, options = {}) {
+    return await this.makeRequest(endpoint, {
+      method: "POST",
+      body: JSON.stringify(body),
+      ...options
+    });
+  }
+
+  async put(endpoint, body, options = {}) {
+    return await this.makeRequest(endpoint, {
+      method: "PUT",
+      body: JSON.stringify(body),
+      ...options
+    });
+  }
+
+  async delete(endpoint, options = {}) {
+    return await this.makeRequest(endpoint, {
+      method: "DELETE",
+      ...options
+    });
+  }
+
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const requestId = `${options.method || "GET"}_${endpoint}`;

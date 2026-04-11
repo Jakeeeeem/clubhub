@@ -41,6 +41,7 @@ async function initializeCoachDashboard() {
   loadCoachStats();
   setupCoachEventListeners();
   initializeTacticalBoard();
+  loadCoachPlayers();
 
   // Also load recent matches/upcoming if functions exist
   if (typeof loadRecentMatches === "function") loadRecentMatches();
@@ -222,11 +223,24 @@ async function loadCoachPlayers() {
     if (tacticalPinsContainer) {
       tacticalPinsContainer.innerHTML = players.map(p => `
         <div class="player-pin-source" draggable="true" 
-             ondragstart="event.dataTransfer.setData('text/plain', JSON.stringify({source:'tray', type:'player', label:'${p.last_name || p.first_name}'}))"
-             style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.4rem; font-size:0.7rem; text-align:center; cursor:grab;">
+             data-label="${p.last_name || p.first_name}"
+             style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.6rem 0.4rem; font-size:0.75rem; text-align:center; cursor:grab; transition:all 0.2s; color:rgba(255,255,255,0.8); font-weight:700;">
           ${(p.first_name || 'P').charAt(0)}${(p.last_name || '').charAt(0)}
         </div>
       `).join('');
+
+      // Add event listeners to new pins
+      tacticalPinsContainer.querySelectorAll('.player-pin-source').forEach(pin => {
+          pin.addEventListener('dragstart', (e) => {
+              e.dataTransfer.setData('text/plain', JSON.stringify({
+                  source: 'tray',
+                  type: 'player',
+                  label: pin.dataset.label
+              }));
+          });
+          pin.addEventListener('mouseover', () => pin.style.borderColor = 'rgba(255,255,255,0.3)');
+          pin.addEventListener('mouseout', () => pin.style.borderColor = 'rgba(255,255,255,0.08)');
+      });
     }
   } catch (err) {
     console.error("Squad load error:", err);
@@ -972,80 +986,149 @@ function filterCoachPlayers() {
 
 // Events Management
 function loadCoachEvents() {
-  const teamEvents = AppState.events.filter((e) =>
-    currentTeams.some((t) => t.id === e.team_id || t.id === e.teamId),
-  );
+    const container = document.getElementById("coachEventsContainer");
+    if (!container) return;
 
-  // Populate team selector for new events
-  const teamSelect = document.getElementById("eventTeamSelect");
-  teamSelect.innerHTML = currentTeams
-    .map((team) => `<option value="${team.id}">${team.name}</option>`)
-    .join("");
+    const teamEvents = AppState.events.filter((e) =>
+        currentTeams.some((t) => t.id === e.team_id || t.id === e.teamId)
+    );
 
-  const container = document.getElementById("coachEventsContainer");
+    // Sort: Upcoming (closest first) then Past (newest first)
+    teamEvents.sort((a, b) => new Date(a.date || a.event_date) - new Date(b.date || b.event_date));
 
-  if (teamEvents.length === 0) {
-    container.innerHTML =
-      '<div class="card"><p>No team events scheduled</p></div>';
-    return;
-  }
+    // Populate team selector for new events
+    const teamSelect = document.getElementById("eventTeamSelect");
+    if (teamSelect && currentTeams.length > 0) {
+        teamSelect.innerHTML = currentTeams
+            .map((team) => `<option value="${team.id}">${team.name}</option>`)
+            .join("");
+    }
 
-  container.innerHTML = teamEvents
-    .map((event) => {
-      const team = currentTeams.find((t) => t.id === event.teamId);
-      const isUpcoming = new Date(event.date) > new Date();
+    if (teamEvents.length === 0) {
+        container.innerHTML = `
+            <div class="glass-card" style="padding: 3rem; text-align: center; border-style: dashed;">
+                <p style="color: var(--text-muted); font-size: 0.9rem;">No events scheduled for your teams yet.</p>
+                <button class="btn btn-primary btn-small" style="margin-top: 1rem;" onclick="openModal('addEventModal')">+ Add First Event</button>
+            </div>
+        `;
+        return;
+    }
 
-      return `
-            <div class="event-card">
-                <h4>${event.title}</h4>
-                <div class="event-meta">
-                    <span><strong>Team:</strong> ${team ? team.name : "Unknown"}</span>
-                    <span><strong>Date:</strong> ${formatDate(event.date)} at ${event.time}</span>
-                    <span><strong>Location:</strong> ${event.location}</span>
-                    ${event.opponent ? `<span><strong>Opponent:</strong> ${event.opponent}</span>` : ""}
+    container.innerHTML = teamEvents.map((event) => {
+        const team = currentTeams.find((t) => t.id === (event.team_id || event.teamId));
+        const eventDate = new Date(event.date || event.event_date);
+        const isUpcoming = eventDate > new Date();
+        const type = (event.type || 'training').toLowerCase();
+        
+        let statusBadge = 'upcoming';
+        if (!isUpcoming) statusBadge = 'completed';
+        // Simple logic for "Live": if date is today and time is close (not implemented for simplicity, just badges)
+
+        return `
+            <div class="event-card-pro" id="event-${event.id}">
+                <div class="event-type-strip event-type-${type}"></div>
+                <div class="event-header-pro">
+                    <div>
+                        <div class="event-title-pro">${event.title}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+                            ${team ? team.name : "Club Event"}
+                        </div>
+                    </div>
+                    <span class="event-badge-pro badge-${statusBadge}">${statusBadge}</span>
                 </div>
-                <div class="event-actions">
-                    ${
-                      event.type === "match" && !isUpcoming
+
+                <div class="event-stats-grid">
+                    <div class="stat-item-pro">
+                        <span class="stat-label-pro">Schedule</span>
+                        <span class="stat-value-pro">${formatDate(eventDate)} @ ${event.time || event.event_time || 'TBD'}</span>
+                    </div>
+                    <div class="stat-item-pro">
+                        <span class="stat-label-pro">Location</span>
+                        <span class="stat-value-pro">${event.location || 'Home Grounds'}</span>
+                    </div>
+                    ${event.opponent ? `
+                    <div class="stat-item-pro">
+                        <span class="stat-label-pro">Opponent</span>
+                        <span class="stat-value-pro">${event.opponent}</span>
+                    </div>
+                    ` : ""}
+                </div>
+
+                <div class="event-footer-pro">
+                    ${type === "match" && !isUpcoming
                         ? `<button class="btn btn-small btn-primary" onclick="recordMatchResult('${event.id}')">Record Result</button>`
-                        : ""
+                        : `<button class="btn btn-small btn-secondary" onclick="manageEventPlayers('${event.id}')">Roster</button>`
                     }
-                    <button class="btn btn-small btn-secondary" onclick="manageEventPlayers('${event.id}')">Manage Players</button>
                     <button class="btn btn-small btn-secondary" onclick="editEvent('${event.id}')">Edit</button>
+                    <button class="btn btn-small btn-text" style="color: var(--text-muted); margin-left: auto;" onclick="deleteEvent('${event.id}')">🗑️</button>
                 </div>
             </div>
         `;
-    })
-    .join("");
+    }).join("");
 }
 
-function handleAddTeamEvent(e) {
+async function handleCreateEvent(e) {
   e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
 
-  const newEvent = {
-    id: generateId(),
-    title: document.getElementById("teamEventTitle").value,
-    type: document.getElementById("teamEventType").value,
-    date: document.getElementById("teamEventDate").value,
-    time: document.getElementById("teamEventTime").value,
-    location: document.getElementById("teamEventLocation").value,
-    opponent: document.getElementById("teamEventOpponent").value,
-    teamId: document.getElementById("eventTeamSelect").value,
-    createdBy: AppState.currentUser.id,
-    createdDate: new Date().toISOString(),
+  const payload = {
+    title: formData.get('eventTitle'),
+    type: formData.get('eventType'),
+    event_date: formData.get('eventDate'),
+    event_time: formData.get('eventTime'),
+    location: formData.get('teamEventLocation') || formData.get('location') || '',
+    opponent: formData.get('teamEventOpponent') || formData.get('opponent') || '',
+    team_id: formData.get('eventTeamId'),
+    recurrence: formData.get('recurring') || 'none',
+    organization_id: AppState.currentUser.currentOrganizationId || AppState.currentUser.clubId
   };
 
-  AppState.events.push(newEvent);
-  saveToStorage();
+  const notify = formData.get('notifyPlayers') === 'on';
 
-  closeModal("addTeamEventModal");
-  loadCoachEvents();
-  loadCoachStats();
+  try {
+    showLoading(true);
+    const result = await apiService.createEvent(payload);
+    
+    if (notify && result && result.id) {
+       await apiService.makeRequest(`/api/events/${result.id}/notify`, { method: 'POST' });
+       showNotification("Event created and players notified!", "success");
+    } else {
+       showNotification("Team event created successfully!", "success");
+    }
 
-  // Reset form
-  document.getElementById("addTeamEventForm").reset();
+    closeModal("addEventModal");
+    form.reset();
 
-  showNotification("Team event added successfully!", "success");
+    // Refresh data
+    if (typeof initializeCoachDashboard === 'function') {
+      await initializeCoachDashboard();
+    } else {
+      loadCoachEvents();
+    }
+  } catch (err) {
+    console.error("Event expansion error:", err);
+    showNotification("Critical Error: " + err.message, "error");
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function deleteEvent(eventId) {
+    if (!confirm("Are you sure you want to delete this event? For recurring events, this will only delete this single instance.")) return;
+    
+    try {
+        showLoading(true);
+        await apiService.makeRequest(`/api/events/${eventId}`, { method: 'DELETE' });
+        showNotification("Event deleted", "success");
+        if (typeof initializeCoachDashboard === 'function') {
+            await initializeCoachDashboard();
+        }
+    } catch (err) {
+        showNotification("Failed to delete: " + err.message, "error");
+    } finally {
+        showLoading(false);
+    }
 }
 
 // Tactical Board
@@ -1213,13 +1296,15 @@ function recordMatchResult(eventId) {
   if (!event) return;
 
   // Set basic info
+  const modalId = "resultModal";
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
   document.getElementById("resultEventId").value = eventId;
   document.getElementById("homeScore").value = event.home_score || 0;
   document.getElementById("awayScore").value = event.away_score || 0;
   document.getElementById("matchNotes").value = event.match_notes || "";
 
-  // Find relevant team to get players
-  // Events usually have team_id. If not, try to find team by name or context
   const teamId = event.team_id || event.teamId;
   const team = currentTeams.find((t) => t.id === teamId);
 
@@ -1227,52 +1312,45 @@ function recordMatchResult(eventId) {
   tbody.innerHTML = "";
 
   if (team) {
-    // Get players for this team
     const teamPlayers = AppState.players.filter(
-      (p) =>
-        p.team_id === teamId ||
-        (p.team_assignments &&
-          p.team_assignments.some((a) => a.team_id === teamId)),
+      (p) => p.team_id === teamId || (p.team_assignments && p.team_assignments.some((a) => a.team_id === teamId))
     );
 
     if (teamPlayers.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center">No players found for this team. Add players to team first.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding: 2rem; color: var(--text-muted);">No squad members found for ${team.name}</td></tr>`;
     } else {
       teamPlayers.forEach((player) => {
         const row = document.createElement("tr");
         row.className = "player-stat-row";
         row.dataset.playerId = player.id;
+        row.style.borderBottom = "1px solid rgba(255,255,255,0.03)";
 
-        // Try to find existing stats if editing (not implemented fully in backend yet, but good for future)
         row.innerHTML = `
-                    <td>
-                        <div class="player-info">
-                            <span class="player-name">${player.first_name} ${player.last_name}</span>
-                            <small class="text-muted" style="display:block; font-size:0.75em;">${player.position || "N/A"}</small>
-                        </div>
-                    </td>
-                    <td><input type="number" class="stat-input" name="rating" min="1" max="10" placeholder="-" style="width: 50px;"></td>
-                    <td><input type="number" class="stat-input" name="goals" min="0" placeholder="0" style="width: 50px;"></td>
-                    <td><input type="number" class="stat-input" name="assists" min="0" placeholder="0" style="width: 50px;"></td>
-                    <td>
-                        <select class="stat-input" name="cards" style="width: 80px; padding: 5px;">
-                            <option value="none">-</option>
-                            <option value="yellow">Yellow</option>
-                            <option value="red">Red</option>
-                             <option value="both">Y + R</option>
-                        </select>
-                    </td>
-                    <td><input type="number" class="stat-input" name="minutes" min="0" max="120" value="90" style="width: 60px;"></td>
-                `;
+            <td style="padding: 0.75rem 0.5rem;">
+                <div style="font-weight:600;">${player.first_name} ${player.last_name}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${player.position || "Player"}</div>
+            </td>
+            <td style="text-align:center;"><input type="number" class="stat-input" name="rating" min="1" max="10" placeholder="-" style="width: 45px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
+            <td style="text-align:center;"><input type="number" class="stat-input" name="goals" min="0" placeholder="0" style="width: 45px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
+            <td style="text-align:center;"><input type="number" class="stat-input" name="assists" min="0" placeholder="0" style="width: 45px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
+            <td style="text-align:center;">
+                <select class="stat-input" name="cards" style="width: 70px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; font-size: 0.8rem;">
+                    <option value="none">-</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="red">Red</option>
+                    <option value="both">Y+R</option>
+                </select>
+            </td>
+            <td style="text-align:center;"><input type="number" class="stat-input" name="minutes" min="0" max="120" value="90" style="width: 50px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
+        `;
         tbody.appendChild(row);
       });
     }
   } else {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center">Team information missing for this event.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding: 2rem;">Team context missing</td></tr>`;
   }
 
-  // Show modal
-  document.getElementById("resultModal").style.display = "block";
+  modal.style.display = "flex";
 }
 
 async function handleSaveResult(e) {
@@ -1376,6 +1454,7 @@ async function manageEventPlayers(eventId) {
   const loading = document.getElementById('rosterLoading');
   const container = document.getElementById('rosterListContainer');
   const body = document.getElementById('rosterListBody');
+  const title = document.getElementById('rosterModalTitle');
   
   if (!modal) return;
   modal.style.display = 'flex';
@@ -1383,39 +1462,52 @@ async function manageEventPlayers(eventId) {
   container.style.display = 'none';
   window.currentRosterEventId = eventId;
 
+  const event = AppState.events.find(e => e.id === eventId);
+  if (event && title) {
+    title.textContent = `Attendance: ${event.title}`;
+  }
+
   try {
-    const responses = await apiService.get(`/api/events/${eventId}/availability`);
+    // We expect the backend to return a list of responses with availability status
+    const responses = await apiService.makeRequest(`/api/events/${eventId}/availability`);
     loading.style.display = 'none';
     container.style.display = 'block';
 
     if (!responses || responses.length === 0) {
-      body.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted);">No responses yet.</td></tr>';
+      body.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted);">No responses yet. Invitations sent.</td></tr>';
       return;
     }
 
-    body.innerHTML = responses.map(r => `
-      <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-        <td style="padding: 1rem;">
-          <div style="font-weight:600; color:#fff;">${r.first_name} ${r.last_name}</div>
-          <div style="font-size:0.75rem; color:var(--text-muted);">${r.email || ''}</div>
-        </td>
-        <td style="padding: 1rem; text-align: center;">
-          <span class="status-badge status-${r.availability === 'yes' ? 'paid' : r.availability === 'no' ? 'overdue' : 'pending'}">
-            ${r.availability.toUpperCase()}
-          </span>
-        </td>
-        <td style="padding: 1rem;">
-          <div style="font-size:0.85rem; color:${r.availability === 'no' ? '#f87171' : '#f1f5f9'};">
-            ${r.notes || (r.availability === 'no' ? '<span style="opacity:0.5;">No reason provided</span>' : '-')}
-          </div>
-          <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.25rem;">
-            ${new Date(r.updated_at).toLocaleString([], {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}
-          </div>
-        </td>
-      </tr>
-    `).join('');
+    body.innerHTML = responses.map(r => {
+        const status = (r.availability || 'pending').toLowerCase();
+        const statusClass = status === 'yes' ? 'paid' : status === 'no' ? 'overdue' : 'pending';
+        const statusLabel = status === 'yes' ? 'CONFIRMED' : status === 'no' ? 'DECLINED' : 'PENDING';
+
+        return `
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+            <td style="padding: 1.25rem 1rem;">
+              <div style="font-weight:600; color:#fff;">${r.first_name || r.firstName} ${r.last_name || r.lastName}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted); opacity:0.7;">${r.position || 'Player'}</div>
+            </td>
+            <td style="padding: 1rem; text-align: center;">
+              <span class="status-badge status-${statusClass}" style="padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700;">
+                ${statusLabel}
+              </span>
+            </td>
+            <td style="padding: 1rem;">
+              <div style="font-size:0.85rem; color:${status === 'no' ? '#f87171' : '#f1f5f9'}; line-height: 1.4;">
+                ${r.notes || (status === 'no' ? '<span style="opacity:0.5; font-style: italic;">No reason provided</span>' : '-')}
+              </div>
+              <div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.35rem; opacity:0.6;">
+                ${r.updated_at ? new Date(r.updated_at).toLocaleString([], {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : 'No update yet'}
+              </div>
+            </td>
+          </tr>
+        `;
+    }).join('');
   } catch (err) {
-    loading.innerHTML = `<p style="color:#f87171;">Error: ${err.message}</p>`;
+    console.error("Roster load error:", err);
+    loading.innerHTML = `<div style="padding:2rem;"><p style="color:#f87171;">Error: ${err.message}</p><button class="btn btn-secondary btn-small" onclick="manageEventPlayers('${eventId}')">Retry</button></div>`;
   }
 }
 
