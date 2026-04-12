@@ -1,14 +1,12 @@
 "use strict";
 
 exports.up = function (db) {
-  return db.addColumn("users", "completed_tours", {
-    type: "jsonb",
-    defaultValue: "[]",
-  });
+  // Use IF NOT EXISTS to make migration idempotent
+  return db.runSql(`ALTER TABLE users ADD COLUMN IF NOT EXISTS completed_tours jsonb DEFAULT '[]'::jsonb;`);
 };
 
 exports.down = function (db) {
-  return db.removeColumn("users", "completed_tours");
+  return db.runSql(`ALTER TABLE users DROP COLUMN IF EXISTS completed_tours;`);
 };
 
 exports._meta = {

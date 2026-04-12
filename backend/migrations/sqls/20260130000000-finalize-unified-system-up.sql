@@ -10,7 +10,7 @@ DROP INDEX IF EXISTS idx_clubs_owner_id;
 INSERT INTO organizations (id, name, description, location, sport, owner_id, created_at, updated_at, slug, is_active, stripe_account_id)
 SELECT 
     id, name, description, location, sport, owner_id, created_at, updated_at,
-    LOWER(REGEXP_REPLACE(REGEXP_REPLACE(name, '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g')),
+    LOWER(REGEXP_REPLACE(REGEXP_REPLACE(name, '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g')) || '-' || id::text,
     true, stripe_account_id
 FROM clubs
 ON CONFLICT (id) DO UPDATE SET

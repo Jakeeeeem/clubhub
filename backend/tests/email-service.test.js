@@ -1,10 +1,11 @@
-#!/usr/bin/env node
+/* eslint-env jest */
 // Simple test for email-service parental approval email using mocked transporter
 process.env.NODE_ENV = "test";
 
-(async () => {
-  try {
-    const emailService = require("../services/email-service");
+const emailService = require("../services/email-service");
+
+describe('Email service', () => {
+  test('sends parental approval email (mocked)', async () => {
     const res = await emailService.sendParentalApprovalEmail({
       to: "parent@example.test",
       parentFirstName: "Jane",
@@ -16,16 +17,8 @@ process.env.NODE_ENV = "test";
         "http://localhost:8000/parent-approval.html?token=testtoken&req=testid&action=deny",
     });
 
-    console.log("emailService test result:", res);
-    if (res && res.success) {
-      console.log("OK: Email service test passed");
-      process.exit(0);
-    } else {
-      console.error("FAIL: Unexpected email service result");
-      process.exit(2);
-    }
-  } catch (err) {
-    console.error("ERROR:", err);
-    process.exit(3);
-  }
-})();
+    expect(res).toBeDefined();
+    expect(typeof res).toBe('object');
+    expect(res.success).toBeTruthy();
+  }, 10000);
+});
