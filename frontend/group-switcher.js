@@ -17,6 +17,12 @@ if (window.__groupSwitcherDefined) {
       this.isOpen = false;
       this.container = container;
       this.init();
+      // Expose instance for programmatic toggles (UnifiedNav header toggle)
+      try {
+        window.__groupSwitcherInstance = this;
+      } catch (e) {
+        // ignore
+      }
     }
 
     static render(container) {
@@ -451,6 +457,9 @@ if (window.__groupSwitcherDefined) {
     const container = document.getElementById("group-switcher-container");
     if (container) {
       groupSwitcher = new GroupSwitcher(container);
+      try {
+        window.__groupSwitcherInstance = groupSwitcher;
+      } catch (e) {}
     }
   });
 }

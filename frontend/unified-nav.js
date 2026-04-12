@@ -737,6 +737,26 @@ const UnifiedNav = {
       } else {
         this.renderGroupSwitcher(switcherSlot);
       }
+      // Ensure clicking the header switcher area toggles the group switcher dropdown
+      try {
+        switcherSlot.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const inst = window.__groupSwitcherInstance;
+          if (inst && typeof inst.toggleDropdown === "function") {
+            inst.toggleDropdown();
+          } else {
+            // If instance not ready, render and toggle after a short delay
+            UnifiedNav.renderGroupSwitcher(switcherSlot);
+            setTimeout(() => {
+              const i = window.__groupSwitcherInstance;
+              if (i && typeof i.toggleDropdown === "function")
+                i.toggleDropdown();
+            }, 300);
+          }
+        });
+      } catch (e) {
+        console.warn("Failed to bind header switcher click", e);
+      }
     }
 
     this.renderTopTabs();
@@ -1421,6 +1441,7 @@ const UnifiedNav = {
                     <a href="club-finder.html" class="sidebar-link">${ICONS.nav.venue}<span>Club Finder</span></a>
                     <a href="venue-booking.html" class="sidebar-link">${ICONS.nav.venue}<span>Book Venues</span></a>
                     <a href="player-dashboard.html#player-event-finder" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('event-finder'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.events}<span>Find Events</span></a>
+                    <a href="tournament-manager.html" class="sidebar-link">${ICONS.nav.trophy}<span>Tournaments</span></a>
                     <a href="player-dashboard.html#player-item-shop" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('item-shop'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.shop}<span>Item Shop</span></a>
                     <a href="player-dashboard.html#player-payments" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('payments'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.finance}<span>Finance</span></a>
                 `;
@@ -1493,6 +1514,74 @@ const UnifiedNav = {
     }
 
     nav.innerHTML = menuHtml;
+
+    // Build collapsible nav groups: group title toggles the following links
+    try {
+      const titles = Array.from(nav.querySelectorAll(".nav-group-title"));
+      titles.forEach((title) => {
+        // Add a visual toggle if missing
+        if (!title.querySelector(".group-toggle")) {
+          const span = document.createElement("span");
+          span.className = "group-toggle";
+          span.textContent = "▾";
+          title.appendChild(span);
+        }
+
+        // Collect following sibling links until next title
+        let next = title.nextElementSibling;
+        const container = document.createElement("div");
+        container.className = "nav-group";
+        while (next && !next.classList.contains("nav-group-title")) {
+          const sibling = next;
+          next = next.nextElementSibling;
+          container.appendChild(sibling);
+        }
+        // Insert container after the title
+        title.parentNode.insertBefore(container, title.nextSibling);
+
+        // Collapse by default when sidebar is collapsed
+        const isCollapsed =
+          document.body.classList.contains("sidebar-collapsed");
+        container.style.display = isCollapsed ? "none" : "";
+
+        title.addEventListener("click", () => {
+          const open = container.style.display !== "none";
+          container.style.display = open ? "none" : "";
+          const toggle = title.querySelector(".group-toggle");
+          if (toggle) toggle.textContent = open ? "▸" : "▾";
+        });
+      });
+    } catch (e) {
+      console.warn("Failed to init collapsible nav groups", e);
+    }
+
+    // Ensure header mode group pill opens the group switcher when clicked
+    try {
+      const groupPill = document.getElementById("header-mode-group-pill");
+      if (groupPill) {
+        groupPill.addEventListener("click", (e) => {
+          const inst = window.__groupSwitcherInstance;
+          if (inst && typeof inst.toggleDropdown === "function") {
+            inst.toggleDropdown();
+          } else {
+            // Try to render into header slot and toggle after render
+            const slot =
+              document.getElementById("header-org-switcher") ||
+              document.getElementById("sidebar-switcher-target");
+            if (slot) {
+              UnifiedNav.renderGroupSwitcher(slot);
+              setTimeout(() => {
+                const i = window.__groupSwitcherInstance;
+                if (i && typeof i.toggleDropdown === "function")
+                  i.toggleDropdown();
+              }, 300);
+            }
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to bind group pill", e);
+    }
 
     // Show/Hide profile switcher based on mode
     const profileArea = document.getElementById("sidebar-profile-switcher");

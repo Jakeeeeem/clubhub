@@ -1598,6 +1598,27 @@ body.clubhub-unified .logo { display: flex; align-items: center; gap: 0.5rem; }
 
 /* Small accessibility/contrast uplift */
 .action-btn { border-radius: 10px; }
+
+/* Small, safe overrides added by agent: center icons and collapsible nav groups */
+.sidebar-link {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+.sidebar-link .nav-icon, .sidebar-link i {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+}
+
+.nav-group { padding-left: 0; }
+.nav-group-title { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.nav-group-title .group-toggle { font-size: 12px; opacity: 0.7; margin-left: 8px; }
+
+/* Hide generic form headers when user requested removal */
+.form-header { display: none !important; }
 .user-profile-trigger .user-name { font-weight: 700 !important; }
 
 /* End UI Polish Overrides */

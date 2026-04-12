@@ -325,73 +325,78 @@ async function seedMasterDemo() {
         const pos = positions[i % positions.length];
         const teamId = teamIds[i % teamIds.length];
 
-        await client.query(
-          `
-                    INSERT INTO players (
-                        first_name, last_name, email, date_of_birth, position, team_id, club_id, 
-                        medical_info, emergency_contact, parent_id
-                    )
-                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                `,
+        const playerRes = await client.query(
+          `INSERT INTO players (user_id, first_name, last_name, email, date_of_birth, position, club_id)
+            VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
           [
+            userMap["parent@demo.com"],
             fname,
             lname,
             `player${i}@demo.com`,
             "2009-06-15",
             pos,
-            teamId,
             clubForElite,
-            JSON.stringify({
-              allergies: i % 10 === 0 ? "Polen" : "None",
-              asthma: i % 5 === 0,
-            }),
-            JSON.stringify({
-              name: "Emergency Contact",
-              phone: "07700 900" + (100 + i),
-            }),
-            userMap["parent@demo.com"],
           ],
+        );
+
+        const playerId = playerRes.rows[0].id;
+        await client.query(
+          `INSERT INTO team_players (team_id, player_id, position, jersey_number) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING`,
+          [teamId, playerId, pos, (i % 99) + 1],
         );
       }
 
       // --- 8. SCOUT WATCHLIST & REPORTS ---
       console.log("🔍 Creating Loads of Scouting Data...");
-      const playersRes = await client.query("SELECT id FROM players LIMIT 40");
-      const playerIds = playersRes.rows.map((r) => r.id);
+      // Only populate scouting tables if they exist in the current schema
+      const hasScoutWatchlist = (
+        await client.query("SELECT to_regclass('public.scout_watchlist') as t")
+      ).rows[0].t;
+      const hasScoutReports = (
+        await client.query("SELECT to_regclass('public.scout_reports') as t")
+      ).rows[0].t;
+      if (hasScoutWatchlist && hasScoutReports) {
+        const playersRes = await client.query(
+          "SELECT id FROM players LIMIT 40",
+        );
+        const playerIds = playersRes.rows.map((r) => r.id);
 
-      for (const pid of playerIds) {
-        await client.query(
-          `
+        for (const pid of playerIds) {
+          await client.query(
+            `
                     INSERT INTO scout_watchlist (scout_id, player_id, rating, notes)
                     VALUES ($1, $2, $3, $4)
                     ON CONFLICT DO NOTHING
                 `,
-          [
-            userMap["scout@demo.com"],
-            pid,
-            (pid.length % 5) + 1,
-            "Top prospect from periodic assessment.",
-          ],
-        );
+            [
+              userMap["scout@demo.com"],
+              pid,
+              (pid.length % 5) + 1,
+              "Top prospect from periodic assessment.",
+            ],
+          );
 
-        await client.query(
-          `
+          await client.query(
+            `
                     INSERT INTO scout_reports (scout_id, player_id, report_type, data)
                     VALUES ($1, $2, 'player', $3)
                 `,
-          [
-            userMap["scout@demo.com"],
-            pid,
-            JSON.stringify({
-              technical: (pid.length % 5) + 1,
-              tactical: (pid.length % 4) + 1,
-              mental: 5,
-              physical: 4,
-              pace: 88,
-              dribbling: 75,
-            }),
-          ],
-        );
+            [
+              userMap["scout@demo.com"],
+              pid,
+              JSON.stringify({
+                technical: (pid.length % 5) + 1,
+                tactical: (pid.length % 4) + 1,
+                mental: 5,
+                physical: 4,
+                pace: 88,
+                dribbling: 75,
+              }),
+            ],
+          );
+        }
+      } else {
+        console.log("ℹ️ Skipping scouting data: tables not present in schema");
       }
 
       // --- 9. TOURNAMENTS & MATCHES ---
@@ -409,100 +414,125 @@ async function seedMasterDemo() {
         const status = t === 0 ? "active" : t < 3 ? "upcoming" : "completed";
         const tournamentRes = await client.query(
           `
-            INSERT INTO events (title, event_type, event_date, event_time, club_id, status, created_by)
-            VALUES ($1, 'tournament', CURRENT_DATE + $2, '10:00', $3, $4, $5)
+            INSERT INTO events (title, event_type, event_date, event_time, club_id, created_by)
+            VALUES ($1, 'tournament', (CURRENT_DATE + ($2 || ' days')::interval)::date, '10:00', $3, $4)
             RETURNING id
           `,
           [
             tourTitles[t],
             (t - 2) * 15,
             clubForElite,
-            status,
             userMap["admin@demo.com"],
           ],
         );
         const tournamentId = tournamentRes.rows[0].id;
 
-        // Pitches
-        const pitchIds = [];
-        for (let p = 1; p <= 4; p++) {
-          const res = await client.query(
-            `
+        // Pitches / tournament details — only if the tournament tables exist
+        const hasPitches = (
+          await client.query(
+            "SELECT to_regclass('public.tournament_pitches') as t",
+          )
+        ).rows[0].t;
+        const hasTournamentTeams = (
+          await client.query(
+            "SELECT to_regclass('public.tournament_teams') as t",
+          )
+        ).rows[0].t;
+        const hasStages = (
+          await client.query(
+            "SELECT to_regclass('public.tournament_stages') as t",
+          )
+        ).rows[0].t;
+        const hasMatches = (
+          await client.query(
+            "SELECT to_regclass('public.tournament_matches') as t",
+          )
+        ).rows[0].t;
+        if (!hasPitches || !hasTournamentTeams || !hasStages || !hasMatches) {
+          console.log(
+            "ℹ️ Skipping tournament details: tournament_* tables not present",
+          );
+        } else {
+          const pitchIds = [];
+          for (let p = 1; p <= 4; p++) {
+            const res = await client.query(
+              `
                 INSERT INTO tournament_pitches (event_id, name, pitch_type, pitch_size)
                 VALUES ($1, $2, '4G', '9v9')
                 RETURNING id
               `,
-            [tournamentId, `Pitch ${p}`],
-          );
-          pitchIds.push(res.rows[0].id);
-        }
+              [tournamentId, `Pitch ${p}`],
+            );
+            pitchIds.push(res.rows[0].id);
+          }
 
-        // Register 12 teams for each tournament
-        const tournamentTeamIds = [];
-        for (let i = 0; i < 12; i++) {
-          const teamIdx = (t * 12 + i) % teamIds.length;
-          const res = await client.query(
-            `
+          // Register 12 teams for each tournament
+          const tournamentTeamIds = [];
+          for (let i = 0; i < 12; i++) {
+            const teamIdx = (t * 12 + i) % teamIds.length;
+            const res = await client.query(
+              `
                 INSERT INTO tournament_teams (event_id, team_name, internal_team_id, status)
                 VALUES ($1, $2, $3, 'approved')
                 RETURNING id
               `,
-            [tournamentId, `Team ${t * 12 + i}`, teamIds[teamIdx]],
-          );
-          tournamentTeamIds.push(res.rows[0].id);
-        }
+              [tournamentId, `Team ${t * 12 + i}`, teamIds[teamIdx]],
+            );
+            tournamentTeamIds.push(res.rows[0].id);
+          }
 
-        // Stages and Matches
-        const stageRes = await client.query(
-          `
+          // Stages and Matches
+          const stageRes = await client.query(
+            `
             INSERT INTO tournament_stages (event_id, name, type, sequence)
             VALUES ($1, 'Group Stage', 'league', 1)
             RETURNING id
           `,
-          [tournamentId],
-        );
-        const stageId = stageRes.rows[0].id;
+            [tournamentId],
+          );
+          const stageId = stageRes.rows[0].id;
 
-        // Add 5 matches for each tournament
-        for (let m = 0; m < 5; m++) {
-          await client.query(
-            `
+          // Add 5 matches for each tournament
+          for (let m = 0; m < 5; m++) {
+            await client.query(
+              `
                 INSERT INTO tournament_matches (event_id, stage_id, home_team_id, away_team_id, round_number, match_number, pitch_id, status, home_score, away_score)
                 VALUES ($1, $2, $3, $4, 1, $5, $6, $7, $8, $9)
               `,
-            [
-              tournamentId,
-              stageId,
-              tournamentTeamIds[m % 6],
-              tournamentTeamIds[(m + 1) % 6],
-              m + 1,
-              pitchIds[m % pitchIds.length],
-              status === "completed" ? "completed" : "scheduled",
-              status === "completed" ? Math.floor(Math.random() * 5) : null,
-              status === "completed" ? Math.floor(Math.random() * 5) : null,
-            ],
-          );
+              [
+                tournamentId,
+                stageId,
+                tournamentTeamIds[m % 6],
+                tournamentTeamIds[(m + 1) % 6],
+                m + 1,
+                pitchIds[m % pitchIds.length],
+                status === "completed" ? "completed" : "scheduled",
+                status === "completed" ? Math.floor(Math.random() * 5) : null,
+                status === "completed" ? Math.floor(Math.random() * 5) : null,
+              ],
+            );
+          }
         }
       }
 
       // --- 10. TACTICS ---
       console.log("📋 Creating Tactical Formations for all coaches...");
       const formations = ["4-3-3", "4-4-2", "3-5-2", "4-2-3-1", "4-1-4-1"];
-      const coaches = [userMap["coach@demo.com"], userMap["coach2@demo.com"]];
+      const coaches = [staffMap["coach@demo.com"], staffMap["coach2@demo.com"]];
 
-      for (const coach of coaches) {
+      for (const coachId of coaches) {
         for (let f = 0; f < 3; f++) {
           await client.query(
             `
-                INSERT INTO tactical_formations (organization_id, team_id, coach_id, name, formation, lineup, is_default)
-                VALUES ($1, $2, $3, $4, $5, '{}', $6)
+                INSERT INTO tactical_formations (team_id, coach_id, name, formation_type, formation_data, is_default)
+                VALUES ($1, $2, $3, $4, $5, $6)
               `,
             [
-              eliteAcademyId,
               teamIds[Math.floor(Math.random() * teamIds.length)],
-              coach,
+              coachId,
               `Coach Selection ${f + 1}`,
               formations[f % formations.length],
+              "{}",
               f === 0,
             ],
           );
