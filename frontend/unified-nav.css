@@ -1488,3 +1488,118 @@ header.header .nav-container,
     margin-top: 0.5rem;
 }
 
+/* -----------------------------
+   Landing page header + hero tweaks
+   ----------------------------- */
+
+/* Force transparent header on landing pages (body.clubhub-unified) */
+body.clubhub-unified header.header,
+body.clubhub-unified .pro-header {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-bottom: 0 !important;
+    transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Landing hero: add a soft dark overlay (keeps underlying image visible) */
+.landing-hero { position: relative; overflow: hidden; }
+.landing-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45); /* change alpha to taste (0.25 - 0.65) */
+    pointer-events: none;
+    z-index: 6;
+}
+.landing-hero .container { position: relative; z-index: 10; }
+
+/* Ensure Install App CTA is visible on landing header */
+body.clubhub-unified .pwa-install-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+/* Slight polish: make header items vertically centered and smooth */
+body.clubhub-unified header.header .nav { align-items: center; }
+body.clubhub-unified .logo { display: flex; align-items: center; gap: 0.5rem; }
+
+
+/* ==========================================================================
+   UI Polish Overrides (minimal, safe)
+   - Centralize small visual/spacing tweaks for header, dashboard and sidebar
+   - Kept intentionally small to avoid regressions
+   ========================================================================== */
+
+:root {
+    --nav-height: 72px;
+    --nav-height-landing: 96px;
+}
+
+.pro-header {
+    height: var(--nav-height) !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+    border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+.clubhub-unified:not(.dashboard-view) .pro-header,
+.clubhub-unified:not(.dashboard-view) header.header {
+    height: var(--nav-height-landing) !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+}
+
+.dashboard-view .pro-header {
+    left: var(--sidebar-width) !important;
+    width: calc(100% - var(--sidebar-width)) !important;
+    height: var(--nav-height) !important;
+    align-items: center !important;
+}
+
+.main, .dashboard-main {
+    padding-top: calc(var(--nav-height) + 18px) !important;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 0;
+    margin-top: 0;
+}
+
+.dashboard-nav {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 0.5rem 0;
+}
+
+.sidebar-link { transition: transform 0.12s, box-shadow 0.12s; }
+.sidebar-link:hover { transform: translateX(2px); box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+
+.mode-pill { padding: 8px 16px !important; font-size: 0.75rem !important; }
+.mode-pill.active { box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+
+/* Ensure content containers don't overlap fixed header on desktop */
+@media (min-width: 992px) {
+    .container { padding-top: 0 !important; }
+}
+
+/* Small accessibility/contrast uplift */
+.action-btn { border-radius: 10px; }
+.user-profile-trigger .user-name { font-weight: 700 !important; }
+
+/* End UI Polish Overrides */
+
+

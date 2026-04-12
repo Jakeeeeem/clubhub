@@ -19,219 +19,215 @@
     <link rel="stylesheet" href="unified-nav.css">
     <link rel="stylesheet" href="group-switcher.css">
     <style>
-    .bracket {
-    display: flex;
-    gap: 4rem; /* For connector lines */
-    overflow-x: auto;
-    padding: 2rem;
-    min-height: 500px;
-    align-items: stretch; /* vital for tree height */
-    }
+        .bracket {
+            display: flex;
+            gap: 4rem;
+            /* For connector lines */
+            overflow-x: auto;
+            padding: 2rem;
+            min-height: 500px;
+            align-items: stretch;
+            /* vital for tree height */
+        }
 
-    .bracket-round {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    min-width: 260px;
-    }
+        .bracket-round {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            min-width: 260px;
+        }
 
-    .bracket-match-wrapper {
-    position: relative;
-    display: flex;
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    }
+        .bracket-match-wrapper {
+            position: relative;
+            display: flex;
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
 
-    .bracket-match {
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    width: 100%;
-    overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    z-index: 2;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    }
+        .bracket-match {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            width: 100%;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
 
-    .bracket-match:hover {
-    transform: translateX(5px) scale(1.02);
-    border-color: var(--primary);
-    box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
-    }
+        .bracket-match:hover {
+            transform: translateX(5px) scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+        }
 
-    .bracket-team {
-    padding: 0.85rem 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.95rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    cursor: grab;
-    transition: background 0.2s;
-    height: 50px;
-    }
+        .bracket-team {
+            padding: 0.85rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: grab;
+            transition: background 0.2s;
+            height: 50px;
+        }
 
-    .bracket-team:last-child {
-    border-bottom: none;
-    }
+        .bracket-team:last-child {
+            border-bottom: none;
+        }
 
-    .bracket-team:hover {
-    background: rgba(255, 255, 255, 0.05);
-    }
+        .bracket-team:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
 
-    .bracket-team span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 150px;
-    }
+        .bracket-team span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
 
-    .bracket-team strong {
-    background: rgba(0, 0, 0, 0.4);
-    padding: 4px 10px;
-    border-radius: 6px;
-    min-width: 30px;
-    text-align: center;
-    font-family: 'Inter', sans-serif;
-    color: var(--primary);
-    }
+        .bracket-team strong {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 10px;
+            border-radius: 6px;
+            min-width: 30px;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            color: var(--primary);
+        }
 
-    .bracket-team.winner {
-    background: rgba(74, 222, 128, 0.05);
-    color: #4ade80;
-    font-weight: 800;
-    }
+        .bracket-team.winner {
+            background: rgba(74, 222, 128, 0.05);
+            color: #4ade80;
+            font-weight: 800;
+        }
 
-    .drag-hover {
-    background: rgba(96, 165, 250, 0.2) !important;
-    border-color: var(--primary) !important;
-    }
+        .drag-hover {
+            background: rgba(96, 165, 250, 0.2) !important;
+            border-color: var(--primary) !important;
+        }
 
-    .round-header {
-    position: absolute;
-    top: -50px;
-    width: 100%;
-    text-align: center;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    color: var(--primary);
-    font-size: 0.75rem;
-    opacity: 0.8;
-    }
+        .round-header {
+            position: absolute;
+            top: -50px;
+            width: 100%;
+            text-align: center;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--primary);
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
 
-    /* Horizontal OUT (Right) */
-    .bracket-round:not(:last-child) /* Horizontal OUT (Right) */
-    .bracket-match-wrapper::after {
-    content: '';
-    position: absolute;
-    right: -3rem; /* Aligned with the bracket-round gap */
-    top: 50%;
-    height: 2px;
-    width: 3.1rem;
-    background: rgba(255, 255, 255, 0.15);
-    z-index: 1;
-    }
+        /* Horizontal OUT (Right) */
+        .bracket-round:not(:last-child)
 
-    .bracket-round:last-child .bracket-match-wrapper::after {
-    display: none;
-    }
+        /* Horizontal OUT (Right) */
+        .bracket-match-wrapper::after {
+            content: '';
+            position: absolute;
+            right: -3rem;
+            /* Aligned with the bracket-round gap */
+            top: 50%;
+            height: 2px;
+            width: 3.1rem;
+            background: rgba(255, 255, 255, 0.15);
+            z-index: 1;
+        }
 
-    /* Vertical connector between two matches */
-    .bracket-match-wrapper:nth-child(even)::before {
-    content: '';
-    position: absolute;
-    right: -3rem;
-    top: -100%; /* Mock vertical line logic */
-    height: 150%;
-    width: 2px;
-    background: rgba(255, 255, 255, 0.15);
-    z-index: 1;
-    }
-    /* Horizontal IN (Left) */
-    .bracket-round:not(:first-child) .bracket-match-wrapper .bracket-match::before {
-    content: '';
-    position: absolute;
-    left: -2rem;
-    top: 50%;
-    height: 2px;
-    width: 2rem;
-    background: var(--primary);
-    z-index: 1;
-    }
+        .bracket-round:last-child .bracket-match-wrapper::after {
+            display: none;
+        }
 
-    /* Vertical Line forming the "Tree" */
-    .bracket-round:not(:last-child) .bracket-match-wrapper:nth-child(odd)::after {
-    content: '';
-    position: absolute;
-    right: -2rem; /* Aligns with the horizontal match::after */
-    top: 50%;
-    width: 2px;
-    height: 100%; /* Spans exactly to center of next sibling */
-    background: var(--primary);
-    z-index: 1;
-    }
+        /* Vertical connector between two matches */
+        .bracket-match-wrapper:nth-child(even)::before {
+            content: '';
+            position: absolute;
+            right: -3rem;
+            top: -100%;
+            /* Mock vertical line logic */
+            height: 150%;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            z-index: 1;
+        }
 
-    .bracket-team {
-    padding: 0.75rem;
-    margin: 0.25rem 0;
-    border-radius: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: grab;
-    transition: all 0.2s;
-    border: 1px dashed transparent;
-    background: rgba(255, 255, 255, 0.02);
-    min-height: 40px; /* Empty slot size */
-    }
+        /* Horizontal IN (Left) */
+        .bracket-round:not(:first-child) .bracket-match-wrapper .bracket-match::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 50%;
+            height: 2px;
+            width: 2rem;
+            background: var(--primary);
+            z-index: 1;
+        }
 
-    .bracket-team:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    }
+        /* Vertical Line forming the "Tree" */
+        .bracket-round:not(:last-child) .bracket-match-wrapper:nth-child(odd)::after {
+            content: '';
+            position: absolute;
+            right: -2rem;
+            /* Aligns with the horizontal match::after */
+            top: 50%;
+            width: 2px;
+            height: 100%;
+            /* Spans exactly to center of next sibling */
+            background: var(--primary);
+            z-index: 1;
+        }
 
-    .bracket-team.drag-over {
-    border-color: var(--primary) !important;
-    background: rgba(34, 197, 94, 0.1) !important;
-    }
+        .bracket-team {
+            padding: 0.75rem;
+            margin: 0.25rem 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+            transition: all 0.2s;
+            border: 1px dashed transparent;
+            background: rgba(255, 255, 255, 0.02);
+            min-height: 40px;
+            /* Empty slot size */
+        }
 
-    .drag-source {
-    opacity: 0.5;
-    }
+        .bracket-team:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
 
-    .bracket-team.winner {
-    background: rgba(34, 197, 94, 0.1) !important;
-    border-left: 3px solid #22c55e !important;
-    }
+        .bracket-team.drag-over {
+            border-color: var(--primary) !important;
+            background: rgba(34, 197, 94, 0.1) !important;
+        }
 
-    .team-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
-    margin: 2rem 0;
-    }
+        .drag-source {
+            opacity: 0.5;
+        }
+
+        .bracket-team.winner {
+            background: rgba(34, 197, 94, 0.1) !important;
+            border-left: 3px solid #22c55e !important;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
     </style>
 </head>
 
 <body>
-    <header class="header pro-header">
-        <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text neon-text">ClubHub</span>
-            </div>
-
-            <div id="org-switcher-container"></div>
-            
-            <div class="header-actions">
-                <div id="notification-bell-container"></div>
-                <!-- Profile will be injected by UnifiedNav -->
-            </div>
-        </nav>
-    </header>
+    <!-- Unified navigation injected by `unified-nav.js` -->
 
     <main class="main">
         <div class="dashboard container dashboard-container">
@@ -284,13 +280,15 @@
 
                     <!-- Teams Tab -->
                     <div id="teams-tab" class="tab-content active">
-                    <div style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center;">
-                        <button class="btn btn-primary" onclick="generateFixtures('knockout')">Generate Knockout Bracket</button>
-                        <button class="btn btn-secondary" onclick="generateFixtures('league')">Generate League Format</button>
-                        <div style="flex: 1;"></div>
-                        <button class="btn btn-special" onclick="openInviteTeamModal()">+ Invite Team</button>
-                        <button class="btn btn-secondary" onclick="printTournament()">🖨️ Print Layout</button>
-                    </div>
+                        <div style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center;">
+                            <button class="btn btn-primary" onclick="generateFixtures('knockout')">Generate Knockout
+                                Bracket</button>
+                            <button class="btn btn-secondary" onclick="generateFixtures('league')">Generate League
+                                Format</button>
+                            <div style="flex: 1;"></div>
+                            <button class="btn btn-special" onclick="openInviteTeamModal()">+ Invite Team</button>
+                            <button class="btn btn-secondary" onclick="printTournament()">🖨️ Print Layout</button>
+                        </div>
                         <div id="teamsGrid" class="team-grid">
                             <!-- Teams will be loaded here -->
                         </div>
@@ -298,14 +296,18 @@
 
                     <!-- Bracket Tab -->
                     <div id="bracket-tab" class="tab-content" style="display: none;">
-                        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div
+                            style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                             <div>
                                 <h3 style="margin:0;">Knockout Bracket</h3>
-                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Drag teams from the Rounds or use Magic Schedule</p>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Drag teams from the
+                                    Rounds or use Magic Schedule</p>
                             </div>
                             <div style="display: flex; gap: 0.75rem;">
-                                <button class="btn btn-secondary btn-small" onclick="handleAutoSchedule()" style="border-color: var(--primary);">🪄 Magic Schedule</button>
-                                <button class="btn btn-text btn-small" onclick="handleResetBracket()" style="color: #f87171;">Reset</button>
+                                <button class="btn btn-secondary btn-small" onclick="handleAutoSchedule()"
+                                    style="border-color: var(--primary);">🪄 Magic Schedule</button>
+                                <button class="btn btn-text btn-small" onclick="handleResetBracket()"
+                                    style="color: #f87171;">Reset</button>
                             </div>
                         </div>
                         <div id="bracketContainer" class="bracket">
@@ -332,7 +334,8 @@
                     <div id="pitches-tab" class="tab-content" style="display: none;">
                         <div class="card" style="margin-bottom: 2rem;">
                             <h3>Pitch Configuration</h3>
-                            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Configure pitches for each format.
+                            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Configure pitches for each
+                                format.
                                 Adding multiple pitches will automatically name them (e.g., Pitch-1, Pitch-2).</p>
                             <div
                                 style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto; gap: 1rem; margin-top: 1rem; align-items: flex-end;">
@@ -604,12 +607,14 @@
                         <input type="number" name="price" value="0.00" step="0.01" min="0">
                     </div>
                 </div>
-                <div class="form-group" style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-top: 1rem;">
+                <div class="form-group"
+                    style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-top: 1rem;">
                     <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin: 0;">
-                        <input type="checkbox" name="is_public" style="width: auto; margin: 0; transform: scale(1.2);"> 
+                        <input type="checkbox" name="is_public" style="width: auto; margin: 0; transform: scale(1.2);">
                         <span style="font-weight: 600; color: #fff;">Make Globally Public</span>
                     </label>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">List this tournament on the ClubHub Global Finder for any group/team to join.</p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">List this tournament on
+                        the ClubHub Global Finder for any group/team to join.</p>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">Create
                     Tournament</button>
@@ -664,11 +669,13 @@
                 </div>
                 <div class="form-group">
                     <label>Assign to Pitches (Optional)</label>
-                    <div id="staffPitchList" style="max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px;">
+                    <div id="staffPitchList"
+                        style="max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px;">
                         <!-- Pitches populated via JS -->
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Send Invitation</button>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Send
+                    Invitation</button>
             </form>
         </div>
     </div>
@@ -684,12 +691,15 @@
                     <label>Manager Email</label>
                     <input type="email" id="inviteTeamEmail" required placeholder="manager@team.com">
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Send Direct Invite</button>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Send Direct
+                    Invite</button>
             </form>
             <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
                 <label style="font-size: 0.8rem; display: block; margin-bottom: 0.25rem;">Or share public link:</label>
                 <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" id="publicTournamentLink" readonly style="flex: 1; font-size: 0.8rem; background: rgba(0,0,0,0.1);" value="https://clubhubsports.io/register-team?id=...">
+                    <input type="text" id="publicTournamentLink" readonly
+                        style="flex: 1; font-size: 0.8rem; background: rgba(0,0,0,0.1);"
+                        value="https://clubhubsports.io/register-team?id=...">
                     <button class="btn btn-secondary btn-small" onclick="copyTournamentLink()">Copy</button>
                 </div>
             </div>
@@ -702,7 +712,6 @@
     <script src="tactical-logic.js"></script>
     <script src="script.js"></script>
     <script src="enhanced-login-handler.js"></script>
-    <script src="group-switcher.js"></script>
     <script>
         let currentTournamentId = null;
         let tournamentData = null;
@@ -795,7 +804,7 @@
 
             try {
                 const orgId = localStorage.getItem('currentOrganizationId');
-                
+
                 // Construct advanced tournament settings
                 const tournamentSettings = {
                     format: data.format || '11v11',
@@ -1349,7 +1358,7 @@
             alert('Link copied to clipboard!');
         }
 
-        window.printTournament = function() {
+        window.printTournament = function () {
             window.print();
         }
 

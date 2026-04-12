@@ -70,21 +70,7 @@
 </head>
 
 <body>
-    <header class="header pro-header">
-        <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text neon-text">ClubHub</span>
-            </div>
-
-            <div id="org-switcher-container"></div>
-            
-            <div class="header-actions">
-                <div id="notification-bell-container"></div>
-                <!-- Profile will be injected by UnifiedNav -->
-            </div>
-        </nav>
-    </header>
+    <!-- Unified navigation injected by `unified-nav.js` -->
 
     <main class="main">
         <div class="dashboard container dashboard-container">
@@ -359,7 +345,7 @@
             try {
                 const data = await apiService.makeRequest(`/talent-id/events/${eventId}/dashboard`);
                 console.log("DEBUG: Talent ID Dashboard Data:", data);
-                
+
                 // Consolidate Registrants: Start with everyone who registered
                 let consolidatedRegistrants = [...data.registrants];
                 const registeredIds = new Set(consolidatedRegistrants.map(r => r.user_id || r.id));

@@ -7,30 +7,68 @@ const ICONS = {
   close: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
   // Nav icons — each wrapped in a semantic <i> tag for layout consistency
   nav: {
-    overview:  `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></i>`,
-    players:   `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></i>`,
-    teams:     `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>`,
-    events:    `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></i>`,
-    chat:      `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></i>`,
+    overview: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></i>`,
+    players: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></i>`,
+    teams: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i>`,
+    events: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></i>`,
+    chat: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></i>`,
     approvals: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></i>`,
-    tactics:   `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></i>`,
-    forms:     `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></i>`,
-    email:     `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></i>`,
-    trophy:    `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1c0 2.76 2.24 5 5 5h10a5 5 0 0 0 5-5V6a2 2 0 0 0-2-2h-3"/><rect x="7" y="2" width="10" height="6" rx="1"/></svg></i>`,
-    training:  `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></i>`,
-    venue:     `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></i>`,
-    finance:   `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></i>`,
-    shop:      `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i>`,
-    settings:  `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></i>`,
-    logout:    `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></i>`,
-  }
+    tactics: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></i>`,
+    forms: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></i>`,
+    email: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></i>`,
+    trophy: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 21 12 17 16 21"/><line x1="12" y1="17" x2="12" y2="11"/><path d="M7 4H4a2 2 0 0 0-2 2v1c0 2.76 2.24 5 5 5h10a5 5 0 0 0 5-5V6a2 2 0 0 0-2-2h-3"/><rect x="7" y="2" width="10" height="6" rx="1"/></svg></i>`,
+    training: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></i>`,
+    venue: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></i>`,
+    finance: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></i>`,
+    shop: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i>`,
+    settings: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></i>`,
+    logout: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></i>`,
+  },
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
 const UnifiedNav = {
   init() {
     console.log("🚀 UnifiedNav: Initializing standard navigation...");
-    
+    // Guard: make init idempotent to avoid duplicate header injection
+    if (this._initialized) {
+      console.log("♻️ UnifiedNav: already initialized; skipping.");
+      return;
+    }
+    this._initialized = true;
+
+    // Early cleanup of legacy artifacts that may introduce duplicate header elements
+    if (typeof this.cleanupLegacyArtifacts === "function") {
+      try {
+        this.cleanupLegacyArtifacts();
+      } catch (e) {
+        console.warn("cleanupLegacyArtifacts failed", e);
+      }
+    }
+
+    // Deduplicate header elements: keep the first .pro-header/header and remove others
+    try {
+      const headers = Array.from(
+        document.querySelectorAll(
+          "header.header, .pro-header, header.unified-header",
+        ),
+      );
+      if (headers.length > 1) {
+        console.log(
+          `🧽 UnifiedNav: Found ${headers.length} header elements; deduplicating.`,
+        );
+        const primary =
+          headers.find((h) => h.classList.contains("pro-header")) || headers[0];
+        headers.forEach((h) => {
+          if (h !== primary) {
+            h.remove();
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Header dedupe failed", e);
+    }
+
     // Auto-inject Group Switcher CSS
     if (!document.getElementById("group-switcher-css")) {
       const link = document.createElement("link");
@@ -41,116 +79,141 @@ const UnifiedNav = {
     }
 
     try {
-        // Perform Mobile UX Sweep to fix layouts
-        if (typeof this.performMobileUXSweep === 'function') {
-            this.performMobileUXSweep();
-        }
-    } catch (e) { console.warn("Sweep failed", e); }
+      // Perform Mobile UX Sweep to fix layouts
+      if (typeof this.performMobileUXSweep === "function") {
+        this.performMobileUXSweep();
+      }
+    } catch (e) {
+      console.warn("Sweep failed", e);
+    }
 
-    const isDesktop = window.matchMedia('(min-width: 992px)').matches;
+    const isDesktop = window.matchMedia("(min-width: 992px)").matches;
     const path = window.location.pathname.toLowerCase();
-    const isDashboard = path.includes('dashboard');
-    const isLandingPage = (path.includes('index.html') || path.endsWith('/') || path === '' || !path.includes('dashboard')) && !path.includes('settings');
-    
-    const token = localStorage.getItem('authToken');
-    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    const isDashboard = path.includes("dashboard");
+    const isLandingPage =
+      (path.includes("index.html") ||
+        path.endsWith("/") ||
+        path === "" ||
+        !path.includes("dashboard")) &&
+      !path.includes("settings");
+
+    const token = localStorage.getItem("authToken");
+    const user = JSON.parse(localStorage.getItem("currentUser") || "null");
     const isLoggedIn = !!(token && user);
 
-    console.log(`📍 Nav Info: Desktop=${isDesktop}, Dashboard=${isDashboard}, Landing=${isLandingPage}, LoggedIn=${isLoggedIn}`);
+    console.log(
+      `📍 Nav Info: Desktop=${isDesktop}, Dashboard=${isDashboard}, Landing=${isLandingPage}, LoggedIn=${isLoggedIn}`,
+    );
 
     // Manage body classes for CSS scoping
     if (isDashboard) {
-      document.body.classList.add('dashboard-view');
-      document.body.classList.remove('landing-view');
+      document.body.classList.add("dashboard-view");
+      document.body.classList.remove("landing-view");
     } else {
-      document.body.classList.remove('dashboard-view');
-      document.body.classList.add('landing-view');
+      document.body.classList.remove("dashboard-view");
+      document.body.classList.add("landing-view");
     }
 
     // ── STAGE 1: Core Layout ───────────────────────────────────────────
     try {
-        if (!isDesktop) {
-          console.log("📱 Mobile View");
-          if (isDashboard || (isLoggedIn && !isLandingPage)) {
-            this.renderHeader();
-            this.renderSidebar();
-            this.renderBottomNav();
-            this.renderMenu();
-            this.renderMobileHeaderElements();
-          } else if (isLandingPage) {
-            this.ensureLandingHeader(isLoggedIn, user);
-            this.toggleSidebar(false);
-          }
-        } else {
-          console.log("💻 Desktop View");
-          if (isDashboard) {
-            if (!isLoggedIn) {
-                console.warn("🔒 Unauthenticated dashboard access. Redirecting to login...");
-                window.location.href = "login.html";
-                return;
-            }
-            this.ensureDashboardHeader(); 
-            this.renderSidebar();
-            this.renderMenu();
-          } else if (isLandingPage) {
-            this.ensureLandingHeader(isLoggedIn, user);
-            this.toggleSidebar(false);
-            const sidebar = document.getElementById("pro-sidebar");
-            if (sidebar) sidebar.remove();
-          } else {
-            this.ensureHeaderElements();
-          }
+      if (!isDesktop) {
+        console.log("📱 Mobile View");
+        if (isDashboard || (isLoggedIn && !isLandingPage)) {
+          this.renderHeader();
+          this.renderSidebar();
+          this.renderBottomNav();
+          this.renderMenu();
+          this.renderMobileHeaderElements();
+        } else if (isLandingPage) {
+          this.ensureLandingHeader(isLoggedIn, user);
+          this.toggleSidebar(false);
         }
+      } else {
+        console.log("💻 Desktop View");
+        if (isDashboard) {
+          if (!isLoggedIn) {
+            console.warn(
+              "🔒 Unauthenticated dashboard access. Redirecting to login...",
+            );
+            window.location.href = "login.html";
+            return;
+          }
+          this.ensureDashboardHeader();
+          this.renderSidebar();
+          this.renderMenu();
+        } else if (isLandingPage) {
+          this.ensureLandingHeader(isLoggedIn, user);
+          this.toggleSidebar(false);
+          const sidebar = document.getElementById("pro-sidebar");
+          if (sidebar) sidebar.remove();
+        } else {
+          this.ensureHeaderElements();
+        }
+      }
     } catch (err) {
-        console.error("❌ Stage 1 (Core Layout) failed:", err);
+      console.error("❌ Stage 1 (Core Layout) failed:", err);
     }
 
     // Sidebar: CLOSED (collapsed) by default on desktop unless user explicitly opened it
     if (isDesktop && isDashboard) {
-        const sidebarPref = localStorage.getItem('sidebarCollapsed');
-        // If never set OR set to true, default to collapsed
-        if (sidebarPref === null || sidebarPref === 'true') {
-            document.body.classList.add('sidebar-collapsed');
-            localStorage.setItem('sidebarCollapsed', 'true');
-        } else {
-            document.body.classList.remove('sidebar-collapsed');
-        }
+      const sidebarPref = localStorage.getItem("sidebarCollapsed");
+      // If never set OR set to true, default to collapsed
+      if (sidebarPref === null || sidebarPref === "true") {
+        document.body.classList.add("sidebar-collapsed");
+        localStorage.setItem("sidebarCollapsed", "true");
+      } else {
+        document.body.classList.remove("sidebar-collapsed");
+      }
     }
 
     // ── STAGE 2: Enhancements ──────────────────────────────────────────
     const enhancements = [
-        { name: "ProfileDropdown", fn: () => isDashboard && isDesktop && this.renderProfileDropdown() },
-        { name: "SidebarToggle", fn: () => isDashboard && isDesktop && this.renderDesktopSidebarToggle() },
-        { name: "HeaderSwitcher", fn: () => isDashboard && !isDesktop && this.renderHeaderSwitcher() },
-        { name: "StripeButton", fn: () => isDashboard && this.renderStripeHeaderButton() },
-        { name: "Notifications", fn: () => isDashboard && this.renderHeaderNotifications() },
-        { name: "PwaInstall", fn: () => this.renderPwaInstallButton() },
-        { name: "EventBinding", fn: () => this.bindEvents() }
+      {
+        name: "ProfileDropdown",
+        fn: () => isDashboard && isDesktop && this.renderProfileDropdown(),
+      },
+      {
+        name: "SidebarToggle",
+        fn: () => isDashboard && isDesktop && this.renderDesktopSidebarToggle(),
+      },
+      {
+        name: "HeaderSwitcher",
+        fn: () => isDashboard && !isDesktop && this.renderHeaderSwitcher(),
+      },
+      {
+        name: "StripeButton",
+        fn: () => isDashboard && this.renderStripeHeaderButton(),
+      },
+      {
+        name: "Notifications",
+        fn: () => isDashboard && this.renderHeaderNotifications(),
+      },
+      { name: "PwaInstall", fn: () => this.renderPwaInstallButton() },
+      { name: "EventBinding", fn: () => this.bindEvents() },
     ];
 
-    enhancements.forEach(task => {
-        try {
-            task.fn();
-        } catch (err) {
-            console.warn(`⚠️ Enhancement '${task.name}' failed:`, err);
-        }
+    enhancements.forEach((task) => {
+      try {
+        task.fn();
+      } catch (err) {
+        console.warn(`⚠️ Enhancement '${task.name}' failed:`, err);
+      }
     });
 
     // ── STAGE 3: Data Sync ─────────────────────────────────────────────
     setTimeout(() => {
-        try {
-            console.log("🔄 Stage 3: Syncing User Data...");
-            this.syncUserData();
-            this.autoLabelTables();
-            if (typeof this.performMobileUXSweep === 'function') this.performMobileUXSweep();
-            console.log("✅ UnifiedNav Init Complete.");
-        } catch (err) {
-            console.error("❌ Stage 3 (Data Sync) failed:", err);
-        }
+      try {
+        console.log("🔄 Stage 3: Syncing User Data...");
+        this.syncUserData();
+        this.autoLabelTables();
+        if (typeof this.performMobileUXSweep === "function")
+          this.performMobileUXSweep();
+        console.log("✅ UnifiedNav Init Complete.");
+      } catch (err) {
+        console.error("❌ Stage 3 (Data Sync) failed:", err);
+      }
     }, 150);
   },
-
-
 
   renderGroupSwitcher(container) {
     if (typeof GroupSwitcher !== "undefined") {
@@ -159,7 +222,8 @@ const UnifiedNav = {
       const script = document.createElement("script");
       script.src = "group-switcher.js";
       script.onload = () => {
-        if (typeof GroupSwitcher !== "undefined") GroupSwitcher.render(container);
+        if (typeof GroupSwitcher !== "undefined")
+          GroupSwitcher.render(container);
       };
       document.head.appendChild(script);
     }
@@ -167,14 +231,16 @@ const UnifiedNav = {
 
   renderFamilySwitcher(container) {
     // Ported from player-dashboard.js logic
-    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const firstName = user.firstName || user.first_name || "User";
-    const family = JSON.parse(localStorage.getItem('userFamily') || '[]');
-    const activeId = localStorage.getItem('activePlayerId');
-    
-    const activePlayer = family.find(f => f.id == activeId);
+    const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
+    const activeId = localStorage.getItem("activePlayerId");
+
+    const activePlayer = family.find((f) => f.id == activeId);
     const displayName = activePlayer ? activePlayer.first_name : "Main Profile";
-    const displayInitial = activePlayer ? activePlayer.first_name.charAt(0) : firstName.charAt(0);
+    const displayInitial = activePlayer
+      ? activePlayer.first_name.charAt(0)
+      : firstName.charAt(0);
 
     container.innerHTML = `
       <div class="profile-switcher" style="position: relative; margin-left: 1rem;">
@@ -191,40 +257,46 @@ const UnifiedNav = {
         <div class="profile-switcher-dropdown" id="profile-switcher-dropdown" style="position: absolute; top: calc(100% + 8px); left: 0; min-width: 240px; background: #1e1e1e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.25s; z-index: 1100; overflow: hidden; backdrop-filter: blur(10px);">
           <div style="padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.4);">Switch Profile</div>
           <div class="profile-list" style="max-height: 300px; overflow-y: auto;">
-            <button class="profile-item ${!activeId ? 'active' : ''}" onclick="UnifiedNav.switchFamilyProfile(null)" style="width:100%; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:none; border:none; color:white; cursor:pointer; text-align:left;">
+            <button class="profile-item ${!activeId ? "active" : ""}" onclick="UnifiedNav.switchFamilyProfile(null)" style="width:100%; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:none; border:none; color:white; cursor:pointer; text-align:left;">
                <div style="width:28px; height:28px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700;">${firstName.charAt(0)}</div>
                <div>
                  <div style="font-weight:600; font-size:0.9rem;">${firstName} (Main)</div>
                </div>
             </button>
-            ${family.map(child => `
-              <button class="profile-item ${activeId == child.id ? 'active' : ''}" onclick="UnifiedNav.switchFamilyProfile('${child.id}')" style="width:100%; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:none; border:none; color:white; cursor:pointer; text-align:left;">
+            ${family
+              .map(
+                (child) => `
+              <button class="profile-item ${activeId == child.id ? "active" : ""}" onclick="UnifiedNav.switchFamilyProfile('${child.id}')" style="width:100%; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:none; border:none; color:white; cursor:pointer; text-align:left;">
                  <div style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-weight:700;">${child.first_name.charAt(0)}</div>
                  <div>
                    <div style="font-weight:600; font-size:0.9rem;">${child.first_name} ${child.last_name}</div>
                  </div>
               </button>
-            `).join('')}
+            `,
+              )
+              .join("")}
           </div>
         </div>
       </div>
     `;
 
     // Bind dropdown toggle
-    const trigger = document.getElementById('profile-switcher-trigger');
-    const dropdown = document.getElementById('profile-switcher-dropdown');
+    const trigger = document.getElementById("profile-switcher-trigger");
+    const dropdown = document.getElementById("profile-switcher-dropdown");
     if (trigger && dropdown) {
       trigger.onclick = (e) => {
         e.stopPropagation();
-        const isOpen = dropdown.style.visibility === 'visible';
-        dropdown.style.opacity = isOpen ? '0' : '1';
-        dropdown.style.visibility = isOpen ? 'hidden' : 'visible';
-        dropdown.style.transform = isOpen ? 'translateY(-10px)' : 'translateY(0)';
+        const isOpen = dropdown.style.visibility === "visible";
+        dropdown.style.opacity = isOpen ? "0" : "1";
+        dropdown.style.visibility = isOpen ? "hidden" : "visible";
+        dropdown.style.transform = isOpen
+          ? "translateY(-10px)"
+          : "translateY(0)";
       };
-      document.addEventListener('click', () => {
-        dropdown.style.opacity = '0';
-        dropdown.style.visibility = 'hidden';
-        dropdown.style.transform = 'translateY(-10px)';
+      document.addEventListener("click", () => {
+        dropdown.style.opacity = "0";
+        dropdown.style.visibility = "hidden";
+        dropdown.style.transform = "translateY(-10px)";
       });
     }
   },
@@ -232,16 +304,20 @@ const UnifiedNav = {
   switchFamilyProfile(id) {
     console.log("🔄 Switching family profile to:", id);
     if (id) {
-      localStorage.setItem('activePlayerId', id);
+      localStorage.setItem("activePlayerId", id);
     } else {
-      localStorage.removeItem('activePlayerId');
+      localStorage.removeItem("activePlayerId");
     }
     window.location.reload();
   },
 
   renderHeaderNotifications(container) {
     // Use provided container or fallback to standard header areas
-    const target = container || document.getElementById('notif-header-btn-container') || document.querySelector(".dash-header-right") || document.querySelector(".nav-right");
+    const target =
+      container ||
+      document.getElementById("notif-header-btn-container") ||
+      document.querySelector(".dash-header-right") ||
+      document.querySelector(".nav-right");
     if (!target || target.querySelector(".notification-wrapper")) return;
 
     const bellHTML = `
@@ -264,81 +340,99 @@ const UnifiedNav = {
         </div>
       </div>
     `;
-    
+
     if (container) {
-       container.innerHTML = bellHTML;
+      container.innerHTML = bellHTML;
     } else {
-       target.insertAdjacentHTML("afterbegin", bellHTML);
+      target.insertAdjacentHTML("afterbegin", bellHTML);
     }
     this.loadNotifications();
   },
 
   toggleNotifications() {
-     const dropdown = document.getElementById('notificationDropdown');
-     if (!dropdown) return;
-     const isOpen = dropdown.style.display === 'block';
-     dropdown.style.display = isOpen ? 'none' : 'block';
-     if (!isOpen) {
-        // Close profile dropdown if open
-        this.toggleProfileDropdown(false);
-     }
+    const dropdown = document.getElementById("notificationDropdown");
+    if (!dropdown) return;
+    const isOpen = dropdown.style.display === "block";
+    dropdown.style.display = isOpen ? "none" : "block";
+    if (!isOpen) {
+      // Close profile dropdown if open
+      this.toggleProfileDropdown(false);
+    }
   },
 
   async loadNotifications() {
-     const list = document.getElementById('notification-list');
-     const badge = document.getElementById('header-notif-badge');
-     if (!list) return;
+    const list = document.getElementById("notification-list");
+    const badge = document.getElementById("header-notif-badge");
+    if (!list) return;
 
-     try {
-        if (typeof apiService === 'undefined') return;
-        const res = await apiService.makeRequest('/notifications');
-        const notifs = res || [];
-        const unreadCount = notifs.filter(n => !n.read).length;
+    try {
+      if (typeof apiService === "undefined") return;
+      const res = await apiService.makeRequest("/notifications");
+      const notifs = res || [];
+      const unreadCount = notifs.filter((n) => !n.read).length;
 
-        if (unreadCount > 0) {
-           badge.textContent = unreadCount;
-           badge.style.display = 'flex';
-        } else {
-           badge.style.display = 'none';
-        }
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount;
+        badge.style.display = "flex";
+      } else {
+        badge.style.display = "none";
+      }
 
-        if (notifs.length > 0) {
-           list.innerHTML = notifs.slice(0, 5).map(n => `
-             <div style="padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="window.location.href='${n.link || '#'}'">
+      if (notifs.length > 0) {
+        list.innerHTML = notifs
+          .slice(0, 5)
+          .map(
+            (n) => `
+             <div style="padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;" onclick="window.location.href='${n.link || "#"}'">
                 <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 2px;">${n.title}</div>
                 <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">${n.message}</div>
              </div>
-           `).join('');
-        }
-     } catch (e) {
-        console.warn("Could not load notifications for header", e);
-     }
+           `,
+          )
+          .join("");
+      }
+    } catch (e) {
+      console.warn("Could not load notifications for header", e);
+    }
   },
 
   markAllRead() {
-     const badge = document.getElementById('header-notif-badge');
-     if (badge) badge.style.display = 'none';
-     const list = document.getElementById('notification-list');
-     if (list) list.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 2rem 0;">No new notifications</div>';
+    const badge = document.getElementById("header-notif-badge");
+    if (badge) badge.style.display = "none";
+    const list = document.getElementById("notification-list");
+    if (list)
+      list.innerHTML =
+        '<div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 2rem 0;">No new notifications</div>';
   },
 
   renderStripeHeaderButton(container) {
-    const target = container || document.getElementById('stripe-header-btn-container') || document.querySelector(".dash-header-right") || document.querySelector(".nav-right");
+    const target =
+      container ||
+      document.getElementById("stripe-header-btn-container") ||
+      document.querySelector(".dash-header-right") ||
+      document.querySelector(".nav-right");
     if (!target || target.querySelector(".stripe-header-btn")) return;
 
     // Check if user is admin or account type is admin/platform_admin
-    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const userRole = this.getUserRole();
-    const isAdmin = ['admin', 'platform_admin', 'organization'].includes(userRole);
-    const isDashboard = window.location.pathname.includes('dashboard');
-    
+    const isAdmin = ["admin", "platform_admin", "organization"].includes(
+      userRole,
+    );
+    const isDashboard = window.location.pathname.includes("dashboard");
+
     // Check connection status from user object or localStorage
-    const isConnected = user.stripe_connected || user.is_stripe_connected || localStorage.getItem('stripeConnected') === 'true';
+    const isConnected =
+      user.stripe_connected ||
+      user.is_stripe_connected ||
+      localStorage.getItem("stripeConnected") === "true";
 
     if (isAdmin && isDashboard) {
       const btnColor = isConnected ? "#22c55e" : "#635bff";
       const btnText = isConnected ? "Connected" : "Stripe";
-      const btnIcon = isConnected ? "✅" : `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      const btnIcon = isConnected
+        ? "✅"
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M13.962 10.935c0-1.212-1.046-1.309-1.973-1.309-1.353 0-2.321.31-2.321.31l-.22-1.552s.934-.367 2.592-.367c2.321 0 3.737 1.026 3.737 3.056 0 3.339-4.57 3.514-4.57 5.163 0 .726.65 1.045 1.636 1.045 1.418 0 2.503-.424 2.503-.424l.23 1.572s-1.162.53-2.88.53c-2.122 0-3.538-.986-3.538-2.936.01-3.6 4.804-3.66 4.804-5.088zM4.613 14.63c.18-1.52.92-2.14 1.94-2.14 1.34 0 2.3.26 2.3.26l.24-1.56s-1.25-.45-2.79-.45C4.213 10.74 3 12.18 3 14.73c0 3.03 2.1 3.54 4.13 3.54 1.7 0 3.1-.48 3.1-.48l.24-1.61s-1.45.66-3.1.66c-1.8 0-2.91-.71-2.757-2.21zm10.79 3.09h1.91v-6.85h-1.91v6.85zm0-8.54h1.91V7.27h-1.91v1.91zm2.34 8.54h1.91v-6.85h-1.91v6.85zm0-8.54h1.91V7.27h-1.91v1.91zm2.34 8.54h1.91v-3.7c0-2.02.8-3.15 2.14-3.15.22 0 .43.02.61.06v-1.74c-.17-.03-.38-.05-.61-.05-1.55 0-2.14.73-2.14.73V10.87h-1.91v6.85z"/>
             </svg>`;
 
@@ -350,11 +444,11 @@ const UnifiedNav = {
           </button>
         </div>
       `;
-      
+
       if (container) {
-          container.innerHTML = stripeBtnHTML;
+        container.innerHTML = stripeBtnHTML;
       } else {
-          target.insertAdjacentHTML("afterbegin", stripeBtnHTML);
+        target.insertAdjacentHTML("afterbegin", stripeBtnHTML);
       }
     }
   },
@@ -369,33 +463,52 @@ const UnifiedNav = {
         <i id="desktop-toggle-icon" style="font-style: normal;">☰</i>
       </button>
     `;
-    
+
     // Insert at the beginning of sidebar header
     target.insertAdjacentHTML("afterbegin", toggleHTML);
-    
+
     // Sync icon
-    const isCollapsed = document.body.classList.contains('sidebar-collapsed');
-    const icon = document.getElementById('desktop-toggle-icon');
-    if (icon) icon.innerHTML = isCollapsed ? '☰' : '✕';
+    const isCollapsed = document.body.classList.contains("sidebar-collapsed");
+    const icon = document.getElementById("desktop-toggle-icon");
+    if (icon) icon.innerHTML = isCollapsed ? "☰" : "✕";
   },
 
   toggleDesktopSidebar() {
-    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+    const isCollapsed = document.body.classList.toggle("sidebar-collapsed");
     // Store 'false' when open (not default), 'true' when closed (default)
-    localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
-    const icon = document.getElementById('desktop-toggle-icon');
+    localStorage.setItem("sidebarCollapsed", isCollapsed ? "true" : "false");
+    const icon = document.getElementById("desktop-toggle-icon");
     if (icon) {
       icon.innerHTML = isCollapsed ? ICONS.menu : ICONS.close;
     }
   },
 
   renderPwaInstallButton() {
+    // Don't inject PWA install wrapper on landing/home pages
+    try {
+      const path = window.location.pathname.toLowerCase();
+      const isRootOrIndex =
+        path === "/" || path.endsWith("/index.html") || path === "";
+      const hasLandingHero = !!document.getElementById("landingHero");
+      if (
+        hasLandingHero ||
+        isRootOrIndex ||
+        document.body.classList.contains("landing-view")
+      ) {
+        // Skip injection on landing page to avoid layout glitches
+        return;
+      }
+    } catch (e) {
+      console.warn("PWA injection guard check failed", e);
+    }
+
     // Look for various header sections
-    const rightSide = document.querySelector(".dash-header-right") || 
-                      document.querySelector(".nav-right") || 
-                      document.querySelector(".header-actions") ||
-                      document.querySelector("header");
-                      
+    const rightSide =
+      document.querySelector(".dash-header-right") ||
+      document.querySelector(".nav-right") ||
+      document.querySelector(".header-actions") ||
+      document.querySelector("header");
+
     if (!rightSide || rightSide.querySelector(".pwa-install-btn")) return;
 
     const pwaBtnHTML = `
@@ -406,7 +519,7 @@ const UnifiedNav = {
         </button>
       </div>
     `;
-    
+
     // For dashboards, we want to insert before profile or stripe
     const profile = rightSide.querySelector(".user-profile-trigger");
     if (profile) {
@@ -418,34 +531,46 @@ const UnifiedNav = {
 
   cleanupLegacyArtifacts() {
     console.log("🧹 UnifiedNav: Purging legacy artifacts...");
-    
+
     // 1. Remove specific legacy IDs that might have been injected
-    ['loggedInNav', 'loggedOutNav', 'scoutStatusBadge'].forEach(id => {
+    ["loggedInNav", "loggedOutNav", "scoutStatusBadge"].forEach((id) => {
       const el = document.getElementById(id);
-      if (el && !el.closest('.pro-header')) {
+      if (el && !el.closest(".pro-header")) {
         console.log(`🗑️ Removing rogue element: #${id}`);
         el.remove();
       }
     });
 
     // 2. Remove legacy welcome banners
-    document.querySelectorAll('.welcome-banner, .user-info').forEach(el => {
-      if (!el.closest('.pro-header') && !el.classList.contains('dash-header-left')) {
-         console.log("🗑️ Removing legacy welcome banner");
-         el.remove();
+    document.querySelectorAll(".welcome-banner, .user-info").forEach((el) => {
+      if (
+        !el.closest(".pro-header") &&
+        !el.classList.contains("dash-header-left")
+      ) {
+        console.log("🗑️ Removing legacy welcome banner");
+        el.remove();
       }
     });
 
     // 3. Absolute purge of any top-level text nodes containing "Hello,"
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false,
+    );
     const nodesToRemove = [];
-    while(walker.nextNode()) {
+    while (walker.nextNode()) {
       const node = walker.currentNode;
-      if (node.textContent.includes("Hello,") && !node.parentElement.closest('.pro-header') && !node.parentElement.closest('.dashboard-container')) {
+      if (
+        node.textContent.includes("Hello,") &&
+        !node.parentElement.closest(".pro-header") &&
+        !node.parentElement.closest(".dashboard-container")
+      ) {
         nodesToRemove.push(node);
       }
     }
-    nodesToRemove.forEach(node => {
+    nodesToRemove.forEach((node) => {
       console.log("🗑️ Purging legacy text node:", node.textContent.trim());
       node.remove();
     });
@@ -472,7 +597,8 @@ const UnifiedNav = {
         </div>
       `;
     } else {
-      const name = (user ? (user.firstName || user.first_name) : "User") || "User";
+      const name =
+        (user ? user.firstName || user.first_name : "User") || "User";
       header.innerHTML = `
         <div class="nav-container nav container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
@@ -490,14 +616,16 @@ const UnifiedNav = {
   },
 
   goToDashboard() {
-    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    const type = user.account_type || user.userType || localStorage.getItem('userType');
-    
-    if (type === 'player') window.location.href = 'player-dashboard.html';
-    else if (type === 'coach') window.location.href = 'coach-dashboard.html';
-    else if (type === 'scout') window.location.href = 'scout-dashboard.html';
-    else if (type === 'platform_admin') window.location.href = 'super-admin-dashboard.html';
-    else window.location.href = 'admin-dashboard.html';
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const type =
+      user.account_type || user.userType || localStorage.getItem("userType");
+
+    if (type === "player") window.location.href = "player-dashboard.html";
+    else if (type === "coach") window.location.href = "coach-dashboard.html";
+    else if (type === "scout") window.location.href = "scout-dashboard.html";
+    else if (type === "platform_admin")
+      window.location.href = "super-admin-dashboard.html";
+    else window.location.href = "admin-dashboard.html";
   },
 
   logout() {
@@ -521,8 +649,13 @@ const UnifiedNav = {
     }
     header.classList.add("unified-header");
 
-    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    const name = (user.firstName || user.first_name || user.name || 'User').split(' ')[0];
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const name = (
+      user.firstName ||
+      user.first_name ||
+      user.name ||
+      "User"
+    ).split(" ")[0];
     const initial = name.charAt(0).toUpperCase();
 
     header.innerHTML = `
@@ -581,19 +714,25 @@ const UnifiedNav = {
     `;
 
     // Inject Stripe button and notifications
-    this.renderStripeHeaderButton(document.getElementById('stripe-header-btn-container'));
-    this.renderHeaderNotifications(document.getElementById('notif-header-btn-container'));
+    this.renderStripeHeaderButton(
+      document.getElementById("stripe-header-btn-container"),
+    );
+    this.renderHeaderNotifications(
+      document.getElementById("notif-header-btn-container"),
+    );
     this.syncUserData();
     this.updateModeUI();
 
     // Inject Group Switcher (or Family Switcher for player page) into #header-org-switcher
-    const switcherSlot = document.getElementById('header-org-switcher');
+    const switcherSlot = document.getElementById("header-org-switcher");
     if (switcherSlot && !switcherSlot.dataset.mounted) {
-      switcherSlot.dataset.mounted = '1';
+      switcherSlot.dataset.mounted = "1";
       const userRole = this.getUserRole();
-      const isPlayerPage = window.location.href.includes('player-dashboard.html');
-      
-      if (isPlayerPage || userRole === 'player') {
+      const isPlayerPage = window.location.href.includes(
+        "player-dashboard.html",
+      );
+
+      if (isPlayerPage || userRole === "player") {
         this.renderFamilySwitcher(switcherSlot);
       } else {
         this.renderGroupSwitcher(switcherSlot);
@@ -607,18 +746,16 @@ const UnifiedNav = {
     this.ensureDashboardHeader();
   },
 
-
-
   renderSidebar() {
     try {
-        if (document.getElementById("pro-sidebar")) {
-            console.log("♻️ Sidebar already exists, skipping recreation.");
-            return;
-        }
+      if (document.getElementById("pro-sidebar")) {
+        console.log("♻️ Sidebar already exists, skipping recreation.");
+        return;
+      }
 
-        console.log("🏗️ Rendering Sidebar...");
-        const isPlayer = window.location.href.includes("player-dashboard.html");
-        const sidebarHTML = `
+      console.log("🏗️ Rendering Sidebar...");
+      const isPlayer = window.location.href.includes("player-dashboard.html");
+      const sidebarHTML = `
                 <div class="sidebar-overlay" id="sidebar-overlay"></div>
                 <aside class="pro-sidebar" id="pro-sidebar">
                     <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; left: 1.25rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 8px; z-index: 10;">
@@ -647,10 +784,10 @@ const UnifiedNav = {
                     </div>
                 </aside>
             `;
-        document.body.insertAdjacentHTML("beforeend", sidebarHTML);
-        this.initSidebarSwitcher();
+      document.body.insertAdjacentHTML("beforeend", sidebarHTML);
+      this.initSidebarSwitcher();
     } catch (err) {
-        console.error("❌ Error rendering sidebar:", err);
+      console.error("❌ Error rendering sidebar:", err);
     }
   },
 
@@ -676,22 +813,22 @@ const UnifiedNav = {
 
   renderGroupSwitcher(container) {
     if (!container) return;
-    if (typeof GroupSwitcher !== 'undefined') {
-        GroupSwitcher.render(container);
+    if (typeof GroupSwitcher !== "undefined") {
+      GroupSwitcher.render(container);
     } else {
-        const script = document.createElement("script");
-        script.src = "group-switcher.js";
-        script.onload = () => {
-          if (typeof GroupSwitcher !== "undefined")
-            GroupSwitcher.render(container);
-        };
-        document.head.appendChild(script);
+      const script = document.createElement("script");
+      script.src = "group-switcher.js";
+      script.onload = () => {
+        if (typeof GroupSwitcher !== "undefined")
+          GroupSwitcher.render(container);
+      };
+      document.head.appendChild(script);
     }
   },
 
   renderFamilySwitcher(container) {
     if (!container) return;
-    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const name = user.firstName || user.first_name || "Member";
     container.innerHTML = `
         <div class="family-switcher-placeholder" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer;" onclick="showPlayerSection('family')">
@@ -702,9 +839,12 @@ const UnifiedNav = {
     `;
   },
 
-
   renderHeaderSwitcher() {
-    const headerLeft = document.querySelector(".dash-header-left") || document.querySelector(".nav-left") || document.querySelector(".logo-area") || document.querySelector(".nav-container");
+    const headerLeft =
+      document.querySelector(".dash-header-left") ||
+      document.querySelector(".nav-left") ||
+      document.querySelector(".logo-area") ||
+      document.querySelector(".nav-container");
     if (!headerLeft || headerLeft.querySelector("#header-org-switcher")) return;
 
     const switcherContainer = document.createElement("div");
@@ -713,9 +853,9 @@ const UnifiedNav = {
     headerLeft.appendChild(switcherContainer);
 
     const userRole = this.getUserRole();
-    const isPlayerMode = window.location.href.includes('player-dashboard.html');
+    const isPlayerMode = window.location.href.includes("player-dashboard.html");
 
-    if (isPlayerMode || userRole === 'player') {
+    if (isPlayerMode || userRole === "player") {
       console.log("👨‍👩‍👧‍👦 Rendering Family Switcher in Header");
       this.renderFamilySwitcher(switcherContainer);
     } else {
@@ -735,7 +875,10 @@ const UnifiedNav = {
     if (!nav) return;
 
     // Add Hamburger if missing (Mobile only)
-    if (!nav.querySelector("#side-menu-trigger") && !nav.querySelector(".side-menu-trigger")) {
+    if (
+      !nav.querySelector("#side-menu-trigger") &&
+      !nav.querySelector(".side-menu-trigger")
+    ) {
       const trigger = document.createElement("div");
       trigger.className = "side-menu-trigger mobile-only";
       trigger.id = "side-menu-trigger";
@@ -802,61 +945,72 @@ const UnifiedNav = {
     if (!header) return;
 
     // Don't render on landing page
-    if (window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname === '') return;
+    if (
+      window.location.pathname.includes("index.html") ||
+      window.location.pathname === "/" ||
+      window.location.pathname === ""
+    )
+      return;
 
-    let existingTabs = document.getElementById('top-headline-tabs');
+    let existingTabs = document.getElementById("top-headline-tabs");
     if (existingTabs) return;
 
     const url = window.location.href;
-    const userRole = localStorage.getItem('userType') || '';
-    const isPlayer = url.includes("player-dashboard.html") || userRole === 'player';
-    const isCoach = url.includes("coach-dashboard.html") || userRole === 'coach';
-    const isScout = url.includes("scout-dashboard.html") || userRole === 'scout';
-    const isSuperAdmin = url.includes("super-admin-dashboard.html") || userRole === 'platform_admin';
-    const isAdmin = url.includes("admin-dashboard.html") || userRole === 'admin';
+    const userRole = localStorage.getItem("userType") || "";
+    const isPlayer =
+      url.includes("player-dashboard.html") || userRole === "player";
+    const isCoach =
+      url.includes("coach-dashboard.html") || userRole === "coach";
+    const isScout =
+      url.includes("scout-dashboard.html") || userRole === "scout";
+    const isSuperAdmin =
+      url.includes("super-admin-dashboard.html") ||
+      userRole === "platform_admin";
+    const isAdmin =
+      url.includes("admin-dashboard.html") || userRole === "admin";
 
     let tabs = [];
     if (isPlayer) {
       tabs = [
-        { id: 'overview', label: 'Overview', icon: '📊' },
-        { id: 'teams', label: 'My Teams', icon: '⚽' },
-        { id: 'club-messenger', label: 'Chat', icon: '💬' },
-        { id: 'notifications', label: 'Activity', icon: '🔔' },
-        { id: 'my-clubs', label: 'Groups', icon: '🏰' },
-        { id: 'payments', label: 'Finance', icon: '💳' }
+        { id: "overview", label: "Overview", icon: "📊" },
+        { id: "teams", label: "My Teams", icon: "⚽" },
+        { id: "club-messenger", label: "Chat", icon: "💬" },
+        { id: "notifications", label: "Activity", icon: "🔔" },
+        { id: "my-clubs", label: "Groups", icon: "🏰" },
+        { id: "payments", label: "Finance", icon: "💳" },
       ];
     } else if (isCoach) {
       tabs = [
-        { id: 'overview', label: 'Dashboard', icon: '📊' },
-        { id: 'teams', label: 'Teams', icon: '🛡️' },
-        { id: 'players', label: 'Squad', icon: '👥' },
-        { id: 'tactical-board', label: 'Tactical', icon: '📋' },
-        { id: 'messenger', label: 'Messenger', icon: '💬' },
-        { id: 'scouting', label: 'Scouting', icon: '🔍' },
-        { id: 'tournament-manager', label: 'Events', icon: '🏆' }
+        { id: "overview", label: "Dashboard", icon: "📊" },
+        { id: "teams", label: "Teams", icon: "🛡️" },
+        { id: "players", label: "Squad", icon: "👥" },
+        { id: "tactical-board", label: "Tactical", icon: "📋" },
+        { id: "messenger", label: "Messenger", icon: "💬" },
+        { id: "scouting", label: "Scouting", icon: "🔍" },
+        { id: "tournament-manager", label: "Events", icon: "🏆" },
       ];
     } else if (isScout) {
       tabs = [
-        { id: 'discovery', label: 'Discover', icon: '🔍' },
-        { id: 'watchlist', label: 'Watchlist', icon: '⭐' },
-        { id: 'messenger', label: 'Chat', icon: '💬' },
-        { id: 'reports', label: 'Reports', icon: '📝' }
+        { id: "discovery", label: "Discover", icon: "🔍" },
+        { id: "watchlist", label: "Watchlist", icon: "⭐" },
+        { id: "messenger", label: "Chat", icon: "💬" },
+        { id: "reports", label: "Reports", icon: "📝" },
       ];
     } else if (isAdmin) {
       tabs = [
-        { id: 'overview', label: 'Overview', icon: '📊' },
-        { id: 'members', label: 'Members', icon: '🏃' },
-        { id: 'teams', label: 'Teams', icon: '🛡️' },
-        { id: 'events', label: 'Events', icon: '📅' },
-        { id: 'finances', label: 'Finance', icon: '💰' },
-        { id: 'staff', label: 'Staff', icon: '👔' }
+        { id: "overview", label: "Overview", icon: "📊" },
+        { id: "members", label: "Members", icon: "🏃" },
+        { id: "teams", label: "Teams", icon: "🛡️" },
+        { id: "events", label: "Events", icon: "📅" },
+        { id: "finances", label: "Finance", icon: "💰" },
+        { id: "staff", label: "Staff", icon: "👔" },
       ];
     } else if (isSuperAdmin) {
       tabs = [
-        { id: 'overview', label: 'Console', icon: '📊' },
-        { id: 'groups', label: 'Groups', icon: '🏢' },
-        { id: 'users', label: 'Global Users', icon: '👥' },
-        { id: 'activity', label: 'System Logs', icon: '📜' }
+        { id: "overview", label: "Console", icon: "📊" },
+        { id: "groups", label: "Groups", icon: "🏢" },
+        { id: "users", label: "Global Users", icon: "👥" },
+        { id: "activity", label: "System Logs", icon: "📜" },
       ];
     }
 
@@ -865,24 +1019,34 @@ const UnifiedNav = {
     const tabsHTML = `
       <div id="top-headline-tabs" class="top-headline-tabs">
         <div class="tabs-scroll-container">
-          ${tabs.map(tab => `
-            <button class="headline-tab ${tab.id === 'overview' ? 'active' : ''}" 
-                    onclick="${isPlayer ? 'showPlayerSection' : (isCoach ? 'showCoachSection' : (isScout ? 'showScoutSection' : 'showSection'))}('${tab.id}'); UnifiedNav.setActiveTab(this);">
+          ${tabs
+            .map(
+              (tab) => `
+            <button class="headline-tab ${tab.id === "overview" ? "active" : ""}" 
+                    onclick="${isPlayer ? "showPlayerSection" : isCoach ? "showCoachSection" : isScout ? "showScoutSection" : "showSection"}('${tab.id}'); UnifiedNav.setActiveTab(this);">
               <span class="tab-icon">${tab.icon}</span>
               <span class="tab-label">${tab.label}</span>
             </button>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </div>
       </div>
     `;
 
-    header.insertAdjacentHTML('afterend', tabsHTML);
+    header.insertAdjacentHTML("afterend", tabsHTML);
   },
 
   setActiveTab(btn) {
-    document.querySelectorAll('.headline-tab').forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    document
+      .querySelectorAll(".headline-tab")
+      .forEach((t) => t.classList.remove("active"));
+    btn.classList.add("active");
+    btn.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
   },
 
   renderBottomNav() {
@@ -892,16 +1056,24 @@ const UnifiedNav = {
     if (!bottomNavContainer) return;
 
     const url = window.location.href;
-    const userRole = localStorage.getItem('userType') || '';
-    const isPlayer = url.includes("player-dashboard.html") || userRole === 'player';
-    const isSuperAdmin = url.includes("super-admin-dashboard.html") || userRole === 'platform_admin';
-    const isCoach = url.includes("coach-dashboard.html") || userRole === 'coach';
-    const isScout = url.includes("scout-dashboard.html") || url.includes("scouting.html") || userRole === 'scout';
+    const userRole = localStorage.getItem("userType") || "";
+    const isPlayer =
+      url.includes("player-dashboard.html") || userRole === "player";
+    const isSuperAdmin =
+      url.includes("super-admin-dashboard.html") ||
+      userRole === "platform_admin";
+    const isCoach =
+      url.includes("coach-dashboard.html") || userRole === "coach";
+    const isScout =
+      url.includes("scout-dashboard.html") ||
+      url.includes("scouting.html") ||
+      userRole === "scout";
 
     let navHtml = "";
 
-    const userType = localStorage.getItem('userType');
-    const isPlayerMode = url.includes('player-dashboard.html') || userType === 'player';
+    const userType = localStorage.getItem("userType");
+    const isPlayerMode =
+      url.includes("player-dashboard.html") || userType === "player";
 
     if (isPlayerMode || isPlayer) {
       navHtml = `
@@ -1028,7 +1200,9 @@ const UnifiedNav = {
             </div>
         `;
     // Try to attach to a header container if possible, otherwise body
-    const container = document.querySelector(".pro-header .nav-container, header.header .nav, header.header .nav-container");
+    const container = document.querySelector(
+      ".pro-header .nav-container, header.header .nav, header.header .nav-container",
+    );
     if (container) {
       container.insertAdjacentHTML("beforeend", dropdownHTML);
     } else {
@@ -1088,11 +1262,11 @@ const UnifiedNav = {
 
     // Standardize breakpoints: 992px+ is desktop
     const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
-    
+
     if (isDesktop && show) {
-       // On desktop, we can use the trigger for profile if sidebar is already persistent
-       this.toggleProfileDropdown(true);
-       return;
+      // On desktop, we can use the trigger for profile if sidebar is already persistent
+      this.toggleProfileDropdown(true);
+      return;
     }
 
     if (show) {
@@ -1105,15 +1279,20 @@ const UnifiedNav = {
     }
 
     if (show) {
-        const notifDropdown = document.getElementById('notificationDropdown');
-        if (notifDropdown) notifDropdown.style.display = 'none';
-        this.toggleProfileDropdown(false);
+      const notifDropdown = document.getElementById("notificationDropdown");
+      if (notifDropdown) notifDropdown.style.display = "none";
+      this.toggleProfileDropdown(false);
     }
   },
 
   getUserRole() {
-    const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    return user.account_type || user.userType || localStorage.getItem('userType') || 'member';
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    return (
+      user.account_type ||
+      user.userType ||
+      localStorage.getItem("userType") ||
+      "member"
+    );
   },
 
   syncUserData() {
@@ -1203,11 +1382,18 @@ const UnifiedNav = {
 
   renderMenu() {
     const url = window.location.href;
-    const userRole = localStorage.getItem('userType') || '';
-    const isPlayer = url.includes("player-dashboard.html") || userRole === 'player';
-    const isSuperAdmin = url.includes("super-admin-dashboard.html") || userRole === 'platform_admin';
-    const isCoach = url.includes("coach-dashboard.html") || userRole === 'coach';
-    const isScout = url.includes("scout-dashboard.html") || url.includes("scouting.html") || userRole === 'scout';
+    const userRole = localStorage.getItem("userType") || "";
+    const isPlayer =
+      url.includes("player-dashboard.html") || userRole === "player";
+    const isSuperAdmin =
+      url.includes("super-admin-dashboard.html") ||
+      userRole === "platform_admin";
+    const isCoach =
+      url.includes("coach-dashboard.html") || userRole === "coach";
+    const isScout =
+      url.includes("scout-dashboard.html") ||
+      url.includes("scouting.html") ||
+      userRole === "scout";
 
     const nav = document.getElementById("sidebar-nav-content");
     if (!nav) return;
@@ -1323,10 +1509,10 @@ const UnifiedNav = {
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const activePlayerId = localStorage.getItem("activePlayerId");
     const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
-    
+
     if (family.length === 0 && !activePlayerId) {
-        target.innerHTML = `<div style="padding: 0.5rem; color: rgba(255,255,255,0.4); font-size: 0.8rem;">Single Profile Mode</div>`;
-        return;
+      target.innerHTML = `<div style="padding: 0.5rem; color: rgba(255,255,255,0.4); font-size: 0.8rem;">Single Profile Mode</div>`;
+      return;
     }
 
     const firstName = user.firstName || user.first_name || "User";
@@ -1334,19 +1520,19 @@ const UnifiedNav = {
 
     let switcherHtml = `
         <div class="mini-profile-list" style="display: flex; flex-direction: column; gap: 4px;">
-            <div class="profile-pill ${!activePlayerId ? 'active' : ''}" onclick="if(typeof switchProfile !== 'undefined') switchProfile(null); else location.reload();" style="display: flex; align-items: center; gap: 0.75rem; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s; ${!activePlayerId ? 'background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3);' : 'background: rgba(255,255,255,0.03); border: 1px solid transparent;'}">
+            <div class="profile-pill ${!activePlayerId ? "active" : ""}" onclick="if(typeof switchProfile !== 'undefined') switchProfile(null); else location.reload();" style="display: flex; align-items: center; gap: 0.75rem; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s; ${!activePlayerId ? "background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3);" : "background: rgba(255,255,255,0.03); border: 1px solid transparent;"}">
                 <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: white;">${initials}</div>
-                <div style="flex: 1; font-size: 0.85rem; font-weight: 600; color: ${!activePlayerId ? 'white' : 'rgba(255,255,255,0.6)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Main Profile</div>
+                <div style="flex: 1; font-size: 0.85rem; font-weight: 600; color: ${!activePlayerId ? "white" : "rgba(255,255,255,0.6)"}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Main Profile</div>
             </div>
     `;
 
-    family.forEach(member => {
-        const isActive = activePlayerId == member.id;
-        const mInitials = (member.first_name || "F").charAt(0).toUpperCase();
-        switcherHtml += `
-            <div class="profile-pill ${isActive ? 'active' : ''}" onclick="if(typeof switchToChildProfile !== 'undefined') switchToChildProfile('${member.id}', '${member.club_id || ''}'); else location.reload();" style="display: flex; align-items: center; gap: 0.75rem; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s; ${isActive ? 'background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3);' : 'background: rgba(255,255,255,0.03); border: 1px solid transparent;'}">
-                <div style="width: 24px; height: 24px; border-radius: 50%; background: ${member.club_id ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'rgba(255,255,255,0.1)'}; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: white;">${mInitials}</div>
-                <div style="flex: 1; font-size: 0.85rem; font-weight: 600; color: ${isActive ? 'white' : 'rgba(255,255,255,0.6)'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${member.first_name}</div>
+    family.forEach((member) => {
+      const isActive = activePlayerId == member.id;
+      const mInitials = (member.first_name || "F").charAt(0).toUpperCase();
+      switcherHtml += `
+            <div class="profile-pill ${isActive ? "active" : ""}" onclick="if(typeof switchToChildProfile !== 'undefined') switchToChildProfile('${member.id}', '${member.club_id || ""}'); else location.reload();" style="display: flex; align-items: center; gap: 0.75rem; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s; ${isActive ? "background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.3);" : "background: rgba(255,255,255,0.03); border: 1px solid transparent;"}">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: ${member.club_id ? "linear-gradient(135deg, #667eea, #764ba2)" : "rgba(255,255,255,0.1)"}; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; color: white;">${mInitials}</div>
+                <div style="flex: 1; font-size: 0.85rem; font-weight: 600; color: ${isActive ? "white" : "rgba(255,255,255,0.6)"}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${member.first_name}</div>
             </div>
         `;
     });
@@ -1354,7 +1540,6 @@ const UnifiedNav = {
     switcherHtml += `</div>`;
     target.innerHTML = switcherHtml;
   },
-
 
   /**
    * Automatically fixes common mobile UX issues like missing table labels
@@ -1367,27 +1552,36 @@ const UnifiedNav = {
     this.autoLabelTables();
 
     // 2. Add padding to main content for mobile bottom nav if it exists
-    const main = document.querySelector('main, .dashboard-container');
+    const main = document.querySelector("main, .dashboard-container");
     if (main) {
-      if (!main.style.paddingBottom || parseInt(main.style.paddingBottom) < 100) {
-        main.style.paddingBottom = '100px';
+      if (
+        !main.style.paddingBottom ||
+        parseInt(main.style.paddingBottom) < 100
+      ) {
+        main.style.paddingBottom = "100px";
       }
     }
 
     // 3. Fix full-screen height issues on iOS
-    document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-    window.addEventListener('resize', () => {
-      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    document.documentElement.style.setProperty(
+      "--vh",
+      `${window.innerHeight * 0.01}px`,
+    );
+    window.addEventListener("resize", () => {
+      document.documentElement.style.setProperty(
+        "--vh",
+        `${window.innerHeight * 0.01}px`,
+      );
     });
   },
-
-
 
   updateHeaderState() {
     // 1. Synchronize the mode toggle checkbox
     const modeToggle = document.getElementById("mode-toggle");
     if (modeToggle) {
-      modeToggle.checked = window.location.href.includes("player-dashboard.html");
+      modeToggle.checked = window.location.href.includes(
+        "player-dashboard.html",
+      );
       const groupLabel = document.getElementById("group-label");
       const playerLabel = document.getElementById("player-label");
       if (groupLabel && playerLabel) {
@@ -1400,8 +1594,9 @@ const UnifiedNav = {
     window.addEventListener("scroll", () => {
       const header = document.querySelector(".pro-header, header.header");
       if (!header) return;
-      
-      const isDesktop = typeof window !== "undefined" && window.innerWidth >= 992;
+
+      const isDesktop =
+        typeof window !== "undefined" && window.innerWidth >= 992;
       if (isDesktop) {
         if (window.scrollY > 50) {
           header.style.background = "rgba(10, 10, 12, 0.95)";
@@ -1426,15 +1621,14 @@ const UnifiedNav = {
 
     // 3. Ensure dynamic elements are rendered
     // Disabled redundant header switcher as it is now in the sidebar
-    // this.renderHeaderSwitcher(); 
+    // this.renderHeaderSwitcher();
     this.renderHeaderNotifications();
     this.renderStripeHeaderButton();
   },
-
 };
 
 // Initialize on load
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => UnifiedNav.init(), 100);
   });
@@ -1445,7 +1639,7 @@ if (typeof window !== 'undefined') {
  * Global Notification Helper (The "Alert UI")
  * Standardizes notifications across all user types and dashboards
  */
-window.showNotification = function(message, type = "info") {
+window.showNotification = function (message, type = "info") {
   const existingNotifications = document.querySelectorAll(".notification");
   existingNotifications.forEach((n) => n.remove());
 
@@ -1454,7 +1648,7 @@ window.showNotification = function(message, type = "info") {
   notification.innerHTML = `
         <div class="notification-content">
             <span class="notification-icon">
-                ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+                ${type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️"}
             </span>
             <span class="notification-message">${message}</span>
         </div>
@@ -1507,16 +1701,16 @@ window.showNotification = function(message, type = "info") {
   }
 
   document.body.appendChild(notification);
-  
+
   // Auto-dismiss after 5 seconds
   setTimeout(() => {
     if (notification && notification.parentElement) {
-        notification.style.transform = "translateX(120%)";
-        notification.style.opacity = "0";
-        notification.style.transition = "all 0.4s ease";
-        setTimeout(() => {
-            if (notification && notification.parentElement) notification.remove();
-        }, 400);
+      notification.style.transform = "translateX(120%)";
+      notification.style.opacity = "0";
+      notification.style.transition = "all 0.4s ease";
+      setTimeout(() => {
+        if (notification && notification.parentElement) notification.remove();
+      }, 400);
     }
   }, 5000);
 };
@@ -1525,23 +1719,23 @@ window.showNotification = function(message, type = "info") {
 UnifiedNav.showNotification = window.showNotification;
 
 // 🛡️ Override native alert to use our premium UI
-window.alert = function(msg) {
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(msg, 'info');
-    } else {
-        console.warn("showNotification not available, using console:", msg);
-    }
+window.alert = function (msg) {
+  if (typeof window.showNotification === "function") {
+    window.showNotification(msg, "info");
+  } else {
+    console.warn("showNotification not available, using console:", msg);
+  }
 };
 
 // 🏗️ Auto-initialize Unified Navigation System
-if (window.UNIFIED_NAV_ENABLED || window.location.href.includes('dashboard')) {
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => {
-            console.log("🚀 UnifiedNav Auto-Init (DOMContentLoaded)");
-            UnifiedNav.init();
-        });
-    } else {
-        console.log("🚀 UnifiedNav Auto-Init (Immediate)");
-        UnifiedNav.init();
-    }
+if (window.UNIFIED_NAV_ENABLED || window.location.href.includes("dashboard")) {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      console.log("🚀 UnifiedNav Auto-Init (DOMContentLoaded)");
+      UnifiedNav.init();
+    });
+  } else {
+    console.log("🚀 UnifiedNav Auto-Init (Immediate)");
+    UnifiedNav.init();
+  }
 }

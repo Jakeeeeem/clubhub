@@ -121,8 +121,12 @@ router.get("/:id", authenticateToken, async (req, res) => {
     const clubResult = await query(queries.findClubById, [staff.club_id]);
     dashboardData.club = clubResult.rows[0];
 
-    // Get recent activities based on permissions
-    if (staff.permissions.includes("players")) {
+    // Get recent activities based on permissions (prefer boolean flags)
+    if (
+      staff.can_manage_players ||
+      (Array.isArray(staff.permissions) &&
+        staff.permissions.includes("players"))
+    ) {
       const recentPlayersResult = await query(
         `
         SELECT * FROM players 
@@ -135,7 +139,10 @@ router.get("/:id", authenticateToken, async (req, res) => {
       dashboardData.recentPlayers = recentPlayersResult.rows;
     }
 
-    if (staff.permissions.includes("events")) {
+    if (
+      staff.can_manage_events ||
+      (Array.isArray(staff.permissions) && staff.permissions.includes("events"))
+    ) {
       const recentEventsResult = await query(
         `
         SELECT * FROM events 
@@ -148,7 +155,11 @@ router.get("/:id", authenticateToken, async (req, res) => {
       dashboardData.recentEvents = recentEventsResult.rows;
     }
 
-    if (staff.permissions.includes("finances")) {
+    if (
+      staff.can_manage_finances ||
+      (Array.isArray(staff.permissions) &&
+        staff.permissions.includes("finances"))
+    ) {
       const recentPaymentsResult = await query(
         `
         SELECT p.*, pl.first_name, pl.last_name
@@ -547,6 +558,40 @@ router.post(
 
       const newStaff = result.rows[0];
 
+      // Backfill boolean permission flags for the newly created staff member
+      try {
+        const flags = {
+          can_manage_finances: finalPermissions.includes("finances"),
+          can_manage_players: finalPermissions.includes("players"),
+          can_manage_events: finalPermissions.includes("events"),
+          can_manage_listings: finalPermissions.includes("listings"),
+          can_manage_scouting: finalPermissions.includes("scouting"),
+          can_manage_venues: finalPermissions.includes("venues"),
+          can_manage_tournaments: finalPermissions.includes("tournaments"),
+          can_manage_staff: finalPermissions.includes("staff"),
+        };
+
+        await query(
+          `UPDATE staff SET can_manage_finances = $1, can_manage_players = $2, can_manage_events = $3, can_manage_listings = $4, can_manage_scouting = $5, can_manage_venues = $6, can_manage_tournaments = $7, can_manage_staff = $8 WHERE id = $9`,
+          [
+            flags.can_manage_finances,
+            flags.can_manage_players,
+            flags.can_manage_events,
+            flags.can_manage_listings,
+            flags.can_manage_scouting,
+            flags.can_manage_venues,
+            flags.can_manage_tournaments,
+            flags.can_manage_staff,
+            newStaff.id,
+          ],
+        );
+      } catch (e) {
+        console.warn(
+          "Failed to set boolean permission flags for new staff:",
+          e.message || e,
+        );
+      }
+
       res.status(201).json({
         message: "Staff member added successfully",
         staff: newStaff,
@@ -635,6 +680,41 @@ router.put(
       );
 
       const updatedStaff = result.rows[0];
+
+      // Update boolean permission flags to reflect the new permissions array
+      try {
+        const finalPerms = permissions || staff.permissions || [];
+        const flags = {
+          can_manage_finances: finalPerms.includes("finances"),
+          can_manage_players: finalPerms.includes("players"),
+          can_manage_events: finalPerms.includes("events"),
+          can_manage_listings: finalPerms.includes("listings"),
+          can_manage_scouting: finalPerms.includes("scouting"),
+          can_manage_venues: finalPerms.includes("venues"),
+          can_manage_tournaments: finalPerms.includes("tournaments"),
+          can_manage_staff: finalPerms.includes("staff"),
+        };
+
+        await query(
+          `UPDATE staff SET can_manage_finances = $1, can_manage_players = $2, can_manage_events = $3, can_manage_listings = $4, can_manage_scouting = $5, can_manage_venues = $6, can_manage_tournaments = $7, can_manage_staff = $8 WHERE id = $9`,
+          [
+            flags.can_manage_finances,
+            flags.can_manage_players,
+            flags.can_manage_events,
+            flags.can_manage_listings,
+            flags.can_manage_scouting,
+            flags.can_manage_venues,
+            flags.can_manage_tournaments,
+            flags.can_manage_staff,
+            req.params.id,
+          ],
+        );
+      } catch (e) {
+        console.warn(
+          "Failed to update boolean permission flags for staff:",
+          e.message || e,
+        );
+      }
 
       // Update organization_members status and role
       const roleMapping = {

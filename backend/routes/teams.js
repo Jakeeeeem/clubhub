@@ -952,8 +952,10 @@ router.get("/:id/dashboard", authenticateToken, async (req, res) => {
   try {
     const teamId = req.params.id;
 
-    // Top Scorer
-    const topScorerRes = await query(`
+    // All-Time Top Scorer (aggregated across seasons/club history)
+    // NOTE: Keep legacy `top_scorer` response key for backward compatibility (deprecated).
+    const topScorerRes = await query(
+      `
       SELECT p.id, p.first_name, p.last_name, SUM(pms.goals) as total_goals
       FROM players p
       JOIN player_match_stats pms ON p.id = pms.player_id
@@ -963,10 +965,13 @@ router.get("/:id/dashboard", authenticateToken, async (req, res) => {
       GROUP BY p.id, p.first_name, p.last_name
       ORDER BY total_goals DESC
       LIMIT 1
-    `, [teamId]);
+    `,
+      [teamId],
+    );
 
     // Most Assists
-    const topAssistsRes = await query(`
+    const topAssistsRes = await query(
+      `
       SELECT p.id, p.first_name, p.last_name, SUM(pms.assists) as total_assists
       FROM players p
       JOIN player_match_stats pms ON p.id = pms.player_id
@@ -976,19 +981,28 @@ router.get("/:id/dashboard", authenticateToken, async (req, res) => {
       GROUP BY p.id, p.first_name, p.last_name
       ORDER BY total_assists DESC
       LIMIT 1
-    `, [teamId]);
+    `,
+      [teamId],
+    );
 
     // Recent Matches
-    const recentMatchesRes = await query(`
+    const recentMatchesRes = await query(
+      `
       SELECT e.id, e.title, e.event_date, mr.home_score, mr.away_score, mr.result, mr.video_url
       FROM events e
       LEFT JOIN match_results mr ON e.id = mr.event_id
       WHERE e.team_id = $1 AND e.event_type = 'match'
       ORDER BY e.event_date DESC
       LIMIT 5
-    `, [teamId]);
+    `,
+      [teamId],
+    );
 
     res.json({
+      // Preferred field name: all_time_top_scorer
+      all_time_top_scorer: topScorerRes.rows[0] || null,
+      // Deprecated legacy field kept for backward compatibility:
+      // Use `all_time_top_scorer` going forward.
       top_scorer: topScorerRes.rows[0] || null,
       top_assists: topAssistsRes.rows[0] || null,
       recent_matches: recentMatchesRes.rows,

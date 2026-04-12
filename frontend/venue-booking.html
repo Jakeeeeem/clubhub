@@ -71,21 +71,7 @@
 </head>
 
 <body>
-    <header class="header pro-header">
-        <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text neon-text">ClubHub</span>
-            </div>
-
-            <div id="org-switcher-container"></div>
-            
-            <div class="header-actions">
-                <div id="notification-bell-container"></div>
-                <!-- Profile will be injected by UnifiedNav -->
-            </div>
-        </nav>
-    </header>
+    <!-- Unified navigation injected by `unified-nav.js` -->
 
     <main class="main">
         <div class="dashboard container dashboard-container">
@@ -105,7 +91,8 @@
                 <div class="nav-divider"></div>
                 <button class="btn-special active">🏟️ Venues</button>
                 <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
-                <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️ Tournaments</button>
+                <button onclick="window.location.href='tournament-manager.html'" class="btn-special">⚔️
+                    Tournaments</button>
             </div>
 
             <div class="dashboard-content">
@@ -118,22 +105,28 @@
 
                 <!-- Browse Venues Tab -->
                 <div id="browse-tab" class="tab-content active">
-                    <div class="filters" style="margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
-                        <input type="text" id="searchVenue" placeholder="Search venues..." style="flex: 1; min-width: 200px;">
+                    <div class="filters"
+                        style="margin-bottom: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
+                        <input type="text" id="searchVenue" placeholder="Search venues..."
+                            style="flex: 1; min-width: 200px;">
                         <select id="locationFilter" style="flex: 0.5; min-width: 150px;">
                             <option value="">All Locations</option>
                         </select>
                         <div class="facility-filters" style="display: flex; gap: 1rem; align-items: center;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <label
+                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
                                 <input type="checkbox" id="filter4G" onchange="loadVenues()"> 4G/3G
                             </label>
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <label
+                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
                                 <input type="checkbox" id="filterGrass" onchange="loadVenues()"> Grass
                             </label>
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <label
+                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
                                 <input type="checkbox" id="filterFloodlit" onchange="loadVenues()"> Floodlit
                             </label>
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
+                            <label
+                                style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem;">
                                 <input type="checkbox" id="filterChanging" onchange="loadVenues()"> Changing Rooms
                             </label>
                         </div>
@@ -235,12 +228,12 @@
                 const filtered = data.filter(v => {
                     const matchesSearch = !search || v.name.toLowerCase().includes(search) || v.description.toLowerCase().includes(search);
                     const matchesLocation = !location || v.location === location;
-                    
+
                     // Surface check (if v.surface is '4G' or 'Grass')
-                    const matchesSurface = (!filter4G && !filterGrass) || 
-                                           (filter4G && v.surface === '4G') || 
-                                           (filterGrass && v.surface === 'Grass');
-                    
+                    const matchesSurface = (!filter4G && !filterGrass) ||
+                        (filter4G && v.surface === '4G') ||
+                        (filterGrass && v.surface === 'Grass');
+
                     const matchesFloodlit = !filterFloodlit || v.is_floodlit;
                     const matchesChanging = !filterChanging || v.has_changing_rooms;
 
@@ -472,7 +465,6 @@
             }
         }
     </script>
-    <script src="group-switcher.js"></script>
 </body>
 
 </html>

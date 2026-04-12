@@ -24,7 +24,8 @@
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="design-system.css">
-    <link rel="stylesheet" href="unified-nav.css">
+    <link rel="stylesheet" href="unified-nav.css?v=20260412">
+    <link rel="stylesheet" href="landing-overrides.css?v=20260412-2">
 </head>
 
 <body class="clubhub-unified">
@@ -35,11 +36,6 @@
                 <span class="logo-text">ClubHub</span>
             </div>
             <div class="nav-buttons" id="loggedOutNav">
-                <button class="btn btn-secondary btn-small pwa-install-btn" onclick="installPWA()"
-                    style="display: none; gap: 0.5rem;">
-                    <img src="images/logo.png" alt="Install" style="width: 18px; height: 18px;">
-                    <span class="pwa-install-text">Install App</span>
-                </button>
                 <button class="btn btn-secondary" onclick="showModal('loginModal')">Login</button>
                 <button class="btn btn-primary" onclick="showSignupOptions()">Sign Up</button>
             </div>
@@ -57,52 +53,68 @@
 
     <main class="main home-main">
         <!-- Main Hero Section (Restored Old Design) -->
-        <section class="welcome-hero landing-hero" id="landingHero"
-            style="position: relative; padding: 10rem 0 6rem; background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4)), url('images/players-hero.jpg'); background-size: cover; background-position: center; min-height: 100vh; display: flex; align-items: center; text-align: center;">
+        <section class="welcome-hero landing-hero" id="landingHero">
             <div class="container" style="position: relative; z-index: 10; width: 100%;">
-                
-                <p style="text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: #fff; margin-bottom: 2rem; font-size: 0.9rem; opacity: 0.9;">
+
+                <p
+                    style="text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: #fff; margin-bottom: 2rem; font-size: 0.9rem; opacity: 0.9;">
                     LEAGUES • GROUPS • VENUES • TOURNAMENT PROVIDERS • COACHES
                 </p>
 
-                <h1 class="hero-title" style="font-size: clamp(3rem, 10vw, 6rem); font-weight: 900; margin-bottom: 1.5rem; font-family: 'Outfit'; color: #fff; line-height: 1.1;">
+                <h1 class="hero-title"
+                    style="font-size: clamp(3rem, 10vw, 6rem); font-weight: 900; margin-bottom: 1.5rem; font-family: 'Outfit'; color: #fff; line-height: 1.1;">
                     Welcome to <span style="color: var(--primary);">ClubHub</span>
                 </h1>
 
-                <p class="hero-subtitle" style="font-size: 1.25rem; color: #f8fafc; max-width: 800px; margin: 0 auto 2.5rem; font-weight: 500;">
+                <p class="hero-subtitle"
+                    style="font-size: 1.25rem; color: #f8fafc; max-width: 800px; margin: 0 auto 2.5rem; font-weight: 500;">
                     The Complete Ecosystem for Grassroots Sports
                 </p>
 
                 <!-- Free Platform Badge -->
-                <div style="display: inline-flex; align-items: center; gap: 0.75rem; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); padding: 0.75rem 1.5rem; border-radius: 100px; border: 1px solid rgba(220, 38, 38, 0.3); margin-bottom: 3.5rem; box-shadow: 0 0 20px rgba(220, 38, 38, 0.2);">
-                    <span style="background: rgba(220, 38, 38, 0.2); padding: 5px; border-radius: 50%; color: #dc2626; font-size: 0.9rem;">✨</span>
-                    <span style="font-weight: 700; font-size: 0.9rem; color: #fff;">100% Free Platform — <span style="color: #cbd5e1; font-weight: 400;">Free to Create an Account</span></span>
+                <div
+                    style="display: inline-flex; align-items: center; gap: 0.75rem; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); padding: 0.75rem 1.5rem; border-radius: 100px; border: 1px solid rgba(220, 38, 38, 0.3); margin-bottom: 3.5rem; box-shadow: 0 0 20px rgba(220, 38, 38, 0.2);">
+                    <span
+                        style="background: rgba(220, 38, 38, 0.2); padding: 5px; border-radius: 50%; color: #dc2626; font-size: 0.9rem;">✨</span>
+                    <span style="font-weight: 700; font-size: 0.9rem; color: #fff;">100% Free Platform — <span
+                            style="color: #cbd5e1; font-weight: 400;">Free to Create an Account</span></span>
                 </div>
 
                 <!-- CTA Buttons -->
-                <div class="cta-group" style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 5rem;">
+                <div class="cta-group"
+                    style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 5rem;">
                     <button class="btn btn-primary" onclick="showSignupOptions()"
-                        style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 100px; min-width: 220px; text-transform: none;">Get Started</button>
-                    <button class="btn btn-secondary" onclick="document.getElementById('benefits').scrollIntoView({behavior: 'smooth'})"
-                        style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 100px; min-width: 220px; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); text-transform: none;">Learn More</button>
+                        style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 100px; min-width: 220px; text-transform: none;">Get
+                        Started</button>
+                    <button class="btn btn-secondary"
+                        onclick="document.getElementById('benefits').scrollIntoView({behavior: 'smooth'})"
+                        style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 100px; min-width: 220px; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); text-transform: none;">Learn
+                        More</button>
                 </div>
 
                 <!-- Three Role Cards -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
                     <!-- card 1 -->
-                    <div class="glass-card" style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
+                    <div class="glass-card"
+                        style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
                         <h3 style="margin-bottom: 1rem; color: #fff; font-size: 1.35rem;">For Groups</h3>
-                        <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Complete group management with player tracking, event organization, and financial tools</p>
+                        <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Complete group management with
+                            player tracking, event organization, and financial tools</p>
                     </div>
                     <!-- card 2 -->
-                    <div class="glass-card" style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
+                    <div class="glass-card"
+                        style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
                         <h3 style="margin-bottom: 1rem; color: #fff; font-size: 1.35rem;">For Players</h3>
-                        <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Join clubs, book events, track progress, and manage payments seamlessly</p>
+                        <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Join clubs, book events, track
+                            progress, and manage payments seamlessly</p>
                     </div>
                     <!-- card 3 -->
-                    <div class="glass-card" style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
+                    <div class="glass-card"
+                        style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
                         <h3 style="margin-bottom: 1rem; color: #fff; font-size: 1.35rem;">For Coaches</h3>
-                        <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Team management, tactical planning, and performance tracking tools</p>
+                        <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Team management, tactical
+                            planning, and performance tracking tools</p>
                     </div>
                 </div>
 
@@ -114,7 +126,8 @@
             style="background: radial-gradient(circle at top left, rgba(220, 38, 38, 0.15) 0%, #0d0d0d 60%); padding: 5rem 0; border-top: 1px solid rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
             <div class="container">
                 <div style="text-align: center; margin-bottom: 3.5rem;">
-                    <p style="font-size: 1.2rem; color: #fff; max-width: 600px; margin: 0 auto 0.5rem; font-weight: 500;">
+                    <p
+                        style="font-size: 1.2rem; color: #fff; max-width: 600px; margin: 0 auto 0.5rem; font-weight: 500;">
                         Discover clubs actively looking for players.
                     </p>
                     <p style="font-size: 1.2rem; color: #fff; max-width: 600px; margin: 0 auto; font-weight: 500;">
@@ -129,7 +142,8 @@
                             placeholder="Search by club name, sport, or location..."
                             style="flex: 1; min-width: 250px; padding: 1.2rem 1.5rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: #fff; font-size: 1rem;"
                             onkeyup="searchRecruitingGroups()">
-                        <button class="btn btn-primary" onclick="searchRecruitingGroups()" style="padding: 1rem 2.5rem; border-radius: 100px;">
+                        <button class="btn btn-primary" onclick="searchRecruitingGroups()"
+                            style="padding: 1rem 2.5rem; border-radius: 100px;">
                             Search
                         </button>
                     </div>

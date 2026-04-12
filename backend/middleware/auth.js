@@ -209,6 +209,97 @@ function rateLimitSensitive(req, res, next) {
   next();
 }
 
+/**
+ * Require a granular permission for the active user.
+ * Usage: app.post('/api/…', authenticateToken, injectOrgContext, requirePermission('finances'), handler)
+ */
+function requirePermission(permission) {
+  const booleanMap = {
+    finances: "can_manage_finances",
+    players: "can_manage_players",
+    events: "can_manage_events",
+    listings: "can_manage_listings",
+    scouting: "can_manage_scouting",
+    venues: "can_manage_venues",
+    tournaments: "can_manage_tournaments",
+    staff: "can_manage_staff",
+  };
+
+  return async (req, res, next) => {
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ error: "Access denied", message: "Authentication required" });
+    }
+
+    const permName = (permission || "").toString();
+
+    try {
+      // 1) Check organization context permissions (legacy array stored on organization_members)
+      if (
+        req.orgContext &&
+        Array.isArray(req.orgContext.permissions) &&
+        req.orgContext.permissions.includes(permName)
+      ) {
+        return next();
+      }
+
+      // 2) Check staff table boolean flags for the user's staff record (prefer explicit flags)
+      const userId = req.user.id;
+      // Try to infer club/organization id from context, params or body
+      const clubId =
+        req.user.organization_id ||
+        req.params.clubId ||
+        req.params.club_id ||
+        req.body.club_id ||
+        req.query.club_id ||
+        req.query.clubId;
+
+      let staffRow = null;
+      if (clubId) {
+        const r = await pool.query(
+          `SELECT permissions, can_manage_finances, can_manage_players, can_manage_events, can_manage_listings, can_manage_scouting, can_manage_venues, can_manage_tournaments, can_manage_staff
+           FROM staff WHERE user_id = $1 AND club_id = $2 LIMIT 1`,
+          [userId, clubId],
+        );
+        staffRow = r.rows[0];
+      } else {
+        // fallback: any staff record for the user
+        const r = await pool.query(
+          `SELECT permissions, can_manage_finances, can_manage_players, can_manage_events, can_manage_listings, can_manage_scouting, can_manage_venues, can_manage_tournaments, can_manage_staff
+           FROM staff WHERE user_id = $1 LIMIT 1`,
+          [userId],
+        );
+        staffRow = r.rows[0];
+      }
+
+      if (staffRow) {
+        const boolCol = booleanMap[permName];
+        if (boolCol && staffRow[boolCol] === true) return next();
+
+        // fallback to array-based permission check on staff.permissions
+        if (
+          Array.isArray(staffRow.permissions) &&
+          staffRow.permissions.includes(permName)
+        )
+          return next();
+      }
+
+      return res
+        .status(403)
+        .json({
+          error: "Insufficient permissions",
+          message: `Permission '${permName}' required`,
+        });
+    } catch (err) {
+      console.error("requirePermission error:", err);
+      return res
+        .status(500)
+        .json({ error: "Internal error", message: "Permission check failed" });
+    }
+  };
+}
+
 module.exports = {
   authenticateToken,
   requireOrganization,
@@ -219,4 +310,5 @@ module.exports = {
   rateLimitSensitive,
   injectOrgContext,
   requireRole,
+  requirePermission,
 };

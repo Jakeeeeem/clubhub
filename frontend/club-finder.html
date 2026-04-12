@@ -200,21 +200,7 @@
 </head>
 
 <body>
-    <header class="header pro-header">
-        <nav class="nav container">
-            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
-                <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
-                <span class="logo-text neon-text">ClubHub</span>
-            </div>
-            
-            <div id="org-switcher-container"></div>
-
-            <div class="nav-buttons desktop-only" id="auth-buttons">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="signup.html" class="btn btn-primary btn-small">Sign Up</a>
-            </div>
-        </nav>
-    </header>
+    <!-- Unified navigation injected by `unified-nav.js` -->
 
     <div class="finder-container">
         <div class="search-hero">
@@ -263,21 +249,25 @@
         </div>
 
         <!-- Results Grid -->
-        <h2 class="neon-text" style="font-size: 2rem; margin-bottom: 1.5rem; display: none;" id="clubsTitle">Groups & Clubs</h2>
+        <h2 class="neon-text" style="font-size: 2rem; margin-bottom: 1.5rem; display: none;" id="clubsTitle">Groups &
+            Clubs</h2>
         <div id="clubResultsGrid" class="card-grid"
             style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); margin-bottom: 4rem;">
             <!-- Loader shown initially -->
             <div style="grid-column: 1/-1; text-align: center; padding: 5rem 0;" id="clubLoader">
-                <div class="placeholder-glow" style="font-size: 1.2rem; color: var(--text-muted);">🔍 Discovering groups around you...</div>
+                <div class="placeholder-glow" style="font-size: 1.2rem; color: var(--text-muted);">🔍 Discovering groups
+                    around you...</div>
             </div>
         </div>
 
-        <h2 class="neon-text" style="font-size: 2rem; margin-bottom: 1.5rem; display: none;" id="tournamentsTitle">Upcoming Global Tournaments</h2>
+        <h2 class="neon-text" style="font-size: 2rem; margin-bottom: 1.5rem; display: none;" id="tournamentsTitle">
+            Upcoming Global Tournaments</h2>
         <div id="tournamentResultsGrid" class="card-grid"
             style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
             <!-- Loader shown initially -->
             <div style="grid-column: 1/-1; text-align: center; padding: 5rem 0; display: none;" id="tournamentLoader">
-                <div class="placeholder-glow" style="font-size: 1.2rem; color: var(--text-muted);">🏆 Finding global tournaments...</div>
+                <div class="placeholder-glow" style="font-size: 1.2rem; color: var(--text-muted);">🏆 Finding global
+                    tournaments...</div>
             </div>
         </div>
 
@@ -353,7 +343,7 @@
                 document.getElementById('tournamentLoader').style.display = 'block';
                 // Fetch public tournaments
                 let tournaments = await apiService.makeRequest('/events?public=true&eventType=tournament');
-                
+
                 // Demo tournaments fallback if needed
                 if (!tournaments || tournaments.length === 0 && localStorage.getItem('isDemoSession') === 'true') {
                     const fallback = new ApiService().getAdminDashboardFallback();
@@ -425,7 +415,7 @@
             grid.innerHTML = tournaments.map(t => {
                 const dateRaw = t.event_date || t.date;
                 const formattedDate = dateRaw ? new Date(dateRaw).toLocaleDateString() : 'TBD';
-                
+
                 return `
                 <div class="club-card">
                     <div class="club-banner" style="background: linear-gradient(135deg, rgba(177, 3, 45, 0.4), #0f172a); border-bottom: 2px solid var(--primary);">
