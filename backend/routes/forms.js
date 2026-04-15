@@ -330,3 +330,41 @@ router.get(
 );
 
 module.exports = router;
+
+// Jotform webhook receiver
+// POST /api/forms/jotform-webhook?formId=<form_uuid>
+router.post("/jotform-webhook", async (req, res) => {
+  try {
+    const formId = req.query.formId;
+    if (!formId) {
+      return res.status(400).json({ error: "Missing formId query parameter" });
+    }
+
+    // Jotform posts can be complex; we will accept either a `submission` object
+    // or a flat key->value map in the body. We'll store the payload as response_data.
+    const payload = req.body || {};
+
+    // Ensure form exists and belongs to an org (but webhook must be open)
+    const formCheck = await query("SELECT id FROM custom_forms WHERE id = $1", [
+      formId,
+    ]);
+    if (formCheck.rows.length === 0) {
+      return res.status(404).json({ error: "Form not found" });
+    }
+
+    // Normalize response data: if body.submission exists, use it; else use body
+    const responseData = payload.submission || payload || {};
+
+    await query(
+      `INSERT INTO custom_form_responses (form_id, user_id, event_id, response_data)
+       VALUES ($1, $2, $3, $4)`,
+      [formId, null, null, JSON.stringify(responseData)],
+    );
+
+    // Respond quickly to Jotform
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Jotform webhook error:", error);
+    res.status(500).json({ error: "Failed to process webhook" });
+  }
+});

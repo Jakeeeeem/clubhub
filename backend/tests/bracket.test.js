@@ -2,7 +2,7 @@
 const tournaments = require("../routes/tournaments");
 const computeNumRounds = tournaments.computeNumRounds;
 
-describe('computeNumRounds helper', () => {
+describe("computeNumRounds helper", () => {
   const cases = [
     [2, 1],
     [3, 2],

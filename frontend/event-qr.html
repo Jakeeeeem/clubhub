@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Event QR Token</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 20px
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Event QR Token</h2>
+    <div>
+        <label>Event ID: <input id="eventId" /></label>
+        <button id="get">Get Token</button>
+    </div>
+    <div id="result" style="margin-top:20px;word-break:break-all"></div>
+    <script>
+        async function getToken(eventId) {
+            try {
+                const res = await fetch(`/api/events/${eventId}/qr-token`, { credentials: 'same-origin' });
+                if (!res.ok) throw new Error('Failed to fetch token: ' + res.status);
+                const data = await res.json();
+                document.getElementById('result').innerText = data.token;
+            } catch (e) {
+                document.getElementById('result').innerText = 'Error: ' + e.message;
+            }
+        }
+        document.getElementById('get').addEventListener('click', () => {
+            const id = document.getElementById('eventId').value.trim();
+            if (!id) return alert('Enter event id');
+            getToken(id);
+        });
+    </script>
+</body>
+
+</html>

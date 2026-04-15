@@ -4,8 +4,8 @@ process.env.NODE_ENV = "test";
 
 const emailService = require("../services/email-service");
 
-describe('Email service', () => {
-  test('sends parental approval email (mocked)', async () => {
+describe("Email service", () => {
+  test("sends parental approval email (mocked)", async () => {
     const res = await emailService.sendParentalApprovalEmail({
       to: "parent@example.test",
       parentFirstName: "Jane",
@@ -18,7 +18,7 @@ describe('Email service', () => {
     });
 
     expect(res).toBeDefined();
-    expect(typeof res).toBe('object');
+    expect(typeof res).toBe("object");
     expect(res.success).toBeTruthy();
   }, 10000);
 });

@@ -1515,6 +1515,50 @@ const UnifiedNav = {
 
     nav.innerHTML = menuHtml;
 
+    // Feature gating: hide Scouting until phase-2 is enabled
+    const phase2Enabled =
+      localStorage.getItem("feature_phase") === "phase-2" ||
+      localStorage.getItem("phase2") === "true" ||
+      window.FEATURE_PHASE === "phase-2";
+
+    if (!phase2Enabled) {
+      // Remove any scouting links injected above
+      try {
+        Array.from(nav.querySelectorAll('a[href*="scouting"]')).forEach((el) =>
+          el.remove(),
+        );
+        Array.from(nav.querySelectorAll("a")).forEach((el) => {
+          if ((el.textContent || "").toLowerCase().includes("scouting"))
+            el.remove();
+        });
+      } catch (e) {
+        console.warn("UnifiedNav: failed to remove scouting links", e);
+      }
+    }
+
+    // Add a Finder section (team, tournament, event, venue) and quick 'My' links
+    try {
+      const finderHtml = `
+        <div class="nav-group-title">Finder</div>
+        <a href="club-finder.html" class="sidebar-link">${ICONS.nav.teams}<span>Team / Club Finder</span></a>
+        <a href="tournament-manager.html" class="sidebar-link">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
+        <a href="player-dashboard.html#player-event-finder" class="sidebar-link">${ICONS.nav.events}<span>Event Finder</span></a>
+        <a href="venue-booking.html" class="sidebar-link">${ICONS.nav.venue}<span>Venue Finder</span></a>
+      `;
+
+      const myHtml = `
+        <div class="nav-group-title">My</div>
+        <a href="venue-booking.html" class="sidebar-link">${ICONS.nav.venue}<span>My Venues</span></a>
+        <a href="tournament-manager.html" class="sidebar-link">${ICONS.nav.trophy}<span>My Tournaments</span></a>
+        <a href="player-dashboard.html#player-event-finder" class="sidebar-link">${ICONS.nav.events}<span>My Events</span></a>
+      `;
+
+      // Append finder and my sections to the end of current menu
+      nav.insertAdjacentHTML("beforeend", finderHtml + myHtml);
+    } catch (e) {
+      console.warn("UnifiedNav: failed to append Finder/My sections", e);
+    }
+
     // Build collapsible nav groups: group title toggles the following links
     try {
       const titles = Array.from(nav.querySelectorAll(".nav-group-title"));

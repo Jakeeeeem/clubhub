@@ -11,5 +11,8 @@
     "test:email": "node backend/tests/email-service.test.js",
     "test:bracket": "node backend/tests/bracket.test.js",
     "test:smoke": "node backend/tests/bracket.test.js && node backend/tests/email-service.test.js"
+  },
+  "devDependencies": {
+    "cypress": "^15.13.1"
   }
 }

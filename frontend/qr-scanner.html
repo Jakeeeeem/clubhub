@@ -1,0 +1,109 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>QR Scanner Check-in</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 16px
+        }
+
+        video {
+            width: 100%;
+            max-width: 480px
+        }
+    </style>
+</head>
+
+<body>
+    <h2>QR Scanner Check-in</h2>
+    <div>
+        <label>Event ID: <input id="eventId" /></label>
+    </div>
+    <div style="margin-top:8px">
+        <button id="start">Start Camera</button>
+        <button id="stop" disabled>Stop</button>
+    </div>
+    <div style="margin-top:12px">
+        <video id="video" autoplay muted playsinline></video>
+    </div>
+    <div id="status" style="margin-top:12px"></div>
+
+    <script>
+        let stream = null;
+        let detector = null;
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+                document.getElementById('start').disabled = true;
+                document.getElementById('stop').disabled = false;
+
+                if ('BarcodeDetector' in window) {
+                    const supportedFormats = await BarcodeDetector.getSupportedFormats();
+                    detector = new BarcodeDetector({ formats: supportedFormats });
+                    tick();
+                } else {
+                    status.innerText = 'BarcodeDetector not supported in this browser. Use manual token.';
+                }
+            } catch (e) {
+                status.innerText = 'Camera error: ' + e.message;
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(t => t.stop());
+                stream = null;
+            }
+            document.getElementById('start').disabled = false;
+            document.getElementById('stop').disabled = true;
+        }
+
+        async function tick() {
+            if (!detector || !stream) return;
+            try {
+                const barcodes = await detector.detect(video);
+                if (barcodes && barcodes.length) {
+                    // Take first barcode raw value as token
+                    const token = barcodes[0].rawValue;
+                    status.innerText = 'Scanned token. Sending checkin...';
+                    await sendCheckin(token);
+                    // Stop after successful scan
+                    stopCamera();
+                }
+            } catch (e) {
+                console.error('Detection error', e);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        async function sendCheckin(token) {
+            try {
+                const eventId = document.getElementById('eventId').value.trim();
+                if (!eventId) return alert('Enter event id');
+                const res = await fetch(`/api/events/${eventId}/qr-checkin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token }),
+                    credentials: 'same-origin'
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || JSON.stringify(data));
+                status.innerText = 'Check-in successful';
+            } catch (e) {
+                status.innerText = 'Check-in error: ' + e.message;
+            }
+        }
+
+        document.getElementById('start').addEventListener('click', startCamera);
+        document.getElementById('stop').addEventListener('click', stopCamera);
+    </script>
+</body>
+
+</html>

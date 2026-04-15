@@ -5,6 +5,7 @@ const {
   requireOrganization,
   optionalAuth,
 } = require("../middleware/auth");
+const crypto = require('crypto');
 const { body, validationResult } = require("express-validator");
 const emailService = require("../services/email-service");
 const StatsService = require("../services/stats-service");
@@ -90,7 +91,7 @@ router.get("/", optionalAuth, async (req, res) => {
       paramCount++;
       queryText += ` AND e.club_id = $${paramCount}`;
       queryParams.push(clubId);
-    } else if (req.query.public === 'true') {
+    } else if (req.query.public === "true") {
       // Allow fetching global public events
       queryText += ` AND e.is_public = true`;
     } else if (req.user) {
@@ -391,23 +392,28 @@ router.post(
               let scheduledAt = new Date(date);
               let shouldCreate = true;
 
-              if (schedule === "7_days" || schedule === "7d") scheduledAt.setDate(scheduledAt.getDate() - 7);
-              else if (schedule === "4_days" || schedule === "4d") scheduledAt.setDate(scheduledAt.getDate() - 4);
-              else if (schedule === "2_days" || schedule === "2d") scheduledAt.setDate(scheduledAt.getDate() - 2);
-              else if (schedule === "1_day" || schedule === "1d") scheduledAt.setDate(scheduledAt.getDate() - 1);
-              else if (schedule === "immediate") scheduledAt = new Date(); // Right now
+              if (schedule === "7_days" || schedule === "7d")
+                scheduledAt.setDate(scheduledAt.getDate() - 7);
+              else if (schedule === "4_days" || schedule === "4d")
+                scheduledAt.setDate(scheduledAt.getDate() - 4);
+              else if (schedule === "2_days" || schedule === "2d")
+                scheduledAt.setDate(scheduledAt.getDate() - 2);
+              else if (schedule === "1_day" || schedule === "1d")
+                scheduledAt.setDate(scheduledAt.getDate() - 1);
+              else if (schedule === "immediate")
+                scheduledAt = new Date(); // Right now
               else shouldCreate = false;
 
               if (shouldCreate) {
                 // Ensure we don't schedule in the past if it's already past the notice period
                 if (scheduledAt < new Date() && schedule !== "immediate") {
-                    scheduledAt = new Date(); // Default to now if missed
+                  scheduledAt = new Date(); // Default to now if missed
                 }
 
                 await client.query(
                   `INSERT INTO scheduled_notifications (event_id, notification_type, scheduled_at, status)
                    VALUES ($1, $2, $3, $4)`,
-                  [newEvent.id, 'reminder', scheduledAt, 'pending']
+                  [newEvent.id, "reminder", scheduledAt, "pending"],
                 );
               }
             }
@@ -508,7 +514,7 @@ router.put(
         price,
         capacity,
         opponent,
-        notificationSchedule, 
+        notificationSchedule,
         tournamentSettings,
         requireDeclineReason,
         updateSeries, // Boolean: update all events in this series?
@@ -549,12 +555,15 @@ router.put(
               JSON.stringify(tournamentSettings || {}),
               requireDeclineReason || false,
               event.recurrence_id,
-              event.event_date
-            ]
+              event.event_date,
+            ],
           );
-          
+
           // Fetch the current one to return
-          const resCurrent = await client.query("SELECT * FROM events WHERE id = $1", [req.params.id]);
+          const resCurrent = await client.query(
+            "SELECT * FROM events WHERE id = $1",
+            [req.params.id],
+          );
           updatedEvent = resCurrent.rows[0];
         } else {
           const result = await client.query(
@@ -610,10 +619,14 @@ router.put(
               let scheduledAt = new Date(eventDate);
               let shouldCreate = true;
 
-              if (sched === "7_days" || sched === "7d") scheduledAt.setDate(scheduledAt.getDate() - 7);
-              else if (sched === "4_days" || sched === "4d") scheduledAt.setDate(scheduledAt.getDate() - 4);
-              else if (sched === "2_days" || sched === "2d") scheduledAt.setDate(scheduledAt.getDate() - 2);
-              else if (sched === "1_day" || sched === "1d") scheduledAt.setDate(scheduledAt.getDate() - 1);
+              if (sched === "7_days" || sched === "7d")
+                scheduledAt.setDate(scheduledAt.getDate() - 7);
+              else if (sched === "4_days" || sched === "4d")
+                scheduledAt.setDate(scheduledAt.getDate() - 4);
+              else if (sched === "2_days" || sched === "2d")
+                scheduledAt.setDate(scheduledAt.getDate() - 2);
+              else if (sched === "1_day" || sched === "1d")
+                scheduledAt.setDate(scheduledAt.getDate() - 1);
               else if (sched === "immediate") scheduledAt = new Date();
               else shouldCreate = false;
 
@@ -626,7 +639,7 @@ router.put(
                 await client.query(
                   `INSERT INTO scheduled_notifications (event_id, notification_type, scheduled_at, status)
                    VALUES ($1, $2, $3, $4)`,
-                  [req.params.id, 'reminder', scheduledAt, 'pending']
+                  [req.params.id, "reminder", scheduledAt, "pending"],
                 );
               }
             }
@@ -677,46 +690,54 @@ router.delete(
 
       // Check if user created the event or owns the club
       // Optionally delete series
-      const deleteSeries = req.query.series === 'true' || req.body.deleteSeries === true;
+      const deleteSeries =
+        req.query.series === "true" || req.body.deleteSeries === true;
 
       // Delete event and related data in transaction
       await withTransaction(async (client) => {
         const targetIds = [];
-        
+
         if (deleteSeries && event.recurrence_id) {
-            const seriesResult = await client.query(
-                "SELECT id FROM events WHERE recurrence_id = $1 AND event_date >= $2",
-                [event.recurrence_id, event.event_date]
-            );
-            seriesResult.rows.forEach(r => targetIds.push(r.id));
+          const seriesResult = await client.query(
+            "SELECT id FROM events WHERE recurrence_id = $1 AND event_date >= $2",
+            [event.recurrence_id, event.event_date],
+          );
+          seriesResult.rows.forEach((r) => targetIds.push(r.id));
         } else {
-            targetIds.push(req.params.id);
+          targetIds.push(req.params.id);
         }
 
         for (const tid of targetIds) {
-            // Delete event bookings
-            await client.query("DELETE FROM event_bookings WHERE event_id = $1", [tid]);
+          // Delete event bookings
+          await client.query("DELETE FROM event_bookings WHERE event_id = $1", [
+            tid,
+          ]);
 
-            // Delete availability responses
-            await client.query(
-              "DELETE FROM availability_responses WHERE event_id = $1",
-              [tid],
-            );
+          // Delete availability responses
+          await client.query(
+            "DELETE FROM availability_responses WHERE event_id = $1",
+            [tid],
+          );
 
-            // Delete match results
-            await client.query("DELETE FROM match_results WHERE event_id = $1", [tid]);
+          // Delete match results
+          await client.query("DELETE FROM match_results WHERE event_id = $1", [
+            tid,
+          ]);
 
-            // Delete scheduled notifications
-            await client.query(
-              "DELETE FROM scheduled_notifications WHERE event_id = $1",
-              [tid],
-            );
+          // Delete scheduled notifications
+          await client.query(
+            "DELETE FROM scheduled_notifications WHERE event_id = $1",
+            [tid],
+          );
 
-            // Delete invitations/assignments
-            await client.query("DELETE FROM event_invitations WHERE event_id = $1", [tid]);
+          // Delete invitations/assignments
+          await client.query(
+            "DELETE FROM event_invitations WHERE event_id = $1",
+            [tid],
+          );
 
-            // Delete event
-            await client.query("DELETE FROM events WHERE id = $1", [tid]);
+          // Delete event
+          await client.query("DELETE FROM events WHERE id = $1", [tid]);
         }
       });
 
@@ -1261,15 +1282,15 @@ router.post(
         // Check if user has already paid (confirmed booking)
         const bookingResult = await query(
           "SELECT id FROM event_bookings WHERE event_id = $1 AND user_id = $2 AND booking_status = 'confirmed'",
-          [event.id, req.user.id]
+          [event.id, req.user.id],
         );
-        
+
         if (bookingResult.rows.length === 0) {
-           return res.status(402).json({ 
-             error: "Payment required", 
-             message: `This event costs £${event.price}. You must pay before confirming your availability.`,
-             eventId: event.id
-           });
+          return res.status(402).json({
+            error: "Payment required",
+            message: `This event costs £${event.price}. You must pay before confirming your availability.`,
+            eventId: event.id,
+          });
         }
       }
 
@@ -1305,8 +1326,8 @@ router.post(
       });
 
       // 🔥 Background: Recalculate stats for the player
-      StatsService.updatePlayerStats(playerId).catch(err => 
-        console.error(`Stats update failed for player ${playerId}:`, err)
+      StatsService.updatePlayerStats(playerId).catch((err) =>
+        console.error(`Stats update failed for player ${playerId}:`, err),
       );
     } catch (error) {
       console.error("Submit availability error:", error);
@@ -1386,8 +1407,8 @@ router.post(
       });
 
       // 🔥 Background: Recalculate stats for the player
-      StatsService.updatePlayerStats(playerId).catch(err => 
-        console.error(`Stats update failed for player ${playerId}:`, err)
+      StatsService.updatePlayerStats(playerId).catch((err) =>
+        console.error(`Stats update failed for player ${playerId}:`, err),
       );
     } catch (error) {
       console.error("Override availability error:", error);
@@ -1769,6 +1790,85 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+/**
+ * @route GET /api/events/:id/qr-token
+ * @desc  Generate a short-lived QR token for event check-in
+ */
+router.get('/:id/qr-token', authenticateToken, async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    // Create a signed token: base64(payload) + '.' + base64(signature)
+    const ttlMs = parseInt(process.env.QR_TOKEN_TTL_MS || String(15 * 60 * 1000)); // default 15 minutes
+    const secret = process.env.QR_TOKEN_SECRET || process.env.SESSION_SECRET || 'dev_secret_change_me';
+    const payload = { eid: eventId, iat: Date.now(), exp: Date.now() + ttlMs };
+    const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64');
+    const sig = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64');
+    const token = `${payloadB64}.${sig}`;
+    res.json({ token, ttlMs });
+  } catch (err) {
+    console.error('QR token generation failed', err);
+    res.status(500).json({ error: 'Failed to generate token' });
+  }
+});
+
+/**
+ * @route POST /api/events/:id/qr-checkin
+ * @desc  Accept a QR checkin token and record checkin. Allows unauthenticated checkin
+ */
+router.post('/:id/qr-checkin', async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const { token, playerId, latitude, longitude } = req.body;
+    if (!token) return res.status(400).json({ error: 'Missing token' });
+
+    // Validate token structure: payload.sig
+    const parts = String(token).split('.');
+    if (parts.length !== 2) return res.status(400).json({ error: 'Invalid token format' });
+    const [payloadB64, sig] = parts;
+    const secret = process.env.QR_TOKEN_SECRET || process.env.SESSION_SECRET || 'dev_secret_change_me';
+    const expectedSig = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64');
+    if (sig !== expectedSig) return res.status(400).json({ error: 'Invalid token signature' });
+
+    let payload;
+    try {
+      payload = JSON.parse(Buffer.from(payloadB64, 'base64').toString('utf8'));
+    } catch (e) {
+      return res.status(400).json({ error: 'Invalid token payload' });
+    }
+
+    if (!payload || payload.eid != eventId) {
+      return res.status(400).json({ error: 'Token does not match event' });
+    }
+
+    if (payload.exp && Date.now() > payload.exp) {
+      return res.status(400).json({ error: 'Token expired' });
+    }
+
+    // If playerId provided, map to user_id
+    let userId = null;
+    if (playerId) {
+      const p = await query('SELECT user_id FROM players WHERE id = $1', [playerId]);
+      if (p.rows.length === 0) return res.status(404).json({ error: 'Player not found' });
+      userId = p.rows[0].user_id;
+    }
+
+    // Insert checkin (allow anonymous by leaving user_id null)
+    await query(
+      `INSERT INTO event_checkins (event_id, user_id, checkin_method, location_lat, location_lng)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [eventId, userId, 'qr', latitude || null, longitude || null],
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('QR checkin failed', err);
+    res.status(500).json({ error: 'QR checkin failed' });
+  }
+});
+    res.status(500).json({ error: "QR checkin failed" });
+  }
+});
+
 // Record match result with player stats
 router.post("/:id/result", authenticateToken, async (req, res) => {
   try {
@@ -1792,14 +1892,21 @@ router.post("/:id/result", authenticateToken, async (req, res) => {
     const event = eventCheck.rows[0];
 
     // 🛂 SCORE ENTRY PERMISSION CHECK
-    if (event.event_type === 'tournament' && (req.user.userType === 'coach' || req.user.role === 'coach')) {
-       const settings = typeof event.tournament_settings === 'string' ? JSON.parse(event.tournament_settings) : event.tournament_settings;
-       if (settings && settings.restrict_coach_scores) {
-          return res.status(403).json({ 
-            error: "Restriction active", 
-            message: "Scorelines for this tournament are entered by referees only." 
-          });
-       }
+    if (
+      event.event_type === "tournament" &&
+      (req.user.userType === "coach" || req.user.role === "coach")
+    ) {
+      const settings =
+        typeof event.tournament_settings === "string"
+          ? JSON.parse(event.tournament_settings)
+          : event.tournament_settings;
+      if (settings && settings.restrict_coach_scores) {
+        return res.status(403).json({
+          error: "Restriction active",
+          message:
+            "Scorelines for this tournament are entered by referees only.",
+        });
+      }
     }
 
     // Use transaction to ensure data integrity
@@ -1968,9 +2075,12 @@ router.post("/:id/result", authenticateToken, async (req, res) => {
 
     // 🔥 Background: Recalculate stats for ALL players in this match
     if (playerStats && playerStats.length > 0) {
-      playerStats.forEach(stat => {
-        StatsService.updatePlayerStats(stat.playerId).catch(err => 
-          console.error(`Stats update failed for player ${stat.playerId}:`, err)
+      playerStats.forEach((stat) => {
+        StatsService.updatePlayerStats(stat.playerId).catch((err) =>
+          console.error(
+            `Stats update failed for player ${stat.playerId}:`,
+            err,
+          ),
         );
       });
     }
@@ -2304,7 +2414,9 @@ router.post(
   authenticateToken,
   requireOrganization,
   [
-    body("stats").isArray().withMessage("Stats must be an array of player stat objects")
+    body("stats")
+      .isArray()
+      .withMessage("Stats must be an array of player stat objects"),
   ],
   async (req, res) => {
     const { stats } = req.body;
@@ -2312,11 +2424,19 @@ router.post(
 
     try {
       // 1. Find the match_result_id for this event
-      const matchRes = await query("SELECT id FROM match_results WHERE event_id = $1", [eventId]);
+      const matchRes = await query(
+        "SELECT id FROM match_results WHERE event_id = $1",
+        [eventId],
+      );
       if (matchRes.rows.length === 0) {
-          return res.status(404).json({ error: "Match result not found. Add the match result scoreline first." });
+        return res
+          .status(404)
+          .json({
+            error:
+              "Match result not found. Add the match result scoreline first.",
+          });
       }
-      
+
       const matchResultId = matchRes.rows[0].id;
 
       // 2. Insert all stats in transaction
@@ -2340,18 +2460,21 @@ router.post(
               stat.minutesPlayed || 0,
               stat.goals || 0,
               stat.assists || 0,
-              stat.individualFeedback || null
-            ]
+              stat.individualFeedback || null,
+            ],
           );
         }
       });
 
-      res.json({ success: true, message: "Player match stats recorded successfully" });
+      res.json({
+        success: true,
+        message: "Player match stats recorded successfully",
+      });
     } catch (err) {
       console.error("Match stats recording error:", err);
       res.status(500).json({ error: "Failed to record player match stats" });
     }
-  }
+  },
 );
 
 module.exports = router;
