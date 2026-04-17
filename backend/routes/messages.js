@@ -1,6 +1,6 @@
 const express = require("express");
 const { query } = require("../config/database");
-const { authenticateToken } = require("../middleware/auth");
+const { authenticateToken, injectOrgContext } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -8,14 +8,22 @@ const router = express.Router();
  * GET /api/messages
  * Fetches latest messages for the logged-in user to show in the messenger list.
  */
-router.get("/", authenticateToken, async (req, res) => {
+router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
   try {
     const userId = req.user.id;
-    const type = req.query.type || "all";
+    const orgId = req.user.organization_id;
+    const allowedTypes = ["all", "direct", "announcement", "team"];
+    const type = allowedTypes.includes(req.query.type) ? req.query.type : "all";
 
-    // Query to get the "latest" message from/to each contact
-    // This simple version returns all messages where the user is involved
-    // For a production app, we'd use a more complex query to get unique conversations
+    if (!orgId) {
+      return res.status(403).json({ error: "Select an active group before viewing messages" });
+    }
+
+    const typeFilter = type === "all" ? "" : "AND m.type = $3";
+    const params = type === "all" ? [userId, orgId] : [userId, orgId, type];
+
+    // Query to get the latest messages for the authenticated user within the active organization.
+    // Announcement messages are visible to all active group members.
     const result = await query(
       `SELECT m.*, 
               u.first_name || ' ' || u.last_name as sender_name,
@@ -23,9 +31,15 @@ router.get("/", authenticateToken, async (req, res) => {
        FROM messages m
        JOIN users u ON m.sender_id = u.id
        JOIN users target ON m.receiver_id = target.id
-       WHERE (m.sender_id = $1 OR m.receiver_id = $1)
+       WHERE m.organization_id = $2
+         AND (
+           m.type = 'announcement'
+           OR m.sender_id = $1
+           OR m.receiver_id = $1
+         )
+         ${typeFilter}
        ORDER BY m.created_at DESC`,
-      [userId]
+      params
     );
 
     // Map to the format expected by the frontend
@@ -51,20 +65,61 @@ router.get("/", authenticateToken, async (req, res) => {
  * POST /api/messages
  * Sends a new message.
  */
-router.post("/", authenticateToken, async (req, res) => {
+router.post("/", authenticateToken, injectOrgContext, async (req, res) => {
   try {
-    const { receiverId, content, type = "direct", organizationId } = req.body;
+    const { receiverId, content: rawContent, type = "direct" } = req.body;
     const senderId = req.user.id;
+    const orgId = req.user.organization_id;
+    const content = (rawContent || "").trim();
+    const validTypes = ["direct", "announcement", "team"];
+    const messageType = validTypes.includes(type) ? type : "direct";
+
+    if (!orgId) {
+      return res.status(403).json({ error: "Select an active group before sending messages" });
+    }
 
     if (!receiverId || !content) {
       return res.status(400).json({ error: "Receiver and content are required" });
+    }
+
+    const receiverResult = await query(
+      `SELECT om.role as receiver_role
+       FROM organization_members om
+       WHERE om.organization_id = $1
+         AND om.user_id = $2
+         AND om.status = 'active'
+       LIMIT 1`,
+      [orgId, receiverId]
+    );
+
+    if (!receiverResult.rows.length) {
+      return res.status(400).json({ error: "Receiver must be a member of your active group" });
+    }
+
+    const receiverRole = receiverResult.rows[0].receiver_role;
+    const senderRole = req.orgContext?.role;
+    const isPlayerRole = ["player", "parent"].includes(senderRole) || req.user.accountType === "adult";
+    const adminRoles = ["owner", "admin", "manager"];
+
+    if (isPlayerRole) {
+      if (messageType !== "direct") {
+        return res.status(403).json({ error: "Players can only reply to admins via direct messages." });
+      }
+
+      if (!adminRoles.includes(receiverRole)) {
+        return res.status(403).json({ error: "Players may only message admins within their active group." });
+      }
+    }
+
+    if (messageType === "announcement" && !adminRoles.includes(senderRole)) {
+      return res.status(403).json({ error: "Only group admins can send announcements." });
     }
 
     const result = await query(
       `INSERT INTO messages (sender_id, receiver_id, organization_id, content, type)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [senderId, receiverId, organizationId || null, content, type]
+      [senderId, receiverId, orgId, content, messageType]
     );
 
     const newMessage = result.rows[0];
@@ -77,7 +132,9 @@ router.post("/", authenticateToken, async (req, res) => {
         senderId: newMessage.sender_id,
         receiverId: newMessage.receiver_id,
         content: newMessage.content,
-        timestamp: newMessage.created_at
+        timestamp: newMessage.created_at,
+        type: newMessage.type,
+        organizationId: newMessage.organization_id
       }
     });
   } catch (error) {

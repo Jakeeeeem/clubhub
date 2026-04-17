@@ -264,7 +264,7 @@
             </div>
 
             <div id="stepIndicatorHeader" style="color: var(--text-muted); font-size: 0.9rem;">
-                Step <span id="currentStepNum">1</span> of 1
+                Step <span id="currentStepNum">1</span> of 2
             </div>
         </nav>
     </header>
@@ -282,7 +282,7 @@
         <div class="form-step active" data-step="1">
             <h2 style="text-align: center; margin-bottom: 1rem; font-family: 'Outfit';">Choose Your Path</h2>
             <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">
-                How would you like to use ClubHub today?
+                Choose the account type that fits your role. You can create or switch groups later from the dashboard.
             </p>
 
             <div class="account-types-grid"
@@ -477,7 +477,7 @@
             const typeParam = urlParams.get('type');
             if (typeParam) {
                 console.log('📋 Type from URL detected:', typeParam);
-                const type = typeParam === 'group' || typeParam === 'group' ? 'group' : 'adult';
+                const type = typeParam === 'group' ? 'group' : typeParam === 'scout' ? 'scout' : 'adult';
                 document.getElementById('selectedAccountType').value = type;
 
                 // We'll update UI in a moment once selectSignupType is defined or manually
@@ -648,8 +648,12 @@
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const roleParam = document.getElementById('selectedAccountType').value || urlParams.get('type') || 'adult';
-                // If they create a group later, they will get the 'owner' role.
-                const userType = roleParam === 'group' || roleParam === 'group' ? 'group' : roleParam;
+                // Map signup selection to the backend account type values.
+                const userType = roleParam === 'group'
+                  ? 'organization'
+                  : roleParam === 'scout'
+                  ? 'coach'
+                  : 'adult';
 
                 const agreeTerms = document.getElementById('agreeTerms').checked;
                 const agreePrivacy = document.getElementById('agreePrivacy').checked;

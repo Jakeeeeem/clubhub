@@ -4575,6 +4575,8 @@ async function openMessageThread(messageId) {
       return;
     }
 
+    window.currentMessageThread = thread;
+
     viewContainer.innerHTML = `
       <div class="message-thread">
         <div class="thread-header">
@@ -4602,8 +4604,8 @@ async function openMessageThread(messageId) {
         </div>
 
         <div class="thread-input-area">
-          <textarea class="chat-input" placeholder="Type a message..." style="flex: 1; min-height: 48px; max-height: 120px;"></textarea>
-          <button class="btn btn-primary btn-pill" onclick="sendThreadMessage('${messageId}')">Send</button>
+          <textarea class="chat-input" placeholder="${thread.type === 'announcement' ? 'Reply to this announcement...' : 'Type a message...'}" style="flex: 1; min-height: 48px; max-height: 120px;"></textarea>
+          <button class="btn btn-primary btn-pill" onclick="sendThreadMessage()">Send</button>
         </div>
       </div>
     `;
@@ -4618,13 +4620,22 @@ async function openMessageThread(messageId) {
   }
 }
 
-async function sendThreadMessage(id) {
+async function sendThreadMessage() {
   const container = document.getElementById("messageViewContainer");
   const textarea = container?.querySelector('textarea');
   const content = textarea?.value?.trim();
-  
-  if (!content) return;
-  
+  const thread = window.currentMessageThread;
+
+  if (!content || !thread) return;
+
+  const currentUser = safeGetCurrentUser();
+  const recipientId = String(currentUser?.id) === String(thread.senderId) ? thread.receiverId : thread.senderId;
+
+  if (!recipientId) {
+    showNotification("Unable to determine the recipient for this conversation.", "error");
+    return;
+  }
+
   try {
     // Optimistic UI
     const threadContainer = document.getElementById('threadMessages');
@@ -4641,7 +4652,7 @@ async function sendThreadMessage(id) {
       textarea.value = '';
     }
 
-    await apiService.sendMessage({ recipientId: id, content });
+    await apiService.sendMessage({ recipientId, content, organizationId: currentUser?.clubId || currentUser?.organizationId });
     showNotification("Message sent", "success");
   } catch (err) {
     console.error("Send failed:", err);

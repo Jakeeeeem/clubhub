@@ -41,6 +41,15 @@ const UnifiedNav = {
     }
     this._initialized = true;
 
+    // Ensure every page has the basic shell before adding the unified header/sidebar
+    if (typeof this.ensureLayoutShell === "function") {
+      try {
+        this.ensureLayoutShell();
+      } catch (e) {
+        console.warn("ensureLayoutShell failed", e);
+      }
+    }
+
     // Early cleanup of legacy artifacts that may introduce duplicate header elements
     if (typeof this.cleanupLegacyArtifacts === "function") {
       try {
@@ -1190,7 +1199,7 @@ const UnifiedNav = {
                 <a href="player-dashboard.html#player-club-messenger" class="bottom-nav-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('club-messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 </a>
-                <a href="player-dashboard.html#player-notifications" class="bottom-nav-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('notifications'); return false; }">
+                <a href="player-dashboard.html#player-event-finder" class="bottom-nav-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-events'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
@@ -1208,8 +1217,8 @@ const UnifiedNav = {
                 <a href="coach-dashboard.html#coach-messenger" class="bottom-nav-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 </a>
-                <a href="coach-dashboard.html#coach-notifications" class="bottom-nav-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('notifications'); return false; }">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <a href="coach-dashboard.html#coach-teams" class="bottom-nav-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('teams'); return false; }">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
@@ -1217,16 +1226,16 @@ const UnifiedNav = {
             `;
     } else if (isScout) {
       navHtml = `
-                <a href="scout-dashboard.html#discovery" class="bottom-nav-link active" onclick="if(typeof showScoutSection === 'function') { showScoutSection('discovery'); return false; }">
+                <a href="scout-dashboard.html#scout-discovery" class="bottom-nav-link active" onclick="if(typeof showScoutSection === 'function') { showScoutSection('discovery'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 </a>
-                <a href="scout-dashboard.html#watchlist" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('watchlist'); return false; }">
+                <a href="scout-dashboard.html#scout-watchlist" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('watchlist'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                 </a>
-                <a href="scout-dashboard.html#messenger" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('messenger'); return false; }">
+                <a href="scout-dashboard.html#scout-messenger" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 </a>
-                <a href="scout-dashboard.html#notifications" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('notifications'); return false; }">
+                <a href="scout-dashboard.html#scout-analytics" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('analytics'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
@@ -1235,16 +1244,16 @@ const UnifiedNav = {
             `;
     } else if (isSuperAdmin) {
       navHtml = `
-                <a href="super-admin-dashboard.html#overview" class="bottom-nav-link active" onclick="if(typeof showSection === 'function') { showSection('overview'); return false; }">
+                <a href="super-admin-dashboard.html#super-admin-overview" class="bottom-nav-link active" onclick="if(typeof showSection === 'function') { showSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 </a>
-                <a href="super-admin-dashboard.html#groups" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('groups'); return false; }">
+                <a href="super-admin-dashboard.html#super-groups" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('groups'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3"></path><path d="M19 21V11"></path><path d="M5 21V11"></path></svg>
                 </a>
-                <a href="super-admin-dashboard.html#users" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('users'); return false; }">
+                <a href="super-admin-dashboard.html#super-admin-users" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('users'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </a>
-                <a href="super-admin-dashboard.html#activity" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('activity'); return false; }">
+                <a href="super-admin-dashboard.html#super-admin-activity" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('activity'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
@@ -1507,30 +1516,30 @@ const UnifiedNav = {
     if (isPlayer) {
       menuHtml = `
                     <div class="nav-group-title">Main Hub</div>
-                    <a href="player-dashboard.html#player-overview" class="sidebar-link active" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Overview</span></a>
-                    <a href="player-dashboard.html#player-club-messenger" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('club-messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Club Chat</span></a>
+                    <a href="player-dashboard.html#player-overview" class="sidebar-link active" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="player-dashboard.html#player-club-messenger" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('club-messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.chat}<span>Club Chat</span></a>
                     
                     <div class="nav-group-title">My Career</div>
-                    <a href="player-dashboard.html#player-teams" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.teams}<span>My Teams</span></a>
-                    <a href="player-dashboard.html#player-my-venues" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-venues'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.venue}<span>My Venues</span></a>
-                    <a href="player-dashboard.html#player-my-tournaments" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-tournaments'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.trophy}<span>My Tournaments</span></a>
-                    <a href="player-dashboard.html#player-my-events" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-events'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.events}<span>My Events</span></a>
-                    <a href="player-dashboard.html#player-my-clubs" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-clubs'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.venue}<span>My Groups</span></a>
-                    <a href="player-dashboard.html#player-documents" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('documents'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Documents</span></a>
-                    <a href="player-dashboard.html#player-polls" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('polls'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Club Polls</span></a>
+                    <a href="player-dashboard.html#player-teams" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.teams}<span>My Teams</span></a>
+                    <a href="player-dashboard.html#player-venue-booking" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-venues'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.venue}<span>My Venues</span></a>
+                    <a href="player-dashboard.html#player-training-manager" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-tournaments'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.trophy}<span>My Tournaments</span></a>
+                    <a href="player-dashboard.html#player-event-finder" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-events'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.events}<span>My Events</span></a>
+                    <a href="player-dashboard.html#player-my-clubs" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-clubs'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.venue}<span>My Groups</span></a>
+                    <a href="player-dashboard.html#player-documents" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('documents'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.forms}<span>Documents</span></a>
+                    <a href="player-dashboard.html#player-polls" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('polls'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.forms}<span>Club Polls</span></a>
                     ${APP_PHASE >= 2 ? '<a href="scouting.html" class="sidebar-link">' + ICONS.nav.training + "<span>Scouting</span></a>" : ""}
 
                     <div class="nav-group-title">Family & Profile</div>
                     <a href="player-settings.html" class="sidebar-link">${ICONS.nav.players}<span>My Profile</span></a>
-                    <a href="player-dashboard.html#player-family" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('family'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>My Family</span></a>
+                    <a href="player-dashboard.html#player-family" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('family'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.players}<span>My Family</span></a>
                     
                     <div class="nav-group-title">Shop & Marketplace</div>
                     <a href="club-finder.html" class="sidebar-link">${ICONS.nav.venue}<span>Club Finder</span></a>
                     <a href="venue-booking.html" class="sidebar-link">${ICONS.nav.venue}<span>Book Venues</span></a>
-                    <a href="player-dashboard.html#player-event-finder" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('event-finder'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.events}<span>Find Events</span></a>
+                    <a href="player-dashboard.html#player-event-finder" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('event-finder'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.events}<span>Find Events</span></a>
                     <a href="tournament-manager.html" class="sidebar-link">${ICONS.nav.trophy}<span>Tournaments</span></a>
-                    <a href="player-dashboard.html#player-item-shop" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('item-shop'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.shop}<span>Item Shop</span></a>
-                    <a href="player-dashboard.html#player-payments" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('payments'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.finance}<span>Finance</span></a>
+                    <a href="player-dashboard.html#player-item-shop" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('item-shop'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.shop}<span>Item Shop</span></a>
+                    <a href="player-dashboard.html#player-payments" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('payments'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.finance}<span>Finance</span></a>
                 `;
       // Append Finder section
       if (!menuHtml.includes("Team Finder")) {
@@ -1545,26 +1554,26 @@ const UnifiedNav = {
     } else if (isSuperAdmin) {
       menuHtml = `
                 <div class="nav-group-title">Platform</div>
-                <a href="super-admin-dashboard.html#overview" class="sidebar-link active" onclick="if(typeof showSection === 'function') { showSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Admin Console</span></a>
-                <a href="super-admin-dashboard.html#groups" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('groups'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.venue}<span>Groups</span></a>
-                <a href="super-admin-dashboard.html#users" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('users'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>Global Users</span></a>
+                <a href="super-admin-dashboard.html#super-admin-overview" class="sidebar-link active" onclick="if(typeof showSection === 'function') { showSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.overview}<span>Admin Console</span></a>
+                <a href="super-admin-dashboard.html#super-groups" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('groups'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.venue}<span>Groups</span></a>
+                <a href="super-admin-dashboard.html#super-admin-users" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('users'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.players}<span>Global Users</span></a>
                 
                 <div class="nav-group-title">Operations</div>
-                <a href="super-admin-dashboard.html#verifications" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('verifications'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.approvals}<span>ID Verification</span></a>
-                <a href="super-admin-dashboard.html#activity" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('activity'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>System Logs</span></a>
+                <a href="super-admin-dashboard.html#super-admin-verifications" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('verifications'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.approvals}<span>ID Verification</span></a>
+                <a href="super-admin-dashboard.html#super-admin-activity" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('activity'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.forms}<span>System Logs</span></a>
                 
                 <div class="nav-group-title">System</div>
-                <a href="super-admin-dashboard.html#stripe" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('stripe'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.finance}<span>Stripe Hub</span></a>
+                <a href="super-admin-dashboard.html#super-admin-stripe" class="sidebar-link" onclick="if(typeof showSection === 'function') { showSection('stripe'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.finance}<span>Stripe Hub</span></a>
             `;
     } else if (isCoach) {
       menuHtml = `
                 <div class="nav-group-title">Coaching</div>
-                <a href="coach-dashboard.html#coach-overview" class="sidebar-link active" onclick="if(typeof showCoachSection === 'function') { showCoachSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Dashboard</span></a>
-                <a href="coach-dashboard.html#coach-messenger" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Messenger</span></a>
+                <a href="coach-dashboard.html#coach-overview" class="sidebar-link active" onclick="if(typeof showCoachSection === 'function') { showCoachSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.overview}<span>Dashboard</span></a>
+                <a href="coach-dashboard.html#coach-messenger" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.chat}<span>Messenger</span></a>
                 
                 <div class="nav-group-title">Squad</div>
-                <a href="coach-dashboard.html#coach-teams" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.teams}<span>My Teams</span></a>
-                <a href="coach-dashboard.html#coach-players" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('players'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>My Players</span></a>
+                <a href="coach-dashboard.html#coach-teams" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.teams}<span>My Teams</span></a>
+                <a href="coach-dashboard.html#coach-players" class="sidebar-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('players'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.players}<span>My Players</span></a>
                 
                 <div class="nav-group-title">Career</div>
                 <a href="scouting.html" class="sidebar-link">${ICONS.nav.training}<span>Scouting Hub</span></a>
@@ -1573,31 +1582,31 @@ const UnifiedNav = {
     } else if (isScout) {
       menuHtml = `
                 <div class="nav-group-title">Talent Pool</div>
-                <a href="scout-dashboard.html#discovery" class="sidebar-link active" onclick="if(typeof showScoutSection === 'function') { showScoutSection('discovery'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.training}<span>Discover</span></a>
-                <a href="scout-dashboard.html#watchlist" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('watchlist'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.trophy}<span>Watchlist</span></a>
+                <a href="scout-dashboard.html#scout-discovery" class="sidebar-link active" onclick="if(typeof showScoutSection === 'function') { showScoutSection('discovery'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.training}<span>Discover</span></a>
+                <a href="scout-dashboard.html#scout-watchlist" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('watchlist'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.trophy}<span>Watchlist</span></a>
                 
                 <div class="nav-group-title">Analysis</div>
-                <a href="scout-dashboard.html#reports" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('reports'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Scout Reports</span></a>
-                <a href="scout-dashboard.html#analytics" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('analytics'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Market Stats</span></a>
+                <a href="scout-dashboard.html#scout-reports" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('reports'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.forms}<span>Scout Reports</span></a>
+                <a href="scout-dashboard.html#scout-analytics" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('analytics'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.overview}<span>Market Stats</span></a>
                 
                 <div class="nav-group-title">Network</div>
-                <a href="scout-dashboard.html#messenger" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Messenger</span></a>
+                <a href="scout-dashboard.html#scout-messenger" class="sidebar-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.chat}<span>Messenger</span></a>
             `;
     } else {
       menuHtml += `
         <div class="nav-group-title"><span>Core Management</span></div>
-        <a href="admin-dashboard.html#overview" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') { showSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.overview}<span>Overview</span></a>
-        <a href="admin-dashboard.html#players" class="sidebar-link" data-tooltip="Player List" onclick="if(typeof showSection === 'function') { showSection('players'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>Player List</span></a>
-        <a href="admin-dashboard.html#teams" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') { showSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.teams}<span>Squads & Teams</span></a>
-        <a href="admin-dashboard.html#events" class="sidebar-link" data-tooltip="Event Manager" onclick="if(typeof showSection === 'function') { showSection('events'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.events}<span>Event Manager</span></a>
-        <a href="admin-dashboard.html#messenger" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') { showSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.chat}<span>Admin Chat</span></a>
-        <a href="admin-dashboard.html#staff" class="sidebar-link" data-tooltip="Staff" onclick="if(typeof showSection === 'function') { showSection('staff'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.players}<span>Staff</span></a>
+        <a href="admin-dashboard.html#overview" class="sidebar-link active" data-tooltip="Overview" onclick="if(typeof showSection === 'function') { showSection('overview'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.overview}<span>Overview</span></a>
+        <a href="admin-dashboard.html#players" class="sidebar-link" data-tooltip="Player List" onclick="if(typeof showSection === 'function') { showSection('players'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.players}<span>Player List</span></a>
+        <a href="admin-dashboard.html#teams" class="sidebar-link" data-tooltip="Squads & Teams" onclick="if(typeof showSection === 'function') { showSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.teams}<span>Squads & Teams</span></a>
+        <a href="admin-dashboard.html#events" class="sidebar-link" data-tooltip="Event Manager" onclick="if(typeof showSection === 'function') { showSection('events'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.events}<span>Event Manager</span></a>
+        <a href="admin-dashboard.html#messenger" class="sidebar-link" data-tooltip="Admin Chat" onclick="if(typeof showSection === 'function') { showSection('messenger'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.chat}<span>Admin Chat</span></a>
+        <a href="admin-dashboard.html#staff" class="sidebar-link" data-tooltip="Staff" onclick="if(typeof showSection === 'function') { showSection('staff'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.players}<span>Staff</span></a>
 
         <div class="nav-group-title"><span>Advanced Operations</span></div>
-        <a href="admin-dashboard.html#scout-approvals" class="sidebar-link" data-tooltip="Scout Approvals" onclick="if(typeof showSection === 'function') { showSection('scout-approvals'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
-        <a href="admin-dashboard.html#tactical-board" class="sidebar-link" data-tooltip="Tactics Board" onclick="if(typeof showSection === 'function') { showSection('tactical-board'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.tactics}<span>Tactics Board</span></a>
-        <a href="admin-dashboard.html#form-builder" class="sidebar-link" data-tooltip="Custom Forms" onclick="if(typeof showSection === 'function') { showSection('form-builder'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Custom Forms</span></a>
-        <a href="admin-dashboard.html#email-campaigns" class="sidebar-link" data-tooltip="Email Campaigns" onclick="if(typeof showSection === 'function') { showSection('email-campaigns'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.email}<span>Email Campaigns</span></a>
+        <a href="admin-dashboard.html#scout-approvals" class="sidebar-link" data-tooltip="Scout Approvals" onclick="if(typeof showSection === 'function') { showSection('scout-approvals'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
+        <a href="admin-dashboard.html#tactical-board" class="sidebar-link" data-tooltip="Tactics Board" onclick="if(typeof showSection === 'function') { showSection('tactical-board'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.tactics}<span>Tactics Board</span></a>
+        <a href="form-builder.html" class="sidebar-link" data-tooltip="Custom Forms">${ICONS.nav.forms}<span>Custom Forms</span></a>
+        <a href="email-campaigns.html" class="sidebar-link" data-tooltip="Email Campaigns">${ICONS.nav.email}<span>Email Campaigns</span></a>
         
         <div class="nav-group-title"><span>Events & Bookings</span></div>
         <a href="training-manager.html" class="sidebar-link" data-tooltip="Training Hub">${ICONS.nav.training}<span>Training Hub</span></a>
@@ -1605,8 +1614,8 @@ const UnifiedNav = {
         <a href="tournament-manager.html" class="sidebar-link" data-tooltip="Tournament Manager">${ICONS.nav.trophy}<span>Tournaments</span></a>
         
         <div class="nav-group-title"><span>Business & Shop</span></div>
-        <a href="admin-dashboard.html#finances" class="sidebar-link" data-tooltip="Financials" onclick="if(typeof showSection === 'function') { showSection('finances'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.finance}<span>Financials</span></a>
-        <a href="admin-dashboard.html#shop" class="sidebar-link" data-tooltip="Club Shop" onclick="if(typeof showSection === 'function') { showSection('shop'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.shop}<span>Club Shop</span></a>
+        <a href="admin-dashboard.html#finances" class="sidebar-link" data-tooltip="Financials" onclick="if(typeof showSection === 'function') { showSection('finances'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.finance}<span>Financials</span></a>
+        <a href="admin-dashboard.html#shop" class="sidebar-link" data-tooltip="Club Shop" onclick="if(typeof showSection === 'function') { showSection('shop'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); }">${ICONS.nav.shop}<span>Club Shop</span></a>
       `;
     }
 
