@@ -201,6 +201,7 @@ async function initializePlayerDashboard() {
     await loadPlayerDataWithFallback();
 
     loadPlayerOverview();
+    updatePostComposerVisibility();
     loadPlayerClubs();
     loadPlayerTeams();
     loadPlayerFinances();
@@ -494,13 +495,32 @@ async function loadPlannerFeed() {
   }
 }
 
-function postToPlannerFeed() {
-  const content = document.getElementById("plannerPostContent")?.value;
+async function postToPlannerFeed() {
+  if (!canPostUpdates()) {
+    showNotification("Only coaches and administrators can post updates.", "error");
+    return;
+  }
+
+  const textarea = document.getElementById("plannerPostContent");
+  const content = textarea?.value?.trim();
   if (!content) return;
-  
-  showNotification("Post shared to your feed!", "success");
-  document.getElementById("plannerPostContent").value = "";
-  // In a real app we'd save to DB and prepend to list
+
+  try {
+    showLoading(true);
+    await apiService.postToFeed(null, { content });
+    textarea.value = "";
+    showNotification("Update posted to your activity feed!", "success");
+    loadPlannerFeed();
+    loadOverviewFeed();
+    if (document.getElementById("player-club-feed")?.style.display !== "none") {
+      loadClubFeed();
+    }
+  } catch (err) {
+    console.error("Post failed:", err);
+    showNotification("Failed to post: " + err.message, "error");
+  } finally {
+    showLoading(false);
+  }
 }
 
 async function loadOverviewFeed() {
@@ -2858,58 +2878,75 @@ function showPlayerSection(sectionId) {
       break;
     case "club-feed":
       loadClubFeed();
+      updatePostComposerVisibility();
       break;
     case "club-messenger":
       loadMessengerConversations();
+      updatePostComposerVisibility();
       break;
     case "my-clubs":
       loadPlayerClubs();
+      updatePostComposerVisibility();
       break;
     case "family":
       loadFamilyMembers();
+      updatePostComposerVisibility();
       break;
     case "teams":
       loadPlayerTeams();
+      updatePostComposerVisibility();
       break;
     case "finances":
       loadPlayerFinances();
+      updatePostComposerVisibility();
       break;
     case "polls":
       loadPolls();
+      updatePostComposerVisibility();
       break;
     case "players":
       const activeFilter =
         document.querySelector(".filter-tab.active")?.dataset.filter || "all";
       renderPlayersList(activeFilter);
+      updatePostComposerVisibility();
       break;
     case "club-finder":
       loadClubFinder();
+      updatePostComposerVisibility();
       break;
     case "event-finder":
       loadEventFinder();
+      updatePostComposerVisibility();
       break;
     case "documents":
       loadPlayerDocuments();
+      updatePostComposerVisibility();
       break;
     case "shop":
       loadShop();
+      updatePostComposerVisibility();
       break;
     case "profile":
       loadPersonalProfile();
+      updatePostComposerVisibility();
       break;
     case "venue-booking":
       loadVenueBooking();
+      updatePostComposerVisibility();
       break;
     case "league-management":
       loadLeagues();
+      updatePostComposerVisibility();
       break;
     case "training-manager":
       if (typeof loadTrainingLibrary === "function") loadTrainingLibrary();
       if (typeof loadTrainingProgress === "function") loadTrainingProgress();
+      updatePostComposerVisibility();
       break;
     case "tournament-manager-placeholder":
       // Consistently using loadPlayerTournaments
       if (typeof loadPlayerTournaments === "function") loadPlayerTournaments();
+      updatePostComposerVisibility();
       break;
     default:
       console.warn("Unknown section:", sectionId);
@@ -3258,6 +3295,22 @@ function safeGetCurrentUser() {
   } catch {
     return null;
   }
+}
+
+function canPostUpdates() {
+  const userType = window.AppState?.userType || safeGetCurrentUser()?.account_type || "";
+  return userType === "coach" || userType === "admin" || userType === "group";
+}
+
+function updatePostComposerVisibility() {
+  const shouldShow = canPostUpdates();
+  const composerIds = ["overviewComposerWrapper", "clubFeedComposerWrapper"];
+  composerIds.forEach((id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.style.display = shouldShow ? "" : "none";
+    }
+  });
 }
 
 function accessStripeAccount() {
@@ -4661,6 +4714,11 @@ async function sendThreadMessage() {
 }
 
 async function postToCommunityFeed() {
+  if (!canPostUpdates()) {
+    showNotification("Only coaches and administrators can post updates.", "error");
+    return;
+  }
+
   const input = document.getElementById("newPostContent");
   const content = input.value.trim();
   if (!content) return;

@@ -503,12 +503,10 @@ const UnifiedNav = {
       document.querySelector(".nav-right");
     if (!target || target.querySelector(".stripe-header-btn")) return;
 
-    // Check if user is admin or account type is admin/platform_admin
+    // Check if user is a group (groups manage payments/events via Stripe)
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const userRole = this.getUserRole();
-    const isAdmin = ["admin", "platform_admin", "organization"].includes(
-      userRole,
-    );
+    const isGroup = userRole === "group";
     const isDashboard = window.location.pathname.includes("dashboard");
 
     // Check connection status from user object or localStorage
@@ -517,7 +515,7 @@ const UnifiedNav = {
       user.is_stripe_connected ||
       localStorage.getItem("stripeConnected") === "true";
 
-    if (isAdmin && isDashboard) {
+    if (isGroup && isDashboard) {
       const btnColor = isConnected ? "#22c55e" : "#635bff";
       const btnText = isConnected ? "Connected" : "Stripe";
       const btnIcon = isConnected
@@ -950,27 +948,27 @@ const UnifiedNav = {
   },
 
   renderHeaderSwitcher() {
-    const headerLeft =
-      document.querySelector(".dash-header-left") ||
-      document.querySelector(".nav-left") ||
-      document.querySelector(".logo-area") ||
-      document.querySelector(".nav-container");
-    if (!headerLeft || headerLeft.querySelector("#header-org-switcher")) return;
+    // Look for the dedicated group switcher container (both mobile and desktop)
+    let headerContainer =
+      document.getElementById("header-org-switcher") ||
+      document.getElementById("header-group-switcher-container") ||
+      document.querySelector(".header-org-switcher-wrapper") ||
+      document.querySelector(".dash-header-left");
+    
+    if (!headerContainer) return;
 
-    const switcherContainer = document.createElement("div");
-    switcherContainer.id = "header-org-switcher";
-    switcherContainer.className = "header-org-switcher-wrapper";
-    headerLeft.appendChild(switcherContainer);
+    // Prevent double-rendering
+    if (headerContainer.querySelector("select")) return;
 
     const userRole = this.getUserRole();
     const isPlayerMode = window.location.href.includes("player-dashboard.html");
 
     if (isPlayerMode || userRole === "player") {
       console.log("👨‍👩‍👧‍👦 Rendering Family Switcher in Header");
-      this.renderFamilySwitcher(switcherContainer);
+      this.renderFamilySwitcher(headerContainer);
     } else {
-      console.log("🏢 Rendering Group Switcher in Header");
-      this.renderGroupSwitcher(switcherContainer);
+      console.log("🏢 Rendering Group Switcher in Header (role: " + userRole + ")");
+      this.renderGroupSwitcher(headerContainer);
     }
   },
 
@@ -1014,9 +1012,12 @@ const UnifiedNav = {
                     ${ICONS.menu}
                 </div>
 
-                <div class="logo-area" onclick="window.location.href='index.html'">
-                    <img src="images/logo.png" alt="Logo" class="logo-img">
-                    <span class="logo-text">ClubHub</span>
+                <div class="dash-header-left" style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                        <img src="images/logo.png" alt="Logo" class="logo-img">
+                        <span class="logo-text">ClubHub</span>
+                    </div>
+                    <div id="header-group-switcher-container"></div>
                 </div>
 
                 <div class="mode-toggle-container desktop-only">
@@ -1190,38 +1191,48 @@ const UnifiedNav = {
 
     if (isPlayerMode || isPlayer) {
       navHtml = `
-                <a href="player-dashboard.html" class="bottom-nav-link active" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('overview'); return false; }">
+                <a href="player-dashboard.html" class="bottom-nav-link active" aria-label="Home" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span>Home</span>
                 </a>
-                <a href="player-dashboard.html" class="bottom-nav-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('teams'); return false; }">
+                <a href="player-dashboard.html" class="bottom-nav-link" aria-label="Teams" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('teams'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Teams</span>
                 </a>
-                <a href="player-dashboard.html" class="bottom-nav-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('club-messenger'); return false; }">
+                <a href="player-dashboard.html" class="bottom-nav-link" aria-label="Chat" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('club-messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span>Chat</span>
                 </a>
-                <a href="player-dashboard.html" class="bottom-nav-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-events'); return false; }">
+                <a href="player-dashboard.html" class="bottom-nav-link" aria-label="Events" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-events'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <span>Events</span>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
+                <a href="#" class="bottom-nav-link" aria-label="More" onclick="UnifiedNav.toggleSidebar(true); return false;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    <span>More</span>
                 </a>
             `;
     } else if (isCoach) {
       navHtml = `
-                <a href="coach-dashboard.html" class="bottom-nav-link active" onclick="if(typeof showCoachSection === 'function') { showCoachSection('overview'); return false; }">
+                <a href="coach-dashboard.html" class="bottom-nav-link active" aria-label="Home" onclick="if(typeof showCoachSection === 'function') { showCoachSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span>Home</span>
                 </a>
-                <a href="coach-dashboard.html" class="bottom-nav-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('players'); return false; }">
+                <a href="coach-dashboard.html" class="bottom-nav-link" aria-label="Squad" onclick="if(typeof showCoachSection === 'function') { showCoachSection('players'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Squad</span>
                 </a>
-                <a href="coach-dashboard.html" class="bottom-nav-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('messenger'); return false; }">
+                <a href="coach-dashboard.html" class="bottom-nav-link" aria-label="Chat" onclick="if(typeof showCoachSection === 'function') { showCoachSection('messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span>Chat</span>
                 </a>
-                <a href="coach-dashboard.html" class="bottom-nav-link" onclick="if(typeof showCoachSection === 'function') { showCoachSection('teams'); return false; }">
+                <a href="coach-dashboard.html" class="bottom-nav-link" aria-label="Teams" onclick="if(typeof showCoachSection === 'function') { showCoachSection('teams'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Teams</span>
                 </a>
-                <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
+                <a href="#" class="bottom-nav-link" aria-label="More" onclick="UnifiedNav.toggleSidebar(true); return false;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    <span>More</span>
                 </a>
             `;
     } else if (isScout) {
