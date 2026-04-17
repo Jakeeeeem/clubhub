@@ -1281,6 +1281,16 @@ const UnifiedNav = {
     }
 
     bottomNavContainer.innerHTML = navHtml;
+    this.stripHashLinks(bottomNavContainer);
+  },
+
+  stripHashLinks(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll('a[href*="#"]').forEach((link) => {
+      const href = link.getAttribute("href") || "";
+      const path = href.split("#")[0];
+      link.setAttribute("href", path.length ? path : "#");
+    });
   },
 
   renderHeaderAddons() {
@@ -1620,6 +1630,7 @@ const UnifiedNav = {
     }
 
     nav.innerHTML = menuHtml;
+    this.stripHashLinks(nav);
 
     // Feature gating: hide Scouting until phase-2 is enabled
     const phase2Enabled =
