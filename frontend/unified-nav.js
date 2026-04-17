@@ -1979,7 +1979,9 @@ window.alert = function (msg) {
 };
 
 // 🏗️ Auto-initialize Unified Navigation System
-if (window.UNIFIED_NAV_ENABLED || window.location.href.includes("dashboard")) {
+// Initialize by default on any page that includes this script,
+// unless a page explicitly sets window.UNIFIED_NAV_ENABLED = false.
+if (window.UNIFIED_NAV_ENABLED !== false) {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       console.log("🚀 UnifiedNav Auto-Init (DOMContentLoaded)");
