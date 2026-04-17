@@ -4751,6 +4751,47 @@ input:focus + .toggle-slider {
     padding-bottom: 70px; /* Space for bottom nav */
 }
 
+.dashboard-view .app-layout .dashboard-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.dashboard-view .app-layout .dashboard-section {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+.dashboard-view .app-layout .card {
+    border-radius: 28px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+    background: rgba(13, 13, 18, 0.96);
+}
+
+.dashboard-view .app-layout .section-header {
+    gap: 0.75rem;
+}
+
+.dashboard-view .app-layout .section-header h2,
+.dashboard-view .app-layout .section-header h3 {
+    font-size: 1.2rem;
+}
+
+.dashboard-view .app-layout .btn {
+    min-width: 140px;
+}
+
+.dashboard-view .app-layout .card + .card {
+    margin-top: 0.75rem;
+}
+
 /* Top Swippable Tabs (Headlines) */
 .app-top-tabs {
     position: sticky;
@@ -4794,11 +4835,53 @@ input:focus + .toggle-slider {
         margin-top: 0 !important;
     }
     
+    .dashboard-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 0 0.75rem;
+    }
+
+    .dashboard-section.active {
+        padding: 0.75rem 0 1rem;
+    }
+    
     .card {
-        border-radius: 0;
+        border-radius: 24px;
         border-left: none;
         border-right: none;
-        margin-bottom: 8px; /* App-style card spacing */
+        margin-bottom: 12px; /* App-style card spacing */
+        padding: 1.25rem;
+    }
+
+    .section-header {
+        padding: 0 0.25rem;
+    }
+
+    .card h3 {
+        font-size: 1.15rem;
+    }
+
+    .main.dashboard-main {
+        padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    }
+
+    .unified-bottom-nav,
+    .pro-bottom-nav {
+        height: 76px;
+        padding: 0.75rem 0.5rem calc(1rem + env(safe-area-inset-bottom));
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .unified-bottom-nav .unified-nav-item,
+    .pro-bottom-nav .bottom-nav-link {
+        flex: 1 1 auto;
+        min-width: 56px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
     }
 }
 

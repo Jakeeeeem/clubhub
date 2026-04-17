@@ -276,9 +276,7 @@
         });
 
         function showSection(id) {
-            console.log("SuperAdmin Mapping ID:", id);
-            window.location.hash = 'super-' + id;
-            
+            console.log("SuperAdmin Mapping ID:", id);            
             document.querySelectorAll('.dashboard-section').forEach(s => {
                 s.style.display = 'none';
                 s.classList.remove('active');

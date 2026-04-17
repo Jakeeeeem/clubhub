@@ -641,9 +641,7 @@
         }
 
         function showSection(sectionId) {
-            console.log("Showing section:", sectionId);
-            window.location.hash = sectionId;
-            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
+            console.log("Showing section:", sectionId);            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
             const target = document.getElementById(sectionId);
             if (target) {
                 target.style.display = 'block';
