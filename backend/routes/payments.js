@@ -1335,13 +1335,21 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
     const targetEventId = req.body.eventId || metadata.eventId;
     if (targetEventId) {
       try {
-        const eventRes = await query("SELECT club_id FROM events WHERE id = $1", [targetEventId]);
+        const eventRes = await query(
+          "SELECT club_id FROM events WHERE id = $1",
+          [targetEventId],
+        );
         if (eventRes.rows.length > 0) {
           const clubId = eventRes.rows[0].club_id;
-          const clubRes = await query("SELECT stripe_account_id FROM clubs WHERE id = $1", [clubId]);
+          const clubRes = await query(
+            "SELECT stripe_account_id FROM clubs WHERE id = $1",
+            [clubId],
+          );
           if (clubRes.rows.length > 0 && clubRes.rows[0].stripe_account_id) {
             stripeAccountId = clubRes.rows[0].stripe_account_id;
-            console.log(`Routing event payment to Connect Account: ${stripeAccountId}`);
+            console.log(
+              `Routing event payment to Connect Account: ${stripeAccountId}`,
+            );
           }
         }
       } catch (err) {
@@ -1371,7 +1379,7 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
           paymentDetails = paymentResult.rows[0];
 
           if (paymentDetails.stripe_account_id && !stripeAccountId) {
-             stripeAccountId = paymentDetails.stripe_account_id;
+            stripeAccountId = paymentDetails.stripe_account_id;
           }
 
           // Check if already paid
@@ -1432,11 +1440,16 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
         description: paymentIntentData.description,
       });
 
-      const stripeOptions = stripeAccountId ? { stripeAccount: stripeAccountId } : {};
-      const paymentIntent = await stripe.paymentIntents.create(paymentIntentData, stripeOptions);
+      const stripeOptions = stripeAccountId
+        ? { stripeAccount: stripeAccountId }
+        : {};
+      const paymentIntent = await stripe.paymentIntents.create(
+        paymentIntentData,
+        stripeOptions,
+      );
 
       console.log(
-        `Stripe Payment Intent created: ${paymentIntent.id} for £${numericAmount}`
+        `Stripe Payment Intent created: ${paymentIntent.id} for £${numericAmount}`,
       );
 
       res.json({
@@ -1447,7 +1460,7 @@ router.post("/create-intent", requirePaymentProcessing, async (req, res) => {
         currency: "gbp",
         paymentDetails: paymentDetails,
         metadata: paymentIntentData.metadata,
-        stripeAccountUsed: stripeAccountId
+        stripeAccountUsed: stripeAccountId,
       });
     } catch (stripeError) {
       console.error("Stripe API error:", stripeError);
@@ -2382,14 +2395,21 @@ router.post("/book-event", async (req, res) => {
       try {
         let stripeOptions = {};
         if (event.club_id) {
-           const clubRes = await query("SELECT stripe_account_id FROM clubs WHERE id = $1", [event.club_id]);
-           if (clubRes.rows.length > 0 && clubRes.rows[0].stripe_account_id) {
-               stripeOptions = { stripeAccount: clubRes.rows[0].stripe_account_id };
-           }
+          const clubRes = await query(
+            "SELECT stripe_account_id FROM clubs WHERE id = $1",
+            [event.club_id],
+          );
+          if (clubRes.rows.length > 0 && clubRes.rows[0].stripe_account_id) {
+            stripeOptions = {
+              stripeAccount: clubRes.rows[0].stripe_account_id,
+            };
+          }
         }
-        
-        const paymentIntent =
-          await stripe.paymentIntents.retrieve(paymentIntentId, stripeOptions);
+
+        const paymentIntent = await stripe.paymentIntents.retrieve(
+          paymentIntentId,
+          stripeOptions,
+        );
 
         if (paymentIntent.status !== "succeeded") {
           return res.status(400).json({
@@ -2614,6 +2634,123 @@ router.use((error, req, res, next) => {
     message: "An unexpected error occurred in payment processing",
   });
 });
+
+// Stripe Webhook receiver - updates local payment records (tournament_teams)
+// Use raw body to allow Stripe signature verification when configured
+router.post(
+  "/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig =
+      req.headers["stripe-signature"] || req.headers["stripe_signature"];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    let event;
+    try {
+      if (webhookSecret) {
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+      } else {
+        // If no webhook secret configured, accept JSON directly (less secure)
+        event = req.body;
+      }
+    } catch (err) {
+      console.error(
+        "Stripe webhook signature verification failed:",
+        err.message,
+      );
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    try {
+      const type = event.type || event.event_type || null;
+      const data = event.data
+        ? event.data.object
+        : event.data_object || event.object;
+
+      // Handle key payment intent events
+      if (type === "payment_intent.succeeded") {
+        const intent = data;
+        const pid = intent.id;
+        if (pid) {
+          await query(
+            `UPDATE tournament_teams SET payment_status = 'succeeded' WHERE payment_intent_id = $1`,
+            [pid],
+          );
+          // also mark any related video purchases as succeeded
+          await query(
+            `UPDATE video_purchases SET payment_status = 'succeeded', purchased_at = NOW() WHERE payment_intent_id = $1`,
+            [pid],
+          );
+
+          // If this intent had transfer data, we rely on Stripe to route funds to connected account.
+          // Post-capture reconciliation: try to attach charge id and transfer id to our record for reporting.
+          try {
+            const chargeId = intent.charges?.data?.[0]?.id || null;
+            if (chargeId) {
+              await query(
+                `UPDATE video_purchases SET stripe_charge_id = $1 WHERE payment_intent_id = $2`,
+                [chargeId, pid],
+              );
+            }
+          } catch (err) {
+            console.warn(
+              "Could not attach charge id to video_purchases",
+              err.message || err,
+            );
+          }
+        }
+      } else if (type === "payment_intent.payment_failed") {
+        const intent = data;
+        const pid = intent.id;
+        if (pid) {
+          await query(
+            `UPDATE tournament_teams SET payment_status = 'failed' WHERE payment_intent_id = $1`,
+            [pid],
+          );
+          await query(
+            `UPDATE video_purchases SET payment_status = 'failed' WHERE payment_intent_id = $1`,
+            [pid],
+          );
+        }
+      } else if (type === "payment_intent.requires_capture") {
+        const intent = data;
+        const pid = intent.id;
+        if (pid) {
+          await query(
+            `UPDATE tournament_teams SET payment_status = 'requires_capture' WHERE payment_intent_id = $1`,
+            [pid],
+          );
+          await query(
+            `UPDATE video_purchases SET payment_status = 'requires_capture' WHERE payment_intent_id = $1`,
+            [pid],
+          );
+        }
+      } else if (
+        type === "charge.refunded" ||
+        type === "charge.refund.updated"
+      ) {
+        const charge = data;
+        // try to map charge to payment_intent
+        const pid = charge.payment_intent;
+        if (pid) {
+          await query(
+            `UPDATE tournament_teams SET payment_status = 'refunded' WHERE payment_intent_id = $1`,
+            [pid],
+          );
+          await query(
+            `UPDATE video_purchases SET payment_status = 'refunded' WHERE payment_intent_id = $1`,
+            [pid],
+          );
+        }
+      }
+
+      res.json({ received: true });
+    } catch (err) {
+      console.error("Processing webhook event failed:", err);
+      res.status(500).json({ error: "Failed to process webhook" });
+    }
+  },
+);
 
 // POST /api/payments/cleanup - Clear dummy data (Admin Only)
 router.post(

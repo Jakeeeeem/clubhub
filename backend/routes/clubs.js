@@ -242,7 +242,7 @@ router.post("/:id/claim", authenticateToken, async (req, res) => {
     // 1. Check if club exists and is not already claimed
     const clubResult = await query(
       "SELECT * FROM organizations WHERE id = $1",
-      [clubId]
+      [clubId],
     );
 
     if (clubResult.rows.length === 0) {
@@ -253,29 +253,37 @@ router.post("/:id/claim", authenticateToken, async (req, res) => {
 
     // If club already has an owner_id that isn't null/placeholder, it might be claimed
     // In our system, platform-generated clubs might have a null owner or a system owner
-    if (club.owner_id && club.status === 'active' && !club.is_platform_generated) {
-      return res.status(400).json({ error: "This club has already been claimed." });
+    if (
+      club.owner_id &&
+      club.status === "active" &&
+      !club.is_platform_generated
+    ) {
+      return res
+        .status(400)
+        .json({ error: "This club has already been claimed." });
     }
 
     // 2. Mark as pending claim
     await query(
       "UPDATE organizations SET status = 'pending_claim', metadata = jsonb_set(COALESCE(metadata, '{}'), '{claim_requested_by}', $1) WHERE id = $2",
-      [JSON.stringify(userId), clubId]
+      [JSON.stringify(userId), clubId],
     );
 
     // 3. Log the claim request
-    console.log(`📩 Claim request for ${club.name} (ID: ${clubId}) by User ${userId}`);
+    console.log(
+      `📩 Claim request for ${club.name} (ID: ${clubId}) by User ${userId}`,
+    );
 
     // 4. Send verification email (Mock logic - in production uses EmailService)
     // We assume a verification link will be sent to the club's contact email if available,
     // or the requester is asked to provide proof.
-    
-    res.json({ 
-      success: true, 
-      message: "Claim request submitted. Our team will verify your relationship with the group and send a confirmation email within 24 hours.",
-      status: "pending_claim"
-    });
 
+    res.json({
+      success: true,
+      message:
+        "Claim request submitted. Our team will verify your relationship with the group and send a confirmation email within 24 hours.",
+      status: "pending_claim",
+    });
   } catch (error) {
     console.error("Club claim error:", error);
     res.status(500).json({ error: "Failed to process claim request" });
@@ -655,6 +663,35 @@ router.post(
             availability || null,
           ],
         );
+
+        // Send notification email to club owner/contact if available
+        try {
+          const clubInfo = await query(
+            "SELECT id, name, owner_id, contact_email FROM organizations WHERE id = $1",
+            [req.params.id],
+          );
+          if (clubInfo.rows.length > 0) {
+            const club = clubInfo.rows[0];
+            const emailService = require("../services/email-service");
+            const es = new emailService();
+            const ownerEmail =
+              club.contact_email || process.env.ADMIN_NOTIFICATION_EMAIL;
+            if (ownerEmail) {
+              const inviteLink = `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/clubs/${club.id}/applications`;
+              await es.transporter.sendMail({
+                from: process.env.EMAIL_FROM || "noreply@clubhub.app",
+                to: ownerEmail,
+                subject: `New application for ${club.name}`,
+                text: `A new application was submitted. View it here: ${inviteLink}`,
+              });
+            }
+          }
+        } catch (err) {
+          console.warn(
+            "Failed to send application notification email:",
+            err.message || err,
+          );
+        }
       }
 
       res.status(201).json({

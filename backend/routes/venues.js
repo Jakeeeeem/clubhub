@@ -3,7 +3,9 @@ const { query } = require("../config/database");
 const {
   authenticateToken,
   requireOrganization,
+  optionalAuth,
 } = require("../middleware/auth");
+const crypto = require("crypto");
 const { body, validationResult } = require("express-validator");
 
 const router = express.Router();
@@ -173,10 +175,10 @@ router.get("/:id/documents", authenticateToken, async (req, res) => {
   }
 });
 
-// POST /api/venues/:id/book - Book a venue
+// POST /api/venues/:id/book - Book a venue (supports guest checkout)
 router.post(
   "/:id/book",
-  authenticateToken,
+  optionalAuth,
   [body("startTime").isISO8601(), body("endTime").isISO8601()],
   async (req, res) => {
     const errors = validationResult(req);
@@ -186,8 +188,15 @@ router.post(
 
     try {
       const { id } = req.params;
-      const { startTime, endTime, notes } = req.body;
-      const userId = req.user.id;
+      const {
+        startTime,
+        endTime,
+        notes,
+        guestEmail,
+        guestFirstName,
+        guestLastName,
+      } = req.body;
+      const userId = req.user ? req.user.id : null;
 
       // Check if venue exists
       const venueResult = await query("SELECT * FROM venues WHERE id = $1", [
@@ -226,11 +235,48 @@ router.post(
       const hours = (end - start) / (1000 * 60 * 60);
       const totalCost = hours * (venue.hourly_rate || 0);
 
-      // Create booking
+      // If guest checkout, ensure guestEmail provided
+      let guestToken = null;
+      if (!userId) {
+        if (!guestEmail) {
+          return res.status(401).json({
+            error:
+              "Account required at checkout. Provide guestEmail to continue or register.",
+          });
+        }
+
+        // Ensure DB has guest columns (lightweight migration)
+        await query(
+          `ALTER TABLE venue_bookings ADD COLUMN IF NOT EXISTS guest_token UUID`,
+        );
+        await query(
+          `ALTER TABLE venue_bookings ADD COLUMN IF NOT EXISTS guest_email VARCHAR(255)`,
+        );
+        await query(
+          `ALTER TABLE venue_bookings ADD COLUMN IF NOT EXISTS guest_first_name VARCHAR(255)`,
+        );
+        await query(
+          `ALTER TABLE venue_bookings ADD COLUMN IF NOT EXISTS guest_last_name VARCHAR(255)`,
+        );
+        await query(
+          `ALTER TABLE venue_bookings ADD COLUMN IF NOT EXISTS guest_token_expires_at TIMESTAMP WITH TIME ZONE`,
+        );
+        await query(
+          `ALTER TABLE venue_bookings ADD COLUMN IF NOT EXISTS accepted_tos BOOLEAN DEFAULT false`,
+        );
+
+        guestToken = crypto.randomUUID();
+      }
+
+      // If guestToken exists, set expiry (48 hours)
+      const guestTokenExpiresAt = guestToken
+        ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+        : null;
+
       const result = await query(
         `
-            INSERT INTO venue_bookings (venue_id, user_id, organization_id, start_time, end_time, total_cost, notes, status)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+            INSERT INTO venue_bookings (venue_id, user_id, organization_id, start_time, end_time, total_cost, notes, status, guest_token, guest_email, guest_first_name, guest_last_name, guest_token_expires_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11, $12)
             RETURNING *
         `,
         [
@@ -241,12 +287,20 @@ router.post(
           endTime,
           totalCost,
           notes,
+          guestToken,
+          guestEmail || null,
+          guestFirstName || null,
+          guestLastName || null,
+          guestTokenExpiresAt,
         ],
       );
 
+      const booking = result.rows[0];
+
       res.status(201).json({
         message: "Booking created successfully",
-        booking: result.rows[0],
+        booking,
+        guest_token: guestToken,
       });
     } catch (error) {
       console.error("Book venue error:", error);
@@ -313,5 +367,46 @@ router.put(
     }
   },
 );
+
+// POST /api/venues/bookings/:id/claim - Claim a guest booking after registration/login
+router.post("/bookings/:id/claim", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { guestToken } = req.body;
+
+    if (!guestToken)
+      return res.status(400).json({ error: "guestToken required" });
+
+    const b = await query(
+      "SELECT * FROM venue_bookings WHERE id = $1 AND guest_token = $2 AND (guest_token_expires_at IS NULL OR guest_token_expires_at > NOW()) LIMIT 1",
+      [id, guestToken],
+    );
+    if (b.rows.length === 0)
+      return res
+        .status(404)
+        .json({ error: "Booking not found, token mismatch, or token expired" });
+
+    const updated = await query(
+      `UPDATE venue_bookings SET user_id = $1, guest_token = NULL, guest_token_expires_at = NULL, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [req.user.id, id],
+    );
+
+    await query(
+      `INSERT INTO notifications (user_id, title, message, type, link) VALUES ($1, $2, $3, $4, $5)`,
+      [
+        req.user.id,
+        "Booking Linked",
+        `Your booking has been linked to your account.`,
+        "booking",
+        `/venues/bookings/${id}`,
+      ],
+    );
+
+    res.json({ success: true, booking: updated.rows[0] });
+  } catch (err) {
+    console.error("Claim booking error:", err);
+    res.status(500).json({ error: "Failed to claim booking" });
+  }
+});
 
 module.exports = router;

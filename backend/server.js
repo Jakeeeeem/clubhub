@@ -22,6 +22,9 @@ const campaignRoutes = require("./routes/campaigns");
 const listingsRoutes = require("./routes/listings");
 const talentIdRoutes = require("./routes/talent-id");
 const formRoutes = require("./routes/forms");
+const pitchesRoutes = require("./routes/pitches");
+const schedulesRoutes = require("./routes/schedules");
+const liveRoutes = require("./routes/live");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -293,6 +296,10 @@ app.use("/api/teams", teamRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/stripe-payouts", require("./routes/stripe-payouts"));
+app.use("/api/tournaments", require("./routes/tournaments")); // Tournament enhancement system
+app.use("/api/pitches", pitchesRoutes);
+app.use("/api/schedules", schedulesRoutes);
+app.use("/api/live", liveRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/invites", invitesRoutes);
 app.use("/api/products", productRoutes);

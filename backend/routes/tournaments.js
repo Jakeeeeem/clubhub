@@ -3,6 +3,7 @@ const { query, withTransaction } = require("../config/database");
 const {
   authenticateToken,
   requireOrganization,
+  optionalAuth,
 } = require("../middleware/auth");
 const router = express.Router();
 const { body, validationResult } = require("express-validator");
@@ -10,6 +11,7 @@ const emailService = require("../services/email-service");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // Ensure video upload directory exists
 const videoUploadDir = path.join(
@@ -60,6 +62,7 @@ router.computeNumRounds = computeNumRounds;
  */
 router.post(
   "/register",
+  optionalAuth,
   [
     body("eventId").isUUID(),
     body("teamName").notEmpty(),
@@ -82,10 +85,13 @@ router.post(
         paymentIntentId,
       } = req.body;
 
+      // Attach created_by_user_id if caller is authenticated
+      const createdBy = req.user && req.user.id ? req.user.id : null;
+
       const result = await query(
         `
-            INSERT INTO tournament_teams (event_id, team_name, contact_email, contact_phone, internal_team_id, payment_intent_id, payment_status, status)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
+            INSERT INTO tournament_teams (event_id, team_name, contact_email, contact_phone, internal_team_id, payment_intent_id, payment_status, status, created_by_user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)
             RETURNING *
         `,
         [
@@ -96,15 +102,114 @@ router.post(
           internalTeamId || null,
           paymentIntentId || null,
           paymentIntentId ? "requires_capture" : "pending",
+          createdBy,
         ],
       );
 
-      res
-        .status(201)
-        .json({ message: "Registration successful", team: result.rows[0] });
+      const team = result.rows[0];
+
+      // If the caller is unauthenticated, return a short-lived registration token
+      if (!createdBy) {
+        const ttlMs = parseInt(
+          process.env.REGISTRATION_TOKEN_TTL_MS || String(24 * 60 * 60 * 1000),
+        ); // default 24 hours
+        const secret = process.env.SESSION_SECRET || "dev_secret_change_me";
+        const payload = {
+          ttid: team.id,
+          email: contactEmail,
+          iat: Date.now(),
+          exp: Date.now() + ttlMs,
+        };
+        const payloadB64 = Buffer.from(JSON.stringify(payload)).toString(
+          "base64",
+        );
+        const sig = require("crypto")
+          .createHmac("sha256", secret)
+          .update(payloadB64)
+          .digest("base64");
+        const registrationToken = `${payloadB64}.${sig}`;
+
+        return res.status(201).json({
+          message: "Registration successful (guest)",
+          team,
+          registrationToken,
+          expiresInMs: ttlMs,
+        });
+      }
+
+      res.status(201).json({ message: "Registration successful", team });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Registration failed" });
+    }
+  },
+);
+
+/**
+ * @route POST /api/tournaments/register/complete
+ * @desc  Complete a guest registration by linking it to an authenticated user
+ */
+router.post(
+  "/register/complete",
+  authenticateToken,
+  [body("registrationToken").notEmpty()],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ errors: errors.array() });
+
+      const { registrationToken } = req.body;
+      const parts = String(registrationToken).split(".");
+      if (parts.length !== 2)
+        return res.status(400).json({ error: "Invalid token format" });
+
+      const [payloadB64, sig] = parts;
+      const secret = process.env.SESSION_SECRET || "dev_secret_change_me";
+      const expectedSig = require("crypto")
+        .createHmac("sha256", secret)
+        .update(payloadB64)
+        .digest("base64");
+      if (sig !== expectedSig)
+        return res.status(400).json({ error: "Invalid token signature" });
+
+      let payload;
+      try {
+        payload = JSON.parse(
+          Buffer.from(payloadB64, "base64").toString("utf8"),
+        );
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid token payload" });
+      }
+
+      if (payload.exp && Date.now() > payload.exp)
+        return res.status(400).json({ error: "Token expired" });
+
+      const teamId = payload.ttid;
+      if (!teamId)
+        return res.status(400).json({ error: "Token missing team id" });
+
+      // Ensure the team exists and is not already linked
+      const teamRes = await query(
+        "SELECT id, created_by_user_id FROM tournament_teams WHERE id = $1",
+        [teamId],
+      );
+      if (teamRes.rows.length === 0)
+        return res.status(404).json({ error: "Registration not found" });
+      if (teamRes.rows[0].created_by_user_id)
+        return res
+          .status(400)
+          .json({ error: "Registration already completed" });
+
+      await query(
+        "UPDATE tournament_teams SET created_by_user_id = $1, updated_at = NOW() WHERE id = $2",
+        [req.user.id, teamId],
+      );
+
+      res.json({ message: "Registration linked to account" });
+    } catch (err) {
+      console.error("Complete registration failed", err);
+      res.status(500).json({ error: "Failed to complete registration" });
     }
   },
 );
@@ -279,45 +384,55 @@ router.get(
         groups: groups.rows,
         standings,
         name: event.rows[0]?.title || event.rows[0]?.name || "Tournament",
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Failed to load dashboard" });
-    }
-  },
-);
 
-/**
- * @route   POST /api/tournaments/:id/groups
- * @desc    Create groups for a tournament stage
- */
-router.post(
-  "/:id/groups",
-  authenticateToken,
-  requireOrganization,
-  [body("stageId").isUUID(), body("groupNames").isArray()],
-  async (req, res) => {
-    const { stageId, groupNames } = req.body;
-    try {
-      await withTransaction(async (client) => {
-        for (const name of groupNames) {
-          await client.query(
-            `
-                    INSERT INTO tournament_groups (stage_id, name)
-                    VALUES ($1, $2)
-                `,
-            [stageId, name],
-          );
+        // Ensure video_purchases table has expected columns
+        await query(`ALTER TABLE video_purchases ADD COLUMN IF NOT EXISTS capture_on_approval BOOLEAN DEFAULT false`);
+
+        // Create Stripe PaymentIntent
+        const amount = Math.round(price * 100); // cents
+        const currency = process.env.DEFAULT_CURRENCY || "gbp";
+
+        // Determine if this match's event/club has a connected Stripe account
+        const ev = await query(
+          `SELECT e.club_id FROM events e JOIN tournament_matches m ON m.event_id = e.id WHERE m.id = $1 LIMIT 1`,
+          [req.params.id],
+        );
+        const clubId = ev.rows[0]?.club_id || null;
+        let transferData = undefined;
+        if (clubId) {
+          const orgRes = await query(`SELECT stripe_account_id FROM organizations WHERE id = $1 LIMIT 1`, [clubId]);
+          const stripeAccountId = orgRes.rows[0]?.stripe_account_id;
+          if (stripeAccountId) {
+            transferData = { destination: stripeAccountId };
+          }
         }
-      });
-      res.json({ message: "Groups created" });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to create groups" });
-    }
-  },
-);
 
-/**
+        const captureOnApproval = !!req.body.captureOnApproval;
+
+        const paymentIntentParams = {
+          amount,
+          currency,
+          metadata: { match_id: req.params.id, user_id: req.user.id },
+          description: `Match video purchase: match ${req.params.id}`,
+        };
+        if (captureOnApproval) paymentIntentParams.capture_method = 'manual';
+        if (transferData) paymentIntentParams.transfer_data = transferData;
+
+        const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
+
+        // Insert purchase record (store amount in cents)
+        await query(
+          `INSERT INTO video_purchases (user_id, match_id, payment_intent_id, payment_status, amount, currency, capture_on_approval) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [
+            req.user.id,
+            req.params.id,
+            paymentIntent.id,
+            paymentIntent.status,
+            amount,
+            currency,
+            captureOnApproval,
+          ],
+        );
  * @route   POST /api/tournaments/:id/groups/assign
  * @desc    Assign team to a group
  */
@@ -1243,15 +1358,164 @@ router.get("/matches/:id/video", async (req, res) => {
 
     const { video_url, video_price, video_access } = matchRes.rows[0];
 
-    // For demonstration, simulating success. In production:
-    // If video_price > 0, check user's payment_intents or access token
-    // If video_access === 'invite_only', enforce authenticateToken manually here
+    // Enforce access rules
+    // 1) Public free video
+    if (
+      (!video_price || Number(video_price) === 0) &&
+      video_access === "public"
+    ) {
+      return res.json({ url: video_url, message: "Video access granted" });
+    }
 
-    res.json({ url: video_url, message: "Video access granted" });
+    // 2) Invite-only content: require authenticated user and membership/staff/invite
+    if (video_access === "invite_only") {
+      if (!req.user)
+        return res.status(401).json({ error: "Authentication required" });
+
+      // Check if user is staff for the club that owns this match
+      const staffCheck = await query(
+        `SELECT 1 FROM staff WHERE user_id = $1 AND club_id = (SELECT club_id FROM tournament_matches WHERE id = $2) LIMIT 1`,
+        [req.user.id, req.params.id],
+      );
+      if (staffCheck.rows.length > 0)
+        return res.json({
+          url: video_url,
+          message: "Video access granted (staff)",
+        });
+
+      // Check if user has a team in the same tournament (team registration / participant)
+      const participantCheck = await query(
+        `SELECT 1 FROM tournament_teams tt WHERE tt.tournament_id = (SELECT tournament_id FROM tournament_matches WHERE id = $1) AND (tt.created_by_user_id = $2 OR tt.contact_email = $3) LIMIT 1`,
+        [req.params.id, req.user.id, req.user.email],
+      );
+      if (participantCheck.rows.length > 0)
+        return res.json({
+          url: video_url,
+          message: "Video access granted (participant)",
+        });
+
+      // Otherwise deny
+      return res
+        .status(403)
+        .json({ error: "Access denied: invite-only video" });
+    }
+
+    // 3) Paywalled content: require completed purchase
+    if (video_price && Number(video_price) > 0) {
+      if (!req.user)
+        return res
+          .status(401)
+          .json({ error: "Authentication required to purchase video" });
+
+      // video_purchases table is managed via migrations; ensure migration applied in deployment
+
+      const purchaseRes = await query(
+        `SELECT 1 FROM video_purchases WHERE user_id = $1 AND match_id = $2 AND payment_status IN ('succeeded','captured') LIMIT 1`,
+        [req.user.id, req.params.id],
+      );
+      if (purchaseRes.rows.length > 0)
+        return res.json({
+          url: video_url,
+          message: "Video access granted (purchased)",
+        });
+
+      return res.status(402).json({
+        error: "Payment required",
+        purchase_endpoint: `/api/tournaments/matches/${req.params.id}/video/purchase`,
+      });
+    }
+
+    // Fallback deny
+    return res.status(403).json({ error: "Access denied" });
   } catch (err) {
     res.status(500).json({ error: "Failed to access video" });
   }
 });
+
+/**
+ * @route   POST /api/tournaments/matches/:id/video/purchase
+ * @desc    Create a Stripe PaymentIntent for a match video purchase
+ */
+router.post(
+  "/matches/:id/video/purchase",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const matchRes = await query(
+        "SELECT id, video_price, video_access FROM tournament_matches WHERE id = $1",
+        [req.params.id],
+      );
+      if (matchRes.rows.length === 0)
+        return res.status(404).json({ error: "Match not found" });
+
+      const match = matchRes.rows[0];
+      const price = Number(match.video_price || 0);
+      if (!price || price <= 0)
+        return res.status(400).json({ error: "This video is not for sale" });
+
+      // video_purchases table is managed via migrations; ensure migration applied in deployment
+
+      // Create Stripe PaymentIntent
+      const amount = Math.round(price * 100);
+      const currency = process.env.DEFAULT_CURRENCY || "gbp";
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency,
+        metadata: { match_id: req.params.id, user_id: req.user.id },
+        description: `Match video purchase: match ${req.params.id}`,
+      });
+
+      // Insert purchase record
+      await query(
+        `INSERT INTO video_purchases (user_id, match_id, payment_intent_id, payment_status, amount, currency) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [
+          req.user.id,
+          req.params.id,
+          paymentIntent.id,
+          paymentIntent.status,
+          price,
+          currency,
+        ],
+      );
+
+      res.json({
+        client_secret: paymentIntent.client_secret,
+        payment_intent_id: paymentIntent.id,
+      });
+    } catch (err) {
+      console.error("Video purchase error:", err);
+      res.status(500).json({ error: "Failed to create purchase" });
+    }
+  },
+);
+
+/**
+ * @route POST /api/tournaments/matches/:id/video/capture
+ * @desc Capture a previously authorised PaymentIntent (capture-on-approval flow)
+ */
+router.post(
+  "/matches/:id/video/capture",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      const { paymentIntentId } = req.body;
+      if (!paymentIntentId) return res.status(400).json({ error: 'paymentIntentId required' });
+
+      // Attempt capture
+      const captured = await stripe.paymentIntents.capture(paymentIntentId);
+
+      // Update DB record if present
+      await query(`UPDATE video_purchases SET payment_status = $1, purchased_at = NOW() WHERE payment_intent_id = $2`, [captured.status, paymentIntentId]);
+
+      res.json({ success: true, intent: captured });
+    } catch (err) {
+      console.error('Capture intent failed:', err);
+      res.status(500).json({ error: 'Failed to capture payment intent' });
+    }
+  },
+);
 
 /**
  * @route   GET /api/tournaments/:id/layout
@@ -1299,6 +1563,523 @@ router.post(
           .status(400)
           .json({ error: "Invite already sent to this email for this role" });
       res.status(500).json({ error: "Failed to send invite" });
+    }
+  },
+);
+
+/**
+ * @route   POST /api/tournaments/:id/invites/accept
+ * @desc    Accept a tournament invite for the authenticated user
+ */
+router.post("/:id/invites/accept", authenticateToken, async (req, res) => {
+  try {
+    // Find a pending invite for this event matching the user's email or user_id
+    const inviteRes = await query(
+      `SELECT ti.*, e.club_id FROM tournament_invites ti JOIN events e ON e.id = ti.event_id WHERE ti.event_id = $1 AND ti.status = 'pending' AND (ti.email = $2 OR ti.user_id = $3) LIMIT 1`,
+      [req.params.id, req.user.email, req.user.id],
+    );
+
+    if (inviteRes.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "No pending invite found for this user" });
+    }
+
+    const invite = inviteRes.rows[0];
+
+    // Ensure invite is for this event
+    if (invite.event_id.toString() !== req.params.id.toString()) {
+      return res
+        .status(400)
+        .json({ error: "Invite does not match this event" });
+    }
+
+    // Accept invite in a transaction and create staff/org membership
+    const result = await withTransaction(async (client) => {
+      await client.query(
+        `UPDATE tournament_invites SET status = 'accepted', user_id = $1, updated_at = NOW() WHERE id = $2`,
+        [req.user.id, invite.id],
+      );
+
+      // Ensure organization_members row exists
+      await client.query(
+        `INSERT INTO organization_members (user_id, organization_id, role, status, joined_at)
+         VALUES ($1, $2, $3, 'active', NOW())
+         ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role, status = 'active'`,
+        [
+          req.user.id,
+          invite.club_id,
+          invite.role === "team" ? "staff" : invite.role,
+        ],
+      );
+
+      // Add to staff table for the club if not present (or update role)
+      await client.query(
+        `INSERT INTO staff (user_id, club_id, first_name, last_name, email, role, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, true)
+         ON CONFLICT (user_id, club_id) DO UPDATE SET role = EXCLUDED.role, is_active = true`,
+        [
+          req.user.id,
+          invite.club_id,
+          req.user.first_name || null,
+          req.user.last_name || null,
+          req.user.email || null,
+          invite.role,
+        ],
+      );
+
+      return { accepted: true, role: invite.role };
+    });
+
+    res.json({ message: "Invite accepted", success: true, details: result });
+  } catch (err) {
+    console.error("Accept tournament invite error:", err);
+    res.status(500).json({ error: "Failed to accept invite" });
+  }
+});
+
+/**
+ * @route   POST /api/tournaments/:id/invites/:inviteId/decline
+ * @desc    Decline a specific tournament invite
+ */
+router.post(
+  "/:id/invites/:inviteId/decline",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { inviteId } = req.params;
+
+      const inv = await query(
+        `SELECT * FROM tournament_invites WHERE id = $1 AND event_id = $2 LIMIT 1`,
+        [inviteId, req.params.id],
+      );
+
+      if (inv.rows.length === 0) {
+        return res.status(404).json({ error: "Invite not found" });
+      }
+
+      const invite = inv.rows[0];
+      if (invite.email && invite.email !== req.user.email) {
+        return res
+          .status(403)
+          .json({ error: "Invite email does not match your account" });
+      }
+
+      await query(
+        `UPDATE tournament_invites SET status = 'rejected', updated_at = NOW() WHERE id = $1`,
+        [inviteId],
+      );
+
+      res.json({ message: "Invite declined" });
+    } catch (err) {
+      console.error("Decline tournament invite error:", err);
+      res.status(500).json({ error: "Failed to decline invite" });
+    }
+  },
+);
+
+/**
+ * @route POST /api/tournaments/teams/:id/submit
+ * @desc  Team submits their registration for admin approval
+ */
+router.post("/teams/:id/submit", async (req, res) => {
+  try {
+    const teamId = req.params.id;
+    // Mark as submitted
+    await query(
+      "UPDATE tournament_teams SET status = 'submitted', updated_at = NOW() WHERE id = $1",
+      [teamId],
+    );
+
+    // Find event and club for context
+    const t = await query(
+      "SELECT event_id, team_name FROM tournament_teams WHERE id = $1",
+      [teamId],
+    );
+    if (t.rows.length === 0)
+      return res.status(404).json({ error: "Team not found" });
+    const eventId = t.rows[0].event_id;
+    const teamName = t.rows[0].team_name;
+
+    const ev = await query("SELECT title, club_id FROM events WHERE id = $1", [
+      eventId,
+    ]);
+    const clubId = ev.rows[0]?.club_id;
+    const eventTitle = ev.rows[0]?.title || "Tournament";
+
+    // Notify club owner if available
+    if (clubId) {
+      const ownerRes = await query(
+        "SELECT owner_id FROM organizations WHERE id = $1",
+        [clubId],
+      );
+      const ownerId = ownerRes.rows[0]?.owner_id;
+      if (ownerId) {
+        const userRes = await query(
+          "SELECT email, first_name FROM users WHERE id = $1",
+          [ownerId],
+        );
+        if (userRes.rows.length > 0) {
+          const toEmail = userRes.rows[0].email;
+          const firstName = userRes.rows[0].first_name || "";
+          try {
+            await emailService.sendClubInviteEmail({
+              email: toEmail,
+              clubName: ev.rows[0]?.title || "Club",
+              inviterName: "ClubHub",
+              inviteLink: `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/admin/tournaments/${eventId}`,
+              personalMessage: `Team ${teamName} has submitted registration for ${eventTitle}. Please review and approve.`,
+              clubRole: "admin",
+            });
+          } catch (mailErr) {
+            console.warn(
+              "Failed to notify owner about submission:",
+              mailErr.message,
+            );
+          }
+        }
+      }
+    }
+
+    res.json({ message: "Team submitted for approval" });
+  } catch (err) {
+    console.error("Submit for approval failed", err);
+    res.status(500).json({ error: "Failed to submit registration" });
+  }
+});
+
+/**
+ * @route PATCH /api/tournaments/pitches/:id/availability
+ * @desc  Set pitch available from/to times (HH:MM)
+ */
+router.patch(
+  "/pitches/:id/availability",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      const { availableFrom, availableTo } = req.body; // strings '09:00'
+      // Ensure columns exist
+      await query(
+        "ALTER TABLE tournament_pitches ADD COLUMN IF NOT EXISTS available_from VARCHAR(10)",
+      );
+      await query(
+        "ALTER TABLE tournament_pitches ADD COLUMN IF NOT EXISTS available_to VARCHAR(10)",
+      );
+
+      await query(
+        "UPDATE tournament_pitches SET available_from = $1, available_to = $2, updated_at = NOW() WHERE id = $3",
+        [availableFrom || null, availableTo || null, req.params.id],
+      );
+      res.json({ message: "Pitch availability updated" });
+    } catch (err) {
+      console.error("Pitch availability update failed", err);
+      res.status(500).json({ error: "Failed to update availability" });
+    }
+  },
+);
+
+/**
+ * @route POST /api/tournaments/:id/schedule-templates
+ * @desc  Save current tournament schedule as a reusable template
+ */
+router.post(
+  "/:id/schedule-templates",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      const eventId = req.params.id;
+      const { name } = req.body;
+      if (!name)
+        return res.status(400).json({ error: "Template name required" });
+
+      // Ensure templates table exists
+      await query(`
+        CREATE TABLE IF NOT EXISTS tournament_schedule_templates (
+          id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+          club_id UUID,
+          event_id UUID,
+          name VARCHAR(255),
+          template JSONB,
+          created_by UUID,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+
+      // Capture current matches for event
+      const matchesRes = await query(
+        `SELECT id, home_team_id, away_team_id, start_time, end_time, pitch_id, round_number, match_number FROM tournament_matches WHERE event_id = $1 ORDER BY round_number, match_number`,
+        [eventId],
+      );
+
+      // Determine club_id
+      const ev = await query("SELECT club_id FROM events WHERE id = $1", [
+        eventId,
+      ]);
+      const clubId = ev.rows[0]?.club_id || null;
+
+      const insertRes = await query(
+        `INSERT INTO tournament_schedule_templates (club_id, event_id, name, template, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [clubId, eventId, name, JSON.stringify(matchesRes.rows), req.user.id],
+      );
+
+      res
+        .status(201)
+        .json({ id: insertRes.rows[0].id, message: "Template saved" });
+    } catch (err) {
+      console.error("Save template failed", err);
+      res.status(500).json({ error: "Failed to save template" });
+    }
+  },
+);
+
+/**
+ * @route GET /api/tournaments/:id/schedule-templates
+ * @desc  List saved templates for this event
+ */
+router.get("/:id/schedule-templates", authenticateToken, async (req, res) => {
+  try {
+    const eventId = req.params.id;
+    const rows = await query(
+      "SELECT id, name, created_at FROM tournament_schedule_templates WHERE event_id = $1 ORDER BY created_at DESC",
+      [eventId],
+    );
+    res.json(rows.rows);
+  } catch (err) {
+    console.error("List templates failed", err);
+    res.status(500).json({ error: "Failed to list templates" });
+  }
+});
+
+/**
+ * @route GET /api/tournaments/matches/:id/qr-token
+ * @desc  Generate short-lived QR token for match check-in
+ */
+router.get("/matches/:id/qr-token", authenticateToken, async (req, res) => {
+  try {
+    const matchId = req.params.id;
+    const matchRes = await query(
+      "SELECT event_id FROM tournament_matches WHERE id = $1",
+      [matchId],
+    );
+    if (matchRes.rows.length === 0)
+      return res.status(404).json({ error: "Match not found" });
+    const eventId = matchRes.rows[0].event_id;
+
+    const ttlMs = parseInt(
+      process.env.QR_TOKEN_TTL_MS || String(15 * 60 * 1000),
+    );
+    const secret =
+      process.env.QR_TOKEN_SECRET ||
+      process.env.SESSION_SECRET ||
+      "dev_secret_change_me";
+    const payload = {
+      mid: matchId,
+      eid: eventId,
+      iat: Date.now(),
+      exp: Date.now() + ttlMs,
+    };
+    const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+    const sig = require("crypto")
+      .createHmac("sha256", secret)
+      .update(payloadB64)
+      .digest("base64");
+    const token = `${payloadB64}.${sig}`;
+    res.json({ token, ttlMs });
+  } catch (err) {
+    console.error("Match QR token generation failed", err);
+    res.status(500).json({ error: "Failed to generate token" });
+  }
+});
+
+/**
+ * @route POST /api/tournaments/matches/:id/qr-checkin
+ * @desc  Accept match QR token and record checkin (allows anonymous)
+ */
+router.post("/matches/:id/qr-checkin", async (req, res) => {
+  try {
+    const matchId = req.params.id;
+    const { token, playerId, latitude, longitude } = req.body;
+    if (!token) return res.status(400).json({ error: "Missing token" });
+
+    const parts = String(token).split(".");
+    if (parts.length !== 2)
+      return res.status(400).json({ error: "Invalid token format" });
+    const [payloadB64, sig] = parts;
+    const secret =
+      process.env.QR_TOKEN_SECRET ||
+      process.env.SESSION_SECRET ||
+      "dev_secret_change_me";
+    const expectedSig = require("crypto")
+      .createHmac("sha256", secret)
+      .update(payloadB64)
+      .digest("base64");
+    if (sig !== expectedSig)
+      return res.status(400).json({ error: "Invalid token signature" });
+
+    let payload;
+    try {
+      payload = JSON.parse(Buffer.from(payloadB64, "base64").toString("utf8"));
+    } catch (e) {
+      return res.status(400).json({ error: "Invalid token payload" });
+    }
+
+    if (!payload || payload.mid != matchId)
+      return res.status(400).json({ error: "Token does not match match" });
+    if (payload.exp && Date.now() > payload.exp)
+      return res.status(400).json({ error: "Token expired" });
+
+    // Map playerId to user_id if provided
+    let userId = null;
+    if (playerId) {
+      const p = await query("SELECT user_id FROM players WHERE id = $1", [
+        playerId,
+      ]);
+      if (p.rows.length === 0)
+        return res.status(404).json({ error: "Player not found" });
+      userId = p.rows[0].user_id;
+    }
+
+    // Find event_id from match
+    const m = await query(
+      "SELECT event_id FROM tournament_matches WHERE id = $1",
+      [matchId],
+    );
+    const eventId = m.rows[0]?.event_id;
+    if (!eventId)
+      return res.status(404).json({ error: "Match not linked to event" });
+
+    // Insert into event_checkins (reuse existing table)
+    await query(
+      `INSERT INTO event_checkins (event_id, user_id, checkin_method, location_lat, location_lng) VALUES ($1, $2, $3, $4, $5)`,
+      [eventId, userId, "qr_match", latitude || null, longitude || null],
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Match QR checkin failed", err);
+    res.status(500).json({ error: "QR checkin failed" });
+  }
+});
+
+/**
+ * @route POST /api/tournaments/matches/:id/live-update
+ * @desc  Update live status or score and notify stakeholders
+ */
+router.post(
+  "/matches/:id/live-update",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      const matchId = req.params.id;
+      const { liveStatus, homeScore, awayScore, note } = req.body;
+
+      const updates = [];
+      const params = [];
+      let idx = 1;
+      if (liveStatus !== undefined) {
+        updates.push(`live_status = $${idx++}`);
+        params.push(liveStatus);
+      }
+      if (homeScore !== undefined) {
+        updates.push(`home_score = $${idx++}`);
+        params.push(homeScore);
+      }
+      if (awayScore !== undefined) {
+        updates.push(`away_score = $${idx++}`);
+        params.push(awayScore);
+      }
+      if (updates.length === 0)
+        return res.status(400).json({ error: "No updates provided" });
+
+      params.push(matchId);
+      await query(
+        `UPDATE tournament_matches SET ${updates.join(", ")}, updated_at = NOW() WHERE id = $${idx}`,
+        params,
+      );
+
+      // Notify club owner & teams
+      const m = await query(
+        "SELECT event_id, home_team_id, away_team_id FROM tournament_matches WHERE id = $1",
+        [matchId],
+      );
+      if (m.rows.length > 0) {
+        const eventId = m.rows[0].event_id;
+        const ev = await query(
+          "SELECT title, club_id, event_date FROM events WHERE id = $1",
+          [eventId],
+        );
+        const eventTitle = ev.rows[0]?.title || "Match";
+        const clubId = ev.rows[0]?.club_id;
+
+        // Gather recipients: club owner + team members
+        const recipients = [];
+        if (clubId) {
+          const ownerRes = await query(
+            "SELECT owner_id FROM organizations WHERE id = $1",
+            [clubId],
+          );
+          const ownerId = ownerRes.rows[0]?.owner_id;
+          if (ownerId) {
+            const u = await query(
+              "SELECT email, first_name FROM users WHERE id = $1",
+              [ownerId],
+            );
+            if (u.rows.length) recipients.push(u.rows[0]);
+          }
+        }
+
+        // Team members (home)
+        for (const tId of [m.rows[0].home_team_id, m.rows[0].away_team_id]) {
+          if (!tId) continue;
+          const teamRes = await query(
+            "SELECT internal_team_id, team_name FROM tournament_teams WHERE id = $1",
+            [tId],
+          );
+          const internalTeamId = teamRes.rows[0]?.internal_team_id;
+          if (internalTeamId) {
+            const members = await query(
+              `SELECT u.email, u.first_name FROM team_players tp JOIN players p ON tp.player_id = p.id JOIN users u ON p.user_id = u.id WHERE tp.team_id = $1`,
+              [internalTeamId],
+            );
+            recipients.push(...members.rows);
+          }
+        }
+
+        // De-duplicate emails
+        const seen = new Set();
+        for (const r of recipients) {
+          if (!r || !r.email) continue;
+          if (seen.has(r.email)) continue;
+          seen.add(r.email);
+          try {
+            await emailService.sendEventReminderEmail({
+              email: r.email,
+              firstName: r.first_name || "",
+              eventTitle: eventTitle,
+              eventDate: ev.rows[0]?.event_date,
+              eventTime: "",
+              location: "",
+              teamName: "",
+              clubName: "",
+              leadTime: "Live update",
+            });
+          } catch (e) {
+            console.warn(
+              "Failed to send live update email to",
+              r.email,
+              e.message,
+            );
+          }
+        }
+      }
+
+      res.json({ message: "Live update applied" });
+    } catch (err) {
+      console.error("Live update failed", err);
+      res.status(500).json({ error: "Failed to apply live update" });
     }
   },
 );

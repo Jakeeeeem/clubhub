@@ -25,6 +25,10 @@ const ICONS = {
     logout: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></i>`,
   },
 };
+// Application phase flag - set on window or localStorage for quick toggling
+const APP_PHASE =
+  window.__CLUBHUB_PHASE ||
+  parseInt(localStorage.getItem("clubhubPhase") || "1", 10);
 // ─────────────────────────────────────────────────────────────────────────────
 
 const UnifiedNav = {
@@ -213,6 +217,83 @@ const UnifiedNav = {
         console.error("❌ Stage 3 (Data Sync) failed:", err);
       }
     }, 150);
+  },
+
+  /**
+   * Ensure pages have the minimal shell elements so nav + footer render consistently
+   */
+  ensureLayoutShell() {
+    // Header
+    if (
+      !document.querySelector(".pro-header") &&
+      !document.querySelector("header.header")
+    ) {
+      const hdr = document.createElement("header");
+      hdr.className = "pro-header unified-header";
+      document.body.insertAdjacentElement("afterbegin", hdr);
+    }
+
+    // Sidebar placeholder
+    if (!document.getElementById("pro-sidebar")) {
+      // renderSidebar will create pro-sidebar when needed; create overlay container placeholders so CSS/layout works
+      const overlay = document.createElement("div");
+      overlay.id = "sidebar-overlay";
+      overlay.className = "sidebar-overlay";
+      document.body.appendChild(overlay);
+      // create empty aside so code that queries it doesn't fail
+      const aside = document.createElement("aside");
+      aside.id = "pro-sidebar";
+      aside.className = "pro-sidebar";
+      aside.style.display = "none";
+      document.body.appendChild(aside);
+    }
+
+    // Bottom nav: ensure a container exists for mobile bottom nav
+    if (!document.getElementById("pro-bottom-nav-content")) {
+      const existing = document.querySelector(
+        ".pro-bottom-nav, .unified-bottom-nav, .app-bottom-nav",
+      );
+      let container;
+      if (existing) {
+        container = existing.querySelector("#pro-bottom-nav-content");
+        if (!container) {
+          container = document.createElement("div");
+          container.id = "pro-bottom-nav-content";
+          existing.appendChild(container);
+        }
+      } else {
+        const nav = document.createElement("nav");
+        nav.className = "pro-bottom-nav mobile-only unified-bottom-nav";
+        const inner = document.createElement("div");
+        inner.className = "bottom-nav-container";
+        inner.id = "pro-bottom-nav-content";
+        nav.appendChild(inner);
+        document.body.appendChild(nav);
+      }
+    }
+
+    // Ensure there's a main/dashboard container for consistent padding/layout
+    if (
+      !document.querySelector("main") &&
+      !document.querySelector(".dashboard-container")
+    ) {
+      const main = document.createElement("main");
+      main.className = "dashboard-container";
+      // Move existing body children (except header/nav/footer) into main
+      const move = [];
+      Array.from(document.body.children).forEach((c) => {
+        if (
+          c.tagName.toLowerCase() === "header" ||
+          c.tagName.toLowerCase() === "nav" ||
+          c.id === "pro-sidebar" ||
+          c.id === "sidebar-overlay"
+        )
+          return;
+        move.push(c);
+      });
+      move.forEach((c) => main.appendChild(c));
+      document.body.appendChild(main);
+    }
   },
 
   renderGroupSwitcher(container) {
@@ -997,6 +1078,9 @@ const UnifiedNav = {
         { id: "club-messenger", label: "Chat", icon: "💬" },
         { id: "notifications", label: "Activity", icon: "🔔" },
         { id: "my-clubs", label: "Groups", icon: "🏰" },
+        { id: "my-venues", label: "My Venues", icon: "📍" },
+        { id: "my-tournaments", label: "My Tournaments", icon: "🏆" },
+        { id: "my-events", label: "My Events", icon: "📅" },
         { id: "payments", label: "Finance", icon: "💳" },
       ];
     } else if (isCoach) {
@@ -1428,10 +1512,13 @@ const UnifiedNav = {
                     
                     <div class="nav-group-title">My Career</div>
                     <a href="player-dashboard.html#player-teams" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('teams'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.teams}<span>My Teams</span></a>
+                    <a href="player-dashboard.html#player-my-venues" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-venues'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.venue}<span>My Venues</span></a>
+                    <a href="player-dashboard.html#player-my-tournaments" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-tournaments'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.trophy}<span>My Tournaments</span></a>
+                    <a href="player-dashboard.html#player-my-events" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-events'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.events}<span>My Events</span></a>
                     <a href="player-dashboard.html#player-my-clubs" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-clubs'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.venue}<span>My Groups</span></a>
                     <a href="player-dashboard.html#player-documents" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('documents'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Documents</span></a>
                     <a href="player-dashboard.html#player-polls" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('polls'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.forms}<span>Club Polls</span></a>
-                    <a href="scouting.html" class="sidebar-link">${ICONS.nav.training}<span>Scouting</span></a>
+                    ${APP_PHASE >= 2 ? '<a href="scouting.html" class="sidebar-link">' + ICONS.nav.training + "<span>Scouting</span></a>" : ""}
 
                     <div class="nav-group-title">Family & Profile</div>
                     <a href="player-settings.html" class="sidebar-link">${ICONS.nav.players}<span>My Profile</span></a>
@@ -1445,6 +1532,16 @@ const UnifiedNav = {
                     <a href="player-dashboard.html#player-item-shop" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('item-shop'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.shop}<span>Item Shop</span></a>
                     <a href="player-dashboard.html#player-payments" class="sidebar-link" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('payments'); } if(window.innerWidth < 992) { window.UnifiedNav.toggleSidebar(false); } return false;">${ICONS.nav.finance}<span>Finance</span></a>
                 `;
+      // Append Finder section
+      if (!menuHtml.includes("Team Finder")) {
+        menuHtml += `
+                    <div class="nav-group-title">Finder</div>
+                    <a href="team-finder.html" class="sidebar-link">${ICONS.nav.teams}<span>Team Finder</span></a>
+                    <a href="tournament-finder.html" class="sidebar-link">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
+                    <a href="event-finder.html" class="sidebar-link">${ICONS.nav.events}<span>Event Finder</span></a>
+                    <a href="venue-finder.html" class="sidebar-link">${ICONS.nav.venue}<span>Venue Finder</span></a>
+        `;
+      }
     } else if (isSuperAdmin) {
       menuHtml = `
                 <div class="nav-group-title">Platform</div>

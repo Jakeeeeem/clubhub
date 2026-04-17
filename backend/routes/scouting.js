@@ -266,6 +266,101 @@ router.get("/contact-requests/pending", authenticateToken, async (req, res) => {
   }
 });
 
+// Admin: list pending contact requests for players belonging to the club
+router.get(
+  "/contact-requests/pending-by-club",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      // Determine club id from user's current organization or query
+      const clubId = req.query.clubId || req.user.current_organization_id;
+      if (!clubId) return res.status(400).json({ error: "clubId required" });
+
+      const result = await query(
+        `SELECT scr.*, p.first_name as player_first_name, p.last_name as player_last_name, u.first_name as scout_first_name, u.last_name as scout_last_name
+         FROM scout_contact_requests scr
+         JOIN players p ON scr.player_id = p.id
+         LEFT JOIN users u ON scr.scout_id = u.id
+         WHERE scr.status = 'pending' AND p.club_id = $1
+         ORDER BY scr.created_at DESC`,
+        [clubId],
+      );
+      res.json(result.rows);
+    } catch (err) {
+      console.error(err);
+      res
+        .status(500)
+        .json({ error: "Failed to fetch pending contact requests for club" });
+    }
+  },
+);
+
+// Admin/Staff: resend parental approval email for a pending request
+router.post(
+  "/contact-requests/:id/resend-approval",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      const reqResult = await query(
+        `SELECT scr.*, p.user_id as player_owner, p.first_name as player_first_name, p.last_name as player_last_name
+         FROM scout_contact_requests scr JOIN players p ON scr.player_id = p.id WHERE scr.id = $1`,
+        [req.params.id],
+      );
+      if (reqResult.rows.length === 0)
+        return res.status(404).json({ error: "Request not found" });
+
+      const record = reqResult.rows[0];
+      if (record.status !== "pending")
+        return res.status(400).json({ error: "Request is not pending" });
+
+      // Fetch parent email
+      const parentRes = await query(
+        "SELECT email, first_name FROM users WHERE id = $1",
+        [record.player_owner],
+      );
+      if (parentRes.rows.length === 0 || !parentRes.rows[0].email)
+        return res.status(404).json({ error: "Parent email not found" });
+
+      const parentEmail = parentRes.rows[0].email;
+      const parentFirst = parentRes.rows[0].first_name || "";
+
+      // scout info
+      const scoutInfo = await query(
+        "SELECT first_name, last_name FROM users WHERE id = $1",
+        [record.scout_id],
+      );
+      const scoutName = scoutInfo.rows[0]
+        ? `${scoutInfo.rows[0].first_name || ""} ${scoutInfo.rows[0].last_name || ""}`.trim()
+        : "A scout";
+
+      const playerName =
+        `${record.player_first_name || "Your"} ${record.player_last_name || "Child"}`.trim();
+
+      const frontendBase = process.env.FRONTEND_URL || "http://localhost:8000";
+      const approvalLink = `${frontendBase}/parent-approval.html?token=${record.approval_token}&req=${record.id}`;
+      const denyLink = `${frontendBase}/parent-approval.html?token=${record.approval_token}&req=${record.id}&action=deny`;
+
+      await emailService.sendParentalApprovalEmail({
+        to: parentEmail,
+        parentFirstName: parentFirst,
+        scoutName,
+        playerName,
+        approvalLink,
+        denyLink,
+      });
+
+      res.json({ success: true, message: "Parental approval email resent" });
+    } catch (err) {
+      console.error("Resend approval error:", err);
+      res
+        .status(500)
+        .json({ error: "Failed to resend parental approval email" });
+    }
+  },
+);
+
 // Get status for a given contact request
 router.get(
   "/contact-requests/:id/status",
