@@ -278,43 +278,12 @@
             <div class="step" data-step="3">✓</div>
         </div>
 
-        <!-- Step 1: Pick Your Path -->
+        <!-- Step 1: Start Your Account -->
         <div class="form-step active" data-step="1">
-            <h2 style="text-align: center; margin-bottom: 1rem; font-family: 'Outfit';">Choose Your Path</h2>
+            <h2 style="text-align: center; margin-bottom: 1rem; font-family: 'Outfit';">Create your ClubHub account</h2>
             <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">
-                Choose the account type that fits your role. You can create or switch groups later from the dashboard.
+                Sign up once and use the dashboard to switch groups or accept invitations later. If you were invited, your membership details will be applied after registration.
             </p>
-
-            <div class="account-types-grid"
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                <div class="checkbox-card account-type-card" id="type-player" onclick="selectSignupType('adult')">
-                    <div class="type-icon"
-                        style="font-size: 2rem; margin-bottom: 0.5rem; display: block; width: 100%; text-align: center;">
-                        ⚽</div>
-                    <div style="text-align: center; width: 100%;">
-                        <strong style="display: block; margin-bottom: 0.25rem;">Player / Fan</strong>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.1;">Join groups and find events.</span>
-                    </div>
-                </div>
-                <div class="checkbox-card account-type-card" id="type-org" onclick="selectSignupType('group')">
-                    <div class="type-icon"
-                        style="font-size: 2rem; margin-bottom: 0.5rem; display: block; width: 100%; text-align: center;">
-                        🏢</div>
-                    <div style="text-align: center; width: 100%;">
-                        <strong style="display: block; margin-bottom: 0.25rem;">Group / Club</strong>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.1;">Manage teams and payments.</span>
-                    </div>
-                </div>
-                <div class="checkbox-card account-type-card" id="type-scout" onclick="selectSignupType('scout')">
-                    <div class="type-icon"
-                        style="font-size: 2rem; margin-bottom: 0.5rem; display: block; width: 100%; text-align: center;">
-                        🔍</div>
-                    <div style="text-align: center; width: 100%;">
-                        <strong style="display: block; margin-bottom: 0.25rem;">Scout</strong>
-                        <span style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.1;">Discover talent and analytics.</span>
-                    </div>
-                </div>
-            </div>
             <input type="hidden" id="selectedAccountType" value="adult">
         </div>
 
@@ -473,16 +442,8 @@
                 }
             }
 
-            // GET TYPE FROM URL
-            const typeParam = urlParams.get('type');
-            if (typeParam) {
-                console.log('📋 Type from URL detected:', typeParam);
-                const type = typeParam === 'group' ? 'group' : typeParam === 'scout' ? 'scout' : 'adult';
-                document.getElementById('selectedAccountType').value = type;
-
-                // We'll update UI in a moment once selectSignupType is defined or manually
-                // But for now just set the value.
-            }
+            // Default signup account type is always Player unless an invite indicates otherwise.
+            document.getElementById('selectedAccountType').value = 'adult';
 
             if (inviteToken) {
                 console.log('📧 Invitation detected, pre-filling email');
@@ -519,30 +480,9 @@
             }
         });
 
-        function selectSignupType(type) {
-            document.getElementById('selectedAccountType').value = type;
-            document.querySelectorAll('.account-type-card').forEach(card => card.classList.remove('selected'));
-            
-            let cardId = 'type-player';
-            if (type === 'group') cardId = 'type-org';
-            if (type === 'scout') cardId = 'type-scout';
-            
-            const selectedCard = document.getElementById(cardId);
-            if (selectedCard) selectedCard.classList.add('selected');
-
-            // Auto-advance to next step
-            setTimeout(() => nextStep(), 300);
-        }
-
-        // Initialize Step 1 cards
-        window.addEventListener('load', () => {
-            const currentType = document.getElementById('selectedAccountType').value;
-            let cardId = 'type-player';
-            if (currentType === 'group') cardId = 'type-org';
-            if (currentType === 'scout') cardId = 'type-scout';
-            
-            const selectedCard = document.getElementById(cardId);
-            if (selectedCard) selectedCard.classList.add('selected');
+        // Set a default signup type.
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('selectedAccountType').value = 'adult';
         });
 
         function nextStep() {
@@ -646,8 +586,7 @@
                 nextBtn.disabled = true;
                 nextBtn.textContent = 'Creating Account...';
 
-                const urlParams = new URLSearchParams(window.location.search);
-                const roleParam = document.getElementById('selectedAccountType').value || urlParams.get('type') || 'adult';
+                const roleParam = document.getElementById('selectedAccountType').value || 'adult';
                 // Map signup selection to the backend account type values.
                 const userType = roleParam === 'group'
                   ? 'organization'

@@ -163,7 +163,7 @@
 
         <!-- Platform Columns (Restored) -->
         <section class="hero-platforms">
-            <a href="signup.html?type=group" class="platform-col org">
+            <a href="signup.html" class="platform-col org">
                 <div class="platform-content">
                     <h2 class="platform-title">Groups</h2>
                     <p class="platform-tagline">Manage your group. Recruit talent. Drive revenue.</p>
@@ -171,7 +171,7 @@
                 </div>
             </a>
 
-            <a href="signup.html?type=adult" class="platform-col player">
+            <a href="signup.html" class="platform-col player">
                 <div class="platform-content">
                     <h2 class="platform-title">Players</h2>
                     <p class="platform-tagline">Build your CV. Find your next group. Join the community.</p>
@@ -179,7 +179,7 @@
                 </div>
             </a>
 
-            <a href="signup.html?type=coach" class="platform-col coach">
+            <a href="signup.html" class="platform-col coach">
                 <div class="platform-content">
                     <h2 class="platform-title">Coaches</h2>
                     <p class="platform-tagline">Manage teams. Track progress. Master the game.</p>
@@ -187,7 +187,7 @@
                 </div>
             </a>
 
-            <a href="signup.html?type=league" class="platform-col league">
+            <a href="signup.html" class="platform-col league">
                 <div class="platform-content">
                     <h2 class="platform-title">Leagues/Venues</h2>
                     <p class="platform-tagline">Schedule fixtures. Manage bookings. Run the show.</p>
@@ -336,49 +336,16 @@
             </div>
         </section>
 
-        <!-- Account Types -->
+        <!-- Generic Sign Up Call to Action -->
         <section class="account-types" id="account-types">
-            <div class="container">
+            <div class="container" style="text-align: center; padding: 4rem 0;">
                 <h2 class="neon-text"
-                    style="text-align: center; font-size: 3.5rem; margin-bottom: 2rem; font-family: 'Outfit';">Choose
-                    Your Account Type</h2>
-                <div class="account-types-grid">
-                    <!-- Group Card -->
-                    <div class="account-type-card group">
-                        <div class="account-icon">🏢</div>
-                        <h3>Group Account</h3>
-                        <p class="subtitle" style="color: #64748b; text-align: center; margin-bottom: 1rem;">Perfect for
-                            groups, academies, and sports groups</p>
-                        <ul class="features-list">
-                            <li>Complete group management dashboard</li>
-                            <li>Player & staff management</li>
-                            <li>Event & team group</li>
-                            <li>Automated payment collection</li>
-                            <li>Group listing & discovery</li>
-                            <li>Advanced reporting & analytics</li>
-                        </ul>
-                        <button class="btn btn-danger" onclick="goToSignup('group')"
-                            style="width: 100%; padding: 1.2rem; font-weight: 700;">Start Managing Your Group</button>
-                    </div>
-
-                    <!-- Player Card -->
-                    <div class="account-type-card player">
-                        <div class="account-icon">⚽</div>
-                        <h3>Player Account</h3>
-                        <p class="subtitle" style="color: #64748b; text-align: center; margin-bottom: 1rem;">Perfect for
-                            players and sports enthusiasts</p>
-                        <ul class="features-list">
-                            <li>Join multiple groups & teams</li>
-                            <li>Browse & book events</li>
-                            <li>Track progress & stats</li>
-                            <li>Team schedule & availability</li>
-                            <li>Direct coach communication</li>
-                            <li>Multi-child family dashboard</li>
-                        </ul>
-                        <button class="btn btn-danger" onclick="goToSignup('adult')"
-                            style="width: 100%; padding: 1.2rem; font-weight: 700;">Join as a Player</button>
-                    </div>
-                </div>
+                    style="font-size: 3.5rem; margin-bottom: 1rem; font-family: 'Outfit';">Get Started with ClubHub</h2>
+                <p style="color: var(--text-muted); font-size: 1.05rem; max-width: 720px; margin: 0 auto 2rem;">
+                    Create one account and access all ClubHub features. If you receive an invitation to a group, it will appear in your dashboard switcher.
+                </p>
+                <button class="btn btn-danger" onclick="goToSignup()"
+                    style="padding: 1.4rem 2.5rem; font-weight: 700; font-size: 1rem;">Create Your Account</button>
             </div>
         </section>
 
@@ -635,8 +602,8 @@
             }
         }
 
-        function goToSignup(type) {
-            window.location.href = `signup.html?type=${type}`;
+        function goToSignup() {
+            window.location.href = 'signup.html';
         }
 
         function switchRoleFeatures(role) {
