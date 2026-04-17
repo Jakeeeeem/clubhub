@@ -698,16 +698,21 @@ header.header .nav-container,
     }
 
     .sidebar-burger {
+        position: absolute !important;
+        top: 1.25rem !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
         transition: all 0.2s ease;
     }
 
     .sidebar-burger:hover {
         opacity: 1 !important;
-        transform: scale(1.1);
+        transform: translateX(-50%) scale(1.1) !important;
     }
 
     body.sidebar-collapsed .sidebar-burger {
-        margin: 0 auto;
+        left: 50% !important;
+        margin: 0 !important;
     }
 }
 

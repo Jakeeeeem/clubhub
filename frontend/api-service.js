@@ -291,6 +291,27 @@ class ApiService {
       return { success: true, message: "Group switched (Demo)", groupId: user.groupId };
     }
 
+    // --- PLAYER FAMILY ---
+    if (endpoint.includes("/players/family")) {
+      return [
+        {
+          id: "demo-family-1",
+          first_name: "Alex",
+          last_name: "Morgan",
+          relationship: "Self",
+          player_id: "demo-player-id",
+        },
+      ];
+    }
+
+    // --- GROUP LISTS ---
+    if (endpoint.includes("/groups") && !endpoint.includes("/platform-admin/groups")) {
+      if (method === "POST") return { success: true, id: "new-group" };
+      return [
+        { id: "g1", name: "Pro Group Demo", teams: ["U18 Elite", "Arsenal Youth"] },
+      ];
+    }
+
     // --- DASHBOARDS ---
     if (endpoint.includes("/dashboard/admin")) return this.getAdminDashboardFallback();
     if (endpoint.includes("/dashboard/player") || endpoint.includes("/players/dashboard")) return this.getPlayerDashboardFallback();

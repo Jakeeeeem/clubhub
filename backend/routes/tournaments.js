@@ -384,9 +384,14 @@ router.get(
         groups: groups.rows,
         standings,
         name: event.rows[0]?.title || event.rows[0]?.name || "Tournament",
-        });
+      });
+    } catch (err) {
+      console.error("Tournament dashboard error:", err);
+      res.status(500).json({ error: "Failed to load tournament dashboard" });
+    }
+  });
 
-      /** @route   POST /api/tournaments/:id/groups/assign
+  /** @route   POST /api/tournaments/:id/groups/assign
        * @desc    Assign team to a group
        */
       router.post(

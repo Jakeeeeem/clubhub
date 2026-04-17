@@ -191,7 +191,7 @@ const UnifiedNav = {
       },
       {
         name: "HeaderSwitcher",
-        fn: () => isDashboard && !isDesktop && this.renderHeaderSwitcher(),
+        fn: () => isLoggedIn && !isLandingPage && this.renderHeaderSwitcher(),
       },
       {
         name: "StripeButton",
@@ -868,7 +868,7 @@ const UnifiedNav = {
       const sidebarHTML = `
                 <div class="sidebar-overlay" id="sidebar-overlay"></div>
                 <aside class="pro-sidebar" id="pro-sidebar">
-                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; left: 1.25rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 8px; z-index: 10;">
+                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 8px; z-index: 10;">
                         ${ICONS.menu}
                     </button>
                     
