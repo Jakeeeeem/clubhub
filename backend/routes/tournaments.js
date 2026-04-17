@@ -384,59 +384,12 @@ router.get(
         groups: groups.rows,
         standings,
         name: event.rows[0]?.title || event.rows[0]?.name || "Tournament",
+        });
 
-        // Ensure video_purchases table has expected columns
-        await query(`ALTER TABLE video_purchases ADD COLUMN IF NOT EXISTS capture_on_approval BOOLEAN DEFAULT false`);
-
-        // Create Stripe PaymentIntent
-        const amount = Math.round(price * 100); // cents
-        const currency = process.env.DEFAULT_CURRENCY || "gbp";
-
-        // Determine if this match's event/club has a connected Stripe account
-        const ev = await query(
-          `SELECT e.club_id FROM events e JOIN tournament_matches m ON m.event_id = e.id WHERE m.id = $1 LIMIT 1`,
-          [req.params.id],
-        );
-        const clubId = ev.rows[0]?.club_id || null;
-        let transferData = undefined;
-        if (clubId) {
-          const orgRes = await query(`SELECT stripe_account_id FROM organizations WHERE id = $1 LIMIT 1`, [clubId]);
-          const stripeAccountId = orgRes.rows[0]?.stripe_account_id;
-          if (stripeAccountId) {
-            transferData = { destination: stripeAccountId };
-          }
-        }
-
-        const captureOnApproval = !!req.body.captureOnApproval;
-
-        const paymentIntentParams = {
-          amount,
-          currency,
-          metadata: { match_id: req.params.id, user_id: req.user.id },
-          description: `Match video purchase: match ${req.params.id}`,
-        };
-        if (captureOnApproval) paymentIntentParams.capture_method = 'manual';
-        if (transferData) paymentIntentParams.transfer_data = transferData;
-
-        const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
-
-        // Insert purchase record (store amount in cents)
-        await query(
-          `INSERT INTO video_purchases (user_id, match_id, payment_intent_id, payment_status, amount, currency, capture_on_approval) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-          [
-            req.user.id,
-            req.params.id,
-            paymentIntent.id,
-            paymentIntent.status,
-            amount,
-            currency,
-            captureOnApproval,
-          ],
-        );
- * @route   POST /api/tournaments/:id/groups/assign
- * @desc    Assign team to a group
- */
-router.post(
+      /** @route   POST /api/tournaments/:id/groups/assign
+       * @desc    Assign team to a group
+       */
+      router.post(
   "/:id/groups/assign",
   authenticateToken,
   requireOrganization,

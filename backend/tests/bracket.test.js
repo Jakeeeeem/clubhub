@@ -1,6 +1,6 @@
 /* eslint-env jest */
-const tournaments = require("../routes/tournaments");
-const computeNumRounds = tournaments.computeNumRounds;
+const helpers = require("../lib/tournament-helpers");
+const computeNumRounds = helpers.computeNumRounds;
 
 describe("computeNumRounds helper", () => {
   const cases = [

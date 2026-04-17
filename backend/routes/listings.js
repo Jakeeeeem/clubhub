@@ -87,7 +87,13 @@ router.post(
   requireOrganization,
   [
     body("title").trim().notEmpty(),
-    body("listing_type").isIn(["player", "staff", "trial", "other", "tournament"]),
+    body("listing_type").isIn([
+      "player",
+      "staff",
+      "trial",
+      "other",
+      "tournament",
+    ]),
     body("clubId").isUUID(),
   ],
   async (req, res) => {
@@ -169,12 +175,10 @@ router.get(
             [teamId, coachId],
           );
           if (ownershipCheck.rows.length === 0) {
-            return res
-              .status(403)
-              .json({
-                error:
-                  "Access denied: You are not the coach for this listing's team",
-              });
+            return res.status(403).json({
+              error:
+                "Access denied: You are not the coach for this listing's team",
+            });
           }
         }
       }
@@ -226,6 +230,62 @@ router.put(
         return res.status(404).json({ error: "Application not found" });
 
       const application = result.rows[0];
+
+      // If application accepted and listing is linked to a team, add player to team
+      if (status === "accepted") {
+        try {
+          const listingRes = await query(
+            "SELECT team_id FROM listings WHERE id = (SELECT listing_id FROM listing_applications WHERE id = $1)",
+            [id],
+          );
+          const teamId = listingRes.rows[0]?.team_id;
+          if (teamId) {
+            // Determine player id: prefer listing_applications.player_id, else create/find player for user
+            const appRes = await query(
+              "SELECT player_id, applicant_id FROM listing_applications WHERE id = $1",
+              [id],
+            );
+            let playerId = appRes.rows[0].player_id;
+            const applicantUserId = appRes.rows[0].applicant_id;
+
+            if (!playerId && applicantUserId) {
+              // Try to find existing player for this user
+              const p = await query(
+                "SELECT id FROM players WHERE user_id = $1 LIMIT 1",
+                [applicantUserId],
+              );
+              if (p.rows.length > 0) playerId = p.rows[0].id;
+              else {
+                // Create a minimal player record from user
+                const user = await query(
+                  "SELECT first_name, last_name, email FROM users WHERE id = $1",
+                  [applicantUserId],
+                );
+                const u = user.rows[0] || {};
+                const created = await query(
+                  `INSERT INTO players (user_id, first_name, last_name, email, date_of_birth, club_id) VALUES ($1,$2,$3,$4,NULL,NULL) RETURNING *`,
+                  [
+                    applicantUserId,
+                    u.first_name || null,
+                    u.last_name || null,
+                    u.email || null,
+                  ],
+                );
+                playerId = created.rows[0].id;
+              }
+            }
+
+            if (playerId) {
+              await query(
+                `INSERT INTO team_players (team_id, player_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+                [teamId, playerId],
+              );
+            }
+          }
+        } catch (err) {
+          console.warn("Auto-add to team failed:", err.message);
+        }
+      }
 
       // 📧 Send Automation Email for Status Updates
       try {

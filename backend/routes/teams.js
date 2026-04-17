@@ -564,7 +564,14 @@ router.post(
 
       const team = teamResult.rows[0];
 
-      if (team.owner_id !== req.user.id) {
+      // Allow club owner OR team coach to add players
+      const staffRow = await query(
+        "SELECT id FROM staff WHERE user_id = $1 AND club_id = $2",
+        [req.user.id, team.club_id],
+      );
+      const isCoach =
+        staffRow.rows.length > 0 && staffRow.rows[0].id === team.coach_id;
+      if (team.owner_id !== req.user.id && !isCoach) {
         return res.status(403).json({
           error: "Access denied",
         });
@@ -721,6 +728,54 @@ router.post(
       res.status(500).json({
         error: "Failed to add player to team",
       });
+    }
+  },
+);
+
+// Assign a coach to a team (admin action)
+router.post(
+  "/:id/assign-coach",
+  authenticateToken,
+  requireOrganization,
+  [body("coachId").isUUID().withMessage("Valid coach ID required")],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res
+          .status(400)
+          .json({ error: "Validation failed", details: errors.array() });
+
+      const { coachId } = req.body;
+
+      // Verify team exists and caller owns the club
+      const teamRes = await query(
+        `SELECT t.*, c.owner_id FROM teams t JOIN organizations c ON t.club_id = c.id WHERE t.id = $1`,
+        [req.params.id],
+      );
+      if (teamRes.rows.length === 0)
+        return res.status(404).json({ error: "Team not found" });
+      const team = teamRes.rows[0];
+      if (team.owner_id !== req.user.id)
+        return res.status(403).json({ error: "Access denied" });
+
+      // Verify coach exists and belongs to club
+      const coachRes = await query(
+        "SELECT * FROM staff WHERE id = $1 AND club_id = $2 AND role IN ('coach','assistant-coach','coaching-supervisor')",
+        [coachId, team.club_id],
+      );
+      if (coachRes.rows.length === 0)
+        return res.status(404).json({ error: "Coach not found in this club" });
+
+      const updated = await query(
+        "UPDATE teams SET coach_id = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
+        [coachId, req.params.id],
+      );
+
+      res.json({ message: "Coach assigned", team: updated.rows[0] });
+    } catch (err) {
+      console.error("Assign coach error:", err);
+      res.status(500).json({ error: "Failed to assign coach" });
     }
   },
 );
@@ -1014,5 +1069,54 @@ router.get("/:id/dashboard", authenticateToken, async (req, res) => {
     });
   }
 });
+
+// Admin: get pending items for team (applications, bookings)
+router.get(
+  "/:id/pending",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      const teamId = req.params.id;
+
+      // Verify permission (club owner or coach)
+      const teamRes = await query(
+        "SELECT t.*, c.owner_id FROM teams t JOIN organizations c ON t.club_id = c.id WHERE t.id = $1",
+        [teamId],
+      );
+      if (teamRes.rows.length === 0)
+        return res.status(404).json({ error: "Team not found" });
+      const team = teamRes.rows[0];
+      const staffRow = await query(
+        "SELECT id FROM staff WHERE user_id = $1 AND club_id = $2",
+        [req.user.id, team.club_id],
+      );
+      const isCoach =
+        staffRow.rows.length > 0 && staffRow.rows[0].id === team.coach_id;
+      if (req.user.id !== team.owner_id && !isCoach)
+        return res.status(403).json({ error: "Access denied" });
+
+      // Pending listing applications for listings attached to this team
+      const listingApps = await query(
+        `SELECT la.*, u.first_name, u.last_name, u.email FROM listing_applications la JOIN users u ON la.applicant_id = u.id JOIN listings l ON la.listing_id = l.id WHERE l.team_id = $1 AND la.status = 'pending' ORDER BY la.created_at DESC`,
+        [teamId],
+      );
+
+      // Pending event bookings for upcoming team events
+      const bookings = await query(
+        `SELECT eb.*, u.first_name, u.last_name, e.title FROM event_bookings eb JOIN users u ON eb.user_id = u.id JOIN events e ON eb.event_id = e.id WHERE e.team_id = $1 AND eb.booking_status = 'pending' ORDER BY eb.booked_at ASC`,
+        [teamId],
+      );
+
+      res.json({
+        listingApplications: listingApps.rows,
+        pendingBookings: bookings.rows,
+      });
+    } catch (err) {
+      console.error("Get pending items error:", err);
+      res.status(500).json({ error: "Failed to fetch pending items" });
+    }
+  },
+);
 
 module.exports = router;
