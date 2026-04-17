@@ -5,7 +5,7 @@ const {
   requireOrganization,
   optionalAuth,
 } = require("../middleware/auth");
-const crypto = require('crypto');
+const crypto = require("crypto");
 const { body, validationResult } = require("express-validator");
 const emailService = require("../services/email-service");
 const StatsService = require("../services/stats-service");
@@ -16,14 +16,21 @@ const fs = require("fs");
 const path = require("path");
 
 // Ensure match video upload dir exists
-const matchVideoDir = path.join(__dirname, "..", "uploads", "videos", "matches");
-if (!fs.existsSync(matchVideoDir)) fs.mkdirSync(matchVideoDir, { recursive: true });
+const matchVideoDir = path.join(
+  __dirname,
+  "..",
+  "uploads",
+  "videos",
+  "matches",
+);
+if (!fs.existsSync(matchVideoDir))
+  fs.mkdirSync(matchVideoDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, matchVideoDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    cb(null, `match-${req.params.id || 'unknown'}-${Date.now()}${ext}`);
+    cb(null, `match-${req.params.id || "unknown"}-${Date.now()}${ext}`);
   },
 });
 const upload = multer({ storage, limits: { fileSize: 500 * 1024 * 1024 } });
@@ -1445,44 +1452,83 @@ router.post(
   async (req, res) => {
     try {
       const errors = validationResult(req);
-      if (!errors.isEmpty()) return res.status(400).json({ error: "Validation failed", details: errors.array() });
+      if (!errors.isEmpty())
+        return res
+          .status(400)
+          .json({ error: "Validation failed", details: errors.array() });
 
       const eventId = req.params.id;
-      const { homeScore, awayScore, matchNotes, playerStats, videoUrl } = req.body;
+      const { homeScore, awayScore, matchNotes, playerStats, videoUrl } =
+        req.body;
 
       // Verify event exists and is a match
-      const evRes = await query("SELECT * FROM events WHERE id = $1", [eventId]);
-      if (evRes.rows.length === 0) return res.status(404).json({ error: "Event not found" });
+      const evRes = await query("SELECT * FROM events WHERE id = $1", [
+        eventId,
+      ]);
+      if (evRes.rows.length === 0)
+        return res.status(404).json({ error: "Event not found" });
       const event = evRes.rows[0];
-      if (event.event_type !== "match") return res.status(400).json({ error: "Not a match event" });
+      if (event.event_type !== "match")
+        return res.status(400).json({ error: "Not a match event" });
 
       // Permission: club owner or team coach
-      const clubRes = await query("SELECT owner_id FROM organizations WHERE id = $1", [event.club_id]);
+      const clubRes = await query(
+        "SELECT owner_id FROM organizations WHERE id = $1",
+        [event.club_id],
+      );
       const ownerId = clubRes.rows[0]?.owner_id;
       // Fetch team to compare coach
       let teamCoachId = null;
       if (event.team_id) {
-        const teamRow = await query("SELECT coach_id, club_id FROM teams WHERE id = $1", [event.team_id]);
+        const teamRow = await query(
+          "SELECT coach_id, club_id FROM teams WHERE id = $1",
+          [event.team_id],
+        );
         if (teamRow.rows.length > 0) teamCoachId = teamRow.rows[0].coach_id;
       }
-      const staffRow = await query("SELECT id FROM staff WHERE user_id = $1 AND club_id = $2", [req.user.id, event.club_id]);
-      const isCoach = staffRow.rows.length > 0 && staffRow.rows[0].id === teamCoachId;
-      if (req.user.id !== ownerId && !isCoach) return res.status(403).json({ error: "Access denied" });
+      const staffRow = await query(
+        "SELECT id FROM staff WHERE user_id = $1 AND club_id = $2",
+        [req.user.id, event.club_id],
+      );
+      const isCoach =
+        staffRow.rows.length > 0 && staffRow.rows[0].id === teamCoachId;
+      if (req.user.id !== ownerId && !isCoach)
+        return res.status(403).json({ error: "Access denied" });
 
       // Upsert match_results
-      const existing = await query("SELECT id FROM match_results WHERE event_id = $1", [eventId]);
+      const existing = await query(
+        "SELECT id FROM match_results WHERE event_id = $1",
+        [eventId],
+      );
       let matchResultId;
-      const resultType = homeScore > awayScore ? "win" : homeScore < awayScore ? "loss" : "draw";
+      const resultType =
+        homeScore > awayScore ? "win" : homeScore < awayScore ? "loss" : "draw";
       if (existing.rows.length > 0) {
         const u = await query(
           `UPDATE match_results SET home_score=$1, away_score=$2, result=$3, match_notes=$4, video_url=$5, recorded_by=$6, recorded_at=NOW() WHERE event_id=$7 RETURNING *`,
-          [homeScore, awayScore, resultType, matchNotes || null, videoUrl || null, req.user.id, eventId],
+          [
+            homeScore,
+            awayScore,
+            resultType,
+            matchNotes || null,
+            videoUrl || null,
+            req.user.id,
+            eventId,
+          ],
         );
         matchResultId = u.rows[0].id;
       } else {
         const ins = await query(
           `INSERT INTO match_results (event_id, home_score, away_score, result, match_notes, video_url, recorded_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-          [eventId, homeScore, awayScore, resultType, matchNotes || null, videoUrl || null, req.user.id],
+          [
+            eventId,
+            homeScore,
+            awayScore,
+            resultType,
+            matchNotes || null,
+            videoUrl || null,
+            req.user.id,
+          ],
         );
         matchResultId = ins.rows[0].id;
       }
@@ -1490,13 +1536,26 @@ router.post(
       // Upsert player stats if provided
       if (Array.isArray(playerStats)) {
         for (const ps of playerStats) {
-          const { playerId, minutesPlayed = 0, goals = 0, assists = 0, individualFeedback = null } = ps;
+          const {
+            playerId,
+            minutesPlayed = 0,
+            goals = 0,
+            assists = 0,
+            individualFeedback = null,
+          } = ps;
           await query(
             `INSERT INTO player_match_stats (match_result_id, player_id, minutes_played, goals, assists, individual_feedback)
              VALUES ($1,$2,$3,$4,$5,$6)
              ON CONFLICT (match_result_id, player_id)
              DO UPDATE SET minutes_played = EXCLUDED.minutes_played, goals = EXCLUDED.goals, assists = EXCLUDED.assists, individual_feedback = EXCLUDED.individual_feedback, updated_at = NOW()`,
-            [matchResultId, playerId, minutesPlayed, goals, assists, individualFeedback],
+            [
+              matchResultId,
+              playerId,
+              minutesPlayed,
+              goals,
+              assists,
+              individualFeedback,
+            ],
           );
         }
       }
@@ -1510,87 +1569,133 @@ router.post(
 );
 
 // POST /api/events/:id/upload-footage - attach video file to match result
-router.post('/:id/upload-footage', authenticateToken, requireOrganization, upload.single('video'), async (req, res) => {
-  try {
-    const eventId = req.params.id;
-    const file = req.file;
-    if (!file) return res.status(400).json({ error: 'No video uploaded' });
+router.post(
+  "/:id/upload-footage",
+  authenticateToken,
+  requireOrganization,
+  upload.single("video"),
+  async (req, res) => {
+    try {
+      const eventId = req.params.id;
+      const file = req.file;
+      if (!file) return res.status(400).json({ error: "No video uploaded" });
 
-    const videoUrl = `/uploads/videos/matches/${file.filename}`;
+      const videoUrl = `/uploads/videos/matches/${file.filename}`;
 
-    // Ensure match_result exists or create a placeholder
-    const existing = await query('SELECT id FROM match_results WHERE event_id = $1', [eventId]);
-    if (existing.rows.length > 0) {
-      await query('UPDATE match_results SET video_url = $1, updated_at = NOW() WHERE event_id = $2', [videoUrl, eventId]);
-    } else {
-      await query('INSERT INTO match_results (event_id, home_score, away_score, result, video_url, recorded_by) VALUES ($1,0,0,\'draw\',$2,$3)', [eventId, videoUrl, req.user.id]);
+      // Ensure match_result exists or create a placeholder
+      const existing = await query(
+        "SELECT id FROM match_results WHERE event_id = $1",
+        [eventId],
+      );
+      if (existing.rows.length > 0) {
+        await query(
+          "UPDATE match_results SET video_url = $1, updated_at = NOW() WHERE event_id = $2",
+          [videoUrl, eventId],
+        );
+      } else {
+        await query(
+          "INSERT INTO match_results (event_id, home_score, away_score, result, video_url, recorded_by) VALUES ($1,0,0,'draw',$2,$3)",
+          [eventId, videoUrl, req.user.id],
+        );
+      }
+
+      res.status(201).json({ message: "Video uploaded", videoUrl });
+    } catch (err) {
+      console.error("Upload footage error:", err);
+      res.status(500).json({ error: "Failed to upload footage" });
     }
-
-    res.status(201).json({ message: 'Video uploaded', videoUrl });
-  } catch (err) {
-    console.error('Upload footage error:', err);
-    res.status(500).json({ error: 'Failed to upload footage' });
-  }
-});
+  },
+);
 
 // GET /api/events/:id/footage - stream match footage with access control
-router.get('/:id/footage', authenticateToken, requireOrganization, async (req, res) => {
-  try {
-    const eventId = req.params.id;
+router.get(
+  "/:id/footage",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      const eventId = req.params.id;
 
-    const row = await query(
-      `SELECT mr.video_url, e.team_id, e.club_id FROM match_results mr JOIN events e ON mr.event_id = e.id WHERE e.id = $1 LIMIT 1`,
-      [eventId],
-    );
-    if (row.rows.length === 0) return res.status(404).json({ error: 'No match result or footage found for this event' });
+      const row = await query(
+        `SELECT mr.video_url, e.team_id, e.club_id FROM match_results mr JOIN events e ON mr.event_id = e.id WHERE e.id = $1 LIMIT 1`,
+        [eventId],
+      );
+      if (row.rows.length === 0)
+        return res
+          .status(404)
+          .json({ error: "No match result or footage found for this event" });
 
-    const { video_url: videoUrl, team_id: teamId, club_id: clubId } = row.rows[0];
-    if (!videoUrl) return res.status(404).json({ error: 'No footage attached' });
+      const {
+        video_url: videoUrl,
+        team_id: teamId,
+        club_id: clubId,
+      } = row.rows[0];
+      if (!videoUrl)
+        return res.status(404).json({ error: "No footage attached" });
 
-    // Permission checks: club owner, team coach, staff admin for club, or player on the team
-    const clubRes = await query('SELECT owner_id FROM organizations WHERE id = $1', [clubId]);
-    const ownerId = clubRes.rows[0]?.owner_id;
+      // Permission checks: club owner, team coach, staff admin for club, or player on the team
+      const clubRes = await query(
+        "SELECT owner_id FROM organizations WHERE id = $1",
+        [clubId],
+      );
+      const ownerId = clubRes.rows[0]?.owner_id;
 
-    // is staff with club membership
-    const staffRes = await query('SELECT id, role FROM staff WHERE user_id = $1 AND club_id = $2', [req.user.id, clubId]);
-    const isStaff = staffRes.rows.length > 0;
+      // is staff with club membership
+      const staffRes = await query(
+        "SELECT id, role FROM staff WHERE user_id = $1 AND club_id = $2",
+        [req.user.id, clubId],
+      );
+      const isStaff = staffRes.rows.length > 0;
 
-    // is coach for this team
-    let isCoach = false;
-    if (teamId) {
-      const teamRow = await query('SELECT coach_id FROM teams WHERE id = $1', [teamId]);
-      if (teamRow.rows.length > 0) {
-        isCoach = staffRes.rows.length > 0 && staffRes.rows[0].id === teamRow.rows[0].coach_id;
+      // is coach for this team
+      let isCoach = false;
+      if (teamId) {
+        const teamRow = await query(
+          "SELECT coach_id FROM teams WHERE id = $1",
+          [teamId],
+        );
+        if (teamRow.rows.length > 0) {
+          isCoach =
+            staffRes.rows.length > 0 &&
+            staffRes.rows[0].id === teamRow.rows[0].coach_id;
+        }
       }
+
+      // is player on team
+      let isPlayer = false;
+      const playerRow = await query(
+        "SELECT id FROM players WHERE user_id = $1",
+        [req.user.id],
+      );
+      if (playerRow.rows.length > 0 && teamId) {
+        const tp = await query(
+          "SELECT 1 FROM team_players WHERE team_id = $1 AND player_id = $2",
+          [teamId, playerRow.rows[0].id],
+        );
+        isPlayer = tp.rows.length > 0;
+      }
+
+      if (req.user.id !== ownerId && !isStaff && !isCoach && !isPlayer) {
+        return res.status(403).json({ error: "Access denied to footage" });
+      }
+
+      // Resolve file path and stream
+      const rel = videoUrl.replace(/^\//, "");
+      const filePath = path.join(__dirname, "..", rel);
+      if (!fs.existsSync(filePath))
+        return res.status(404).json({ error: "File not found" });
+
+      res.setHeader("Content-Type", "video/mp4");
+      const stat = fs.statSync(filePath);
+      res.setHeader("Content-Length", stat.size);
+      const stream = fs.createReadStream(filePath);
+      stream.pipe(res);
+    } catch (err) {
+      console.error("Stream footage error:", err);
+      res.status(500).json({ error: "Failed to stream footage" });
     }
-
-    // is player on team
-    let isPlayer = false;
-    const playerRow = await query('SELECT id FROM players WHERE user_id = $1', [req.user.id]);
-    if (playerRow.rows.length > 0 && teamId) {
-      const tp = await query('SELECT 1 FROM team_players WHERE team_id = $1 AND player_id = $2', [teamId, playerRow.rows[0].id]);
-      isPlayer = tp.rows.length > 0;
-    }
-
-    if (req.user.id !== ownerId && !isStaff && !isCoach && !isPlayer) {
-      return res.status(403).json({ error: 'Access denied to footage' });
-    }
-
-    // Resolve file path and stream
-    const rel = videoUrl.replace(/^\//, '');
-    const filePath = path.join(__dirname, '..', rel);
-    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found' });
-
-    res.setHeader('Content-Type', 'video/mp4');
-    const stat = fs.statSync(filePath);
-    res.setHeader('Content-Length', stat.size);
-    const stream = fs.createReadStream(filePath);
-    stream.pipe(res);
-  } catch (err) {
-    console.error('Stream footage error:', err);
-    res.status(500).json({ error: 'Failed to stream footage' });
-  }
-});
+  },
+);
 
 // Get event availability responses (for coaches/organizers)
 router.get("/:id/availability", authenticateToken, async (req, res) => {
@@ -1969,20 +2074,28 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
  * @route GET /api/events/:id/qr-token
  * @desc  Generate a short-lived QR token for event check-in
  */
-router.get('/:id/qr-token', authenticateToken, async (req, res) => {
+router.get("/:id/qr-token", authenticateToken, async (req, res) => {
   try {
     const eventId = req.params.id;
     // Create a signed token: base64(payload) + '.' + base64(signature)
-    const ttlMs = parseInt(process.env.QR_TOKEN_TTL_MS || String(15 * 60 * 1000)); // default 15 minutes
-    const secret = process.env.QR_TOKEN_SECRET || process.env.SESSION_SECRET || 'dev_secret_change_me';
+    const ttlMs = parseInt(
+      process.env.QR_TOKEN_TTL_MS || String(15 * 60 * 1000),
+    ); // default 15 minutes
+    const secret =
+      process.env.QR_TOKEN_SECRET ||
+      process.env.SESSION_SECRET ||
+      "dev_secret_change_me";
     const payload = { eid: eventId, iat: Date.now(), exp: Date.now() + ttlMs };
-    const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64');
-    const sig = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64');
+    const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64");
+    const sig = crypto
+      .createHmac("sha256", secret)
+      .update(payloadB64)
+      .digest("base64");
     const token = `${payloadB64}.${sig}`;
     res.json({ token, ttlMs });
   } catch (err) {
-    console.error('QR token generation failed', err);
-    res.status(500).json({ error: 'Failed to generate token' });
+    console.error("QR token generation failed", err);
+    res.status(500).json({ error: "Failed to generate token" });
   }
 });
 
@@ -1990,40 +2103,51 @@ router.get('/:id/qr-token', authenticateToken, async (req, res) => {
  * @route POST /api/events/:id/qr-checkin
  * @desc  Accept a QR checkin token and record checkin. Allows unauthenticated checkin
  */
-router.post('/:id/qr-checkin', async (req, res) => {
+router.post("/:id/qr-checkin", async (req, res) => {
   try {
     const eventId = req.params.id;
     const { token, playerId, latitude, longitude } = req.body;
-    if (!token) return res.status(400).json({ error: 'Missing token' });
+    if (!token) return res.status(400).json({ error: "Missing token" });
 
     // Validate token structure: payload.sig
-    const parts = String(token).split('.');
-    if (parts.length !== 2) return res.status(400).json({ error: 'Invalid token format' });
+    const parts = String(token).split(".");
+    if (parts.length !== 2)
+      return res.status(400).json({ error: "Invalid token format" });
     const [payloadB64, sig] = parts;
-    const secret = process.env.QR_TOKEN_SECRET || process.env.SESSION_SECRET || 'dev_secret_change_me';
-    const expectedSig = crypto.createHmac('sha256', secret).update(payloadB64).digest('base64');
-    if (sig !== expectedSig) return res.status(400).json({ error: 'Invalid token signature' });
+    const secret =
+      process.env.QR_TOKEN_SECRET ||
+      process.env.SESSION_SECRET ||
+      "dev_secret_change_me";
+    const expectedSig = crypto
+      .createHmac("sha256", secret)
+      .update(payloadB64)
+      .digest("base64");
+    if (sig !== expectedSig)
+      return res.status(400).json({ error: "Invalid token signature" });
 
     let payload;
     try {
-      payload = JSON.parse(Buffer.from(payloadB64, 'base64').toString('utf8'));
+      payload = JSON.parse(Buffer.from(payloadB64, "base64").toString("utf8"));
     } catch (e) {
-      return res.status(400).json({ error: 'Invalid token payload' });
+      return res.status(400).json({ error: "Invalid token payload" });
     }
 
     if (!payload || payload.eid != eventId) {
-      return res.status(400).json({ error: 'Token does not match event' });
+      return res.status(400).json({ error: "Token does not match event" });
     }
 
     if (payload.exp && Date.now() > payload.exp) {
-      return res.status(400).json({ error: 'Token expired' });
+      return res.status(400).json({ error: "Token expired" });
     }
 
     // If playerId provided, map to user_id
     let userId = null;
     if (playerId) {
-      const p = await query('SELECT user_id FROM players WHERE id = $1', [playerId]);
-      if (p.rows.length === 0) return res.status(404).json({ error: 'Player not found' });
+      const p = await query("SELECT user_id FROM players WHERE id = $1", [
+        playerId,
+      ]);
+      if (p.rows.length === 0)
+        return res.status(404).json({ error: "Player not found" });
       userId = p.rows[0].user_id;
     }
 
@@ -2031,15 +2155,12 @@ router.post('/:id/qr-checkin', async (req, res) => {
     await query(
       `INSERT INTO event_checkins (event_id, user_id, checkin_method, location_lat, location_lng)
        VALUES ($1, $2, $3, $4, $5)`,
-      [eventId, userId, 'qr', latitude || null, longitude || null],
+      [eventId, userId, "qr", latitude || null, longitude || null],
     );
 
     res.json({ success: true });
   } catch (err) {
-    console.error('QR checkin failed', err);
-    res.status(500).json({ error: 'QR checkin failed' });
-  }
-});
+    console.error("QR checkin failed", err);
     res.status(500).json({ error: "QR checkin failed" });
   }
 });
@@ -2604,12 +2725,10 @@ router.post(
         [eventId],
       );
       if (matchRes.rows.length === 0) {
-        return res
-          .status(404)
-          .json({
-            error:
-              "Match result not found. Add the match result scoreline first.",
-          });
+        return res.status(404).json({
+          error:
+            "Match result not found. Add the match result scoreline first.",
+        });
       }
 
       const matchResultId = matchRes.rows[0].id;

@@ -219,26 +219,19 @@ router.post("/webhook", async (req, res) => {
     res.status(201).json({ success: true, result });
   } catch (error) {
     console.error("Form webhook ingestion error:", error);
-    res
-      .status(500)
-      .json({
-        error: "Failed to ingest form submission",
-        message: error.message,
-      });
+    res.status(500).json({
+      error: "Failed to ingest form submission",
+      message: error.message,
+    });
   }
 });
 
-module.exports = router;
-const express = require("express");
-const { query, withTransaction } = require("../config/database");
 const {
   authenticateToken,
   requireOrganization,
   optionalAuth,
 } = require("../middleware/auth");
 const { body, validationResult } = require("express-validator");
-
-const router = express.Router();
 
 const ALLOWED_FIELD_TYPES = [
   "text",
