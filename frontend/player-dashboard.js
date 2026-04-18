@@ -2901,6 +2901,10 @@ function showPlayerSection(sectionId) {
       loadCurrentPlan();
       updatePostComposerVisibility();
       break;
+    case "payments":
+      loadPlayerFinances();
+      updatePostComposerVisibility();
+      break;
     case "polls":
       loadPolls();
       updatePostComposerVisibility();
