@@ -856,6 +856,10 @@ header.header .nav-container,
     .sidebar-burger.mobile-only {
         display: flex !important;
     }
+    .dashboard-nav,
+    .top-headline-tabs {
+        display: none !important;
+    }
     .main {
         padding-bottom: 90px !important;
     }

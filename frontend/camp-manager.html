@@ -64,6 +64,7 @@
 </head>
 <body class="clubhub-unified dashboard-page">
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
+    <header class="header"></header>
     <main class="main dashboard-main">
         <div class="container dashboard-container">
             <div class="dashboard-content">
@@ -410,18 +411,18 @@
 
             body.innerHTML = attendees.map(a => `
                 <tr>
-                    <td>
+                    <td data-label="Player">
                         <div style="font-weight:bold;">${a.first_name} ${a.last_name}</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">${a.email}</div>
                     </td>
-                    <td>${a.group_name || 'Unassigned'}</td>
-                    <td>${tracking && a.bib_number ? `<span class="badge" style="background:${a.bib_color.toLowerCase()}">${a.bib_color} #${a.bib_number}</span>` : (tracking ? '-' : 'N/A')}</td>
-                    <td>
+                    <td data-label="Group">${a.group_name || 'Unassigned'}</td>
+                    <td data-label="Bib">${tracking && a.bib_number ? `<span class="badge" style="background:${a.bib_color.toLowerCase()}">${a.bib_color} #${a.bib_number}</span>` : (tracking ? '-' : 'N/A')}</td>
+                    <td data-label="Status">
                         <span class="status-pill ${a.checked_in ? 'status-present' : 'status-absent'}">
                             ${a.checked_in ? 'Present' : 'Absent'}
                         </span>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                         <div style="display: flex; gap: 0.4rem;">
                             <button class="btn btn-primary btn-sm" onclick="openAssignModal('${a.id}', '${a.first_name} ${a.last_name}')">Assign</button>
                             <button class="btn btn-secondary btn-sm" onclick="openMedicalModal('${a.id}')">🏥 Info</button>
@@ -455,13 +456,13 @@
             }
             body.innerHTML = waitlist.map((w, index) => `
                 <tr>
-                    <td>#${index + 1}</td>
-                    <td>
+                    <td data-label="Position">#${index + 1}</td>
+                    <td data-label="Player">
                         <div style="font-weight:bold;">${w.first_name} ${w.last_name}</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">${w.email}</div>
                     </td>
-                    <td>${new Date(w.created_at).toLocaleDateString()}</td>
-                    <td>
+                    <td data-label="Signed Up">${new Date(w.created_at).toLocaleDateString()}</td>
+                    <td data-label="Actions">
                         <button class="btn btn-primary btn-sm" onclick="approveFromWaitlist('${w.id}')">Approve Entry</button>
                     </td>
                 </tr>

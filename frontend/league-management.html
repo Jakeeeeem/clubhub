@@ -73,6 +73,7 @@
 
 <body>
     <!-- Unified navigation injected by `unified-nav.js` -->
+    <header class="header"></header>
 
     <main class="main">
         <div class="dashboard container dashboard-container">
@@ -398,16 +399,16 @@
 
             tbody.innerHTML = standings.map((team, index) => `
                 <tr>
-                    <td><span class="position-badge">${index + 1}</span></td>
-                    <td><strong>${team.team_name}</strong></td>
-                    <td>${team.wins + team.draws + team.losses}</td>
-                    <td>${team.wins}</td>
-                    <td>${team.draws}</td>
-                    <td>${team.losses}</td>
-                    <td>${team.goals_for}</td>
-                    <td>${team.goals_against}</td>
-                    <td>${team.goal_difference}</td>
-                    <td><strong>${team.points}</strong></td>
+                    <td data-label="Pos"><span class="position-badge">${index + 1}</span></td>
+                    <td data-label="Team"><strong>${team.team_name}</strong></td>
+                    <td data-label="P">${team.wins + team.draws + team.losses}</td>
+                    <td data-label="W">${team.wins}</td>
+                    <td data-label="D">${team.draws}</td>
+                    <td data-label="L">${team.losses}</td>
+                    <td data-label="GF">${team.goals_for}</td>
+                    <td data-label="GA">${team.goals_against}</td>
+                    <td data-label="GD">${team.goal_difference}</td>
+                    <td data-label="Pts"><strong>${team.points}</strong></td>
                 </tr>
             `).join('');
         }
@@ -431,18 +432,18 @@
 
             tbody.innerHTML = fixtures.map(fixture => `
                 <tr>
-                    <td>${fixture.match_week || '-'}</td>
-                    <td>${fixture.scheduled_time ? new Date(fixture.scheduled_time).toLocaleDateString() : 'TBD'}</td>
-                    <td>${fixture.home_team_name}</td>
-                    <td>
+                    <td data-label="Week">${fixture.match_week || '-'}</td>
+                    <td data-label="Date">${fixture.scheduled_time ? new Date(fixture.scheduled_time).toLocaleDateString() : 'TBD'}</td>
+                    <td data-label="Home Team">${fixture.home_team_name}</td>
+                    <td data-label="Score">
                         ${fixture.status === 'completed'
                     ? `${fixture.home_score} - ${fixture.away_score}`
                     : '<button class="btn btn-sm" onclick="openScoreModal(\'' + fixture.id + '\')">Enter Score</button>'
                 }
                     </td>
-                    <td>${fixture.away_team_name}</td>
-                    <td>${fixture.referee_name || 'TBD'}</td>
-                    <td>
+                    <td data-label="Away Team">${fixture.away_team_name}</td>
+                    <td data-label="Referee">${fixture.referee_name || 'TBD'}</td>
+                    <td data-label="Status">
                         ${fixture.status === 'scheduled'
                     ? '<span class="badge">Scheduled</span>'
                     : '<span class="badge" style="background: #22c55e;">Completed</span>'

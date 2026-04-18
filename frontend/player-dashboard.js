@@ -872,16 +872,16 @@ function loadPlayerClubs() {
       (c.staff || []).forEach((s) => {
         rows.push(
           "<tr>" +
-            "<td>" +
+            "<td data-label=\"Name\">" +
             escapeHTML((s.first_name || "") + " " + (s.last_name || "")) +
             "</td>" +
-            "<td>" +
+            "<td data-label=\"Role\">" +
             escapeHTML(s.role || "") +
             "</td>" +
-            "<td>" +
+            "<td data-label=\"Email\">" +
             escapeHTML(s.email || "N/A") +
             "</td>" +
-            "<td>" +
+            "<td data-label=\"Club\">" +
             escapeHTML(c.name) +
             "</td>" +
             "</tr>",
@@ -955,7 +955,7 @@ function loadPlayerTeams() {
 
               return `
             <tr onclick="viewTeamDetails('${t.id}')" style="cursor: pointer;">
-              <td>
+              <td data-label="Team Name">
                 <div class="team-info-cell">
                    <div class="team-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
                       ${(t.name || "T").charAt(0).toUpperCase()}
@@ -966,15 +966,15 @@ function loadPlayerTeams() {
                    </div>
                 </div>
               </td>
-              <td>
+              <td data-label="Role / Position">
                  <div style="display:flex; flex-direction:column; gap:2px;">
                     <span style="font-weight:500;">${escapeHTML(t.player_position || "Player")}</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">#${escapeHTML(t.jersey_number || "N/A")}</span>
                  </div>
               </td>
-              <td>${coachName}</td>
-              <td>${escapeHTML(t.age_group || "-")}</td>
-              <td>
+              <td data-label="Coach">${coachName}</td>
+              <td data-label="Age Group">${escapeHTML(t.age_group || "-")}</td>
+              <td data-label="Actions">
                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                   <button class="btn btn-small btn-primary" onclick="event.stopPropagation(); viewTeamEvents('${t.id}')">Events</button>
                   <button class="btn btn-small btn-secondary" onclick="event.stopPropagation(); viewTeamDetails('${t.id}')">View</button>
@@ -1080,21 +1080,21 @@ function loadPaymentHistory() {
 
       return (
         "<tr>" +
-        "<td>" +
+        "<td data-label=\"Date\">" +
         formatDate(p.due_date) +
         "</td>" +
-        "<td>" +
+        "<td data-label=\"Description\">" +
         escapeHTML(p.description || "") +
         "</td>" +
-        "<td>" +
+        "<td data-label=\"Amount\">" +
         formatCurrency(p.amount) +
         "</td>" +
-        '<td><span class="status-badge status-' +
+        '<td data-label=\"Status\"><span class="status-badge status-' +
         escapeHTML(p.payment_status || "unknown") +
         '">' +
         escapeHTML(p.payment_status || "unknown") +
         "</span></td>" +
-        "<td>" +
+        "<td data-label=\"Actions\">" +
         actionButton +
         "</td>" +
         "</tr>"
@@ -1716,22 +1716,19 @@ function loadPlayerDocuments() {
     .map(
       (d) =>
         "<tr>" +
-        "<td>" +
+        "<td data-label=\"Document Name\">" +
         escapeHTML(d.name) +
         "</td>" +
-        "<td>" +
+        "<td data-label=\"Type\">" +
         escapeHTML(d.type) +
         "</td>" +
-        "<td>" +
+        "<td data-label=\"Club\">" +
         escapeHTML(d.club_name) +
         "</td>" +
-        "<td>" +
+        "<td data-label=\"Last Updated\">" +
         formatDate(d.updated_at) +
         "</td>" +
-        "<td>" +
-        '<button class="btn btn-small btn-primary" onclick="downloadDocument(\'' +
-        d.id +
-        "')\">Download</button>" +
+        "<td data-label=\"Actions\">" +
         '<button class="btn btn-small btn-secondary" onclick="viewDocument(\'' +
         d.id +
         "')\">View</button>" +

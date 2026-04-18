@@ -71,6 +71,7 @@
 
 <body>
     <!-- Unified navigation injected by `unified-nav.js` -->
+    <header class="header"></header>
 
     <main class="main">
         <div class="dashboard container dashboard-container">
@@ -410,14 +411,14 @@
 
                 return `
                     <tr>
-                        <td style="font-family: monospace; color: var(--text-muted);">#${reg.id ? reg.id.toString().substring(0, 6) : 'N/A'}</td>
-                        <td><strong>${reg.first_name} ${reg.last_name}</strong></td>
-                        <td>${reg.phone || reg.phone_number || '-'}</td>
-                        <td>${calculateAge(reg.date_of_birth)}</td>
-                        <td>${reg.bib_number ? `<span class="bib-badge" style="background: ${getBibColor(reg.bib_color)}">${reg.bib_color} #${reg.bib_number}</span>` : '-'}</td>
-                        <td>${reg.group_name || '-'}</td>
-                        <td>${statusBadge}</td>
-                        <td>
+                        <td data-label="ID" style="font-family: monospace; color: var(--text-muted);">#${reg.id ? reg.id.toString().substring(0, 6) : 'N/A'}</td>
+                        <td data-label="Name"><strong>${reg.first_name} ${reg.last_name}</strong></td>
+                        <td data-label="Phone">${reg.phone || reg.phone_number || '-'}</td>
+                        <td data-label="Age">${calculateAge(reg.date_of_birth)}</td>
+                        <td data-label="Bib">${reg.bib_number ? `<span class="bib-badge" style="background: ${getBibColor(reg.bib_color)}">${reg.bib_color} #${reg.bib_number}</span>` : '-'}</td>
+                        <td data-label="Group">${reg.group_name || '-'}</td>
+                        <td data-label="Status">${statusBadge}</td>
+                        <td data-label="Actions">
                             ${reg.status !== 'checked_in' ? `<button class="btn btn-sm" onclick="checkIn('${reg.id}')">Check In</button>` : ''}
                         </td>
                     </tr>
