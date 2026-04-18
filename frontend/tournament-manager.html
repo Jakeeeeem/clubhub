@@ -1051,14 +1051,14 @@
                                 <tbody>
                                     ${stats.map((s, idx) => `
                                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.02);">
-                                            <td style="padding: 0.75rem 1rem; opacity: 0.5;">${idx + 1}</td>
-                                            <td style="padding: 0.75rem 1rem; font-weight: 700;">${s.team_name}</td>
-                                            <td style="padding: 0.75rem 1rem; text-align: center;">${s.played}</td>
-                                            <td style="padding: 0.75rem 1rem; text-align: center;">${s.won}</td>
-                                            <td style="padding: 0.75rem 1rem; text-align: center;">${s.drawn}</td>
-                                            <td style="padding: 0.75rem 1rem; text-align: center;">${s.lost}</td>
-                                            <td style="padding: 0.75rem 1rem; text-align: center; color: ${s.gd > 0 ? '#4ade80' : s.gd < 0 ? '#f87171' : 'inherit'}">${s.gd > 0 ? '+' : ''}${s.gd}</td>
-                                            <td style="padding: 0.75rem 1rem; text-align: center; font-weight: 800; color: var(--primary);">${s.pts}</td>
+                                            <td data-label="#" style="padding: 0.75rem 1rem; opacity: 0.5;">${idx + 1}</td>
+                                            <td data-label="Team" style="padding: 0.75rem 1rem; font-weight: 700;">${s.team_name}</td>
+                                            <td data-label="P" style="padding: 0.75rem 1rem; text-align: center;">${s.played}</td>
+                                            <td data-label="W" style="padding: 0.75rem 1rem; text-align: center;">${s.won}</td>
+                                            <td data-label="D" style="padding: 0.75rem 1rem; text-align: center;">${s.drawn}</td>
+                                            <td data-label="L" style="padding: 0.75rem 1rem; text-align: center;">${s.lost}</td>
+                                            <td data-label="GD" style="padding: 0.75rem 1rem; text-align: center; color: ${s.gd > 0 ? '#4ade80' : s.gd < 0 ? '#f87171' : 'inherit'}">${s.gd > 0 ? '+' : ''}${s.gd}</td>
+                                            <td data-label="Pts" style="padding: 0.75rem 1rem; text-align: center; font-weight: 800; color: var(--primary);">${s.pts}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1403,27 +1403,27 @@
 
             tbody.innerHTML = matches.map(match => `
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <td style="padding: 1.5rem;">
+                    <td data-label="Round/Stage" style="padding: 1.5rem;">
                         <div style="font-weight: 800; color: var(--primary);">Stage 1</div>
                         <div style="font-size: 0.8rem; color: var(--text-muted);">${match.start_time ? new Date(match.start_time).toLocaleDateString() : 'TBD'}</div>
                     </td>
-                    <td>
+                    <td data-label="Matchup">
                         <div style="display: flex; align-items: center; gap: 1rem; font-size: 1.1rem;">
                             <span style="flex: 1; text-align: right;">${match.home_team_name || 'TBD'}</span>
                             <span style="color: var(--text-muted); font-size: 0.8rem;">VS</span>
                             <span style="flex: 1;">${match.away_team_name || 'TBD'}</span>
                         </div>
                     </td>
-                    <td style="text-align: center;">
+                    <td data-label="Score" style="text-align: center;">
                         ${match.status === 'completed'
                     ? `<div style="font-size: 1.5rem; font-weight: 800; color: #22c55e;">${match.home_score} - ${match.away_score}</div>`
                     : `<span style="color: var(--text-muted);">--</span>`
                 }
                     </td>
-                    <td>
+                    <td data-label="Status">
                         <span class="badge" style="background: ${match.status === 'completed' ? '#22c55e' : '#3b82f6'}">${match.status}</span>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                         <div style="display: flex; gap: 0.5rem;">
                             <button class="btn btn-sm btn-primary" onclick="openScoreModal('${match.id}', '${match.home_team_name}', '${match.away_team_name}')">
                                 ${match.status === 'completed' ? 'Edit Result' : 'Post Score'}

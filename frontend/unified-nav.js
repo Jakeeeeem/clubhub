@@ -847,7 +847,10 @@ const UnifiedNav = {
       }
     }
 
-    this.renderTopTabs();
+    const isMobile = window.innerWidth < 992;
+    if (!isMobile) {
+      this.renderTopTabs();
+    }
   },
 
   ensureHeaderElements() {
@@ -1006,8 +1009,12 @@ const UnifiedNav = {
 
     header.classList.add("pro-header", "unified-header");
 
+    const isMobile = window.innerWidth < 992;
     header.innerHTML = `
             <div class="nav-container">
+                <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:transparent; color:inherit; font-size:1.2rem; padding:0.5rem; margin-right:0.5rem; cursor:pointer;">
+                    ←
+                </button>
                 <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
                     ${ICONS.menu}
                 </div>
@@ -1044,7 +1051,9 @@ const UnifiedNav = {
         `;
 
     this.updateModeUI();
-    this.renderTopTabs();
+    if (!isMobile) {
+      this.renderTopTabs();
+    }
   },
 
   /**

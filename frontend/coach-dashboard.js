@@ -974,16 +974,16 @@ function filterCoachPlayers() {
 
       return `
             <tr>
-                <td>${pFirstName} ${pLastName}</td>
-                <td>${player.team_name || "Assigned"}</td>
-                <td>${player.position || player.team_position || "Not set"}</td>
-                <td>${age}</td>
-                <td>
+                <td data-label="Player Name">${pFirstName} ${pLastName}</td>
+                <td data-label="Team">${player.team_name || "Assigned"}</td>
+                <td data-label="Position">${player.position || player.team_position || "Not set"}</td>
+                <td data-label="Age">${age}</td>
+                <td data-label="Attendance">
                     <span class="status-badge status-${(player.attendance_rate || player.attendance || 85) > 80 ? "paid" : (player.attendance_rate || player.attendance || 85) > 60 ? "pending" : "overdue"}">
                         ${player.attendance_rate || player.attendance || 85}%
                     </span>
                 </td>
-                <td>
+                <td data-label="Actions">
                     <button class="btn btn-small btn-primary" onclick="viewPlayerStats('${player.id}')">Stats</button>
                     <button class="btn btn-small btn-secondary" onclick="editPlayerPosition('${player.id}')">Edit</button>
                 </td>
@@ -1335,14 +1335,14 @@ function recordMatchResult(eventId) {
         row.style.borderBottom = "1px solid rgba(255,255,255,0.03)";
 
         row.innerHTML = `
-            <td style="padding: 0.75rem 0.5rem;">
+            <td data-label="Player" style="padding: 0.75rem 0.5rem;">
                 <div style="font-weight:600;">${player.first_name} ${player.last_name}</div>
                 <div style="font-size:0.75rem; color:var(--text-muted);">${player.position || "Player"}</div>
             </td>
-            <td style="text-align:center;"><input type="number" class="stat-input" name="rating" min="1" max="10" placeholder="-" style="width: 45px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
-            <td style="text-align:center;"><input type="number" class="stat-input" name="goals" min="0" placeholder="0" style="width: 45px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
-            <td style="text-align:center;"><input type="number" class="stat-input" name="assists" min="0" placeholder="0" style="width: 45px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
-            <td style="text-align:center;">
+            <td data-label="Rating" style="text-align:center;"><input type="number" class="stat-input" name="rating" min="1" max="10" placeholder="-" style="width: 45px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
+            <td data-label="Goals" style="text-align:center;"><input type="number" class="stat-input" name="goals" min="0" placeholder="0" style="width: 45px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
+            <td data-label="Assists" style="text-align:center;"><input type="number" class="stat-input" name="assists" min="0" placeholder="0" style="width: 45px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
+            <td data-label="Cards" style="text-align:center;">
                 <select class="stat-input" name="cards" style="width: 70px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; font-size: 0.8rem;">
                     <option value="none">-</option>
                     <option value="yellow">Yellow</option>
@@ -1350,7 +1350,7 @@ function recordMatchResult(eventId) {
                     <option value="both">Y+R</option>
                 </select>
             </td>
-            <td style="text-align:center;"><input type="number" class="stat-input" name="minutes" min="0" max="120" value="90" style="width: 50px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
+            <td data-label="Min" style="text-align:center;"><input type="number" class="stat-input" name="minutes" min="0" max="120" value="90" style="width: 50px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px; text-align: center;"></td>
         `;
         tbody.appendChild(row);
       });
@@ -1494,16 +1494,16 @@ async function manageEventPlayers(eventId) {
 
         return `
           <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-            <td style="padding: 1.25rem 1rem;">
+            <td data-label="Player" style="padding: 1.25rem 1rem;">
               <div style="font-weight:600; color:#fff;">${r.first_name || r.firstName} ${r.last_name || r.lastName}</div>
               <div style="font-size:0.75rem; color:var(--text-muted); opacity:0.7;">${r.position || 'Player'}</div>
             </td>
-            <td style="padding: 1rem; text-align: center;">
+            <td data-label="Status" style="padding: 1rem; text-align: center;">
               <span class="status-badge status-${statusClass}" style="padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.7rem; font-weight: 700;">
                 ${statusLabel}
               </span>
             </td>
-            <td style="padding: 1rem;">
+            <td data-label="Notes / Reason" style="padding: 1rem;">
               <div style="font-size:0.85rem; color:${status === 'no' ? '#f87171' : '#f1f5f9'}; line-height: 1.4;">
                 ${r.notes || (status === 'no' ? '<span style="opacity:0.5; font-style: italic;">No reason provided</span>' : '-')}
               </div>
