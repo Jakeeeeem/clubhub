@@ -38,7 +38,74 @@
     --btn-radius: 12px;
     --btn-radius-pill: 100px;
     --input-radius: 10px;
+    --icon-size: 20px;
+    --icon-size-lg: 28px;
+    --premium-font-scale: 1.02;
 }
+
+html { font-size: 16px; }
+body { font-size: 16px; }
+
+/* Headings refinement for a premium feel */
+h1 { font-size: 1.75rem; letter-spacing: -0.5px; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.05rem; }
+
+/* Premium visual refinements */
+body { font-size: calc(16px * var(--premium-font-scale)); }
+
+/* Larger, more tactile buttons */
+.btn { 
+    padding: 0.9rem 1.9rem;
+    font-size: 0.92rem;
+    border-radius: calc(var(--btn-radius) + 2px);
+}
+.btn-primary { box-shadow: 0 10px 30px rgba(220,38,38,0.28), 0 2px 8px rgba(0,0,0,0.4); }
+.btn-secondary { box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+
+/* Icon buttons for compact actions */
+.icon-btn {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    cursor: pointer;
+}
+.icon-btn svg { width: var(--icon-size); height: var(--icon-size); }
+
+/* Larger nav icons */
+.nav-icon { width: var(--icon-size-lg) !important; height: var(--icon-size-lg) !important; margin-right: 10px !important; }
+.nav-icon svg { width: var(--icon-size-lg) !important; height: var(--icon-size-lg) !important; }
+
+/* Premium cards: increased radius, spacing and softer shadows */
+.card, .event-card, .card-elite, .feature-check-card, .testimonial-card {
+    border-radius: calc(var(--card-radius) + 6px) !important;
+    padding: 1.25rem !important;
+    box-shadow: var(--shadow-premium), 0 6px 18px rgba(0,0,0,0.5) !important;
+    border: 1px solid rgba(255,255,255,0.04) !important;
+    background: linear-gradient(180deg, rgba(20,20,24,0.95), rgba(10,10,12,0.92));
+}
+
+/* Improve event card appearance */
+.event-card { padding: 1rem; margin-bottom: 1rem; border-radius: 14px; }
+
+/* Make small text and muted text more elegant */
+.text-muted, .subtitle { color: #aab6c6 !important; font-size: 0.95rem; }
+
+/* Slightly larger input and control sizes for touch */
+input, select, textarea, .btn-small { font-size: 0.95rem; }
+
+/* Ensure headers and nav feel premium on mobile */
+@media (max-width: 991px) {
+  .pro-header, header.header { height: 72px !important; }
+  .logo-text { font-size: 1.15rem !important; }
+}
+
 
 * {
     margin: 0;
