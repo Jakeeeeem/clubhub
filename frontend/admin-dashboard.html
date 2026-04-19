@@ -572,12 +572,21 @@
             const container = document.getElementById('teamsListContainer');
             if (!container) return;
             try {
-                const { teams } = await apiService.get('/api/teams');
-                if (!teams || teams.length === 0) {
-                    container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
-                    return;
-                }
-                container.innerHTML = teams.map(t => `
+                    const { teams } = await apiService.get('/api/teams');
+                    let teamsToRender = teams;
+                    if ((!teamsToRender || teamsToRender.length === 0) && localStorage.getItem('isDemoSession') === 'true') {
+                        // Demo fallback teams for local visual testing
+                        teamsToRender = [
+                            { id: 'demo-team-1', name: 'Under 12s', coach_name: 'Alex Morgan', player_count: 14 },
+                            { id: 'demo-team-2', name: 'Under 16s', coach_name: 'Sam Riley', player_count: 18 },
+                        ];
+                    }
+
+                    if (!teamsToRender || teamsToRender.length === 0) {
+                        container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
+                        return;
+                    }
+                    container.innerHTML = teamsToRender.map(t => `
                     <div class="glass-card" style="padding:1.25rem; border:1px solid rgba(255,255,255,0.05);">
                         <div style="display:flex; justify-content:space-between; align-items:start;">
                             <h3 style="font-size:1.1rem; margin-bottom:0.25rem;">${t.name}</h3>

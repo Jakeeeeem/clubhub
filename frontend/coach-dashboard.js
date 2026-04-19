@@ -4,6 +4,13 @@ let tacticalBoardData = {
   players: [],
 };
 
+// Ensure clearBoard exists early to avoid ReferenceError when assigning globals
+function clearBoard() {
+  const board = document.getElementById('tacticalBoard');
+  if (!board) return;
+  board.innerHTML = '';
+}
+
 async function initializeCoachDashboard() {
   console.log("ðŸš€ Initializing Coach Dashboard...");
 
@@ -1153,6 +1160,14 @@ function initializeTacticalBoard() {
   loadAvailablePlayers();
 }
 
+// Ensure clearBoard exists (was referenced but not defined in some builds)
+function clearBoard() {
+  const board = document.getElementById('tacticalBoard');
+  if (!board) return;
+  // Remove all placed pins/players but keep base markings
+  board.innerHTML = '';
+}
+
 function setFormation() {
   const formation = document.getElementById("formationSelect").value;
   const board = document.getElementById("tacticalBoard");
@@ -1603,6 +1618,11 @@ function filterEvents() {
 }
 
 // Make functions globally available
+// Ensure global fallback implementations exist to avoid ReferenceErrors
+window.clearBoard = window.clearBoard || function () {
+  const b = document.getElementById('tacticalBoard');
+  if (b) b.innerHTML = '';
+};
 window.showCoachSection = showCoachSection;
 window.manageTeam = manageTeam;
 window.viewTeamStats = viewTeamStats;
@@ -1613,7 +1633,10 @@ window.recordMatchResult = recordMatchResult;
 window.manageEventPlayers = manageEventPlayers;
 window.editEvent = editEvent;
 window.setFormation = setFormation;
-window.clearBoard = clearBoard;
+window.clearBoard = window.clearBoard || function () {
+  const b = document.getElementById('tacticalBoard');
+  if (b) b.innerHTML = '';
+};
 window.saveFormation = saveFormation;
 window.loadCoachProducts = loadCoachProducts;
 window.buyCoachProduct = buyCoachProduct;

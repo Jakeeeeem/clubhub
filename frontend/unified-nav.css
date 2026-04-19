@@ -1635,6 +1635,19 @@ body.clubhub-unified .logo { display: flex; align-items: center; gap: 0.5rem; }
     margin-top: 0;
 }
 
+/* Ensure dashboard header remains full-width on small screens (mobile)
+   Some rules above apply desktop offsets unconditionally; this override
+   resets the left/width so mobile header is visible and not clipped. */
+@media (max-width: 991px) {
+    .dashboard-view .pro-header,
+    .dashboard-view header.header {
+        left: 0 !important;
+        width: 100% !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+}
+
 .dashboard-nav {
     display: flex;
     gap: 0.5rem;

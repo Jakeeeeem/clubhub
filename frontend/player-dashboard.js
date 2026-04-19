@@ -43,6 +43,17 @@ if (!window.AppState) {
   }
 }
 
+// Safe fallback no-op helpers (prevent console errors when optional scripts are missing)
+window.setupNavButtons = window.setupNavButtons || function () {
+  // UnifiedNav handles nav in most cases; this is a safe fallback
+  console.log('setupNavButtons(): no-op fallback');
+};
+window.showAlert = window.showAlert || function (msg, title, type) {
+  window.showNotification ? window.showNotification(msg, type === 'success' ? 'success' : 'info') : console.log(title, msg);
+};
+window.setupCoachEventListeners = window.setupCoachEventListeners || function () {};
+window.initializeTacticalBoard = window.initializeTacticalBoard || function () {};
+
 // Removed redundant setupNavButtons - Now handled by UnifiedNav global controller
 
 /**
