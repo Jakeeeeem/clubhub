@@ -106,6 +106,106 @@ input, select, textarea, .btn-small { font-size: 0.95rem; }
   .logo-text { font-size: 1.15rem !important; }
 }
 
+/* Stronger premium refinements */
+:root {
+    --spacing-lg: 1.5rem;
+    --spacing-md: 1rem;
+    --spacing-sm: 0.6rem;
+}
+
+/* Header: tighter, center-aligned elements, higher contrast */
+.pro-header, header.header {
+    height: 72px !important;
+    padding: 0 1.25rem !important;
+    backdrop-filter: blur(14px) !important;
+    background: linear-gradient(180deg, rgba(8,8,10,0.98), rgba(6,6,8,0.95)) !important;
+}
+
+.nav.container { gap: var(--spacing-md) !important; }
+.logo-text { font-size: 1.35rem !important; font-weight: 900 !important; color: #fff !important; }
+
+/* Navigation and icons: larger and consistent */
+.nav-icon { width: var(--icon-size-lg) !important; height: var(--icon-size-lg) !important; margin-right: 8px !important; }
+.nav.container img.logo-image { height: 36px !important; width: 36px !important; }
+
+/* Buttons: more pill-like, tactile, and consistent */
+.btn { border-radius: 999px !important; padding: 0.9rem 1.2rem !important; font-size: 0.95rem !important; }
+.btn-primary { padding: 0.9rem 1.4rem !important; }
+.btn-small { padding: 0.45rem 0.8rem !important; font-size: 0.82rem !important; border-radius: 12px !important; }
+
+/* Cards: heavier padding, subtle glass sheen and elevation */
+.card, .card-elite, .event-card, .testimonial-card, .feature-check-card {
+    padding: 1.25rem !important;
+    border-radius: 20px !important;
+    background: linear-gradient(180deg, rgba(22,22,26,0.96), rgba(12,12,14,0.92)) !important;
+    border: 1px solid rgba(255,255,255,0.04) !important;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.7), 0 6px 18px rgba(0,0,0,0.45) !important;
+}
+
+/* Event cards special */
+.event-card { display:block !important; padding:1rem 1.25rem !important; margin-bottom:1rem !important; }
+.event-card strong { font-size: 1.02rem; letter-spacing: -0.3px; }
+
+/* Make muted text more refined */
+.text-muted, .subtitle { color: #95a3b6 !important; font-size: 0.96rem !important; }
+
+/* Bottom nav: subtle elevated pill center */
+.pro-bottom-nav .bottom-nav-container { background: linear-gradient(180deg, rgba(12,12,14,0.92), rgba(6,6,8,0.98)); border-radius: 14px; padding: 0.5rem 0.75rem; }
+.pro-bottom-nav .bottom-nav-link { padding: 0.25rem 0.5rem; }
+
+/* Reduce visual clutter by standardizing icon colors */
+svg { color: inherit; fill: currentColor; }
+
+/* Improve readability on small screens */
+@media (max-width: 640px) {
+    h1 { font-size: 1.25rem !important; }
+    .container { padding: 0 0.75rem !important; }
+    .btn { padding: 0.7rem 1rem !important; }
+    .card { padding: 0.9rem !important; }
+}
+
+/* Mobile-first improvements: touch targets, spacing, stacked layout */
+@media (max-width: 640px) {
+    html { font-size: 17px; }
+    body { line-height: 1.5; }
+
+    /* Ensure header is compact and elements are reachable */
+    .pro-header, header.header, .header {
+        height: 64px !important;
+        padding: 0 0.75rem !important;
+        align-items: center !important;
+    }
+
+    /* Hide desktop sidebar on mobile */
+    .pro-sidebar { display: none !important; }
+
+    /* Make main content stack and avoid wide columns */
+    .dashboard-main, .main, main { padding-top: 80px !important; }
+    .container { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+
+    /* Buttons become full-width in key action groups */
+    .btn-block, .dashboard-actions .btn { display: block !important; width: 100% !important; margin-bottom: 0.6rem !important; }
+
+    /* Increase touch target for icon buttons */
+    .icon-btn { width: 52px !important; height: 52px !important; border-radius: 12px !important; }
+
+    /* Cards become full-width stacked with larger spacing */
+    .card, .card-elite, .event-card, .testimonial-card { width: 100% !important; margin-bottom: 1rem !important; padding: 1rem !important; }
+
+    /* Bottom nav stickiness and spacing */
+    .pro-bottom-nav { height: 72px !important; padding-bottom: 8px !important; }
+    body:not(.no-bottom-spacing) { padding-bottom: 92px !important; }
+
+    /* Larger, readable text sizes for mobile */
+    h1 { font-size: 1.25rem !important; }
+    h2 { font-size: 1rem !important; }
+    h3 { font-size: 0.95rem !important; }
+
+    /* Reduce clutter: hide non-essential desktop-only items */
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block !important; }
+}
+
 
 * {
     margin: 0;

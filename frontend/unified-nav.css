@@ -283,6 +283,14 @@
     }
 }
 
+/* Mobile: hide sidebar and ensure header + bottom nav visible and touch-friendly */
+@media (max-width: 991px) {
+    .pro-sidebar { display: none !important; }
+    header.header, .pro-header { left: 0 !important; width: 100% !important; height: 64px !important; padding: 0 0.75rem !important; }
+    .pro-bottom-nav { display: flex !important; position: fixed !important; left: 0; right: 0; bottom: 0; height: 72px; z-index: 5000; }
+    .pro-bottom-nav .bottom-nav-container { max-width: 720px; margin: 0 auto; }
+}
+
 /* Mobile: Pro header polish */
 @media (max-width: 991px) {
     .pro-header, header.header {
