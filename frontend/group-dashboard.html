@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Group Dashboard — ClubHub</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="unified-nav.css">
+</head>
+<body class="dashboard-view app-layout">
+  <header class="header"></header>
+  <aside id="pro-sidebar" class="pro-sidebar"></aside>
+
+  <main class="dashboard-main container">
+    <div class="dashboard-header">
+      <h1 id="groupTitle">Group Dashboard</h1>
+      <div class="dashboard-actions">
+        <button id="createEventBtn" class="btn btn-primary">Create Event</button>
+        <button id="membersBtn" class="btn btn-secondary">Members</button>
+      </div>
+    </div>
+
+    <section id="overview">
+      <div id="groupInfo"></div>
+      <div id="upcomingEvents"></div>
+      <div id="recentActivity"></div>
+    </section>
+  </main>
+
+  <nav class="pro-bottom-nav mobile-only">
+    <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
+  </nav>
+
+  <script>window.UNIFIED_NAV_ENABLED = true;</script>
+  <script src="unified-nav.js"></script>
+  <script src="groups.js"></script>
+  <script src="events.js"></script>
+  <script>
+    (function(){
+      const params = new URLSearchParams(window.location.search);
+      const groupId = params.get('group') || localStorage.getItem('activeGroupId') || (Groups.GroupSwitcher.list()[0] && Groups.GroupSwitcher.list()[0].id);
+      if(groupId) localStorage.setItem('activeGroupId', groupId);
+
+      const group = Groups.GroupSwitcher.get(groupId);
+      if(group){
+        document.getElementById('groupTitle').innerText = group.name;
+        document.getElementById('groupInfo').innerHTML = `<p>${group.description || ''}</p><p>Members: ${group.members.length}</p><p><a href="#" id="inviteLink">Invite Link</a></p>`;
+        document.getElementById('inviteLink').onclick = (e)=>{ e.preventDefault(); alert(Groups.generateInviteLink(group.id)); };
+
+        const events = Events.getEventsForGroup(group.id);
+        const list = events.length ? events.map(ev=>`<div class="event-card" style="padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:8px;"><strong>${ev.title}</strong><div>${new Date(ev.startsAt).toLocaleString()}</div><div>RSVPs: ${ev.rsvps.length}</div><div><button class=\"btn btn-small\" data-id=\"${ev.id}\" onclick=\"window.location.href='group-event.html?event=${ev.id}'\">View</button> <button class=\"btn btn-outline\" onclick=\"Events.rsvp('${ev.id}','u-1','yes')\">RSVP Yes</button></div></div>`).join('') : '<p>No upcoming events</p>';
+        document.getElementById('upcomingEvents').innerHTML = `<h3>Upcoming Events</h3>${list}`;
+      } else {
+        document.getElementById('groupInfo').innerText = 'No group selected.';
+      }
+
+      document.getElementById('createEventBtn').onclick = ()=>{
+        const title = prompt('Event title');
+        const starts = prompt('Start ISO datetime (e.g. 2026-04-20T10:00)');
+        if(title && starts){
+          Events.createEvent({groupId: group.id, title, description:'', startsAt: new Date(starts).getTime(), endsAt: null});
+          window.location.reload();
+        }
+      };
+
+      document.getElementById('membersBtn').onclick = ()=>{
+        window.location.href = 'group-members.html?group=' + group.id;
+      };
+
+      // ensure UnifiedNav renders group switcher if present
+      setTimeout(()=>{
+        if(window.UnifiedNav && typeof window.UnifiedNav.renderGroupSwitcher === 'function'){
+          const node = document.getElementById('header-org-switcher');
+          if(node) window.UnifiedNav.renderGroupSwitcher(node);
+        }
+      }, 200);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Group Members — ClubHub</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="unified-nav.css">
+</head>
+<body class="dashboard-view app-layout">
+  <header class="header"></header>
+  <main class="dashboard-main container">
+    <h1>Members</h1>
+    <div id="membersList"></div>
+  </main>
+  <script>window.UNIFIED_NAV_ENABLED = true;</script>
+  <script src="unified-nav.js"></script>
+  <script src="groups.js"></script>
+  <script>
+    (function(){
+      const params = new URLSearchParams(window.location.search);
+      const groupId = params.get('group') || localStorage.getItem('activeGroupId');
+      const group = Groups.GroupSwitcher.get(groupId);
+      if(!group){ document.getElementById('membersList').innerText = 'No group selected'; return; }
+      const node = document.getElementById('membersList');
+      node.innerHTML = group.members.map(m=>`<div style="padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;"><div><strong>${m.name}</strong><div style="font-size:0.9rem;color:rgba(255,255,255,0.6);">${m.role}</div></div><div><button class="btn btn-outline" data-id="${m.id}">Remove</button></div></div>`).join('');
+    })();
+  </script>
+</body>
+</html>
