@@ -283,6 +283,100 @@
     }
 }
 
+/* Mobile: Pro header polish */
+@media (max-width: 991px) {
+    .pro-header, header.header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 64px !important;
+        padding: 0 1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        background: linear-gradient(90deg, rgba(12,12,14,0.98), rgba(22,22,24,0.96)) !important;
+        border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important;
+        z-index: 5000 !important;
+        backdrop-filter: blur(10px) !important;
+    }
+
+    .pro-header .nav-container,
+    header.header .nav-container,
+    .nav.container {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 !important;
+        gap: 0.5rem !important;
+    }
+
+    .logo-area-wrapper.mobile-only { display: flex !important; align-items: center !important; gap: 0.5rem !important; }
+
+    .side-menu-trigger {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 10px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: rgba(255,255,255,0.03) !important;
+        border: 1px solid rgba(255,255,255,0.04) !important;
+    }
+
+    .logo { display:flex !important; align-items:center !important; gap:0.5rem !important; }
+    .logo .logo-text, .logo-text { font-size: 1rem !important; color: #fff !important; font-weight: 800 !important; }
+
+    .dash-header-right { display:flex !important; align-items:center !important; gap:0.5rem !important; }
+    .user-profile-trigger { padding: 6px 8px !important; border-radius: 10px !important; }
+    .user-avatar-sm { width: 36px !important; height: 36px !important; border-radius: 10px !important; }
+
+    /* Make back-button more visible on mobile */
+    .back-button.mobile-only { font-size: 1.15rem !important; color: #fff !important; background: rgba(255,255,255,0.02) !important; border-radius: 8px !important; padding: 0.5rem !important; }
+
+    /* Bottom navigation: polished pro look */
+    .pro-bottom-nav.mobile-only {
+        position: fixed !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        height: 64px !important;
+        background: linear-gradient(180deg, rgba(10,10,12,0.95), rgba(6,6,8,0.95)) !important;
+        border-top: 1px solid rgba(255,255,255,0.04) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 4500 !important;
+        box-shadow: 0 -8px 20px rgba(0,0,0,0.6) !important;
+    }
+
+    .pro-bottom-nav .bottom-nav-container {
+        display: flex !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+        max-width: 640px !important;
+        padding: 0 1rem !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+
+    .pro-bottom-nav .bottom-nav-link {
+        color: rgba(255,255,255,0.95) !important;
+        text-decoration: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.75rem !important;
+        gap: 0.25rem !important;
+    }
+
+    /* Ensure page content isn't hidden behind bottom nav */
+    body:not(.no-bottom-spacing) { padding-bottom: 76px !important; }
+}
+
 /* --- Global Header (Standardized) --- */
 .pro-header, header.header {
     height: 80px;
