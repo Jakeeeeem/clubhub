@@ -1,4 +1,5 @@
-class ApiService {
+if (typeof ApiService === 'undefined') {
+  var ApiService = class {
   constructor() {
     // Determine base URL based on environment
     this.baseURL = this.getBaseURL();
@@ -459,6 +460,21 @@ class ApiService {
       return { success: true, url: "https://dashboard.stripe.com/test/dashboard" };
     }
 
+    // --- PAYMENTS & PLANS (Demo) ---
+    if (endpoint.includes("/payments/plans")) {
+      return { plans: [ { id: 'demo-plan-1', name: 'Demo Monthly', amount: 2000, interval: 'monthly', description: 'Demo monthly plan' } ] };
+    }
+
+    if (endpoint.includes("/payments/plan/current")) {
+      return { plan: { id: 'demo-plan-1', name: 'Demo Monthly', amount: 2000, interval: 'monthly' } };
+    }
+
+    // --- PLAYERS LIST (Demo) ---
+    if (endpoint.includes("/players") && !endpoint.includes("/players/family") && !endpoint.includes("/players/dashboard")) {
+      const fb = this.getAdminDashboardFallback();
+      return fb.players || [];
+    }
+
     return null; // Fall through to real fetch if no mock found
   }
 
@@ -478,6 +494,20 @@ class ApiService {
     }
 
     if (!response.ok) {
+      // If demo session or local dev, attempt to return demo fallback instead of throwing
+      const isDemo = localStorage.getItem("isDemoSession") === "true";
+      const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+      if ((response.status === 401 || response.status === 403) && (isDemo || isLocal)) {
+        try {
+          const fallback = await this._interceptDemoRequest(endpoint, options);
+          if (fallback !== null) return fallback;
+        } catch (e) {
+          console.warn("Demo fallback failed:", e);
+        }
+        // If no mock available, fall through to normal error handling below
+      }
+
       // Don't trigger logout for 401/403 in demo mode
       if ((response.status === 401 || response.status === 403) && localStorage.getItem("isDemoSession") !== "true") {
         console.warn("🔐 Session expired, logging out...");
@@ -3521,12 +3551,16 @@ class ApiService {
   async getScoutingAnalytics() {
     return await this.makeRequest('/scouting/analytics');
   }
-}
+  };
 
-// Create and export a singleton instance
-// Use window.apiService to avoid redeclaration errors if script is loaded twice
-if (!window.apiService) {
-  window.apiService = new ApiService();
+  // Expose class to window to avoid redeclaration on subsequent loads
+  window.ApiService = ApiService;
+
+  // Create and export a singleton instance
+  // Use window.apiService to avoid redeclaration errors if script is loaded twice
+  if (!window.apiService) {
+    window.apiService = new ApiService();
+  }
 }
 
 // Enhanced error handling and logging

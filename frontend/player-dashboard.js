@@ -1,4 +1,4 @@
-let PlayerDashboardState = {
+if (typeof PlayerDashboardState === 'undefined') PlayerDashboardState = {
   activeSection: "overview", // Added from instruction
   activePlayerId: null,
   player: null,
@@ -197,6 +197,33 @@ async function initializePlayerDashboard() {
     wireAccountModal();
     wireFormEventListeners();
     wireFamilyListeners();
+
+    // Load dashboard data and provide demo fallbacks if necessary
+    await loadPlayerDataWithFallback().catch((e) => {
+      console.warn("loadPlayerDataWithFallback failed:", e);
+    });
+
+    // If demo session and no payments loaded, inject demo payment so Orders UI shows example data
+    if (localStorage.getItem("isDemoSession") === "true") {
+      if (!PlayerDashboardState.payments || PlayerDashboardState.payments.length === 0) {
+        PlayerDashboardState.payments = [
+          {
+            id: "demo-pay-1",
+            due_date: new Date().toISOString(),
+            description: "Tournament Registration — Riverside Cup",
+            amount: 25.0,
+            payment_status: "pending",
+          },
+          {
+            id: "demo-pay-2",
+            due_date: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
+            description: "Membership Fee",
+            amount: 120.0,
+            payment_status: "paid",
+          },
+        ];
+      }
+    }
 
     await loadPlayerDataWithFallback();
 
@@ -3074,6 +3101,33 @@ function loadLeagues() {
   `;
 }
 
+function loadPlayerVenues() {
+  const container = byId("player-venue-booking");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">🏟️ Venue Booking</h3>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Venue booking features coming soon.</p>
+    </div>
+  `;
+}
+
+function loadPlayerLeagues() {
+  loadLeagues();
+}
+
+function loadPlayerTournaments() {
+  const container = byId("player-tournament-manager") || byId("player-league-management");
+  if (!container) return;
+  container.innerHTML = `
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">⚔️ Tournaments</h3>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Browse and register for tournaments.</p>
+        <button class="btn btn-primary" onclick="showPlayerSection('event-finder')">Find Tournaments</button>
+    </div>
+  `;
+}
+
 function loadTraining() {
   const container = byId("player-training-manager");
   if (!container) return;
@@ -3094,6 +3148,10 @@ function loadTournaments() {
         <p style="color: var(--text-muted); margin-bottom: 2rem;">Tournament registrations and brackets will be available here.</p>
     </div>
   `;
+}
+
+function loadVenueBooking() {
+  loadPlayerVenues();
 }
 
 async function loadPlayerProducts() {
