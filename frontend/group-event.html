@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Event — ClubHub</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="unified-nav.css">
+</head>
+<body class="dashboard-view app-layout">
+  <header class="header"></header>
+  <main class="dashboard-main container">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+      <h1 id="eventTitle">Event</h1>
+      <div>
+        <button id="rsvpYes" class="btn btn-primary">Yes</button>
+        <button id="rsvpMaybe" class="btn btn-outline">Maybe</button>
+        <button id="rsvpNo" class="btn btn-secondary">No</button>
+      </div>
+    </div>
+
+    <section id="eventDetails" style="margin-top:1rem;">
+      <div id="eventInfo"></div>
+      <h3>Attendees</h3>
+      <div id="attendeesList"></div>
+
+      <h3>Attendance History</h3>
+      <div id="attendanceHistory"></div>
+    </section>
+  </main>
+
+  <nav class="pro-bottom-nav mobile-only">
+    <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
+  </nav>
+
+  <script>window.UNIFIED_NAV_ENABLED = true;</script>
+  <script src="unified-nav.js"></script>
+  <script src="groups.js"></script>
+  <script src="events.js"></script>
+  <script>
+    (function(){
+      const params = new URLSearchParams(window.location.search);
+      let eventId = params.get('event');
+      const activeGroup = Groups.GroupSwitcher.get(localStorage.getItem('activeGroupId'));
+
+      function ensureEvent(){
+        if(!eventId){
+          // create demo event for the group if none provided
+          const ev = Events.createEvent({groupId: activeGroup.id, title: 'Demo Training', description: 'Weekly practice', startsAt: Date.now() + 3600*1000, endsAt: Date.now() + 7200*1000});
+          eventId = ev.id;
+          history.replaceState(null,'', '?event=' + eventId);
+        }
+      }
+
+      function render(){
+        const ev = Events.getEvent(eventId);
+        if(!ev){ document.getElementById('eventInfo').innerText = 'Event not found.'; return; }
+        document.getElementById('eventTitle').innerText = ev.title;
+        document.getElementById('eventInfo').innerHTML = `<p>${ev.description || ''}</p><p>${new Date(ev.startsAt).toLocaleString()}</p>`;
+        const attendees = ev.rsvps || [];
+        document.getElementById('attendeesList').innerHTML = attendees.length ? attendees.map(a=>`<div style="padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;justify-content:space-between;"><div>${a.userId}</div><div style="text-transform:capitalize">${a.response}</div></div>`).join('') : '<p>No RSVPs yet</p>';
+
+        const hist = Events.attendanceHistoryForUser('u-1');
+        document.getElementById('attendanceHistory').innerHTML = hist.length ? hist.map(h=>`<div style="padding:6px;border-bottom:1px solid rgba(255,255,255,0.02)"><strong>${h.title}</strong> — ${h.response} on ${new Date(h.startsAt).toLocaleString()}</div>`).join('') : '<p>No attendance history</p>';
+      }
+
+      // init
+      if(!activeGroup){ alert('No active group. Open a group first.'); window.location.href='group-dashboard.html'; }
+      ensureEvent();
+      render();
+
+      document.getElementById('rsvpYes').onclick = ()=>{ Events.rsvp(eventId, 'u-1', 'yes'); render(); };
+      document.getElementById('rsvpMaybe').onclick = ()=>{ Events.rsvp(eventId, 'u-1', 'maybe'); render(); };
+      document.getElementById('rsvpNo').onclick = ()=>{ Events.rsvp(eventId, 'u-1', 'no'); render(); };
+
+      // ensure UnifiedNav group switcher
+      setTimeout(()=>{ if(window.UnifiedNav && typeof window.UnifiedNav.renderGroupSwitcher === 'function'){ const node = document.getElementById('header-org-switcher'); if(node) window.UnifiedNav.renderGroupSwitcher(node); } },200);
+    })();
+  </script>
+</body>
+</html>
