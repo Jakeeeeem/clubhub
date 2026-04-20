@@ -164,6 +164,29 @@ svg { color: inherit; fill: currentColor; }
     .card { padding: 0.9rem !important; }
 }
 
+/* Mobile density: tighten buttons, cards, and icon sizes for premium compact look */
+@media (max-width: 991px) {
+    .btn {
+        padding: 0.55rem 0.9rem !important;
+        font-size: 0.9rem !important;
+        border-radius: 10px !important;
+    }
+
+    .btn-primary { padding: 0.55rem 0.95rem !important; }
+
+    .icon-btn {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 10px !important;
+    }
+
+    .icon-btn svg { width: 18px !important; height: 18px !important; }
+
+    .card, .card-elite, .event-card { padding: 0.85rem !important; border-radius: 14px !important; }
+
+    .logo-text { font-size: 1.08rem !important; }
+}
+
 /* Mobile-first improvements: touch targets, spacing, stacked layout */
 @media (max-width: 640px) {
     html { font-size: 17px; }

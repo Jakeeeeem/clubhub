@@ -82,6 +82,28 @@ const UnifiedNav = {
       console.warn("Header dedupe failed", e);
     }
 
+    // Deduplicate bottom navs: keep the first .pro-bottom-nav and remove others to avoid stacking issues
+    try {
+      const bottoms = Array.from(document.querySelectorAll("nav.pro-bottom-nav, nav.unified-bottom-nav"));
+      if (bottoms.length > 1) {
+        console.log(`🧽 UnifiedNav: Found ${bottoms.length} bottom-nav elements; deduplicating.`);
+        const primary = bottoms[0];
+        bottoms.forEach((b) => {
+          if (b !== primary) b.remove();
+        });
+      }
+      // Ensure the primary has the content container
+      const primaryNav = document.querySelector("nav.pro-bottom-nav, nav.unified-bottom-nav");
+      if (primaryNav && !primaryNav.querySelector('#pro-bottom-nav-content')) {
+        const inner = document.createElement('div');
+        inner.id = 'pro-bottom-nav-content';
+        inner.className = 'bottom-nav-container';
+        primaryNav.appendChild(inner);
+      }
+    } catch (e) {
+      console.warn('Bottom-nav dedupe failed', e);
+    }
+
     // Auto-inject Group Switcher CSS
     if (!document.getElementById("group-switcher-css")) {
       const link = document.createElement("link");
@@ -253,7 +275,7 @@ const UnifiedNav = {
       const aside = document.createElement("aside");
       aside.id = "pro-sidebar";
       aside.className = "pro-sidebar";
-      aside.style.display = "none";
+      // Do not set inline display:none here — rely on CSS and `.active` class to control visibility
       document.body.appendChild(aside);
     }
 
@@ -859,16 +881,28 @@ const UnifiedNav = {
 
   renderSidebar() {
     try {
-      if (document.getElementById("pro-sidebar")) {
-        console.log("♻️ Sidebar already exists, skipping recreation.");
+      const existingSidebar = document.getElementById("pro-sidebar");
+      const existingOverlay = document.getElementById("sidebar-overlay");
+
+      // If a fully populated sidebar is already present, skip.
+      if (existingSidebar && existingSidebar.innerHTML.trim().length > 20) {
+        console.log("♻️ Sidebar already exists and is populated; skipping recreation.");
         return;
       }
 
-      console.log("🏗️ Rendering Sidebar...");
-      const isPlayer = window.location.href.includes("player-dashboard.html");
-      const sidebarHTML = `
-                <div class="sidebar-overlay" id="sidebar-overlay"></div>
-                <aside class="pro-sidebar" id="pro-sidebar">
+      console.log("🏗️ Rendering Sidebar (creating or populating placeholder)...");
+
+      // Ensure overlay exists
+      if (!existingOverlay) {
+        const ov = document.createElement("div");
+        ov.id = "sidebar-overlay";
+        ov.className = "sidebar-overlay";
+        document.body.appendChild(ov);
+        try { ov.style.removeProperty('display'); } catch (e) {}
+      }
+
+      // Build inner HTML for aside (only the content inside <aside>) so we can populate existing placeholders
+      const asideInner = `
                     <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 8px; z-index: 10;">
                         ${ICONS.menu}
                     </button>
@@ -893,9 +927,20 @@ const UnifiedNav = {
                             <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.75rem 1rem;">${ICONS.nav.logout} <span>Sign Out</span></a>
                         </div>
                     </div>
-                </aside>
             `;
-      document.body.insertAdjacentHTML("beforeend", sidebarHTML);
+
+      if (existingSidebar) {
+        existingSidebar.innerHTML = asideInner;
+        // ensure any placeholder inline display does not block visibility when `.active` is toggled
+        try { existingSidebar.style.removeProperty('display'); } catch (e) {}
+      } else {
+        const aside = document.createElement("aside");
+        aside.className = "pro-sidebar";
+        aside.id = "pro-sidebar";
+        aside.innerHTML = asideInner;
+        document.body.appendChild(aside);
+      }
+
       this.initSidebarSwitcher();
     } catch (err) {
       console.error("❌ Error rendering sidebar:", err);
@@ -1415,10 +1460,15 @@ const UnifiedNav = {
     if (show) {
       sidebar.classList.add("active");
       overlay.classList.add("active");
+      // Ensure inline display is set so CSS cascade doesn't accidentally keep it hidden
+      try { sidebar.style.setProperty('display','flex','important'); } catch (e) {}
+      try { overlay.style.setProperty('display','block','important'); } catch (e) {}
       this.syncUserData();
     } else {
       sidebar.classList.remove("active");
       overlay.classList.remove("active");
+      try { sidebar.style.removeProperty('display'); } catch (e) {}
+      try { overlay.style.removeProperty('display'); } catch (e) {}
     }
 
     if (show) {
