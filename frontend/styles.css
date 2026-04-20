@@ -102,8 +102,8 @@ input, select, textarea, .btn-small { font-size: 0.95rem; }
 
 /* Ensure headers and nav feel premium on mobile */
 @media (max-width: 991px) {
-  .pro-header, header.header { height: 72px !important; }
-  .logo-text { font-size: 1.15rem !important; }
+    .pro-header, header.header { height: 56px !important; }
+    .logo-text { font-size: 1.12rem !important; }
 }
 
 /* Stronger premium refinements */
@@ -171,13 +171,13 @@ svg { color: inherit; fill: currentColor; }
 
     /* Ensure header is compact and elements are reachable */
     .pro-header, header.header, .header {
-        height: 64px !important;
-        padding: 0 0.75rem !important;
+        height: 56px !important;
+        padding: 0 0.65rem !important;
         align-items: center !important;
     }
 
-    /* Hide desktop sidebar on mobile */
-    .pro-sidebar { display: none !important; }
+    /* Hide desktop sidebar on mobile (allow .active to show) */
+    .pro-sidebar:not(.active) { display: none !important; }
 
     /* Make main content stack and avoid wide columns */
     .dashboard-main, .main, main { padding-top: 80px !important; }
@@ -187,14 +187,14 @@ svg { color: inherit; fill: currentColor; }
     .btn-block, .dashboard-actions .btn { display: block !important; width: 100% !important; margin-bottom: 0.6rem !important; }
 
     /* Increase touch target for icon buttons */
-    .icon-btn { width: 52px !important; height: 52px !important; border-radius: 12px !important; }
+    .icon-btn { width: 48px !important; height: 48px !important; border-radius: 12px !important; }
 
     /* Cards become full-width stacked with larger spacing */
     .card, .card-elite, .event-card, .testimonial-card { width: 100% !important; margin-bottom: 1rem !important; padding: 1rem !important; }
 
     /* Bottom nav stickiness and spacing */
-    .pro-bottom-nav { height: 72px !important; padding-bottom: 8px !important; }
-    body:not(.no-bottom-spacing) { padding-bottom: 92px !important; }
+    .pro-bottom-nav { height: 56px !important; padding-bottom: 6px !important; }
+    body:not(.no-bottom-spacing) { padding-bottom: 72px !important; }
 
     /* Larger, readable text sizes for mobile */
     h1 { font-size: 1.25rem !important; }
