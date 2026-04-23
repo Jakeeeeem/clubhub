@@ -941,8 +941,8 @@ const UnifiedNav = {
 
       // Build inner HTML for aside (only the content inside <aside>) so we can populate existing placeholders
       const asideInner = `
-                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; padding: 8px; display: flex; align-items: center; border-radius: 8px; z-index: 10;">
-                        ${ICONS.menu}
+                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; padding: 12px; display: flex; align-items: center; justify-content: center; border-radius: 12px; z-index: 10; width: 52px; height: 52px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                     
                     <div class="sidebar-header" style="display: flex; align-items: center; gap: 1rem; padding: 4.5rem 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem; position: relative;">
@@ -953,16 +953,16 @@ const UnifiedNav = {
                         <div id="sidebar-switcher-target" style="margin-top: 1rem; width: 100%;"></div>
                     </div>
 
-                    <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto;">
-                        <div id="sidebar-nav-content">
+                    <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                        <div id="sidebar-nav-content" style="flex: 1;">
                             <div style="padding: 2rem; text-align: center; opacity: 0.5;">Loading menu...</div>
                         </div>
-                    </div>
 
-                    <div class="sidebar-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.2);">
-                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0; padding: 0.75rem 1rem;">${ICONS.nav.settings} <span>Settings</span></a>
-                            <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.75rem 1rem;">${ICONS.nav.logout} <span>Sign Out</span></a>
+                        <div class="sidebar-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1); margin-top: auto;">
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0; padding: 0.75rem 1rem;">${ICONS.nav.settings} <span>Settings</span></a>
+                                <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.75rem 1rem;">${ICONS.nav.logout} <span>Sign Out</span></a>
+                            </div>
                         </div>
                     </div>
             `;
@@ -1417,6 +1417,7 @@ const UnifiedNav = {
                 </div>
                 
                 <div class="dropdown-links" style="margin-top: 1rem;">
+                    <a href="player-settings.html" class="dropdown-link">${ICONS.nav.players} View My Profile</a>
                     <a href="player-settings.html" class="dropdown-link">${ICONS.nav.settings} Account Settings</a>
                     <a href="#" class="dropdown-link" style="color: #ef4444;" onclick="typeof handleLogout === 'function' ? handleLogout() : UnifiedNav.logout(); return false;">${ICONS.nav.logout} Sign Out</a>
                 </div>
