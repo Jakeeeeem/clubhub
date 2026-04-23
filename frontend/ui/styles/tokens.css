@@ -1,0 +1,64 @@
+/* --- Design System Tokens --- */
+:root {
+    /* Colors (Premium Dark HSL) */
+    --bg-h: 220;
+    --bg-s: 15%;
+    --bg-l: 8%;
+    --bg: var(--bg-h) var(--bg-s) var(--bg-l);
+    
+    --surface-h: 220;
+    --surface-s: 15%;
+    --surface-l: 12%;
+    --surface: var(--surface-h) var(--surface-s) var(--surface-l);
+    
+    --primary-h: 160;
+    --primary-s: 80%;
+    --primary-l: 50%;
+    --primary: var(--primary-h) var(--primary-s) var(--primary-l);
+    
+    --text-h: 0;
+    --text-s: 0%;
+    --text-l: 95%;
+    --text: var(--text-h) var(--text-s) var(--text-l);
+    
+    --muted-h: 220;
+    --muted-s: 10%;
+    --muted-l: 60%;
+    --muted: var(--muted-h) var(--muted-s) var(--muted-l);
+    
+    --border-h: 220;
+    --border-s: 10%;
+    --border-l: 20%;
+    --border: var(--border-h) var(--border-s) var(--border-l);
+
+    --accent-red: 350 85% 55%;
+    --accent-cyan: 190 90% 50%;
+
+    /* Typography Scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.85rem;
+    --text-base: 1rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.5rem;
+    --text-2xl: 2rem;
+    --text-3xl: clamp(2.5rem, 8vw, 4.5rem);
+
+    /* Spacing System */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --space-8: 48px;
+
+    /* Effects */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --shadow-sm: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.5);
+    --shadow-lg: 0 16px 48px rgba(0,0,0,0.6);
+    --glass-blur: 20px;
+}
