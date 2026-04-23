@@ -28,7 +28,7 @@ export const LoginPage = () => {
                             </div>
                             
                             <div style="margin-top: var(--space-4);">
-                                ${Button({ text: "Sign In", variant: "primary", className: "btn-block", onClick: "console.log('Login attempt')" })}
+                                ${Button({ text: "Sign In", variant: "primary", className: "btn-block", type: "submit" })}
                             </div>
 
                             <div style="margin-top: var(--space-4); text-align: center;">

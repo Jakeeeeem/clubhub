@@ -21,7 +21,12 @@ export const CoachDashboard = () => {
                             <p style="font-weight: 800; font-size: var(--text-lg); color: hsl(var(--accent-cyan)); margin: 0;">Today 18:00</p>
                             <p style="font-size: var(--text-sm); opacity: 0.7; margin: 4px 0 0 0;">Under 14s · Training Pitch A</p>
                         </div>
-                        ${Button({ text: "Attendance", variant: "primary", className: "btn-small" })}
+                        ${Button({ 
+                            text: "Attendance", 
+                            variant: "primary", 
+                            className: "btn-small",
+                            onClick: "navigateTo('groups')" 
+                        })}
                     </div>
                 `,
                 glass: true
@@ -49,11 +54,11 @@ export const CoachDashboard = () => {
                     <div style="display: flex; flex-direction: column; gap: var(--space-3);">
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: var(--text-sm);">
                             <span>Marcus J. (U14)</span>
-                            <span style="color: hsl(var(--primary));">View Report</span>
+                            <span style="color: hsl(var(--primary)); cursor: pointer;" onclick="navigateTo('profile')">View Report</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; font-size: var(--text-sm);">
                             <span>Sarah K. (U16)</span>
-                            <span style="color: hsl(var(--primary));">View Report</span>
+                            <span style="color: hsl(var(--primary)); cursor: pointer;" onclick="navigateTo('profile')">View Report</span>
                         </div>
                     </div>
                 `
@@ -63,8 +68,8 @@ export const CoachDashboard = () => {
         <div style="margin-top: var(--space-8);">
             <h3 style="margin-bottom: var(--space-4);">Management Actions</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
-                ${Button({ text: "New Session", variant: "primary" })}
-                ${Button({ text: "Message Squad", variant: "secondary" })}
+                ${Button({ text: "New Session", variant: "primary", onClick: "navigateTo('events')" })}
+                ${Button({ text: "Message Squad", variant: "secondary", onClick: "navigateTo('groups')" })}
             </div>
         </div>
     `;

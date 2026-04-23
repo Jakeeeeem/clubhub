@@ -43,8 +43,8 @@ export const AdminDashboard = () => {
                                     <p style="margin: 0; font-size: var(--text-xs); opacity: 0.5;">Group Application · 2h ago</p>
                                 </div>
                                 <div style="display: flex; gap: var(--space-2);">
-                                    ${Button({ text: "Approve", variant: "primary", className: "btn-small" })}
-                                    ${Button({ text: "Reject", variant: "secondary", className: "btn-small" })}
+                                    ${Button({ text: "Approve", variant: "primary", className: "btn-small", onClick: "alert('Approved!')" })}
+                                    ${Button({ text: "Reject", variant: "secondary", className: "btn-small", onClick: "alert('Rejected')" })}
                                 </div>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); background: hsla(0, 0%, 100%, 0.02); border-radius: var(--radius-md);">
@@ -53,8 +53,8 @@ export const AdminDashboard = () => {
                                     <p style="margin: 0; font-size: var(--text-xs); opacity: 0.5;">Provider Verification · 5h ago</p>
                                 </div>
                                 <div style="display: flex; gap: var(--space-2);">
-                                    ${Button({ text: "Approve", variant: "primary", className: "btn-small" })}
-                                    ${Button({ text: "Reject", variant: "secondary", className: "btn-small" })}
+                                    ${Button({ text: "Approve", variant: "primary", className: "btn-small", onClick: "alert('Approved!')" })}
+                                    ${Button({ text: "Reject", variant: "secondary", className: "btn-small", onClick: "alert('Rejected')" })}
                                 </div>
                             </div>
                         </div>
@@ -71,7 +71,7 @@ export const AdminDashboard = () => {
                                 <div style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #4ade80;"></div>
                                 <span style="font-size: var(--text-sm);">API Gateway: Online</span>
                             </div>
-                            <div style="display: center; align-items: center; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
                                 <div style="width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #4ade80;"></div>
                                 <span style="font-size: var(--text-sm);">Stripe Webhooks: Active</span>
                             </div>
@@ -88,9 +88,9 @@ export const AdminDashboard = () => {
                     title: "Quick Tasks",
                     content: `
                         <div style="display: flex; flex-direction: column; gap: var(--space-3);">
-                            ${Button({ text: "Global Announcement", variant: "secondary", className: "btn-block" })}
-                            ${Button({ text: "System Audit", variant: "secondary", className: "btn-block" })}
-                            ${Button({ text: "Database Backup", variant: "secondary", className: "btn-block" })}
+                            ${Button({ text: "Global Announcement", variant: "secondary", className: "btn-block", onClick: "navigateTo('events')" })}
+                            ${Button({ text: "System Audit", variant: "secondary", className: "btn-block", onClick: "navigateTo('profile')" })}
+                            ${Button({ text: "Database Backup", variant: "secondary", className: "btn-block", onClick: "alert('Backup Started')" })}
                         </div>
                     `
                 })}

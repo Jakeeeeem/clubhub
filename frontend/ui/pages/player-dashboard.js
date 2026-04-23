@@ -21,7 +21,12 @@ export const PlayerDashboard = () => {
                             <p style="font-weight: 800; font-size: var(--text-lg); color: hsl(var(--primary)); margin: 0;">Tue 18:00</p>
                             <p style="font-size: var(--text-sm); opacity: 0.7; margin: 4px 0 0 0;">Elite Academy · Pitch 2</p>
                         </div>
-                        ${Button({ text: "Details", variant: "secondary", className: "btn-small" })}
+                        ${Button({ 
+                            text: "Details", 
+                            variant: "secondary", 
+                            className: "btn-small",
+                            onClick: "navigateTo('events')" 
+                        })}
                     </div>
                 `,
                 glass: true
@@ -57,8 +62,8 @@ export const PlayerDashboard = () => {
         <div style="margin-top: var(--space-8);">
             <h3 style="margin-bottom: var(--space-4);">Quick Actions</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
-                ${Button({ text: "Book Event", variant: "primary" })}
-                ${Button({ text: "Payments", variant: "secondary" })}
+                ${Button({ text: "Book Event", variant: "primary", onClick: "navigateTo('events')" })}
+                ${Button({ text: "Payments", variant: "secondary", onClick: "navigateTo('profile')" })}
             </div>
         </div>
     `;

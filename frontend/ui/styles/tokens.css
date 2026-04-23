@@ -11,10 +11,12 @@
     --surface-l: 12%;
     --surface: var(--surface-h) var(--surface-s) var(--surface-l);
     
-    --primary-h: 160;
-    --primary-s: 80%;
-    --primary-l: 50%;
+    --primary-h: 0;
+    --primary-s: 72%;
+    --primary-l: 51%;
     --primary: var(--primary-h) var(--primary-s) var(--primary-l);
+    
+    --primary-glow: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.5);
     
     --text-h: 0;
     --text-s: 0%;

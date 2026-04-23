@@ -7,8 +7,8 @@
     --primary-glass: rgba(220, 38, 38, 0.05);
     --primary-glass-border: rgba(220, 38, 38, 0.2);
     
-    --neon-purple: #6d28d9;
-    --neon-purple-glow: rgba(109, 40, 217, 0.2);
+    --neon-red: #dc2626;
+    --neon-red-glow: rgba(220, 38, 38, 0.2);
     
     --bg-dark: #0a0a0c; 
     --bg-card: rgba(18, 18, 22, 0.9);
@@ -575,7 +575,7 @@ section#benefits {
 .neon-text {
     color: #ffffff;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.2),
-                 0 0 20px rgba(124, 58, 237, 0.4);
+                 0 0 20px rgba(220, 38, 38, 0.4);
 }
 
 .neon-text-red {
@@ -701,8 +701,8 @@ section#benefits {
 }
 
 .account-type-card.group::before { 
-    background: #7c3aed;
-    box-shadow: 0 0 15px rgba(124, 58, 237, 0.6);
+    background: #dc2626;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.6);
 }
 
 .account-type-card.player::before { 
@@ -717,7 +717,7 @@ section#benefits {
 }
 
 .account-type-card.group:hover {
-    box-shadow: 0 20px 50px rgba(124, 58, 237, 0.15);
+    box-shadow: 0 20px 50px rgba(220, 38, 38, 0.15);
 }
 
 .account-type-card.player:hover {

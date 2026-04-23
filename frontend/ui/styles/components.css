@@ -52,12 +52,14 @@ body {
 
 .btn-primary {
     background: hsl(var(--primary));
-    color: #000;
+    color: #fff;
+    box-shadow: 0 4px 15px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
 }
 
 .btn-primary:hover {
     filter: brightness(1.1);
-    box-shadow: 0 0 20px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
+    box-shadow: 0 6px 20px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
+    transform: translateY(-2px);
 }
 
 .btn-secondary {

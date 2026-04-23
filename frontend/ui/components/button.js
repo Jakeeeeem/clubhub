@@ -7,9 +7,10 @@
  * @param {string} [props.onClick=''] - Click handler (string or function name)
  * @returns {string} HTML string
  */
-export const Button = ({ text, variant = 'primary', className = '', onClick = '' }) => {
+export const Button = ({ text, variant = 'primary', className = '', onClick = '', type = 'button' }) => {
     return `
         <button 
+            type="${type}"
             class="btn btn-${variant} ${className}"
             ${onClick ? `onclick="${onClick}"` : ''}
         >
