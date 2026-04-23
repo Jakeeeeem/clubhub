@@ -14,33 +14,35 @@ const getNavItems = () => {
     
     if (role === 'admin') {
         return [
-            { label: 'Overview', icon: '📊', href: 'admin-dashboard.html', id: 'home', active: true },
-            { label: 'Groups', icon: '🏢', href: 'groups.html', id: 'groups' },
-            { label: 'Approvals', icon: '✅', href: 'approvals.html', id: 'approvals' },
-            { label: 'Finance', icon: '💰', href: 'finance.html', id: 'finance' },
-            { label: 'System', icon: '⚙️', href: 'settings.html', id: 'settings' }
+            { label: 'Overview', icon: '📊', id: 'home', active: true },
+            { label: 'Player List', icon: '👥', id: 'players' },
+            { label: 'Squads & Teams', icon: '🛡️', id: 'groups' },
+            { label: 'Event Manager', icon: '📅', id: 'events' },
+            { label: 'Admin Chat', icon: '💬', id: 'chat' },
+            { label: 'Staff', icon: '👤', id: 'staff' },
+            { label: 'System Settings', icon: '⚙️', id: 'settings' }
         ];
     }
     
     if (role === 'coach') {
         return [
-            { label: 'Overview', icon: '🏠', href: 'coach-dashboard.html', id: 'home', active: true },
-            { label: 'Squad', icon: '👥', href: 'groups.html', id: 'groups' },
-            { label: 'Tactics', icon: '📋', href: 'tactics.html', id: 'tactics' },
-            { label: 'Training', icon: '⚽', href: 'events.html', id: 'events' },
-            { label: 'Chat', icon: '💬', href: 'messages.html', id: 'chat' },
-            { label: 'Profile', icon: '👤', href: 'profile.html', id: 'profile' }
+            { label: 'Overview', icon: '🏠', id: 'home', active: true },
+            { label: 'My Squads', icon: '👥', id: 'groups' },
+            { label: 'Event Manager', icon: '📅', id: 'events' },
+            { label: 'Performance', icon: '📈', id: 'profile' },
+            { label: 'Messages', icon: '💬', id: 'chat' },
+            { label: 'Settings', icon: '⚙️', id: 'settings' }
         ];
     }
     
     // Default: Player
     return [
-        { label: 'Overview', icon: '🏠', href: 'player-dashboard.html', id: 'home', active: true },
-        { label: 'My Groups', icon: '🛡️', href: 'groups.html', id: 'groups' },
-        { label: 'Sessions', icon: '📅', href: 'events.html', id: 'events' },
-        { label: 'Training', icon: '⚡', href: 'training.html', id: 'training' },
-        { label: 'Payments', icon: '💳', href: 'finance.html', id: 'profile' },
-        { label: 'My Profile', icon: '👤', href: 'profile.html', id: 'profile' }
+        { label: 'Overview', icon: '🏠', id: 'home', active: true },
+        { label: 'My Groups', icon: '🛡️', id: 'groups' },
+        { label: 'My Sessions', icon: '📅', id: 'events' },
+        { label: 'Performance', icon: '📈', id: 'profile' },
+        { label: 'Payments', icon: '💳', id: 'finance' },
+        { label: 'Settings', icon: '⚙️', id: 'settings' }
     ];
 };
 
@@ -100,6 +102,36 @@ window.navigateTo = (pageId, fromUrl = false) => {
         render(GroupsPage());
     } else if (pageId === 'events' || pageId === 'training') {
         render(EventsPage());
+    } else if (pageId === 'players') {
+        render(`
+            <div class="page-header" style="margin-bottom: var(--space-6);">
+                <h1 class="text-neon">Player Management</h1>
+                <p style="color: hsl(var(--muted));">Global directory of all platform athletes.</p>
+            </div>
+            <div class="grid">
+                <div class="card glass">Player List Loading...</div>
+            </div>
+        `);
+    } else if (pageId === 'chat') {
+        render(`
+            <div class="page-header" style="margin-bottom: var(--space-6);">
+                <h1 class="text-neon">Messenger</h1>
+                <p style="color: hsl(var(--muted));">Real-time communication with your groups and staff.</p>
+            </div>
+            <div class="card glass" style="height: 400px; display: flex; align-items: center; justify-content: center;">
+                <p>Select a conversation to start chatting</p>
+            </div>
+        `);
+    } else if (pageId === 'staff') {
+        render(`
+            <div class="page-header" style="margin-bottom: var(--space-6);">
+                <h1 class="text-neon">Staff Directory</h1>
+                <p style="color: hsl(var(--muted));">Manage coaches, admins, and support staff.</p>
+            </div>
+            <div class="grid">
+                <div class="card glass">Staff List Loading...</div>
+            </div>
+        `);
     } else if (pageId === 'approvals') {
         render(`
             <div class="page-header" style="margin-bottom: var(--space-6);">
@@ -107,7 +139,7 @@ window.navigateTo = (pageId, fromUrl = false) => {
                 <p style="color: hsl(var(--muted));">Manage pending group and provider applications.</p>
             </div>
             <div class="grid">
-                ${Card({ title: "Pending", content: "No pending approvals at this time." })}
+                <div class="card glass">No pending approvals at this time.</div>
             </div>
         `);
     } else if (pageId === 'finance') {
@@ -117,8 +149,14 @@ window.navigateTo = (pageId, fromUrl = false) => {
                 <p style="color: hsl(var(--muted));">Track revenue, payouts, and financial health.</p>
             </div>
             <div class="grid">
-                ${Card({ title: "Revenue", content: "£14,200 MTD" })}
-                ${Card({ title: "Payouts", content: "Next payout: £2,400 on Friday" })}
+                <div class="card glass" style="padding: var(--space-6);">
+                    <h3 style="margin-top: 0;">Revenue Overview</h3>
+                    <p style="font-size: 2rem; font-weight: 900; color: #4ade80;">£14,200.00 <span style="font-size: 1rem; opacity: 0.5;">MTD</span></p>
+                </div>
+                <div class="card glass" style="padding: var(--space-6);">
+                    <h3 style="margin-top: 0;">Next Payout</h3>
+                    <p style="font-size: 2rem; font-weight: 900; color: var(--primary);">£2,450.00 <span style="font-size: 1rem; opacity: 0.5;">Friday</span></p>
+                </div>
             </div>
         `);
     } else if (pageId === 'profile' || pageId === 'settings') {

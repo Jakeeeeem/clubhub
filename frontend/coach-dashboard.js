@@ -676,7 +676,7 @@ async function loadCoachFeed() {
       <div class="premium-feed-item">
         <div class="feed-header">
           <div class="author-info">
-            <div class="author-avatar" style="background: var(--accent-cyan);">CH</div>
+            <div class="author-avatar" style="background: var(--primary);">CH</div>
             <div>
               <div style="font-weight: 700;">ClubHub System</div>
               <div style="font-size: 0.75rem; color: var(--text-muted);">Platform Update â€¢ Today</div>

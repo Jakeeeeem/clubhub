@@ -89,8 +89,8 @@ export const AdminDashboard = () => {
                     content: `
                         <div style="display: flex; flex-direction: column; gap: var(--space-3);">
                             ${Button({ text: "Global Announcement", variant: "secondary", className: "btn-block", onClick: "navigateTo('events')" })}
-                            ${Button({ text: "System Audit", variant: "secondary", className: "btn-block", onClick: "navigateTo('profile')" })}
-                            ${Button({ text: "Database Backup", variant: "secondary", className: "btn-block", onClick: "alert('Backup Started')" })}
+                            ${Button({ text: "System Audit", variant: "secondary", className: "btn-block", onClick: "navigateTo('settings')" })}
+                            ${Button({ text: "Add New Staff", variant: "secondary", className: "btn-block", onClick: "navigateTo('staff')" })}
                         </div>
                     `
                 })}

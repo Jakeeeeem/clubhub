@@ -20,12 +20,30 @@
 
 /* Strong mobile overrides (ensure density changes apply) */
 @media (max-width: 991px) {
-    .pro-header, header.header, .header { height: 56px !important; padding: 0 0.6rem !important; }
+    .pro-header, header.header, .header { 
+        height: 56px !important; 
+        padding: 0 0.6rem !important; 
+        display: flex !important;
+        align-items: center !important;
+    }
     .pro-bottom-nav, .pro-bottom-nav.mobile-only { height: 56px !important; }
     body:not(.no-bottom-spacing) { padding-bottom: 72px !important; }
     .user-avatar-sm { width: 32px !important; height: 32px !important; }
-    .side-menu-trigger { width: 40px !important; height: 40px !important; }
-    .action-btn { width: 36px !important; height: 36px !important; }
+    .side-menu-trigger { 
+        width: 40px !important; 
+        height: 40px !important; 
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-right: 0.5rem !important;
+    }
+    .action-btn { 
+        width: 36px !important; 
+        height: 36px !important; 
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
 }
 
 
@@ -151,13 +169,24 @@
     .sidebar-link {
         display: flex !important;
         align-items: center !important;
-        padding: 9px 16px !important;
-        border-radius: 10px !important;
-        font-size: 0.85rem !important;
+        padding: 12px 20px !important;
+        border-radius: 12px !important;
+        font-size: 0.9rem !important;
         font-weight: 500 !important;
         letter-spacing: -0.01em;
         transition: background 0.15s, color 0.15s !important;
         position: relative;
+        margin-bottom: 4px !important;
+    }
+
+    .sidebar-link .nav-icon {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 24px !important;
+        height: 24px !important;
+        margin-right: 16px !important;
+        flex-shrink: 0 !important;
     }
 
     .sidebar-link span {

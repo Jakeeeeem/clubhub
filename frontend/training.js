@@ -150,7 +150,7 @@ function renderDrillCard(drill, role = 'player') {
     <div class="glass-card" style="padding:1.5rem; display:flex; flex-direction:column; gap:0.75rem; transition:transform 0.2s;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
         <div>
-          <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-cyan); margin-bottom:0.25rem;">${drill.category}</div>
+          <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--primary); margin-bottom:0.25rem;">${drill.category}</div>
           <h3 style="font-size:1.1rem; margin:0; font-family:var(--font-heading);">${drill.title}</h3>
         </div>
         ${statusBadge}
@@ -180,7 +180,7 @@ async function openDrillDetail(drillId, assignmentId) {
 
     content.innerHTML = `
       <div style="padding:0 0 1.5rem;">
-        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; color:var(--accent-cyan); margin-bottom:0.5rem;">${drill.category} • ${drill.difficulty}</div>
+        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; color:var(--primary); margin-bottom:0.5rem;">${drill.category} • ${drill.difficulty}</div>
         <h2 style="font-family:var(--font-heading); font-size:1.8rem; margin:0 0 0.5rem;">${drill.title}</h2>
         <p style="color:var(--text-muted);">⏱ ${drill.duration_minutes} min${drill.required_equipment ? ' • 🎒 ' + drill.required_equipment : ''}</p>
       </div>
@@ -278,7 +278,7 @@ async function loadCoachReviewQueue() {
     container.innerHTML = submissions.map(s => `
       <div class="glass-card" style="padding:1.5rem; display:grid; grid-template-columns:1fr auto; gap:1rem; align-items:start;">
         <div>
-          <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-cyan); margin-bottom:0.25rem;">${s.drill_category}</div>
+          <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--primary); margin-bottom:0.25rem;">${s.drill_category}</div>
           <h4 style="margin:0 0 0.25rem;">${s.first_name} ${s.last_name}</h4>
           <p style="margin:0; color:var(--text-muted); font-size:0.85rem;">${s.drill_title}</p>
           <p style="margin:0.5rem 0 0; color:var(--text-muted); font-size:0.75rem;">Submitted ${new Date(s.submitted_at).toLocaleDateString('en-GB')}</p>
@@ -347,10 +347,10 @@ function renderSkillRadar(skills) {
     <div style="margin-bottom:1rem;">
       <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:0.4rem;">
         <span>${name}</span>
-        <span style="font-weight:700; color:var(--accent-cyan);">${val}</span>
+        <span style="font-weight:700; color:var(--primary);">${val}</span>
       </div>
       <div style="height:8px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden;">
-        <div style="height:100%; width:${val}%; background:linear-gradient(90deg, var(--primary), var(--accent-cyan)); border-radius:99px; transition:width 0.8s ease;"></div>
+        <div style="height:100%; width:${val}%; background:linear-gradient(90deg, var(--primary), var(--primary)); border-radius:99px; transition:width 0.8s ease;"></div>
       </div>
     </div>`).join('');
 }
@@ -367,7 +367,7 @@ function renderDrillHistory(history) {
   container.innerHTML = history.map(h => `
     <div class="glass-card" style="padding:1rem; display:flex; justify-content:space-between; align-items:center;">
       <div>
-        <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--accent-cyan);">${h.category}</div>
+        <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:1px; color:var(--primary);">${h.category}</div>
         <div style="font-weight:600; margin-top:0.25rem;">${h.title}</div>
         ${h.feedback ? `<div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem; font-style:italic;">"${h.feedback}"</div>` : ''}
       </div>
