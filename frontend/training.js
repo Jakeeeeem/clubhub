@@ -88,7 +88,7 @@ async function loadTrainingLibrary(category = null) {
   tabs.forEach(tab => {
     if (tab.textContent === (category || 'All Drills')) {
         tab.style.background = 'rgba(106,92,255,0.25)';
-        tab.style.borderColor = 'var(--accent-purple)';
+        tab.style.borderColor = 'var(--primary)';
     } else {
         tab.style.background = 'transparent';
         tab.style.borderColor = 'rgba(255,255,255,0.1)';
@@ -196,7 +196,7 @@ async function openDrillDetail(drillId, assignmentId) {
         </div>`}
 
       <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-        <h4 style="margin:0 0 0.75rem; color:var(--accent-purple);">📋 Instructions</h4>
+        <h4 style="margin:0 0 0.75rem; color:var(--primary);">📋 Instructions</h4>
         <p style="margin:0; line-height:1.7;">${drill.description || "Follow the coach's demonstration above."}</p>
       </div>
 
@@ -350,7 +350,7 @@ function renderSkillRadar(skills) {
         <span style="font-weight:700; color:var(--accent-cyan);">${val}</span>
       </div>
       <div style="height:8px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden;">
-        <div style="height:100%; width:${val}%; background:linear-gradient(90deg, var(--accent-purple), var(--accent-cyan)); border-radius:99px; transition:width 0.8s ease;"></div>
+        <div style="height:100%; width:${val}%; background:linear-gradient(90deg, var(--primary), var(--accent-cyan)); border-radius:99px; transition:width 0.8s ease;"></div>
       </div>
     </div>`).join('');
 }

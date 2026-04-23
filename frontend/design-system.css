@@ -1,8 +1,8 @@
 :root {
     /* 🎨 Premium HSL Sports Tech Palette */
-    --primary-h: 235;
-    --primary-s: 100%;
-    --primary-l: 68%;
+    --primary-h: 0;
+    --primary-s: 72%;
+    --primary-l: 51%;
     --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
     --primary-glow: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3);
     

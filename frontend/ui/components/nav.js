@@ -6,7 +6,7 @@
  */
 export const BottomNav = ({ items = [] }) => {
     return `
-        <nav class="bottom-nav">
+        <nav class="bottom-nav mobile-only">
             <div class="container" style="display: flex; justify-content: space-around; align-items: center; height: 100%;">
                 ${items.map(item => `
                     <a href="?page=${item.id}" 

@@ -497,7 +497,7 @@ async function loadPlannerFeed() {
         </div>
         <div class="feed-media">
           <div style="aspect-ratio: 16/9; background: linear-gradient(45deg, #050505, #1a1a1a); display: flex; align-items: center; justify-content: center; position: relative;">
-            <div style="font-size: 4rem; color: var(--accent-purple); opacity: 0.8;">🎥</div>
+            <div style="font-size: 4rem; color: var(--primary); opacity: 0.8;">🎥</div>
             <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.8); padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700;">Getting Started: Tutorial</div>
           </div>
         </div>
@@ -1681,7 +1681,7 @@ function displayEvents(events) {
             <tr onclick="viewEventDetails('${event.id}')" style="cursor: pointer;">
               <td>
                 <div class="event-info-cell">
-                  <div class="team-icon" style="background: rgba(124, 58, 237, 0.1); color: var(--neon-purple);">
+                  <div class="team-icon" style="background: rgba(124, 58, 237, 0.1); color: var(--primary);">
                     ${event.event_type === "match" ? "⚽" : event.event_type === "training" ? "🏃" : "🎯"}
                   </div>
                   <div class="event-name-group">

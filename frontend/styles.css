@@ -2612,8 +2612,8 @@ select option {
 }
 
 .player-position.selected {
-    border-color: var(--neon-purple);
-    box-shadow: 0 0 20px var(--neon-purple-glow);
+    border-color: var(--primary);
+    box-shadow: 0 0 20px var(--primary-glow);
 }
 
 .player-label {
@@ -3331,7 +3331,7 @@ main.main.home-main {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--neon-purple) 0%, #4c1d95 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #4c1d95 100%);
     color: white;
     display: flex;
     align-items: center;
@@ -4230,7 +4230,7 @@ input:focus + .toggle-slider {
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, var(--primary), var(--neon-purple));
+    background: linear-gradient(90deg, var(--primary), var(--primary));
 }
 
 .dialog-icon {
@@ -4252,7 +4252,7 @@ input:focus + .toggle-slider {
 
 .dialog-icon.info {
     background: rgba(124, 58, 237, 0.1);
-    color: var(--neon-purple);
+    color: var(--primary);
 }
 
 .dialog-icon.warning {

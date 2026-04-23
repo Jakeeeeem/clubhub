@@ -59,6 +59,12 @@ const render = (pageContent) => {
         nav: BottomNav({ items: navItems }),
         navItems: navItems
     });
+
+    // Initialize Group Switcher if it exists
+    const switcherContainer = document.getElementById('group-switcher-container');
+    if (switcherContainer && window.GroupSwitcher) {
+        window.GroupSwitcher.render(switcherContainer);
+    }
 };
 
 // Simple Router
