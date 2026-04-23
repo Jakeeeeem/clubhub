@@ -29,6 +29,17 @@
     .pro-bottom-nav, .pro-bottom-nav.mobile-only { height: 56px !important; }
     body:not(.no-bottom-spacing) { padding-bottom: 72px !important; }
     .user-avatar-sm { width: 32px !important; height: 32px !important; }
+}
+
+/* 🛡️ Legacy Navigation Shield: Prevent old UI from surfacing */
+#loggedInNav, 
+#loggedOutNav, 
+.nav-buttons:not(.pro-header .nav-buttons),
+.user-info:not(.pro-header .user-info) {
+    display: none !important;
+}
+
+@media (max-width: 991px) {
     .side-menu-trigger { 
         width: 40px !important; 
         height: 40px !important; 
@@ -36,7 +47,7 @@
         align-items: center !important;
         justify-content: center !important;
         margin-right: 0.5rem !important;
-    }
+    }    
     .action-btn { 
         width: 36px !important; 
         height: 36px !important; 
@@ -1103,11 +1114,12 @@ header.header .nav-container,
     transform: scale(0.92);
 }
 
+#pwa-floating-btn, .pwa-floating-install {
+    display: none !important;
+}
+
 /* Hide PWA floating button when bottom nav is present */
 @media (max-width: 991px) {
-    #pwa-floating-btn, .pwa-floating-install {
-        display: none !important;
-    }
 }
 
 .bottom-nav-link {

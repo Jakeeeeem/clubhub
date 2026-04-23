@@ -155,21 +155,29 @@ const UnifiedNav = {
 
     const isDesktop = window.matchMedia("(min-width: 992px)").matches;
     const path = window.location.pathname.toLowerCase();
-    const isDashboard = path.includes("dashboard");
-    const isLandingPage =
-      (path.includes("index.html") ||
-        path.endsWith("/") ||
-        path === "" ||
-        !path.includes("dashboard")) &&
-      !path.includes("settings");
+    const isDashboard = path.includes("dashboard") || 
+                        path.includes("admin-") || 
+                        path.includes("coach-") || 
+                        path.includes("player-") || 
+                        path.includes("super-admin-") ||
+                        path.includes("scout-") ||
+                        window.UNIFIED_NAV_ENABLED === true;
+
+    const isLandingPage = !isDashboard && 
+      (path.includes("index.html") || path.endsWith("/") || path === "");
 
     const token = localStorage.getItem("authToken");
     const user = JSON.parse(localStorage.getItem("currentUser") || "null");
     const isLoggedIn = !!(token && user);
 
-    console.log(
-      `📍 Nav Info: Desktop=${isDesktop}, Dashboard=${isDashboard}, Landing=${isLandingPage}, LoggedIn=${isLoggedIn}`,
-    );
+    console.log("📍 Nav Info:", { 
+      Desktop: isDesktop, 
+      Dashboard: isDashboard, 
+      Landing: isLandingPage, 
+      LoggedIn: isLoggedIn,
+      Path: path,
+      EnabledFlag: window.UNIFIED_NAV_ENABLED
+    });
 
     // Manage body classes for CSS scoping
     if (isDashboard) {
@@ -254,7 +262,6 @@ const UnifiedNav = {
         name: "Notifications",
         fn: () => isDashboard && this.renderHeaderNotifications(),
       },
-      { name: "PwaInstall", fn: () => this.renderPwaInstallButton() },
       { name: "EventBinding", fn: () => this.bindEvents() },
     ];
 
@@ -1040,15 +1047,15 @@ const UnifiedNav = {
     if (headerContainer.querySelector("select")) return;
 
     const userRole = this.getUserRole();
-    const isPlayerMode = window.location.href.includes("player-dashboard.html");
+    const isPlayerMode = window.location.href.includes("player-dashboard.html") || 
+                         window.location.pathname.includes("player-");
 
-    if (isPlayerMode || userRole === "player") {
-      console.log("👨‍👩‍👧‍👦 Rendering Family Switcher in Header");
-      this.renderFamilySwitcher(headerContainer);
-    } else {
-      console.log("🏢 Rendering Group Switcher in Header (role: " + userRole + ")");
-      this.renderGroupSwitcher(headerContainer);
-    }
+    // If on a player dashboard, we typically want family switching (kids)
+    // BUT we also want the group switcher if they are a coach/admin elsewhere
+    // Use the unified Group Switcher for all dashboards
+    // It handles both group switching and player profile switching within groups
+    console.log("🏢 Rendering Group Switcher in Header (role: " + userRole + ")");
+    this.renderGroupSwitcher(headerContainer);
   },
 
   /**

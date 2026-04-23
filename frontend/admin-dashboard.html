@@ -229,7 +229,9 @@
                                 <button class="btn btn-secondary btn-small" style="margin-left:auto;"
                                     onclick="window.location.href='admin-members.html'">View All</button>
                             </div>
-                            <p style="color:var(--text-muted);font-size:0.875rem;">Loading members list...</p>
+                            <div id="recentMembersList" style="display:flex; flex-direction:column; gap:0.75rem;">
+                                <p style="color:var(--text-muted);font-size:0.875rem;">Loading members list...</p>
+                            </div>
                         </div>
                     </div>
 
@@ -579,6 +581,7 @@
     <script src="pwa-install.js"></script>
     <script src="unified-nav.js"></script>
     <script src="squad-messenger.js"></script>
+    <script src="dashboard-loaders.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -595,11 +598,9 @@
             }
 
             // Load initial data
-            loadDashboardStats();
-            loadTeams();
-            loadAvailableCoaches();
-            loadAvailableForms();
-            loadScoutApprovals();
+            if (window.DashboardLoaders) {
+                DashboardLoaders.initAdmin();
+            }
             // default tab
             const tp = document.getElementById('tabPlatform'); if (tp) tp.classList.add('active');
         });
@@ -612,8 +613,67 @@
                     if (stats.totalMembers !== undefined) document.getElementById('totalMembers').textContent = stats.totalMembers;
                     if (stats.monthlyRevenue !== undefined) document.getElementById('monthlyRevenue').textContent = '£' + stats.monthlyRevenue.toLocaleString();
                     if (stats.activeEvents !== undefined) document.getElementById('activeEvents').textContent = stats.activeEvents;
+                    if (stats.pendingScouts !== undefined) document.getElementById('pendingScouts').textContent = stats.pendingScouts;
                 }
             } catch (e) { console.warn("Live stats fail, using demo data"); }
+        }
+
+        async function loadActivityFeed() {
+            const container = document.getElementById('activityFeed');
+            if (!container) return;
+            try {
+                const { activity } = await apiService.get('/api/feed');
+                if (!activity || activity.length === 0) return;
+                
+                container.innerHTML = activity.map(a => `
+                    <div class="feed-entry">
+                        <div class="feed-icon" style="background:${a.type === 'user_signup' ? 'rgba(74,222,128,0.1)' : 'rgba(220,38,38,0.1)'}; color:${a.type === 'user_signup' ? '#4ade80' : '#f87171'};">
+                            ${a.type === 'user_signup' ? '👤' : a.type === 'payment' ? '💳' : '📅'}
+                        </div>
+                        <div class="feed-meta">
+                            <strong>${a.title}</strong>
+                            <span>${a.user_email || ''}</span>
+                        </div>
+                        <span class="feed-time">${formatRelativeTime(a.timestamp)}</span>
+                    </div>
+                `).join('');
+            } catch (e) { }
+        }
+
+        async function loadRecentMembers() {
+            const container = document.getElementById('recentMembersList');
+            if (!container) return;
+            try {
+                const { players } = await apiService.get('/api/members');
+                if (!players || players.length === 0) {
+                    container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No recent members.</p>';
+                    return;
+                }
+                
+                container.innerHTML = players.slice(0, 5).map(p => `
+                    <div style="display:flex; align-items:center; gap:1rem; padding:0.75rem; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+                        <div style="width:36px; height:36px; border-radius:10px; background:rgba(220,38,38,0.15); color:#f87171; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem;">
+                            ${(p.first_name || 'P').charAt(0)}
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-size:0.9rem; font-weight:600; color:#fff;">${p.first_name} ${p.last_name}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${p.team_name || 'Unassigned'}</div>
+                        </div>
+                        <button class="btn btn-text btn-small" onclick="window.location.href='admin-members.html'">View</button>
+                    </div>
+                `).join('');
+            } catch (e) { }
+        }
+
+        function formatRelativeTime(timestamp) {
+            const now = new Date();
+            const then = new Date(timestamp);
+            const diff = now - then;
+            const minutes = Math.floor(diff / 60000);
+            if (minutes < 60) return minutes + 'm ago';
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return hours + 'h ago';
+            return Math.floor(hours / 24) + 'd ago';
         }
 
         async function loadTeams() {

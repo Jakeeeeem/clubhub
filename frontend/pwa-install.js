@@ -31,8 +31,8 @@ function isPWAInstalled() {
 
 // Create floating install button
 function createFloatingInstallButton() {
+  return; // Disabled by request
   const existingButton = document.getElementById("pwa-floating-btn");
-  if (existingButton) return; // Already exists
 
   const floatingBtn = document.createElement("button");
   floatingBtn.id = "pwa-floating-btn";
@@ -47,6 +47,7 @@ function createFloatingInstallButton() {
 
 // Create install banner
 function createInstallBanner() {
+  return; // Disabled by request
   if (hasUserDismissedBanner() || isPWAInstalled()) {
     createFloatingInstallButton(); // Show floating button instead
     return;

@@ -7,6 +7,22 @@ if (typeof ApiService === 'undefined') {
     this.retryCount = {};
     this.maxRetries = 2;
 
+    // Auto-enable demo mode on localhost or local network IPs unless explicitly disabled
+    const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const isLocalIP = /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(location.hostname);
+    
+    if (isLocalhost || isLocalIP) {
+        if (localStorage.getItem('isDemoSession') !== 'false') {
+            localStorage.setItem('isDemoSession', 'true');
+            if (!localStorage.getItem('authToken')) {
+                localStorage.setItem('authToken', 'demo-token');
+            }
+        }
+    }
+    
+    this.isDemo = localStorage.getItem("isDemoSession") === "true";
+    window.UNIFIED_NAV_ENABLED = true; // Signal to other scripts that unified nav is active
+    
     console.log(
       "🌐 Enhanced API Service initialized with baseURL:",
       this.baseURL,
@@ -287,9 +303,33 @@ if (typeof ApiService === 'undefined') {
     // --- GROUP SWITCHING ---
     if (endpoint.includes("/auth/switch-group")) {
       const body = JSON.parse(options.body || "{}");
-      user.groupId = body.groupId || "demo-club-id";
+      const targetGroupId = body.groupId || "demo-club-id";
+      
+      // Demo Role Switching based on target group
+      if (targetGroupId === "demo-player-org") {
+        user.groupId = targetGroupId;
+        user.activePlayerId = "demo-player-id";
+        user.role = "player";
+        user.account_type = "player";
+      } else if (targetGroupId === "demo-coach-org-2") {
+        user.groupId = targetGroupId;
+        user.activePlayerId = null;
+        user.role = "coach";
+        user.account_type = "coach";
+      } else {
+        user.groupId = targetGroupId;
+        user.activePlayerId = null;
+        user.role = "admin";
+        user.account_type = "organization";
+      }
+      
       localStorage.setItem("currentUser", JSON.stringify(user));
-      return { success: true, message: "Group switched (Demo)", groupId: user.groupId };
+      localStorage.setItem("userType", user.account_type);
+      if (user.activePlayerId) localStorage.setItem("activePlayerId", user.activePlayerId);
+      else localStorage.removeItem("activePlayerId");
+
+      console.log("♻️ Demo Group Switch:", { groupId: user.groupId, role: user.role, player: user.activePlayerId });
+      return { success: true, message: "Group switched (Demo)", groupId: user.groupId, role: user.role };
     }
 
     // --- PLAYER FAMILY ---
@@ -308,15 +348,113 @@ if (typeof ApiService === 'undefined') {
     // --- GROUP LISTS ---
     if (endpoint.includes("/groups") && !endpoint.includes("/platform-admin/groups")) {
       if (method === "POST") return { success: true, id: "new-group" };
-      return [
-        { id: "g1", name: "Pro Group Demo", teams: ["U18 Elite", "Arsenal Youth"] },
-      ];
+      const fb = this.getAdminDashboardFallback();
+      return fb.groups || [];
     }
 
     // --- DASHBOARDS ---
-    if (endpoint.includes("/dashboard/admin")) return this.getAdminDashboardFallback();
+    if (endpoint.includes("/dashboard/admin") || endpoint.includes("/admin/stats")) {
+        const fb = this.getAdminDashboardFallback();
+        if (endpoint.includes("/stats")) {
+            return {
+                totalMembers: fb.players.length + fb.staff.length,
+                monthlyRevenue: fb.statistics.monthly_revenue || 3840,
+                activeEvents: fb.events.length,
+                pendingScouts: 3
+            };
+        }
+        return fb;
+    }
     if (endpoint.includes("/dashboard/player") || endpoint.includes("/players/dashboard")) return this.getPlayerDashboardFallback();
     if (endpoint.includes("/dashboard/coach")) return this.getCoachDashboardFallback();
+
+    // --- TEAMS & MEMBERS ---
+    if (endpoint.includes("/teams")) {
+        const fb = this.getAdminDashboardFallback();
+        return { success: true, teams: fb.teams || [] };
+    }
+    if (endpoint.includes("/members") || endpoint.includes("/staff")) {
+        const fb = this.getAdminDashboardFallback();
+        return { success: true, players: fb.players || [], staff: fb.staff || [] };
+    }
+
+    // --- VENUES & TOURNAMENTS ---
+    if (endpoint.includes("/venues")) {
+        const fb = this.getAdminDashboardFallback();
+        if (endpoint.includes("/bookings/my")) return fb.bookings || [];
+        if (endpoint.includes("/availability")) {
+            return [
+                { id: "s1", start_time: "09:00", end_time: "10:00", available: true, price: 25 },
+                { id: "s2", start_time: "10:00", end_time: "11:00", available: false, price: 25 },
+                { id: "s3", start_time: "11:00", end_time: "12:00", available: true, price: 25 },
+                { id: "s4", start_time: "18:00", end_time: "19:00", available: true, price: 35 }
+            ];
+        }
+        return fb.pitches || [
+            { id: "pitch1", name: "Main Stadium", type: "Grass", size: "11v11", price: 50, location: "North Campus" },
+            { id: "pitch2", name: "Field A", type: "4G", size: "9v9", price: 35, location: "South Campus" },
+            { id: "pitch3", name: "Indoor Hall", type: "Parquet", size: "5v5", price: 40, location: "Sports Center" }
+        ];
+    }
+
+    if (endpoint.includes("/tournaments")) {
+        const fb = this.getAdminDashboardFallback();
+        return fb.tournaments || [];
+    }
+
+    if (endpoint.includes("/events")) {
+        const fb = this.getAdminDashboardFallback();
+        return fb.events || [];
+    }
+
+    // --- FEED & ACTIVITY ---
+    if (endpoint.includes("/feed") || endpoint.includes("/activity")) {
+        return {
+            activity: [
+                { id: "a1", type: "user_signup", title: "New Player: Jaylen Okafor", user_email: "jaylen@example.com", timestamp: new Date(Date.now() - 3600000).toISOString() },
+                { id: "a2", type: "payment", title: "Payment Received: £50.00", user_email: "parent@example.com", timestamp: new Date(Date.now() - 7200000).toISOString() },
+                { id: "a3", type: "event", title: "New Event: Summer Camp 2025", user_email: "admin@clubhub.com", timestamp: new Date(Date.now() - 86400000).toISOString() }
+            ],
+            feed: [
+                { id: "f1", author: "ClubHub System", title: "Welcome to ClubHub", content: "Your group is now active and ready to manage members.", date: new Date().toISOString() }
+            ]
+        };
+    }
+
+    // --- NOTIFICATIONS ---
+    if (endpoint.includes("/notifications")) {
+        return [
+            { id: "n1", title: "New Member Application", message: "Jaylen Okafor has applied to join Under 18s Elite", read: false, created_at: new Date().toISOString() },
+            { id: "n2", title: "Payment Due", message: "Monthly subscription for July is now generated", read: true, created_at: new Date(Date.now() - 86400000).toISOString() }
+        ];
+    }
+
+    // --- STRIPE / FINANCES ---
+    if (endpoint.includes("/payments/stripe/connect/status")) {
+        return { connected: true, payouts_enabled: true, details_submitted: true };
+    }
+
+    // --- TEAMS & MEMBERS ---
+    if (endpoint.includes("/teams")) {
+        const fb = this.getAdminDashboardFallback();
+        if (method === "GET") {
+            return { success: true, teams: fb.teams };
+        }
+        return { success: true, message: "Team action successful (Demo)" };
+    }
+    if (endpoint.includes("/members") || endpoint.includes("/players")) {
+        const fb = this.getAdminDashboardFallback();
+        if (method === "GET") {
+            // Check for role filter
+            const urlObj = new URL(endpoint, "http://dummy.com");
+            const role = urlObj.searchParams.get("role");
+            if (role === "coach") return { success: true, coaches: fb.staff.filter(s => s.role.toLowerCase().includes("coach")) };
+            if (role === "staff") return { success: true, staff: fb.staff };
+            
+            return { success: true, players: fb.players, members: fb.players };
+        }
+        return { success: true, message: "Member action successful (Demo)" };
+    }
 
     // --- PLATFORM ADMIN (SUPER ADMIN) ---
     if (endpoint.includes("/platform-admin/stats")) {
@@ -2358,51 +2496,42 @@ if (typeof ApiService === 'undefined') {
         founded_year: 1995,
         colors: { primary: "#dc2626", secondary: "#ffffff" },
       },
+      {
+        id: "g2",
+        name: "Riverside Academy",
+        location: "Manchester, UK",
+        sport: "Football",
+        member_count: 85,
+        is_primary: false,
+        logo_url: "images/logo.png",
+        description: "Elite youth development center focused on technical excellence.",
+        founded_year: 2010,
+        colors: { primary: "#2563eb", secondary: "#ffffff" },
+      },
+      {
+        id: "g3",
+        name: "Metro Sports Group",
+        location: "London, UK",
+        sport: "Multi-Sport",
+        member_count: 320,
+        is_primary: false,
+        logo_url: "images/logo.png",
+        description: "A community sports hub offering tennis, football, and swimming.",
+        founded_year: 1988,
+        colors: { primary: "#16a34a", secondary: "#ffffff" },
+      }
     ];
 
     return {
       groups: demoClubs,
       clubs: demoClubs, // Added for compatibility
       players: [
-        {
-          id: "demo-player-id",
-          first_name: "David",
-          last_name: "Williams",
-          email: "demo-player@clubhub.com",
-          position: "Forward",
-          payment_status: "paid",
-          attendance_rate: 95,
-          date_of_birth: "2006-05-15",
-          monthly_fee: 50.0,
-          team_name: "Under 18s Elite",
-          team_id: "t1"
-        },
-        {
-          id: "p2",
-          first_name: "Jordan",
-          last_name: "Smith",
-          email: "jordan@example.com",
-          position: "Midfielder",
-          payment_status: "pending",
-          attendance_rate: 88,
-          date_of_birth: "2007-08-22",
-          monthly_fee: 50.0,
-          team_name: "Under 18s Elite",
-          team_id: "t1"
-        },
-        {
-          id: "p3",
-          first_name: "Leo",
-          last_name: "Messi",
-          email: "leo@example.com",
-          position: "Forward",
-          payment_status: "paid",
-          attendance_rate: 100,
-          date_of_birth: "1987-06-24",
-          monthly_fee: 500.0,
-          team_name: "Under 16s Development",
-          team_id: "t2"
-        }
+        { id: "demo-player-id", first_name: "David", last_name: "Williams", email: "demo-player@clubhub.com", position: "Forward", payment_status: "paid", attendance_rate: 95, date_of_birth: "2006-05-15", monthly_fee: 50.0, team_name: "Under 18s Elite", team_id: "t1" },
+        { id: "p2", first_name: "Jordan", last_name: "Smith", email: "jordan@example.com", position: "Midfielder", payment_status: "pending", attendance_rate: 88, date_of_birth: "2007-08-22", monthly_fee: 50.0, team_name: "Under 18s Elite", team_id: "t1" },
+        { id: "p3", first_name: "Leo", last_name: "Messi", email: "leo@example.com", position: "Forward", payment_status: "paid", attendance_rate: 100, date_of_birth: "1987-06-24", monthly_fee: 500.0, team_name: "Under 16s Development", team_id: "t2" },
+        { id: "p4", first_name: "Marcus", last_name: "Thompson", email: "marcus@example.com", position: "Defender", payment_status: "paid", attendance_rate: 92, date_of_birth: "2005-11-03", monthly_fee: 45.0, team_name: "First Team", team_id: "t3" },
+        { id: "p5", first_name: "Sarah", last_name: "Davies", email: "sarah@example.com", position: "Midfielder", payment_status: "paid", attendance_rate: 85, date_of_birth: "2008-02-14", monthly_fee: 40.0, team_name: "Riverside U16", team_id: "t4" },
+        { id: "p6", first_name: "Tom", last_name: "Harris", email: "tom@example.com", position: "Goalkeeper", payment_status: "overdue", attendance_rate: 78, date_of_birth: "2006-09-30", monthly_fee: 50.0, team_name: "Under 18s Elite", team_id: "t1" }
       ],
       staff: [
         {
@@ -2426,51 +2555,27 @@ if (typeof ApiService === 'undefined') {
         }
       ],
       teams: [
-        { id: "t1", name: "Under 18s Elite", members: 22, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["demo-player-id", "p2"], sport: "Football", ageGroup: "U18" },
-        { id: "t2", name: "Under 16s Development", members: 18, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["p3"], sport: "Football", ageGroup: "U16" },
-        { id: "t3", name: "First Team", members: 25, coach: "Jürgen Klopp", coachId: "s3", players: [], sport: "Football", ageGroup: "Senior" }
+        { id: "t1", name: "Under 18s Elite", members: 22, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["demo-player-id", "p2", "p6"], sport: "Football", ageGroup: "U18", groupId: "demo-club-id" },
+        { id: "t2", name: "Under 16s Development", members: 18, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["p3"], sport: "Football", ageGroup: "U16", groupId: "demo-club-id" },
+        { id: "t3", name: "First Team", members: 25, coach: "Jürgen Klopp", coachId: "s3", players: ["p4"], sport: "Football", ageGroup: "Senior", groupId: "demo-club-id" },
+        { id: "t4", name: "Riverside U16", members: 20, coach: "Sarah Evans", coachId: "s4", players: ["p5"], sport: "Football", ageGroup: "U16", groupId: "g2" },
+        { id: "t5", name: "Metro Tennis A", members: 12, coach: "John Doe", coachId: "s5", players: [], sport: "Tennis", ageGroup: "Adult", groupId: "g3" }
       ],
       tournaments: [
-        {
-          id: "tour1",
-          name: "Elite Performance Cup 2025",
-          format: "knockout",
-          status: "upcoming",
-          teams_count: 8,
-          start_date: new Date(Date.now() + 86400000 * 30).toISOString()
-        },
-        {
-          id: "tour2",
-          name: "Junior League Championship",
-          format: "league",
-          status: "in_progress",
-          teams_count: 12,
-          start_date: new Date(Date.now() - 86400000 * 5).toISOString()
-        }
+        { id: "tour1", name: "Elite Performance Cup 2025", format: "knockout", status: "upcoming", teams_count: 8, start_date: new Date(Date.now() + 86400000 * 30).toISOString(), prize_pool: "£1,000", location: "Wembley Stadium" },
+        { id: "tour2", name: "Junior League Championship", format: "league", status: "in_progress", teams_count: 12, start_date: new Date(Date.now() - 86400000 * 5).toISOString(), prize_pool: "Trophy", location: "Local Hub" },
+        { id: "tour3", name: "Summer 5-a-side Blitz", format: "tournament", status: "open", teams_count: 16, start_date: new Date(Date.now() + 86400000 * 45).toISOString(), prize_pool: "£500", location: "Riverside Center" }
       ],
       events: [
-        {
-          id: "e1",
-          title: "Summer Talent ID Camp",
-          date: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0],
-          time: "09:00",
-          location: "Main Stadium",
-          type: "camp",
-          status: "upcoming",
-          description: "Our flagship talent identification camp for ages 8-16.",
-          attendees: 45,
-        },
-        {
-          id: "e2",
-          title: "Elite Training Session",
-          date: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0],
-          time: "18:30",
-          location: "Field A",
-          type: "training",
-          status: "upcoming",
-          team_name: "Under 18s Elite",
-          team_id: "t1"
-        }
+        { id: "e1", title: "Summer Talent ID Camp", date: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0], time: "09:00", location: "Main Stadium", type: "camp", status: "upcoming", description: "Our flagship talent identification camp for ages 8-16.", attendees: 45 },
+        { id: "e2", title: "Elite Training Session", date: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0], time: "18:30", location: "Field A", type: "training", status: "upcoming", team_name: "Under 18s Elite", team_id: "t1" },
+        { id: "e3", title: "Match vs United FC", date: new Date(Date.now() + 86400000 * 4).toISOString().split("T")[0], time: "14:00", location: "Away Ground", type: "match", status: "upcoming", team_name: "First Team", team_id: "t3" },
+        { id: "e4", title: "Riverside Technical Clinic", date: new Date(Date.now() + 86400000 * 1).toISOString().split("T")[0], time: "17:00", location: "Riverside Pitch", type: "clinic", status: "upcoming", team_name: "Riverside U16", team_id: "t4" },
+        { id: "e5", title: "Metro Tennis Open Day", date: new Date(Date.now() + 86400000 * 10).toISOString().split("T")[0], time: "10:00", location: "Metro Court 1", type: "open-day", status: "upcoming", team_name: "Metro Tennis A", team_id: "t5" }
+      ],
+      bookings: [
+        { id: "b1", event_id: "e1", event_title: "Summer Talent ID Camp", date: new Date(Date.now() + 86400000 * 7).toISOString(), status: "confirmed", qr_code: "DEMO_QR_CODE_123", amount: 45 },
+        { id: "b2", event_id: "v-book-1", event_title: "Main Stadium Rental", date: new Date(Date.now() + 86400000 * 3).toISOString(), status: "confirmed", location: "Main Stadium", amount: 50 }
       ],
       payments: [
         {
@@ -2537,8 +2642,10 @@ if (typeof ApiService === 'undefined') {
           { id: "t2", name: "Diamond 4-4-2", formation: "4-4-2", coach: "Michael Thompson" }
       ],
       pitches: [
-          { id: "pitch1", name: "Main Stadium", type: "Grass", size: "11v11" },
-          { id: "pitch2", name: "Field A", type: "4G", size: "9v9" }
+          { id: "pitch1", name: "Main Stadium", type: "Grass", size: "11v11", location: "North Campus", capacity: 5000, floodlights: true },
+          { id: "pitch2", name: "Field A", type: "4G", size: "9v9", location: "South Campus", capacity: 200, floodlights: true },
+          { id: "pitch3", name: "Riverside Pitch", type: "Grass", size: "11v11", location: "Riverside Center", capacity: 1000, floodlights: false },
+          { id: "pitch4", name: "Metro Court 1", type: "Hard Court", size: "Singles/Doubles", location: "Metro Sports", capacity: 2, floodlights: true }
       ],
       statistics: {
         total_groups: 1,

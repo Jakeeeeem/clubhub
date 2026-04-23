@@ -590,6 +590,7 @@
     <script src="pwa-install.js"></script>
     <script src="unified-nav.js"></script>
     <script src="squad-messenger.js"></script>
+    <script src="dashboard-loaders.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -606,12 +607,9 @@
             }
 
             // Load initial data
-            loadDashboardStats();
-            loadStaff();
-            loadTeams();
-            loadAvailableCoaches();
-            loadAvailableForms();
-            loadScoutApprovals();
+            if (window.DashboardLoaders) {
+                DashboardLoaders.initAdmin();
+            }
             // default tab
             const tp = document.getElementById('tabPlatform'); if (tp) tp.classList.add('active');
         });
