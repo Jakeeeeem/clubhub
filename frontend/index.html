@@ -52,52 +52,38 @@
     </nav>
 
     <main class="main home-main">
-        <!-- Main Hero Section (Restored Old Design) -->
+        <!-- Main Hero Section -->
         <section class="welcome-hero landing-hero" id="landingHero">
             <div class="container" style="position: relative; z-index: 10; width: 100%;">
 
-                <p
-                    style="text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: #fff; margin-bottom: 2rem; font-size: 0.9rem; opacity: 0.9;">
-                    LEAGUES • GROUPS • VENUES • TOURNAMENT PROVIDERS • COACHES
+                <p class="hero-tagline" style="text-transform: uppercase; letter-spacing: 3px; font-weight: 800; color: var(--primary); margin-bottom: 2rem; font-size: 0.85rem; opacity: 0.9;">
+                    LEAGUES • GROUPS • VENUES • TOURNAMENTS • COACHES
                 </p>
 
-                <h1 class="hero-title"
-                    style="font-size: clamp(3rem, 10vw, 6rem); font-weight: 900; margin-bottom: 1.5rem; font-family: 'Outfit'; color: #fff; line-height: 1.1;">
+                <h1 class="hero-title neon-text" style="font-size: clamp(3rem, 12vw, 7rem); font-weight: 900; margin-bottom: 1.5rem; line-height: 1; letter-spacing: -2px;">
                     Welcome to <span style="color: var(--primary);">ClubHub</span>
                 </h1>
 
-                <p class="hero-subtitle"
-                    style="font-size: 1.25rem; color: #f8fafc; max-width: 800px; margin: 0 auto 2.5rem; font-weight: 500;">
-                    The Complete Ecosystem for Grassroots Sports
+                <p class="hero-subtitle" style="font-size: clamp(1.1rem, 3vw, 1.5rem); color: rgba(255,255,255,0.7); max-width: 850px; margin: 0 auto 3rem; font-weight: 500; line-height: 1.4;">
+                    The Complete Ecosystem for Grassroots Sports. Manage groups, track performance, and connect with your community.
                 </p>
 
                 <!-- Free Platform Badge -->
-                <div
-                    style="display: inline-flex; align-items: center; gap: 0.75rem; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); padding: 0.75rem 1.5rem; border-radius: 100px; border: 1px solid rgba(220, 38, 38, 0.3); margin-bottom: 3.5rem; box-shadow: 0 0 20px rgba(220, 38, 38, 0.2);">
-                    <span
-                        style="background: rgba(220, 38, 38, 0.2); padding: 5px; border-radius: 50%; color: #dc2626; font-size: 0.9rem;">✨</span>
-                    <span style="font-weight: 700; font-size: 0.9rem; color: #fff;">100% Free Platform — <span
-                            style="color: #cbd5e1; font-weight: 400;">Free to Create an Account</span></span>
+                <div class="glass-card" style="display: inline-flex; align-items: center; gap: 1rem; padding: 0.75rem 2rem; border-radius: 100px; margin-bottom: 4rem; border-color: hsla(0, 72%, 51%, 0.3);">
+                    <span style="background: var(--primary); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #fff; font-size: 0.75rem; box-shadow: 0 0 15px var(--primary-glow);">✨</span>
+                    <span style="font-weight: 800; font-size: 0.9rem; letter-spacing: 0.5px;">100% FREE PLATFORM</span>
                 </div>
 
                 <!-- CTA Buttons -->
-                <div class="cta-group"
-                    style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 5rem;">
-                    <button class="btn btn-primary" onclick="showSignupOptions()"
-                        style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 100px; min-width: 220px; text-transform: none;">Get
-                        Started</button>
-                    <button class="btn btn-secondary"
-                        onclick="document.getElementById('benefits').scrollIntoView({behavior: 'smooth'})"
-                        style="padding: 1rem 3rem; font-size: 1.1rem; border-radius: 100px; min-width: 220px; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); text-transform: none;">Learn
-                        More</button>
+                <div class="cta-group" style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 6rem;">
+                    <button class="btn btn-primary" onclick="showSignupOptions()" style="min-width: 240px; border-radius: 100px; font-size: 1.1rem;">Get Started Free</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('benefits').scrollIntoView({behavior: 'smooth'})" style="min-width: 240px; border-radius: 100px; font-size: 1.1rem; background: hsla(0, 0%, 100%, 0.05);">Explore Features</button>
                 </div>
 
                 <!-- Three Role Cards -->
-                <div
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                <div class="dashboard-grid">
                     <!-- card 1 -->
-                    <div class="glass-card"
-                        style="padding: 2.5rem 2rem; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: center;">
+                    <div class="glass-panel" style="padding: 3rem 2rem; text-align: center;">
                         <h3 style="margin-bottom: 1rem; color: #fff; font-size: 1.35rem;">For Groups</h3>
                         <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">Complete group management with
                             player tracking, event organization, and financial tools</p>

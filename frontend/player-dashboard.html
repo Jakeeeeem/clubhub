@@ -20,22 +20,6 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="group-switcher.css">
   <link rel="stylesheet" href="unified-nav.css">
-  <style>
-    /* Small desktop-specific padding fixes for Player dashboard to match previous layout */
-    @media (min-width:1025px) {
-      .dashboard-header {
-        padding: 18px 0 !important;
-      }
-
-      .dashboard.container {
-        margin-top: 0 !important;
-      }
-
-      .dashboard-container {
-        padding-top: 8px !important;
-      }
-    }
-  </style>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="app-state.js"></script>
   <script src="api-service.js"></script>
@@ -62,23 +46,6 @@
   <script>
     window.UNIFIED_NAV_ENABLED = true;
   </script>
-  <script>
-    // Auto-enable demo session for local development when no auth token present
-    try {
-      if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
-        localStorage.setItem('isDemoSession', 'true');
-        // Provide a lightweight demo auth token so app auth checks pass locally
-        if (!localStorage.getItem('authToken')) {
-          localStorage.setItem('authToken', 'demo-token');
-        }
-        if (!localStorage.getItem('currentUser')) {
-          localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-user', first_name: 'Demo', last_name: 'User', role: 'player', groupId: 'demo-club-id' }));
-        }
-      }
-    } catch (e) {
-      console.warn('Demo auto-enable failed', e);
-    }
-  </script>
   <!-- Unified Navigation will inject the Header and Sidebar automatically -->
   <header class="header"></header>
 
@@ -87,13 +54,13 @@
       <div class="dashboard-content">
         <!-- Profile Section -->
         <div id="player-profile" class="dashboard-section">
-          <div class="card">
-            <div class="section-header">
-              <h3>👤 Personal Profile</h3>
+          <div class="glass-panel" style="padding: 2rem;">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+              <h2 class="neon-text" style="margin: 0;">👤 Personal Profile</h2>
               <button class="btn btn-primary" onclick="savePlayerProfile()">Save Changes</button>
             </div>
-            <form id="playerProfileForm" class="profile-form" style="margin-top: 2rem;">
-              <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <form id="playerProfileForm" class="profile-form">
+              <div class="dashboard-grid">
                 <div class="form-group">
                   <label>First Name</label>
                   <input type="text" id="prof-firstName" required>
@@ -102,21 +69,14 @@
                   <label>Last Name</label>
                   <input type="text" id="prof-lastName" required>
                 </div>
-              </div>
-              <div class="form-row"
-                style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
                 <div class="form-group">
                   <label>Email Address</label>
-                  <input type="email" id="prof-email" readonly
-                    style="background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5);">
+                  <input type="email" id="prof-email" readonly style="opacity: 0.6; cursor: not-allowed;">
                 </div>
                 <div class="form-group">
                   <label>Phone Number</label>
                   <input type="tel" id="prof-phone">
                 </div>
-              </div>
-              <div class="form-row"
-                style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
                 <div class="form-group">
                   <label>Date of Birth</label>
                   <input type="date" id="prof-dob">
@@ -132,98 +92,67 @@
 
         <!-- Shop Section -->
         <div id="player-shop" class="dashboard-section">
-          <div class="card" style="padding: 0; overflow: hidden; height: 85vh;">
+          <div class="glass-panel" style="padding: 0; overflow: hidden; height: 85vh;">
             <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
           </div>
         </div>
 
         <!-- Family Section -->
         <div id="player-family" class="dashboard-section">
-          <div class="section-header"
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <div>
-              <h2>My Family</h2>
-              <p>Manage child profiles linked to your account</p>
+              <h2 class="neon-text">My Family</h2>
+              <p style="color: rgba(255,255,255,0.6);">Manage child profiles linked to your account</p>
             </div>
-            <button id="addChildHeaderBtn" class="btn btn-primary" onclick="openAddChildModal()"
-              style="display: none;">+ Add Child</button>
+            <button id="addChildHeaderBtn" class="btn btn-primary" onclick="openAddChildModal()" style="display: none;">+ Add Child</button>
           </div>
-          <div id="familyGrid" style="width: 100%;">
+          
+          <div id="familyGrid" class="dashboard-grid">
             <!-- Populated by JS -->
-            <div class="stat-card loading-card">Loading family members...</div>
+            <div class="glass-card loading-card">Loading family members...</div>
           </div>
 
           <!-- Growth & Potential Section -->
-          <div class="card"
-            style="margin-top: 2rem; background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.8)); border: 1px solid var(--builder-accent);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <div class="glass-panel" style="margin-top: 3rem; padding: 2rem; border-color: var(--primary-glow);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem;">
               <div>
-                <h3 style="color: var(--primary);">📈 Scouting & Growth</h3>
-                <p style="color: var(--text-muted); font-size: 0.85rem;">Track your professional development and market
-                  valuation.</p>
+                <h3 class="neon-text" style="color: var(--primary); margin: 0 0 0.5rem 0;">📈 Scouting & Growth</h3>
+                <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">Track your professional development and market valuation.</p>
               </div>
-              <div style="text-align: right;">
-                <span
-                  style="display:block; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Growth
-                  Index</span>
-                <span style="font-size: 1.5rem; font-weight: 900; color: #4ade80;">+12.4%</span>
+              <div style="background: hsla(142, 70%, 50%, 0.1); padding: 1rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid hsla(142, 70%, 50%, 0.2);">
+                <span style="display:block; font-size: 0.65rem; color: #4ade80; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Growth Index</span>
+                <span style="font-size: 1.75rem; font-weight: 900; color: #4ade80;">+12.4%</span>
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+            <div class="dashboard-grid">
               <!-- Growth Chart Mock -->
-              <div
-                style="grid-column: span 2; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1.5rem; position: relative; height: 180px;">
-                <div
-                  style="display: flex; align-items: flex-end; justify-content: space-between; height: 100%; gap: 10px;">
-                  <div
-                    style="flex: 1; height: 40%; background: var(--primary); opacity: 0.3; border-radius: 4px 4px 0 0;">
-                  </div>
-                  <div
-                    style="flex: 1; height: 55%; background: var(--primary); opacity: 0.5; border-radius: 4px 4px 0 0;">
-                  </div>
-                  <div
-                    style="flex: 1; height: 45%; background: var(--primary); opacity: 0.4; border-radius: 4px 4px 0 0;">
-                  </div>
-                  <div
-                    style="flex: 1; height: 70%; background: var(--primary); opacity: 0.7; border-radius: 4px 4px 0 0;">
-                  </div>
-                  <div
-                    style="flex: 1; height: 85%; background: var(--primary); border-radius: 2px 2px 0 0; box-shadow: 0 0 15px var(--primary);">
-                  </div>
-                  <div
-                    style="flex: 1; height: 60%; background: var(--primary); opacity: 0.6; border-radius: 4px 4px 0 0;">
-                  </div>
-                  <div
-                    style="flex: 1; height: 95%; background: #4ade80; border-radius: 4px 4px 0 0; box-shadow: 0 0 15px #4ade80;">
-                  </div>
-                </div>
-                <div
-                  style="position: absolute; top: 1rem; right: 1rem; font-size: 0.7rem; color: var(--text-muted); background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 4px;">
-                  6 Month Progress</div>
+              <div class="glass-card" style="grid-column: span 1; min-height: 200px; display: flex; align-items: flex-end; gap: 8px; padding-top: 3rem;">
+                <div style="flex: 1; height: 40%; background: var(--primary); opacity: 0.3; border-radius: 4px 4px 0 0;"></div>
+                <div style="flex: 1; height: 55%; background: var(--primary); opacity: 0.5; border-radius: 4px 4px 0 0;"></div>
+                <div style="flex: 1; height: 45%; background: var(--primary); opacity: 0.4; border-radius: 4px 4px 0 0;"></div>
+                <div style="flex: 1; height: 70%; background: var(--primary); opacity: 0.7; border-radius: 4px 4px 0 0;"></div>
+                <div style="flex: 1; height: 85%; background: var(--primary); border-radius: 2px 2px 0 0; box-shadow: 0 0 15px var(--primary-glow);"></div>
+                <div style="flex: 1; height: 60%; background: var(--primary); opacity: 0.6; border-radius: 4px 4px 0 0;"></div>
+                <div style="flex: 1; height: 95%; background: #4ade80; border-radius: 4px 4px 0 0; box-shadow: 0 0 15px hsla(142, 70%, 50%, 0.4);"></div>
+                <div style="position: absolute; top: 1rem; left: 1rem; font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700;">6 Month Progress</div>
               </div>
 
-              <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <div class="stat-card"
-                  style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
-                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Elite
-                    Potential</span>
-                  <div style="display:flex; align-items:center; gap: 10px; margin-top: 5px;">
-                    <span style="font-size: 1.2rem; font-weight: 800;">88/100</span>
-                    <div style="flex:1; height:6px; background:rgba(255,255,255,0.1); border-radius:3px;">
-                      <div
-                        style="width: 88%; height: 100%; background: #4ade80; border-radius:3px; box-shadow: 0 0 10px #4ade80;">
-                      </div>
+              <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="glass-card">
+                  <span style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700;">Elite Potential</span>
+                  <div style="display:flex; align-items:center; gap: 12px; margin-top: 8px;">
+                    <span style="font-size: 1.5rem; font-weight: 900;">88/100</span>
+                    <div style="flex:1; height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow: hidden;">
+                      <div style="width: 88%; height: 100%; background: #4ade80; border-radius:4px; box-shadow: 0 0 12px #4ade80;"></div>
                     </div>
                   </div>
                 </div>
-                <div class="stat-card"
-                  style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
-                  <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Scout
-                    Visibility</span>
-                  <div style="display:flex; align-items:center; gap: 10px; margin-top: 5px;">
-                    <span style="font-size: 1.2rem; font-weight: 800;">High</span>
-                    <span style="color: #3b82f6; font-size: 0.8rem;">14 Views This Week</span>
+                <div class="glass-card">
+                  <span style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700;">Scout Visibility</span>
+                  <div style="display:flex; flex-direction: column; gap: 4px; margin-top: 8px;">
+                    <span style="font-size: 1.5rem; font-weight: 900; color: var(--accent-cyan);">High Intensity</span>
+                    <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">14 Professional Views This Week</span>
                   </div>
                 </div>
               </div>
@@ -231,54 +160,51 @@
           </div>
         </div>
 
-        <!-- Overview -->
         <!-- 🧵 Club Feed Section (Blog Roll Style) -->
         <div id="player-club-feed" class="dashboard-section" style="display: none;">
-          <div class="section-header" style="margin-bottom: 2rem;">
+          <div class="section-header" style="margin-bottom: 2.5rem;">
             <h1 class="neon-text">Activity Feed</h1>
-            <p>Updates from your groups, coaches, and upcoming events.</p>
+            <p style="color: rgba(255,255,255,0.5);">Updates from your groups, coaches, and upcoming events.</p>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2.5rem; align-items: start;">
+          <div class="dashboard-layout-sidebar">
             <div class="feed-main-column">
-              <div id="clubFeedComposerWrapper" class="glass-card"
-                style="padding: 1.5rem; margin-bottom: 2rem; border-color: rgba(177, 3, 45, 0.3);">
+              <div id="clubFeedComposerWrapper" class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
                 <div style="display: flex; gap: 1rem;">
-                  <div class="sender-avatar" style="width: 48px; height: 48px; flex-shrink: 0;">${initials}</div>
+                  <div class="author-avatar" style="width: 48px; height: 48px; flex-shrink: 0; background: var(--primary);">Me</div>
                   <div style="flex: 1;">
-                    <textarea id="newPostContent" class="chat-input"
-                      style="width: 100%; height: 100px; border-radius: 12px; margin-bottom: 1rem; resize: none; background: rgba(255,255,255,0.03);"
+                    <textarea id="newPostContent" 
+                      style="width: 100%; height: 100px; margin-bottom: 1rem; resize: none;" 
                       placeholder="Share a quick update from training, events or group news."></textarea>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn-secondary btn-small">📎 Add Media</button>
-                      </div>
+                      <button class="btn btn-secondary">📎 Add Media</button>
                       <button class="btn btn-primary" onclick="postToCommunityFeed()">Share Update</button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div id="communityFeedContainer" class="community-feed">
+              <div id="communityFeedContainer" class="activity-card-list">
                 <!-- Blog roll items -->
-                <div class="stat-card">Loading community feed...</div>
+                <div class="glass-card">Loading community feed...</div>
               </div>
             </div>
 
             <aside class="feed-sidebar">
-              <div class="glass-card" style="padding: 1.5rem; position: sticky; top: 2rem;">
-                <h4 style="margin-bottom: 1rem; font-family: var(--font-heading);">Filter Feed</h4>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2rem;">
-                  <button class="btn btn-secondary btn-small btn-block active">All Updates</button>
-                  <button class="btn btn-secondary btn-small btn-block">Groups & Teams</button>
-                  <button class="btn btn-secondary btn-small btn-block">Scouting Blogs</button>
-                  <button class="btn btn-secondary btn-small btn-block">Announcements</button>
+              <div class="glass-panel" style="padding: 1.5rem; position: sticky; top: 2rem;">
+                <h4 style="margin-bottom: 1.25rem; font-family: var(--font-heading);">Filter Feed</h4>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2.5rem;">
+                  <button class="btn btn-primary" style="justify-content: flex-start;">All Updates</button>
+                  <button class="btn btn-secondary" style="justify-content: flex-start;">Groups & Teams</button>
+                  <button class="btn btn-secondary" style="justify-content: flex-start;">Scouting Blogs</button>
+                  <button class="btn btn-secondary" style="justify-content: flex-start;">Announcements</button>
                 </div>
 
-                <h4 style="margin-bottom: 1rem; font-family: var(--font-heading);">Trending Tags</h4>
+                <h4 style="margin-bottom: 1.25rem; font-family: var(--font-heading);">Trending Tags</h4>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                  <span class="feed-tag">#SummerLeague</span>
-                  <span class="feed-tag">#ScoutingTips</span>
-                  <span class="feed-tag">#Training</span>
-                  <span class="feed-tag">#WinnerMentality</span>
+                  <span class="btn btn-secondary btn-small" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; min-height: auto;">#SummerLeague</span>
+                  <span class="btn btn-secondary btn-small" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; min-height: auto;">#ScoutingTips</span>
+                  <span class="btn btn-secondary btn-small" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; min-height: auto;">#Training</span>
                 </div>
               </div>
             </aside>
@@ -286,9 +212,8 @@
         </div>
 
         <!-- 💬 Squad Messenger Section -->
-        <div id="player-club-messenger" class="dashboard-section" style="display: none; padding:0.5rem;">
-          <!-- Mounted dynamically by squad-messenger.js -->
-          <div id="player-messenger-mount"></div>
+        <div id="player-club-messenger" class="dashboard-section" style="display: none;">
+          <div class="glass-panel" id="player-messenger-mount" style="height: 80vh; overflow: hidden;"></div>
         </div>
 
         <div id="player-overview" class="dashboard-section active">
@@ -301,7 +226,7 @@
             </div>
             <div class="dashboard-card-strip-item" onclick="showPlayerSection('teams')">
               <div class="dashboard-card-strip-label">Next Session</div>
-              <div class="dashboard-card-strip-value">Tue 18:00</div>
+              <div class="dashboard-card-strip-value" style="font-size: 1.5rem;">Tue 18:00</div>
               <div class="dashboard-card-strip-meta">Training · Astro Pitch 2</div>
             </div>
             <div class="dashboard-card-strip-item" onclick="showPlayerSection('teams')">
@@ -311,7 +236,7 @@
             </div>
             <div class="dashboard-card-strip-item" onclick="showPlayerSection('subscriptions')">
               <div class="dashboard-card-strip-label">Subscription</div>
-              <div class="dashboard-card-strip-value" id="playerSubStatus">Paid ✓</div>
+              <div class="dashboard-card-strip-value" id="playerSubStatus" style="font-size: 1.5rem; color: #4ade80;">Paid ✓</div>
               <div class="dashboard-card-strip-meta">Next due: 1 May</div>
             </div>
           </div>
@@ -328,21 +253,20 @@
             <div class="feed-column">
               <div class="section-header" style="margin-bottom: 2rem;">
                 <h2 class="neon-text">Activity Feed</h2>
-                <p>Latest updates from your coaches and groups</p>
+                <p style="color: rgba(255,255,255,0.5);">Latest updates from your coaches and groups</p>
               </div>
 
-
               <!-- Post Creator for activity updates -->
-              <div id="overviewComposerWrapper" class="premium-feed-item" style="padding: 1rem; margin-bottom: 2rem;">
+              <div id="overviewComposerWrapper" class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
                 <div style="display: flex; gap: 1rem;">
-                  <div class="author-avatar">Me</div>
-                  <textarea id="plannerPostContent" class="chat-input" 
-                    style="width: 100%; height: 80px; border: none; background: transparent; color: white; resize: none;" 
+                  <div class="author-avatar" style="background: var(--primary);">Me</div>
+                  <textarea id="plannerPostContent" 
+                    style="width: 100%; height: 80px; border: none; background: transparent; resize: none;" 
                     placeholder="Share a quick update from training, events, or match day."></textarea>
                 </div>
-                <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem; gap: 0.5rem;">
-                  <button class="btn btn-secondary btn-small">📎 Attach</button>
-                  <button class="btn btn-primary btn-small" onclick="postToPlannerFeed()">Share Update</button>
+                <div style="display: flex; justify-content: flex-end; margin-top: 1rem; gap: 0.75rem;">
+                  <button class="btn btn-secondary">📎 Attach</button>
+                  <button class="btn btn-primary" onclick="postToPlannerFeed()">Share Update</button>
                 </div>
               </div>
 
@@ -351,10 +275,10 @@
                 <div class="premium-feed-item">
                   <div class="feed-header">
                     <div class="author-info">
-                      <div class="author-avatar">JD</div>
+                      <div class="author-avatar" style="background: var(--accent-cyan);">JD</div>
                       <div>
                         <div style="font-weight: 700;">Coach John Doe</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">2 hours ago</div>
+                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">2 hours ago</div>
                       </div>
                     </div>
                   </div>
@@ -362,9 +286,9 @@
                     <p>Great session today everyone! Check out the highlights from the tactical drill. Focus on the defensive positioning.</p>
                   </div>
                   <div class="feed-media">
-                    <div style="aspect-ratio: 16/9; background: #1a1a1a; display: flex; align-items: center; justify-content: center; position: relative;">
-                      <div style="font-size: 3rem; color: white; opacity: 0.5;">▶️</div>
-                      <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.6); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">Match Highlights: Tactical Drill</div>
+                    <div style="aspect-ratio: 16/9; background: #000; display: flex; align-items: center; justify-content: center; position: relative;">
+                      <div style="font-size: 3rem; color: #fff; opacity: 0.5;">▶️</div>
+                      <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem;">Match Highlights: Tactical Drill</div>
                     </div>
                   </div>
                 </div>
@@ -373,45 +297,45 @@
 
             <!-- Sidebar: Daily Planner -->
             <div class="planner-sidebar">
-              <div class="planner-widget">
+              <div class="glass-panel" style="padding: 1.5rem;">
                 <h3 style="margin-bottom: 1.5rem; font-family: var(--font-heading);">📅 Your Schedule</h3>
-                <div id="dailyPlannerContainer">
+                <div id="dailyPlannerContainer" style="display: grid; gap: 1rem;">
                   <!-- Planner items loaded via JS -->
-                  <div class="planner-day-row">
+                  <div class="planner-day-row" style="background: hsla(0, 0%, 100%, 0.03); border: 1px solid hsla(0, 0%, 100%, 0.05);">
                     <div class="day-indicator">
-                      <div class="day-number">24</div>
+                      <div class="day-number" style="color: var(--primary);">24</div>
                       <div class="day-name">Mar</div>
                     </div>
                     <div class="event-details">
-                      <div class="event-time">18:00 - 19:30</div>
+                      <div class="event-time" style="color: var(--primary);">18:00 - 19:30</div>
                       <div class="event-title">Elite Training Session</div>
-                      <div style="font-size: 0.75rem; color: var(--text-muted);">Main Pitch, Elite Academy</div>
+                      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">Main Pitch, Elite Academy</div>
                     </div>
                   </div>
-                  <div class="planner-day-row">
+                  <div class="planner-day-row" style="background: hsla(0, 0%, 100%, 0.03); border: 1px solid hsla(0, 0%, 100%, 0.05);">
                     <div class="day-indicator">
-                      <div class="day-number">26</div>
+                      <div class="day-number" style="color: var(--accent-cyan);">26</div>
                       <div class="day-name">Mar</div>
                     </div>
                     <div class="event-details">
-                      <div class="event-time">19:00 - 20:00</div>
+                      <div class="event-time" style="color: var(--accent-cyan);">19:00 - 20:00</div>
                       <div class="event-title">Tactical Webinar</div>
-                      <div style="font-size: 0.75rem; color: var(--text-muted);">Online (Zoom)</div>
+                      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">Online (Zoom)</div>
                     </div>
                   </div>
                 </div>
-                <button class="btn btn-secondary btn-block" style="margin-top: 1rem;" onclick="showPlayerSection('event-finder')">Find More Events</button>
+                <button class="btn btn-secondary" style="margin-top: 1.5rem; width: 100%;" onclick="showPlayerSection('event-finder')">Find More Events</button>
               </div>
 
               <!-- Growth Widget (Smaller) -->
-              <div class="glass-card" style="margin-top: 2rem; padding: 1.5rem;">
-                <h4 style="margin-bottom: 1rem; color: var(--accent-cyan);">📈 Player Growth</h4>
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1rem;">
-                  <span style="font-size: 1.5rem; font-weight: 800;">88/100</span>
-                  <span style="color: #4ade80; font-size: 0.8rem;">+12% vs last month</span>
+              <div class="glass-card" style="margin-top: 2rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--accent-cyan); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">📈 Player Growth</h4>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
+                  <span style="font-size: 1.75rem; font-weight: 800;">88/100</span>
+                  <span style="color: #4ade80; font-size: 0.8rem; font-weight: 700;">+12%</span>
                 </div>
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;">
-                  <div style="width: 88%; height: 100%; background: #4ade80; border-radius:3px;"></div>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                  <div style="width: 88%; height: 100%; background: #4ade80; box-shadow: 0 0 10px #4ade80;"></div>
                 </div>
               </div>
             </div>
@@ -420,47 +344,43 @@
       </div>
 
       <!-- Notifications Section -->
-      <div id="player-notifications" class="dashboard-section" style="display:none; padding:1.5rem;">
-        <div class="card">
-          <h3>🔔 Notifications</h3>
-          <p style="color:var(--text-muted);">Important alerts and updates from your club, events, and family.</p>
-          <div class="card" style="margin-top:1rem; padding:1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px;">
-            <p style="margin:0.25rem 0;">No new notifications yet. Check back after your next team update or event invitation.</p>
+      <div id="player-notifications" class="dashboard-section" style="display:none;">
+        <div class="glass-panel" style="padding: 2rem;">
+          <h2 class="neon-text">🔔 Notifications</h2>
+          <p style="color: rgba(255,255,255,0.5); margin-bottom: 2rem;">Important alerts and updates from your club, events, and family.</p>
+          <div class="glass-card" style="background: hsla(0, 0%, 100%, 0.03);">
+            <p style="margin: 0; opacity: 0.8;">No new notifications yet. Check back after your next team update or event invitation.</p>
           </div>
         </div>
       </div>
 
       <!-- Venue Booking Section -->
       <div id="player-venue-booking" class="dashboard-section">
-        <div class="card">
-          <h3>🏟️ Venue Booking</h3>
+        <div class="glass-panel" style="padding: 2rem;">
+          <h2 class="neon-text">🏟️ Venue Booking</h2>
           <p>Loading booking system...</p>
         </div>
       </div>
 
       <!-- League Management Section -->
       <div id="player-league-management" class="dashboard-section">
-        <div class="card">
-          <h3>🥇 Leagues</h3>
+        <div class="glass-panel" style="padding: 2rem;">
+          <h2 class="neon-text">🥇 Leagues</h2>
           <p>Loading leagues...</p>
         </div>
       </div>
 
-
-
-
-
       <!-- My Clubs -->
       <div id="player-my-clubs" class="dashboard-section">
-        <div class="card">
-          <h3>My Groups</h3>
-          <div class="card-grid" id="playerClubsContainer"></div>
+        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">My Groups</h2>
+          <div class="dashboard-grid" id="playerClubsContainer"></div>
         </div>
 
-        <div class="card">
-          <h3>Group Staff</h3>
+        <div class="glass-panel" style="padding: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Group Staff</h2>
           <div class="table-responsive">
-            <table class="table">
+            <table class="modern-table">
               <thead>
                 <tr>
                   <th>Staff Name</th>
@@ -477,36 +397,35 @@
 
       <!-- Teams -->
       <div id="player-teams" class="dashboard-section">
-        <div class="card">
-          <h3>My Teams</h3>
-          <div class="card-grid" id="playerTeamsContainer"></div>
+        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">My Teams</h2>
+          <div class="dashboard-grid" id="playerTeamsContainer"></div>
         </div>
 
-        <div class="card">
-          <h3>Team Events & Availability</h3>
-          <div id="teamEventsContainer"></div>
+        <div class="glass-panel" style="padding: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Team Events & Availability</h2>
+          <div id="teamEventsContainer" class="activity-card-list"></div>
         </div>
       </div>
 
       <!-- Polls & Voting -->
       <div id="player-polls" class="dashboard-section">
-        <div class="card" style="padding: 0; overflow: hidden; height: 85vh;">
+        <div class="glass-panel" style="padding: 0; overflow: hidden; height: 85vh;">
           <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
         </div>
       </div>
 
       <!-- Subscriptions -->
       <div id="player-subscriptions" class="dashboard-section">
-        <div class="card">
-          <h3>My Subscription</h3>
+        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">My Subscription</h2>
           <div id="currentPlanInfo" style="margin-bottom: 2rem;"></div>
-
           <div class="subscription-benefits"></div>
         </div>
 
-        <div class="card">
-          <h3>Change Subscription Plan</h3>
-          <div id="planAssignRow" class="search-filters" style="align-items:flex-end">
+        <div class="glass-panel" style="padding: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Change Subscription Plan</h2>
+          <div id="planAssignRow" class="dashboard-grid" style="align-items: flex-end;">
             <div class="form-group">
               <label for="planSelector">Choose Plan</label>
               <select id="planSelector"></select>
@@ -518,35 +437,37 @@
             <button class="btn btn-primary" id="assignPlanBtn">Update Subscription</button>
           </div>
         </div>
-
-
       </div>
 
       <!-- Payments -->
       <div id="player-payments" class="dashboard-section">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span class="stat-number" id="totalDue">£0</span>
-            <span class="stat-label">Total Due</span>
+        <div class="dashboard-card-strip">
+          <div class="dashboard-card-strip-item">
+            <div class="dashboard-card-strip-label">Total Due</div>
+            <div class="dashboard-card-strip-value" id="totalDue" style="color: var(--accent-red);">£0</div>
+            <div class="dashboard-card-strip-meta">Outstanding balance</div>
           </div>
-          <div class="stat-card">
-            <span class="stat-number" id="nextPayment">£0</span>
-            <span class="stat-label">Next Payment</span>
+          <div class="dashboard-card-strip-item">
+            <div class="dashboard-card-strip-label">Next Payment</div>
+            <div class="dashboard-card-strip-value" id="nextPayment">£0</div>
+            <div class="dashboard-card-strip-meta">Due by end of month</div>
           </div>
-          <div class="stat-card">
-            <span class="stat-number" id="paymentStatus">Up to Date</span>
-            <span class="stat-label">Status</span>
+          <div class="dashboard-card-strip-item">
+            <div class="dashboard-card-strip-label">Status</div>
+            <div class="dashboard-card-strip-value" id="paymentStatus" style="font-size: 1.5rem;">Up to Date</div>
+            <div class="dashboard-card-strip-meta">Financial standing</div>
           </div>
-          <div class="stat-card">
-            <span class="stat-number" id="totalPaid">£0</span>
-            <span class="stat-label">Total Paid</span>
+          <div class="dashboard-card-strip-item">
+            <div class="dashboard-card-strip-label">Total Paid</div>
+            <div class="dashboard-card-strip-value" id="totalPaid" style="color: #4ade80;">£0</div>
+            <div class="dashboard-card-strip-meta">Lifetime contribution</div>
           </div>
         </div>
 
-        <div class="card">
-          <h3>Payment History</h3>
+        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Payment History</h2>
           <div class="table-responsive">
-            <table class="table">
+            <table class="modern-table">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -561,9 +482,9 @@
           </div>
         </div>
 
-        <div class="card">
-          <h3>Outstanding Payments</h3>
-          <div id="outstandingPayments"></div>
+        <div class="glass-panel" style="padding: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Outstanding Payments</h2>
+          <div id="outstandingPayments" class="activity-card-list"></div>
         </div>
       </div>
 

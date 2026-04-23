@@ -3,12 +3,19 @@
    ============================================================================ */
 
 :root {
-    --nav-height: 64px;
-    --sidebar-width: 280px; /* Slightly narrower for better mobile density */
-    --glass-bg: rgba(10, 10, 12, 0.92);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --accent-glow: rgba(220, 38, 38, 0.5);
-    --primary: #dc2626; /* Brand Red */
+    --nav-height: 72px;
+    --nav-height-mobile: 60px;
+    --sidebar-width: 280px;
+    
+    /* Inherit from global but provide fallbacks */
+    --nav-glass: hsla(240, 10%, 4%, 0.85);
+    --nav-border: hsla(0, 0%, 100%, 0.08);
+}
+
+/* Base Mobile Height Overrides */
+@media (max-width: 991px) {
+    .pro-header, header.header, .header { height: var(--nav-height-mobile) !important; }
+    .pro-bottom-nav { height: var(--nav-height-mobile) !important; }
 }
 
 /* Strong mobile overrides (ensure density changes apply) */
