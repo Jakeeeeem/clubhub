@@ -9,9 +9,9 @@ export const BottomNav = ({ items = [] }) => {
         <nav class="bottom-nav">
             <div class="container" style="display: flex; justify-content: space-around; align-items: center; height: 100%;">
                 ${items.map(item => `
-                    <a href="#" 
+                    <a href="?page=${item.id}" 
                        class="nav-item ${item.active ? 'active' : ''}" 
-                       onclick="navigateTo('${item.id}')"
+                       onclick="event.preventDefault(); navigateTo('${item.id}')"
                        style="display: flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit; gap: 4px; padding: 10px;"
                     >
                         <span class="nav-icon">${item.icon}</span>

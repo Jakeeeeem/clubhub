@@ -14,33 +14,33 @@ const getNavItems = () => {
     
     if (role === 'admin') {
         return [
-            { label: 'Overview', icon: '📊', id: 'home', active: true },
-            { label: 'Groups', icon: '🏢', id: 'groups' },
-            { label: 'Approvals', icon: '✅', id: 'approvals' },
-            { label: 'Finance', icon: '💰', id: 'finance' },
-            { label: 'System', icon: '⚙️', id: 'settings' }
+            { label: 'Overview', icon: '📊', href: 'admin-dashboard.html', id: 'home', active: true },
+            { label: 'Groups', icon: '🏢', href: 'groups.html', id: 'groups' },
+            { label: 'Approvals', icon: '✅', href: 'approvals.html', id: 'approvals' },
+            { label: 'Finance', icon: '💰', href: 'finance.html', id: 'finance' },
+            { label: 'System', icon: '⚙️', href: 'settings.html', id: 'settings' }
         ];
     }
     
     if (role === 'coach') {
         return [
-            { label: 'Overview', icon: '🏠', id: 'home', active: true },
-            { label: 'Squad', icon: '👥', id: 'groups' },
-            { label: 'Tactics', icon: '📋', id: 'tactics' },
-            { label: 'Training', icon: '⚽', id: 'events' },
-            { label: 'Chat', icon: '💬', id: 'chat' },
-            { label: 'Profile', icon: '👤', id: 'profile' }
+            { label: 'Overview', icon: '🏠', href: 'coach-dashboard.html', id: 'home', active: true },
+            { label: 'Squad', icon: '👥', href: 'groups.html', id: 'groups' },
+            { label: 'Tactics', icon: '📋', href: 'tactics.html', id: 'tactics' },
+            { label: 'Training', icon: '⚽', href: 'events.html', id: 'events' },
+            { label: 'Chat', icon: '💬', href: 'messages.html', id: 'chat' },
+            { label: 'Profile', icon: '👤', href: 'profile.html', id: 'profile' }
         ];
     }
     
     // Default: Player
     return [
-        { label: 'Overview', icon: '🏠', id: 'home', active: true },
-        { label: 'My Groups', icon: '🛡️', id: 'groups' },
-        { label: 'Sessions', icon: '📅', id: 'events' },
-        { label: 'Training', icon: '⚡', id: 'training' },
-        { label: 'Payments', icon: '💳', id: 'profile' },
-        { label: 'My Profile', icon: '👤', id: 'profile' }
+        { label: 'Overview', icon: '🏠', href: 'player-dashboard.html', id: 'home', active: true },
+        { label: 'My Groups', icon: '🛡️', href: 'groups.html', id: 'groups' },
+        { label: 'Sessions', icon: '📅', href: 'events.html', id: 'events' },
+        { label: 'Training', icon: '⚡', href: 'training.html', id: 'training' },
+        { label: 'Payments', icon: '💳', href: 'finance.html', id: 'profile' },
+        { label: 'My Profile', icon: '👤', href: 'profile.html', id: 'profile' }
     ];
 };
 
@@ -62,7 +62,14 @@ const render = (pageContent) => {
 };
 
 // Simple Router
-window.navigateTo = (pageId) => {
+window.navigateTo = (pageId, fromUrl = false) => {
+    // Update URL if not triggered by popstate/load
+    if (!fromUrl) {
+        const url = new URL(window.location);
+        url.searchParams.set('page', pageId);
+        window.history.pushState({}, '', url);
+    }
+
     // Update active state for main nav items
     navItems.forEach(item => item.active = item.id === pageId);
     
@@ -73,7 +80,9 @@ window.navigateTo = (pageId) => {
     }
 
     if (pageId === 'home' || pageId === 'dashboard') {
-        navItems.find(i => i.id === 'home').active = true;
+        const homeItem = navItems.find(i => i.id === 'home');
+        if (homeItem) homeItem.active = true;
+        
         if (window.currentRole === 'coach') {
             render(CoachDashboard());
         } else if (window.currentRole === 'admin') {
@@ -144,5 +153,14 @@ window.switchRole = (role) => {
 
 // Initial render
 document.addEventListener('DOMContentLoaded', () => {
-    window.navigateTo('login');
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page') || 'login';
+    window.navigateTo(page, true);
 });
+
+// Handle browser back/forward
+window.onpopstate = () => {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page') || 'home';
+    window.navigateTo(page, true);
+};

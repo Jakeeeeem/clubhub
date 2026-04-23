@@ -13,9 +13,9 @@ export const Sidebar = ({ items = [] }) => {
             
             <nav class="sidebar-nav">
                 ${items.map(item => `
-                    <a href="#" 
+                    <a href="?page=${item.id}" 
                        class="sidebar-item ${item.active ? 'active' : ''}" 
-                       onclick="navigateTo('${item.id}')"
+                       onclick="event.preventDefault(); navigateTo('${item.id}')"
                     >
                         <span class="sidebar-icon">${item.icon}</span>
                         <span class="sidebar-label">${item.label}</span>
