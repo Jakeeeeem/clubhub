@@ -396,7 +396,7 @@
       </div>
 
       <!-- Teams -->
-      <div id="player-teams" class="dashboard-section">
+      <div id="player-teams" class="dashboard-section active" style="display:block;">
         <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
           <h2 class="neon-text" style="margin-bottom: 1.5rem;">My Teams</h2>
           <div class="dashboard-grid" id="playerTeamsContainer"></div>
@@ -1271,7 +1271,7 @@
   </script>
 
   <!-- ═══════ TRAINING LIBRARY SECTION ═══════ -->
-  <div id="player-training-manager" class="dashboard-section active" style="display:block;>
+  <div id="player-training-manager" class="dashboard-section active" style="display:block;">
     <div style="max-width:900px;">
       <!-- Header -->
       <div style="margin-bottom:2rem;">
@@ -1398,7 +1398,17 @@
     // Wire messenger section to shared SquadMessenger
     let _playerMessengerMounted = false;
     const _origShowPlayerSection = typeof showPlayerSection === 'function' ? showPlayerSection : null;
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize player dashboard
+      if (typeof initializePlayerDashboard === 'function') {
+        await initializePlayerDashboard();
+      }
+
+      // Explicitly show teams/schedule section
+      if (typeof showPlayerSection === 'function') {
+        showPlayerSection('teams');
+      }
+
       // Intercept section switching at the navigation layer
       if (window.UnifiedNav && window.UnifiedNav.onSectionChange) {
         const _orig = window.UnifiedNav.onSectionChange;

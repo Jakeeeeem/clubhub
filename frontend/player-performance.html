@@ -98,7 +98,7 @@
         </div>
 
         <!-- Family Section -->
-        <div id="player-family" class="dashboard-section">
+        <div id="player-family" class="dashboard-section active" style="display:block;">
           <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <div>
               <h2 class="neon-text">My Family</h2>
@@ -1398,7 +1398,17 @@
     // Wire messenger section to shared SquadMessenger
     let _playerMessengerMounted = false;
     const _origShowPlayerSection = typeof showPlayerSection === 'function' ? showPlayerSection : null;
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize player dashboard
+      if (typeof initializePlayerDashboard === 'function') {
+        await initializePlayerDashboard();
+      }
+
+      // Explicitly show family/performance section
+      if (typeof showPlayerSection === 'function') {
+        showPlayerSection('family');
+      }
+
       // Intercept section switching at the navigation layer
       if (window.UnifiedNav && window.UnifiedNav.onSectionChange) {
         const _orig = window.UnifiedNav.onSectionChange;

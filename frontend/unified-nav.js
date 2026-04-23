@@ -34,11 +34,12 @@ window.handleNavClick = function(e, page, section) {
     
     console.log(`🔗 NavClick: Target=${page} Section=${section} Current=${currentPath}`);
 
-    // If target page is current page, try section switching for a smooth experience
-    if (currentPath.includes(page.toLowerCase()) || 
-        (page === 'admin-dashboard.html' && currentPath.includes('admin')) ||
-        (page === 'player-dashboard.html' && currentPath.includes('player'))) {
-        
+    // Get current filename
+    const currentFile = currentPath.split('/').pop() || 'index.html';
+    const targetFile = page.toLowerCase();
+
+    // Only intercept if we are already on the target page
+    if (currentFile === targetFile) {
         const showFn = window.showSection || window.showPlayerSection || window.showCoachSection || window.showScoutSection;
         if (typeof showFn === 'function' && section) {
             e.preventDefault();

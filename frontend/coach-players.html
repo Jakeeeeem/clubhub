@@ -264,7 +264,7 @@
             </div>
 
             <!-- Teams Section -->
-            <div id="coach-teams" class="dashboard-section" style="display:none; padding:2rem;">
+            <div id="coach-teams" class="dashboard-section active" style="display:block; padding:2rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
                     <h2 class="neon-text">My Teams</h2>
                     <button class="btn btn-primary" onclick="openModal('createTeamModal')">+ Create Team</button>
@@ -651,15 +651,9 @@
                 await initializeCoachDashboard();
             }
 
-            // Route hash
-            const hash = window.location.hash;
-            if (hash) {
-                if (hash.startsWith('#coach-')) {
-                    const section = hash.replace('#coach-', '');
-                    if (typeof showCoachSection === 'function') {
-                        showCoachSection(section);
-                    }
-                }
+            // Show players section explicitly
+            if (typeof showCoachSection === 'function') {
+                showCoachSection('players');
             }
         });
 </body>

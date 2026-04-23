@@ -651,15 +651,9 @@
                 await initializeCoachDashboard();
             }
 
-            // Route hash
-            const hash = window.location.hash;
-            if (hash) {
-                if (hash.startsWith('#coach-')) {
-                    const section = hash.replace('#coach-', '');
-                    if (typeof showCoachSection === 'function') {
-                        showCoachSection(section);
-                    }
-                }
+            // Show teams section explicitly
+            if (typeof showCoachSection === 'function') {
+                showCoachSection('teams');
             }
         });
 </body>

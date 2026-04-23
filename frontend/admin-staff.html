@@ -309,11 +309,22 @@
 
             <!-- Staff Section -->
             <div id="staff" class="dashboard-section active" style="display:block; padding:1.5rem;">
-                <div class="section-title">👔 Staff Management</div>
-                <div class="glass-card" style="padding:1.5rem; margin-top:1rem; text-align:center; color:var(--text-muted);">
-                    <h3 style="margin-bottom:0.75rem;">Staff Overview</h3>
-                    <p>Manage coaches, administrators, and support staff across your group.</p>
-                    <button class="btn btn-secondary" onclick="showNotification('Staff management will be available soon.', 'info')">Learn More</button>
+                <div id="staffListContainer" class="glass-card" style="padding:1.5rem; margin-top:1rem;">
+                    <div class="table-responsive">
+                        <table style="width:100%; text-align:left; border-collapse:collapse;">
+                            <thead>
+                                <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
+                                    <th style="padding:0.75rem 0;">Name</th>
+                                    <th style="padding:0.75rem 0;">Role</th>
+                                    <th style="padding:0.75rem 0;">Contact</th>
+                                    <th style="padding:0.75rem 0; text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffTableBody" style="font-size:0.9rem;">
+                                <tr><td colspan="4" style="padding:2rem; text-align:center; color:var(--text-muted);">Loading staff...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -596,6 +607,7 @@
 
             // Load initial data
             loadDashboardStats();
+            loadStaff();
             loadTeams();
             loadAvailableCoaches();
             loadAvailableForms();
@@ -603,6 +615,35 @@
             // default tab
             const tp = document.getElementById('tabPlatform'); if (tp) tp.classList.add('active');
         });
+
+        async function loadStaff() {
+            const tbody = document.getElementById('staffTableBody');
+            if (!tbody) return;
+
+            try {
+                const data = await apiService.getAdminDashboardData();
+                const staff = data.staff || [];
+                
+                if (staff.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; color:var(--text-muted);">No staff members found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = staff.map(s => `
+                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                        <td data-label="Name" style="padding:1rem 0;">${s.first_name} ${s.last_name}</td>
+                        <td data-label="Role" style="padding:1rem 0;">${s.role || 'Staff'}</td>
+                        <td data-label="Contact" style="padding:1rem 0;">${s.email || 'N/A'}</td>
+                        <td data-label="Actions" style="padding:1rem 0; text-align:right;">
+                            <button class="btn btn-text btn-small" onclick="showNotification('Staff details coming soon', 'info')">Edit</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error("Failed to load staff:", e);
+                tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; color:var(--accent-red);">Failed to load staff.</td></tr>';
+            }
+        }
 
         async function loadDashboardStats() {
             if (typeof apiService === 'undefined') return;

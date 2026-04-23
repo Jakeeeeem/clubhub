@@ -1398,7 +1398,17 @@
     // Wire messenger section to shared SquadMessenger
     let _playerMessengerMounted = false;
     const _origShowPlayerSection = typeof showPlayerSection === 'function' ? showPlayerSection : null;
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize player dashboard logic
+      if (typeof initializePlayerDashboard === 'function') {
+        await initializePlayerDashboard();
+      }
+
+      // Show overview by default
+      if (typeof showPlayerSection === 'function') {
+        showPlayerSection('overview');
+      }
+
       // Intercept section switching at the navigation layer
       if (window.UnifiedNav && window.UnifiedNav.onSectionChange) {
         const _orig = window.UnifiedNav.onSectionChange;

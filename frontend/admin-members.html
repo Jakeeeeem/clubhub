@@ -169,7 +169,7 @@
             </div>
 
             <!-- Dashboard Sections -->
-            <div id="overview" class="dashboard-section">
+            <div id="overview" class="dashboard-section" style="display:none;">
                 <div class="stats-row"
                     style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
                     <div class="stat-card" onclick="window.location.href='admin-members.html'" style="cursor: pointer;">
@@ -596,6 +596,7 @@
 
             // Load initial data
             loadDashboardStats();
+            loadMembers();
             loadTeams();
             loadAvailableCoaches();
             loadAvailableForms();
@@ -603,6 +604,39 @@
             // default tab
             const tp = document.getElementById('tabPlatform'); if (tp) tp.classList.add('active');
         });
+
+        async function loadMembers() {
+            const container = document.getElementById('membersListContainer');
+            const tbody = container ? container.querySelector('tbody') : null;
+            if (!tbody) return;
+
+            try {
+                const data = await apiService.getAdminDashboardData();
+                const members = data.players || [];
+                
+                if (members.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = members.map(m => `
+                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                        <td data-label="Name" style="padding:1rem 0;">${m.first_name} ${m.last_name}</td>
+                        <td data-label="Role" style="padding:1rem 0;">${m.role || 'Member'}</td>
+                        <td data-label="Squad" style="padding:1rem 0;">${m.team_name || 'N/A'}</td>
+                        <td data-label="Status" style="padding:1rem 0;">
+                            <span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
+                        </td>
+                        <td data-label="Actions" style="padding:1rem 0; text-align:right;">
+                            <button class="btn btn-text btn-small" onclick="showNotification('Member details coming soon', 'info')">View</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error("Failed to load members:", e);
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--accent-red);">Failed to load members.</td></tr>';
+            }
+        }
 
         async function loadDashboardStats() {
             if (typeof apiService === 'undefined') return;

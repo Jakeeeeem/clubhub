@@ -440,7 +440,7 @@
       </div>
 
       <!-- Payments -->
-      <div id="player-payments" class="dashboard-section active" style="display:block;>
+      <div id="player-payments" class="dashboard-section active" style="display:block;">
         <div class="dashboard-card-strip">
           <div class="dashboard-card-strip-item">
             <div class="dashboard-card-strip-label">Total Due</div>
@@ -1398,7 +1398,17 @@
     // Wire messenger section to shared SquadMessenger
     let _playerMessengerMounted = false;
     const _origShowPlayerSection = typeof showPlayerSection === 'function' ? showPlayerSection : null;
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize player dashboard
+      if (typeof initializePlayerDashboard === 'function') {
+        await initializePlayerDashboard();
+      }
+
+      // Explicitly show payments section
+      if (typeof showPlayerSection === 'function') {
+        showPlayerSection('payments');
+      }
+
       // Intercept section switching at the navigation layer
       if (window.UnifiedNav && window.UnifiedNav.onSectionChange) {
         const _orig = window.UnifiedNav.onSectionChange;

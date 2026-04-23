@@ -12,11 +12,11 @@ function clearBoard() {
 }
 
 async function initializeCoachDashboard() {
-  console.log("ðŸš€ Initializing Coach Dashboard...");
+  console.log("🚀 Initializing Coach Dashboard...");
 
   // Ensure we have dashboard data loaded into AppState
   if (!AppState.staff || AppState.staff.length === 0) {
-    console.log("ðŸ“¡ Fetching group data for Coach...");
+    console.log("📡 Fetching group data for Coach...");
     try {
       const activeClubId =
         AppState.currentUser?.clubId ||
@@ -30,17 +30,16 @@ async function initializeCoachDashboard() {
         AppState.staff = dashboardData.staff || [];
         AppState.events = dashboardData.events || [];
         AppState.teams = dashboardData.teams || [];
-        AppState.payments = dashboardData.payments || [];
         AppState.statistics =
           dashboardData.stats || dashboardData.statistics || {};
-        console.log("âœ… Data loaded into AppState:", {
+        console.log("✅ Data loaded into AppState:", {
           staff: AppState.staff.length,
           teams: AppState.teams.length,
           players: AppState.players.length,
         });
       }
     } catch (error) {
-      console.error("âŒ Failed to fetch coach dashboard dependencies:", error);
+      console.error("❌ Failed to fetch coach dashboard dependencies:", error);
     }
   }
 
@@ -49,6 +48,9 @@ async function initializeCoachDashboard() {
   setupCoachEventListeners();
   initializeTacticalBoard();
   loadCoachPlayers();
+  loadCoachTeams();
+  loadCoachEvents();
+  loadCoachTournaments();
 
   // Also load recent matches/upcoming if functions exist
   if (typeof loadRecentMatches === "function") loadRecentMatches();
@@ -208,7 +210,7 @@ async function saveCoachProfile() {
 }
 
 async function loadCoachPlayers() {
-  const container = document.getElementById("coach-players-list");
+  const container = document.getElementById("coach-players-list") || document.getElementById("coachPlayersTableBody");
   const tacticalPinsContainer = document.getElementById("availablePlayerPins");
   
   if (!container && !tacticalPinsContainer) return;
@@ -218,16 +220,40 @@ async function loadCoachPlayers() {
     
     // 1. Populate squad list
     if (container) {
-      container.innerHTML = players.map(p => `
-        <div class="player-row">
-          <div class="player-av">${(p.first_name || 'P').charAt(0)}</div>
-          <div style="flex:1;">
-            <div style="font-weight:600;">${p.first_name} ${p.last_name}</div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">${p.position || 'Unknown'}</div>
+      if (container.tagName === 'TBODY') {
+        container.innerHTML = players.map(p => `
+          <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:1rem 0;">
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div class="player-av">${(p.first_name || 'P').charAt(0)}</div>
+                <span>${p.first_name} ${p.last_name}</span>
+              </div>
+            </td>
+            <td style="padding:1rem 0;">${p.team_name || 'Main Squad'}</td>
+            <td style="padding:1rem 0;">${p.position || 'Forward'}</td>
+            <td style="padding:1rem 0;">${p.age || '16'}</td>
+            <td style="padding:1rem 0;">
+              <div style="width:100%; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
+                <div style="width:85%; height:100%; background:#4ade80;"></div>
+              </div>
+            </td>
+            <td style="padding:1rem 0; text-align:right;">
+              <button class="btn btn-text btn-small" onclick="viewPlayerProfile('${p.id}')">View</button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        container.innerHTML = players.map(p => `
+          <div class="player-row">
+            <div class="player-av">${(p.first_name || 'P').charAt(0)}</div>
+            <div style="flex:1;">
+              <div style="font-weight:600;">${p.first_name} ${p.last_name}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">${p.position || 'Unknown'}</div>
+            </div>
+            <button class="btn btn-secondary btn-small" onclick="viewPlayerProfile('${p.id}')">View</button>
           </div>
-          <button class="btn btn-secondary btn-small" onclick="viewPlayerProfile('${p.id}')">View</button>
-        </div>
-      `).join('');
+        `).join('');
+      }
     }
 
     // 2. Populate tactical pins
@@ -1730,7 +1756,6 @@ async function loadMessengerConversations() {
 function loadCoachFeed() { console.log("Feed module standby"); }
 function loadCoachDailyPlanner() { console.log("Planner module standby"); }
 function loadCommunityFeed() { console.log("Community feed standby"); }
-function loadCoachTournaments() { console.log("Tournament manager standby"); }
 
 function initializeTacticalBoard() {
   console.log("Tactical Board initializing...");
