@@ -21,7 +21,13 @@ if (typeof ApiService === 'undefined') {
     }
     
     this.isDemo = localStorage.getItem("isDemoSession") === "true";
-    window.UNIFIED_NAV_ENABLED = true; // Signal to other scripts that unified nav is active
+    
+    // Signal to other scripts that unified nav is active (Dashboard pages only)
+    const path = location.pathname.toLowerCase();
+    const isLanding = path.includes('index.html') || path.endsWith('/') || path === '';
+    if (!isLanding) {
+        window.UNIFIED_NAV_ENABLED = true;
+    }
     
     console.log(
       "🌐 Enhanced API Service initialized with baseURL:",
@@ -97,10 +103,13 @@ if (typeof ApiService === 'undefined') {
   }
 
   // Force refresh context (clears cache)
-  async refreshContext() {
-    this.context = null;
-    return await this.getContext();
-  }
+    static render(container) {
+      if (!container) return;
+      if (container.__groupSwitcherInstance) return container.__groupSwitcherInstance;
+      const instance = new GroupSwitcher(container);
+      container.__groupSwitcherInstance = instance;
+      return instance;
+    }
 
   getCurrentOrg() {
     return this.context?.currentGroup || null;
@@ -301,7 +310,7 @@ if (typeof ApiService === 'undefined') {
     }
 
     // --- GROUP SWITCHING ---
-    if (endpoint.includes("/auth/switch-group")) {
+    if (endpoint.includes("/auth/switch-group") || endpoint.includes("/auth/switch")) {
       const body = JSON.parse(options.body || "{}");
       const targetGroupId = body.groupId || "demo-club-id";
       
@@ -2871,10 +2880,6 @@ if (typeof ApiService === 'undefined') {
     return await this.makeRequest(`/listings/${listingId}/applications`);
   }
 
-  async getApplications(listingId) {
-    return await this.makeRequest(`/listings/${listingId}/applications`);
-  }
-
   async updateApplicationStatus(applicationId, status) {
     return await this.makeRequest(`/applications/${applicationId}/status`, {
       method: "PUT",
@@ -2893,10 +2898,6 @@ if (typeof ApiService === 'undefined') {
     return await this.makeRequest(`/applications/${applicationId}/accept`, {
       method: "POST",
     });
-  }
-
-  async getGroupApplications(groupId) {
-    return await this.makeRequest(`/groups/${groupId}/applications`);
   }
 
   // =========================== ADVANCED TEAM MANAGEMENT METHODS ===========================
@@ -2990,9 +2991,13 @@ if (typeof ApiService === 'undefined') {
 
   async switchPrimaryGroup(groupId) {
     try {
-      return await this.makeRequest(`/auth/switch-group/${groupId}`, {
+      const response = await this.makeRequest(`/auth/switch-group/${groupId}`, {
         method: "POST",
       });
+      if (localStorage.getItem("isDemoSession") === "true") {
+          await this.refreshContext();
+      }
+      return response;
     } catch (error) {
       console.error("❌ Failed to switch group:", error);
       throw error;

@@ -1114,8 +1114,51 @@ header.header .nav-container,
     transform: scale(0.92);
 }
 
-#pwa-floating-btn, .pwa-floating-install {
+#pwa-floating-btn, 
+#pwa-install-btn, 
+.pwa-floating-install {
     display: none !important;
+}
+
+/* 📊 Full-Width Tables & Data Grid Polish */
+.table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Ensure actions column doesn't squash and is always reachable */
+table th:last-child, 
+table td:last-child,
+[data-label="Actions"] {
+    min-width: 120px !important;
+    text-align: right !important;
+}
+
+.dashboard-main table, 
+.dashboard-content table,
+.admin-table,
+.table-container table,
+.glass-card table {
+    width: 100% !important;
+    min-width: 600px; /* Force scroll on very narrow containers */
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.dashboard-main .dash-grid,
+.dashboard-content .dash-grid {
+    width: 100% !important;
+    display: grid !important;
+    gap: 1.5rem !important;
+}
+
+@media (max-width: 991px) {
+    .dashboard-main table, 
+    .dashboard-content table {
+        min-width: auto; /* Allow design-system's card-conversion to take over */
+    }
 }
 
 /* Hide PWA floating button when bottom nav is present */

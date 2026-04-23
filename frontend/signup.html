@@ -229,11 +229,31 @@
             }
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 991px) {
+            .signup-container {
+                margin-top: 1rem;
+                padding: 1.25rem;
+            }
 
             .org-type-grid,
-            .toggle-grid {
-                grid-template-columns: 1fr;
+            .toggle-grid,
+            .dashboard-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1rem;
+            }
+
+            .form-group {
+                margin-bottom: 1.25rem;
+            }
+
+            .btn-next, .btn-prev {
+                width: 100% !important;
+                padding: 1rem !important;
+            }
+
+            .step-navigation {
+                flex-direction: column-reverse;
+                gap: 1rem;
             }
         }
     </style>

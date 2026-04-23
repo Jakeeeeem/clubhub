@@ -138,9 +138,13 @@ body.clubhub-unified {
 
 /* --- Mobile Specific Dashboard Adjustments --- */
 @media (max-width: 991px) {
-    .dashboard-grid, .card-grid, .stats-grid {
-        grid-template-columns: 1fr;
+    .dashboard-grid, .card-grid, .stats-grid, .dash-grid, .grid-2, .grid-3 {
+        grid-template-columns: 1fr !important;
         gap: 1.25rem;
+    }
+
+    .glass-card {
+        padding: 1.25rem !important;
     }
 
     .dashboard-card-strip {
@@ -148,7 +152,7 @@ body.clubhub-unified {
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         padding-bottom: 1rem;
-        margin: 0 -1rem 2rem;
+        margin: 0 -1rem 1.5rem;
         padding-left: 1rem;
         padding-right: 1rem;
         scrollbar-width: none;
@@ -159,25 +163,32 @@ body.clubhub-unified {
     }
 
     .dashboard-card-strip-item {
-        flex: 0 0 260px;
+        flex: 0 0 240px;
         scroll-snap-align: center;
     }
 }
 
 /* --- Mobile UX Standardization --- */
 :root {
-    --touch-target: 52px;
+    --touch-target: 48px;
 }
 
 @media (max-width: 991px) {
     /* Fluid Typography */
-    h1 { font-size: clamp(1.75rem, 8vw, 2.5rem) !important; font-weight: 800; line-height: 1.1; }
-    h2 { font-size: clamp(1.5rem, 6vw, 2rem) !important; font-weight: 700; }
-    h3 { font-size: clamp(1.25rem, 5vw, 1.5rem) !important; }
+    h1 { font-size: 1.75rem !important; font-weight: 800; line-height: 1.2; }
+    h2 { font-size: 1.5rem !important; font-weight: 700; }
+    h3 { font-size: 1.25rem !important; }
     
-    /* Touch Targets */
-    .btn, .nav-item, .tab-item, .quick-action-btn, select, input {
+    /* Touch Targets & Padding */
+    .btn, .nav-item, .tab-item, .quick-action-btn, select, input, .form-control {
         min-height: var(--touch-target);
+    }
+
+    .container, .dashboard-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
 
     /* Modern Table to Card Conversion */
@@ -200,14 +211,15 @@ body.clubhub-unified {
     }
 
     .table-responsive td, table.data-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid hsla(0, 0%, 100%, 0.05);
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 0.75rem 0 !important;
+        border-bottom: 1px solid hsla(0, 0%, 100%, 0.05) !important;
+        text-align: right !important;
     }
 
-    .table-responsive td:last-child { border-bottom: none; }
+    .table-responsive td:last-child { border-bottom: none !important; }
 
     .table-responsive td::before, table.data-table td::before {
         content: attr(data-label);
@@ -216,6 +228,8 @@ body.clubhub-unified {
         text-transform: uppercase;
         color: rgba(255, 255, 255, 0.4);
         letter-spacing: 0.5px;
+        margin-right: 1rem;
+        text-align: left;
     }
 }
 

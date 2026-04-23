@@ -1043,17 +1043,13 @@ const UnifiedNav = {
     
     if (!headerContainer) return;
 
-    // Prevent double-rendering
-    if (headerContainer.querySelector("select")) return;
+    // Robust double-render guard: check for both UI elements and instance flag
+    if (headerContainer.querySelector(".group-switcher") || headerContainer.__groupSwitcherInstance) {
+        console.log("♻️ UnifiedNav: Header Switcher already exists, skipping.");
+        return;
+    }
 
     const userRole = this.getUserRole();
-    const isPlayerMode = window.location.href.includes("player-dashboard.html") || 
-                         window.location.pathname.includes("player-");
-
-    // If on a player dashboard, we typically want family switching (kids)
-    // BUT we also want the group switcher if they are a coach/admin elsewhere
-    // Use the unified Group Switcher for all dashboards
-    // It handles both group switching and player profile switching within groups
     console.log("🏢 Rendering Group Switcher in Header (role: " + userRole + ")");
     this.renderGroupSwitcher(headerContainer);
   },
@@ -1876,32 +1872,43 @@ const UnifiedNav = {
     const isMobile = window.innerWidth <= 991;
     if (!isMobile) return;
 
-    // 1. Process all tables to ensure card-mode works
+    // 1. Ensure correct viewport meta is present
+    if (!document.querySelector('meta[name="viewport"]')) {
+        const meta = document.createElement('meta');
+        meta.name = "viewport";
+        meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+        document.head.appendChild(meta);
+    }
+
+    // 2. Process all tables to ensure card-mode works
     this.autoLabelTables();
 
-    // 2. Add padding to main content for mobile bottom nav if it exists
-    const main = document.querySelector("main, .dashboard-container");
+    // 3. Global layout fixes
+    document.body.style.overflowX = "hidden";
+    
+    const main = document.querySelector("main, .dashboard-main, .dashboard-container, #overview, #members");
     if (main) {
-      if (
-        !main.style.paddingBottom ||
-        parseInt(main.style.paddingBottom) < 100
-      ) {
-        main.style.paddingBottom = "100px";
-      }
+      main.style.paddingBottom = "100px";
+      main.style.paddingLeft = "0";
+      main.style.paddingRight = "0";
+      main.style.width = "100%";
+      main.style.maxWidth = "100%";
       main.classList.add("dashboard-main");
     }
 
-    // 3. Fix full-screen height issues on iOS
+    // 4. Force grid stacking if missed by CSS
+    const grids = document.querySelectorAll('.dash-grid, .dashboard-grid, .grid-2, .grid-3');
+    grids.forEach(g => {
+        g.style.display = "grid";
+        g.style.gridTemplateColumns = "1fr";
+        g.style.width = "100%";
+    });
+
+    // 5. Fix full-screen height issues on iOS
     document.documentElement.style.setProperty(
       "--vh",
       `${window.innerHeight * 0.01}px`,
     );
-    window.addEventListener("resize", () => {
-      document.documentElement.style.setProperty(
-        "--vh",
-        `${window.innerHeight * 0.01}px`,
-      );
-    });
   },
 
   updateHeaderState() {

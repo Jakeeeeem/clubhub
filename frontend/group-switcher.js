@@ -27,7 +27,10 @@ if (window.__groupSwitcherDefined) {
 
     static render(container) {
       if (!container) return;
-      return new GroupSwitcher(container);
+      if (container.__groupSwitcherInstance) return container.__groupSwitcherInstance;
+      const instance = new GroupSwitcher(container);
+      container.__groupSwitcherInstance = instance;
+      return instance;
     }
 
     async init() {
@@ -428,6 +431,7 @@ if (window.__groupSwitcherDefined) {
               if (currentUser) currentUser.role = newRole;
               // Also sync clubId for determining active club
               currentUser.clubId = context.currentGroup.id;
+              currentUser.groupId = context.currentGroup.id; // Added for demo sync
 
               localStorage.setItem("currentUser", JSON.stringify(currentUser));
 

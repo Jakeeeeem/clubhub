@@ -66,3 +66,14 @@
 .clubhub-unified:not(.dashboard-view) .pwa-install-wrapper.desktop-only {
   display: none !important;
 }
+/* Mobile Hero Spacing */
+@media (max-width: 991px) {
+  .landing-hero {
+    padding: 8rem 0 4rem !important;
+    min-height: auto;
+  }
+  
+  .hero-title {
+    font-size: 3rem !important;
+  }
+}
