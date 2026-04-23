@@ -3,8 +3,8 @@
 // ─── ICON LIBRARY (Apple SF Symbol-style clean SVGs) ─────────────────────────
 const ICONS = {
   // UI chrome icons
-  menu: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
-  close: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  menu: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
+  close: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
   // Nav icons — each wrapped in a semantic <i> tag for layout consistency
   nav: {
     overview: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></i>`,
@@ -1094,7 +1094,7 @@ const UnifiedNav = {
                 <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:transparent; color:inherit; font-size:1.2rem; padding:0.5rem; margin-right:0.5rem; cursor:pointer;">
                     ←
                 </button>
-                <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
+                <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; margin-right: 0.75rem; cursor: pointer;">
                     ${ICONS.menu}
                 </div>
 
@@ -1119,9 +1119,12 @@ const UnifiedNav = {
                         <span class="badge" id="header-notif-badge" style="display:none">0</span>
                     </div>
 
-                    <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)">
-                        <span class="user-name desktop-only" id="header-user-name">Loading...</span>
-                        <div class="user-avatar-sm" id="header-user-avatar">?</div>
+                    <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <div class="user-details desktop-only" style="text-align: right; margin-right: 0.5rem;" onclick="event.stopPropagation(); window.location.href='player-settings.html'">
+                            <span class="user-name" id="header-user-name" style="display: block; font-weight: 700; font-size: 0.9rem;">Loading...</span>
+                            <span style="display: block; font-size: 0.7rem; opacity: 0.6;">View Profile</span>
+                        </div>
+                        <div class="user-avatar-sm" id="header-user-avatar" onclick="event.stopPropagation(); window.location.href='player-settings.html'">?</div>
                         <i class="fa fa-chevron-down desktop-only" style="font-size: 0.7rem; opacity: 0.5; margin-left: 4px;"></i>
                     </div>
                     <button class="btn btn-secondary btn-small desktop-only" onclick="UnifiedNav.logout()" style="margin-left: 0.5rem;">Logout</button>
