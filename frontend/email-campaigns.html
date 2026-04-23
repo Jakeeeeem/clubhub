@@ -11,11 +11,11 @@
     <link rel="stylesheet" href="group-switcher.css">
 </head>
 
-<body>
-    <!-- Unified navigation injected by `unified-nav.js` -->
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
+    <header class="header"></header>
 
-    <main class="main">
-        <div class="dashboard container dashboard-container">
+    <main class="main dashboard-main">
+        <div class="container dashboard-container">
             <div class="dashboard-header">
                 <div>
                     <h1 class="neon-text">Email Campaigns</h1>
@@ -162,6 +162,8 @@
             }
         }
     </script>
+    <script src="api-service.js"></script>
+    <script src="unified-nav.js"></script>
 </body>
 
 </html>

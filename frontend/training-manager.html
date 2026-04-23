@@ -70,28 +70,16 @@
 </head>
 
 <body>
-    <!-- Unified navigation injected by `unified-nav.js` -->
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
     <header class="header"></header>
 
-    <main class="main">
-        <div class="dashboard container dashboard-container">
+    <main class="main dashboard-main">
+        <div class="container dashboard-container">
             <div class="dashboard-header">
                 <div>
                     <h1 class="neon-text">Training Manager</h1>
                     <p style="color: var(--text-muted);">Manage your talent identified players, groups and bibs.</p>
                 </div>
-            </div>
-
-            <!-- Dashboard Navigation - Injected by UnifiedNav as Sidebar/BottomNav on mobile -->
-            <div class="dashboard-nav desktop-only">
-                <button onclick="window.location.href='admin-dashboard.html'">Overview</button>
-                <button onclick="window.location.href='admin-dashboard.html#members'">Players</button>
-                <button onclick="window.location.href='admin-dashboard.html#teams'">Teams</button>
-                <button onclick="window.location.href='admin-dashboard.html#finances'">Finances</button>
-                <div class="nav-divider"></div>
-                <button onclick="window.location.href='venue-booking.html'" class="btn-special">🏟️ Venues</button>
-                <button onclick="window.location.href='league-management.html'" class="btn-special">🏆 Leagues</button>
-                <button class="btn-special active">🎯 Training</button>
             </div>
 
             <div class="dashboard-content">

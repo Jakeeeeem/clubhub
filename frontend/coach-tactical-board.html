@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach Dashboard — ClubHub</title>
+    <meta name="description" content="ClubHub - The ultimate sports group management platform">
+    <meta name="theme-color" content="#dc4343">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ClubHub">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="design-system.css">
+    <link rel="stylesheet" href="unified-nav.css">
+    <style>
+        .feed-entry { display:flex; gap:1rem; padding:1rem 0; border-bottom:1px solid rgba(255,255,255,0.05); align-items:flex-start; }
+        .feed-entry:last-child { border-bottom:none; }
+        .feed-icon { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+        .feed-meta { flex:1; }
+        .feed-meta strong { display:block; font-size:0.9rem; color:#f1f5f9; margin-bottom:2px; }
+        .feed-meta span { font-size:0.78rem; color:var(--text-muted); }
+        .feed-time { font-size:0.72rem; color:rgba(255,255,255,0.3); white-space:nowrap; }
+        .stat-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:1.5rem; }
+        .stat-card .stat-label { font-size:0.72rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+        .stat-card .stat-number { font-size:2.2rem; font-weight:900; color:#fff; display:block; margin-top:0.25rem; }
+        .stat-card .stat-change { font-size:0.78rem; margin-top:0.25rem; color:#4ade80; }
+        .quick-action-btn { display:flex; align-items:center; gap:0.75rem; width:100%; padding:0.85rem 1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; color:#f1f5f9; font-size:0.9rem; font-weight:600; cursor:pointer; transition:all .2s; text-align:left; }
+        .quick-action-btn:hover { background:rgba(220,38,38,0.08); border-color:rgba(220,38,38,0.3); }
+        .player-row { display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+        .player-row:last-child { border-bottom:none; }
+        .player-av { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; background:rgba(220,38,38,0.15); color:#f87171; }
+        @media(max-width:768px){ .dash-grid { grid-template-columns:1fr !important; } .stats-row { grid-template-columns:1fr 1fr !important; } }
+    </style>
+</head>
+<body>
+    <script>
+        // Auto-enable demo session on localhost for visual tests
+        try {
+            if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
+                localStorage.setItem('isDemoSession', 'true');
+                localStorage.setItem('authToken', 'demo-token');
+                if (!localStorage.getItem('currentUser')) {
+                    localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-coach', first_name: 'Demo', last_name: 'Coach', role: 'coach', account_type: 'coach' }));
+                }
+            }
+        } catch (e) { console.warn('Demo auto-enable failed', e); }
+    </script>
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
+
+    <!-- Unified Navigation will inject the Header and Sidebar automatically -->
+    <header class="header"></header>
+
+    <main class="main dashboard-main">
+        <div class="container dashboard-container">
+
+
+
+            <div id="coach-overview" class="dashboard-section" style="display:none;">
+
+            <!-- Stats -->
+            <div class="stats-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
+                <div class="stat-card" onclick="showCoachSection('players')" style="cursor: pointer;">
+                    <span class="stat-label">Squad Size</span>
+                    <span class="stat-number" id="totalPlayersCount">0</span>
+                    <div class="stat-change">Total Players</div>
+                </div>
+                <div class="stat-card" onclick="showCoachSection('tournament-manager')" style="cursor: pointer;">
+                    <span class="stat-label">Upcoming Sessions</span>
+                    <span class="stat-number" id="upcomingSessionsCount">0</span>
+                    <div class="stat-change" style="color:#60a5fa;">Ready to plan</div>
+                </div>
+                <div class="stat-card" onclick="showCoachSection('teams')" style="cursor: pointer;">
+                    <span class="stat-label">Managed Teams</span>
+                    <span class="stat-number" id="managedTeamsCount">0</span>
+                    <div class="stat-change">Active squads</div>
+                </div>
+                <div class="stat-card" onclick="showCoachSection('players')" style="cursor: pointer;">
+                    <span class="stat-label">Pending Reviews</span>
+                    <span class="stat-number" id="pendingReviewsCount" style="color:#f59e0b;">0</span>
+                    <div class="stat-change" style="color:#f59e0b;">Player feedback due</div>
+                </div>
+            </div>
+
+            <div class="dash-grid" style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;">
+
+                <!-- Left: Feed -->
+                <div>
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                            <span style="font-size:1rem;font-weight:700;color:#fff;">📋 Squad Activity</span>
+                            <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">Live updates</span>
+                        </div>
+                        <div id="coachFeed">
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">✅</div>
+                                <div class="feed-meta">
+                                    <strong>Marcus Thompson confirmed attendance</strong>
+                                    <span>Tuesday training · Under 16s</span>
+                                </div>
+                                <span class="feed-time">5m ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(251,191,36,0.1);color:#fbbf24;">📝</div>
+                                <div class="feed-meta">
+                                    <strong>Player review submitted — Liam Brown</strong>
+                                    <span>Performance rating: 4.2/5 · Good positioning</span>
+                                </div>
+                                <span class="feed-time">32m ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(239,68,68,0.1);color:#f87171;">❌</div>
+                                <div class="feed-meta">
+                                    <strong>Absence reported — Kyle Adams</strong>
+                                    <span>Tuesday training · Family commitment</span>
+                                </div>
+                                <span class="feed-time">1h ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(96,165,250,0.1);color:#60a5fa;">📨</div>
+                                <div class="feed-meta">
+                                    <strong>New player application — Ethan Reid</strong>
+                                    <span>Under 18s · Midfielder · Awaiting review</span>
+                                </div>
+                                <span class="feed-time">2h ago</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(167,139,250,0.1);color:#a78bfa;">🏃</div>
+                                <div class="feed-meta">
+                                    <strong>Training plan updated — Endurance block</strong>
+                                    <span>4 weeks · April–May cycle · 18 drills</span>
+                                </div>
+                                <span class="feed-time">Yesterday</span>
+                            </div>
+                            <div class="feed-entry">
+                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">🏆</div>
+                                <div class="feed-meta">
+                                    <strong>Match result logged — Won 3-1 vs City FC</strong>
+                                    <span>Saturday league · Man of the match: M. Thompson</span>
+                                </div>
+                                <span class="feed-time">3 days ago</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
+                        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                            <span style="font-size:1rem;font-weight:700;color:#fff;">📅 Upcoming Sessions</span>
+                            <button class="btn btn-secondary btn-small" style="margin-left:auto;" onclick="openModal('addEventModal')">Plan Session</button>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                            <div style="padding:0.75rem;background:rgba(255,255,255,0.03);border-radius:10px;border-left:3px solid #dc2626;display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-size:0.85rem;font-weight:600;color:#f1f5f9;">Tuesday Evening Training</div>
+                                    <div style="font-size:0.75rem;color:var(--text-muted);">Tue 1 Apr · 18:00–19:30 · Astro Pitch 2</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#4ade80;font-weight:600;">14 ✓</span>
+                            </div>
+                            <div style="padding:0.75rem;background:rgba(255,255,255,0.03);border-radius:10px;border-left:3px solid #3b82f6;display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-size:0.85rem;font-weight:600;color:#f1f5f9;">Saturday Fixture — Riverside Cup</div>
+                                    <div style="font-size:0.75rem;color:var(--text-muted);">Sat 5 Apr · 10:00 · Riverside Stadium</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#60a5fa;font-weight:600;">18 ✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div style="display:flex;flex-direction:column;gap:1.5rem;">
+                    <!-- Quick Actions -->
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">⚡ Quick Actions</div>
+                        <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                            <button class="quick-action-btn" onclick="openModal('addEventModal')">🏃 Plan Training Session</button>
+                            <button class="quick-action-btn" onclick="showCoachSection('players')">📝 Write Player Review</button>
+                            <button class="quick-action-btn" onclick="showCoachSection('messenger')">📨 Message Squad</button>
+                            <button class="quick-action-btn" onclick="showCoachSection('players')">📊 View Squad Stats</button>
+                            <button class="quick-action-btn">👤 Review Application</button>
+                        </div>
+                    </div>
+
+                    <!-- Squad Summary -->
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">👥 My Squad</div>
+                        <div id="squadList">
+                            <div class="player-row">
+                                <div class="player-av">MT</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">Marcus Thompson</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">Forward</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#4ade80;">✓</span>
+                            </div>
+                            <div class="player-row">
+                                <div class="player-av">LB</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">Liam Brown</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">Midfielder</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#4ade80;">✓</span>
+                            </div>
+                            <div class="player-row">
+                                <div class="player-av">KA</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">Kyle Adams</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">Defender</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#f87171;">✗</span>
+                            </div>
+                            <div class="player-row">
+                                <div class="player-av">JW</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">James Wilson</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">Goalkeeper</div>
+                                </div>
+                                <span style="font-size:0.75rem;color:#4ade80;">✓</span>
+                            </div>
+                            <div style="padding-top:0.75rem;text-align:center;">
+                                <button class="btn btn-secondary btn-small" style="width:100%;">View Full Squad</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Coach Sections -->
+            <!-- Players Section -->
+            <div id="coach-players" class="dashboard-section" style="display:none; padding:2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <h2 class="neon-text">Squad Manager</h2>
+                    <div style="display:flex; gap:1rem;">
+                        <input type="text" id="playerSearchCoach" placeholder="Search players..." class="form-control" style="width:250px;" oninput="filterCoachPlayers()">
+                        <select id="teamFilter" class="form-control" style="width:180px;" onchange="filterCoachPlayers()">
+                            <option value="">All Teams</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="window.location.href='training-manager.html'">Go to Training Manager</button>
+                    </div>
+                </div>
+                
+                <div class="glass-card" style="padding:0;">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Player Name</th>
+                                    <th>Team</th>
+                                    <th>Position</th>
+                                    <th>Age</th>
+                                    <th>Attendance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coachPlayersTableBody">
+                                <!-- Players will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teams Section -->
+            <div id="coach-teams" class="dashboard-section" style="display:none; padding:2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <h2 class="neon-text">My Teams</h2>
+                    <button class="btn btn-primary" onclick="openModal('createTeamModal')">+ Create Team</button>
+                </div>
+                
+                <div id="coachTeamsContainer" class="dash-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1.5rem;">
+                    <!-- Teams will be loaded here -->
+                </div>
+            </div>
+
+            <div id="coach-messenger" class="dashboard-section" style="display:none; padding:1rem;">
+                <!-- Squad Messenger — mounted by squad-messenger.js -->
+                <h2 class="neon-text" style="margin-bottom: 1.5rem;">Squad Messenger</h2>
+                <div id="coach-messenger-mount" class="glass-card" style="min-height: 500px; display: flex; align-items: center; justify-content: center;">
+                    <div class="loader">Loading Messenger...</div>
+                </div>
+            </div>
+
+            <!-- Tournament & Event Manager -->
+            <div id="coach-tournament-manager" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <!-- List View Container -->
+                <div id="coachTournamentListView">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h2 class="neon-text">Tournament & Event Center</h2>
+                        <button class="btn btn-primary" onclick="openModal('addEventModal')">+ Create Event</button>
+                    </div>
+                    
+                    <!-- Tournament Grid -->
+                    <div id="coachTournamentListContainer" class="dash-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.5rem; margin-bottom:2rem;">
+                        <!-- Tournaments from backend load here -->
+                    </div>
+
+                    <!-- Sessions & Events Feed -->
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <h3 class="section-title">📅 Sessions Feed</h3>
+                        <div id="coachEventsListContainer" style="display:flex; flex-direction:column; gap:1rem; margin-top:1rem;">
+                            <!-- Individual events load here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail View Container -->
+                <div id="coachTournamentDetailView" style="display:none;">
+                    <div style="display:flex; align-items:center; gap:1.5rem; margin-bottom:1.5rem;">
+                        <button class="btn btn-secondary btn-small" onclick="closeCoachTournamentDetail()">&larr; Back</button>
+                        <h2 id="coachDetailTournamentName" class="neon-text">Tournament Detail</h2>
+                    </div>
+
+                    <div class="tabs" style="margin-bottom:1.5rem;">
+                        <button class="tab-btn active" id="tab-bracket" onclick="switchCoachTournamentTab(this, 'bracket')">Bracket</button>
+                        <button class="tab-btn" id="tab-fixtures" onclick="switchCoachTournamentTab(this, 'fixtures')">Fixtures</button>
+                        <button class="tab-btn" id="tab-standings" onclick="switchCoachTournamentTab(this, 'standings')">Standings</button>
+                    </div>
+
+                    <div id="coach-tab-bracket" class="tab-content active">
+                        <div id="coachTournamentBracketVisual" style="min-height:400px; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.2); border-radius:12px;">
+                            <!-- Bracket visualizes here -->
+                        </div>
+                    </div>
+                    <div id="coach-tab-fixtures" class="tab-content" style="display:none;">
+                        <div id="coachTournamentFixturesList"></div>
+                    </div>
+                    <div id="coach-tab-standings" class="tab-content" style="display:none;">
+                        <div id="coachTournamentStandingsContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="coach-events" class="dashboard-section" style="display:none; padding:2rem;">
+                <div class="glass-card" style="padding:1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h2 class="neon-text">Event Management</h2>
+                        <button class="btn btn-primary" onclick="openModal('addEventModal')">+ Create Event</button>
+                    </div>
+                    <div id="coachEventsListContainer" style="display:flex; flex-direction:column; gap:1rem;">
+                        <p style="color:var(--text-muted); font-size:0.875rem;">Loading events...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tactical Board Section -->
+            <div id="coach-tactical-board" class="dashboard-section active" style="display:block;">
+                <div class="glass-card" style="padding:1.5rem; height: calc(100vh - 200px); display: flex; flex-direction: column;">
+                    <div class="section-title" style="margin-bottom: 1rem;">
+                        <span>📋 Tactical Board Pro</span>
+                        <div style="margin-left:auto; display:flex; gap:0.5rem;">
+                            <button class="btn btn-secondary btn-small" onclick="TacticalBoard.prevFrame()">◀</button>
+                            <span id="currentFrameLabel" style="font-size:0.8rem; font-weight:700; min-width:60px; text-align:center; padding-top:4px;">Frame 1/1</span>
+                            <button class="btn btn-secondary btn-small" onclick="TacticalBoard.nextFrame()">▶</button>
+                            <button class="btn btn-primary btn-small" onclick="TacticalBoard.addFrame()">+</button>
+                            <button class="btn btn-primary btn-small" id="playAnimationBtn" onclick="TacticalBoard.togglePlayback()">▶ Play</button>
+                            <button class="btn btn-secondary btn-small" onclick="TacticalBoard.shareToFeed()" title="Share to Feed">📤 Share</button>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 80px 1fr 200px; gap:1rem; flex:1; overflow:hidden;">
+                        <!-- Left: Equipment Tray -->
+                        <div class="equipment-tray" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:0.75rem; display:flex; flex-direction:column; gap:1rem; align-items:center;">
+                            <div class="eq-item" draggable="true" data-type="cone" title="Cone" style="font-size:1.5rem; cursor:grab;">🟠</div>
+                            <div class="eq-item" draggable="true" data-type="goal" title="Goal" style="font-size:1.5rem; cursor:grab;">🥅</div>
+                            <div class="eq-item" draggable="true" data-type="hurdle" title="Hurdle" style="font-size:1.5rem; cursor:grab;">🚧</div>
+                            <div class="eq-item" draggable="true" data-type="bib-blue" title="Blue Bib" style="font-size:1.5rem; cursor:grab;">👕</div>
+                            <div class="eq-item" draggable="true" data-type="bib-red" title="Red Bib" style="font-size:1.5rem; cursor:grab;">🔴</div>
+                            <div style="margin-top:auto;">
+                                <button class="btn btn-text btn-small" onclick="TacticalBoard.clearEquipment()" title="Clear Equipment">🗑️</button>
+                            </div>
+                        </div>
+
+                        <!-- Center: Pitch -->
+                        <div id="tacticalPitchContainer" class="pitch-container" style="min-height: 500px;">
+                            <div class="pitch-markings">
+                                <div class="pitch-goal-area top"></div>
+                                <div class="pitch-penalty-spot top"></div>
+                                <div class="pitch-goal-area bottom"></div>
+                                <div class="pitch-penalty-spot bottom"></div>
+                            </div>
+                            <div id="activePitchArea" style="position:absolute; inset:0;">
+                                <!-- Players and equipment will be injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Right: Lineup & Options -->
+                        <div class="tactical-sidebar" style="display:flex; flex-direction:column; gap:1rem;">
+                            <div class="glass-card" style="padding:1rem; flex:1; overflow-y:auto;">
+                                <div style="font-size:0.8rem; font-weight:700; margin-bottom:0.75rem;">Formation</div>
+                                <select id="tacticalFormationSelect" class="form-control btn-small" style="width:100%; margin-bottom:1rem;" onchange="TacticalBoard.setFormation(this.value)">
+                                    <option value="4-3-3">4-3-3 Attack</option>
+                                    <option value="4-4-2">4-4-2 Switch</option>
+                                    <option value="3-5-2">3-5-2 Wing</option>
+                                    <option value="5-3-2">5-3-2 Defensive</option>
+                                </select>
+                                
+                                <div style="font-size:0.8rem; font-weight:700; margin-bottom:0.75rem;">Pins (Drag to Pitch)</div>
+                                <div id="availablePlayerPins" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem;">
+                                    <!-- Player pins here -->
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="TacticalBoard.saveFormation()">Save Scenario</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <nav class="pro-bottom-nav mobile-only">
+        <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
+    </nav>
+
+    <!-- Create Event Modal -->
+    <div id="addEventModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <span class="close" onclick="closeModal('addEventModal')">&times;</span>
+            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create Team Event</h2>
+            <form id="createEventForm" onsubmit="handleCreateEvent(event)">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label>Event Name</label>
+                        <input type="text" name="eventTitle" placeholder="e.g. Tuesday Training" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Event Type</label>
+                        <select name="eventType" required>
+                            <option value="training">Training</option>
+                            <option value="match">Match</option>
+                            <option value="social">Social</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Team</label>
+                    <select name="eventTeamId" id="eventTeamSelect" required>
+                        <!-- Injected via JS -->
+                    </select>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" name="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" name="eventTime" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Recurrence</label>
+                    <select name="recurring">
+                        <option value="none">One-off Event</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="fortnightly">Every 2 Weeks</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Audience</label>
+                    <div style="display:flex; gap:1.5rem; margin-top:0.5rem; background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:10px;">
+                        <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; cursor:pointer;">
+                            <input type="radio" name="target" value="all" checked onchange="togglePlayerSelect(false)"> All Squad
+                        </label>
+                        <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; cursor:pointer;">
+                            <input type="radio" name="target" value="specific" onchange="togglePlayerSelect(true)"> Specific Players
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:1rem;">
+                    <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer; font-size:0.9rem;">
+                        <input type="checkbox" name="notifyPlayers" checked> Notify all invited players immediately
+                    </label>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Event Modal -->
+    <div id="editEventModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <span class="close" onclick="closeModal('editEventModal')">&times;</span>
+            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Edit Event</h2>
+            <form id="editEventForm" onsubmit="handleUpdateEvent(event)">
+                <input type="hidden" name="eventId">
+                <input type="hidden" name="recurrenceId">
+                <div class="form-group">
+                    <label>Event Name</label>
+                    <input type="text" name="eventTitle" required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" name="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" name="eventTime" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" name="location">
+                </div>
+                <div id="seriesOption" class="form-group" style="display:none; background:rgba(220,38,38,0.05); padding:1rem; border-radius:10px; border:1px solid rgba(220,38,38,0.2);">
+                    <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer; color:#f87171;">
+                        <input type="checkbox" name="updateSeries"> Update all future events in this series
+                    </label>
+                    <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; margin-left:1.8rem;">Changes will apply to this and all subsequent recurring dates.</p>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editEventModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manage Roster / Attendance Modal -->
+    <div id="manageRosterModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width:600px; padding: 0; overflow: hidden;">
+            <div style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 class="neon-text" style="font-size:1.3rem; margin:0;" id="rosterModalTitle">Squad Availability</h2>
+                    <p id="rosterModalSub" style="font-size:0.8rem; color:var(--text-muted); margin:0.25rem 0 0 0;">Manage responses and see decline reasons.</p>
+                </div>
+                <span class="close" onclick="closeModal('manageRosterModal')" style="position: static;">&times;</span>
+            </div>
+            
+            <div id="rosterLoading" style="padding: 3rem; text-align: center;">
+                <div class="spinner"></div>
+                <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted);">Fetching responses...</p>
+            </div>
+
+            <div id="rosterListContainer" style="max-height: 450px; overflow-y: auto; display: none;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background: rgba(255,255,255,0.02); position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                            <th style="padding: 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Player</th>
+                            <th style="padding: 1rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Status</th>
+                            <th style="padding: 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Notes / Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rosterListBody">
+                        <!-- Responses injected here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="padding: 1rem; background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between;">
+                <button class="btn btn-secondary btn-small" onclick="nudgeUnresponsive()">🔔 Nudge Pending</button>
+                <button class="btn btn-primary btn-small" onclick="closeModal('manageRosterModal')">Done</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Record Result Modal -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Record Match Result</h2>
+                <button class="close" onclick="closeModal('resultModal')">&times;</button>
+            </div>
+            <form id="resultForm" onsubmit="handleSaveResult(event)">
+                <input type="hidden" id="resultEventId" name="eventId">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+                    <div class="form-group">
+                        <label>Our Score</label>
+                        <input type="number" id="homeScore" name="homeScore" required min="0" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Opponent Score</label>
+                        <input type="number" id="awayScore" name="awayScore" required min="0" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Outcome</label>
+                    <select id="matchOutcome" name="result" required>
+                        <option value="win">Win</option>
+                        <option value="loss">Loss</option>
+                        <option value="draw">Draw</option>
+                        <option value="postponed">Postponed</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Match Notes</label>
+                    <textarea id="matchNotes" name="notes" placeholder="How did the team play? Any key highlights?"></textarea>
+                </div>
+
+                <div id="playerStatsSection">
+                    <h3 style="font-size:1rem; margin:1.5rem 0 0.75rem;">Player Performance</h3>
+                    <div id="playerStatsTable" style="max-height:300px; overflow-y:auto; border:1px solid rgba(255,255,255,0.05); border-radius:8px;">
+                        <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                            <thead style="background:rgba(255,255,255,0.05); position:sticky; top:0;">
+                                <tr>
+                                    <th style="padding:0.75rem; text-align:left;">Player</th>
+                                    <th style="padding:0.75rem; text-align:center;">Rating</th>
+                                    <th style="padding:0.75rem; text-align:center;">Goals</th>
+                                    <th style="padding:0.75rem; text-align:center;">Assists</th>
+                                    <th style="padding:0.75rem; text-align:center;">Cards</th>
+                                    <th style="padding:1rem; text-align:center;">Min</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playerStatsTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('resultModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Save Result</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <nav class="pro-bottom-nav mobile-only">
+        <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
+    </nav>
+
+    <script src="app-state.js"></script>
+    <script src="api-service.js"></script>
+    <script src="dialog-service.js"></script>
+    <script src="enhanced-login-handler.js"></script>
+    <script src="group-switcher.js"></script>
+    <script src="pwa-install.js"></script>
+    <script src="unified-nav.js"></script>
+    <script src="squad-messenger.js"></script>
+    <script src="coach-dashboard.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check auth
+            if (typeof checkAuthStatus === 'function') {
+                const ok = await checkAuthStatus();
+                if (!ok) { window.location.href = 'index.html'; return; }
+            }
+
+            // Initialize coach dashboard logic
+            if (typeof initializeCoachDashboard === 'function') {
+                await initializeCoachDashboard();
+            }
+
+            // Route hash
+            const hash = window.location.hash;
+            if (hash) {
+                if (hash.startsWith('#coach-')) {
+                    const section = hash.replace('#coach-', '');
+                    if (typeof showCoachSection === 'function') {
+                        showCoachSection(section);
+                    }
+                }
+            }
+        });
+</body>
+</html>

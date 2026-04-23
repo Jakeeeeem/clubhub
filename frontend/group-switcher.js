@@ -99,8 +99,13 @@ if (window.__groupSwitcherDefined) {
             // For non-admins, filter based on dashboard type
             const path = window.location.pathname;
             if (
-              path.includes("admin-dashboard.html") ||
-              path.includes("coach-dashboard.html")
+              path.includes("admin-") ||
+              path.includes("coach-") ||
+              path.includes("super-admin-") ||
+              path.includes("tournament-manager.html") ||
+              path.includes("training-manager.html") ||
+              path.includes("form-builder.html") ||
+              path.includes("email-campaigns.html")
             ) {
               groups = groups.filter((group) => {
                 const role = (
@@ -115,6 +120,8 @@ if (window.__groupSwitcherDefined) {
                   "coach",
                   "staff",
                   "assistant_coach",
+                  "platform_admin",
+                  "platform-admin"
                 ].includes(role);
               });
             }

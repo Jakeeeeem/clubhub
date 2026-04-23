@@ -169,7 +169,7 @@
             </div>
 
             <!-- Dashboard Sections -->
-            <div id="overview" class="dashboard-section active">
+            <div id="overview" class="dashboard-section">
                 <div class="stats-row"
                     style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
                     <div class="stat-card" onclick="showSection('members')" style="cursor: pointer;">
@@ -376,7 +376,7 @@
                 </div>
             </div>
 
-            <div id="tactical-board" class="dashboard-section" style="display:none; padding:1.5rem;">
+            <div id="tactical-board" class="dashboard-section active" style="display:block; padding:1.5rem;">
                 <div class="section-title">📋 Tactical Strategy Board</div>
                 <div class="glass-card"
                     style="height:400px; background:rgba(0,0,0,0.2) url('https://w0.peakpx.com/wallpaper/384/261/HD-wallpaper-football-pitch-soccer-field-top-view-soccer-concepts-soccer-background-football.jpg') center/cover; border-radius:12px; position:relative; overflow:hidden;">
@@ -888,7 +888,7 @@
 
                 list.innerHTML = pending.map(s => `
                     <div class="feed-entry" style="align-items:center;">
-                        <div class="feed-icon" style="background:rgba(139,92,246,0.06); color:#8b5cf6;">🛡️</div>
+                        <div class="feed-icon" style="background:rgba(220,38,38,0.06); color:#dc2626;">🛡️</div>
                         <div class="feed-meta">
                             <strong>${s.first_name || s.display_name || ''} ${s.last_name || ''}</strong>
                             <span style="display:block; color:var(--text-muted); font-size:0.85rem;">${s.email || s.phone || ''} · Added: ${new Date(s.created_at).toLocaleString()}</span>

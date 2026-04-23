@@ -169,25 +169,25 @@
             </div>
 
             <!-- Dashboard Sections -->
-            <div id="overview" class="dashboard-section active">
+            <div id="overview" class="dashboard-section">
                 <div class="stats-row"
                     style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                    <div class="stat-card" onclick="showSection('members')" style="cursor: pointer;">
+                    <div class="stat-card" onclick="window.location.href='admin-members.html'" style="cursor: pointer;">
                         <span class="stat-label">Total Members</span>
                         <span class="stat-number" id="totalMembers">47</span>
                         <div class="stat-change">↑ 3 this month</div>
                     </div>
-                    <div class="stat-card" onclick="showSection('finances')" style="cursor: pointer;">
+                    <div class="stat-card" onclick="window.location.href='admin-finances.html'" style="cursor: pointer;">
                         <span class="stat-label">Revenue (30d)</span>
                         <span class="stat-number" id="monthlyRevenue">£3,840</span>
                         <div class="stat-change">↑ 12% vs last month</div>
                     </div>
-                    <div class="stat-card" onclick="showSection('events')" style="cursor: pointer;">
+                    <div class="stat-card" onclick="window.location.href='tournament-manager.html'" style="cursor: pointer;">
                         <span class="stat-label">Active Events</span>
                         <span class="stat-number" id="activeEvents">6</span>
                         <div class="stat-change">2 upcoming this week</div>
                     </div>
-                    <div class="stat-card" onclick="showSection('scout-approvals')" style="cursor: pointer;">
+                    <div class="stat-card" onclick="window.location.href='admin-scout-approvals.html'" style="cursor: pointer;">
                         <span class="stat-label">Pending Scouts</span>
                         <span class="stat-number" id="pendingScouts" style="color:#f59e0b;">3</span>
                         <div class="stat-change" style="color:#f59e0b;">Requires verification</div>
@@ -227,7 +227,7 @@
                         <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
                             <div class="section-title">👥 Recent Members
                                 <button class="btn btn-secondary btn-small" style="margin-left:auto;"
-                                    onclick="showSection('members')">View All</button>
+                                    onclick="window.location.href='admin-members.html'">View All</button>
                             </div>
                             <p style="color:var(--text-muted);font-size:0.875rem;">Loading members list...</p>
                         </div>
@@ -318,7 +318,7 @@
             </div>
 
             <!-- Teams Section -->
-            <div id="teams" class="dashboard-section" style="display:none; padding:1.5rem;">
+            <div id="teams" class="dashboard-section active" style="display:block; padding:1.5rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                     <div class="section-title" style="margin:0;">⚽ Squads & Teams</div>
                     <button class="btn btn-primary" onclick="openModal('createTeamModal')">+ Create Team</button>
@@ -888,7 +888,7 @@
 
                 list.innerHTML = pending.map(s => `
                     <div class="feed-entry" style="align-items:center;">
-                        <div class="feed-icon" style="background:rgba(139,92,246,0.06); color:#8b5cf6;">🛡️</div>
+                        <div class="feed-icon" style="background:rgba(220,38,38,0.06); color:#dc2626;">🛡️</div>
                         <div class="feed-meta">
                             <strong>${s.first_name || s.display_name || ''} ${s.last_name || ''}</strong>
                             <span style="display:block; color:var(--text-muted); font-size:0.85rem;">${s.email || s.phone || ''} · Added: ${new Date(s.created_at).toLocaleString()}</span>
