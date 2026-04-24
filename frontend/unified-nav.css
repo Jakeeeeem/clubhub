@@ -1024,17 +1024,13 @@ header.header .nav-container,
 }
 
 .sidebar-link.active {
-    background: rgba(220, 38, 38, 0.1);
-    color: var(--primary);
-    border: 1px solid rgba(220, 38, 38, 0.2);
-    font-weight: 700;
+    background: var(--primary) !important;
+    color: #fff !important;
     border-radius: 12px;
 }
 
-.sidebar-link.active i {
-    opacity: 1;
-    filter: saturate(1);
-    color: var(--primary);
+.sidebar-link.active i, .sidebar-link.active span {
+    color: #fff !important;
 }
 
 /* --- Bottom Navigation --- */
@@ -1245,64 +1241,89 @@ table td:last-child,
         font-size: 0.9rem !important;
     }
 
-    table td:last-child {
-        border-bottom: 0 !important;
+    .top-headline-tabs {
+        display: block !important;
+        background: rgba(10, 10, 12, 0.9) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 0.75rem 0 !important;
+        position: sticky;
+        top: 56px;
+        z-index: 100;
+        overflow: hidden;
     }
 
-    table td::before {
-        content: attr(data-label);
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.7rem;
-        color: var(--text-muted);
-        text-align: left;
-        margin-right: 1rem;
+    .top-headline-tabs, .dashboard-nav {
+        display: block !important;
+        background: rgba(10, 10, 12, 0.9) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 0.75rem 0 !important;
+        position: sticky !important;
+        top: 56px !important;
+        z-index: 100 !important;
+        overflow: hidden;
     }
 
-    /* Swipeable Headlines (Dashboard Nav) */
-    .dashboard-nav, .top-headline-tabs {
+    .tabs-scroll-container, .dashboard-nav-inner {
         display: flex !important;
+        flex-direction: row !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        scroll-snap-type: x mandatory !important;
+        padding: 0 1rem !important;
         gap: 0.75rem !important;
-        padding: 0.75rem 1rem !important;
-        margin: 0 !important;
-        background: rgba(10, 10, 12, 0.8) !important;
-        backdrop-filter: blur(20px) !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-        scrollbar-width: none !important;
-        position: sticky !important;
-        top: 80px !important;
-        z-index: 1000 !important;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tabs-scroll-container::-webkit-scrollbar, .dashboard-nav-inner::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .headline-tab {
+        flex: 0 0 auto !important;
+        padding: 0.6rem 1.25rem !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        border-radius: 100px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .headline-tab.active {
+        background: var(--primary) !important;
+        color: #fff !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+    }
+
+    .tab-icon {
+        font-size: 1.1rem;
+    }
+
+    .sidebar-burger {
+        width: 48px !important;
+        height: 48px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .sidebar-burger svg {
+        width: 28px !important;
+        height: 28px !important;
     }
 
     .dashboard-nav::-webkit-scrollbar, .top-headline-tabs::-webkit-scrollbar {
         display: none !important;
-    }
-
-    .headline-tab, .dashboard-nav button {
-        flex: 0 0 auto !important;
-        scroll-snap-align: start !important;
-        padding: 0.5rem 1rem !important;
-        font-size: 0.85rem !important;
-        font-weight: 700 !important;
-        white-space: nowrap !important;
-        border-radius: 100px !important;
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        color: rgba(255, 255, 255, 0.6) !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    }
-
-    .headline-tab.active, .dashboard-nav button.active {
-        background: #fff !important;
-        color: #000 !important;
-        transform: scale(1.05);
     }
 
     .tab-icon {

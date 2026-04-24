@@ -272,8 +272,14 @@ if (typeof ApiService === 'undefined') {
         }
       }
 
-      console.log(`🌐 API Request: ${options.method || "GET"} ${url}`);
-      const response = await fetch(url, config);
+      const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      const fullUrl = this.baseURL.endsWith('/api') && cleanEndpoint.startsWith('/api')
+        ? `${this.baseURL.replace(/\/api$/, '')}${cleanEndpoint}`
+        : `${this.baseURL}${cleanEndpoint}`;
+      
+      console.log(`🌐 API Request: ${options.method || "GET"} ${fullUrl}`);
+
+      const response = await fetch(fullUrl, config);
       return await this._handleResponse(response, endpoint, options);
     } catch (error) {
       return this._handleError(error, requestId, endpoint, options);
@@ -348,21 +354,15 @@ if (typeof ApiService === 'undefined') {
     // --- PLAYER FAMILY ---
     if (endpoint.includes("/players/family")) {
       return [
-        {
-          id: "demo-family-1",
-          first_name: "Alex",
-          last_name: "Morgan",
-          relationship: "Self",
-          player_id: "demo-player-id",
-        },
+        { id: "demo-family-1", first_name: "Alex", last_name: "Morgan", relationship: "Self", player_id: "demo-player-id" },
+        { id: "demo-family-2", first_name: "Sam", last_name: "Kerr", relationship: "Child", player_id: "child-1" }
       ];
     }
 
     // --- GROUP LISTS ---
     if (endpoint.includes("/groups") && !endpoint.includes("/platform-admin/groups")) {
       if (method === "POST") return { success: true, id: "new-group" };
-      const fb = this.getAdminDashboardFallback();
-      return fb.groups || [];
+      return this.getAdminDashboardFallback().groups || [];
     }
 
     // --- DASHBOARDS ---
@@ -386,247 +386,45 @@ if (typeof ApiService === 'undefined') {
         const fb = this.getAdminDashboardFallback();
         return { success: true, teams: fb.teams || [] };
     }
-    if (endpoint.includes("/members") || endpoint.includes("/staff")) {
+    if (endpoint.includes("/members") || endpoint.includes("/staff") || (endpoint.includes("/players") && !endpoint.includes("/dashboard"))) {
         const fb = this.getAdminDashboardFallback();
-        return { success: true, players: fb.players || [], staff: fb.staff || [] };
+        // Handle role filtering
+        if (endpoint.includes("role=coach")) return { success: true, coaches: fb.staff.filter(s => s.role.toLowerCase().includes("coach")) };
+        return { success: true, players: fb.players || [], members: fb.players || [], staff: fb.staff || [] };
     }
 
     // --- VENUES & TOURNAMENTS ---
     if (endpoint.includes("/venues")) {
         const fb = this.getAdminDashboardFallback();
-        if (endpoint.includes("/bookings/my")) return fb.bookings || [];
-        if (endpoint.includes("/availability")) {
-            return [
-                { id: "s1", start_time: "09:00", end_time: "10:00", available: true, price: 25 },
-                { id: "s2", start_time: "10:00", end_time: "11:00", available: false, price: 25 },
-                { id: "s3", start_time: "11:00", end_time: "12:00", available: true, price: 25 },
-                { id: "s4", start_time: "18:00", end_time: "19:00", available: true, price: 35 }
-            ];
-        }
-        return fb.pitches || [
-            { id: "pitch1", name: "Main Stadium", type: "Grass", size: "11v11", price: 50, location: "North Campus" },
-            { id: "pitch2", name: "Field A", type: "4G", size: "9v9", price: 35, location: "South Campus" },
-            { id: "pitch3", name: "Indoor Hall", type: "Parquet", size: "5v5", price: 40, location: "Sports Center" }
-        ];
+        return fb.pitches || [];
     }
 
-    if (endpoint.includes("/tournaments")) {
+    if (endpoint.includes("/tournaments") || endpoint.includes("/events")) {
         const fb = this.getAdminDashboardFallback();
-        return fb.tournaments || [];
+        return fb.tournaments || fb.events || [];
     }
 
-    if (endpoint.includes("/events")) {
+    // --- MESSAGES & FEED ---
+    if (endpoint.includes("/messages") || endpoint.includes("/feed") || endpoint.includes("/activity")) {
         const fb = this.getAdminDashboardFallback();
-        return fb.events || [];
+        return { success: true, messages: [], activity: fb.activity || [], feed: fb.feed || [] };
     }
 
-    // --- FEED & ACTIVITY ---
-    if (endpoint.includes("/feed") || endpoint.includes("/activity")) {
-        return {
-            activity: [
-                { id: "a1", type: "user_signup", title: "New Player: Jaylen Okafor", user_email: "jaylen@example.com", timestamp: new Date(Date.now() - 3600000).toISOString() },
-                { id: "a2", type: "payment", title: "Payment Received: £50.00", user_email: "parent@example.com", timestamp: new Date(Date.now() - 7200000).toISOString() },
-                { id: "a3", type: "event", title: "New Event: Summer Camp 2025", user_email: "admin@clubhub.com", timestamp: new Date(Date.now() - 86400000).toISOString() }
-            ],
-            feed: [
-                { id: "f1", author: "ClubHub System", title: "Welcome to ClubHub", content: "Your group is now active and ready to manage members.", date: new Date().toISOString() }
-            ]
-        };
+    // --- PLATFORM ADMIN ---
+    if (endpoint.includes("/platform-admin")) {
+      return { success: true, stats: { total_users: 1242, total_groups: 86 }, groups: [], users: [], verifications: [] };
     }
 
     // --- NOTIFICATIONS ---
     if (endpoint.includes("/notifications")) {
-        return [
-            { id: "n1", title: "New Member Application", message: "Jaylen Okafor has applied to join Under 18s Elite", read: false, created_at: new Date().toISOString() },
-            { id: "n2", title: "Payment Due", message: "Monthly subscription for July is now generated", read: true, created_at: new Date(Date.now() - 86400000).toISOString() }
-        ];
+        return { success: true, notifications: [
+            { id: "n1", title: "Welcome", message: "Thanks for joining ClubHub Demo!", read: false, created_at: new Date().toISOString() }
+        ]};
     }
 
-    // --- STRIPE / FINANCES ---
-    if (endpoint.includes("/payments/stripe/connect/status")) {
-        return { connected: true, payouts_enabled: true, details_submitted: true };
-    }
+    if (endpoint.includes("/api/health") || endpoint.includes("/health")) return { status: "healthy", service: "ClubHub Demo" };
 
-    // --- TEAMS & MEMBERS ---
-    if (endpoint.includes("/teams")) {
-        const fb = this.getAdminDashboardFallback();
-        if (method === "GET") {
-            return { success: true, teams: fb.teams };
-        }
-        return { success: true, message: "Team action successful (Demo)" };
-    }
-    if (endpoint.includes("/members") || endpoint.includes("/players")) {
-        const fb = this.getAdminDashboardFallback();
-        if (method === "GET") {
-            // Check for role filter
-            const urlObj = new URL(endpoint, "http://dummy.com");
-            const role = urlObj.searchParams.get("role");
-            if (role === "coach") return { success: true, coaches: fb.staff.filter(s => s.role.toLowerCase().includes("coach")) };
-            if (role === "staff") return { success: true, staff: fb.staff };
-            
-            return { success: true, players: fb.players, members: fb.players };
-        }
-        return { success: true, message: "Member action successful (Demo)" };
-    }
-
-    // --- PLATFORM ADMIN (SUPER ADMIN) ---
-    if (endpoint.includes("/platform-admin/stats")) {
-      return { stats: { total_users: 1242, total_groups: 86, active_plans: 64, pending_invitations: 12 }, recentSignups: 42 };
-    }
-    if (endpoint.includes("/platform-admin/groups")) {
-      return { 
-        total: 86, page: 1, 
-        groups: [
-          { id: "g1", name: "Elite Performance Academy", sport: "Football", owner_email: "academy@example.com", member_count: 142, created_at: "2023-01-15", status: "Active" },
-          { id: "g2", name: "London Lions FC", sport: "Football", owner_email: "info@londonlions.com", member_count: 88, created_at: "2023-03-22", status: "Active" },
-          { id: "g3", name: "Rising Stars Basketball", sport: "Basketball", owner_email: "coach@risingstars.org", member_count: 56, created_at: "2023-06-10", status: "Active" }
-        ] 
-      };
-    }
-    if (endpoint.includes("/platform-admin/users")) {
-      if (method === "GET") {
-        return { 
-          total: 1242, page: 1, 
-          users: [
-            { id: "u1", first_name: "John", last_name: "Doe", email: "john@example.com", account_type: "group", is_active: true },
-            { id: "u2", first_name: "Sarah", last_name: "Smith", email: "sarah@example.com", account_type: "adult", is_active: true },
-            { id: "u3", first_name: "Admin", last_name: "User", email: "admin@clubhub.com", account_type: "admin", is_active: true }
-          ] 
-        };
-      }
-      return { success: true, message: "Action completed (Demo)" };
-    }
-    if (endpoint.includes("/platform-admin/activity")) {
-      return { activity: [
-        { id: "a1", type: "user_signup", title: "New User: John Doe", user_email: "john@doe.com", timestamp: new Date().toISOString() },
-        { id: "a2", type: "group_created", title: "New Group: Elite Academy", user_email: "admin@elite.com", timestamp: new Date().toISOString() }
-      ]};
-    }
-
-    // --- SCOUTING & SEARCH ---
-    if (endpoint.includes("/scouting/watchlist")) {
-        const fb = this.getAdminDashboardFallback();
-        if (method === "GET") return fb.scouting.watchlist;
-        return { success: true, message: "Watchlist updated (Demo)" };
-    }
-    if (endpoint.includes("/scouting/medical")) {
-        const fb = this.getAdminDashboardFallback();
-        const pId = endpoint.split("/").pop();
-        return fb.scouting.medical[pId] || { allergies: "None", asthma: false };
-    }
-    if (endpoint.includes("/scout/discover") || endpoint.includes("/search/players")) {
-      return { success: true, players: this.getAdminDashboardFallback().players };
-    }
-
-    // --- TOURNAMENTS & EVENTS ---
-    if (endpoint.includes("/tournaments") || endpoint.includes("/events")) {
-      let mockEvents = JSON.parse(localStorage.getItem("demo_mock_events") || "[]");
-      let mockTournaments = JSON.parse(localStorage.getItem("demo_mock_tournaments") || "[]");
-      
-      if (endpoint.includes("/pitches")) {
-          return this.getAdminDashboardFallback().pitches;
-      }
-      if (endpoint.includes("/bracket")) {
-          return {
-              stages: [{ id: "s1", name: "Finals", sequence: 1 }],
-              matches: [
-                  { id: "m1", round_number: 1, home_team_name: "U18 Elite", away_team_name: "Arsenal Youth", home_score: 2, away_score: 1, status: "completed" }
-              ]
-          };
-      }
-      if (endpoint.includes("/matches")) {
-          return [
-              { id: "m1", home_team_name: "U18 Elite", away_team_name: "Arsenal Youth", home_score: 2, away_score: 1, status: "completed", pitch_name: "Main Stadium", start_time: new Date().toISOString() }
-          ];
-      }
-      if (endpoint.includes("/groups")) {
-          if (method === "POST") return { success: true, id: "new-group" };
-          return [
-              { id: "g1", name: "Group A", teams: ["U18 Elite", "Arsenal Youth"] }
-          ];
-      }
-
-      if (method === "POST") {
-        const payload = JSON.parse(options.body || "{}");
-        const newItem = { 
-          id: "demo_" + Date.now(), 
-          ...payload, 
-          created_at: new Date().toISOString() 
-        };
-        
-        if (endpoint.includes("/tournaments")) {
-          mockTournaments.push(newItem);
-          localStorage.setItem("demo_mock_tournaments", JSON.stringify(mockTournaments));
-          return { success: true, message: "Tournament created (Demo)", tournament: newItem };
-        } else {
-          mockEvents.push(newItem);
-          localStorage.setItem("demo_mock_events", JSON.stringify(mockEvents));
-          return { success: true, message: "Event created (Demo)", event: newItem };
-        }
-      }
-      
-      if (method === "GET") {
-        if (endpoint.includes("/tournaments/schedule")) {
-          return { success: true, fixtures: [{ id: "f1", team1: "U18 Elite", team2: "Academy Blues", time: "10:00", pitch: "Pitch 1" }]};
-        }
-        if (endpoint.includes("/tournaments")) {
-          const fallbackTournaments = this.getAdminDashboardFallback().tournaments || [];
-          return [...fallbackTournaments, ...mockTournaments];
-        }
-        const fallbackEvents = this.getAdminDashboardFallback().events || [];
-        return [...fallbackEvents, ...mockEvents];
-      }
-    }
-
-    // --- FORMS & SURVEYS ---
-    if (endpoint.includes("/forms")) {
-      let mockForms = JSON.parse(localStorage.getItem("demo_mock_forms") || "[]");
-      if (method === "POST") {
-        const payload = JSON.parse(options.body || "{}");
-        const newForm = { id: "form_" + Date.now(), ...payload, created_at: new Date().toISOString() };
-        mockForms.push(newForm);
-        localStorage.setItem("demo_mock_forms", JSON.stringify(mockForms));
-        return { success: true, message: "Form created (Demo)", form: newForm };
-      }
-      return [
-        { id: "f1", title: "New Player Registration", description: "Standard induction form", responses: 12 },
-        { id: "f2", title: "Summer Camp Waiver", description: "Legal parent consent form", responses: 45 },
-        ...mockForms
-      ];
-    }
-
-    // --- OTHER FALLBACKS ---
-    if (endpoint.includes("/auth/profile")) return { success: true, profile: { ...user, first_name: user.first_name || "Demo", last_name: user.last_name || "User" }};
-    if (endpoint.includes("/auth/settings")) return { success: true, theme: "dark", emailNotifications: true };
-    if (endpoint.includes("/notifications")) return [{ id: "n1", title: "Welcome", message: "Thanks for joining ClubHub Demo!", is_read: false, created_at: new Date().toISOString() }];
-    if (endpoint.includes("/api/health")) return { status: "healthy", service: "ClubHub Demo" };
-    // --- STRIPE CONNECT ---
-    if (endpoint.includes("/payments/stripe/connect/status")) {
-      return { success: true, connected: true, payouts_enabled: true, details_submitted: true };
-    }
-    if (endpoint.includes("/payments/stripe/connect/onboard")) {
-      return { success: true, url: "https://stripe.com/onboard-demo" };
-    }
-    if (endpoint.includes("/payments/stripe/connect/login-link") || endpoint.includes("/payments/stripe/connect/manage")) {
-      return { success: true, url: "https://dashboard.stripe.com/test/dashboard" };
-    }
-
-    // --- PAYMENTS & PLANS (Demo) ---
-    if (endpoint.includes("/payments/plans")) {
-      return { plans: [ { id: 'demo-plan-1', name: 'Demo Monthly', amount: 2000, interval: 'monthly', description: 'Demo monthly plan' } ] };
-    }
-
-    if (endpoint.includes("/payments/plan/current")) {
-      return { plan: { id: 'demo-plan-1', name: 'Demo Monthly', amount: 2000, interval: 'monthly' } };
-    }
-
-    // --- PLAYERS LIST (Demo) ---
-    if (endpoint.includes("/players") && !endpoint.includes("/players/family") && !endpoint.includes("/players/dashboard")) {
-      const fb = this.getAdminDashboardFallback();
-      return fb.players || [];
-    }
-
-    return null; // Fall through to real fetch if no mock found
+    return null;
   }
 
   async _handleResponse(response, endpoint, options) {
