@@ -56,63 +56,70 @@ body.clubhub-unified {
 
 /* --- Premium Components --- */
 .glass-panel {
-    background: var(--glass-bg);
+    background: linear-gradient(135deg, hsla(0, 0%, 100%, 0.05) 0%, hsla(0, 0%, 100%, 0.02) 100%);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
     box-shadow: var(--glass-shadow);
+    padding: 2rem;
 }
 
 .glass-card {
-    background: hsla(0, 0%, 100%, 0.02);
+    background: linear-gradient(180deg, hsla(0, 0%, 100%, 0.04) 0%, hsla(0, 0%, 100%, 0.01) 100%);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsla(0, 0%, 100%, 0.05);
+    border: 1px solid hsla(0, 0%, 100%, 0.06);
     border-radius: var(--radius-lg);
     padding: 1.5rem;
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
 .glass-card:hover {
-    background: hsla(0, 0%, 100%, 0.04);
-    border-color: hsla(0, 0%, 100%, 0.12);
-    transform: translateY(-6px);
-    box-shadow: 0 20px 40px hsla(0, 0%, 0%, 0.4);
+    background: hsla(0, 0%, 100%, 0.06);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px hsla(0, 0%, 0%, 0.4);
 }
 
 /* --- Dashboard Grids & Layouts --- */
 .dashboard-grid, .card-grid, .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
 .dashboard-card-strip {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1.25rem;
-    margin-bottom: 2rem;
-    overflow-x: visible;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
 }
 
 .dashboard-card-strip-item {
     padding: 1.5rem;
-    border-radius: var(--radius-xl);
-    background: var(--bg-surface);
-    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    background: hsla(0, 0%, 100%, 0.02);
+    border: 1px solid hsla(0, 0%, 100%, 0.06);
     transition: var(--transition-smooth);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    cursor: pointer;
 }
 
 .dashboard-card-strip-item:hover {
     background: hsla(0, 0%, 100%, 0.08);
     transform: translateY(-4px);
+    border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
+}
+
+.dashboard-card-strip-item.active-highlight {
+    background: linear-gradient(135deg, hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1) 0%, hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.03) 100%);
     border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
 }
 
@@ -136,6 +143,100 @@ body.clubhub-unified {
     color: rgba(255, 255, 255, 0.5);
 }
 
+.dashboard-layout-sidebar {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 2rem;
+    align-items: start;
+}
+
+.feed-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.planner-sidebar {
+    position: sticky;
+    top: 100px;
+}
+
+/* --- Premium Tables --- */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    background: hsla(0, 0%, 100%, 0.02);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 2rem;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.data-table th {
+    background: hsla(0, 0%, 100%, 0.03);
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.data-table td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid hsla(0, 0%, 100%, 0.03);
+    vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tr:hover td {
+    background: hsla(0, 0%, 100%, 0.02);
+}
+
+.event-info-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.team-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.event-name-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.event-name {
+    font-weight: 700;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.event-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
 /* --- Mobile Specific Dashboard Adjustments --- */
 @media (max-width: 991px) {
     .dashboard-grid, .card-grid, .stats-grid, .dash-grid, .grid-2, .grid-3 {
@@ -143,8 +244,13 @@ body.clubhub-unified {
         gap: 1.25rem;
     }
 
-    .glass-card {
-        padding: 1.25rem !important;
+    .dashboard-layout-sidebar {
+        grid-template-columns: 1fr !important;
+    }
+
+    .planner-sidebar {
+        position: static;
+        margin-top: 2rem;
     }
 
     .dashboard-card-strip {
@@ -165,6 +271,46 @@ body.clubhub-unified {
     .dashboard-card-strip-item {
         flex: 0 0 240px;
         scroll-snap-align: center;
+    }
+
+    /* Modern Table to Card Conversion */
+    .table-responsive table, table.data-table, table.modern-table {
+        display: block;
+        width: 100%;
+        border: none !important;
+    }
+
+    .table-responsive thead, table.data-table thead { display: none; }
+
+    .table-responsive tr, table.data-table tr {
+        display: block;
+        background: hsla(0, 0%, 100%, 0.02);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive td, table.data-table td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 0.75rem 0 !important;
+        border-bottom: 1px solid hsla(0, 0%, 100%, 0.05) !important;
+        text-align: right !important;
+    }
+
+    .table-responsive td:last-child { border-bottom: none !important; }
+
+    .table-responsive td::before, table.data-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.4);
+        letter-spacing: 0.5px;
+        margin-right: 1rem;
+        text-align: left;
     }
 }
 
@@ -189,47 +335,6 @@ body.clubhub-unified {
         padding-right: 1rem !important;
         width: 100% !important;
         max-width: 100% !important;
-    }
-
-    /* Modern Table to Card Conversion */
-    .table-responsive table, table.data-table, table.modern-table {
-        display: block;
-        width: 100%;
-        border: none !important;
-    }
-
-    .table-responsive thead, table.data-table thead { display: none; }
-
-    .table-responsive tr, table.data-table tr {
-        display: block;
-        background: var(--bg-surface);
-        border: 1px solid var(--glass-border);
-        border-radius: var(--radius-lg);
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    .table-responsive td, table.data-table td {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        padding: 0.75rem 0 !important;
-        border-bottom: 1px solid hsla(0, 0%, 100%, 0.05) !important;
-        text-align: right !important;
-    }
-
-    .table-responsive td:last-child { border-bottom: none !important; }
-
-    .table-responsive td::before, table.data-table td::before {
-        content: attr(data-label);
-        font-weight: 700;
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.4);
-        letter-spacing: 0.5px;
-        margin-right: 1rem;
-        text-align: left;
     }
 }
 

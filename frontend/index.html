@@ -551,6 +551,15 @@
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
+                
+                <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; text-align: center;">
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Quick Demo Access</p>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button type="button" class="btn btn-secondary btn-small" style="flex: 1; border-color: var(--primary); color: #fff;" onclick="quickDemoLogin('admin')">🛡️ Admin</button>
+                        <button type="button" class="btn btn-secondary btn-small" style="flex: 1; border-color: var(--primary); color: #fff;" onclick="quickDemoLogin('player')">👤 Player</button>
+                        <button type="button" class="btn btn-secondary btn-small" style="flex: 1; border-color: var(--primary); color: #fff;" onclick="quickDemoLogin('scout')">🔭 Scout</button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -585,6 +594,18 @@
 
     <script>
         // Simple functions that work with your enhanced login handler
+        function quickDemoLogin(role) {
+            const email = role === 'admin' ? 'demo-admin@clubhub.com' : (role === 'scout' ? 'demo-scout@clubhub.com' : 'demo-player@clubhub.com');
+            const password = 'password123';
+            
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = password;
+            document.getElementById('demoMode').checked = true;
+            
+            // Trigger submit
+            document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+        }
+
         function showSignupOptions() {
             if (typeof showModal === 'function') {
                 showModal('registerModal');
@@ -605,6 +626,15 @@
                 const isMatch = tab.getAttribute('onclick').includes(`'${role}'`);
                 tab.classList.toggle('active', isMatch);
             });
+
+            // Check auth status
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            const isDemo = localStorage.getItem('isDemoSession') === 'true';
+            
+            if (!isDemo && (!user || (user.userType !== 'admin' && user.userType !== 'organization'))) {
+                window.location.href = 'index.html';
+                return;
+            }
 
             // Update feature lists
             const lists = document.querySelectorAll('.role-features');

@@ -262,6 +262,10 @@ const UnifiedNav = {
         name: "Notifications",
         fn: () => isDashboard && this.renderHeaderNotifications(),
       },
+      {
+        name: "FamilySwitcher",
+        fn: () => isLoggedIn && !isLandingPage && this.renderFamilySwitcher(),
+      },
       { name: "EventBinding", fn: () => this.bindEvents() },
     ];
 
@@ -826,7 +830,7 @@ const UnifiedNav = {
             <img src="images/logo.png" alt="Logo" style="height:32px; width:32px; object-fit:contain;">
             <span style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.2rem; color:var(--primary);">ClubHub</span>
           </div>
-          <div id="header-org-switcher" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
+          <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
         </div>
 
         <!-- CENTER: Mode Switcher (Groups vs Player) -->
@@ -841,6 +845,7 @@ const UnifiedNav = {
 
         <!-- RIGHT: Actions -->
         <div class="dash-header-right" id="header-actions-right" style="display:flex; align-items:center; gap:0.75rem; flex-shrink:0;">
+          <div id="header-family-switcher-container" class="desktop-only"></div>
           <div id="stripe-header-btn-container" class="desktop-only"></div>
           <div id="notif-header-btn-container"></div>
           
@@ -860,6 +865,11 @@ const UnifiedNav = {
         </div>
       </div>
     `;
+
+    // CRITICAL: Call renderers immediately after HTML injection to ensure switchers appear
+    this.renderHeaderSwitcher();
+    this.renderFamilySwitcher();
+    this.updateModeUI();
 
     // Inject Stripe button and notifications
     this.renderStripeHeaderButton(
@@ -1020,16 +1030,50 @@ const UnifiedNav = {
     }
   },
 
-  renderFamilySwitcher(container) {
+  renderFamilySwitcher() {
+    const container = document.getElementById("header-family-switcher-container") || document.getElementById("family-switcher-target");
     if (!container) return;
+
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    const name = user.firstName || user.first_name || "Member";
+    const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
+    const activePlayerId = localStorage.getItem("activePlayerId");
+
+    // If no family, just show the user's name (compact mode)
+    if (family.length === 0) {
+        container.innerHTML = "";
+        return;
+    }
+
+    const currentName = activePlayerId 
+        ? (family.find(f => f.id == activePlayerId)?.first_name || "Profile")
+        : (user.firstName || user.first_name || "Main");
+
     container.innerHTML = `
-        <div class="family-switcher-placeholder" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer;" onclick="showPlayerSection('family'); return false;">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800;">${name.charAt(0)}</div>
-            <span style="font-size: 0.85rem; font-weight: 600;">${name}</span>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <div class="family-switcher" style="position: relative;">
+            <button class="family-trigger" onclick="this.nextElementSibling.classList.toggle('open')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; color: white;">
+                <div style="width: 18px; height: 18px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800;">👪</div>
+                <span style="font-size: 0.8rem; font-weight: 600;">${currentName}</span>
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="family-dropdown" style="position: absolute; top: calc(100% + 5px); right: 0; width: 180px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1100; display: none; padding: 0.5rem;">
+                <div style="font-size: 0.7rem; color: var(--text-muted); padding: 0.25rem 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Switch Profile</div>
+                <div class="family-item ${!activePlayerId ? 'active' : ''}" onclick="switchProfile(null)" style="padding: 0.5rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; font-size: 0.85rem; background: ${!activePlayerId ? 'rgba(220,38,38,0.1)' : 'transparent'};">
+                    <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">${(user.firstName || 'U').charAt(0)}</div>
+                    <span>Main Profile</span>
+                </div>
+                ${family.map(f => `
+                    <div class="family-item ${activePlayerId == f.id ? 'active' : ''}" onclick="switchToChildProfile('${f.id}', '${f.club_id || ""}')" style="padding: 0.5rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; font-size: 0.85rem; background: ${activePlayerId == f.id ? 'rgba(220,38,38,0.1)' : 'transparent'};">
+                        <div style="width: 20px; height: 20px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">${(f.first_name || 'F').charAt(0)}</div>
+                        <span>${f.first_name}</span>
+                    </div>
+                `).join('')}
+            </div>
         </div>
+        <style>
+            .family-dropdown.open { display: block !important; }
+            .family-item:hover { background: rgba(255,255,255,0.05) !important; }
+            .family-item.active { border: 1px solid rgba(220,38,38,0.2); }
+        </style>
     `;
   },
 
@@ -1133,6 +1177,7 @@ const UnifiedNav = {
         `;
 
     this.renderHeaderSwitcher();
+    this.renderFamilySwitcher();
     this.updateModeUI();
     if (!isMobile) {
       this.renderTopTabs();

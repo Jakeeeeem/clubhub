@@ -305,14 +305,18 @@ if (typeof ApiService === 'undefined') {
         success: true,
         user: { ...user, is_active: true },
         currentGroup: groups.find(g => g.id === (user.groupId || "demo-club-id")) || groups[0],
-        groups: groups
+        groups: groups,
+        family: [
+          { id: "child-1", first_name: "Alex", last_name: "Morgan", club_id: "demo-club-id", role: "player" },
+          { id: "child-2", first_name: "Sam", last_name: "Kerr", club_id: "demo-coach-org-2", role: "player" }
+        ]
       };
     }
 
     // --- GROUP SWITCHING ---
     if (endpoint.includes("/auth/switch-group") || endpoint.includes("/auth/switch")) {
       const body = JSON.parse(options.body || "{}");
-      const targetGroupId = body.groupId || "demo-club-id";
+      const targetGroupId = body.organizationId || body.groupId || "demo-club-id";
       
       // Demo Role Switching based on target group
       if (targetGroupId === "demo-player-org") {
@@ -2316,7 +2320,7 @@ if (typeof ApiService === 'undefined') {
   async getPlayerDashboardData(playerId = null) {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     try {
-      if (isDemo && !this.baseURL.includes("localhost")) {
+      if (isDemo) {
         console.log(
           "✨ Demo session (Player) detected, using rich fallback data",
         );
@@ -2709,26 +2713,30 @@ if (typeof ApiService === 'undefined') {
         {
           id: "t1",
           name: "Under 18s Elite",
-          coach: "Michael Thompson",
+          coach: { name: "Michael Thompson" },
           coachId: "demo-coach-id",
+          age_group: "U18",
+          position: "Forward"
         },
       ],
       events: [
         {
           id: "e1",
           title: "Summer Talent ID Camp",
-          date: new Date(Date.now() + 86400000 * 7).toISOString(),
+          event_date: new Date(Date.now() + 86400000 * 7).toISOString(),
           location: "Main Stadium",
           type: "camp",
           status: "upcoming",
+          price: 25.0
         },
         {
           id: "e2",
           title: "Elite Training Session",
-          date: new Date(Date.now() + 86400000 * 2).toISOString(),
+          event_date: new Date(Date.now() + 86400000 * 2).toISOString(),
           location: "Field A",
           type: "training",
           status: "upcoming",
+          price: 15.0
         },
       ],
       payments: [
