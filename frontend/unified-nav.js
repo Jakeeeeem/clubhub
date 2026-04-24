@@ -1101,6 +1101,17 @@ const UnifiedNav = {
     if (!container) return;
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const userRole = this.getUserRole();
+    const isPlayer = window.location.href.includes("player-dashboard.html") || userRole === "player";
+
+    // ONLY show family switcher for players/parents
+    if (!isPlayer) {
+      container.innerHTML = "";
+      container.style.display = "none";
+      return;
+    }
+    
+    container.style.display = "flex";
     const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
     const activePlayerId = localStorage.getItem("activePlayerId");
 
@@ -1201,8 +1212,20 @@ const UnifiedNav = {
     // 1. Desktop Header Switcher
     const hContainer = document.getElementById("header-group-switcher-container") || 
                        document.getElementById("header-org-switcher");
-    if (hContainer && !hContainer.__groupSwitcherInstance) {
-        this.renderGroupSwitcher(hContainer);
+    
+    const userRole = this.getUserRole();
+    const isPlayer = window.location.href.includes("player-dashboard.html") || userRole === "player";
+
+    if (hContainer) {
+        if (isPlayer) {
+            // If player page, render family switcher in the header slot instead of group switcher
+            this.renderFamilySwitcher();
+        } else {
+            // If admin/coach, render group switcher
+            if (!hContainer.__groupSwitcherInstance) {
+                this.renderGroupSwitcher(hContainer);
+            }
+        }
     }
 
     // 2. Mobile Sidebar Switcher
@@ -1816,7 +1839,7 @@ const UnifiedNav = {
     }
   },
 
-switchMode(mode) {
+  switchMode(mode) {
     if (mode === "player") {
       window.location.href = "player-dashboard.html";
     } else {
@@ -1846,22 +1869,18 @@ switchMode(mode) {
   },
 
   renderMenu() {
-    const url = window.location.href;
-    const userRole = localStorage.getItem("userType") || "";
-    const isPlayer =
-      url.includes("player-dashboard.html") || userRole === "player";
-    const isSuperAdmin =
-      url.includes("super-admin-dashboard.html") ||
-      userRole === "platform_admin";
-    const isCoach =
-      url.includes("coach-dashboard.html") || userRole === "coach";
-    const isScout =
-      url.includes("scout-dashboard.html") ||
-      url.includes("scouting.html") ||
-      userRole === "scout";
-
     const nav = document.getElementById("sidebar-nav-content");
     if (!nav) return;
+
+    const url = window.location.href;
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
+    
+    const isPlayer = url.includes("player-dashboard.html") || userRole === "player" || userRole === "parent";
+    const isSuperAdmin = url.includes("super-admin-dashboard.html") || userRole === "platform_admin" || userRole === "superadmin";
+    const isCoach = url.includes("coach-dashboard.html") || userRole === "coach" || userRole === "staff";
+    const isScout = url.includes("scout-dashboard.html") || url.includes("scouting.html") || userRole === "scout";
+    const isAdmin = url.includes("admin-dashboard.html") || userRole === "admin" || userRole === "organization" || userRole === "owner" || (!isPlayer && !isSuperAdmin && !isCoach && !isScout);
 
     let menuHtml = "";
     const p = window.location.pathname;
@@ -1917,7 +1936,7 @@ switchMode(mode) {
                 <div class="nav-group-title">Analysis</div>
                 <a href="scout-reports.html" class="sidebar-link ${isActive('scout-reports.html')}">${ICONS.nav.forms}<span>Scout Reports</span></a>
             `;
-    } else {
+    } else if (isAdmin) {
       menuHtml = `
         <div class="nav-group-title"><span>Management</span></div>
         <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('admin-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Dashboard</span></a>
@@ -1937,6 +1956,12 @@ switchMode(mode) {
         <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
         <a href="tournament-manager.html" class="sidebar-link ${isActive('tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
         <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
+      `;
+    } else {
+      // Fallback for unknown role
+      menuHtml = `
+        <div class="nav-group-title"><span>Main Hub</span></div>
+        <a href="player-dashboard.html" class="sidebar-link">${ICONS.nav.overview}<span>Overview</span></a>
       `;
     }
     nav.innerHTML = menuHtml;

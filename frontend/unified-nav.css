@@ -1424,12 +1424,91 @@ table td:last-child,
         padding-right: 1rem !important;
     }
 
+    /* ── TOP HEADLINE TABS (MODERN PREMIUM) ─────────────────────────────── */
+.top-headline-tabs {
+    background: var(--glass-bg);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 0 1rem;
+    position: sticky;
+    top: 72px; /* Below desktop header */
+    z-index: 90;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+@media (max-width: 991px) {
     .top-headline-tabs {
-        top: 56px !important;
-        background: rgba(10, 10, 12, 0.95) !important;
-        position: sticky !important;
-        z-index: 4000 !important;
+        top: 56px; /* Below mobile header */
+        padding: 0;
     }
+}
+
+.tabs-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 1.5rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.tabs-scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.headline-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0.5rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    font-family: 'Outfit', sans-serif;
+}
+
+.headline-tab:hover {
+    color: #fff;
+}
+
+.headline-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.headline-tab .tab-icon {
+    font-size: 1.1rem;
+}
+
+/* Sidebar Fixes */
+@media (min-width: 992px) {
+    .dashboard-view .pro-sidebar {
+        display: flex !important;
+        left: 0 !important;
+        position: fixed !important;
+        z-index: 2000 !important;
+        width: 280px !important;
+        background: #0a0a0c !important;
+        border-right: 1px solid rgba(255,255,255,0.05) !important;
+    }
+    
+    .dashboard-view .pro-header {
+        left: 280px !important;
+        width: calc(100% - 280px) !important;
+    }
+    
+    .dashboard-view main.main {
+        margin-left: 280px !important;
+        width: calc(100% - 280px) !important;
+    }
+}
 
     .has-top-tabs .dashboard-main {
         padding-top: 105px !important; /* Offset for both header and tabs */

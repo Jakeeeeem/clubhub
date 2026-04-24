@@ -480,8 +480,25 @@ async function checkAuthStatus() {
 
   if (isDemo || (token && userData)) {
     try {
-      let user = userData ? JSON.parse(userData) : {};
-      console.log("✅ User authenticated:", user.email || "Demo User");
+      // Robust parsing to catch "undefined" string or corrupted data
+      let user = null;
+      if (userData && userData !== "undefined" && userData !== "null") {
+        user = JSON.parse(userData);
+      }
+      
+      if (!user && isDemo) {
+        user = { email: "demo-user@clubhub.com", firstName: "Demo", lastName: "User", userType: "admin" };
+        localStorage.setItem("currentUser", JSON.stringify(user));
+      }
+
+      if (!user) {
+        console.warn("⚠️ No valid user data found, redirecting...");
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("currentUser");
+        return false;
+      }
+
+      console.log("✅ User authenticated:", user.email);
 
       // If user data is missing account_type, fetch fresh data from API
       if (
