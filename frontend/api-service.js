@@ -351,6 +351,18 @@ if (typeof ApiService === 'undefined') {
       return { success: true, message: "Group switched (Demo)", groupId: user.groupId, role: user.role };
     }
 
+    // --- AUTH CONTEXT ---
+    if (endpoint.includes("/auth/context")) {
+      const fb = this.getAdminDashboardFallback();
+      const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      return { 
+        success: true, 
+        user: user,
+        currentGroup: fb.groups[0] || null,
+        groups: fb.groups || []
+      };
+    }
+
     // --- PLAYER FAMILY ---
     if (endpoint.includes("/players/family")) {
       return [

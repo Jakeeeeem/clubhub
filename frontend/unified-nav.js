@@ -155,29 +155,34 @@ const UnifiedNav = {
 
     const isDesktop = window.matchMedia("(min-width: 992px)").matches;
     const path = window.location.pathname.toLowerCase();
-    const isDashboard = path.includes("dashboard") || 
-                        path.includes("admin-") || 
-                        path.includes("coach-") || 
-                        path.includes("player-") || 
-                        path.includes("super-admin-") ||
-                        path.includes("scout-") ||
-                        path.includes("finder") ||
-                        window.UNIFIED_NAV_ENABLED === true;
+    const fileName = path.split('/').pop() || 'index.html';
+    const fullUrl = window.location.href.toLowerCase();
+    
+    // EXTREMELY AGGRESSIVE check for dashboard/finder patterns
+    const dashboardMarkers = ["dashboard", "admin-", "coach-", "player-", "super-admin-", "scout-", "finder", "booking", "messenger", "performance", "finances", "schedule", "chat", "shop"];
+    const hasDashboardPattern = dashboardMarkers.some(marker => fullUrl.includes(marker));
+    const hasDashboardClass = document.body.classList.contains("dashboard-view") || document.body.classList.contains("app-layout");
+    const hasDashboardMarker = !!(document.querySelector('.dashboard-main') || document.querySelector('.finder-container') || document.querySelector('.dashboard-container'));
+
+    const isDashboard = hasDashboardPattern || hasDashboardClass || hasDashboardMarker || window.UNIFIED_NAV_ENABLED === true;
 
     const isLandingPage = !isDashboard && 
-      (path.includes("index.html") || path.endsWith("/") || path === "");
+      (fileName === "index.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html");
 
     const token = localStorage.getItem("authToken");
     const user = JSON.parse(localStorage.getItem("currentUser") || "null");
     const isLoggedIn = !!(token && user);
 
-    console.log("📍 Nav Info:", { 
-      Desktop: isDesktop, 
-      Dashboard: isDashboard, 
-      Landing: isLandingPage, 
-      LoggedIn: isLoggedIn,
-      Path: path,
-      EnabledFlag: window.UNIFIED_NAV_ENABLED
+    console.log("📍 UnifiedNav Detection:", { 
+      isDesktop, 
+      isDashboard, 
+      isLandingPage, 
+      isLoggedIn,
+      path,
+      fileName,
+      hasPattern: hasDashboardPattern,
+      hasClass: hasDashboardClass,
+      hasMarker: hasDashboardMarker
     });
 
     // Manage body classes for CSS scoping
@@ -373,6 +378,14 @@ const UnifiedNav = {
   },
 
   renderGroupSwitcher(container) {
+    if (!document.getElementById("group-switcher-styles")) {
+      const link = document.createElement("link");
+      link.id = "group-switcher-styles";
+      link.rel = "stylesheet";
+      link.href = "group-switcher.css";
+      document.head.appendChild(link);
+    }
+
     if (typeof GroupSwitcher !== "undefined") {
       GroupSwitcher.render(container);
     } else {
@@ -1769,15 +1782,15 @@ const UnifiedNav = {
     if (isPlayer) {
       menuHtml = `
                     <div class="nav-group-title">Main Hub</div>
-                    <a href="player-dashboard.html" onclick="return handleNavClick(event, 'player-dashboard.html', 'overview')" class="sidebar-link ${isActive('player-dashboard.html') && !isActive('player-schedule.html') && !isActive('player-performance.html') && !isActive('player-finances.html') && !isActive('player-chat.html') && !isActive('player-shop.html') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
-                    <a href="player-schedule.html" onclick="return handleNavClick(event, 'player-schedule.html', 'schedule')" class="sidebar-link ${isActive('player-schedule.html')}">${ICONS.nav.training}<span>My Schedule</span></a>
-                    <a href="player-performance.html" onclick="return handleNavClick(event, 'player-performance.html', 'performance')" class="sidebar-link ${isActive('player-performance.html')}">${ICONS.nav.players}<span>Performance</span></a>
-                    <a href="player-finances.html" onclick="return handleNavClick(event, 'player-finances.html', 'payments')" class="sidebar-link ${isActive('player-finances.html')}">${ICONS.nav.finance}<span>My Finances</span></a>
+                    <a href="player-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'overview')" class="sidebar-link ${isActive('player-dashboard.html') && !isActive('player-schedule.html') && !isActive('player-performance.html') && !isActive('player-finances.html') && !isActive('player-chat.html') && !isActive('player-shop.html') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="player-schedule.html" onclick="return UnifiedNav.handleNavClick(event, 'player-schedule.html', 'schedule')" class="sidebar-link ${isActive('player-schedule.html')}">${ICONS.nav.training}<span>My Schedule</span></a>
+                    <a href="player-performance.html" onclick="return UnifiedNav.handleNavClick(event, 'player-performance.html', 'performance')" class="sidebar-link ${isActive('player-performance.html')}">${ICONS.nav.players}<span>Performance</span></a>
+                    <a href="player-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'player-finances.html', 'payments')" class="sidebar-link ${isActive('player-finances.html')}">${ICONS.nav.finance}<span>My Finances</span></a>
                     
                     <div class="nav-group-title">Club Services</div>
-                    <a href="player-chat.html" onclick="return handleNavClick(event, 'player-chat.html', 'club-messenger')" class="sidebar-link ${isActive('player-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
-                    <a href="player-shop.html" onclick="return handleNavClick(event, 'player-shop.html', 'item-shop')" class="sidebar-link ${isActive('player-shop.html')}">${ICONS.nav.shop}<span>Club Shop</span></a>
-                    <a href="venue-booking.html" onclick="return handleNavClick(event, 'venue-booking.html', 'venue-booking')" class="sidebar-link ${isActive('venue-booking.html')}">${ICONS.nav.venue}<span>Book Venue</span></a>
+                    <a href="player-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'player-chat.html', 'club-messenger')" class="sidebar-link ${isActive('player-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
+                    <a href="player-shop.html" onclick="return UnifiedNav.handleNavClick(event, 'player-shop.html', 'item-shop')" class="sidebar-link ${isActive('player-shop.html')}">${ICONS.nav.shop}<span>Club Shop</span></a>
+                    <a href="venue-booking.html" onclick="return UnifiedNav.handleNavClick(event, 'venue-booking.html', 'venue-booking')" class="sidebar-link ${isActive('venue-booking.html')}">${ICONS.nav.venue}<span>Book Venue</span></a>
                     
                     <div class="nav-group-title">Finder</div>
                     <a href="team-finder.html" class="sidebar-link ${isActive('team-finder.html')}">${ICONS.nav.teams}<span>Team Finder</span></a>
@@ -1786,7 +1799,7 @@ const UnifiedNav = {
     } else if (isSuperAdmin) {
       menuHtml = `
                 <div class="nav-group-title">Platform</div>
-                <a href="super-admin-dashboard.html" onclick="return handleNavClick(event, 'super-admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('super-admin-dashboard.html')}">${ICONS.nav.overview}<span>Admin Console</span></a>
+                <a href="super-admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'super-admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('super-admin-dashboard.html')}">${ICONS.nav.overview}<span>Admin Console</span></a>
                 
                 <div class="nav-group-title">Operations</div>
                 <a href="scouting.html" class="sidebar-link ${isActive('scouting.html')}">${ICONS.nav.approvals}<span>Scouting Hub</span></a>
@@ -1795,22 +1808,22 @@ const UnifiedNav = {
     } else if (isCoach) {
       menuHtml = `
                 <div class="nav-group-title">Coaching</div>
-                <a href="coach-dashboard.html" onclick="return handleNavClick(event, 'coach-dashboard.html', 'overview')" class="sidebar-link ${isActive('coach-dashboard.html') && !isActive('coach-players.html') && !isActive('coach-teams.html') && !isActive('coach-chat.html') && !isActive('coach-events.html') && !isActive('coach-tactical-board.html') && !isActive('coach-tournament-manager.html') ? 'active' : ''}">${ICONS.nav.overview}<span>Dashboard</span></a>
-                <a href="coach-chat.html" onclick="return handleNavClick(event, 'coach-chat.html', 'messenger')" class="sidebar-link ${isActive('coach-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
+                <a href="coach-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'overview')" class="sidebar-link ${isActive('coach-dashboard.html') && !isActive('coach-players.html') && !isActive('coach-teams.html') && !isActive('coach-chat.html') && !isActive('coach-events.html') && !isActive('coach-tactical-board.html') && !isActive('coach-tournament-manager.html') ? 'active' : ''}">${ICONS.nav.overview}<span>Dashboard</span></a>
+                <a href="coach-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-chat.html', 'messenger')" class="sidebar-link ${isActive('coach-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
                 
                 <div class="nav-group-title">Squad</div>
-                <a href="coach-teams.html" onclick="return handleNavClick(event, 'coach-teams.html', 'teams')" class="sidebar-link ${isActive('coach-teams.html')}">${ICONS.nav.teams}<span>My Teams</span></a>
-                <a href="coach-players.html" onclick="return handleNavClick(event, 'coach-players.html', 'players')" class="sidebar-link ${isActive('coach-players.html')}">${ICONS.nav.players}<span>My Players</span></a>
+                <a href="coach-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-teams.html', 'teams')" class="sidebar-link ${isActive('coach-teams.html')}">${ICONS.nav.teams}<span>My Teams</span></a>
+                <a href="coach-players.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-players.html', 'players')" class="sidebar-link ${isActive('coach-players.html')}">${ICONS.nav.players}<span>My Players</span></a>
                 
                 <div class="nav-group-title">Career</div>
                 <a href="scouting.html" class="sidebar-link ${isActive('scouting.html')}">${ICONS.nav.training}<span>Scouting Hub</span></a>
-                <a href="coach-tournament-manager.html" onclick="return handleNavClick(event, 'coach-tournament-manager.html', 'tournament-manager')" class="sidebar-link ${isActive('coach-tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournaments</span></a>
-                <a href="coach-tactical-board.html" onclick="return handleNavClick(event, 'coach-tactical-board.html', 'tactical-board')" class="sidebar-link ${isActive('coach-tactical-board.html')}">${ICONS.nav.tactics}<span>Tactical Board</span></a>
+                <a href="coach-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tournament-manager.html', 'tournament-manager')" class="sidebar-link ${isActive('coach-tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournaments</span></a>
+                <a href="coach-tactical-board.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tactical-board.html', 'tactical-board')" class="sidebar-link ${isActive('coach-tactical-board.html')}">${ICONS.nav.tactics}<span>Tactical Board</span></a>
             `;
     } else if (isScout) {
       menuHtml = `
                 <div class="nav-group-title">Talent Pool</div>
-                <a href="scout-dashboard.html" onclick="return handleNavClick(event, 'scout-dashboard.html', 'overview')" class="sidebar-link ${isActive('scout-dashboard.html')}">${ICONS.nav.training}<span>Discover</span></a>
+                <a href="scout-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'scout-dashboard.html', 'overview')" class="sidebar-link ${isActive('scout-dashboard.html')}">${ICONS.nav.training}<span>Discover</span></a>
                 
                 <div class="nav-group-title">Analysis</div>
                 <a href="scouting.html" class="sidebar-link ${isActive('scouting.html')}">${ICONS.nav.forms}<span>Scout Reports</span></a>
@@ -1818,18 +1831,18 @@ const UnifiedNav = {
     } else {
       menuHtml = `
         <div class="nav-group-title"><span>Core Management</span></div>
-        <a href="admin-dashboard.html" onclick="return handleNavClick(event, 'admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('admin-dashboard.html') && !isActive('admin-members.html') && !isActive('admin-teams.html') && !isActive('admin-chat.html') && !isActive('admin-staff.html') && !isActive('admin-scout-approvals.html') && !isActive('admin-shop.html') ? 'active' : ''}" data-tooltip="Overview">${ICONS.nav.overview}<span>Overview</span></a>
-        <a href="admin-dashboard.html" onclick="return handleNavClick(event, 'admin-dashboard.html', 'members')" class="sidebar-link ${isActive('admin-members.html')}" data-tooltip="Player List">${ICONS.nav.players}<span>Player List</span></a>
-        <a href="admin-dashboard.html" onclick="return handleNavClick(event, 'admin-dashboard.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}" data-tooltip="Squads & Teams">${ICONS.nav.teams}<span>Squads & Teams</span></a>
-        <a href="admin-dashboard.html" onclick="return handleNavClick(event, 'admin-dashboard.html', 'events')" class="sidebar-link ${isActive('admin-events.html')}" data-tooltip="Event Manager">${ICONS.nav.events}<span>Event Manager</span></a>
-        <a href="admin-dashboard.html" onclick="return handleNavClick(event, 'admin-dashboard.html', 'messenger')" class="sidebar-link ${isActive('admin-chat.html')}" data-tooltip="Admin Chat">${ICONS.nav.chat}<span>Admin Chat</span></a>
-        <a href="admin-dashboard.html" onclick="return handleNavClick(event, 'admin-dashboard.html', 'staff')" class="sidebar-link ${isActive('admin-staff.html')}" data-tooltip="Staff">${ICONS.nav.players}<span>Staff</span></a>
+        <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('admin-dashboard.html') && !isActive('admin-members.html') && !isActive('admin-teams.html') && !isActive('admin-chat.html') && !isActive('admin-staff.html') && !isActive('admin-scout-approvals.html') && !isActive('admin-shop.html') ? 'active' : ''}" data-tooltip="Overview">${ICONS.nav.overview}<span>Overview</span></a>
+        <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'members')" class="sidebar-link ${isActive('admin-members.html')}" data-tooltip="Player List">${ICONS.nav.players}<span>Player List</span></a>
+        <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}" data-tooltip="Squads & Teams">${ICONS.nav.teams}<span>Squads & Teams</span></a>
+        <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'events')" class="sidebar-link ${isActive('admin-events.html')}" data-tooltip="Event Manager">${ICONS.nav.events}<span>Event Manager</span></a>
+        <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'messenger')" class="sidebar-link ${isActive('admin-chat.html')}" data-tooltip="Admin Chat">${ICONS.nav.chat}<span>Admin Chat</span></a>
+        <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'staff')" class="sidebar-link ${isActive('admin-staff.html')}" data-tooltip="Staff">${ICONS.nav.players}<span>Staff</span></a>
 
         <div class="nav-group-title"><span>Advanced Operations</span></div>
-        <a href="admin-dashboard.html" onclick="return handleNavClick(event, 'admin-dashboard.html', 'scout-approvals')" class="sidebar-link ${isActive('admin-scout-approvals.html')}" data-tooltip="Scout Approvals">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
+        <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'scout-approvals')" class="sidebar-link ${isActive('admin-scout-approvals.html')}" data-tooltip="Scout Approvals">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
         <a href="training-manager.html" class="sidebar-link ${isActive('training-manager.html')}" data-tooltip="Training Hub">${ICONS.nav.training}<span>Training Hub</span></a>
         <a href="venue-booking.html" class="sidebar-link ${isActive('venue-booking.html')}" data-tooltip="Venue Portal">${ICONS.nav.venue}<span>Venue Portal</span></a>
-        <a href="admin-dashboard.html" onclick="return handleNavClick(event, 'admin-dashboard.html', 'finances')" class="sidebar-link ${isActive('admin-finances.html')}" data-tooltip="Finance">${ICONS.nav.finance}<span>Finance</span></a>
+        <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'finances')" class="sidebar-link ${isActive('admin-finances.html')}" data-tooltip="Finance">${ICONS.nav.finance}<span>Finance</span></a>
         
         <div class="nav-group-title"><span>Business & Shop</span></div>
         <a href="admin-finances.html" class="sidebar-link ${isActive('admin-finances.html')}" data-tooltip="Financials">${ICONS.nav.finance}<span>Financials</span></a>
