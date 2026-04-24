@@ -640,11 +640,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            // Check auth
-            if (typeof checkAuthStatus === 'function') {
-                const ok = await checkAuthStatus();
-                if (!ok) { window.location.href = 'index.html'; return; }
-            }
+            // Auth handled by UnifiedNav
 
             // Initialize coach dashboard logic
             if (typeof initializeCoachDashboard === 'function') {

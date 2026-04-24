@@ -476,8 +476,9 @@ async function handleLogout() {
 async function checkAuthStatus() {
   const token = localStorage.getItem("authToken");
   const userData = localStorage.getItem("currentUser");
+  const isDemo = localStorage.getItem("isDemoSession") === "true";
 
-  if (token && userData) {
+  if (isDemo || (token && userData)) {
     try {
       let user = JSON.parse(userData);
       console.log("✅ User authenticated:", user.email);

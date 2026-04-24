@@ -584,6 +584,22 @@ header.header .nav-container,
     transform: translateY(-2px);
 }
 
+@media (max-width: 991px) {
+    /* Ensure group switcher is correctly sized on mobile */
+    #header-group-switcher-container {
+        display: flex !important;
+        align-items: center !important;
+        max-width: 130px !important;
+        overflow: hidden !important;
+    }
+    
+    #header-group-switcher-container .group-switcher-btn {
+        padding: 4px 6px !important;
+        font-size: 0.75rem !important;
+        height: 28px !important;
+    }
+}
+
 .action-btn .badge {
     position: absolute;
     top: -4px;

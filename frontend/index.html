@@ -627,14 +627,10 @@
                 tab.classList.toggle('active', isMatch);
             });
 
-            // Check auth status
-            const user = JSON.parse(localStorage.getItem('currentUser'));
             const isDemo = localStorage.getItem('isDemoSession') === 'true';
             
-            if (!isDemo && (!user || (user.userType !== 'admin' && user.userType !== 'organization'))) {
-                window.location.href = 'index.html';
-                return;
-            }
+            // Allow all roles to see features on the landing page
+            // Logic continues to tab switching...
 
             // Update feature lists
             const lists = document.querySelectorAll('.role-features');

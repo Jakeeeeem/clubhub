@@ -213,11 +213,11 @@ const UnifiedNav = {
       } else {
         console.log("💻 Desktop View");
         if (isDashboard) {
-          if (!isLoggedIn) {
+          if (!isLoggedIn && localStorage.getItem("isDemoSession") !== "true") {
             console.warn(
-              "🔒 Unauthenticated dashboard access. Redirecting to login...",
+              "🔒 Unauthenticated dashboard access. Redirecting to home...",
             );
-            window.location.href = "login.html";
+            window.location.href = "index.html";
             return;
           }
           this.ensureDashboardHeader();
@@ -996,14 +996,14 @@ const UnifiedNav = {
                         <div id="sidebar-switcher-target" style="margin-top: 1rem; width: 100%;"></div>
                     </div>
 
-                    <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0.5rem;">
+                        <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0.5rem; padding-bottom: 100px;">
                         <div id="sidebar-nav-content" style="flex: 1;">
                             <div style="padding: 2rem; text-align: center; opacity: 0.5;">Loading menu...</div>
                         </div>
 
                         <div style="font-size: 0.7rem; color: var(--text-muted); padding: 0.25rem 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Account Management</div>
-                        <a href="${isPlayer ? 'player-dashboard.html' : 'admin-dashboard.html'}" onclick="return handleNavClick(event, '${isPlayer ? 'player-dashboard.html' : 'admin-dashboard.html'}', 'profile')" class="sidebar-link" style="padding: 0.75rem 0.5rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;">${(user.firstName || 'U').charAt(0)}</div>
+                        <a href="${isPlayer ? "player-dashboard.html" : "admin-dashboard.html"}" onclick="return handleNavClick(event, '${isPlayer ? "player-dashboard.html" : "admin-dashboard.html"}', 'profile')" class="sidebar-link" style="padding: 0.75rem 0.5rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;">${(user.firstName || "U").charAt(0)}</div>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-size: 0.85rem; font-weight: 700;">My Profile</span>
                                 <span style="font-size: 0.65rem; opacity: 0.6;">View and edit details</span>
@@ -1250,6 +1250,12 @@ const UnifiedNav = {
                 </div>
 
                 <div class="header-actions">
+                    ${this.getUserRole() === "admin" || this.getUserRole() === "organization" ? `
+                    <button id="stripe-connect-btn" class="btn btn-secondary btn-small desktop-only" style="margin-right: 1rem; border-color: rgba(255,255,255,0.1);" onclick="UnifiedNav.manageStripeAccount()">
+                        <i class="fa fa-cc-stripe" style="margin-right: 6px;"></i> Stripe
+                    </button>
+                    ` : ""}
+                    
                     <div class="action-btn desktop-only" style="margin-right: 1rem;" onclick="typeof showPlayerSection !== 'undefined' ? showPlayerSection('notifications') : (typeof showSection !== 'undefined' ? showSection('notifications') : null); return false;">
                         <i class="fa fa-bell-o"></i>
                         <span class="badge" id="header-notif-badge" style="display:none">0</span>
@@ -1272,6 +1278,7 @@ const UnifiedNav = {
     this.renderFamilySwitcher();
     this.updateModeUI();
     this.renderTopTabs();
+    this.checkStripeStatus();
   },
 
   /**
@@ -1401,10 +1408,39 @@ const UnifiedNav = {
     });
   },
 
-  manageStripeAccount() {
-    // Ported from previous working version
-    const stripeUrl = "https://dashboard.stripe.com/test/connect/accounts"; // Placeholder or dynamic from config
-    window.open(stripeUrl, "_blank", "width=800,height=900,scrollbars=yes");
+  async manageStripeAccount() {
+    try {
+        if (typeof apiService !== 'undefined') {
+            const resp = await apiService.makeRequest('/payments/stripe/onboarding-link', { method: 'POST' });
+            if (resp && resp.url) {
+                window.open(resp.url, "_blank", "width=800,height=900,scrollbars=yes");
+                return;
+            }
+        }
+        // Fallback
+        const stripeUrl = "https://dashboard.stripe.com/test/connect/accounts"; 
+        window.open(stripeUrl, "_blank", "width=800,height=900,scrollbars=yes");
+    } catch (err) {
+        console.error("Failed to get Stripe link:", err);
+        window.open("https://dashboard.stripe.com/test/connect/accounts", "_blank");
+    }
+  },
+
+  async checkStripeStatus() {
+    const btn = document.getElementById("stripe-connect-btn");
+    if (!btn || typeof apiService === "undefined") return;
+
+    try {
+      const status = await apiService.getStripeConnectStatus();
+      if (status && status.is_connected) {
+        btn.style.backgroundColor = "rgba(74, 222, 128, 0.15)";
+        btn.style.color = "#4ade80";
+        btn.style.borderColor = "rgba(74, 222, 128, 0.3)";
+        btn.innerHTML = '<i class="fa fa-check-circle" style="margin-right: 6px;"></i> Stripe Linked';
+      }
+    } catch (err) {
+      console.warn("Stripe status check failed:", err);
+    }
   },
 
   renderBottomNav() {
@@ -1869,6 +1905,7 @@ switchMode(mode) {
         <div class="nav-group-title"><span>Discovery</span></div>
         <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.venue}<span>Club Finder</span></a>
         <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
+        <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
       `;
     }
     nav.innerHTML = menuHtml;

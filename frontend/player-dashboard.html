@@ -768,21 +768,9 @@
   <!-- Core services -->
 
   <script>
-    // 🔒 AUTHENTICATION GUARD - Prevent unauthorized access
+    // 🔒 AUTHENTICATION GUARD - Handled by UnifiedNav
     (function () {
-      const token = localStorage.getItem('authToken');
-      const currentUser = localStorage.getItem('currentUser');
-
-      // Allow demo sessions to bypass server auth during local testing
-      if ((localStorage.getItem('isDemoSession') !== 'true') && (!token || !currentUser)) {
-        console.warn('🚫 No authentication found, redirecting to login...');
-        window.location.href = 'index.html';
-        return;
-      }
-
-      // Just verify auth exists - don't redirect based on account type
-      // Let script.js handle the redirect logic
-      console.log('✅ Player/Parent/Context authentication verified');
+      console.log('✅ Dashboard view initialized');
     })();
 
     // Initialize AppState safely
@@ -1399,7 +1387,7 @@
     let _playerMessengerMounted = false;
     const _origShowPlayerSection = typeof showPlayerSection === 'function' ? showPlayerSection : null;
     document.addEventListener('DOMContentLoaded', async () => {
-      // Initialize player dashboard logic
+      // Auth handled by UnifiedNav
       if (typeof initializePlayerDashboard === 'function') {
         await initializePlayerDashboard();
       }
