@@ -1002,6 +1002,11 @@ const UnifiedNav = {
         try { ov.style.removeProperty('display'); } catch (e) {}
       }
 
+      const url = window.location.href;
+      const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      const userRole = localStorage.getItem("userType") || "";
+      const isPlayer = url.includes("player-dashboard.html") || userRole === "player";
+
       // Build inner HTML for aside (only the content inside <aside>) so we can populate existing placeholders
       const asideInner = `
                     <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; z-index: 100; width: 48px; height: 48px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
@@ -1016,14 +1021,14 @@ const UnifiedNav = {
                         <div id="sidebar-switcher-target" style="width: 100%; margin-top: 0.5rem;"></div>
                     </div>
 
-                        <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0.5rem; padding-bottom: 100px;">
+                    <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0.5rem; padding-bottom: 100px;">
                         <div id="sidebar-nav-content" style="flex: 1;">
                             <div style="padding: 2rem; text-align: center; opacity: 0.5;">Loading menu...</div>
                         </div>
 
                         <div style="font-size: 0.7rem; color: var(--text-muted); padding: 0.25rem 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Account Management</div>
                         <a href="${isPlayer ? "player-dashboard.html" : "admin-dashboard.html"}" onclick="return handleNavClick(event, '${isPlayer ? "player-dashboard.html" : "admin-dashboard.html"}', 'profile')" class="sidebar-link" style="padding: 0.75rem 0.5rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;">${(user.firstName || "U").charAt(0)}</div>
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;">${(user.firstName || user.first_name || "U").charAt(0)}</div>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-size: 0.85rem; font-weight: 700;">My Profile</span>
                                 <span style="font-size: 0.65rem; opacity: 0.6;">View and edit details</span>
@@ -1050,6 +1055,7 @@ const UnifiedNav = {
       }
 
       this.initSidebarSwitcher();
+      this.renderMenu();
     } catch (err) {
       console.error("❌ Error rendering sidebar:", err);
     }

@@ -480,11 +480,12 @@ async function checkAuthStatus() {
 
   if (isDemo || (token && userData)) {
     try {
-      let user = JSON.parse(userData);
-      console.log("✅ User authenticated:", user.email);
+      let user = userData ? JSON.parse(userData) : {};
+      console.log("✅ User authenticated:", user.email || "Demo User");
 
       // If user data is missing account_type, fetch fresh data from API
       if (
+        user.email &&
         !user.account_type &&
         !user.userType &&
         localStorage.getItem("isDemoSession") !== "true"

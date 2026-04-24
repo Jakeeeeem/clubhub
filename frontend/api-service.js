@@ -357,17 +357,6 @@ if (typeof ApiService === 'undefined') {
       return { success: true, message: "Group switched (Demo)", groupId: user.groupId, role: user.role };
     }
 
-    // --- AUTH CONTEXT ---
-    if (endpoint.includes("/auth/context")) {
-      const fb = this.getAdminDashboardFallback();
-      const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      return { 
-        success: true, 
-        user: user,
-        currentGroup: fb.groups[0] || null,
-        groups: fb.groups || []
-      };
-    }
 
     // --- PLAYER FAMILY ---
     if (endpoint.includes("/players/family")) {
@@ -433,10 +422,13 @@ if (typeof ApiService === 'undefined') {
       return { 
         success: true, 
         stats: { total_users: 1242, total_groups: 86 }, 
-        groups: [], 
+        groups: this.getAdminDashboardFallback().groups || [], 
         users: [], 
         verifications: [],
-        scout_verifications: [] // Added for scout approvals
+        scout_verifications: [
+            { id: "scout-1", first_name: "David", last_name: "Beckham", club_name: "LA Galaxy", status: "pending", created_at: new Date().toISOString() },
+            { id: "scout-2", first_name: "Zinedine", last_name: "Zidane", club_name: "Real Madrid", status: "pending", created_at: new Date().toISOString() }
+        ]
       };
     }
 
