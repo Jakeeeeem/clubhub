@@ -5,8 +5,9 @@ let installButton;
 // Register service worker
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
+    // Adding version to SW registration to force update detection
     navigator.serviceWorker
-      .register("/service-worker.js")
+      .register("/service-worker.js?v=7.0.1")
       .then((registration) => {
         console.log("✅ ServiceWorker registered:", registration.scope);
       })

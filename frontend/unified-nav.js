@@ -515,8 +515,9 @@ const UnifiedNav = {
     const isDashboard = window.location.pathname.includes("dashboard") || window.location.pathname.includes("finder");
     
     // ⚡ SYSTEM RESET: check for ?reset=system to clear all state
-    const CURRENT_VERSION = "2.1.0"; // Increment this to force clear cache for all users
+    const CURRENT_VERSION = "2.1.2";
     const storedVersion = localStorage.getItem("CH_UI_VERSION");
+    const urlParams = new URLSearchParams(window.location.search);
     
     if (urlParams.get('reset') === 'system' || storedVersion !== CURRENT_VERSION) {
         console.warn("⚡ System Sync: Clearing legacy cache for version " + CURRENT_VERSION);
@@ -841,9 +842,21 @@ const UnifiedNav = {
     this.renderStripeHeaderButton();
 
     // On mobile, also render switcher in the header target if it exists
-    if (window.innerWidth < 992) {
+    // For mobile devices, we want the switcher in the header if space allows, 
+    // or we ensure it's in the mobile sidebar.
+    const isMobile = window.innerWidth < 992;
+    if (isMobile) {
       const mobTarget = document.getElementById("header-mobile-switcher-target");
-      if (mobTarget) this.renderGroupSwitcher(mobTarget);
+      if (mobTarget) {
+          this.renderGroupSwitcher(mobTarget);
+      } else {
+          // Fallback to sidebar target if header target is missing on mobile
+          const sideTarget = document.getElementById("sidebar-switcher-target");
+          if (sideTarget) this.renderGroupSwitcher(sideTarget);
+      }
+    } else {
+      const desktopTarget = document.getElementById("header-org-switcher");
+      if (desktopTarget) this.renderGroupSwitcher(desktopTarget);
     }
 
     // CRITICAL: Call renderers immediately after HTML injection to ensure switchers appear
@@ -886,7 +899,6 @@ const UnifiedNav = {
 
   renderSidebar() {
     try {
-      const existingSidebar = document.getElementById("pro-sidebar");
       const existingOverlay = document.getElementById("sidebar-overlay");
 
       console.log("🏗️ Rendering Sidebar...");
@@ -912,7 +924,7 @@ const UnifiedNav = {
       const userRole = localStorage.getItem("userType") || "";
       const isPlayer = url.includes("player-dashboard.html") || userRole === "player";
 
-      // Build inner HTML for aside (only the content inside <aside>) so we can populate existing placeholders
+      // Build inner HTML for aside
       const asideInner = `
                     <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; z-index: 100; width: 48px; height: 48px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
                         ${ICONS.close}
@@ -923,26 +935,21 @@ const UnifiedNav = {
                             <img src="images/logo.png" alt="Logo" style="width: 32px; height: 32px;">
                             <span style="font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px;">ClubHub</span>
                         </div>
-                        <div id="sidebar-switcher-target" style="width: 100%; margin-top: 0.5rem;"></div>
                     </div>
 
-                    <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0.5rem; padding-bottom: 100px;">
-                        <div id="sidebar-nav-content" style="flex: 1;">
-                            <div style="padding: 2rem; text-align: center; opacity: 0.5;">Loading menu...</div>
-                        </div>
+                    <div id="sidebar-nav-content" class="sidebar-nav" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
+                        <!-- Populated by renderMenu() -->
+                    </div>
 
-                        <div style="font-size: 0.7rem; color: var(--text-muted); padding: 0.25rem 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Account Management</div>
-                        <a href="${isPlayer ? "player-dashboard.html" : "admin-dashboard.html"}" onclick="return handleNavClick(event, '${isPlayer ? "player-dashboard.html" : "admin-dashboard.html"}', 'profile')" class="sidebar-link" style="padding: 0.75rem 0.5rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800;">${(user.firstName || user.first_name || "U").charAt(0)}</div>
-                            <div style="display: flex; flex-direction: column;">
-                                <span style="font-size: 0.85rem; font-weight: 700;">My Profile</span>
-                                <span style="font-size: 0.65rem; opacity: 0.6;">View and edit details</span>
-                            </div>
-                        </a>
-                        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 0.5rem 0;"></div>
-                        <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
-                            <a href="${isPlayer ? "player-settings.html" : "admin-settings.html"}" class="sidebar-link" style="flex: 1; margin-bottom: 0; padding: 0.5rem; font-size: 0.7rem; justify-content: center; gap: 0.5rem;">${ICONS.nav.settings} <span style="font-size: 0.7rem;">Settings</span></a>
-                            <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="flex: 1; color: #ef4444; margin-bottom: 0; padding: 0.5rem; font-size: 0.7rem; justify-content: center; gap: 0.5rem;">${ICONS.nav.logout} <span style="font-size: 0.7rem;">Sign Out</span></a>
+                    <div class="sidebar-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">
+                        <div id="sidebar-switcher-target" style="width: 100%; margin-bottom: 1rem;"></div>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                             <button class="btn btn-secondary btn-small" onclick="window.location.href += (window.location.href.includes('?') ? '&' : '?') + 'reset=system'" style="width: 100%; opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px; padding: 0.6rem;">
+                                🔄 HARD REFRESH SYSTEM
+                            </button>
+                            <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="color: #ef4444; padding: 0.5rem; font-size: 0.75rem; justify-content: center; gap: 0.5rem; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px;">
+                                ${ICONS.nav.logout} <span>Sign Out</span>
+                            </a>
                         </div>
                     </div>
             `;
@@ -1797,50 +1804,43 @@ const UnifiedNav = {
     const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
     
     const isPlayer = /player-|schedule|performance|finances|shop|chat/.test(url) || userRole === "player" || userRole === "parent";
-    const isSuperAdmin = url.includes("super-admin") || userRole === "platform_admin" || userRole === "superadmin";
-    const isCoach = url.includes("coach-") || userRole === "coach" || userRole === "staff";
-    const isScout = /scout-|scouting/.test(url) || userRole === "scout";
-    const isAdmin = /admin-|members|teams|events/.test(url) || userRole === "admin" || userRole === "organization" || userRole === "owner";
+    const isSuperAdmin = userRole === "platform_admin" || userRole === "superadmin" || url.includes("super-admin");
+    const isCoach = userRole === "coach" || userRole === "staff" || url.includes("coach-");
+    const isScout = userRole === "scout" || url.includes("scout-") || url.includes("scouting");
     
-    // Fallback logic if detection is still ambiguous
-    const finalIsPlayer = isPlayer && !isSuperAdmin && !isAdmin;
-    const finalIsAdmin = (isAdmin || (!isPlayer && !isSuperAdmin && !isCoach && !isScout)) && !finalIsPlayer;
+    // Admin detection (Group/Org admin)
+    const isAdmin = userRole === "admin" || userRole === "organization" || userRole === "owner" || /admin-|members|teams|events/.test(url);
+    
+    // Player detection
+    const isPlayerRole = userRole === "player" || userRole === "parent" || !!localStorage.getItem("activePlayerId");
+    const isPlayerUrl = /player-|schedule|performance|finances|shop|chat/.test(url);
+    
+    // Final logic: Priority to SuperAdmin -> Coach/Scout -> Admin -> Player
+    let finalRole = "player";
+    if (isSuperAdmin) finalRole = "superadmin";
+    else if (isCoach) finalRole = "coach";
+    else if (isScout) finalRole = "scout";
+    else if (isAdmin) finalRole = "admin";
+    else if (isPlayerRole || isPlayerUrl) finalRole = "player";
 
     console.log("🔍 UnifiedNav Role Detection:", { 
         url, 
-        userRole, 
-        isPlayer, 
-        isSuperAdmin, 
-        isCoach, 
-        isScout, 
-        isAdmin,
-        finalIsPlayer,
-        finalIsAdmin
+        userRole,
+        detected: finalRole,
+        isSuperAdmin, isCoach, isScout, isAdmin, isPlayerRole, isPlayerUrl
     });
+
+    const finalIsPlayer = finalRole === "player";
+    const finalIsAdmin = finalRole === "admin";
+    const finalIsSuperAdmin = finalRole === "superadmin";
+    const finalIsCoach = finalRole === "coach";
+    const finalIsScout = finalRole === "scout";
 
     let menuHtml = "";
     const p = window.location.pathname;
     const isActive = (f) => p.includes(f) ? "active" : "";
 
-    if (finalIsPlayer) {
-      menuHtml = `
-                    <div class="nav-group-title">Main Hub</div>
-                    <a href="player-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'overview')" class="sidebar-link ${isActive('player-dashboard.html') && !isActive('player-schedule.html') && !isActive('player-performance.html') && !isActive('player-finances.html') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
-                    <a href="player-schedule.html" onclick="return UnifiedNav.handleNavClick(event, 'player-schedule.html', 'schedule')" class="sidebar-link ${isActive('player-schedule.html')}">${ICONS.nav.training}<span>My Schedule</span></a>
-                    <a href="player-performance.html" onclick="return UnifiedNav.handleNavClick(event, 'player-performance.html', 'performance')" class="sidebar-link ${isActive('player-performance.html')}">${ICONS.nav.players}<span>Performance</span></a>
-                    <a href="player-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'player-finances.html', 'payments')" class="sidebar-link ${isActive('player-finances.html')}">${ICONS.nav.finance}<span>My Finances</span></a>
-                    
-                    <div class="nav-group-title">Services</div>
-                    <a href="player-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'player-chat.html', 'club-messenger')" class="sidebar-link ${isActive('player-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
-                    <a href="player-shop.html" onclick="return UnifiedNav.handleNavClick(event, 'player-shop.html', 'item-shop')" class="sidebar-link ${isActive('player-shop.html')}">${ICONS.nav.shop}<span>Club Shop</span></a>
-                    
-                    <div class="nav-group-title">Discovery</div>
-                    <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
-                    <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
-                    <a href="tournament-manager.html" class="sidebar-link ${isActive('tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
-                    <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
-        `;
-    } else if (isSuperAdmin) {
+    if (finalIsSuperAdmin) {
       menuHtml = `
                 <div class="nav-group-title">Platform</div>
                 <a href="super-admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'super-admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('super-admin-dashboard.html')}">${ICONS.nav.overview}<span>Admin Console</span></a>
@@ -1849,7 +1849,7 @@ const UnifiedNav = {
                 <a href="scouting.html" class="sidebar-link ${isActive('scouting.html')}">${ICONS.nav.approvals}<span>Scouting Hub</span></a>
                 <a href="venue-booking.html" class="sidebar-link ${isActive('venue-booking.html')}">${ICONS.nav.venue}<span>Venue Booking</span></a>
             `;
-    } else if (isCoach) {
+    } else if (finalIsCoach) {
       menuHtml = `
                 <div class="nav-group-title">Coaching</div>
                 <a href="coach-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'overview')" class="sidebar-link ${isActive('coach-dashboard.html') && !isActive('coach-players.html') && !isActive('coach-teams.html') && !isActive('coach-chat.html') && !isActive('coach-events.html') && !isActive('coach-tactical-board.html') && !isActive('coach-tournament-manager.html') ? 'active' : ''}">${ICONS.nav.overview}<span>Dashboard</span></a>
@@ -1864,7 +1864,7 @@ const UnifiedNav = {
                 <a href="coach-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tournament-manager.html', 'tournament-manager')" class="sidebar-link ${isActive('coach-tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournaments</span></a>
                 <a href="coach-tactical-board.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tactical-board.html', 'tactical-board')" class="sidebar-link ${isActive('coach-tactical-board.html')}">${ICONS.nav.tactics}<span>Tactical Board</span></a>
             `;
-    } else if (isScout) {
+    } else if (finalIsScout) {
       menuHtml = `
                 <div class="nav-group-title">Talent Pool</div>
                 <a href="scout-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'scout-dashboard.html', 'overview')" class="sidebar-link ${isActive('scout-dashboard.html')}">${ICONS.nav.training}<span>Discover</span></a>
@@ -1893,6 +1893,24 @@ const UnifiedNav = {
         <a href="tournament-manager.html" class="sidebar-link ${isActive('tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
         <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
       `;
+    } else if (finalIsPlayer) {
+      menuHtml = `
+                    <div class="nav-group-title">Main Hub</div>
+                    <a href="player-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'overview')" class="sidebar-link ${isActive('player-dashboard.html') && !isActive('player-schedule.html') && !isActive('player-performance.html') && !isActive('player-finances.html') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="player-schedule.html" onclick="return UnifiedNav.handleNavClick(event, 'player-schedule.html', 'schedule')" class="sidebar-link ${isActive('player-schedule.html')}">${ICONS.nav.training}<span>My Schedule</span></a>
+                    <a href="player-performance.html" onclick="return UnifiedNav.handleNavClick(event, 'player-performance.html', 'performance')" class="sidebar-link ${isActive('player-performance.html')}">${ICONS.nav.players}<span>Performance</span></a>
+                    <a href="player-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'player-finances.html', 'payments')" class="sidebar-link ${isActive('player-finances.html')}">${ICONS.nav.finance}<span>My Finances</span></a>
+                    
+                    <div class="nav-group-title">Services</div>
+                    <a href="player-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'player-chat.html', 'club-messenger')" class="sidebar-link ${isActive('player-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
+                    <a href="player-shop.html" onclick="return UnifiedNav.handleNavClick(event, 'player-shop.html', 'item-shop')" class="sidebar-link ${isActive('player-shop.html')}">${ICONS.nav.shop}<span>Club Shop</span></a>
+                    
+                    <div class="nav-group-title">Discovery</div>
+                    <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
+                    <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
+                    <a href="tournament-manager.html" class="sidebar-link ${isActive('tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
+                    <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
+        `;
     } else {
       // Fallback for unknown role
       menuHtml = `
