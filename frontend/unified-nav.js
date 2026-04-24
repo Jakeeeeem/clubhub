@@ -24,6 +24,7 @@ const ICONS = {
     settings: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></i>`,
     logout: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></i>`,
   },
+  back: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
 };
 
 // --- GLOBAL LINK HANDLER ---
@@ -586,8 +587,8 @@ const UnifiedNav = {
     // Check if user is a group (groups manage payments/events via Stripe)
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const userRole = this.getUserRole();
-    const isGroup = userRole === "group";
-    const isDashboard = window.location.pathname.includes("dashboard");
+    const isAdmin = userRole === "admin" || userRole === "platform_admin";
+    const isDashboard = window.location.pathname.includes("dashboard") || window.location.pathname.includes("finder");
 
     // Check connection status from user object or localStorage
     const isConnected =
@@ -595,7 +596,7 @@ const UnifiedNav = {
       user.is_stripe_connected ||
       localStorage.getItem("stripeConnected") === "true";
 
-    if (isGroup && isDashboard) {
+    if (isAdmin && isDashboard) {
       const btnColor = isConnected ? "#22c55e" : "#635bff";
       const btnText = isConnected ? "Connected" : "Stripe";
       const btnIcon = isConnected
@@ -606,7 +607,7 @@ const UnifiedNav = {
 
       const stripeBtnHTML = `
         <div class="stripe-header-btn" style="margin-right: 0.5rem;">
-          <button class="btn btn-small" onclick="typeof manageStripeAccount === 'function' ? manageStripeAccount() : console.log('💳 Stripe Dashboard')" style="background: ${btnColor}; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: background 0.2s;">
+          <button class="btn btn-small" onclick="UnifiedNav.manageStripeAccount()" style="background: ${btnColor}; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
             ${btnIcon}
             <span class="desktop-only">${btnText}</span>
           </button>
@@ -826,61 +827,77 @@ const UnifiedNav = {
     ).split(" ")[0];
     const initial = name.charAt(0).toUpperCase();
 
-    header.innerHTML = `
-      <div class="nav-container nav container" style="display:flex; align-items:center; width:100%; gap:1.5rem;">
+    const path = window.location.pathname.toLowerCase();
+    const isSubPage = path.includes("-") && !path.includes("dashboard");
 
-        <!-- MOBILE: hamburger + logo -->
-        <div class="logo-area-wrapper mobile-only" style="display:flex; align-items:center; gap:0.75rem; flex-shrink:0;">
-          <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="cursor:pointer; display:flex; align-items:center;">
-            ${ICONS.menu}
+    header.innerHTML = `
+      <div class="nav-container nav container" style="display:flex; align-items:center; width:100%; height:100%;">
+
+        <!-- MOBILE HEADER: Back | Centered Logo | Profile -->
+        <div class="logo-area-wrapper mobile-only" style="display:flex; align-items:center; justify-content:space-between; width:100%; position:relative;">
+          
+          <div class="header-left-actions" style="display:flex; align-items:center; gap:0.5rem;">
+            ${isSubPage ? `
+              <div class="back-button" onclick="window.history.back()" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); border-radius:10px;">
+                ${ICONS.back}
+              </div>
+            ` : `
+              <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); border-radius:10px;">
+                ${ICONS.menu}
+              </div>
+            `}
           </div>
-          <div class="logo" onclick="window.location.href='index.html'" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
-            <img src="images/logo.png" alt="Logo" style="height:28px; width:28px; object-fit:contain;">
+          
+          <div class="mobile-logo-centered" style="position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:0.5rem;" onclick="window.location.href='index.html'">
+            <img src="images/logo.png" alt="Logo" style="height:28px; filter:drop-shadow(0 0 10px rgba(220,38,38,0.3));">
             <span style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.1rem; color:var(--primary);">ClubHub</span>
           </div>
-        </div>
 
-        <!-- DESKTOP LEFT: Logo + Group Switcher (Unified Context) -->
-        <div class="dash-header-left desktop-only" style="display:flex; align-items:center; gap:1.5rem; flex-shrink:0;">
-          <div class="logo" onclick="window.location.href='index.html'" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; text-decoration:none;">
-            <img src="images/logo.png" alt="Logo" style="height:32px; width:32px; object-fit:contain;">
-            <span style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.2rem; color:var(--primary);">ClubHub</span>
-          </div>
-          <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
-        </div>
-
-        <!-- CENTER: Mode Switcher (Groups vs Player) -->
-        <div class="dash-header-center desktop-only" style="flex:1; display:flex; justify-content:center;">
-          <div class="header-mode-toggle" id="header-mode-toggle" style="display:flex; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:4px;">
-            <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')" 
-                 style="padding:0.5rem 1rem; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer; transition:all 0.2s;">Groups Hub</div>
-            <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')" 
-                 style="padding:0.5rem 1rem; font-size:0.85rem; font-weight:600; border-radius:8px; cursor:pointer; transition:all 0.2s;">Player Pro</div>
+          <div class="header-right-actions" style="display:flex; align-items:center; gap:0.5rem;">
+             <div id="header-mobile-switcher-target" style="display:flex; align-items:center;"></div>
+             <div class="mobile-profile-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width:36px; height:36px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem; border:2px solid rgba(255,255,255,0.1);">${initial}</div>
           </div>
         </div>
 
-        <!-- RIGHT: Actions -->
-        <div class="dash-header-right" id="header-actions-right" style="display:flex; align-items:center; gap:0.75rem; flex-shrink:0;">
-          <div id="header-family-switcher-container" class="desktop-only"></div>
-          <div id="stripe-header-btn-container" class="desktop-only"></div>
-          <div id="notif-header-btn-container"></div>
-          
-          <div class="user-profile-trigger desktop-only" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
-               style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.35rem 0.75rem; border-radius:999px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); transition:all 0.2s;">
-            <span class="user-name" id="header-user-name" style="font-size:0.85rem; font-weight:600;">${name}</span>
-            <div class="user-avatar-sm" id="header-user-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0;">${initial}</div>
-            <i class="fa fa-chevron-down" style="font-size:0.7rem; opacity:0.5;"></i>
+        <!-- DESKTOP HEADER: Logo + Group Switcher | Right Actions -->
+        <div class="logo-area-wrapper desktop-only" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+          <div class="dash-header-left" style="display:flex; align-items:center; gap:1.5rem;">
+            <div class="logo" onclick="window.location.href='index.html'" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; text-decoration:none;">
+              <img src="images/logo.png" alt="Logo" style="height:32px; width:32px; object-fit:contain;">
+              <span style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.2rem; color:var(--primary);">ClubHub</span>
+            </div>
+            <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
           </div>
 
-          <button class="btn btn-secondary btn-small desktop-only" onclick="UnifiedNav.logout()" style="white-space:nowrap; border-radius:8px;">Logout</button>
-          
-          <!-- mobile avatar only -->
-          <div class="mobile-only" style="display:flex; align-items:center; gap:0.5rem;" onclick="UnifiedNav.toggleSidebar(true)">
-            <div class="user-avatar-sm" style="width:32px; height:32px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem;">${initial}</div>
+          <div class="dash-header-right" style="display:flex; align-items:center; gap:1rem;">
+            <div id="header-family-switcher-container"></div>
+            <div id="stripe-header-btn-container"></div>
+            <div id="notif-header-btn-container"></div>
+            
+            <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
+                 style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.35rem 0.75rem; border-radius:999px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); transition:all 0.2s;">
+              <span class="user-name" id="header-user-name" style="font-size:0.85rem; font-weight:600;">${name}</span>
+              <div class="user-avatar-sm" id="header-user-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0;">${initial}</div>
+              <i class="fa fa-chevron-down" style="font-size:0.7rem; opacity:0.5;"></i>
+            </div>
+
+            <button class="btn btn-secondary btn-small" onclick="UnifiedNav.logout()" style="white-space:nowrap; border-radius:8px;">Logout</button>
           </div>
         </div>
       </div>
     `;
+
+    // CRITICAL: Call renderers immediately after HTML injection to ensure switchers appear
+    this.renderHeaderSwitcher();
+    this.renderFamilySwitcher();
+    this.updateModeUI();
+    this.renderStripeHeaderButton();
+
+    // On mobile, also render switcher in the header target if it exists
+    if (window.innerWidth < 992) {
+      const mobTarget = document.getElementById("header-mobile-switcher-target");
+      if (mobTarget) this.renderGroupSwitcher(mobTarget);
+    }
 
     // CRITICAL: Call renderers immediately after HTML injection to ensure switchers appear
     this.renderHeaderSwitcher();
@@ -1382,6 +1399,12 @@ const UnifiedNav = {
       block: "nearest",
       inline: "center",
     });
+  },
+
+  manageStripeAccount() {
+    // Ported from previous working version
+    const stripeUrl = "https://dashboard.stripe.com/test/connect/accounts"; // Placeholder or dynamic from config
+    window.open(stripeUrl, "_blank", "width=800,height=900,scrollbars=yes");
   },
 
   renderBottomNav() {

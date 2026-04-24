@@ -932,6 +932,13 @@ header.header .nav-container,
     overflow-y: auto;
     padding: 0 1.5rem;
     scrollbar-width: none; /* Hide scrollbar Firefox */
+    list-style: none !important;
+}
+
+.sidebar-nav ul, .sidebar-nav li {
+    list-style: none !important;
+    padding: 0;
+    margin: 0;
 }
 
 .sidebar-nav::-webkit-scrollbar {
@@ -1309,37 +1316,74 @@ table td:last-child,
         font-size: 1.1rem;
     }
 
-    .sidebar-burger {
-        width: 48px !important;
-        height: 48px !important;
+    .pro-header {
+        height: 64px !important;
+        background: rgba(10, 10, 12, 0.8) !important;
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding: 0 1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        position: fixed !important;
+        top: 0 !important;
+        width: 100% !important;
+        z-index: 2000 !important;
+    }
+
+    .logo-area-wrapper.mobile-only {
+        width: 100% !important;
+        justify-content: space-between !important;
+        gap: 0 !important;
+    }
+
+    .side-menu-trigger {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
-    
+
+    .sidebar-burger {
+        width: 56px !important;
+        height: 56px !important;
+        background: var(--primary) !important;
+        border-radius: 50% !important;
+        box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4) !important;
+        margin-bottom: 2rem !important;
+        border: none !important;
+        color: white !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
     .sidebar-burger svg {
-        width: 28px !important;
-        height: 28px !important;
+        width: 32px !important;
+        height: 32px !important;
     }
 
-    .dashboard-nav::-webkit-scrollbar, .top-headline-tabs::-webkit-scrollbar {
-        display: none !important;
+    .main, .dashboard-main {
+        padding-top: 80px !important;
+        padding-bottom: 100px !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
 
-    .tab-icon {
-        font-size: 1rem;
+    .top-headline-tabs {
+        top: 64px !important;
+        background: rgba(10, 10, 12, 0.95) !important;
+        position: sticky !important;
     }
 
-    /* Fix for common grid layouts on mobile - Force stack despite inline styles */
+    /* Force Grid Cleanup for mobile */
     .dashboard-grid, .stats-grid, .account-types-grid, .card-grid, .filters-grid {
         grid-template-columns: 1fr !important;
-        gap: 1rem !important;
-    }
-
-    /* Fix for scout specific filters and dashboard headers */
-    .dashboard-header, .filters-bar {
-        flex-direction: column !important;
-        align-items: flex-start !important;
         gap: 1rem !important;
     }
 }

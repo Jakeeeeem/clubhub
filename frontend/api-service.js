@@ -424,17 +424,26 @@ if (typeof ApiService === 'undefined') {
 
     // --- PLATFORM ADMIN ---
     if (endpoint.includes("/platform-admin")) {
-      return { success: true, stats: { total_users: 1242, total_groups: 86 }, groups: [], users: [], verifications: [] };
+      return { 
+        success: true, 
+        stats: { total_users: 1242, total_groups: 86 }, 
+        groups: [], 
+        users: [], 
+        verifications: [],
+        scout_verifications: [] // Added for scout approvals
+      };
     }
 
-    // --- NOTIFICATIONS ---
-    if (endpoint.includes("/notifications")) {
-        return { success: true, notifications: [
-            { id: "n1", title: "Welcome", message: "Thanks for joining ClubHub Demo!", read: false, created_at: new Date().toISOString() }
-        ]};
+    // --- GENERIC SUCCESS FOR OTHER DASHBOARD REQUESTS ---
+    if (endpoint.includes("/admin") || endpoint.includes("/coach") || endpoint.includes("/player")) {
+      return { success: true, data: [] };
     }
 
     if (endpoint.includes("/api/health") || endpoint.includes("/health")) return { status: "healthy", service: "ClubHub Demo" };
+
+    // Fallback for everything else in demo mode to prevent 403 crashes
+    const isDemo = localStorage.getItem("isDemoSession") === "true";
+    if (isDemo) return { success: true, data: [] };
 
     return null;
   }
