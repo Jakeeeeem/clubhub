@@ -7,6 +7,68 @@ if (window.__groupSwitcherDefined) {
   console.log("♻️ GroupSwitcher: already loaded, skipping duplicate include.");
 } else {
   window.__groupSwitcherDefined = true;
+  
+  // Inject CSS if not already present
+  if (!document.getElementById("group-switcher-css")) {
+    const style = document.createElement("style");
+    style.id = "group-switcher-css";
+    style.textContent = `
+      .group-switcher { position: relative; z-index: 1000; font-family: 'Inter', sans-serif; }
+      .group-switcher-trigger { 
+        display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.85rem; 
+        background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); 
+        border-radius: 8px; cursor: pointer; transition: all 0.2s; min-width: 180px; 
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      }
+      .group-switcher-trigger:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--primary); }
+      .group-switcher-trigger.open { background: rgba(255, 255, 255, 0.12); border-color: var(--primary); box-shadow: 0 0 15px rgba(220, 67, 67, 0.2); }
+      .group-avatar { 
+        width: 32px; height: 32px; border-radius: 6px; background: var(--primary); 
+        display: flex; align-items: center; justify-content: center; font-weight: 800; 
+        font-size: 0.8rem; color: white; flex-shrink: 0; box-shadow: 0 2px 8px rgba(220, 67, 67, 0.3);
+      }
+      .group-info { flex: 1; text-align: left; min-width: 0; overflow: hidden; }
+      .group-name { font-size: 0.85rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+      .group-role { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+      .group-switcher-dropdown {
+        position: absolute; top: calc(100% + 8px); left: 0; width: 300px; 
+        background: #111; border: 1px solid rgba(255, 255, 255, 0.1); 
+        border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); 
+        z-index: 2000; opacity: 0; visibility: hidden; transform: translateY(-10px); 
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden;
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      }
+      .group-switcher-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
+      .group-switcher-header { padding: 12px 16px; font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); }
+      .group-switcher-list { max-height: 350px; overflow-y: auto; padding: 6px; }
+      .group-item {
+        display: flex; align-items: center; gap: 0.75rem; padding: 10px 12px; 
+        width: 100%; background: transparent; border: none; border-radius: 8px; 
+        color: #fff; cursor: pointer; text-align: left; transition: background 0.2s;
+      }
+      .group-item:hover { background: rgba(255, 255, 255, 0.05); }
+      .group-item.active { background: rgba(220, 67, 67, 0.1); border: 1px solid rgba(220, 67, 67, 0.2); }
+      .group-item .item-avatar { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+      .group-item.active .item-avatar { background: var(--primary); }
+      .group-item .item-info { flex: 1; min-width: 0; }
+      .group-item .item-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .group-item .item-role { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
+      .group-switcher-footer { padding: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
+      .add-org-btn { 
+        display: flex; align-items: center; justify-content: center; gap: 0.5rem; 
+        width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.03); 
+        border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; color: #fff; 
+        font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      }
+      .add-org-btn:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--primary); color: var(--primary); }
+      
+      /* Sidebar Specific Overrides */
+      .pro-sidebar .group-switcher { width: 100%; margin-bottom: 1rem; }
+      .pro-sidebar .group-switcher-trigger { width: 100%; background: rgba(0,0,0,0.2); }
+      .pro-sidebar .group-switcher-dropdown { left: 0; width: calc(var(--sidebar-width, 280px) - 24px); }
+    `;
+    document.head.appendChild(style);
+  }
 
   class GroupSwitcher {
     constructor(container = null) {

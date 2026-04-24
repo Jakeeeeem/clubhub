@@ -875,26 +875,6 @@ const UnifiedNav = {
       } else {
         this.renderGroupSwitcher(switcherSlot);
       }
-      // Ensure clicking the header switcher area toggles the group switcher dropdown
-      try {
-        switcherSlot.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const inst = window.__groupSwitcherInstance;
-          if (inst && typeof inst.toggleDropdown === "function") {
-            inst.toggleDropdown();
-          } else {
-            // If instance not ready, render and toggle after a short delay
-            UnifiedNav.renderGroupSwitcher(switcherSlot);
-            setTimeout(() => {
-              const i = window.__groupSwitcherInstance;
-              if (i && typeof i.toggleDropdown === "function")
-                i.toggleDropdown();
-            }, 300);
-          }
-        });
-      } catch (e) {
-        console.warn("Failed to bind header switcher click", e);
-      }
     }
 
     this.renderTopTabs();

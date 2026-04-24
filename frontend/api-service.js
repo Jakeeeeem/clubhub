@@ -268,6 +268,22 @@ if (typeof ApiService === 'undefined') {
       headers["Authorization"] = `Bearer ${this.token}`;
     }
 
+    // Add context headers for organization/club filtering
+    let currentClubId = localStorage.getItem("clubId") || localStorage.getItem("activeOrganizationId");
+    
+    // Recovery: check currentUser object if not found in root keys
+    if (!currentClubId) {
+        try {
+            const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+            currentClubId = user.clubId || user.groupId || user.currentGroupId;
+        } catch(e) {}
+    }
+
+    if (currentClubId) {
+        headers["x-club-id"] = currentClubId;
+        headers["x-organization-id"] = currentClubId;
+    }
+
     const config = {
       ...options,
       headers,
@@ -382,15 +398,31 @@ if (typeof ApiService === 'undefined') {
     // --- DASHBOARDS ---
     if (endpoint.includes("/dashboard/admin") || endpoint.includes("/admin/stats")) {
         const fb = this.getAdminDashboardFallback();
+        const currentId = user.groupId || user.clubId || "demo-club-id";
+        
+        // Filter data for the current group
+        const filteredPlayers = fb.players.filter(p => p.groupId === currentId || p.clubId === currentId || p.team_id?.startsWith('t') || true); // Defaulting to true for demo simplicity but smarter filtering is better
+        
+        // Smarter filtering: if it's a specific demo club, only show its teams
+        const filteredTeams = fb.teams.filter(t => t.groupId === currentId);
+        const filteredPlayersFinal = fb.players.filter(p => {
+            const team = fb.teams.find(t => t.id === p.team_id);
+            return team && team.groupId === currentId;
+        });
+
         if (endpoint.includes("/stats")) {
             return {
-                totalMembers: fb.players.length + fb.staff.length,
+                totalMembers: filteredPlayersFinal.length + fb.staff.length,
                 monthlyRevenue: fb.statistics.monthly_revenue || 3840,
                 activeEvents: fb.events.length,
                 pendingScouts: 3
             };
         }
-        return fb;
+        return {
+            ...fb,
+            players: filteredPlayersFinal.length > 0 ? filteredPlayersFinal : fb.players.slice(0, 5),
+            teams: filteredTeams.length > 0 ? filteredTeams : fb.teams.slice(0, 3)
+        };
     }
     if (endpoint.includes("/dashboard/player") || endpoint.includes("/players/dashboard")) return this.getPlayerDashboardFallback();
     if (endpoint.includes("/dashboard/coach")) return this.getCoachDashboardFallback();
@@ -398,13 +430,27 @@ if (typeof ApiService === 'undefined') {
     // --- TEAMS & MEMBERS ---
     if (endpoint.includes("/teams")) {
         const fb = this.getAdminDashboardFallback();
-        return { success: true, teams: fb.teams || [] };
+        const currentId = user.groupId || user.clubId || "demo-club-id";
+        const filteredTeams = fb.teams.filter(t => t.groupId === currentId);
+        return { success: true, teams: filteredTeams.length > 0 ? filteredTeams : fb.teams };
     }
     if (endpoint.includes("/members") || endpoint.includes("/staff") || (endpoint.includes("/players") && !endpoint.includes("/dashboard"))) {
         const fb = this.getAdminDashboardFallback();
+        const currentId = user.groupId || user.clubId || "demo-club-id";
+        
+        const filteredPlayers = fb.players.filter(p => {
+            const team = fb.teams.find(t => t.id === p.team_id);
+            return team && team.groupId === currentId;
+        });
+
         // Handle role filtering
         if (endpoint.includes("role=coach")) return { success: true, coaches: fb.staff.filter(s => s.role.toLowerCase().includes("coach")) };
-        return { success: true, players: fb.players || [], members: fb.players || [], staff: fb.staff || [] };
+        return { 
+            success: true, 
+            players: filteredPlayers.length > 0 ? filteredPlayers : fb.players, 
+            members: filteredPlayers.length > 0 ? filteredPlayers : fb.players, 
+            staff: fb.staff || [] 
+        };
     }
 
     // --- VENUES & TOURNAMENTS ---
