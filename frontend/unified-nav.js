@@ -515,13 +515,26 @@ const UnifiedNav = {
     const isDashboard = window.location.pathname.includes("dashboard") || window.location.pathname.includes("finder");
     
     // ⚡ SYSTEM RESET: check for ?reset=system to clear all state
-    if (urlParams.get('reset') === 'system') {
-        console.warn("⚡ System Reset Requested: Clearing cache...");
+    const CURRENT_VERSION = "2.1.0"; // Increment this to force clear cache for all users
+    const storedVersion = localStorage.getItem("CH_UI_VERSION");
+    
+    if (urlParams.get('reset') === 'system' || storedVersion !== CURRENT_VERSION) {
+        console.warn("⚡ System Sync: Clearing legacy cache for version " + CURRENT_VERSION);
+        
+        // Save critical flags before clearing
+        const isDemo = localStorage.getItem('isDemoSession');
+        
         localStorage.clear();
-        // Remove the reset param and reload
-        const newUrl = window.location.origin + window.location.pathname;
-        window.location.href = newUrl;
-        return;
+        
+        // Restore manual demo flag if it existed
+        if (isDemo) localStorage.setItem('isDemoSession', isDemo);
+        localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
+        
+        if (urlParams.get('reset') === 'system') {
+            const newUrl = window.location.origin + window.location.pathname;
+            window.location.href = newUrl;
+            return;
+        }
     }
 
     // Check connection status from user object or localStorage
@@ -884,10 +897,7 @@ const UnifiedNav = {
       }
     }
 
-    const isMobile = window.innerWidth < 992;
-    if (!isMobile) {
-      this.renderTopTabs();
-    }
+    this.renderTopTabs();
   },
 
   ensureHeaderElements() {
@@ -1332,7 +1342,7 @@ const UnifiedNav = {
     if (tabs.length === 0) return;
 
     const tabsHTML = `
-      <div id="top-headline-tabs" class="top-headline-tabs">
+      <div id="top-headline-tabs" class="top-headline-tabs mobile-only">
         <div class="tabs-scroll-container">
           ${tabs
             .map(

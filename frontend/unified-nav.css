@@ -2096,9 +2096,17 @@ body.has-top-tabs .dashboard-main {
     padding: 0.75rem 0 !important;
 }
 
-.dashboard-view .top-headline-tabs {
-    left: var(--sidebar-width) !important;
-    width: calc(100% - var(--sidebar-width)) !important;
+@media (min-width: 992px) {
+    .dashboard-view .top-headline-tabs {
+        left: var(--sidebar-width) !important;
+        width: calc(100% - var(--sidebar-width)) !important;
+    }
+}
+@media (max-width: 991px) {
+    .dashboard-view .top-headline-tabs {
+        left: 0 !important;
+        width: 100% !important;
+    }
 }
 
 .dashboard-container {
