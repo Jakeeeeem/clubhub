@@ -70,7 +70,7 @@ if (window.__groupSwitcherDefined) {
     document.head.appendChild(style);
   }
 
-  class GroupSwitcher {
+  window.GroupSwitcher = class GroupSwitcher {
     constructor(container = null) {
       this.currentGroup = null;
       this.groups = [];
@@ -148,18 +148,19 @@ if (window.__groupSwitcherDefined) {
                   `Switcher: Loaded ${allGroupsResponse.groups.length} platform clubs.`,
                 );
                 // Map to match the format from /auth/context
-                groups = allGroupsResponse.groups.map((group) => ({
-                  id: group.id,
-                  name: group.name,
-                  sport: group.sport,
-                  location: group.location,
-                  logo_url: group.logo_url,
-                  user_role: "Platform Admin",
-                  role: "Platform Admin",
+                const platformGroups = allGroupsResponse.groups.map((g) => ({
+                  id: g.id,
+                  name: g.name,
+                  role: "platform_admin",
+                  logo: g.logo,
                 }));
+                // Deduplicate and merge
+                const existingIds = new Set(groups.map((g) => g.id));
+                const uniqueNew = platformGroups.filter((g) => !existingIds.has(g.id));
+                groups = [...groups, ...uniqueNew];
               }
             } catch (error) {
-              console.warn("Switcher: Failed to load all groups:", error);
+              console.warn("Switcher: Failed to load all groups (403 expected if permissions missing):", error);
             }
           } else {
             // For non-admins, filter based on dashboard type

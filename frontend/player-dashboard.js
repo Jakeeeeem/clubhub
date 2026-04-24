@@ -3402,7 +3402,7 @@ async function loadNotifications() {
     PlayerDashboardState.notifications = notifications;
 
     // Update the bell icon and unread count
-    setupNavButtons();
+    console.log("Notifications loaded");
 
     const listEl = document.getElementById("notificationList");
     if (!listEl) return;

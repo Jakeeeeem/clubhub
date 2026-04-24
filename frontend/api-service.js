@@ -390,7 +390,7 @@ if (typeof ApiService === 'undefined') {
     }
 
     // --- GROUP LISTS ---
-    if (endpoint.includes("/groups") && !endpoint.includes("/platform-admin/groups")) {
+    if (endpoint.includes("/clubs") && !endpoint.includes("/platform-admin/organizations")) {
       if (method === "POST") return { success: true, id: "new-group" };
       return this.getAdminDashboardFallback().groups || [];
     }
@@ -650,7 +650,7 @@ if (typeof ApiService === 'undefined') {
         has_listings: hasListings, // Only fetch groups with active listings if requested
       }).toString();
 
-      return await this.makeRequest(`/groups?${queryString}`);
+      return await this.makeRequest(`/clubs?${queryString}`);
     } catch (error) {
       console.error("Failed to search groups:", error);
       throw error;
@@ -835,7 +835,7 @@ if (typeof ApiService === 'undefined') {
     const formData = new FormData();
     formData.append("image", file);
 
-    return await this.makeRequest(`/groups/${groupId}/images`, {
+    return await this.makeRequest(`/clubs/${groupId}/images`, {
       method: "POST",
       body: formData,
     });
@@ -845,14 +845,14 @@ if (typeof ApiService === 'undefined') {
     const formData = new FormData();
     formData.append("logo", file);
 
-    return await this.makeRequest(`/groups/${groupId}/logo`, {
+    return await this.makeRequest(`/clubs/${groupId}/logo`, {
       method: "POST",
       body: formData,
     });
   }
 
   async deleteGroupImage(orgId, imageUrl) {
-    return await this.makeRequest(`/groups/${orgId}/images`, {
+    return await this.makeRequest(`/clubs/${orgId}/images`, {
       method: "DELETE",
       body: JSON.stringify({ imageUrl }),
     });
@@ -1032,7 +1032,7 @@ if (typeof ApiService === 'undefined') {
   async getGroupApplications(groupId) {
     try {
       const response = await this.makeRequest(
-        `/groups/${groupId}/applications`,
+        `/clubs/${groupId}/applications`,
       );
       return response.applications || [];
     } catch (error) {
@@ -1233,8 +1233,8 @@ if (typeof ApiService === 'undefined') {
   async getGroups(search = null) {
     try {
       const endpoint = search
-        ? `/groups?search=${encodeURIComponent(search)}`
-        : "/groups";
+        ? `/clubs?search=${encodeURIComponent(search)}`
+        : "/clubs";
       const groups = await this.makeRequest(endpoint);
       localStorage.setItem("cachedGroups", JSON.stringify(groups));
       return groups;
@@ -1256,7 +1256,7 @@ if (typeof ApiService === 'undefined') {
       return demoGroups.find((c) => c.id === id) || demoGroups[0];
     }
     try {
-      return await this.makeRequest(`/groups/${id}`);
+      return await this.makeRequest(`/clubs/${id}`);
     } catch (error) {
       console.warn(`❌ Failed to fetch club ${id}:`, error);
       if (localStorage.getItem("isDemoSession") === "true") {
@@ -1275,7 +1275,7 @@ if (typeof ApiService === 'undefined') {
 
     // 2. Try real API
     try {
-      return await this.makeRequest(`/groups/${id}`);
+      return await this.makeRequest(`/clubs/${id}`);
     } catch (error) {
       // 3. Fallback only if in demo session
       if (localStorage.getItem("isDemoSession") === "true") {
@@ -1287,7 +1287,7 @@ if (typeof ApiService === 'undefined') {
   }
 
   async createGroup(clubData) {
-    const response = await this.makeRequest("/groups", {
+    const response = await this.makeRequest("/clubs", {
       method: "POST",
       body: JSON.stringify(clubData),
     });
@@ -1297,7 +1297,7 @@ if (typeof ApiService === 'undefined') {
   }
 
   async updateGroup(id, clubData) {
-    return await this.makeRequest(`/groups/${id}`, {
+    return await this.makeRequest(`/clubs/${id}`, {
       method: "PUT",
       body: JSON.stringify(clubData),
     });
@@ -1315,7 +1315,7 @@ if (typeof ApiService === 'undefined') {
   async sendInvitation(groupId, inviteData) {
     try {
       console.log(`📧 Sending invitation for org ${groupId}:`, inviteData);
-      return await this.makeRequest(`/groups/${groupId}/invite`, {
+      return await this.makeRequest(`/clubs/${groupId}/invite`, {
         method: "POST",
         body: JSON.stringify(inviteData),
       });
@@ -1376,7 +1376,7 @@ if (typeof ApiService === 'undefined') {
    */
   async getGroupInvitations(groupId) {
     try {
-      return await this.makeRequest(`/groups/${groupId}/invitations`);
+      return await this.makeRequest(`/clubs/${groupId}/invitations`);
     } catch (error) {
       console.error("❌ Failed to get group invitations:", error);
       throw error;
@@ -1384,7 +1384,7 @@ if (typeof ApiService === 'undefined') {
   }
 
   async deleteGroup(id) {
-    return await this.makeRequest(`/groups/${id}`, {
+    return await this.makeRequest(`/clubs/${id}`, {
       method: "DELETE",
     });
   }
@@ -1392,7 +1392,7 @@ if (typeof ApiService === 'undefined') {
   async applyToGroup(groupId, applicationData) {
     try {
       console.log(`📝 Applying to club ${groupId}:`, applicationData);
-      return await this.makeRequest(`/groups/${groupId}/apply`, {
+      return await this.makeRequest(`/clubs/${groupId}/apply`, {
         method: "POST",
         body: JSON.stringify(applicationData),
       });
@@ -2283,7 +2283,7 @@ if (typeof ApiService === 'undefined') {
           },
         ];
       }
-      return await this.makeRequest(`/groups/${groupId}/campaigns`);
+      return await this.makeRequest(`/clubs/${groupId}/campaigns`);
     } catch (error) {
       console.warn("❌ Failed to fetch campaigns:", error);
       return [];
@@ -2328,7 +2328,7 @@ if (typeof ApiService === 'undefined') {
           },
         ];
       }
-      return await this.makeRequest(`/groups/${groupId}/products`);
+      return await this.makeRequest(`/clubs/${groupId}/products`);
     } catch (error) {
       console.warn("❌ Failed to fetch products:", error);
       return [];
@@ -2860,7 +2860,7 @@ if (typeof ApiService === 'undefined') {
 
   async getUserGroups() {
     try {
-      return await this.makeRequest("/auth/groups");
+      return await this.makeRequest("/auth/clubs");
     } catch (error) {
       console.error("❌ Failed to fetch groups:", error);
       throw error;
@@ -3045,7 +3045,7 @@ if (typeof ApiService === 'undefined') {
 
   async applyToGroupForChild(groupId, childId, applicationData) {
     try {
-      return await this.makeRequest(`/groups/${groupId}/apply-child`, {
+      return await this.makeRequest(`/clubs/${groupId}/apply-child`, {
         method: "POST",
         body: JSON.stringify({ childId, ...applicationData }),
       });
@@ -3202,7 +3202,7 @@ if (typeof ApiService === 'undefined') {
   async getPolls(groupId) {
     try {
       const response = await this.makeRequest(
-        `/groups/${groupId || "demo-club-id"}/polls`,
+        `/clubs/${groupId || "demo-club-id"}/polls`,
       );
       return Array.isArray(response) ? response : response.polls || [];
     } catch (error) {
@@ -3351,7 +3351,7 @@ if (typeof ApiService === 'undefined') {
 
   // =========================== CAMPS & GROUPS ===========================
   async createCampGroup(eventId, groupData) {
-    return await this.makeRequest(`/events/${eventId}/groups`, {
+    return await this.makeRequest(`/events/${eventId}/clubs`, {
       method: "POST",
       body: JSON.stringify(groupData),
     });

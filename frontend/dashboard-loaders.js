@@ -125,6 +125,16 @@ window.DashboardLoaders = {
         const list = document.getElementById('scoutApprovalsList');
         if (!list) return;
         try {
+            // Check if user is platform admin before calling restricted endpoint
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const isPlatformAdmin = user.role === 'platform_admin' || user.is_platform_admin === true || user.isPlatformAdmin === true;
+
+            if (!isPlatformAdmin) {
+                console.log("ℹ️ Skipping platform scout approvals: user is not a platform admin.");
+                list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">Access restricted to platform administrators.</div>';
+                return;
+            }
+
             const approvals = await apiService.getPlatformScoutVerifications();
             if (!approvals || approvals.length === 0) {
                 list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending platform scout approvals.</div>';

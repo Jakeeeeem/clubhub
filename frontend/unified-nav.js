@@ -178,15 +178,6 @@ const UnifiedNav = {
       document.head.appendChild(link);
     }
 
-    // 🛡️ Context Sync: Ensure we have latest roles and family data for switcher
-    if (typeof apiService !== 'undefined') {
-        apiService.getContext().then(context => {
-            if (context && context.family) {
-                localStorage.setItem("userFamily", JSON.stringify(context.family));
-                this.renderFamilySwitcher();
-            }
-        });
-    }
 
     try {
       // Perform Mobile UX Sweep to fix layouts
@@ -244,6 +235,23 @@ const UnifiedNav = {
     } else {
       document.body.classList.remove("dashboard-view", "app-layout");
       document.body.classList.add("landing-view");
+    }
+    // 🛡️ Context Sync: Ensure we have latest roles and family data for switcher
+    if (typeof apiService !== 'undefined' && typeof apiService.getContext === 'function') {
+        try {
+            apiService.getContext()
+                .then(context => {
+                    if (context && context.family) {
+                        localStorage.setItem("userFamily", JSON.stringify(context.family));
+                        this.renderFamilySwitcher();
+                    }
+                })
+                .catch(e => {
+                    console.warn("⚠️ UnifiedNav: Context sync failed (expected if non-admin)", e);
+                });
+        } catch (e) {
+            console.warn("⚠️ UnifiedNav: Context sync execution failed", e);
+        }
     }
 
     // ── STAGE 1: Core Layout ───────────────────────────────────────────
@@ -1164,7 +1172,7 @@ const UnifiedNav = {
     if (hContainer) {
         if (isPlayer) {
             // If player page, render family switcher in the header slot instead of group switcher
-            this.renderFamilySwitcher();
+            this.renderFamilySwitcher(hContainer);
         } else {
             // If admin/coach, render group switcher
             if (!hContainer.__groupSwitcherInstance) {
@@ -2095,7 +2103,10 @@ const UnifiedNav = {
    */
   performMobileUXSweep() {
     const isMobile = window.innerWidth <= 991;
-    if (!isMobile) return;
+    if (!isMobile) {
+        document.querySelectorAll('.mobile-only').forEach(el => el.style.display = 'none');
+        return;
+    }
 
     // 1. Ensure correct viewport meta is present
     if (!document.querySelector('meta[name="viewport"]')) {

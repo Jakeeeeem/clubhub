@@ -498,7 +498,8 @@ async function checkAuthStatus() {
         return false;
       }
 
-      console.log("✅ User authenticated:", user.email);
+      const displayEmail = user.email || user.username || user.id || "demo-session";
+      console.log("✅ User authenticated:", displayEmail);
 
       // If user data is missing account_type, fetch fresh data from API
       if (
