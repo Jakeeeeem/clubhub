@@ -589,6 +589,16 @@ const UnifiedNav = {
     const userRole = this.getUserRole();
     const isAdmin = userRole === "admin" || userRole === "platform_admin";
     const isDashboard = window.location.pathname.includes("dashboard") || window.location.pathname.includes("finder");
+    
+    // ⚡ SYSTEM RESET: check for ?reset=system to clear all state
+    if (urlParams.get('reset') === 'system') {
+        console.warn("⚡ System Reset Requested: Clearing cache...");
+        localStorage.clear();
+        // Remove the reset param and reload
+        const newUrl = window.location.origin + window.location.pathname;
+        window.location.href = newUrl;
+        return;
+    }
 
     // Check connection status from user object or localStorage
     const isConnected =
@@ -1234,12 +1244,12 @@ const UnifiedNav = {
                     ${ICONS.menu}
                 </div>
 
-                <div class="dash-header-left" style="display: flex; align-items: center; gap: 1rem;">
-                    <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer;">
-                        <img src="images/logo.png" alt="Logo" class="logo-img">
-                        <span class="logo-text">ClubHub</span>
+                <div class="dash-header-left" style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
+                    <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                        <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 28px;">
+                        <span class="logo-text desktop-only">ClubHub</span>
                     </div>
-                    <div id="header-group-switcher-container"></div>
+                    <div id="header-group-switcher-container" style="flex: 1; min-width: 0;"></div>
                 </div>
 
                 <div class="mode-toggle-container desktop-only">
@@ -1250,7 +1260,7 @@ const UnifiedNav = {
                 </div>
 
                 <div class="header-actions">
-                    ${this.getUserRole() === "admin" || this.getUserRole() === "organization" ? `
+                    ${(this.getUserRole() === "admin" || this.getUserRole() === "organization" || this.getUserRole() === "platform_admin") ? `
                     <button id="stripe-connect-btn" class="btn btn-secondary btn-small desktop-only" style="margin-right: 1rem; border-color: rgba(255,255,255,0.1);" onclick="UnifiedNav.manageStripeAccount()">
                         <i class="fa fa-cc-stripe" style="margin-right: 6px;"></i> Stripe
                     </button>
@@ -1386,6 +1396,7 @@ const UnifiedNav = {
     `;
 
     header.insertAdjacentHTML("afterend", tabsHTML);
+    document.body.classList.add("has-top-tabs");
     
     // Ensure horizontal scrolling is enabled and active tab is visible
     setTimeout(() => {
@@ -1621,6 +1632,11 @@ const UnifiedNav = {
                     
                     <div class="dropdown-divider" style="height: 1px; background: rgba(255,255,255,0.08); margin: 0.5rem 0;"></div>
                     
+                    <a href="?reset=system" class="dropdown-link" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 8px;">
+                        <span style="font-size: 1.1rem;">🧹</span>
+                        <span style="font-size: 0.85rem; font-weight: 600;">Clear Cache & Reset</span>
+                    </a>
+
                     <a href="#" class="dropdown-link" style="color: #ef4444; display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 8px;" onclick="UnifiedNav.logout(); return false;">
                         <span style="font-size: 1.1rem;">🚪</span>
                         <span style="font-size: 0.85rem; font-weight: 600;">Sign Out</span>
@@ -1851,8 +1867,9 @@ switchMode(mode) {
                     <a href="player-shop.html" onclick="return UnifiedNav.handleNavClick(event, 'player-shop.html', 'item-shop')" class="sidebar-link ${isActive('player-shop.html')}">${ICONS.nav.shop}<span>Club Shop</span></a>
                     
                     <div class="nav-group-title">Discovery</div>
-                    <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.venue}<span>Club Finder</span></a>
+                    <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
                     <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
+                    <a href="tournament-manager.html" class="sidebar-link ${isActive('tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
                     <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
         `;
     } else if (isSuperAdmin) {
@@ -1903,8 +1920,9 @@ switchMode(mode) {
         <a href="admin-tactical-board.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-tactical-board.html', 'tactical-board')" class="sidebar-link ${isActive('admin-tactical-board.html')}">${ICONS.nav.tactics}<span>Tactical Board</span></a>
 
         <div class="nav-group-title"><span>Discovery</span></div>
-        <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.venue}<span>Club Finder</span></a>
+        <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
         <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
+        <a href="tournament-manager.html" class="sidebar-link ${isActive('tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
         <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
       `;
     }
@@ -1932,28 +1950,8 @@ switchMode(mode) {
       }
     }
 
-    // Add a Finder section (team, tournament, event, venue) and quick 'My' links
-    try {
-      const finderHtml = `
-        <div class="nav-group-title">Finder</div>
-        <a href="club-finder.html" class="sidebar-link">${ICONS.nav.teams}<span>Team / Club Finder</span></a>
-        <a href="tournament-manager.html" class="sidebar-link">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
-        <a href="player-dashboard.html" class="sidebar-link">${ICONS.nav.events}<span>Event Finder</span></a>
-        <a href="venue-booking.html" class="sidebar-link">${ICONS.nav.venue}<span>Venue Finder</span></a>
-      `;
-
-      const myHtml = `
-        <div class="nav-group-title">My</div>
-        <a href="venue-booking.html" class="sidebar-link">${ICONS.nav.venue}<span>My Venues</span></a>
-        <a href="tournament-manager.html" class="sidebar-link">${ICONS.nav.trophy}<span>My Tournaments</span></a>
-        <a href="player-dashboard.html" class="sidebar-link">${ICONS.nav.events}<span>My Events</span></a>
-      `;
-
-      // Append finder and my sections to the end of current menu
-      nav.insertAdjacentHTML("beforeend", finderHtml + myHtml);
-    } catch (e) {
-      console.warn("UnifiedNav: failed to append Finder/My sections", e);
-    }
+    // Discovery sections are now integrated into the main role-based menu structures above
+    // to prevent duplication and ensure consistency across roles.
 
     // Build collapsible nav groups: group title toggles the following links
     try {

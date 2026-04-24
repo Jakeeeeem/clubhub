@@ -138,6 +138,11 @@
         width: 100% !important;
     }
 
+    body.has-top-tabs .main, 
+    body.has-top-tabs .dashboard-main {
+        padding-top: 150px !important;
+    }
+
     /* Dashboard Header Left/Right alignment */
     .dash-header-left {
         display: flex !important;
@@ -344,7 +349,35 @@
 /* Mobile: hide sidebar and ensure header + bottom nav visible and touch-friendly */
 @media (max-width: 991px) {
     /* Hide sidebar by default on mobile, but allow .active to override */
-    .pro-sidebar:not(.active) { display: none !important; }
+    .pro-sidebar { 
+        position: fixed !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 85% !important;
+        max-width: 300px !important;
+        height: 100% !important;
+        background: #0a0a0c !important;
+        z-index: 6000 !important;
+        transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 20px 0 50px rgba(0,0,0,0.5) !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    .pro-sidebar.active { left: 0 !important; display: flex !important; }
+
+    .sidebar-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0,0,0,0.7) !important;
+        backdrop-filter: blur(4px) !important;
+        z-index: 5500 !important;
+        display: none !important;
+    }
+    .sidebar-overlay.active { display: block !important; }
+
     header.header, .pro-header { left: 0 !important; width: 100% !important; height: 56px !important; padding: 0 0.75rem !important; }
     .pro-bottom-nav { display: flex !important; position: fixed !important; left: 0; right: 0; bottom: 0; height: 56px; z-index: 5000; }
     .pro-bottom-nav .bottom-nav-container { max-width: 720px; margin: 0 auto; }
@@ -1392,9 +1425,15 @@ table td:last-child,
     }
 
     .top-headline-tabs {
-        top: 64px !important;
+        top: 56px !important;
         background: rgba(10, 10, 12, 0.95) !important;
         position: sticky !important;
+        z-index: 4000 !important;
+    }
+
+    body.has-top-tabs .main, 
+    body.has-top-tabs .dashboard-main {
+        padding-top: 120px !important;
     }
 
     /* Force Grid Cleanup for mobile */
@@ -1950,6 +1989,27 @@ body.clubhub-unified .logo { display: flex; align-items: center; gap: 0.5rem; }
 
 .main, .dashboard-main {
     padding-top: calc(var(--nav-height) + 18px) !important;
+}
+
+body.has-top-tabs .main, 
+body.has-top-tabs .dashboard-main {
+    padding-top: calc(var(--nav-height) + 72px) !important;
+}
+
+.top-headline-tabs {
+    position: sticky !important;
+    top: var(--nav-height) !important;
+    z-index: 3000 !important;
+    background: rgba(10, 10, 12, 0.95) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.75rem 0 !important;
+}
+
+.dashboard-view .top-headline-tabs {
+    left: var(--sidebar-width) !important;
+    width: calc(100% - var(--sidebar-width)) !important;
 }
 
 .dashboard-container {
