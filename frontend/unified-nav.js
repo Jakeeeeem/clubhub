@@ -145,6 +145,16 @@ const UnifiedNav = {
       document.head.appendChild(link);
     }
 
+    // 🛡️ Context Sync: Ensure we have latest roles and family data for switcher
+    if (typeof apiService !== 'undefined') {
+        apiService.getContext().then(context => {
+            if (context && context.family) {
+                localStorage.setItem("userFamily", JSON.stringify(context.family));
+                this.renderFamilySwitcher();
+            }
+        });
+    }
+
     try {
       // Perform Mobile UX Sweep to fix layouts
       if (typeof this.performMobileUXSweep === "function") {
@@ -994,16 +1004,16 @@ const UnifiedNav = {
 
       // Build inner HTML for aside (only the content inside <aside>) so we can populate existing placeholders
       const asideInner = `
-                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.5rem; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.12); border: 1.5px solid rgba(255,255,255,0.2); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; z-index: 100; width: 64px; height: 64px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; z-index: 100; width: 48px; height: 48px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                        ${ICONS.close}
                     </button>
                     
-                    <div class="sidebar-header" style="display: flex; align-items: center; gap: 1rem; padding: 4.5rem 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem; position: relative;">
+                    <div class="sidebar-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; padding: 2rem 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem; position: relative;">
                         <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem;">
-                            <img src="images/logo.png" alt="Logo" style="width: 28px; height: 28px;">
-                            <span style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px;">ClubHub</span>
+                            <img src="images/logo.png" alt="Logo" style="width: 32px; height: 32px;">
+                            <span style="font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px;">ClubHub</span>
                         </div>
-                        <div id="sidebar-switcher-target" style="margin-top: 1rem; width: 100%;"></div>
+                        <div id="sidebar-switcher-target" style="width: 100%; margin-top: 0.5rem;"></div>
                     </div>
 
                         <div class="sidebar-nav-container" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 0.5rem; padding-bottom: 100px;">
@@ -1020,8 +1030,10 @@ const UnifiedNav = {
                             </div>
                         </a>
                         <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 0.5rem 0;"></div>
-                        <a href="player-settings.html" class="sidebar-link" style="margin-bottom: 0; padding: 0.6rem 0.5rem;">${ICONS.nav.settings} <span>Settings</span></a>
-                        <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="color: #ef4444; margin-bottom: 0; padding: 0.6rem 0.5rem;">${ICONS.nav.logout} <span>Sign Out</span></a>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                            <a href="${isPlayer ? "player-settings.html" : "admin-settings.html"}" class="sidebar-link" style="flex: 1; margin-bottom: 0; padding: 0.5rem; font-size: 0.7rem; justify-content: center; gap: 0.5rem;">${ICONS.nav.settings} <span style="font-size: 0.7rem;">Settings</span></a>
+                            <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="flex: 1; color: #ef4444; margin-bottom: 0; padding: 0.5rem; font-size: 0.7rem; justify-content: center; gap: 0.5rem;">${ICONS.nav.logout} <span style="font-size: 0.7rem;">Sign Out</span></a>
+                        </div>
                     </div>
             `;
 
@@ -1180,25 +1192,20 @@ const UnifiedNav = {
   },
 
   renderHeaderSwitcher() {
-    // Look for the dedicated group switcher container (both mobile and desktop)
-    let headerContainer =
-      document.getElementById("header-org-switcher") ||
-      document.getElementById("header-group-switcher-container") ||
-      document.querySelector(".header-org-switcher-wrapper") ||
-      document.querySelector(".dash-header-left");
-    
-    if (!headerContainer) return;
-
-    // Robust double-render guard: check for both UI elements and instance flag
-    if (headerContainer.querySelector(".group-switcher") || headerContainer.__groupSwitcherInstance) {
-        console.log("♻️ UnifiedNav: Header Switcher already exists, skipping.");
-        return;
+    // 1. Desktop Header Switcher
+    const hContainer = document.getElementById("header-group-switcher-container") || 
+                       document.getElementById("header-org-switcher");
+    if (hContainer && !hContainer.__groupSwitcherInstance) {
+        this.renderGroupSwitcher(hContainer);
     }
 
-    const userRole = this.getUserRole();
-    console.log("🏢 Rendering Group Switcher in Header (role: " + userRole + ")");
-    this.renderGroupSwitcher(headerContainer);
+    // 2. Mobile Sidebar Switcher
+    const sContainer = document.getElementById("sidebar-switcher-target");
+    if (sContainer && !sContainer.__groupSwitcherInstance) {
+        this.renderGroupSwitcher(sContainer);
+    }
   },
+
 
   /**
    * Adds essential mobile buttons (Hamburger) to any header

@@ -67,6 +67,7 @@ if (window.__groupSwitcherDefined) {
           }
 
           let groups = response.groups || response.organizations || [];
+
           console.log(
             `Switcher: Found ${groups.length} member groups. Admin: ${this.isPlatformAdmin}`,
           );
@@ -135,6 +136,20 @@ if (window.__groupSwitcherDefined) {
           this.currentGroup =
             response.currentGroup || response.currentOrganization;
 
+          // 🛡️ RECOVERY: If groups are still empty but user is authenticated, try one more endpoint
+          if (this.groups.length === 0) {
+              try {
+                  const fallback = await apiService.makeRequest("/groups/my");
+                  if (fallback && fallback.groups) {
+                      this.groups = fallback.groups;
+                      this.allGroups = fallback.groups;
+                      if (!this.currentGroup) this.currentGroup = this.groups[0];
+                  }
+              } catch (e) {
+                  console.warn("Switcher: Fallback groups fetch failed", e);
+              }
+          }
+
           this.render();
         }
       } catch (error) {
@@ -144,10 +159,10 @@ if (window.__groupSwitcherDefined) {
 
     render() {
       const container =
-        this.container || document.getElementById("group-switcher-container");
+        this.container || document.getElementById("group-switcher-container") || document.getElementById("sidebar-switcher-target");
       if (!container) return;
 
-      const currentGroupName = this.currentGroup?.name || "No Group";
+      const currentGroupName = this.currentGroup?.name || "Select Group";
       const currentGroupRole =
         this.currentGroup?.user_role || this.currentGroup?.role || "";
 
@@ -164,7 +179,7 @@ if (window.__groupSwitcherDefined) {
             </div>
             <div class="group-info">
               <div class="group-name">${currentGroupName}</div>
-              ${currentGroupRole ? `<div class="group-role">${this.formatRole(currentGroupRole)}</div>` : ""}
+              ${currentGroupRole ? `<div class="group-role">${this.formatRole(currentGroupRole)}</div>` : `<div class="group-role">Active Organization</div>`}
             </div>
           </div>
           <svg class="group-switcher-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -191,7 +206,7 @@ if (window.__groupSwitcherDefined) {
             ${
               this.groups.length === 0
                 ? `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-                   No groups found.
+                   No organizations found.
                  </div>`
                 : this.groups
                     .map((group) => this.renderGroupItem(group))
@@ -262,17 +277,18 @@ if (window.__groupSwitcherDefined) {
     }
 
     formatRole(role) {
+      if (!role) return "Member";
       const roleMap = {
         owner: "Owner",
         admin: "Admin",
         coach: "Coach",
         assistant_coach: "Assistant Coach",
-        player: "Player",
-        parent: "Parent",
+        player: "Player Pro",
+        parent: "Parent Hub",
         staff: "Staff",
         viewer: "Viewer",
       };
-      return roleMap[role] || role;
+      return roleMap[role.toLowerCase()] || role;
     }
 
     attachEventListeners(container) {
@@ -288,10 +304,6 @@ if (window.__groupSwitcherDefined) {
         this._handleTriggerClick = (e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log(
-            "GroupSwitcher: Trigger clicked, current isOpen:",
-            this.isOpen,
-          );
           this.toggleDropdown();
         };
       }
@@ -343,7 +355,7 @@ if (window.__groupSwitcherDefined) {
       if (!this.listContainer) return;
 
       if (this.groups.length === 0) {
-        this.listContainer.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No matching groups.</div>`;
+        this.listContainer.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No matching organizations.</div>`;
       } else {
         this.listContainer.innerHTML = this.groups
           .map((group) => this.renderGroupItem(group))
@@ -375,7 +387,7 @@ if (window.__groupSwitcherDefined) {
 
     async switchGroup(groupId, playerId = null) {
       try {
-        showNotification("Switching group...", "info");
+        if (typeof showNotification === 'function') showNotification("Switching group...", "info");
 
         const response = await apiService.makeRequest("/auth/switch-group", {
           method: "POST",
@@ -389,9 +401,6 @@ if (window.__groupSwitcherDefined) {
             user.activePlayerId = playerId;
             console.log(`👶 Switching to child context: Player ID ${playerId}`);
           } else {
-            // When manually switching organizations, we should always clear the activePlayerId
-            // This ensures we load the default profile (yourself) for the new club context.
-            // Preserving a child ID is dangerous because that child likely doesn't exist in the new club.
             delete user.activePlayerId;
             sessionStorage.removeItem("activePlayerId");
             console.log(`👤 Switching group: Resetting to default profile`);
@@ -400,7 +409,7 @@ if (window.__groupSwitcherDefined) {
           user.currentGroupId = groupId;
           localStorage.setItem("currentUser", JSON.stringify(user));
 
-          showNotification("Group switched successfully!", "success");
+          if (typeof showNotification === 'function') showNotification("Group switched successfully!", "success");
 
           // Fetch new context to get updated role
           try {
@@ -409,7 +418,7 @@ if (window.__groupSwitcherDefined) {
               const newRole =
                 context.currentGroup.user_role || context.currentGroup.role;
 
-              // Update local storage user - CRITICAL FIX: Ensure we merge with existing or fetch fresh if missing
+              // Update local storage user
               let currentUser = null;
               try {
                 const stored = localStorage.getItem("currentUser");
@@ -418,20 +427,17 @@ if (window.__groupSwitcherDefined) {
                 console.warn("Local storage parse error", e);
               }
 
-              // If currentUser is missing or broken (causing the "Login" button issue), recover it from context
               if (!currentUser || !currentUser.id) {
                 if (context.user) {
                   currentUser = context.user;
                 } else {
-                  // Fallback - this shouldn't happen if refreshContext worked
                   currentUser = { role: newRole };
                 }
               }
 
               if (currentUser) currentUser.role = newRole;
-              // Also sync clubId for determining active club
               currentUser.clubId = context.currentGroup.id;
-              currentUser.groupId = context.currentGroup.id; // Added for demo sync
+              currentUser.groupId = context.currentGroup.id;
 
               localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
@@ -457,20 +463,17 @@ if (window.__groupSwitcherDefined) {
         }
       } catch (error) {
         console.error("Failed to switch group:", error);
-        showNotification("Failed to switch group", "error");
+        if (typeof showNotification === 'function') showNotification("Failed to switch group", "error");
       }
     }
   }
 
-  // Initialize on page load
-  let groupSwitcher;
-  document.addEventListener("DOMContentLoaded", () => {
-    const container = document.getElementById("group-switcher-container");
-    if (container) {
-      groupSwitcher = new GroupSwitcher(container);
-      try {
-        window.__groupSwitcherInstance = groupSwitcher;
-      } catch (e) {}
-    }
-  });
+  // Robust immediate initialization
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.UnifiedNav) window.UnifiedNav.renderHeaderSwitcher();
+    });
+  } else {
+    if (window.UnifiedNav) window.UnifiedNav.renderHeaderSwitcher();
+  }
 }

@@ -102,14 +102,20 @@ if (typeof ApiService === 'undefined') {
     }
   }
 
-  // Force refresh context (clears cache)
-    static render(container) {
-      if (!container) return;
-      if (container.__groupSwitcherInstance) return container.__groupSwitcherInstance;
-      const instance = new GroupSwitcher(container);
-      container.__groupSwitcherInstance = instance;
-      return instance;
+  async refreshContext() {
+    console.log("🔄 API Service: Refreshing context...");
+    this.context = null;
+    const response = await this.getContext();
+    if (response && response.success) {
+      if (response.user) localStorage.setItem("currentUser", JSON.stringify(response.user));
+      if (response.family) localStorage.setItem("userFamily", JSON.stringify(response.family));
+      if (response.currentGroup) {
+          const role = (response.currentGroup.user_role || response.currentGroup.role || "").toLowerCase();
+          localStorage.setItem("userType", ["admin", "organization", "owner", "staff"].includes(role) ? "organization" : "player");
+      }
     }
+    return response;
+  }
 
   getCurrentOrg() {
     return this.context?.currentGroup || null;

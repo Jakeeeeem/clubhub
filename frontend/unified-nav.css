@@ -1431,9 +1431,19 @@ table td:last-child,
         z-index: 4000 !important;
     }
 
-    body.has-top-tabs .main, 
-    body.has-top-tabs .dashboard-main {
-        padding-top: 120px !important;
+    .has-top-tabs .dashboard-main {
+        padding-top: 105px !important; /* Offset for both header and tabs */
+    }
+
+    /* Family Switcher Dropdown */
+    .family-dropdown.open {
+        display: block !important;
+        animation: familySlideUp 0.2s ease-out;
+    }
+
+    @keyframes familySlideUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     /* Force Grid Cleanup for mobile */
