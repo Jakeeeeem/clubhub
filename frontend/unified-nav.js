@@ -181,7 +181,15 @@ const UnifiedNav = {
       (fileName === "index.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html");
 
     const token = localStorage.getItem("authToken");
-    const user = JSON.parse(localStorage.getItem("currentUser") || "null");
+    let user = null;
+    try {
+      const userData = localStorage.getItem("currentUser");
+      if (userData && userData !== "undefined" && userData !== "null") {
+        user = JSON.parse(userData);
+      }
+    } catch (e) {
+      console.warn("UnifiedNav: Failed to parse currentUser", e);
+    }
     const isLoggedIn = !!(token && user);
 
     console.log("📍 UnifiedNav Detection:", { 
@@ -388,106 +396,12 @@ const UnifiedNav = {
     }
   },
 
-  renderGroupSwitcher(container) {
-    if (!document.getElementById("group-switcher-styles")) {
-      const link = document.createElement("link");
-      link.id = "group-switcher-styles";
-      link.rel = "stylesheet";
-      link.href = "group-switcher.css";
-      document.head.appendChild(link);
-    }
-
-    if (typeof GroupSwitcher !== "undefined") {
-      GroupSwitcher.render(container);
-    } else {
-      const script = document.createElement("script");
-      script.src = "group-switcher.js";
-      script.onload = () => {
-        if (typeof GroupSwitcher !== "undefined")
-          GroupSwitcher.render(container);
-      };
-      document.head.appendChild(script);
-    }
-  },
-
-  renderFamilySwitcher(container) {
-    // Ported from player-dashboard.js logic
-    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    const firstName = user.firstName || user.first_name || "User";
-    const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
-    const activeId = localStorage.getItem("activePlayerId");
-
-    const activePlayer = family.find((f) => f.id == activeId);
-    const displayName = activePlayer ? activePlayer.first_name : "Main Profile";
-    const displayInitial = activePlayer
-      ? activePlayer.first_name.charAt(0)
-      : firstName.charAt(0);
-
-    container.innerHTML = `
-      <div class="profile-switcher" style="position: relative; margin-left: 1rem;">
-        <button class="profile-switcher-trigger" id="profile-switcher-trigger" style="display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 10px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; min-width: 140px; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div class="profile-avatar" style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
-              ${displayInitial}
-            </div>
-            <span style="font-weight: 600;">${displayName}</span>
-          </div>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </button>
-        
-        <div class="profile-switcher-dropdown" id="profile-switcher-dropdown" style="position: absolute; top: calc(100% + 8px); left: 0; min-width: 240px; background: #1e1e1e; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.25s; z-index: 1100; overflow: hidden; backdrop-filter: blur(10px);">
-          <div style="padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.4);">Switch Profile</div>
-          <div class="profile-list" style="max-height: 300px; overflow-y: auto;">
-            <button class="profile-item ${!activeId ? "active" : ""}" onclick="UnifiedNav.switchFamilyProfile(null)" style="width:100%; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:none; border:none; color:white; cursor:pointer; text-align:left;">
-               <div style="width:28px; height:28px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700;">${firstName.charAt(0)}</div>
-               <div>
-                 <div style="font-weight:600; font-size:0.9rem;">${firstName} (Main)</div>
-               </div>
-            </button>
-            ${family
-              .map(
-                (child) => `
-              <button class="profile-item ${activeId == child.id ? "active" : ""}" onclick="UnifiedNav.switchFamilyProfile('${child.id}')" style="width:100%; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:none; border:none; color:white; cursor:pointer; text-align:left;">
-                 <div style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-weight:700;">${child.first_name.charAt(0)}</div>
-                 <div>
-                   <div style="font-weight:600; font-size:0.9rem;">${child.first_name} ${child.last_name}</div>
-                 </div>
-              </button>
-            `,
-              )
-              .join("")}
-          </div>
-        </div>
-      </div>
-    `;
-
-    // Bind dropdown toggle
-    const trigger = document.getElementById("profile-switcher-trigger");
-    const dropdown = document.getElementById("profile-switcher-dropdown");
-    if (trigger && dropdown) {
-      trigger.onclick = (e) => {
-        e.stopPropagation();
-        const isOpen = dropdown.style.visibility === "visible";
-        dropdown.style.opacity = isOpen ? "0" : "1";
-        dropdown.style.visibility = isOpen ? "hidden" : "visible";
-        dropdown.style.transform = isOpen
-          ? "translateY(-10px)"
-          : "translateY(0)";
-      };
-      document.addEventListener("click", () => {
-        dropdown.style.opacity = "0";
-        dropdown.style.visibility = "hidden";
-        dropdown.style.transform = "translateY(-10px)";
-      });
-    }
-  },
-
   switchFamilyProfile(id) {
-    console.log("🔄 Switching family profile to:", id);
-    if (id) {
-      localStorage.setItem("activePlayerId", id);
+    console.log("🔄 UnifiedNav: Switching family profile to:", id);
+    if (!id) {
+        localStorage.removeItem("activePlayerId");
     } else {
-      localStorage.removeItem("activePlayerId");
+        localStorage.setItem("activePlayerId", id);
     }
     window.location.reload();
   },
@@ -985,13 +899,7 @@ const UnifiedNav = {
       const existingSidebar = document.getElementById("pro-sidebar");
       const existingOverlay = document.getElementById("sidebar-overlay");
 
-      // If a fully populated sidebar is already present, skip.
-      if (existingSidebar && existingSidebar.innerHTML.trim().length > 20) {
-        console.log("♻️ Sidebar already exists and is populated; skipping recreation.");
-        return;
-      }
-
-      console.log("🏗️ Rendering Sidebar (creating or populating placeholder)...");
+      console.log("🏗️ Rendering Sidebar...");
 
       // Ensure overlay exists
       if (!existingOverlay) {
@@ -1003,7 +911,14 @@ const UnifiedNav = {
       }
 
       const url = window.location.href;
-      const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      let user = {};
+      try {
+        const userData = localStorage.getItem("currentUser");
+        if (userData && userData !== "undefined" && userData !== "null") {
+          user = JSON.parse(userData);
+        }
+      } catch (e) {}
+      
       const userRole = localStorage.getItem("userType") || "";
       const isPlayer = url.includes("player-dashboard.html") || userRole === "player";
 
@@ -1042,7 +957,10 @@ const UnifiedNav = {
                     </div>
             `;
 
+      const existingSidebar = document.getElementById("pro-sidebar") || document.querySelector(".pro-sidebar");
+      
       if (existingSidebar) {
+        if (!existingSidebar.id) existingSidebar.id = "pro-sidebar";
         existingSidebar.innerHTML = asideInner;
         // ensure any placeholder inline display does not block visibility when `.active` is toggled
         try { existingSidebar.style.removeProperty('display'); } catch (e) {}
@@ -1096,8 +1014,8 @@ const UnifiedNav = {
     }
   },
 
-  renderFamilySwitcher() {
-    const container = document.getElementById("header-family-switcher-container") || document.getElementById("family-switcher-target");
+  renderFamilySwitcher(targetContainer) {
+    const container = targetContainer || document.getElementById("header-family-switcher-container") || document.getElementById("family-switcher-target");
     if (!container) return;
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
@@ -1870,23 +1788,51 @@ const UnifiedNav = {
 
   renderMenu() {
     const nav = document.getElementById("sidebar-nav-content");
-    if (!nav) return;
+    if (!nav) {
+        console.warn("⚠️ UnifiedNav: #sidebar-nav-content not found! Sidebar might be broken.");
+        return;
+    }
+
+    console.log("🚀 UnifiedNav: renderMenu() executing...");
 
     const url = window.location.href;
-    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    let user = {};
+    try {
+      const userData = localStorage.getItem("currentUser");
+      if (userData && userData !== "undefined" && userData !== "null") {
+        user = JSON.parse(userData);
+      }
+    } catch (e) {}
+
     const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
     
-    const isPlayer = url.includes("player-dashboard.html") || userRole === "player" || userRole === "parent";
-    const isSuperAdmin = url.includes("super-admin-dashboard.html") || userRole === "platform_admin" || userRole === "superadmin";
-    const isCoach = url.includes("coach-dashboard.html") || userRole === "coach" || userRole === "staff";
-    const isScout = url.includes("scout-dashboard.html") || url.includes("scouting.html") || userRole === "scout";
-    const isAdmin = url.includes("admin-dashboard.html") || userRole === "admin" || userRole === "organization" || userRole === "owner" || (!isPlayer && !isSuperAdmin && !isCoach && !isScout);
+    const isPlayer = /player-|schedule|performance|finances|shop|chat/.test(url) || userRole === "player" || userRole === "parent";
+    const isSuperAdmin = url.includes("super-admin") || userRole === "platform_admin" || userRole === "superadmin";
+    const isCoach = url.includes("coach-") || userRole === "coach" || userRole === "staff";
+    const isScout = /scout-|scouting/.test(url) || userRole === "scout";
+    const isAdmin = /admin-|members|teams|events/.test(url) || userRole === "admin" || userRole === "organization" || userRole === "owner";
+    
+    // Fallback logic if detection is still ambiguous
+    const finalIsPlayer = isPlayer && !isSuperAdmin && !isAdmin;
+    const finalIsAdmin = (isAdmin || (!isPlayer && !isSuperAdmin && !isCoach && !isScout)) && !finalIsPlayer;
+
+    console.log("🔍 UnifiedNav Role Detection:", { 
+        url, 
+        userRole, 
+        isPlayer, 
+        isSuperAdmin, 
+        isCoach, 
+        isScout, 
+        isAdmin,
+        finalIsPlayer,
+        finalIsAdmin
+    });
 
     let menuHtml = "";
     const p = window.location.pathname;
     const isActive = (f) => p.includes(f) ? "active" : "";
 
-    if (isPlayer) {
+    if (finalIsPlayer) {
       menuHtml = `
                     <div class="nav-group-title">Main Hub</div>
                     <a href="player-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'overview')" class="sidebar-link ${isActive('player-dashboard.html') && !isActive('player-schedule.html') && !isActive('player-performance.html') && !isActive('player-finances.html') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
@@ -1936,7 +1882,7 @@ const UnifiedNav = {
                 <div class="nav-group-title">Analysis</div>
                 <a href="scout-reports.html" class="sidebar-link ${isActive('scout-reports.html')}">${ICONS.nav.forms}<span>Scout Reports</span></a>
             `;
-    } else if (isAdmin) {
+    } else if (finalIsAdmin) {
       menuHtml = `
         <div class="nav-group-title"><span>Management</span></div>
         <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('admin-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Dashboard</span></a>

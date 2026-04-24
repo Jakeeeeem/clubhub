@@ -12,10 +12,15 @@ if (typeof ApiService === 'undefined') {
     const isLocalIP = /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(location.hostname);
     
     if (isLocalhost || isLocalIP) {
-        if (localStorage.getItem('isDemoSession') !== 'false') {
+        // Only auto-enable demo mode if the user hasn't explicitly disabled it
+        // AND they aren't already logged in with a real token
+        if (localStorage.getItem('isDemoSession') !== 'false' && !localStorage.getItem('authToken')) {
             localStorage.setItem('isDemoSession', 'true');
-            if (!localStorage.getItem('authToken')) {
-                localStorage.setItem('authToken', 'demo-token');
+            localStorage.setItem('authToken', 'demo-token');
+        } else if (localStorage.getItem('authToken') && localStorage.getItem('authToken') !== 'demo-token') {
+            // If they have a real token, ensure demo mode is OFF unless explicitly requested
+            if (localStorage.getItem('isDemoSession') === 'true' && localStorage.getItem('isDemoSession_manual') !== 'true') {
+                localStorage.setItem('isDemoSession', 'false');
             }
         }
     }
@@ -66,7 +71,9 @@ if (typeof ApiService === 'undefined') {
     if (this.context) return this.context;
 
     // 🛡️ Demo session bypass
-    if (localStorage.getItem("isDemoSession") === "true") {
+    const token = localStorage.getItem("authToken");
+    const isDemoToken = !token || token === "demo-token";
+    if (localStorage.getItem("isDemoSession") === "true" && isDemoToken) {
       console.log("🛡️ Returning mock context for demo session");
       const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
 
