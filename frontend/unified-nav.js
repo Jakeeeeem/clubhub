@@ -72,6 +72,39 @@ const UnifiedNav = {
       return;
     }
     this._initialized = true;
+    
+    // ⚡ SYSTEM RESET & SYNC: check for ?reset=system to clear all state
+    const CURRENT_VERSION = "2.1.3";
+    const storedVersion = localStorage.getItem("CH_UI_VERSION");
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.get('reset') === 'system' || (storedVersion && storedVersion !== CURRENT_VERSION)) {
+        console.warn("⚡ System Sync: Clearing legacy cache for version " + CURRENT_VERSION);
+        
+        // Save critical flags before clearing
+        const isDemo = localStorage.getItem('isDemoSession');
+        const token = localStorage.getItem('authToken');
+        const user = localStorage.getItem('currentUser');
+        
+        localStorage.clear();
+        
+        // Restore session to prevent forced logout unless it's a manual reset
+        if (urlParams.get('reset') !== 'system') {
+            if (isDemo) localStorage.setItem('isDemoSession', isDemo);
+            if (token) localStorage.setItem('authToken', token);
+            if (user) localStorage.setItem('currentUser', user);
+        }
+        
+        localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
+        
+        if (urlParams.get('reset') === 'system' || (storedVersion && storedVersion !== CURRENT_VERSION)) {
+            console.log("♻️ Version mismatch or manual reset, reloading...");
+            window.location.href = window.location.origin + window.location.pathname;
+            return;
+        }
+    } else if (!storedVersion) {
+        localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
+    }
 
     // Ensure every page has the basic shell before adding the unified header/sidebar
     if (typeof this.ensureLayoutShell === "function") {
@@ -218,6 +251,11 @@ const UnifiedNav = {
       if (!isDesktop) {
         console.log("📱 Mobile View");
         if (isDashboard || (isLoggedIn && !isLandingPage)) {
+          if (!isLoggedIn && localStorage.getItem("isDemoSession") !== "true") {
+            console.warn("🔒 Unauthenticated mobile dashboard access. Redirecting to home...");
+            window.location.href = "index.html";
+            return;
+          }
           this.renderHeader();
           this.renderSidebar();
           this.renderBottomNav();
@@ -250,6 +288,20 @@ const UnifiedNav = {
         } else {
           this.ensureHeaderElements();
         }
+      }
+
+      // 🚨 EMERGENCY VISIBILITY FALLBACK
+      // If we are on a dashboard and after 2.5s no section is visible, force 'overview'
+      if (isDashboard) {
+        setTimeout(() => {
+          const visibleSections = Array.from(document.querySelectorAll('.dashboard-section, .section')).filter(s => s.style.display !== 'none');
+          if (visibleSections.length === 0) {
+            console.warn("🚨 Emergency Visibility: No section visible, forcing 'overview'");
+            const overview = document.getElementById('player-overview') || document.getElementById('overview') || document.querySelector('.dashboard-section');
+            if (overview) overview.style.display = 'block';
+            document.body.classList.remove('loading');
+          }
+        }, 2500);
       }
     } catch (err) {
       console.error("❌ Stage 1 (Core Layout) failed:", err);
@@ -514,29 +566,7 @@ const UnifiedNav = {
     const isAdmin = userRole === "admin" || userRole === "platform_admin";
     const isDashboard = window.location.pathname.includes("dashboard") || window.location.pathname.includes("finder");
     
-    // ⚡ SYSTEM RESET: check for ?reset=system to clear all state
-    const CURRENT_VERSION = "2.1.2";
-    const storedVersion = localStorage.getItem("CH_UI_VERSION");
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    if (urlParams.get('reset') === 'system' || storedVersion !== CURRENT_VERSION) {
-        console.warn("⚡ System Sync: Clearing legacy cache for version " + CURRENT_VERSION);
-        
-        // Save critical flags before clearing
-        const isDemo = localStorage.getItem('isDemoSession');
-        
-        localStorage.clear();
-        
-        // Restore manual demo flag if it existed
-        if (isDemo) localStorage.setItem('isDemoSession', isDemo);
-        localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
-        
-        if (urlParams.get('reset') === 'system') {
-            const newUrl = window.location.origin + window.location.pathname;
-            window.location.href = newUrl;
-            return;
-        }
-    }
+    // Check connection status from user object or localStorage
 
     // Check connection status from user object or localStorage
     const isConnected =

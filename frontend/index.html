@@ -22,10 +22,32 @@
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="apple-touch-icon" href="/images/logo.png">
 
-    <link rel="stylesheet" href="styles.css?v=20260424">
-    <link rel="stylesheet" href="design-system.css?v=20260424">
-    <link rel="stylesheet" href="unified-nav.css?v=20260424">
-    <link rel="stylesheet" href="landing-overrides.css?v=20260424">
+    <link rel="stylesheet" href="styles.css?v=20260424_v2">
+    <link rel="stylesheet" href="design-system.css?v=20260424_v2">
+    <link rel="stylesheet" href="unified-nav.css?v=20260424_v2">
+    <script>
+        // CRITICAL: Force Service Worker Unregistration if stuck on old version
+        (function() {
+            const TARGET_SW_VERSION = '7.0.2';
+            const currentSwVersion = localStorage.getItem('CH_SW_VERSION');
+            if (currentSwVersion !== TARGET_SW_VERSION && 'serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                        console.log('🗑️ Unregistered old ServiceWorker');
+                    }
+                    localStorage.setItem('CH_SW_VERSION', TARGET_SW_VERSION);
+                    // Clear caches too
+                    if ('caches' in window) {
+                        caches.keys().then(names => {
+                            for (let name of names) caches.delete(name);
+                        });
+                    }
+                });
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="landing-overrides.css?v=20260424_v2">
 </head>
 
 <body class="clubhub-unified">
@@ -722,14 +744,14 @@
                 }
             } catch (e) { console.warn('Demo auto-enable failed', e); }
         </script>
-    <script src="app-state.js?v=20260424"></script>
-    <script src="api-service.js?v=20260424" onerror="console.log('API service not found')"></script>
-    <script src="dialog-service.js?v=20260424"></script>
-    <script src="enhanced-login-handler.js?v=20260424" onerror="console.log('Enhanced login handler not found')"></script>
+    <script src="app-state.js?v=20260424_v2"></script>
+    <script src="api-service.js?v=20260424_v2" onerror="console.log('API service not found')"></script>
+    <script src="dialog-service.js?v=20260424_v2"></script>
+    <script src="enhanced-login-handler.js?v=20260424_v2" onerror="console.log('Enhanced login handler not found')"></script>
 
     <!-- PWA Install Handler -->
-    <script src="pwa-install.js?v=20260424"></script>
-    <script src="unified-nav.js?v=20260424"></script>
+    <script src="pwa-install.js?v=20260424_v2"></script>
+    <script src="unified-nav.js?v=20260424_v2"></script>
 </body>
 
 </html>

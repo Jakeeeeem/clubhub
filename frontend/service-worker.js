@@ -1,4 +1,4 @@
-const CACHE_NAME = "clubhub-v7.0.1"; // Bumped version for forced update
+const CACHE_NAME = "clubhub-v7.0.2"; // Bumped version for forced update
 const urlsToCache = [
   "/",
   "/index.html",

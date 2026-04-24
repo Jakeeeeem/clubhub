@@ -17,17 +17,38 @@
   <link rel="icon" type="image/png" href="/images/logo.png">
   <link rel="apple-touch-icon" href="/images/logo.png">
 
-  <link rel="stylesheet" href="styles.css?v=20260424" />
-  <link rel="stylesheet" href="group-switcher.css?v=20260424">
-  <link rel="stylesheet" href="unified-nav.css?v=20260424">
+  <link rel="stylesheet" href="styles.css?v=20260424_v2" />
+  <link rel="stylesheet" href="group-switcher.css?v=20260424_v2">
+  <link rel="stylesheet" href="unified-nav.css?v=20260424_v2">
+  <script>
+      // CRITICAL: Force Service Worker Unregistration if stuck on old version
+      (function() {
+          const TARGET_SW_VERSION = '7.0.2';
+          const currentSwVersion = localStorage.getItem('CH_SW_VERSION');
+          if (currentSwVersion !== TARGET_SW_VERSION && 'serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(registrations => {
+                  for(let registration of registrations) {
+                      registration.unregister();
+                      console.log('🗑️ Unregistered old ServiceWorker');
+                  }
+                  localStorage.setItem('CH_SW_VERSION', TARGET_SW_VERSION);
+                  if ('caches' in window) {
+                      caches.keys().then(names => {
+                          for (let name of names) caches.delete(name);
+                      });
+                  }
+              });
+          }
+      })();
+  </script>
   <script src="https://js.stripe.com/v3/"></script>
-  <script src="app-state.js?v=20260424"></script>
-  <script src="api-service.js?v=20260424"></script>
-  <script src="group-switcher.js?v=20260424"></script>
-  <script src="workspace-manager.js?v=20260424"></script>
-  <link rel="stylesheet" href="tour-service.css?v=20260424">
-  <script src="tour-service.js?v=20260424"></script>
-  <link rel="stylesheet" href="design-system.css?v=20260424">
+  <script src="app-state.js?v=20260424_v2"></script>
+  <script src="api-service.js?v=20260424_v2"></script>
+  <script src="group-switcher.js?v=20260424_v2"></script>
+  <script src="workspace-manager.js?v=20260424_v2"></script>
+  <link rel="stylesheet" href="tour-service.css?v=20260424_v2">
+  <script src="tour-service.js?v=20260424_v2"></script>
+  <link rel="stylesheet" href="design-system.css?v=20260424_v2">
   <script>
     // Head-level demo auto-enable to set auth before any other scripts run
     try {
@@ -1376,12 +1397,12 @@
 
   <!-- Core Dependencies -->
   <script src="api-service.js"></script>
-  <script src="enhanced-login-handler.js?v=20260424"></script>
-  <script src="training.js?v=20260424"></script>
-  <script src="pwa-install.js?v=20260424"></script>
-  <script src="unified-nav.js?v=20260424"></script>
-  <script src="squad-messenger.js?v=20260424"></script>
-  <script src="player-dashboard.js?v=20260424"></script>
+  <script src="enhanced-login-handler.js?v=20260424_v2"></script>
+  <script src="training.js?v=20260424_v2"></script>
+  <script src="pwa-install.js?v=20260424_v2"></script>
+  <script src="unified-nav.js?v=20260424_v2"></script>
+  <script src="squad-messenger.js?v=20260424_v2"></script>
+  <script src="player-dashboard.js?v=20260424_v2"></script>
   <script>
     // Wire messenger section to shared SquadMessenger
     let _playerMessengerMounted = false;
