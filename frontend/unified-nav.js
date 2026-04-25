@@ -819,14 +819,6 @@ const UnifiedNav = {
     header.classList.add("unified-header");
     document.body.classList.add("dashboard-view");
     
-    // Ensure main content is correctly offset for the fixed sidebar on desktop
-    if (window.innerWidth >= 992) {
-        const main = document.querySelector("main, .dashboard-main, .dashboard-container");
-        if (main) {
-            main.style.marginLeft = document.body.classList.contains("sidebar-collapsed") ? "80px" : "280px";
-            main.style.width = document.body.classList.contains("sidebar-collapsed") ? "calc(100% - 80px)" : "calc(100% - 280px)";
-        }
-    }
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const name = (
@@ -962,13 +954,6 @@ const UnifiedNav = {
       if (desktopTarget) this.renderGroupSwitcher(desktopTarget);
     }
 
-    // CRITICAL: Call renderers immediately after HTML injection to ensure switchers appear
-    this.renderHeaderSwitcher();
-    this.renderFamilySwitcher();
-    this.updateModeUI();
-
-    this.syncUserData();
-    this.updateModeUI();
 
     // Inject Group Switcher (or Family Switcher for player page) into #header-org-switcher
     const switcherSlot = document.getElementById("header-org-switcher");
@@ -1718,6 +1703,49 @@ const UnifiedNav = {
   },
 
   autoLabelTables() {
+    const injectActionButtons = (table) => {
+      if (table.dataset.actionsInjected) return;
+      const theadRow = table.querySelector("thead tr");
+      if (!theadRow) return;
+
+      // Check if Actions column already exists
+      const hasActions = Array.from(theadRow.querySelectorAll("th")).some(
+        th => th.textContent.trim().toLowerCase() === "actions"
+      );
+      if (hasActions) {
+        table.dataset.actionsInjected = "1";
+        return;
+      }
+
+      // Add Actions header
+      const th = document.createElement("th");
+      th.textContent = "Actions";
+      th.style.cssText = "text-align:center; min-width:120px;";
+      theadRow.appendChild(th);
+
+      // Add action buttons to each body row
+      table.querySelectorAll("tbody tr").forEach((row) => {
+        const td = document.createElement("td");
+        td.setAttribute("data-label", "Actions");
+        td.style.cssText = "text-align:center; white-space:nowrap;";
+        td.innerHTML = `
+          <button onclick="event.stopPropagation(); UnifiedNav.handleTableEdit(this)" style="
+            background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4);
+            color:#60a5fa; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
+            font-weight:700; cursor:pointer; margin-right:0.4rem; transition:all 0.15s;
+          " onmouseover="this.style.background='rgba(59,130,246,0.3)'" onmouseout="this.style.background='rgba(59,130,246,0.15)'">✏️ Edit</button>
+          <button onclick="event.stopPropagation(); UnifiedNav.handleTableDelete(this)" style="
+            background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.35);
+            color:#f87171; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
+            font-weight:700; cursor:pointer; transition:all 0.15s;
+          " onmouseover="this.style.background='rgba(220,38,38,0.28)'" onmouseout="this.style.background='rgba(220,38,38,0.12)'">🗑️ Delete</button>
+        `;
+        row.appendChild(td);
+      });
+
+      table.dataset.actionsInjected = "1";
+    };
+
     document.querySelectorAll("table").forEach((table) => {
       const headers = Array.from(table.querySelectorAll("thead th")).map((th) =>
         th.textContent.trim(),
@@ -1730,8 +1758,38 @@ const UnifiedNav = {
           }
         });
       });
+      injectActionButtons(table);
     });
-    console.log("📋 Tables auto-labeled for mobile view");
+
+    // Watch for dynamically added tables
+    if (!window.__tableObserver) {
+      window.__tableObserver = new MutationObserver(() => {
+        document.querySelectorAll("table:not([data-actions-injected])").forEach(injectActionButtons);
+      });
+      window.__tableObserver.observe(document.body, { childList: true, subtree: true });
+    }
+
+    console.log("📋 Tables auto-labeled + action buttons injected");
+  },
+
+  handleTableEdit(btn) {
+    const row = btn.closest("tr");
+    if (!row) return;
+    const cells = Array.from(row.querySelectorAll("td:not(:last-child)"));
+    const data = cells.map(td => td.textContent.trim()).join(" | ");
+    alert("✏️ Edit: " + data + "\n\n(Connect this to your edit modal or form)");
+  },
+
+  handleTableDelete(btn) {
+    const row = btn.closest("tr");
+    if (!row) return;
+    const first = row.querySelector("td")?.textContent.trim() || "this item";
+    if (confirm("🗑️ Delete \"" + first + "\"?\n\nThis action cannot be undone.")) {
+      row.style.transition = "opacity 0.3s, transform 0.3s";
+      row.style.opacity = "0";
+      row.style.transform = "translateX(20px)";
+      setTimeout(() => row.remove(), 300);
+    }
   },
 
   bindEvents() {

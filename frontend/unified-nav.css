@@ -134,14 +134,21 @@
 
     .dashboard-view .main, 
     .dashboard-view .dashboard-main {
-        padding-top: 100px !important;
-        padding-left: 280px !important; /* Sidebar width */
-        width: 100% !important;
+        padding-top: 80px !important;
+        margin-left: 280px !important; /* Sidebar width — use margin, not padding */
+        width: calc(100% - 280px) !important;
+        transition: margin-left 0.28s cubic-bezier(0.16, 1, 0.3, 1), width 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    body.sidebar-collapsed .dashboard-view .main,
+    body.sidebar-collapsed .dashboard-view .dashboard-main {
+        margin-left: 72px !important;
+        width: calc(100% - 72px) !important;
     }
 
     body.has-top-tabs .main, 
     body.has-top-tabs .dashboard-main {
-        padding-top: 150px !important;
+        padding-top: 130px !important;
     }
 
     /* Dashboard Header Left/Right alignment */
@@ -186,14 +193,32 @@
     .sidebar-link {
         display: flex !important;
         align-items: center !important;
-        padding: 10px 16px !important;
+        padding: 12px 18px !important;
         border-radius: 12px !important;
-        font-size: 0.9rem !important;
-        font-weight: 500 !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
         letter-spacing: -0.01em;
-        transition: background 0.15s, color 0.15s !important;
+        transition: background 0.15s, color 0.15s, transform 0.1s !important;
         position: relative;
         margin-bottom: 4px !important;
+        color: rgba(255,255,255,0.65) !important;
+        text-decoration: none !important;
+    }
+
+    .sidebar-link:hover {
+        background: rgba(220, 38, 38, 0.12) !important;
+        color: rgba(255,255,255,0.95) !important;
+    }
+
+    .sidebar-link.active {
+        background: rgba(220, 38, 38, 0.85) !important;
+        color: #fff !important;
+        box-shadow: 0 4px 20px rgba(220, 38, 38, 0.35) !important;
+    }
+
+    .sidebar-link.active .nav-icon {
+        opacity: 1 !important;
+        color: #fff !important;
     }
 
     .sidebar-link .nav-icon {
@@ -228,8 +253,8 @@
     body.sidebar-collapsed .main,
     body.sidebar-collapsed .dashboard-main,
     body.sidebar-collapsed main {
-        padding-left: 72px !important;
-        margin-left: 0 !important;
+        margin-left: 72px !important;
+        width: calc(100% - 72px) !important;
     }
 
     /* Hide text in collapsed state */
@@ -996,29 +1021,54 @@ header.header .nav-container,
 }
 
 .nav-group-title {
-    font-size: 0.65rem;
+    font-size: 0.8rem;
     font-weight: 800;
-    color: rgba(255, 255, 255, 0.25);
+    color: #fff;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    margin: 2.5rem 0 1rem 0;
+    letter-spacing: 1.5px;
+    margin: 0.6rem 0 0.25rem;
+    padding: 0.65rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    background: rgba(140, 15, 15, 0.85);
+    border-radius: 10px;
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.nav-group-title:hover {
+    background: rgba(180, 20, 20, 0.95);
+}
+
+.nav-group-title .group-toggle {
+    font-size: 0.75rem;
+    opacity: 0.85;
+    transition: transform 0.2s;
 }
 
 .sidebar-link {
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    padding: 0.9rem 1.25rem;
-    color: rgba(255, 255, 255, 0.6);
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    color: rgba(255, 255, 255, 0.65);
     text-decoration: none;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
-    border-radius: 16px;
-    transition: all 0.3s ease;
-    margin-bottom: 10px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
-    backdrop-filter: blur(16px);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+    border: none;
+    background: transparent;
+}
+
+.sidebar-link.active {
+    background: rgba(220, 38, 38, 0.85) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 18px rgba(220, 38, 38, 0.3);
 }
 
 .sidebar-link i {
@@ -1033,7 +1083,7 @@ header.header .nav-container,
 }
 
 .header-org-switcher-wrapper {
-    margin-left: 1rem;
+    margin-left: 0.5rem;
     display: flex;
     align-items: center;
 }
@@ -1070,9 +1120,8 @@ header.header .nav-container,
 }
 
 .sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
-    transform: translateX(4px);
+    background: rgba(220, 38, 38, 0.1);
+    color: rgba(255,255,255,0.95);
 }
 
 .sidebar-link:hover i {
