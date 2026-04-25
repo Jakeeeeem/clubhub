@@ -188,33 +188,40 @@ const UnifiedNav = {
       console.warn("Sweep failed", e);
     }
 
-    const isDesktop = window.matchMedia("(min-width: 992px)").matches;
+    // 0. AUTH PROTECTION: Immediate redirect if on backend but not logged in
+    const token = localStorage.getItem("authToken");
+    const userJson = localStorage.getItem("currentUser");
+    const isDemo = localStorage.getItem("isDemoSession") === "true";
+    let user = null;
+    try {
+        if (userJson && userJson !== "undefined" && userJson !== "null") user = JSON.parse(userJson);
+    } catch(e) {}
+    
     const path = window.location.pathname.toLowerCase();
     const fileName = path.split('/').pop() || 'index.html';
     const fullUrl = window.location.href.toLowerCase();
     
-    // EXTREMELY AGGRESSIVE check for dashboard/finder patterns
+    const isLoggedIn = !!(token && user);
+    const isDashboardPath = /dashboard|members|teams|events|finances|shop|performance|schedule|scout|finder|finder-/.test(path) || /finder/.test(fullUrl);
+    const isLanding = (fileName === "index.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html") && !fullUrl.includes('#');
+
+    if (isDashboardPath && !isLoggedIn && !isDemo) {
+        console.warn("🔒 Unauthorized access to dashboard. Redirecting...");
+        document.body.style.display = "none";
+        window.location.href = "login.html";
+        return;
+    }
+
+    const isDesktop = window.matchMedia("(min-width: 992px)").matches;
     const dashboardMarkers = ["dashboard", "admin-", "coach-", "player-", "super-admin-", "scout-", "finder", "booking", "messenger", "performance", "finances", "schedule", "chat", "shop"];
     const hasDashboardPattern = dashboardMarkers.some(marker => fullUrl.includes(marker));
     const hasDashboardClass = document.body.classList.contains("dashboard-view") || document.body.classList.contains("app-layout");
     const hasDashboardMarker = !!(document.querySelector('.dashboard-main') || document.querySelector('.finder-container') || document.querySelector('.dashboard-container'));
 
-    const isLandingPage = (fileName === "index.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html") && !fullUrl.includes('#');
+    const isLandingPage = isLanding;
     
     // isDashboard should only be true if it matches dashboard patterns AND is NOT the landing page
     const isDashboard = !isLandingPage && (hasDashboardPattern || hasDashboardClass || hasDashboardMarker || window.UNIFIED_NAV_ENABLED === true || isLoggedIn);
-
-    const token = localStorage.getItem("authToken");
-    let user = null;
-    try {
-      const userData = localStorage.getItem("currentUser");
-      if (userData && userData !== "undefined" && userData !== "null") {
-        user = JSON.parse(userData);
-      }
-    } catch (e) {
-      console.warn("UnifiedNav: Failed to parse currentUser", e);
-    }
-    const isLoggedIn = !!(token && user);
 
     console.log("📍 UnifiedNav Detection:", { 
       isDesktop, 
@@ -892,10 +899,6 @@ const UnifiedNav = {
         <!-- DESKTOP HEADER: Page Title + Group Switcher | Right Actions -->
         <div class="logo-area-wrapper desktop-only" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
           <div class="dash-header-left" style="display:flex; align-items:center; gap:2rem;">
-            <div class="header-title-area" style="display:flex; align-items:center; gap:1.25rem;">
-               <h1 style="font-size:1.4rem; font-weight:800; color:#fff; margin:0; letter-spacing:-0.5px; white-space:nowrap;">${document.title.split('—')[0].trim()}</h1>
-               <div style="width:1px; height:24px; background:rgba(255,255,255,0.1);"></div>
-            </div>
             <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
           </div>
 
@@ -1121,7 +1124,6 @@ const UnifiedNav = {
     }
     
     container.style.display = "flex";
-    family = JSON.parse(localStorage.getItem("userFamily") || "[]");
     const activePlayerId = localStorage.getItem("activePlayerId");
 
     // If no family, just show the user's name (compact mode)
@@ -1218,22 +1220,14 @@ const UnifiedNav = {
   },
 
   renderHeaderSwitcher() {
-    // 1. Desktop Header Switcher
+    // 1. Desktop Header Switcher (Left side)
     const hContainer = document.getElementById("header-group-switcher-container") || 
                        document.getElementById("header-org-switcher");
     
-    const userRole = this.getUserRole();
-    const isPlayer = window.location.href.includes("player-dashboard.html") || userRole === "player";
-
     if (hContainer) {
-        if (isPlayer) {
-            // If player page, render family switcher in the header slot instead of group switcher
-            this.renderFamilySwitcher(hContainer);
-        } else {
-            // If admin/coach, render group switcher
-            if (!hContainer.__groupSwitcherInstance) {
-                this.renderGroupSwitcher(hContainer);
-            }
+        // ALWAYS try to render group switcher if it exists
+        if (!hContainer.__groupSwitcherInstance) {
+            this.renderGroupSwitcher(hContainer);
         }
     }
 
@@ -1277,6 +1271,10 @@ const UnifiedNav = {
     const header = document.querySelector("header.header, .pro-header");
     if (!header) return;
 
+    const token = localStorage.getItem("authToken");
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const isLoggedIn = !!(token && user.id);
+
     header.classList.add("pro-header", "unified-header");
 
     const isMobile = window.innerWidth < 992;
@@ -1294,7 +1292,7 @@ const UnifiedNav = {
                         <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 28px;">
                         <span class="logo-text desktop-only">ClubHub</span>
                     </div>
-                    <div id="header-group-switcher-container" style="flex: 1; min-width: 0;"></div>
+                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="flex: 1; min-width: 0;"></div>
                 </div>
 
                 <div class="mode-toggle-container desktop-only">
@@ -1920,7 +1918,8 @@ const UnifiedNav = {
     const isAdmin = userRole === "admin" || userRole === "organization" || userRole === "owner" || /admin-|members|teams|events/.test(url);
     
     // Player detection
-    const isPlayerRole = userRole === "player" || userRole === "parent" || !!localStorage.getItem("activePlayerId");
+    const dashboardMode = localStorage.getItem("dashboardMode") || "group";
+    const isPlayerRole = userRole === "player" || userRole === "parent" || !!localStorage.getItem("activePlayerId") || dashboardMode === "player";
     const isPlayerUrl = /player-|schedule|performance|finances|shop|chat/.test(url);
     
     // Final logic: Priority to SuperAdmin -> Coach/Scout -> Admin -> Player
@@ -1928,7 +1927,7 @@ const UnifiedNav = {
     if (isSuperAdmin) finalRole = "superadmin";
     else if (isCoach) finalRole = "coach";
     else if (isScout) finalRole = "scout";
-    else if (isAdmin) finalRole = "admin";
+    else if (isAdmin && dashboardMode !== "player") finalRole = "admin";
     else if (isPlayerRole || isPlayerUrl) finalRole = "player";
 
     console.log("🔍 UnifiedNav Role Detection:", { 
