@@ -439,6 +439,54 @@ if (typeof ApiService === 'undefined') {
         const filteredTeams = fb.teams.filter(t => t.groupId === currentId);
         return { success: true, teams: filteredTeams.length > 0 ? filteredTeams : fb.teams };
     }
+    if (endpoint.includes("/events") || endpoint.includes("/tournaments")) {
+        if (localStorage.getItem("isDemoSession") === "true") {
+            if (endpoint.includes("eventType=tournament") || endpoint.includes("/tournaments")) {
+                return [
+                    { id: "mock_t1", title: "Elite Academy Premier League", event_date: "2026-04-20", status: "Live", type: "league" },
+                    { id: "mock_t2", title: "ClubHub Knockout Cup", event_date: "2026-05-15", status: "Active", type: "knockout" }
+                ];
+            }
+            // Regular events
+            return this.getAdminDashboardFallback().events || [];
+        }
+    }
+
+    if (endpoint.includes("/events") && endpoint.includes("/result") && method === "POST") {
+        if (localStorage.getItem("isDemoSession") === "true") {
+            const body = JSON.parse(options.body || "{}");
+            const fb = this.getAdminDashboardFallback();
+            
+            // Add a main result entry to the feed
+            const mainEntry = {
+                id: "feed-" + Date.now(),
+                author: "System",
+                title: "Match Result Logged",
+                content: `Final Score: ${body.home_score} - ${body.away_score}. Result: ${body.result.toUpperCase()}`,
+                date: new Date().toISOString()
+            };
+            fb.feed.unshift(mainEntry);
+
+            // Add entries for scorers
+            if (body.playerStats && body.playerStats.length > 0) {
+                body.playerStats.forEach(stat => {
+                    const player = fb.players.find(p => p.id === stat.playerId);
+                    if (stat.goals > 0 && player) {
+                        fb.feed.unshift({
+                            id: "feed-goal-" + Date.now() + "-" + player.id,
+                            author: player.first_name + " " + player.last_name,
+                            title: "⚽ Goal Scored!",
+                            content: `${player.first_name} scored ${stat.goals} goal(s) in today's match.`,
+                            date: new Date().toISOString()
+                        });
+                    }
+                });
+            }
+            
+            return { success: true, message: "Result saved to demo session" };
+        }
+    }
+
     if (endpoint.includes("/members") || endpoint.includes("/staff") || (endpoint.includes("/players") && !endpoint.includes("/dashboard"))) {
         const fb = this.getAdminDashboardFallback();
         const currentId = user.groupId || user.clubId || "demo-club-id";
@@ -721,10 +769,6 @@ if (typeof ApiService === 'undefined') {
   handleAuthError() {
     console.log("🚨 handleAuthError called - clearing auth and redirecting");
     console.log("Current path:", window.location.pathname);
-    console.log(
-      "Token before clear:",
-      localStorage.getItem("authToken")?.substring(0, 20),
-    );
 
     localStorage.removeItem("authToken");
     localStorage.removeItem("currentUser");
@@ -2481,16 +2525,17 @@ if (typeof ApiService === 'undefined') {
         { id: "t5", name: "Metro Tennis A", members: 12, coach: "John Doe", coachId: "s5", players: [], sport: "Tennis", ageGroup: "Adult", groupId: "g3" }
       ],
       tournaments: [
-        { id: "tour1", name: "Elite Performance Cup 2025", format: "knockout", status: "upcoming", teams_count: 8, start_date: new Date(Date.now() + 86400000 * 30).toISOString(), prize_pool: "£1,000", location: "Wembley Stadium" },
-        { id: "tour2", name: "Junior League Championship", format: "league", status: "in_progress", teams_count: 12, start_date: new Date(Date.now() - 86400000 * 5).toISOString(), prize_pool: "Trophy", location: "Local Hub" },
-        { id: "tour3", name: "Summer 5-a-side Blitz", format: "tournament", status: "open", teams_count: 16, start_date: new Date(Date.now() + 86400000 * 45).toISOString(), prize_pool: "£500", location: "Riverside Center" }
+        { id: "mock_t1", title: "Elite Academy Premier League", event_date: "2026-04-20", status: "Live", type: "league" },
+        { id: "mock_t2", title: "ClubHub Knockout Cup", event_date: "2026-05-15", status: "Active", type: "knockout" }
       ],
       events: [
         { id: "e1", title: "Summer Talent ID Camp", date: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0], time: "09:00", location: "Main Stadium", type: "camp", status: "upcoming", description: "Our flagship talent identification camp for ages 8-16.", attendees: 45 },
         { id: "e2", title: "Elite Training Session", date: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0], time: "18:30", location: "Field A", type: "training", status: "upcoming", team_name: "Under 18s Elite", team_id: "t1" },
         { id: "e3", title: "Match vs United FC", date: new Date(Date.now() + 86400000 * 4).toISOString().split("T")[0], time: "14:00", location: "Away Ground", type: "match", status: "upcoming", team_name: "First Team", team_id: "t3" },
         { id: "e4", title: "Riverside Technical Clinic", date: new Date(Date.now() + 86400000 * 1).toISOString().split("T")[0], time: "17:00", location: "Riverside Pitch", type: "clinic", status: "upcoming", team_name: "Riverside U16", team_id: "t4" },
-        { id: "e5", title: "Metro Tennis Open Day", date: new Date(Date.now() + 86400000 * 10).toISOString().split("T")[0], time: "10:00", location: "Metro Court 1", type: "open-day", status: "upcoming", team_name: "Metro Tennis A", team_id: "t5" }
+        { id: "e5", title: "Metro Tennis Open Day", date: new Date(Date.now() + 86400000 * 10).toISOString().split("T")[0], time: "10:00", location: "Metro Court 1", type: "open-day", status: "upcoming", team_name: "Metro Tennis A", team_id: "t5" },
+        { id: "mock_t1", title: "Elite Academy Premier League", date: "2026-04-20", type: "tournament", status: "Live" },
+        { id: "mock_t2", title: "ClubHub Knockout Cup", date: "2026-05-15", type: "tournament", status: "Active" }
       ],
       bookings: [
         { id: "b1", event_id: "e1", event_title: "Summer Talent ID Camp", date: new Date(Date.now() + 86400000 * 7).toISOString(), status: "confirmed", qr_code: "DEMO_QR_CODE_123", amount: 45 },
@@ -3287,53 +3332,44 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getTournamentDetails(tournamentId) {
-    if (tournamentId && tournamentId.startsWith("mock_")) {
-      return {
-        id: tournamentId,
-        name:
-          tournamentId === "mock_t1" ? "Winter League 2026" : "Knockout Cup",
-        participants: [
-          { id: "t1", name: "Red Dragons" },
-          { id: "t2", name: "Blue Sharks" },
-          { id: "t3", name: "Green Giants" },
-          { id: "t4", name: "Yellow Stars" },
-        ],
-        fixtures: [
-          {
-            id: "m1",
-            round: 1,
-            home_team: "Red Dragons",
-            away_team: "Blue Sharks",
-            home_score: 2,
-            away_score: 1,
-            played: true,
-          },
-          {
-            id: "m2",
-            round: 1,
-            home_team: "Green Giants",
-            away_team: "Yellow Stars",
-            home_score: null,
-            away_score: null,
-            played: false,
-          },
-          {
-            id: "m3",
-            round: 2,
-            home_team: "Red Dragons",
-            away_team: "Green Giants",
-            home_score: null,
-            away_score: null,
-            played: false,
-          },
-        ],
-        standings: [
-          { team: "Red Dragons", p: 1, w: 1, d: 0, l: 0, pts: 3 },
-          { team: "Blue Sharks", p: 1, w: 0, d: 0, l: 1, pts: 0 },
-        ],
-      };
+    if (localStorage.getItem("isDemoSession") === "true") {
+      if (tournamentId === "mock_t1") {
+        // League Mock
+        return {
+          tournament: { id: "mock_t1", title: "Elite Academy Premier League", type: "league", status: "Active" },
+          matches: [
+            { id: "m1", round_number: 1, home_team: "Red Dragons", away_team: "Blue Sharks", home_score: 3, away_score: 1, status: "completed", team_id: "t1", away_team_id: "t2", scorers: ["M. Thompson (2)", "L. Brown"] },
+            { id: "m2", round_number: 1, home_team: "Green Giants", away_team: "Yellow Stars", home_score: 0, away_score: 0, status: "completed", team_id: "t3", away_team_id: "t4" },
+            { id: "m3", round_number: 2, home_team: "Red Dragons", away_team: "Green Giants", home_score: 2, away_score: 2, status: "live", team_id: "t1", away_team_id: "t3", scorers: ["M. Thompson", "K. Adams"] },
+            { id: "m4", round_number: 2, home_team: "Blue Sharks", away_team: "Yellow Stars", status: "scheduled", team_id: "t2", away_team_id: "t4" }
+          ],
+          standings: {
+            "t1": { name: "Red Dragons", p: 2, w: 1, d: 1, l: 0, gf: 5, ga: 3, gd: 2, pts: 4 },
+            "t3": { name: "Green Giants", p: 2, w: 0, d: 2, l: 0, gf: 2, ga: 2, gd: 0, pts: 2 },
+            "t2": { name: "Blue Sharks", p: 1, w: 0, d: 0, l: 1, gf: 1, ga: 3, gd: -2, pts: 0 },
+            "t4": { name: "Yellow Stars", p: 1, w: 0, d: 1, l: 0, gf: 0, ga: 0, gd: 0, pts: 1 }
+          }
+        };
+      } else {
+        // Knockout Mock
+        return {
+          tournament: { id: "mock_t2", title: "ClubHub Knockout Cup", type: "knockout", status: "Active" },
+          matches: [
+            // Round 1 (Quarter Finals)
+            { id: "k1", round_number: 1, home_team: "Red Dragons", away_team: "Blue Sharks", home_score: 4, away_score: 2, status: "completed", played: true },
+            { id: "k2", round_number: 1, home_team: "Green Giants", away_team: "Yellow Stars", home_score: 1, away_score: 0, status: "completed", played: true },
+            { id: "k3", round_number: 1, home_team: "Scout Elite", away_team: "Academy XI", home_score: 0, away_score: 3, status: "completed", played: true },
+            { id: "k4", round_number: 1, home_team: "Titans FC", away_team: "Phoenix United", home_score: 2, away_score: 1, status: "completed", played: true },
+            // Round 2 (Semi Finals)
+            { id: "k5", round_number: 2, home_team: "Red Dragons", away_team: "Green Giants", status: "completed", home_score: 1, away_score: 2, played: true },
+            { id: "k6", round_number: 2, home_team: "Academy XI", away_team: "Titans FC", status: "completed", home_score: 3, away_score: 0, played: true },
+            // Final
+            { id: "k7", round_number: 3, home_team: "Green Giants", away_team: "Academy XI", status: "scheduled", played: false }
+          ]
+        };
+      }
     }
-    return await this.makeRequest(`/tournaments/${tournamentId}/dashboard`);
+    return await this.makeRequest(`/tournaments/${tournamentId}`);
   }
 
   async getTournamentPitches(tournamentId) {
@@ -3348,18 +3384,16 @@ if (typeof ApiService === 'undefined') {
   }
 
   async autoScheduleTournament(tournamentId, scheduleData) {
-    return await this.makeRequest(
-      `/tournaments/${tournamentId}/auto-schedule`,
-      {
-        method: "POST",
-        body: JSON.stringify(scheduleData),
-      },
-    );
+    return await this.makeRequest(`/tournaments/${tournamentId}/auto-schedule`, {
+      method: "POST",
+      body: JSON.stringify(scheduleData),
+    });
   }
 
   async getTournamentBracket(tournamentId) {
     return await this.makeRequest(`/tournaments/${tournamentId}/bracket`);
   }
+
 
   // =========================== SCOUTING ===========================
   async getScoutingReports(filters = {}) {
@@ -3562,22 +3596,7 @@ if (typeof ApiService === 'undefined') {
       body: JSON.stringify({ verified }),
     });
   }
-
-  async getScoutingReports() {
-    return await this.makeRequest('/scouting/reports');
   }
-
-  async requestScoutContact(userId, playerId) {
-    return await this.makeRequest('/scouting/request-contact', {
-      method: "POST",
-      body: JSON.stringify({ user_id: userId, player_id: playerId })
-    });
-  }
-
-  async getScoutingAnalytics() {
-    return await this.makeRequest('/scouting/analytics');
-  }
-  };
 
   // Expose class to window to avoid redeclaration on subsequent loads
   window.ApiService = ApiService;

@@ -784,6 +784,18 @@
             connectedBox.style.display = 'none';
             errorBox.style.display = 'none';
 
+            // Mock status for demo session
+            if (localStorage.getItem('isDemoSession') === 'true') {
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    connectedBox.style.display = 'block';
+                    document.getElementById('active-plans-box').style.display = 'block';
+                    document.getElementById('payout-status').textContent = 'Enabled';
+                    document.getElementById('account-status').textContent = 'Verified';
+                }, 500);
+                return;
+            }
+
             try {
                 const data = await apiService.makeRequest('/payments/stripe/connect/status');
 

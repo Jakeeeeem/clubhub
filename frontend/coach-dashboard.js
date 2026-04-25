@@ -59,15 +59,14 @@ async function initializeCoachDashboard() {
 
 function setupCoachEventListeners() {
   // Form submissions
-  document
-    .getElementById("createTeamForm")
-    .addEventListener("submit", handleCreateTeam);
-  document
-    .getElementById("addTeamEventForm")
-    .addEventListener("submit", handleAddTeamEvent);
-  document
-    .getElementById("matchResultForm")
-    .addEventListener("submit", handleMatchResult);
+  const createTeamForm = document.getElementById("createTeamForm");
+  if (createTeamForm) createTeamForm.addEventListener("submit", handleCreateTeam);
+  
+  const addTeamEventForm = document.getElementById("addTeamEventForm");
+  if (addTeamEventForm) addTeamEventForm.addEventListener("submit", handleAddTeamEvent);
+  
+  const matchResultForm = document.getElementById("matchResultForm");
+  if (matchResultForm) matchResultForm.addEventListener("submit", handleMatchResult);
 }
 
 function loadCoachData() {
@@ -332,7 +331,7 @@ async function loadCoachTournaments() {
                         <div style="width: 48px; height: 48px; background: #dc2626; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">ðŸ†</div>
                         <span class="status-badge" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">${t.status || "Active"}</span>
                     </div>
-                    <h4>${t.title}</h4>
+                    <h4>${t.title || t.name || 'Tournament'}</h4>
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0;">${formatDate(t.event_date)}</p>
                     <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 0.75rem; color: var(--text-muted);">Competition Details</span>
@@ -364,7 +363,7 @@ window.viewCoachTournament = async function (tournamentId) {
     if (!data) throw new Error("Could not fetch details");
 
     document.getElementById("coachDetailTournamentName").textContent =
-      data.tournament.title;
+      data.tournament.title || data.tournament.name || "Tournament Detail";
 
     renderCoachBracket(data.matches || []);
     renderCoachFixtures(data.matches || []);
@@ -405,80 +404,20 @@ window.switchCoachTournamentTab = function (btn, tabId) {
 };
 
 function renderCoachBracket(matches) {
+  if (typeof TournamentUI !== 'undefined') {
+    TournamentUI.renderBracket(matches, "coachTournamentBracketVisual");
+    return;
+  }
+
   const container = document.getElementById("coachTournamentBracketVisual");
   if (!container) return;
-
-  let bracketMatches = matches.filter(
-    (m) => m.round_number !== null && m.round_number !== undefined,
-  );
-  if (bracketMatches.length === 0) bracketMatches = matches;
-
-  if (bracketMatches.length === 0) {
+  
+  if (!matches || matches.length === 0) {
     container.innerHTML = `<div style="text-align:center; padding: 4rem; opacity: 0.3;">
             <p>Brackets are finalized by administrators before the knockout stage begins.</p>
         </div>`;
     return;
   }
-
-  const rounds = {};
-  bracketMatches.forEach((m) => {
-    const rk = m.round_number ?? 1;
-    if (!rounds[rk]) rounds[rk] = [];
-    rounds[rk].push(m);
-  });
-
-  const sortedRoundNums = Object.keys(rounds)
-    .map(Number)
-    .sort((a, b) => a - b);
-  const totalRounds = sortedRoundNums.length;
-
-  container.innerHTML = `
-        <div class="bracket-tree">
-            ${sortedRoundNums
-              .map((roundNum, idx) => {
-                const label =
-                  totalRounds > 1 && idx === totalRounds - 1
-                    ? "Final"
-                    : totalRounds > 2 && idx === totalRounds - 2
-                      ? "Semi Finals"
-                      : `Round ${roundNum}`;
-
-                return `
-                <div class="bracket-round">
-                    <h4 class="bracket-round-label">${label}</h4>
-                    ${rounds[roundNum]
-                      .map((m, mIdx) => {
-                        const played = m.played || m.status === "completed";
-                        const homeWon =
-                          played &&
-                          parseInt(m.home_score) > parseInt(m.away_score);
-                        const awayWon =
-                          played &&
-                          parseInt(m.away_score) > parseInt(m.home_score);
-                        const isUpper = mIdx % 2 === 0;
-
-                        return `
-                        <div class="bracket-match-container ${idx < totalRounds - 1 ? (isUpper ? "upper" : "lower") : ""}">
-                            <div class="bracket-match" style="border-left: 3px solid ${played ? "#dc2626" : "rgba(255,255,255,0.1)"};">
-                                <div class="match-team ${homeWon ? "winner" : ""}">
-                                    <span class="team-name">${m.home_team || "TBD"} ${m.team_id && currentTeams.some((t) => t.id === m.team_id) ? "â­" : ""}</span>
-                                    <span class="match-score">${played ? m.home_score : "-"}</span>
-                                </div>
-                                <div class="match-team ${awayWon ? "winner" : ""}">
-                                    <span class="team-name">${m.away_team || "TBD"} ${m.away_team_id && currentTeams.some((t) => t.id === m.away_team_id) ? "â­" : ""}</span>
-                                    <span class="match-score">${played ? m.away_score : "-"}</span>
-                                </div>
-                            </div>
-                        </div>
-                        `;
-                      })
-                      .join("")}
-                </div>
-            `;
-              })
-              .join("")}
-        </div>
-    `;
 }
 
 function renderCoachFixtures(matches) {
@@ -501,20 +440,10 @@ function renderCoachFixtures(matches) {
                     ${m.status === "completed" || m.status === "live" ? `${m.home_score} - ${m.away_score}` : "VS"}
                 </div>
                 <div style="font-size: 0.65rem; color: ${m.status === "live" ? "#dc2626" : "var(--text-muted)"}; margin-top: 6px; font-weight: 700; text-transform: uppercase;">
-                    ${m.status === "live" ? "â— LIVE" : m.status}
+                    ${m.status === "live" ? "● LIVE" : m.status}
                 </div>
             </div>
             <div style="flex: 1; text-align: left; font-weight: 600;">${m.away_team || "TBD"}</div>
-            <div style="margin-left: 1rem;">
-                ${
-                  m.status !== "completed" &&
-                  currentTeams.some(
-                    (t) => t.id === m.team_id || t.id === m.away_team_id,
-                  )
-                    ? `<button class="btn btn-small btn-primary" onclick="recordMatchResult('${m.id}')">Update</button>`
-                    : ""
-                }
-            </div>
         </div>
     `,
     )
@@ -522,57 +451,19 @@ function renderCoachFixtures(matches) {
 }
 
 function renderCoachStandings(standings) {
-  const container = document.getElementById(
-    "coachTournamentStandingsContainer",
-  );
-  if (!container) return;
-
-  if (!standings || Object.keys(standings).length === 0) {
-    container.innerHTML =
-      "<p style='text-align:center; padding: 4rem; opacity: 0.4;'>Group standings will appear here once the league phase transitions logic is finalized.</p>";
+  if (typeof TournamentUI !== 'undefined') {
+    TournamentUI.renderLeagueTable(standings, "coachTournamentStandingsContainer");
     return;
   }
 
-  const sorted = Object.values(standings).sort(
-    (a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf,
-  );
+  const container = document.getElementById("coachTournamentStandingsContainer");
+  if (!container) return;
 
-  container.innerHTML = `
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th style="width: 40px;">#</th>
-                        <th>Team</th>
-                        <th style="text-align: center;">P</th>
-                        <th style="text-align: center;">W</th>
-                        <th style="text-align: center;">D</th>
-                        <th style="text-align: center;">L</th>
-                        <th style="text-align: center;">GD</th>
-                        <th style="text-align: center; color: #dc2626;">PtsLocal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sorted
-                      .map(
-                        (s, idx) => `
-                        <tr style="${currentTeams.some((t) => t.name === s.name) ? "background: rgba(220,38,38,0.05); border-left: 2px solid #dc2626;" : ""}">
-                            <td style="opacity: 0.5;">${idx + 1}</td>
-                            <td style="font-weight: 700;">${s.name} ${currentTeams.some((t) => t.name === s.name) ? "(Your Team)" : ""}</td>
-                            <td style="text-align: center;">${s.p}</td>
-                            <td style="text-align: center;">${s.w}</td>
-                            <td style="text-align: center;">${s.d}</td>
-                            <td style="text-align: center;">${s.l}</td>
-                            <td style="text-align: center;">${s.gd > 0 ? "+" : ""}${s.gd}</td>
-                            <td style="text-align: center; font-weight: 800; color: #dc2626;">${s.pts}</td>
-                        </tr>
-                    `,
-                      )
-                      .join("")}
-                </tbody>
-            </table>
-        </div>
-    `;
+  if (!standings || (Array.isArray(standings) && standings.length === 0)) {
+    container.innerHTML =
+      "<p style='text-align:center; padding: 4rem; opacity: 0.4;'>Group standings will appear here once the league phase logic is finalized.</p>";
+    return;
+  }
 }
 
 async function loadCoachProducts() {

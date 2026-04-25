@@ -169,14 +169,14 @@ const UnifiedNav = {
       console.warn('Bottom-nav dedupe failed', e);
     }
 
-    // Auto-inject Group Switcher CSS
-    if (!document.getElementById("group-switcher-css")) {
-      const link = document.createElement("link");
-      link.id = "group-switcher-css";
-      link.rel = "stylesheet";
-      link.href = "group-switcher.css";
-      document.head.appendChild(link);
-    }
+    // Auto-inject Group Switcher CSS (Merged into unified-nav.css)
+    // if (!document.getElementById("group-switcher-css")) {
+    //   const link = document.createElement("link");
+    //   link.id = "group-switcher-css";
+    //   link.rel = "stylesheet";
+    //   link.href = "group-switcher.css";
+    //   document.head.appendChild(link);
+    // }
 
 
     try {
@@ -630,8 +630,22 @@ const UnifiedNav = {
     if (!target || target.querySelector(".desktop-sidebar-toggle")) return;
 
     const toggleHTML = `
-      <button class="desktop-sidebar-toggle desktop-only btn btn-small" onclick="window.UnifiedNav.toggleDesktopSidebar()" style="margin-right: 0.75rem; background: transparent; border: none; color: rgba(255,255,255,0.7); padding: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: color 0.2s;">
-        <i id="desktop-toggle-icon" style="font-style: normal;">☰</i>
+      <button class="desktop-sidebar-toggle desktop-only" onclick="window.UnifiedNav.toggleDesktopSidebar()" style="
+        background: rgba(255,255,255,0.06); 
+        border: 1px solid rgba(255,255,255,0.12); 
+        color: white; 
+        width: 38px; 
+        height: 38px; 
+        border-radius: 50%; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        cursor: pointer; 
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+        flex-shrink: 0;
+      " onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.transform='scale(1)';" id="desktop-toggle-btn">
+        <span id="desktop-toggle-icon" style="display: flex; align-items: center; justify-content: center;">${ICONS.menu}</span>
       </button>
     `;
 
@@ -641,7 +655,7 @@ const UnifiedNav = {
     // Sync icon
     const isCollapsed = document.body.classList.contains("sidebar-collapsed");
     const icon = document.getElementById("desktop-toggle-icon");
-    if (icon) icon.innerHTML = isCollapsed ? "☰" : "✕";
+    if (icon) icon.innerHTML = isCollapsed ? ICONS.menu : ICONS.close;
   },
 
   toggleDesktopSidebar() {
@@ -909,7 +923,7 @@ const UnifiedNav = {
                 <span>Console</span>
               </a>
             ` : ''}
-            <div id="header-family-switcher-container"></div>
+            
             <div id="stripe-header-btn-container"></div>
             <div id="notif-header-btn-container"></div>
             
@@ -1280,7 +1294,7 @@ const UnifiedNav = {
                 <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:transparent; color:inherit; font-size:1.2rem; padding:0.5rem; margin-right:0.5rem; cursor:pointer;">
                     ←
                 </button>
-                <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; margin-right: 0.75rem; cursor: pointer;">
+                <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
                     ${ICONS.menu}
                 </div>
 
@@ -2124,7 +2138,8 @@ const UnifiedNav = {
   renderMenu() {
     const nav = document.getElementById("sidebar-nav-content");
     if (!nav) {
-        console.warn("⚠️ UnifiedNav: #sidebar-nav-content not found! Sidebar might be broken.");
+        console.warn("⚠️ UnifiedNav: #sidebar-nav-content not found! Retrying in 100ms...");
+        setTimeout(() => this.renderMenu(), 100);
         return;
     }
 
@@ -2154,15 +2169,31 @@ const UnifiedNav = {
     const isPlayerRole = userRole === "player" || userRole === "parent" || !!localStorage.getItem("activePlayerId") || dashboardMode === "player";
     const isPlayerUrl = /player-|schedule|performance|finances|shop|chat/.test(url);
     
-    // Final logic: Priority to SuperAdmin -> Coach/Scout -> Admin -> Player
-    let finalRole = "player";
-    if (url.includes("player-") || url.includes("schedule")) finalRole = "player";
-    else if (url.includes("admin-")) finalRole = "admin";
-    else if (isSuperAdmin) finalRole = "superadmin";
-    else if (isCoach) finalRole = "coach";
-    else if (isScout) finalRole = "scout";
-    else if (isAdmin && dashboardMode !== "player") finalRole = "admin";
-    else if (isPlayerRole || isPlayerUrl) finalRole = "player";
+    // Final logic: Explicit role first, then URL fallback
+    let finalRole = (userRole || "player").toLowerCase();
+    const p = window.location.pathname.toLowerCase();
+    
+    // URL-based overrides (if user is navigating to a specific dash)
+    if (p.includes("super-admin")) finalRole = "superadmin";
+    else if (p.includes("admin-") || p.includes("members") || p.includes("teams")) finalRole = "admin";
+    else if (p.includes("scout-") || p.includes("scouting")) finalRole = "scout";
+    else if (p.includes("coach-")) finalRole = "coach";
+    else if (p.includes("player-") || p.includes("schedule") || p.includes("performance")) finalRole = "player";
+    else if (dashboardMode === "player") finalRole = "player";
+    
+    // Safety check: if user is admin but on a coach page, stay admin (we'll handle redirect or view switch)
+    if (userRole === "admin" && finalRole === "coach") {
+        // If they are on a coach page, we allow them to see it as coach OR redirect
+        // For now, let's keep them as Admin so they see Admin sidebar
+        finalRole = "admin";
+    }
+    else if (localStorage.getItem("isDemoSession") === "true") {
+        // Fallback for demo session based on page
+        if (p.includes("admin")) finalRole = "admin";
+        else if (p.includes("coach")) finalRole = "coach";
+        else if (p.includes("scout")) finalRole = "scout";
+        else finalRole = "player";
+    }
 
     console.log("🔍 UnifiedNav Role Detection:", { 
         url, 
@@ -2178,8 +2209,7 @@ const UnifiedNav = {
     const finalIsScout = finalRole === "scout";
 
     let menuHtml = "";
-    const p = window.location.pathname;
-    const isActive = (f) => p.includes(f) ? "active" : "";
+    const isActive = (f) => window.location.pathname.includes(f) ? "active" : "";
 
     if (finalIsSuperAdmin) {
       menuHtml = `
@@ -2236,7 +2266,7 @@ const UnifiedNav = {
         <a href="admin-members.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-members.html', 'members')" class="sidebar-link ${isActive('admin-members.html')}">${ICONS.nav.players}<span>Members</span></a>
         <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>Teams & Squads</span></a>
         <a href="admin-events.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-events.html', 'events')" class="sidebar-link ${isActive('admin-events.html')}">${ICONS.nav.events}<span>Event Manager</span></a>
-        <a href="coach-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tournament-manager.html', 'tournament-manager')" class="sidebar-link ${isActive('coach-tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Manager</span></a>
+        <a href="admin-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-tournament-manager.html', 'tournament-manager')" class="sidebar-link sidebar-sublink ${isActive('admin-tournament-manager.html')}" style="padding-left: 2.5rem; opacity: 0.85; font-size: 0.85rem;">${ICONS.nav.trophy}<span>Competition Management</span></a>
         <a href="admin-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-chat.html', 'messenger')" class="sidebar-link ${isActive('admin-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
 
         <div class="nav-group-title"><span>Operations</span></div>
@@ -2251,6 +2281,34 @@ const UnifiedNav = {
         <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
         <a href="tournament-finder.html" class="sidebar-link ${isActive('tournament-finder.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
         <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
+      `;
+    } else if (finalIsScout) {
+      menuHtml = `
+        <div class="nav-group-title"><span>Scouting Hub</span></div>
+        <a href="scouting.html" onclick="return UnifiedNav.handleNavClick(event, 'scouting.html', 'overview')" class="sidebar-link ${isActive('scouting.html')}">${ICONS.nav.overview}<span>Talent Search</span></a>
+        <a href="scouting.html#my-reports" class="sidebar-link">${ICONS.nav.approvals}<span>Player Reports</span></a>
+        <a href="scouting.html#watchlist" class="sidebar-link">${ICONS.nav.players}<span>Watchlist</span></a>
+        
+        <div class="nav-group-title"><span>Discovery</span></div>
+        <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
+        <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
+      `;
+    } else if (finalIsCoach) {
+      menuHtml = `
+        <div class="nav-group-title"><span>Coaching Hub</span></div>
+        <a href="coach-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'overview')" class="sidebar-link ${isActive('coach-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
+        <a href="coach-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tournament-manager.html', 'tournament-manager')" class="sidebar-link ${isActive('coach-tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Hub</span></a>
+        <a href="coach-dashboard.html#coach-players" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'players')" class="sidebar-link ${p.includes('players') ? 'active' : ''}">${ICONS.nav.players}<span>Squad Manager</span></a>
+        <a href="coach-dashboard.html#coach-teams" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'teams')" class="sidebar-link ${p.includes('teams') ? 'active' : ''}">${ICONS.nav.teams}<span>My Teams</span></a>
+        
+        <div class="nav-group-title"><span>Tools</span></div>
+        <a href="coach-dashboard.html#coach-messenger" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'messenger')" class="sidebar-link ${p.includes('messenger') ? 'active' : ''}">${ICONS.nav.chat}<span>Squad Messenger</span></a>
+        <a href="coach-dashboard.html#coach-tactical-board" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'tactical-board')" class="sidebar-link ${p.includes('tactical-board') ? 'active' : ''}">${ICONS.nav.tactics}<span>Tactical Board Pro</span></a>
+        <a href="scouting.html" class="sidebar-link ${isActive('scouting.html')}">${ICONS.nav.approvals}<span>Scouting Hub</span></a>
+
+        <div class="nav-group-title"><span>Discovery</span></div>
+        <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
+        <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
       `;
     } else if (finalIsPlayer) {
       menuHtml = `
@@ -2595,6 +2653,7 @@ window.showNotification = function (message, type = "info") {
 };
 
 // Also expose as a static method for convenience
+UnifiedNav.handleNavClick = window.handleNavClick;
 UnifiedNav.showNotification = window.showNotification;
 
 // 🛡️ Override native alert to use our premium UI

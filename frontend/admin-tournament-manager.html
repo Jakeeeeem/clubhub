@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competition Management — ClubHub</title>
+    <meta name="description" content="ClubHub - The ultimate sports group management platform">
+    <meta name="theme-color" content="#dc4343">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="design-system.css">
+    <link rel="stylesheet" href="unified-nav.css">
+    <style>
+        :root {
+            --admin-gold: #fbbf24;
+            --admin-accent: rgba(251, 191, 36, 0.1);
+        }
+        .admin-badge {
+            background: var(--admin-accent);
+            color: var(--admin-gold);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+        .comp-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .comp-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.05);
+            border-color: var(--primary);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+        .comp-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--admin-gold));
+            opacity: 0.6;
+        }
+        .stat-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .stat-item {
+            background: rgba(0,0,0,0.2);
+            padding: 0.75rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-val { font-size: 1.2rem; font-weight: 800; color: #fff; display: block; }
+        .stat-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+        
+        /* Bracket Admin Styles */
+        .bracket-admin-tools {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body class="admin-theme">
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
+    <header class="header"></header>
+
+    <main class="main dashboard-main">
+        <div class="container dashboard-container">
+            
+            <div id="admin-comp-list" class="dashboard-section active">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2rem;">
+                    <div>
+                        <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+                            <h1 class="neon-text" style="margin:0;">Competition Management</h1>
+                            <span class="admin-badge">Owner View</span>
+                        </div>
+                        <p style="color:var(--text-muted); margin:0;">Create and manage league structures, knockout brackets, and tournament rules.</p>
+                    </div>
+                    <div style="display:flex; gap:1rem;">
+                        <button class="btn btn-secondary" onclick="openModal('setupLeagueModal')">Setup League</button>
+                        <button class="btn btn-primary" onclick="openModal('createTournamentModal')">+ New Tournament</button>
+                    </div>
+                </div>
+
+                <!-- Global Stats -->
+                <div class="stats-grid" style="margin-bottom: 2.5rem;">
+                    <div class="stat-card">
+                        <span class="stat-label">Total Competitions</span>
+                        <span class="stat-number">4</span>
+                        <div class="stat-change">Active this season</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Teams Enrolled</span>
+                        <span class="stat-number">32</span>
+                        <div class="stat-change">Across all formats</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Upcoming Fixtures</span>
+                        <span class="stat-number">12</span>
+                        <div class="stat-change">Next 7 days</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Total Revenue</span>
+                        <span class="stat-number">£1,250</span>
+                        <div class="stat-change" style="color:#4ade80;">Entry fees collected</div>
+                    </div>
+                </div>
+
+                <div id="adminTournamentListContainer" class="dash-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); gap:2rem;">
+                    <!-- Populated by JS -->
+                    <div class="loader-container" style="grid-column: 1/-1; padding: 4rem; text-align: center;">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 1rem; color: var(--text-muted);">Loading competitions...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail View -->
+            <div id="admin-comp-detail" class="dashboard-section" style="display:none;">
+                <div style="display:flex; align-items:center; gap:1.5rem; margin-bottom:2rem;">
+                    <button class="btn btn-secondary btn-small" onclick="closeAdminDetail()">&larr; Dashboard</button>
+                    <div>
+                        <h2 id="adminDetailCompName" class="neon-text" style="margin:0;">Tournament Detail</h2>
+                        <span id="adminDetailCompStatus" class="admin-badge">Live</span>
+                    </div>
+                    <div style="margin-left:auto; display:flex; gap:0.75rem;">
+                        <button class="btn btn-secondary btn-small" onclick="openModal('editCompModal')">⚙️ Settings</button>
+                        <button class="btn btn-primary btn-small" onclick="generateFixtures()">🔄 Generate Fixtures</button>
+                    </div>
+                </div>
+
+                <div class="tabs" style="margin-bottom:2rem;">
+                    <button class="tab-btn active" onclick="switchAdminTab(this, 'bracket')">Bracket / Structure</button>
+                    <button class="tab-btn" onclick="switchAdminTab(this, 'teams')">Participating Teams</button>
+                    <button class="tab-btn" onclick="switchAdminTab(this, 'fixtures')">Fixture Management</button>
+                    <button class="tab-btn" onclick="switchAdminTab(this, 'standings')">Standings & Results</button>
+                </div>
+
+                <div id="admin-tab-bracket" class="tab-content active">
+                    <div class="bracket-admin-tools">
+                        <button class="btn btn-text btn-small" onclick="seedTournament('auto')">🪄 Auto-Seed</button>
+                        <button class="btn btn-text btn-small" onclick="seedTournament('random')">🎲 Randomize</button>
+                        <button class="btn btn-text btn-small" onclick="toggleDragDrop(true)">🖱️ Enable Drag & Drop</button>
+                        <span style="margin-left:auto; font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center;">
+                            Drag teams into slots to set seeds
+                        </span>
+                    </div>
+                    <div id="adminTournamentBracketVisual" class="bracket-tree-container" style="min-height:500px; padding: 2rem; background: rgba(0,0,0,0.2); border-radius: 20px; overflow-x: auto;">
+                        <!-- Bracket logic -->
+                    </div>
+                </div>
+
+                <div id="admin-tab-teams" class="tab-content" style="display:none;">
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem;">
+                            <h3 style="margin:0;">Participating Teams</h3>
+                            <button class="btn btn-primary btn-small" onclick="openModal('addTeamToCompModal')">+ Add Team</button>
+                        </div>
+                        <div id="adminCompTeamsList"></div>
+                    </div>
+                </div>
+
+                <div id="admin-tab-fixtures" class="tab-content" style="display:none;">
+                    <div id="adminCompFixturesList"></div>
+                </div>
+
+                <div id="admin-tab-standings" class="tab-content" style="display:none;">
+                    <div id="adminCompStandingsContainer"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Create Tournament Modal -->
+    <div id="createTournamentModal" class="modal">
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <span class="close" onclick="closeModal('createTournamentModal')">&times;</span>
+            <div style="text-align:center; margin-bottom:2rem;">
+                <div style="width:64px; height:64px; background:rgba(220,38,38,0.1); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:2rem; border:1px solid rgba(220,38,38,0.2);">🏆</div>
+                <h2 class="neon-text" style="margin:0;">Create Tournament</h2>
+                <p style="font-size:0.85rem; color:var(--text-muted);">Configure knockout bracket structure</p>
+            </div>
+            <form id="createTournamentForm" onsubmit="handleCreateTournament(event)">
+                <div class="form-group">
+                    <label>Tournament Name</label>
+                    <input type="text" name="name" placeholder="e.g. Summer Knockout Cup" required>
+                </div>
+                <div class="form-group">
+                    <label>Number of Teams</label>
+                    <select name="team_count">
+                        <option value="4">4 Teams (Semi-Finals)</option>
+                        <option value="8" selected>8 Teams (Quarter-Finals)</option>
+                        <option value="16">16 Teams (Round of 16)</option>
+                        <option value="32">32 Teams (Round of 32)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Seeding Method</label>
+                    <select name="seeding">
+                        <option value="random">Random Draw</option>
+                        <option value="rank">By Team Rank</option>
+                        <option value="manual">Manual Placement</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createTournamentModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Tournament →</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Setup League Modal -->
+    <div id="setupLeagueModal" class="modal">
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <span class="close" onclick="closeModal('setupLeagueModal')">&times;</span>
+            <div style="text-align:center; margin-bottom:2rem;">
+                <div style="width:64px; height:64px; background:rgba(59,130,246,0.1); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:2rem; border:1px solid rgba(59,130,246,0.2);">🛡️</div>
+                <h2 class="neon-text" style="margin:0;">Setup New League</h2>
+                <p style="font-size:0.85rem; color:var(--text-muted);">Configure round-robin competition</p>
+            </div>
+            <form id="setupLeagueForm" onsubmit="handleCreateLeague(event)">
+                <div class="form-group">
+                    <label>League Name</label>
+                    <input type="text" name="name" placeholder="e.g. Premier Sunday League" required>
+                </div>
+                <div class="form-group">
+                    <label>Season</label>
+                    <input type="text" name="season" placeholder="e.g. 2026/27">
+                </div>
+                <div class="form-group">
+                    <label>Teams per League</label>
+                    <input type="number" name="teams_per_league" value="10" min="2" max="24">
+                </div>
+                <div class="form-group">
+                    <label>Promotion/Relegation</label>
+                    <select name="levels">
+                        <option value="none">Single Tier</option>
+                        <option value="2">2 Tiers (Pro/Rel)</option>
+                        <option value="3">3 Tiers (Pyramid)</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('setupLeagueModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1; background:var(--primary);">Setup League →</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app-state.js"></script>
+    <script src="api-service.js?v=20260424_v3"></script>
+    <script src="unified-nav.js?v=20260424_v3"></script>
+    <script src="tournament-ui.js"></script>
+    <script src="coach-dashboard.js"></script> <!-- Reusing core logic but extending for Admin -->
+
+    <script>
+        // Admin-Specific Tournament Logic
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof checkAuthStatus === 'function') {
+                const ok = await checkAuthStatus();
+                if (!ok) { window.location.href = 'index.html'; return; }
+            }
+            loadAdminCompetitions();
+        });
+
+        function openModal(id) {
+            const m = document.getElementById(id);
+            if (m) m.style.display = 'block';
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            if (m) m.style.display = 'none';
+        }
+
+        function showNotification(msg, type) {
+            if (window.UnifiedNav && window.UnifiedNav.showNotification) {
+                window.UnifiedNav.showNotification(msg, type);
+            } else {
+                alert(msg);
+            }
+        }
+
+        async function loadAdminCompetitions() {
+            const container = document.getElementById('adminTournamentListContainer');
+            try {
+                // In demo mode, apiService returns rich mock data
+                const tournaments = await apiService.getTournaments();
+                
+                if (!tournaments || tournaments.length === 0) {
+                    container.innerHTML = `<div style="grid-column:1/-1; padding:4rem; text-align:center; color:var(--text-muted);">No competitions created yet.</div>`;
+                    return;
+                }
+
+                container.innerHTML = tournaments.map(t => `
+                    <div class="comp-card" onclick="viewAdminCompDetail('${t.id}')" style="cursor:pointer;">
+                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:1rem;">
+                            <h3 style="margin:0; font-size:1.2rem;">${t.title || t.name || 'Tournament'}</h3>
+                            <span class="admin-badge" style="background:${t.type === 'league' ? 'rgba(59,130,246,0.1)' : 'rgba(168,85,247,0.1)'}; color:${t.type === 'league' ? '#60a5fa' : '#c084fc'}; border-color:${t.type === 'league' ? 'rgba(59,130,246,0.2)' : 'rgba(168,85,247,0.2)'};">
+                                ${t.type.toUpperCase()}
+                            </span>
+                        </div>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">${t.description || 'Full season competition with teams from across the region.'}</p>
+                        
+                        <div class="stat-group">
+                            <div class="stat-item">
+                                <span class="stat-val">${t.teams_count || (t.standings ? t.standings.length : 8)}</span>
+                                <span class="stat-lbl">Teams</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-val">${t.fixtures_count || 0}</span>
+                                <span class="stat-lbl">Fixtures</span>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top:1.5rem; display:flex; align-items:center; gap:0.5rem;">
+                            <div style="flex:1; height:4px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden;">
+                                <div style="width: ${t.progress || 35}%; height:100%; background:var(--primary);"></div>
+                            </div>
+                            <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted);">${t.progress || 35}% Complete</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Failed to load admin comps:", err);
+                container.innerHTML = `<p style="color:#f87171; text-align:center;">Failed to load competitions.</p>`;
+            }
+        }
+
+        async function viewAdminCompDetail(compId) {
+            document.getElementById('admin-comp-list').style.display = 'none';
+            document.getElementById('admin-comp-detail').style.display = 'block';
+            
+            try {
+                const tournament = await apiService.getTournamentDetails(compId);
+                document.getElementById('adminDetailCompName').textContent = tournament.title || tournament.name || 'Tournament Detail';
+                
+                // Use TournamentUI for premium visualizations
+                if (tournament.type === 'knockout' || tournament.type === 'bracket') {
+                    TournamentUI.renderBracket(tournament.matches || tournament.bracket || [], 'adminTournamentBracketVisual');
+                } else {
+                    TournamentUI.renderLeagueTable(tournament.standings || [], 'adminTournamentBracketVisual');
+                }
+            } catch (err) {
+                console.error("Failed to load comp detail:", err);
+            }
+        }
+
+        function closeAdminDetail() {
+            document.getElementById('admin-comp-list').style.display = 'block';
+            document.getElementById('admin-comp-detail').style.display = 'none';
+        }
+
+        function switchAdminTab(btn, tabId) {
+            const detail = document.getElementById('admin-comp-detail');
+            detail.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            detail.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            const target = document.getElementById('admin-tab-' + tabId);
+            if (target) target.style.display = 'block';
+        }
+
+        async function handleCreateTournament(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            showNotification(`Creating ${formData.get('name')} knockout structure...`, "info");
+            setTimeout(() => {
+                showNotification("Tournament created with 8-team bracket!", "success");
+                closeModal('createTournamentModal');
+                loadAdminCompetitions();
+            }, 1200);
+        }
+
+        async function handleCreateLeague(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            showNotification(`Generating ${formData.get('name')} season fixtures...`, "info");
+            setTimeout(() => {
+                showNotification("League structure and fixtures generated successfully!", "success");
+                closeModal('setupLeagueModal');
+                loadAdminCompetitions();
+            }, 1500);
+        }
+
+        function generateFixtures() {
+            showNotification("Generating fixture list for all rounds...", "info");
+            setTimeout(() => {
+                showNotification("24 fixtures generated and sent to team calendars.", "success");
+            }, 1500);
+        }
+
+        function seedTournament(type) {
+            showNotification(`Applying ${type} seeding to bracket...`, "info");
+            setTimeout(() => {
+                showNotification("Bracket re-seeded and locked.", "success");
+            }, 800);
+        }
+    </script>
+</body>
+</html>
