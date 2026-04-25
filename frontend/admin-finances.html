@@ -404,7 +404,10 @@
             </div>
 
             <div id="finances" class="dashboard-section active" style="display:block; padding:1.5rem;">
-                <div class="section-title">💰 Stripe Connect Hub</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <div class="section-title" style="margin:0;">💰 Stripe Connect Hub</div>
+                    <div id="stripe-finance-btn-container"></div>
+                </div>
 
                 <div class="glass-card" style="padding:2rem; text-align:center; max-width:600px; margin:0 auto;">
                     <div id="stripe-status-loading">
@@ -715,7 +718,10 @@
             const target = document.getElementById(sectionId);
             if (target) {
                 target.style.display = 'block';
-                if (sectionId === 'finances') checkStripeStatus();
+                if (sectionId === 'finances') {
+                    checkStripeStatus();
+                    if (window.UnifiedNav) window.UnifiedNav.renderStripeHeaderButton(document.getElementById('stripe-finance-btn-container'));
+                }
                 if (sectionId === 'teams') loadTeams();
                 if (sectionId === 'messenger' && window.SquadMessenger) {
                     if (!window._adminMessengerMounted) {

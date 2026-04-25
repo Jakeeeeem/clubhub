@@ -568,14 +568,15 @@ const UnifiedNav = {
     const target =
       container ||
       document.getElementById("stripe-header-btn-container") ||
+      document.getElementById("stripe-finance-btn-container") ||
       document.querySelector(".dash-header-right") ||
       document.querySelector(".nav-right");
     if (!target || target.querySelector(".stripe-header-btn")) return;
 
     // Check if user is a group (groups manage payments/events via Stripe)
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    const userRole = this.getUserRole();
-    const isAdmin = userRole === "admin" || userRole === "platform_admin";
+    const userRole = (this.getUserRole() || "").toLowerCase();
+    const isAdmin = userRole === "admin" || userRole === "platform_admin" || userRole === "organization";
     // More robust dashboard check
     const isDashboard = !document.body.classList.contains("landing-view") || window.location.pathname.includes("dashboard") || window.location.pathname.includes("finder");
     
@@ -588,6 +589,7 @@ const UnifiedNav = {
       localStorage.getItem("stripeConnected") === "true";
 
     if (isAdmin && isDashboard) {
+      console.log("💳 renderStripeHeaderButton: Rendering for Admin on Dashboard", { isConnected, target });
       const btnColor = isConnected ? "#22c55e" : "#635bff";
       const btnText = isConnected ? "Connected" : "Stripe";
       const btnIcon = isConnected
@@ -841,7 +843,7 @@ const UnifiedNav = {
                 ${ICONS.back}
               </div>
             ` : `
-              <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); border-radius:10px;">
+              <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="display:flex; align-items:center; justify-content:center;">
                 ${ICONS.menu}
               </div>
             `}
@@ -859,13 +861,19 @@ const UnifiedNav = {
         </div>
 
         <!-- DESKTOP HEADER: Page Title + Group Switcher | Right Actions -->
-        <div class="logo-area-wrapper desktop-only" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
           <div class="dash-header-left" style="display:flex; align-items:center; gap:2rem;">
             <div class="header-title-area" style="display:flex; align-items:center; gap:1.25rem;">
                <h1 style="font-size:1.4rem; font-weight:800; color:#fff; margin:0; letter-spacing:-0.5px; white-space:nowrap;">${document.title.split('—')[0].trim()}</h1>
                <div style="width:1px; height:24px; background:rgba(255,255,255,0.1);"></div>
             </div>
             <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
+          </div>
+
+          <div class="mode-toggle-container desktop-only" style="margin: 0 1rem;">
+              <div class="header-mode-toggle" id="header-mode-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.08);">
+                  <div class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Groups Hub</div>
+                  <div class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Player Pro</div>
+              </div>
           </div>
 
           <div class="dash-header-right" style="display:flex; align-items:center; gap:1.25rem;">
@@ -893,7 +901,15 @@ const UnifiedNav = {
     this.renderHeaderSwitcher();
     this.renderFamilySwitcher();
     this.updateModeUI();
-    this.renderStripeHeaderButton();
+    
+    // Inject Stripe button and notifications into their containers
+    const stripeContainer = document.getElementById("stripe-header-btn-container");
+    if (stripeContainer) this.renderStripeHeaderButton(stripeContainer);
+
+    const notifContainer = document.getElementById("notif-header-btn-container");
+    if (notifContainer) this.renderHeaderNotifications(notifContainer);
+
+    this.syncUserData();
 
     // On mobile, also render switcher in the header target if it exists
     // For mobile devices, we want the switcher in the header if space allows, 
@@ -909,7 +925,7 @@ const UnifiedNav = {
           if (sideTarget) this.renderGroupSwitcher(sideTarget);
       }
     } else {
-      const desktopTarget = document.getElementById("header-org-switcher");
+      const desktopTarget = document.getElementById("header-group-switcher-container");
       if (desktopTarget) this.renderGroupSwitcher(desktopTarget);
     }
 
@@ -918,13 +934,6 @@ const UnifiedNav = {
     this.renderFamilySwitcher();
     this.updateModeUI();
 
-    // Inject Stripe button and notifications
-    this.renderStripeHeaderButton(
-      document.getElementById("stripe-header-btn-container"),
-    );
-    this.renderHeaderNotifications(
-      document.getElementById("notif-header-btn-container"),
-    );
     this.syncUserData();
     this.updateModeUI();
 
@@ -980,15 +989,14 @@ const UnifiedNav = {
 
       // Build inner HTML for aside
       const asideInner = `
-                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; z-index: 100; width: 48px; height: 48px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        ${ICONS.close}
-                    </button>
-                    
-                    <div class="sidebar-header" style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; padding: 2rem 1.5rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem; position: relative;">
+                    <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem; position: relative;">
                         <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem;">
                             <img src="images/logo.png" alt="Logo" style="width: 32px; height: 32px;">
                             <span style="font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px;">ClubHub</span>
                         </div>
+                        <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; width: 42px; height: 42px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                            ${ICONS.close}
+                        </button>
                     </div>
 
                     <div id="sidebar-nav-content" class="sidebar-nav" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
@@ -996,7 +1004,7 @@ const UnifiedNav = {
                     </div>
 
                     <div class="sidebar-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15);">
-                        <div id="sidebar-switcher-target" style="width: 100%; margin-bottom: 1rem;"></div>
+                        ${window.innerWidth < 992 ? '<div id="sidebar-switcher-target" style="width: 100%; margin-bottom: 1rem;"></div>' : ''}
                         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                              <button class="btn btn-secondary btn-small" onclick="window.location.href += (window.location.href.includes('?') ? '&' : '?') + 'reset=system'" style="width: 100%; opacity: 0.6; font-size: 0.7rem; letter-spacing: 0.5px; padding: 0.6rem;">
                                 🔄 HARD REFRESH SYSTEM
@@ -1636,12 +1644,6 @@ const UnifiedNav = {
                             <span style="font-size: 0.65rem; opacity: 0.5;">Personal details & settings</span>
                         </div>
                     </a>
-                    <a href="player-settings.html" class="dropdown-link" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 8px;">
-                        <span style="font-size: 1.1rem;">⚙️</span>
-                        <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 0.85rem; font-weight: 600;">Account Settings</span>
-                            <span style="font-size: 0.65rem; opacity: 0.5;">Manage your preferences</span>
-                        </div>
                     </a>
                     
                     <div class="dropdown-divider" style="height: 1px; background: rgba(255,255,255,0.08); margin: 0.5rem 0;"></div>

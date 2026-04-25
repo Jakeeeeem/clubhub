@@ -15,10 +15,11 @@ if (window.__groupSwitcherDefined) {
     style.textContent = `
       .group-switcher { position: relative; z-index: 1000; font-family: 'Inter', sans-serif; }
       .group-switcher-trigger { 
-        display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; 
+        display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.85rem; 
         background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); 
         border-radius: 12px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); min-width: 220px; 
         backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        margin: 0.5rem 0;
       }
       .group-switcher-trigger:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
       .group-switcher-trigger.open { background: rgba(255, 255, 255, 0.12); border-color: var(--primary); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
