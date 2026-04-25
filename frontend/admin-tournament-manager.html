@@ -269,62 +269,109 @@
     <script src="api-service.js?v=20260424_v3"></script>
     <script src="unified-nav.js?v=20260424_v3"></script>
     <script src="tournament-ui.js"></script>
-    <script src="coach-dashboard.js"></script> <!-- Reusing core logic but extending for Admin -->
-
+    <script src="coach-dashboard.js"></script> 
     <script>
-        // Admin-Specific Tournament Logic
-        // Explicitly expose functions to window to ensure accessibility from onclick
-        window.openModal = openModal;
-        window.closeModal = closeModal;
-        window.viewAdminCompDetail = viewAdminCompDetail;
-        window.closeAdminCompDetail = closeAdminCompDetail;
-        window.switchAdminTab = switchAdminTab;
-        window.saveAdminMatchResult = () => {}; // Placeholder for interface compatibility
-        window.openAdminTactics = () => {};
-        window.setFormation = () => {};
-        window.saveMatchFormation = () => {};
-
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log("🚀 Admin Tournament Manager Initializing...");
-            if (typeof checkAuthStatus === 'function') {
-                const ok = await checkAuthStatus();
-                if (!ok) { window.location.href = 'index.html'; return; }
-            }
-            loadAdminCompetitions();
-        });
-
-        function openModal(id) {
+        // --- Core Utility Functions (Exposed to Window) ---
+        window.openModal = function(id) {
             const m = document.getElementById(id);
             if (m) m.style.display = 'block';
-        }
+        };
 
-        function closeModal(id) {
+        window.closeModal = function(id) {
             const m = document.getElementById(id);
             if (m) m.style.display = 'none';
-        }
+        };
 
-        function showNotification(msg, type) {
+        window.showNotification = function(msg, type) {
             if (window.UnifiedNav && window.UnifiedNav.showNotification) {
                 window.UnifiedNav.showNotification(msg, type);
             } else {
-                alert(msg);
+                console.log(`[Notification] ${type}: ${msg}`);
             }
-        }
+        };
 
-        async function loadAdminCompetitions() {
-            const container = document.getElementById('adminTournamentListContainer');
+        window.closeAdminCompDetail = function() {
+            console.log("🔙 Closing competition detail");
+            const list = document.getElementById('admin-comp-list');
+            const detail = document.getElementById('admin-comp-detail');
+            if (list) list.style.display = 'block';
+            if (detail) detail.style.display = 'none';
+        };
+
+        window.switchAdminTab = function(btn, tabId) {
+            const detail = document.getElementById('admin-comp-detail');
+            if (!detail) return;
+            detail.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            detail.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            const target = document.getElementById('admin-tab-' + tabId);
+            if (target) target.style.display = 'block';
+        };
+
+        // --- Competition Detail Logic ---
+        window.viewAdminCompDetail = async function(compId) {
+            console.log("🏆 viewAdminCompDetail triggered for:", compId);
+            const list = document.getElementById('admin-comp-list');
+            const detail = document.getElementById('admin-comp-detail');
+            
+            if (!list || !detail) {
+                console.error("❌ Critical UI elements missing: admin-comp-list or admin-comp-detail");
+                return;
+            }
+
             try {
-                // In demo mode, apiService returns rich mock data
+                // Show detail view immediately
+                list.style.display = 'none';
+                detail.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                const visualContainer = 'adminTournamentBracketVisual';
+                const visualEl = document.getElementById(visualContainer);
+                if (visualEl) visualEl.innerHTML = '<div style="padding:4rem; text-align:center; opacity:0.5;">Loading FIFA Visuals...</div>';
+
+                const data = await apiService.getTournamentDetails(compId);
+                console.log("📊 Tournament data loaded:", data);
+
+                const tournament = data.tournament || data;
+                document.getElementById('adminDetailCompName').textContent = tournament.title || tournament.name || 'Competition Detail';
+
+                const type = (tournament.type || '').toLowerCase();
+                if (type === 'knockout' || type === 'bracket' || type === 'tournament') {
+                    TournamentUI.renderBracket(data.matches || tournament.matches || [], visualContainer);
+                } else {
+                    let standings = data.standings || tournament.standings || [];
+                    if (standings && typeof standings === 'object' && !Array.isArray(standings)) {
+                        standings = Object.values(standings);
+                    }
+                    TournamentUI.renderLeagueTable(standings, visualContainer);
+                }
+
+                // Switch to first tab
+                const firstTab = detail.querySelector('.tab-btn');
+                if (firstTab) switchAdminTab(firstTab, 'bracket');
+
+            } catch (err) {
+                console.error("❌ viewAdminCompDetail Error:", err);
+                window.showNotification("Failed to load competition details", "error");
+                window.closeAdminCompDetail();
+            }
+        };
+
+        // --- List Loading Logic ---
+        window.loadAdminCompetitions = async function() {
+            const container = document.getElementById('adminTournamentListContainer');
+            if (!container) return;
+
+            try {
                 const tournaments = await apiService.getTournaments();
-                
                 if (!tournaments || tournaments.length === 0) {
                     container.innerHTML = `<div style="grid-column:1/-1; padding:4rem; text-align:center; color:var(--text-muted);">No competitions created yet.</div>`;
                     return;
                 }
 
                 container.innerHTML = tournaments.map(t => `
-                    <div class="comp-card" onclick="viewAdminCompDetail('${t.id}')" style="cursor:pointer;">
+                    <div class="comp-card" onclick="window.viewAdminCompDetail('${t.id}')" style="cursor:pointer; position:relative; z-index:10;">
                         <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:1rem;">
                             <h3 style="margin:0; font-size:1.2rem;">${t.title || t.name || 'Tournament'}</h3>
                             <span class="admin-badge" style="background:${t.type === 'league' ? 'rgba(59,130,246,0.1)' : 'rgba(168,85,247,0.1)'}; color:${t.type === 'league' ? '#60a5fa' : '#c084fc'}; border-color:${t.type === 'league' ? 'rgba(59,130,246,0.2)' : 'rgba(168,85,247,0.2)'};">
@@ -344,128 +391,41 @@
                             </div>
                         </div>
                         
-                        <div style="margin-top:1.5rem; display:flex; align-items:center; gap:0.5rem;">
+                        <div style="margin-top:1.5rem; display:flex; align-items:center; gap:0.5rem; margin-bottom: 1rem;">
                             <div style="flex:1; height:4px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden;">
                                 <div style="width: ${t.progress || 35}%; height:100%; background:var(--primary);"></div>
                             </div>
-                            <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted);">${t.progress || 35}% Complete</span>
+                            <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted);">${t.progress || 35}%</span>
                         </div>
+
+                        <button class="btn btn-primary btn-small" style="width:100%; pointer-events:none;">View Competition Visuals →</button>
                     </div>
                 `).join('');
             } catch (err) {
-                console.error("Failed to load admin comps:", err);
-                container.innerHTML = `<p style="color:#f87171; text-align:center;">Failed to load competitions.</p>`;
+                console.error("❌ loadAdminCompetitions Error:", err);
+                container.innerHTML = '<p style="color:var(--accent-red);">Failed to load competitions list.</p>';
             }
-        }
+        };
 
-        async function viewAdminCompDetail(compId) {
-            console.log("🏆 Viewing competition detail for:", compId);
-            const list = document.getElementById('admin-comp-list');
-            const detail = document.getElementById('admin-comp-detail');
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log("🚀 Admin Tournament Manager Initializing...");
             
-            if (!list || !detail) {
-                console.error("❌ Critical UI elements missing: admin-comp-list or admin-comp-detail");
-                return;
+            // Check auth if available
+            if (typeof checkAuthStatus === 'function') {
+                const ok = await checkAuthStatus();
+                if (!ok) { window.location.href = 'index.html'; return; }
             }
 
-            try {
-                list.style.display = 'none';
-                detail.style.display = 'block';
-                
-                // Show loading state in the visual container
-                const visualContainer = 'adminTournamentBracketVisual';
-                const visualEl = document.getElementById(visualContainer);
-                if (visualEl) visualEl.innerHTML = '<div class="spinner"></div>';
+            // Load initial list
+            window.loadAdminCompetitions();
+        });
 
-                const data = await apiService.getTournamentDetails(compId);
-                console.log("📊 Tournament data received:", data);
-
-                const tournament = data.tournament || data;
-                
-                document.getElementById('adminDetailCompName').textContent = tournament.title || tournament.name || 'Competition Detail';
-                
-                const type = (tournament.type || '').toLowerCase();
-                
-                if (type === 'knockout' || type === 'bracket' || type === 'tournament') {
-                    console.log("🎾 Rendering Knockout Bracket");
-                    TournamentUI.renderBracket(data.matches || tournament.matches || [], visualContainer);
-                } else {
-                    console.log("📈 Rendering League Table");
-                    let standings = data.standings || tournament.standings || [];
-                    if (standings && typeof standings === 'object' && !Array.isArray(standings)) {
-                        standings = Object.values(standings);
-                    }
-                    TournamentUI.renderLeagueTable(standings, visualContainer);
-                }
-
-                // Auto-switch to the first tab (Results/Bracket)
-                const firstTab = detail.querySelector('.tab-btn');
-                if (firstTab) switchAdminTab(firstTab, 'bracket');
-
-            } catch (err) {
-                console.error("❌ Failed to load comp detail:", err);
-                showNotification("Could not load competition details", "error");
-                closeAdminCompDetail();
-            }
-        }
-
-        function closeAdminDetail() {
-            document.getElementById('admin-comp-list').style.display = 'block';
-            document.getElementById('admin-comp-detail').style.display = 'none';
-        }
-
-        function closeAdminCompDetail() {
-            const list = document.getElementById('admin-comp-list');
-            const detail = document.getElementById('admin-comp-detail');
-            if (list) list.style.display = 'block';
-            if (detail) detail.style.display = 'none';
-        }
-
-        function switchAdminTab(btn, tabId) {
-            const detail = document.getElementById('admin-comp-detail');
-            detail.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            detail.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-            const target = document.getElementById('admin-tab-' + tabId);
-            if (target) target.style.display = 'block';
-        }
-
-        async function handleCreateTournament(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            showNotification(`Creating ${formData.get('name')} knockout structure...`, "info");
-            setTimeout(() => {
-                showNotification("Tournament created with 8-team bracket!", "success");
-                closeModal('createTournamentModal');
-                loadAdminCompetitions();
-            }, 1200);
-        }
-
-        async function handleCreateLeague(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            showNotification(`Generating ${formData.get('name')} season fixtures...`, "info");
-            setTimeout(() => {
-                showNotification("League structure and fixtures generated successfully!", "success");
-                closeModal('setupLeagueModal');
-                loadAdminCompetitions();
-            }, 1500);
-        }
-
-        function generateFixtures() {
-            showNotification("Generating fixture list for all rounds...", "info");
-            setTimeout(() => {
-                showNotification("24 fixtures generated and sent to team calendars.", "success");
-            }, 1500);
-        }
-
-        function seedTournament(type) {
-            showNotification(`Applying ${type} seeding to bracket...`, "info");
-            setTimeout(() => {
-                showNotification("Bracket re-seeded and locked.", "success");
-            }, 800);
-        }
+        // Placeholder functions for other tools
+        window.handleCreateTournament = (e) => { e.preventDefault(); showNotification("Tournament creation simulated", "success"); };
+        window.handleCreateLeague = (e) => { e.preventDefault(); showNotification("League creation simulated", "success"); };
+        window.generateFixtures = () => showNotification("Fixtures generated", "success");
+        window.seedTournament = () => showNotification("Tournament seeded", "success");
     </script>
 </body>
 </html>
