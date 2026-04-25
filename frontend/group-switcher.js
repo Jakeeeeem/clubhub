@@ -255,9 +255,7 @@ if (window.__groupSwitcherDefined) {
               ${currentGroupRole ? `<div class="group-role">${this.formatRole(currentGroupRole)}</div>` : `<div class="group-role">Active Organization</div>`}
             </div>
           </div>
-          <svg class="group-switcher-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+          <svg class="group-switcher-arrow" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
 
         <div class="group-switcher-dropdown">

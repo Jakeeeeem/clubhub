@@ -1741,6 +1741,11 @@ const UnifiedNav = {
           color:#60a5fa; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
           font-weight:700; cursor:pointer; margin-right:0.4rem; transition:all 0.15s;
         " onmouseover="this.style.background='rgba(59,130,246,0.3)'" onmouseout="this.style.background='rgba(59,130,246,0.15)'">✏️ Edit</button>
+        <button onclick="event.stopPropagation(); UnifiedNav.handleAssignPlan(this)" style="
+          background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.4);
+          color:#c084fc; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
+          font-weight:700; cursor:pointer; margin-right:0.4rem; transition:all 0.15s;
+        " onmouseover="this.style.background='rgba(168,85,247,0.3)'" onmouseout="this.style.background='rgba(168,85,247,0.15)'">💳 Assign Plan</button>
         <button onclick="event.stopPropagation(); UnifiedNav.handleTableDelete(this)" style="
           background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.35);
           color:#f87171; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
@@ -1875,6 +1880,55 @@ const UnifiedNav = {
     };
   },
 
+  handleAssignPlan(btn) {
+    const row = btn.closest("tr");
+    if (!row) return;
+    const name = row.querySelector("td")?.textContent.trim() || "this member";
+    
+    document.getElementById("__ch-assign-modal")?.remove();
+    
+    const modal = document.createElement("div");
+    modal.id = "__ch-assign-modal";
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;";
+    modal.innerHTML = `
+      <div style="background:#1a1a1c;border:1px solid rgba(168,85,247,0.3);border-radius:20px;padding:2rem;max-width:440px;width:92%;box-shadow:0 25px 60px rgba(0,0,0,0.6);animation:slideUp 0.2s ease;">
+        <div style="width:56px;height:56px;border-radius:16px;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.25rem;">💳</div>
+        <h3 style="margin:0 0 0.5rem;font-size:1.15rem;font-weight:800;color:#fff;">Assign Payment Plan</h3>
+        <p style="margin:0 0 1.5rem;color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.5;">Select a Stripe subscription plan to assign to <strong style="color:#f1f5f9;">${name.slice(0,40)}</strong>.</p>
+        
+        <div style="margin-bottom:1.5rem;">
+            <select id="__ch-plan-select" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.8rem;color:#fff;outline:none;">
+                <option value="">-- Select a Plan --</option>
+                <option value="p1">Monthly Academy - £40/mo</option>
+                <option value="p2">Elite Training - £65/mo</option>
+                <option value="p3">Annual Registration - £150/yr</option>
+            </select>
+        </div>
+
+        <div style="display:flex;gap:0.75rem;">
+          <button onclick="document.getElementById('__ch-assign-modal').remove()" style="flex:1;padding:0.65rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
+          <button onclick="UnifiedNav._confirmAssignPlan('${name.replace(/'/g,'&apos;')}');" style="flex:1;padding:0.65rem;background:rgba(168,85,247,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(168,85,247,0.3);">Assign Plan →</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+  },
+
+  _confirmAssignPlan(name) {
+    const plan = document.getElementById("__ch-plan-select")?.value;
+    if(!plan) { alert("Please select a plan"); return; }
+    document.getElementById("__ch-assign-modal").remove();
+    
+    const toast = document.createElement("div");
+    toast.style.cssText = "position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(22,163,74,0.95);color:#fff;padding:0.75rem 1.5rem;border-radius:12px;font-weight:700;font-size:0.88rem;z-index:999999;box-shadow:0 8px 25px rgba(0,0,0,0.4);animation:slideUp 0.3s ease;";
+    toast.textContent = "✅ Plan assigned successfully to " + name.slice(0, 30);
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  },
+
+
   showEventRegisterModal(title, type) {
     document.getElementById("__ch-event-modal")?.remove();
     const isEvent = (type || "event").toLowerCase();
@@ -1892,7 +1946,7 @@ const UnifiedNav = {
         </div>
         <div style="display:flex;gap:0.75rem;">
           <button onclick="document.getElementById('__ch-event-modal').remove()" style="flex:1;padding:0.65rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
-          <button onclick="UnifiedNav._confirmEventRegister('${(title||'').replace(/'/g,'\\'')}'); document.getElementById('__ch-event-modal').remove();" style="flex:1;padding:0.65rem;background:rgba(220,38,38,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(220,38,38,0.3);">Register →</button>
+          <button onclick="UnifiedNav._confirmEventRegister('${(title||'').replace(/'/g,'&apos;')}'); document.getElementById('__ch-event-modal').remove();" style="flex:1;padding:0.65rem;background:rgba(220,38,38,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(220,38,38,0.3);">Register →</button>
         </div>
       </div>
       <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>

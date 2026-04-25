@@ -457,6 +457,42 @@
                                 style="font-size:0.8rem; opacity:0.6;">Refresh Status</button>
                         </div>
                     </div>
+                    
+                    <div id="active-plans-box" style="display:none; margin-top:2rem; text-align:left;">
+                        <h3 style="margin-bottom:1rem; color:#fff; font-size:1.15rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.75rem;">💳 Active Plans</h3>
+                        <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1rem; display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <strong style="color:#fff; display:block; margin-bottom:0.25rem;">Monthly Academy</strong>
+                                    <span style="color:var(--text-muted); font-size:0.8rem;">£40.00 / month</span>
+                                </div>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <button class="btn btn-text btn-small" onclick="alert('Copy link')">🔗 Link</button>
+                                    <button class="btn btn-text btn-small" style="color:#f87171;" onclick="this.closest('div').parentElement.remove()">🗑️</button>
+                                </div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1rem; display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <strong style="color:#fff; display:block; margin-bottom:0.25rem;">Elite Training</strong>
+                                    <span style="color:var(--text-muted); font-size:0.8rem;">£65.00 / month</span>
+                                </div>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <button class="btn btn-text btn-small" onclick="alert('Copy link')">🔗 Link</button>
+                                    <button class="btn btn-text btn-small" style="color:#f87171;" onclick="this.closest('div').parentElement.remove()">🗑️</button>
+                                </div>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1rem; display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <strong style="color:#fff; display:block; margin-bottom:0.25rem;">Annual Registration</strong>
+                                    <span style="color:var(--text-muted); font-size:0.8rem;">£150.00 / year</span>
+                                </div>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <button class="btn btn-text btn-small" onclick="alert('Copy link')">🔗 Link</button>
+                                    <button class="btn btn-text btn-small" style="color:#f87171;" onclick="this.closest('div').parentElement.remove()">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div id="stripe-error-box" style="display:none;">
                         <div style="color:#f87171; margin-bottom:1rem;"><i class="fa fa-exclamation-triangle"
@@ -754,6 +790,7 @@
                 loading.style.display = 'none';
                 if (data && data.connected) {
                     connectedBox.style.display = 'block';
+                    document.getElementById('active-plans-box').style.display = 'block';
                     document.getElementById('payout-status').textContent = data.payouts_enabled ? 'Enabled' : 'Pending';
                     document.getElementById('account-status').textContent = data.details_submitted ? 'Verified' : 'Incomplete';
                 } else {
