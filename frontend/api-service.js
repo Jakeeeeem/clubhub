@@ -67,6 +67,11 @@ if (typeof ApiService === 'undefined') {
     this._mockMessages = null;
   }
 
+  // Generic GET method for dashboard loaders
+  async get(endpoint, options = {}) {
+    return this.makeRequest(endpoint, { ...options, method: 'GET' });
+  }
+
   async getContext() {
     if (this.context) return this.context;
 

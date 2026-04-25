@@ -239,12 +239,12 @@
         overflow: hidden !important;
     }
 
-    body.sidebar-collapsed .nav-group-title,
-    body.sidebar-collapsed .sidebar-header > div > span,
-    body.sidebar-collapsed .sidebar-group-switcher-area,
-    body.sidebar-collapsed .sidebar-profile-switcher-area,
-    body.sidebar-collapsed .group-info,
-    body.sidebar-collapsed .group-switcher-arrow {
+    body.sidebar-collapsed .pro-sidebar .nav-group-title,
+    body.sidebar-collapsed .pro-sidebar .sidebar-header > div > span,
+    body.sidebar-collapsed .pro-sidebar .sidebar-group-switcher-area,
+    body.sidebar-collapsed .pro-sidebar .sidebar-profile-switcher-area,
+    body.sidebar-collapsed .pro-sidebar .group-info,
+    body.sidebar-collapsed .pro-sidebar .group-switcher-arrow {
         display: none !important;
     }
 

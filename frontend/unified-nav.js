@@ -227,6 +227,10 @@ const UnifiedNav = {
       hasClass: hasDashboardClass,
       hasMarker: hasDashboardMarker
     });
+    
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+      document.body.classList.add('sidebar-collapsed');
+    }
 
     // Manage body classes for CSS scoping
     if (isDashboard) {
@@ -523,7 +527,7 @@ const UnifiedNav = {
     try {
       if (typeof apiService === "undefined") return;
       const res = await apiService.makeRequest("/notifications");
-      const notifs = res || [];
+      const notifs = Array.isArray(res) ? res : [];
       const unreadCount = notifs.filter((n) => !n.read).length;
 
       if (unreadCount > 0) {
