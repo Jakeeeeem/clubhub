@@ -350,14 +350,26 @@
             document.getElementById('admin-comp-detail').style.display = 'block';
             
             try {
-                const tournament = await apiService.getTournamentDetails(compId);
+                const data = await apiService.getTournamentDetails(compId);
+                const tournament = data.tournament || data; // Handle both nested and flat responses
+                
                 document.getElementById('adminDetailCompName').textContent = tournament.title || tournament.name || 'Tournament Detail';
                 
                 // Use TournamentUI for premium visualizations
-                if (tournament.type === 'knockout' || tournament.type === 'bracket') {
-                    TournamentUI.renderBracket(tournament.matches || tournament.bracket || [], 'adminTournamentBracketVisual');
+                const type = (tournament.type || '').toLowerCase();
+                const visualContainer = 'adminTournamentBracketVisual';
+                
+                if (type === 'knockout' || type === 'bracket' || type === 'tournament') {
+                    TournamentUI.renderBracket(data.matches || tournament.matches || [], visualContainer);
+                    switchAdminTab(document.querySelector('[onclick*="bracket"]'), 'bracket');
                 } else {
-                    TournamentUI.renderLeagueTable(tournament.standings || [], 'adminTournamentBracketVisual');
+                    let standings = data.standings || tournament.standings || [];
+                    // Convert object-style standings to array if needed
+                    if (standings && typeof standings === 'object' && !Array.isArray(standings)) {
+                        standings = Object.values(standings);
+                    }
+                    TournamentUI.renderLeagueTable(standings, visualContainer);
+                    switchAdminTab(document.querySelector('[onclick*="bracket"]'), 'bracket'); // Reuse bracket container for table
                 }
             } catch (err) {
                 console.error("Failed to load comp detail:", err);

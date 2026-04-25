@@ -425,12 +425,52 @@
         </div>
       </div>
 
-      <!-- League Management Section -->
-      <div id="player-league-management" class="dashboard-section">
-        <div class="glass-panel" style="padding: 2rem;">
-          <h2 class="neon-text">🥇 Leagues</h2>
-          <p>Loading leagues...</p>
-        </div>
+      <!-- Tournament Management Section -->
+      <div id="player-tournaments" class="dashboard-section">
+          <div id="playerTournamentListView">
+              <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                      <h2 class="neon-text">My Competitions</h2>
+                      <div style="display:flex; gap:1rem;">
+                          <button class="btn btn-secondary btn-small" onclick="loadPlayerTournaments()">🔄 Refresh</button>
+                      </div>
+                  </div>
+                  <div id="playerTournamentListContainer" class="dashboard-grid">
+                      <p style="color:var(--text-muted); font-size:0.875rem;">Loading your active competitions...</p>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Player Tournament Detail View -->
+          <div id="playerTournamentDetailView" style="display:none;">
+              <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
+                  <div style="display:flex; align-items:center; gap:1.5rem; margin-bottom:1.5rem;">
+                      <button class="btn btn-secondary btn-small" onclick="closePlayerTournamentDetail()">&larr; Back</button>
+                      <div>
+                          <h2 id="playerDetailTournamentName" class="neon-text" style="margin:0;">Tournament Detail</h2>
+                          <div id="playerDetailTournamentMeta" style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;"></div>
+                      </div>
+                  </div>
+
+                  <div class="tabs" style="margin-bottom:1.5rem;">
+                      <button class="tab-btn active" id="p-tab-bracket" onclick="switchPlayerTournamentTab(this, 'bracket')">Visuals</button>
+                      <button class="tab-btn" id="p-tab-fixtures" onclick="switchPlayerTournamentTab(this, 'fixtures')">Fixtures</button>
+                      <button class="tab-btn" id="p-tab-standings" onclick="switchPlayerTournamentTab(this, 'standings')">Leagues</button>
+                  </div>
+
+                  <div id="p-tab-content-bracket" class="player-tournament-tab-content active">
+                      <div id="playerTournamentBracketVisual" style="min-height:400px; display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.2); border-radius:12px; overflow-x:auto; padding: 2rem;">
+                          <!-- Bracket visualizes here -->
+                      </div>
+                  </div>
+                  <div id="p-tab-content-fixtures" class="player-tournament-tab-content" style="display:none;">
+                      <div id="playerTournamentFixturesList" class="activity-card-list"></div>
+                  </div>
+                  <div id="p-tab-content-standings" class="player-tournament-tab-content" style="display:none;">
+                      <div id="playerTournamentStandingsContainer"></div>
+                  </div>
+              </div>
+          </div>
       </div>
 
       <!-- My Clubs -->

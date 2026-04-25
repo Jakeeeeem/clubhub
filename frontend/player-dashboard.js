@@ -245,6 +245,7 @@ async function initializePlayerDashboard() {
     loadPlayerFinances();
     loadClubFinder();
     loadEventFinder();
+    loadPlayerTournaments();
     loadPlayerDocuments();
     loadNotifications();
 
