@@ -595,7 +595,9 @@ const UnifiedNav = {
       user.is_stripe_connected ||
       localStorage.getItem("stripeConnected") === "true";
 
-    if (isAdmin && isDashboard) {
+    // Only show Stripe for admin roles, never for players
+    const isPlayerMode = (this.getCurrentMode() === 'player') || (userRole === 'player') || (userRole === 'parent');
+    if (isAdmin && isDashboard && !isPlayerMode) {
       console.log("💳 renderStripeHeaderButton: Rendering for Admin on Dashboard", { isConnected, target });
       const btnColor = isConnected ? "#22c55e" : "#635bff";
       const btnText = isConnected ? "Connected" : "Stripe";
@@ -1111,8 +1113,12 @@ const UnifiedNav = {
     container.style.display = "flex";
     const activePlayerId = localStorage.getItem("activePlayerId");
 
-    // If no family, just show the user's name (compact mode)
-    if (family.length === 0) {
+    // For players: always show family switcher even if empty (so they can add members)
+    const modeNow = this.getCurrentMode();
+    const roleNow = (this.getUserRole() || '').toLowerCase();
+    const isPlayerView = modeNow === 'player' || roleNow === 'player' || roleNow === 'parent';
+    
+    if (family.length === 0 && !isPlayerView) {
         container.innerHTML = "";
         return;
     }
@@ -1140,6 +1146,12 @@ const UnifiedNav = {
                         <span>${f.first_name}</span>
                     </div>
                 `).join('')}
+                <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:0.5rem;padding-top:0.5rem;">
+                    <div onclick="document.getElementById('familyDropdown')?.classList.remove('open'); if(typeof openAddChildModal==='function'){openAddChildModal();}else{window.location.href='player-dashboard.html#family';}" style="padding:0.5rem;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;font-size:0.82rem;color:var(--primary);border:1px dashed rgba(220,38,38,0.3);">
+                        <div style="width:20px;height:20px;border-radius:50%;background:rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;">+</div>
+                        <span>Add Family Member</span>
+                    </div>
+                </div>
             </div>
         </div>
         <style>
@@ -1708,39 +1720,49 @@ const UnifiedNav = {
       const theadRow = table.querySelector("thead tr");
       if (!theadRow) return;
 
-      // Check if Actions column already exists
-      const hasActions = Array.from(theadRow.querySelectorAll("th")).some(
-        th => th.textContent.trim().toLowerCase() === "actions"
-      );
-      if (hasActions) {
-        table.dataset.actionsInjected = "1";
-        return;
+      let actionsIndex = -1;
+      Array.from(theadRow.querySelectorAll("th")).forEach((th, idx) => {
+        if (th.textContent.trim().toLowerCase() === "actions") {
+          actionsIndex = idx;
+        }
+      });
+
+      if (actionsIndex === -1) {
+        // Add Actions header if it doesn't exist
+        const th = document.createElement("th");
+        th.textContent = "Actions";
+        th.style.cssText = "text-align:center; min-width:120px;";
+        theadRow.appendChild(th);
       }
 
-      // Add Actions header
-      const th = document.createElement("th");
-      th.textContent = "Actions";
-      th.style.cssText = "text-align:center; min-width:120px;";
-      theadRow.appendChild(th);
+      const buttonsHtml = `
+        <button onclick="event.stopPropagation(); UnifiedNav.handleTableEdit(this)" style="
+          background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4);
+          color:#60a5fa; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
+          font-weight:700; cursor:pointer; margin-right:0.4rem; transition:all 0.15s;
+        " onmouseover="this.style.background='rgba(59,130,246,0.3)'" onmouseout="this.style.background='rgba(59,130,246,0.15)'">✏️ Edit</button>
+        <button onclick="event.stopPropagation(); UnifiedNav.handleTableDelete(this)" style="
+          background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.35);
+          color:#f87171; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
+          font-weight:700; cursor:pointer; transition:all 0.15s;
+        " onmouseover="this.style.background='rgba(220,38,38,0.28)'" onmouseout="this.style.background='rgba(220,38,38,0.12)'">🗑️ Delete</button>
+      `;
 
-      // Add action buttons to each body row
+      // Add or replace action buttons in each body row
       table.querySelectorAll("tbody tr").forEach((row) => {
-        const td = document.createElement("td");
-        td.setAttribute("data-label", "Actions");
-        td.style.cssText = "text-align:center; white-space:nowrap;";
-        td.innerHTML = `
-          <button onclick="event.stopPropagation(); UnifiedNav.handleTableEdit(this)" style="
-            background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4);
-            color:#60a5fa; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
-            font-weight:700; cursor:pointer; margin-right:0.4rem; transition:all 0.15s;
-          " onmouseover="this.style.background='rgba(59,130,246,0.3)'" onmouseout="this.style.background='rgba(59,130,246,0.15)'">✏️ Edit</button>
-          <button onclick="event.stopPropagation(); UnifiedNav.handleTableDelete(this)" style="
-            background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.35);
-            color:#f87171; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
-            font-weight:700; cursor:pointer; transition:all 0.15s;
-          " onmouseover="this.style.background='rgba(220,38,38,0.28)'" onmouseout="this.style.background='rgba(220,38,38,0.12)'">🗑️ Delete</button>
-        `;
-        row.appendChild(td);
+        if (actionsIndex !== -1 && row.children.length > actionsIndex) {
+          // Replace content of existing Actions cell
+          const td = row.children[actionsIndex];
+          td.style.cssText = "text-align:right; white-space:nowrap;";
+          td.innerHTML = buttonsHtml;
+        } else {
+          // Append new cell
+          const td = document.createElement("td");
+          td.setAttribute("data-label", "Actions");
+          td.style.cssText = "text-align:center; white-space:nowrap;";
+          td.innerHTML = buttonsHtml;
+          row.appendChild(td);
+        }
       });
 
       table.dataset.actionsInjected = "1";
@@ -1761,10 +1783,44 @@ const UnifiedNav = {
       injectActionButtons(table);
     });
 
-    // Watch for dynamically added tables
+    // Watch for dynamically added tables and rows
     if (!window.__tableObserver) {
-      window.__tableObserver = new MutationObserver(() => {
-        document.querySelectorAll("table:not([data-actions-injected])").forEach(injectActionButtons);
+      window.__tableObserver = new MutationObserver((mutations) => {
+        let needsUpdate = false;
+        mutations.forEach(m => {
+          if (m.type === 'childList' && m.addedNodes.length > 0) {
+            let target = m.target;
+            if (target.tagName === 'TBODY' || target.tagName === 'TR') {
+              const table = target.closest('table');
+              if (table) {
+                  table.removeAttribute('data-actions-injected');
+                  needsUpdate = true;
+              }
+            } else if (target.tagName === 'TABLE') {
+                needsUpdate = true;
+            } else if (target.querySelector && target.querySelector('table')) {
+                needsUpdate = true;
+            }
+          }
+        });
+        
+        if (needsUpdate || document.querySelector("table:not([data-actions-injected])")) {
+            document.querySelectorAll("table").forEach((table) => {
+              if (table.dataset.actionsInjected) return;
+              
+              const headers = Array.from(table.querySelectorAll("thead th")).map((th) => th.textContent.trim());
+              if (headers.length > 0) {
+                  table.querySelectorAll("tbody tr").forEach((row) => {
+                    row.querySelectorAll("td").forEach((td, index) => {
+                      if (headers[index] && !td.getAttribute("data-label")) {
+                        td.setAttribute("data-label", headers[index]);
+                      }
+                    });
+                  });
+              }
+              injectActionButtons(table);
+            });
+        }
       });
       window.__tableObserver.observe(document.body, { childList: true, subtree: true });
     }
@@ -1784,13 +1840,77 @@ const UnifiedNav = {
     const row = btn.closest("tr");
     if (!row) return;
     const first = row.querySelector("td")?.textContent.trim() || "this item";
-    if (confirm("🗑️ Delete \"" + first + "\"?\n\nThis action cannot be undone.")) {
+    
+    // Remove any existing modal
+    document.getElementById("__ch-delete-modal")?.remove();
+    
+    const modal = document.createElement("div");
+    modal.id = "__ch-delete-modal";
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;";
+    modal.innerHTML = `
+      <div style="background:#1a1a1c;border:1px solid rgba(220,38,38,0.3);border-radius:20px;padding:2rem;max-width:400px;width:90%;box-shadow:0 25px 60px rgba(0,0,0,0.6);animation:slideUp 0.2s ease;">
+        <div style="width:56px;height:56px;border-radius:16px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.25rem;">🗑️</div>
+        <h3 style="margin:0 0 0.5rem;font-size:1.15rem;font-weight:800;color:#fff;">Delete Item</h3>
+        <p style="margin:0 0 1.5rem;color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.5;">Are you sure you want to delete "<strong style="color:#f1f5f9;">${first.slice(0,40)}</strong>"? This action cannot be undone.</p>
+        <div style="display:flex;gap:0.75rem;">
+          <button onclick="document.getElementById('__ch-delete-modal').remove()" style="flex:1;padding:0.65rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
+          <button id="__ch-confirm-delete" style="flex:1;padding:0.65rem;background:rgba(220,38,38,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(220,38,38,0.3);">Delete</button>
+        </div>
+      </div>
+      <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on backdrop click
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+    
+    // Confirm action
+    document.getElementById("__ch-confirm-delete").onclick = () => {
+      modal.remove();
       row.style.transition = "opacity 0.3s, transform 0.3s";
       row.style.opacity = "0";
-      row.style.transform = "translateX(20px)";
-      setTimeout(() => row.remove(), 300);
-    }
+      row.style.transform = "translateX(30px)";
+      setTimeout(() => row.remove(), 320);
+    };
   },
+
+  showEventRegisterModal(title, type) {
+    document.getElementById("__ch-event-modal")?.remove();
+    const isEvent = (type || "event").toLowerCase();
+    const modal = document.createElement("div");
+    modal.id = "__ch-event-modal";
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;";
+    modal.innerHTML = `
+      <div style="background:#1a1a1c;border:1px solid rgba(220,38,38,0.25);border-radius:20px;padding:2rem;max-width:440px;width:92%;box-shadow:0 25px 60px rgba(0,0,0,0.6);animation:slideUp 0.2s ease;">
+        <div style="width:56px;height:56px;border-radius:16px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.25);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.25rem;">🏆</div>
+        <h3 style="margin:0 0 0.35rem;font-size:1.15rem;font-weight:800;color:#fff;">Register Interest</h3>
+        <p style="margin:0 0 1.25rem;color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.5;">You're registering interest for <strong style="color:#f1f5f9;">${(title || '').slice(0,50)}</strong>. A coach or admin will confirm your place.</p>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem;margin-bottom:1.25rem;">
+          <label style="font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:0.5rem;">Note for Coach (optional)</label>
+          <textarea id="__ch-event-note" placeholder="e.g. I'll need transport, dietary requirements..." style="width:100%;background:transparent;border:none;color:#fff;font-size:0.88rem;resize:none;outline:none;height:64px;line-height:1.5;"></textarea>
+        </div>
+        <div style="display:flex;gap:0.75rem;">
+          <button onclick="document.getElementById('__ch-event-modal').remove()" style="flex:1;padding:0.65rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
+          <button onclick="UnifiedNav._confirmEventRegister('${(title||'').replace(/'/g,'\\'')}'); document.getElementById('__ch-event-modal').remove();" style="flex:1;padding:0.65rem;background:rgba(220,38,38,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(220,38,38,0.3);">Register →</button>
+        </div>
+      </div>
+      <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+  },
+
+  _confirmEventRegister(title) {
+    const note = document.getElementById("__ch-event-note")?.value || "";
+    // Show success toast
+    const toast = document.createElement("div");
+    toast.style.cssText = "position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(22,163,74,0.95);color:#fff;padding:0.75rem 1.5rem;border-radius:12px;font-weight:700;font-size:0.88rem;z-index:999999;box-shadow:0 8px 25px rgba(0,0,0,0.4);animation:slideUp 0.3s ease;";
+    toast.textContent = "✅ Interest registered for " + title.slice(0, 30) + (title.length > 30 ? "..." : "");
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  },
+
 
   bindEvents() {
     const overlay = document.getElementById("sidebar-overlay");
@@ -1982,7 +2102,9 @@ const UnifiedNav = {
     
     // Final logic: Priority to SuperAdmin -> Coach/Scout -> Admin -> Player
     let finalRole = "player";
-    if (isSuperAdmin) finalRole = "superadmin";
+    if (url.includes("player-") || url.includes("schedule")) finalRole = "player";
+    else if (url.includes("admin-")) finalRole = "admin";
+    else if (isSuperAdmin) finalRole = "superadmin";
     else if (isCoach) finalRole = "coach";
     else if (isScout) finalRole = "scout";
     else if (isAdmin && dashboardMode !== "player") finalRole = "admin";
@@ -2060,6 +2182,7 @@ const UnifiedNav = {
         <a href="admin-members.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-members.html', 'members')" class="sidebar-link ${isActive('admin-members.html')}">${ICONS.nav.players}<span>Members</span></a>
         <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>Teams & Squads</span></a>
         <a href="admin-events.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-events.html', 'events')" class="sidebar-link ${isActive('admin-events.html')}">${ICONS.nav.events}<span>Event Manager</span></a>
+        <a href="coach-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tournament-manager.html', 'tournament-manager')" class="sidebar-link ${isActive('coach-tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Manager</span></a>
         <a href="admin-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-chat.html', 'messenger')" class="sidebar-link ${isActive('admin-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
 
         <div class="nav-group-title"><span>Operations</span></div>

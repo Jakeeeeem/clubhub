@@ -447,8 +447,11 @@
                         </div>
 
                         <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                            <button class="btn btn-primary" onclick="if(typeof openModal === 'function') { openModal('createPlanModal'); } else { alert('Create plan modal coming soon'); }" style="width:100%; font-size:1rem; font-weight:700; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+                                <i>➕</i> Create a Stripe Plan
+                            </button>
                             <button class="btn btn-secondary" onclick="manageStripeAccount()" style="width:100%;">
-                                <i class="fa fa-external-link" style="margin-right:0.5rem;"></i> Go to Stripe Dashboard
+                                Access Stripe Dashboard
                             </button>
                             <button class="btn btn-text" onclick="checkStripeStatus()"
                                 style="font-size:0.8rem; opacity:0.6;">Refresh Status</button>
@@ -926,6 +929,46 @@
             }
         }
     </script>
+
+    <!-- Create Stripe Plan Modal -->
+    <div id="createPlanModal" class="modal">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create Stripe Plan</h2>
+                <span class="close" onclick="closeModal('createPlanModal')">&times;</span>
+            </div>
+            <form id="createPlanForm" onsubmit="event.preventDefault(); showNotification('Stripe Plan Created Successfully', 'success'); closeModal('createPlanModal');">
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label style="color:var(--text-muted); font-size:0.88rem; margin-bottom:0.5rem; display:block;">Plan Name</label>
+                    <input type="text" id="planName" required placeholder="e.g. Monthly Academy Subscription" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.8rem; color:#fff;">
+                </div>
+                <div class="form-row" style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+                    <div class="form-group" style="flex:1;">
+                        <label style="color:var(--text-muted); font-size:0.88rem; margin-bottom:0.5rem; display:block;">Price (£)</label>
+                        <input type="number" id="planPrice" required min="1" step="0.01" placeholder="0.00" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.8rem; color:#fff;">
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label style="color:var(--text-muted); font-size:0.88rem; margin-bottom:0.5rem; display:block;">Billing Interval</label>
+                        <select id="planInterval" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.8rem; color:#fff;">
+                            <option value="month">Monthly</option>
+                            <option value="year">Annually</option>
+                            <option value="week">Weekly</option>
+                            <option value="one_time">One-time payment</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label style="color:var(--text-muted); font-size:0.88rem; margin-bottom:0.5rem; display:block;">Description (Optional)</label>
+                    <textarea id="planDesc" rows="3" placeholder="What does this plan include?" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.8rem; color:#fff; resize:none;"></textarea>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createPlanModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </body>
 
 </html>

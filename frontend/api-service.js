@@ -464,6 +464,37 @@ if (typeof ApiService === 'undefined') {
         return fb.pitches || [];
     }
 
+    if (endpoint.match(/\/tournaments\/.*\/dashboard/)) {
+        return {
+            teams: [
+                { id: "t1", team_name: "Red Dragons", status: "approved" },
+                { id: "t2", team_name: "Blue Sharks", status: "approved" },
+                { id: "t3", team_name: "Green Giants", status: "approved" },
+                { id: "t4", team_name: "Yellow Stars", status: "approved" },
+                { id: "t5", team_name: "Black Knights", status: "approved" },
+                { id: "t6", team_name: "White Eagles", status: "approved" },
+                { id: "t7", team_name: "Silver Foxes", status: "approved" },
+                { id: "t8", team_name: "Golden Bears", status: "approved" }
+            ],
+            groups: [],
+            pitches: [],
+            matches: [
+                { id: "m1", round_number: 1, home_team: "Red Dragons", away_team: "Blue Sharks", home_score: 2, away_score: 1, played: true },
+                { id: "m2", round_number: 1, home_team: "Green Giants", away_team: "Yellow Stars", home_score: null, away_score: null, played: false },
+                { id: "m3", round_number: 1, home_team: "Black Knights", away_team: "White Eagles", home_score: 3, away_score: 0, played: true },
+                { id: "m4", round_number: 1, home_team: "Silver Foxes", away_team: "Golden Bears", home_score: null, away_score: null, played: false },
+                { id: "m5", round_number: 2, home_team: "Red Dragons", away_team: "Green Giants", home_score: null, away_score: null, played: false },
+                { id: "m6", round_number: 2, home_team: "Black Knights", away_team: "Silver Foxes", home_score: null, away_score: null, played: false },
+                { id: "m7", round_number: 3, home_team: "TBD", away_team: "TBD", home_score: null, away_score: null, played: false }
+            ],
+            stages: [{ id: "s1", name: "Knockout Stage" }]
+        };
+    }
+    
+    if (endpoint.includes("/generate-fixtures")) {
+        return { success: true };
+    }
+
     if (endpoint.includes("/tournaments") || endpoint.includes("/events")) {
         const fb = this.getAdminDashboardFallback();
         return fb.tournaments || fb.events || [];

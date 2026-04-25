@@ -11,15 +11,17 @@
   display: flex;
   align-items: center;
   gap: 0.875rem;
-  padding: 0.625rem 1rem;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  padding: 0.5rem 0.875rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 240px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 200px;
+  max-height: 52px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  margin: 0.5rem 0;
 }
 
 .group-switcher-trigger:hover {
