@@ -17,7 +17,7 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 220px;
+  min-width: 240px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -126,7 +126,7 @@
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    width: 280px;
+    width: 320px;
     background: #1e1e1e;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;

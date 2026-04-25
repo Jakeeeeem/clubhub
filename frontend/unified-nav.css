@@ -82,17 +82,18 @@
     .dashboard-view header.header {
         position: fixed !important;
         top: 0 !important;
-        left: 280px; 
-        width: calc(100% - 280px);
-        padding: 0 3rem !important;
+        left: 280px !important; 
+        width: calc(100% - 280px) !important;
+        padding: 0 2rem !important;
         height: 72px !important;
         display: flex !important;
         align-items: center !important;
         z-index: 100 !important;
-        background: var(--glass-bg) !important;
-        backdrop-filter: blur(10px) !important;
-        border-bottom: 1px solid var(--glass-border) !important;
-        transition: left 0.3s ease, width 0.3s ease !important;
+        background: rgba(10, 10, 12, 0.8) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
 
     .pro-header .nav-container { display: flex !important; }
@@ -908,7 +909,7 @@ header.header .nav-container,
     border-right: 1px solid var(--glass-border);
     z-index: 5000;
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-    display: flex;
+    display: none;
     flex-direction: column;
     box-shadow: 20px 0 60px rgba(0, 0, 0, 0.8);
 }

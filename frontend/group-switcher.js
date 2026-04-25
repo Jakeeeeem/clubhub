@@ -15,52 +15,59 @@ if (window.__groupSwitcherDefined) {
     style.textContent = `
       .group-switcher { position: relative; z-index: 1000; font-family: 'Inter', sans-serif; }
       .group-switcher-trigger { 
-        display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.85rem; 
-        background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); 
-        border-radius: 8px; cursor: pointer; transition: all 0.2s; min-width: 180px; 
-        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; 
+        background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); 
+        border-radius: 12px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); min-width: 220px; 
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       }
-      .group-switcher-trigger:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--primary); }
-      .group-switcher-trigger.open { background: rgba(255, 255, 255, 0.12); border-color: var(--primary); box-shadow: 0 0 15px rgba(220, 67, 67, 0.2); }
+      .group-switcher-trigger:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+      .group-switcher-trigger.open { background: rgba(255, 255, 255, 0.12); border-color: var(--primary); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
       .group-avatar { 
-        width: 32px; height: 32px; border-radius: 6px; background: var(--primary); 
+        width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), #991b1b); 
         display: flex; align-items: center; justify-content: center; font-weight: 800; 
-        font-size: 0.8rem; color: white; flex-shrink: 0; box-shadow: 0 2px 8px rgba(220, 67, 67, 0.3);
+        font-size: 0.85rem; color: white; flex-shrink: 0; box-shadow: 0 4px 12px rgba(220, 67, 67, 0.2);
       }
-      .group-info { flex: 1; text-align: left; min-width: 0; overflow: hidden; }
-      .group-name { font-size: 0.85rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
-      .group-role { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+      .group-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+      .group-info { flex: 1; text-align: left; min-width: 0; overflow: hidden; display: flex; flex-direction: column; gap: 1px; }
+      .group-name { font-size: 0.9rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; letter-spacing: -0.2px; }
+      .group-role { font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 800; margin: 0; }
       .group-switcher-dropdown {
-        position: absolute; top: calc(100% + 8px); left: 0; width: 300px; 
-        background: #111; border: 1px solid rgba(255, 255, 255, 0.1); 
-        border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); 
-        z-index: 2000; opacity: 0; visibility: hidden; transform: translateY(-10px); 
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden;
-        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        position: absolute; top: calc(100% + 10px); left: 0; width: 320px; 
+        background: rgba(15, 15, 18, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); 
+        border-radius: 16px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8); 
+        z-index: 5000; opacity: 0; visibility: hidden; transform: translateY(-12px); 
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden;
+        backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
       }
       .group-switcher-dropdown.open { opacity: 1; visibility: visible; transform: translateY(0); }
-      .group-switcher-header { padding: 12px 16px; font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); }
-      .group-switcher-list { max-height: 350px; overflow-y: auto; padding: 6px; }
-      .group-item {
-        display: flex; align-items: center; gap: 0.75rem; padding: 10px 12px; 
-        width: 100%; background: transparent; border: none; border-radius: 8px; 
-        color: #fff; cursor: pointer; text-align: left; transition: background 0.2s;
+      .group-switcher-header { padding: 16px 20px 12px; font-size: 0.7rem; font-weight: 800; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; }
+      .group-switcher-list { max-height: 400px; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+      .group-switcher-item {
+        display: flex; align-items: center; gap: 1rem; padding: 12px 16px; 
+        width: 100%; background: transparent; border: 1px solid transparent; border-radius: 12px; 
+        color: #fff; cursor: pointer; text-align: left; transition: all 0.2s ease;
       }
-      .group-item:hover { background: rgba(255, 255, 255, 0.05); }
-      .group-item.active { background: rgba(220, 67, 67, 0.1); border: 1px solid rgba(220, 67, 67, 0.2); }
-      .group-item .item-avatar { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
-      .group-item.active .item-avatar { background: var(--primary); }
-      .group-item .item-info { flex: 1; min-width: 0; }
-      .group-item .item-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .group-item .item-role { font-size: 0.7rem; color: rgba(255,255,255,0.5); }
-      .group-switcher-footer { padding: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
-      .add-org-btn { 
-        display: flex; align-items: center; justify-content: center; gap: 0.5rem; 
-        width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.03); 
-        border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; color: #fff; 
-        font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      .group-switcher-item:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.05); }
+      .group-switcher-item.active { background: rgba(220, 38, 38, 0.08); border-color: rgba(220, 38, 38, 0.2); }
+      .group-switcher-item .group-item-avatar { 
+        width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); 
+        display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; 
+        font-size: 1rem; transition: all 0.2s;
       }
-      .add-org-btn:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--primary); color: var(--primary); }
+      .group-switcher-item.active .group-item-avatar { background: var(--primary); box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
+      .group-switcher-item .group-item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+      .group-switcher-item .group-item-name { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+      .group-switcher-item .group-item-role { font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 500; }
+      .group-switcher-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); }
+      .group-switcher-action { 
+        display: flex; align-items: center; justify-content: center; gap: 0.6rem; 
+        width: 100%; padding: 0.85rem; background: rgba(255,255,255,0.04); 
+        border: 1px dashed rgba(255,255,255,0.2); border-radius: 12px; color: rgba(255,255,255,0.8); 
+        font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      }
+      .group-switcher-action:hover { background: rgba(220, 38, 38, 0.05); border-color: var(--primary); color: #fff; }
+      .group-switcher-arrow { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0.5; }
+      .group-switcher-trigger.open .group-switcher-arrow { transform: rotate(180deg); opacity: 1; }
       
       /* Sidebar Specific Overrides */
       .pro-sidebar .group-switcher { width: 100%; margin-bottom: 1rem; }
