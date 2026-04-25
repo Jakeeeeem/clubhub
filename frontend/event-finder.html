@@ -1,30 +1,263 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Finder — ClubHub</title>
+    <title>Event Finder - Tournaments & Trials | ClubHub</title>
+    <meta name="description" content="Find sports events, tournaments, and trials near you.">
+    <meta name="theme-color" content="#dc4343">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ClubHub">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="unified-nav.css">
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: #0d0d0d;
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(177, 3, 45, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(177, 3, 45, 0.05) 0%, transparent 50%);
+        }
+
+        .finder-container {
+            max-width: 1200px;
+            margin: 100px auto 4rem;
+            padding: 0 1.5rem;
+        }
+
+        .search-hero {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .filter-bar {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 992px) {
+            .filter-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .filter-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .filter-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: #fff;
+            font-family: inherit;
+        }
+
+        .club-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .club-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(177, 3, 45, 0.1);
+        }
+
+        .club-banner {
+            height: 140px;
+            background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .club-content {
+            padding: 20px;
+        }
+
+        .club-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .club-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tag {
+            background: rgba(177, 3, 45, 0.1);
+            color: var(--primary);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .date-badge {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            padding: 0.5rem 0.75rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .date-badge span {
+            display: block;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .date-badge .day { font-size: 1.2rem; }
+        .date-badge .month { font-size: 0.7rem; text-transform: uppercase; opacity: 0.7; }
+    </style>
 </head>
 
 <body class="dashboard-view app-layout">
-    <script src="api-service.js?v=20260424_v3"></script>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
-    <script src="unified-nav.js?v=20260424_v3"></script>
-    
-    <main class="dashboard-main" style="padding: 2rem;">
-        <div class="glass-panel" style="padding: 3rem; text-align: center;">
-            <h1 class="neon-text" style="font-size: 2.5rem; margin-bottom: 1rem;">Event Finder</h1>
-            <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Discover upcoming tournaments, matches, and training sessions in your area.</p>
-            <div style="margin-top: 3rem; padding: 5rem; border: 2px dashed rgba(255,255,255,0.1); border-radius: 20px; color: var(--text-muted);">
-                <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">📅</span>
-                Search functionality coming soon to this section.
-            </div>
+    <main class="dashboard-main">
+    <div class="finder-container">
+        <div class="search-hero">
+            <h1 class="neon-text" style="font-size: 3.5rem; margin-bottom: 1rem;">Explore Events</h1>
+            <p style="color: var(--text-muted); font-size: 1.2rem;">Find the biggest tournaments, trials, and showcases.</p>
         </div>
-    </main>
-</body>
 
+        <!-- Advanced Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Event Name</label>
+                <input type="text" id="eventSearch" class="filter-input" placeholder="Search events..." onkeyup="filterEvents()">
+            </div>
+            <div class="filter-group">
+                <label>Category</label>
+                <select id="catFilter" class="filter-input" onchange="filterEvents()">
+                    <option value="">All Categories</option>
+                    <option value="tournament">Tournament</option>
+                    <option value="trial">Pro Trial</option>
+                    <option value="camp">Training Camp</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Location</label>
+                <input type="text" id="locationSearch" class="filter-input" placeholder="Postcode / City..." onkeyup="filterEvents()">
+            </div>
+            <div class="filter-group">
+                <label>Age Group</label>
+                <select id="ageFilter" class="filter-input" onchange="filterEvents()">
+                    <option value="">Any Age</option>
+                    <option value="youth">Youth (U18)</option>
+                    <option value="adult">Adult</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="padding: 0.8rem 2rem;" onclick="filterEvents()">Filter</button>
+        </div>
+
+        <div id="eventResultsGrid" class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+    </main>
+
+    <script src="api-service.js?v=20260424_v3"></script>
+    <script src="unified-nav.js?v=20260424_v3"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            filterEvents();
+        });
+
+        async function filterEvents() {
+            const grid = document.getElementById('eventResultsGrid');
+            const events = [
+                { id: 1, title: 'Regional Summer Cup', cat: 'Tournament', location: 'Birmingham', date: { day: '12', month: 'Jun' }, icon: '🏆' },
+                { id: 2, title: 'Pro Scout Showcase', cat: 'Pro Trial', location: 'London', date: { day: '25', month: 'Jun' }, icon: '⚽' },
+                { id: 3, title: 'Elite Skills Camp', cat: 'Training Camp', location: 'Bristol', date: { day: '05', month: 'Jul' }, icon: '🔥' }
+            ];
+
+            grid.innerHTML = events.map(e => `
+                <div class="club-card">
+                    <div class="club-banner">
+                        <div class="date-badge">
+                            <span class="day">${e.date.day}</span>
+                            <span class="month">${e.date.month}</span>
+                        </div>
+                        ${e.icon}
+                    </div>
+                    <div class="club-content">
+                        <h3 class="club-name">${e.title}</h3>
+                        <div class="club-meta">
+                            <span>📅 Coming Soon</span>
+                            <span>📍 ${e.location}</span>
+                        </div>
+                        <div class="tag-list">
+                            <span class="tag">${e.cat}</span>
+                            <span class="tag">Global Listing</span>
+                        </div>
+                        <button class="btn btn-primary" style="width:100%;" onclick="alert('Registering for event...')">Register Now</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
 </html>

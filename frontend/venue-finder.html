@@ -1,30 +1,257 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Venue Finder — ClubHub</title>
+    <title>Venue Finder - Find Sports Facilities | ClubHub</title>
+    <meta name="description" content="Find and book sports venues, pitches, and courts near you.">
+    <meta name="theme-color" content="#dc4343">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ClubHub">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="unified-nav.css">
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: #0d0d0d;
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(177, 3, 45, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(177, 3, 45, 0.05) 0%, transparent 50%);
+        }
+
+        .finder-container {
+            max-width: 1200px;
+            margin: 100px auto 4rem;
+            padding: 0 1.5rem;
+        }
+
+        .search-hero {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .filter-bar {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 1rem;
+            align-items: end;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 992px) {
+            .filter-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .filter-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .filter-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: #fff;
+            font-family: inherit;
+        }
+
+        .club-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .club-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(177, 3, 45, 0.1);
+        }
+
+        .club-banner {
+            height: 140px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .venue-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.6;
+        }
+
+        .club-content {
+            padding: 20px;
+        }
+
+        .club-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .club-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tag {
+            background: rgba(177, 3, 45, 0.1);
+            color: var(--primary);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .price-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--primary);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 800;
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            box-shadow: 0 4px 12px rgba(220, 67, 67, 0.3);
+        }
+    </style>
 </head>
 
 <body class="dashboard-view app-layout">
-    <script src="api-service.js?v=20260424_v3"></script>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
-    <script src="unified-nav.js?v=20260424_v3"></script>
-    
-    <main class="dashboard-main" style="padding: 2rem;">
-        <div class="glass-panel" style="padding: 3rem; text-align: center;">
-            <h1 class="neon-text" style="font-size: 2.5rem; margin-bottom: 1rem;">Venue Finder</h1>
-            <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Locate and book high-quality sports facilities, pitches, and courts.</p>
-            <div style="margin-top: 3rem; padding: 5rem; border: 2px dashed rgba(255,255,255,0.1); border-radius: 20px; color: var(--text-muted);">
-                <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">📍</span>
-                Venue discovery and availability maps are being integrated.
-            </div>
+    <main class="dashboard-main">
+    <div class="finder-container">
+        <div class="search-hero">
+            <h1 class="neon-text" style="font-size: 3.5rem; margin-bottom: 1rem;">Find Your Venue</h1>
+            <p style="color: var(--text-muted); font-size: 1.2rem;">Book pitches, courts, and training facilities instantly.</p>
         </div>
-    </main>
-</body>
 
+        <!-- Advanced Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Venue Name</label>
+                <input type="text" id="venueSearch" class="filter-input" placeholder="Search venues..." onkeyup="filterVenues()">
+            </div>
+            <div class="filter-group">
+                <label>Facility Type</label>
+                <select id="typeFilter" class="filter-input" onchange="filterVenues()">
+                    <option value="">All Types</option>
+                    <option value="pitch">Grass Pitch</option>
+                    <option value="3g">3G Astro</option>
+                    <option value="court">Indoor Court</option>
+                    <option value="gym">Gym / Studio</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Location</label>
+                <input type="text" id="locationSearch" class="filter-input" placeholder="City..." onkeyup="filterVenues()">
+            </div>
+            <div class="filter-group">
+                <label>Surface</label>
+                <select id="surfaceFilter" class="filter-input" onchange="filterVenues()">
+                    <option value="">Any Surface</option>
+                    <option value="grass">Grass</option>
+                    <option value="artificial">Artificial</option>
+                    <option value="hard">Hard Court</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="padding: 0.8rem 2rem;" onclick="filterVenues()">Search</button>
+        </div>
+
+        <div id="venueResultsGrid" class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+    </main>
+
+    <script src="api-service.js?v=20260424_v3"></script>
+    <script src="unified-nav.js?v=20260424_v3"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            filterVenues();
+        });
+
+        async function filterVenues() {
+            const grid = document.getElementById('venueResultsGrid');
+            const venues = [
+                { id: 1, name: 'St. George\'s Park', type: '3G Astro', location: 'Burton', price: '£45/hr', surface: '3G', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800' },
+                { id: 2, name: 'Elite Sports Hub', type: 'Grass Pitch', location: 'Manchester', price: '£30/hr', surface: 'Grass', image: 'https://images.unsplash.com/photo-1529900948632-5a634ad6d8f6?auto=format&fit=crop&q=80&w=800' },
+                { id: 3, name: 'The Arena', type: 'Indoor Court', location: 'London', price: '£60/hr', surface: 'Hard', image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800' }
+            ];
+
+            grid.innerHTML = venues.map(v => `
+                <div class="club-card">
+                    <div class="club-banner">
+                        <img src="${v.image}" class="venue-image">
+                        <span class="price-badge">${v.price}</span>
+                    </div>
+                    <div class="club-content">
+                        <h3 class="club-name">${v.name}</h3>
+                        <div class="club-meta">
+                            <span>📍 ${v.location}</span>
+                            <span>🏗️ ${v.type}</span>
+                        </div>
+                        <div class="tag-list">
+                            <span class="tag">Instant Booking</span>
+                            <span class="tag">Changing Rooms</span>
+                        </div>
+                        <button class="btn btn-primary" style="width:100%;" onclick="alert('Booking flow starting...')">Check Availability</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
 </html>

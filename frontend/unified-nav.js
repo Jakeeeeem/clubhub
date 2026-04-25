@@ -810,6 +810,16 @@ const UnifiedNav = {
       document.body.prepend(header);
     }
     header.classList.add("unified-header");
+    document.body.classList.add("dashboard-view");
+    
+    // Ensure main content is correctly offset for the fixed sidebar on desktop
+    if (window.innerWidth >= 992) {
+        const main = document.querySelector("main, .dashboard-main, .dashboard-container");
+        if (main) {
+            main.style.marginLeft = document.body.classList.contains("sidebar-collapsed") ? "80px" : "280px";
+            main.style.width = document.body.classList.contains("sidebar-collapsed") ? "calc(100% - 80px)" : "calc(100% - 280px)";
+        }
+    }
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const name = (
@@ -828,6 +838,25 @@ const UnifiedNav = {
     if (header.querySelector('.logo-area-wrapper')) {
         this.renderHeaderSwitcher();
         this.renderFamilySwitcher();
+        this.renderHeaderNotifications();
+        this.renderStripeHeaderButton();
+        
+        // Ensure mode toggle is present even on already rendered headers
+        if (!header.querySelector('.mode-toggle-container') && window.innerWidth >= 992) {
+            const right = header.querySelector('.dash-header-right');
+            if (right) {
+                const container = document.createElement('div');
+                container.className = 'mode-toggle-container desktop-only';
+                container.style.margin = '0 1rem';
+                container.innerHTML = `
+                    <div class="header-mode-toggle" id="header-mode-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.08);">
+                        <div class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Groups Hub</div>
+                        <div class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Player Pro</div>
+                    </div>
+                `;
+                right.parentNode.insertBefore(container, right);
+            }
+        }
         return;
     }
 
@@ -1949,8 +1978,9 @@ const UnifiedNav = {
 
                 <div class="nav-group-title">Discovery</div>
                 <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
+                <a href="team-finder.html" class="sidebar-link ${isActive('team-finder.html')}">${ICONS.nav.players}<span>Team Finder</span></a>
                 <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
-                <a href="tournament-manager.html" class="sidebar-link ${isActive('tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
+                <a href="tournament-finder.html" class="sidebar-link ${isActive('tournament-finder.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
                 <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
             `;
     } else if (finalIsScout) {
@@ -1983,8 +2013,9 @@ const UnifiedNav = {
 
         <div class="nav-group-title"><span>Discovery</span></div>
         <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
+        <a href="team-finder.html" class="sidebar-link ${isActive('team-finder.html')}">${ICONS.nav.players}<span>Team Finder</span></a>
         <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
-        <a href="tournament-manager.html" class="sidebar-link ${isActive('tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
+        <a href="tournament-finder.html" class="sidebar-link ${isActive('tournament-finder.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
         <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
       `;
     } else if (finalIsPlayer) {
@@ -2001,8 +2032,9 @@ const UnifiedNav = {
                     
                     <div class="nav-group-title">Discovery</div>
                     <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
+                    <a href="team-finder.html" class="sidebar-link ${isActive('team-finder.html')}">${ICONS.nav.players}<span>Team Finder</span></a>
                     <a href="event-finder.html" class="sidebar-link ${isActive('event-finder.html')}">${ICONS.nav.events}<span>Event Finder</span></a>
-                    <a href="tournament-manager.html" class="sidebar-link ${isActive('tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
+                    <a href="tournament-finder.html" class="sidebar-link ${isActive('tournament-finder.html')}">${ICONS.nav.trophy}<span>Tournament Finder</span></a>
                     <a href="venue-finder.html" class="sidebar-link ${isActive('venue-finder.html')}">${ICONS.nav.venue}<span>Venue Finder</span></a>
         `;
     } else {
@@ -2044,10 +2076,9 @@ const UnifiedNav = {
         // Insert container after the title
         title.parentNode.insertBefore(container, title.nextSibling);
 
-        // Collapse by default when sidebar is collapsed
-        const isCollapsed =
-          document.body.classList.contains("sidebar-collapsed");
-        container.style.display = isCollapsed ? "none" : "";
+        // Collapse by default ONLY if explicitly set
+        const isCollapsed = document.body.classList.contains("sidebar-collapsed");
+        container.style.display = isCollapsed ? "none" : "block";
 
         title.addEventListener("click", () => {
           const open = container.style.display !== "none";
@@ -2162,9 +2193,14 @@ const UnifiedNav = {
     const main = document.querySelector("main, .dashboard-main, .dashboard-container, #overview, #members");
     if (main) {
       main.style.paddingBottom = "100px";
-      main.style.paddingLeft = "0";
-      main.style.paddingRight = "0";
-      main.style.width = "100%";
+      if (!isMobile) {
+        main.style.marginLeft = "280px";
+        main.style.width = "calc(100% - 280px)";
+      } else {
+        main.style.paddingLeft = "0";
+        main.style.paddingRight = "0";
+        main.style.width = "100%";
+      }
       main.style.maxWidth = "100%";
       main.classList.add("dashboard-main");
     }
