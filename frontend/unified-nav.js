@@ -861,6 +861,7 @@ const UnifiedNav = {
         </div>
 
         <!-- DESKTOP HEADER: Page Title + Group Switcher | Right Actions -->
+        <div class="logo-area-wrapper desktop-only" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
           <div class="dash-header-left" style="display:flex; align-items:center; gap:2rem;">
             <div class="header-title-area" style="display:flex; align-items:center; gap:1.25rem;">
                <h1 style="font-size:1.4rem; font-weight:800; color:#fff; margin:0; letter-spacing:-0.5px; white-space:nowrap;">${document.title.split('—')[0].trim()}</h1>
@@ -1749,6 +1750,19 @@ const UnifiedNav = {
       if (notifDropdown) notifDropdown.style.display = "none";
       this.toggleProfileDropdown(false);
     }
+  },
+
+  getCurrentMode() {
+    const url = window.location.href;
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
+    
+    // Explicit player path check
+    if (/player-|schedule|performance|finances|shop|chat/.test(url)) return "player";
+    
+    // Fallback to role-based default
+    if (userRole === "player" || userRole === "parent") return "player";
+    return "group";
   },
 
   getUserRole() {
