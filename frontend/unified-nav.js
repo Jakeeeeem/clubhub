@@ -2008,8 +2008,22 @@ const UnifiedNav = {
       sidebar.classList.add("active");
       overlay.classList.add("active");
       // Ensure inline display is set so CSS cascade doesn't accidentally keep it hidden
-      try { sidebar.style.setProperty('display','flex','important'); } catch (e) {}
-      try { overlay.style.setProperty('display','block','important'); } catch (e) {}
+      try { sidebar.style.setProperty('display','flex','important'); } catch (e) {}    const userRole = (localStorage.getItem("userType") || localStorage.getItem("userRole") || "").toLowerCase();
+    let finalRole = userRole;
+
+    // Critical Fallback: Use URL if role is missing in storage
+    if (!finalRole) {
+        if (isDashboard) {
+            if (p.includes("admin")) finalRole = "admin";
+            else if (p.includes("coach")) finalRole = "coach";
+            else if (p.includes("scout")) finalRole = "scout";
+            else if (p.includes("player")) finalRole = "player";
+        }
+    }
+    
+    // Default to player if still unknown but on a dashboard
+    if (!finalRole && isDashboard) finalRole = "player";
+try { overlay.style.setProperty('display','block','important'); } catch (e) {}
       this.syncUserData();
     } else {
       sidebar.classList.remove("active");
@@ -2321,6 +2335,7 @@ const UnifiedNav = {
                     <div class="nav-group-title">Services</div>
                     <a href="player-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'player-chat.html', 'club-messenger')" class="sidebar-link ${isActive('player-chat.html') || p.includes('messenger') ? 'active' : ''}">${ICONS.nav.chat}<span>Messenger</span></a>
                     <a href="player-shop.html" onclick="return UnifiedNav.handleNavClick(event, 'player-shop.html', 'item-shop')" class="sidebar-link ${isActive('player-shop.html') || p.includes('shop') ? 'active' : ''}">${ICONS.nav.shop}<span>Club Shop</span></a>
+                    <a href="player-dashboard.html#tournaments" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'tournaments')" class="sidebar-link ${p.includes('tournaments') ? 'active' : ''}">${ICONS.nav.trophy}<span>My Tournaments</span></a>
                     
                     <div class="nav-group-title">Discovery</div>
                     <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>

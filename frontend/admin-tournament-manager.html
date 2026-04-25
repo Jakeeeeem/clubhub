@@ -273,7 +273,20 @@
 
     <script>
         // Admin-Specific Tournament Logic
+        // Explicitly expose functions to window to ensure accessibility from onclick
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.viewAdminCompDetail = viewAdminCompDetail;
+        window.closeAdminCompDetail = closeAdminCompDetail;
+        window.switchAdminTab = switchAdminTab;
+        window.saveAdminMatchResult = () => {}; // Placeholder for interface compatibility
+        window.openAdminTactics = () => {};
+        window.setFormation = () => {};
+        window.saveMatchFormation = () => {};
+
+        // Initialize on load
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log("🚀 Admin Tournament Manager Initializing...");
             if (typeof checkAuthStatus === 'function') {
                 const ok = await checkAuthStatus();
                 if (!ok) { window.location.href = 'index.html'; return; }
@@ -346,39 +359,66 @@
         }
 
         async function viewAdminCompDetail(compId) {
-            document.getElementById('admin-comp-list').style.display = 'none';
-            document.getElementById('admin-comp-detail').style.display = 'block';
+            console.log("🏆 Viewing competition detail for:", compId);
+            const list = document.getElementById('admin-comp-list');
+            const detail = document.getElementById('admin-comp-detail');
             
+            if (!list || !detail) {
+                console.error("❌ Critical UI elements missing: admin-comp-list or admin-comp-detail");
+                return;
+            }
+
             try {
-                const data = await apiService.getTournamentDetails(compId);
-                const tournament = data.tournament || data; // Handle both nested and flat responses
+                list.style.display = 'none';
+                detail.style.display = 'block';
                 
-                document.getElementById('adminDetailCompName').textContent = tournament.title || tournament.name || 'Tournament Detail';
-                
-                // Use TournamentUI for premium visualizations
-                const type = (tournament.type || '').toLowerCase();
+                // Show loading state in the visual container
                 const visualContainer = 'adminTournamentBracketVisual';
+                const visualEl = document.getElementById(visualContainer);
+                if (visualEl) visualEl.innerHTML = '<div class="spinner"></div>';
+
+                const data = await apiService.getTournamentDetails(compId);
+                console.log("📊 Tournament data received:", data);
+
+                const tournament = data.tournament || data;
+                
+                document.getElementById('adminDetailCompName').textContent = tournament.title || tournament.name || 'Competition Detail';
+                
+                const type = (tournament.type || '').toLowerCase();
                 
                 if (type === 'knockout' || type === 'bracket' || type === 'tournament') {
+                    console.log("🎾 Rendering Knockout Bracket");
                     TournamentUI.renderBracket(data.matches || tournament.matches || [], visualContainer);
-                    switchAdminTab(document.querySelector('[onclick*="bracket"]'), 'bracket');
                 } else {
+                    console.log("📈 Rendering League Table");
                     let standings = data.standings || tournament.standings || [];
-                    // Convert object-style standings to array if needed
                     if (standings && typeof standings === 'object' && !Array.isArray(standings)) {
                         standings = Object.values(standings);
                     }
                     TournamentUI.renderLeagueTable(standings, visualContainer);
-                    switchAdminTab(document.querySelector('[onclick*="bracket"]'), 'bracket'); // Reuse bracket container for table
                 }
+
+                // Auto-switch to the first tab (Results/Bracket)
+                const firstTab = detail.querySelector('.tab-btn');
+                if (firstTab) switchAdminTab(firstTab, 'bracket');
+
             } catch (err) {
-                console.error("Failed to load comp detail:", err);
+                console.error("❌ Failed to load comp detail:", err);
+                showNotification("Could not load competition details", "error");
+                closeAdminCompDetail();
             }
         }
 
         function closeAdminDetail() {
             document.getElementById('admin-comp-list').style.display = 'block';
             document.getElementById('admin-comp-detail').style.display = 'none';
+        }
+
+        function closeAdminCompDetail() {
+            const list = document.getElementById('admin-comp-list');
+            const detail = document.getElementById('admin-comp-detail');
+            if (list) list.style.display = 'block';
+            if (detail) detail.style.display = 'none';
         }
 
         function switchAdminTab(btn, tabId) {
