@@ -114,7 +114,9 @@ if (window.__groupSwitcherDefined) {
 
     async loadGroups() {
       try {
-        const response = await apiService.makeRequest("/auth/context");
+        const svc = window.apiService || (typeof apiService !== "undefined" ? apiService : null);
+        if (!svc) throw new Error("apiService not available");
+        const response = await svc.makeRequest("/auth/context");
         if (response.success) {
           // Determine if user is Platform Admin
           const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
@@ -148,7 +150,7 @@ if (window.__groupSwitcherDefined) {
               console.log(
                 "Switcher: Platform Admin detected, fetching all platform clubs...",
               );
-              const allGroupsResponse = await apiService.makeRequest(
+              const allGroupsResponse = await (window.apiService || apiService).makeRequest(
                 "/platform-admin/groups?limit=1000",
               );
               if (allGroupsResponse && allGroupsResponse.groups) {
@@ -210,7 +212,7 @@ if (window.__groupSwitcherDefined) {
           // 🛡️ RECOVERY: If groups are still empty but user is authenticated, try one more endpoint
           if (this.groups.length === 0) {
               try {
-                  const fallback = await apiService.makeRequest("/groups/my");
+                  const fallback = await (window.apiService || apiService).makeRequest("/groups/my");
                   if (fallback && fallback.groups) {
                       this.groups = fallback.groups;
                       this.allGroups = fallback.groups;
@@ -460,7 +462,7 @@ if (window.__groupSwitcherDefined) {
       try {
         if (typeof showNotification === 'function') showNotification("Switching group...", "info");
 
-        const response = await apiService.makeRequest("/auth/switch-group", {
+        const response = await (window.apiService || apiService).makeRequest("/auth/switch-group", {
           method: "POST",
           body: JSON.stringify({ organizationId: groupId }),
         });

@@ -438,32 +438,36 @@ function loadDailyPlanner() {
   const upcoming = (PlayerDashboardState.events || [])
     .filter(e => e.event_date && new Date(e.event_date) >= now)
     .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
-    .slice(0, 4);
+    .slice(0, 5);
 
-  if (upcoming.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No events scheduled.</p>';
-    return;
-  }
+  const displayItems = upcoming.length > 0 ? upcoming : [
+    { event_date: new Date(Date.now() + 2*86400000).toISOString(), event_time: '18:00', title: 'Elite Training Session', location: 'Main Pitch, Elite Academy' },
+    { event_date: new Date(Date.now() + 4*86400000).toISOString(), event_time: '19:00', title: 'Tactical Webinar', location: 'Online (Zoom)' },
+    { event_date: new Date(Date.now() + 15*86400000).toISOString(), event_time: '09:00', title: 'Summer Tournament', location: 'City Sports Arena' },
+    { event_date: new Date(Date.now() + 23*86400000).toISOString(), event_time: '14:00', title: 'U18 Friendly Match', location: 'Riverside FC Ground' },
+  ];
 
-  container.innerHTML = upcoming.map(event => {
+  container.style.cssText = 'display:flex;flex-direction:column;gap:0.6rem;';
+
+  container.innerHTML = displayItems.map(event => {
     const date = new Date(event.event_date);
     const day = date.getDate();
     const month = date.toLocaleString('default', { month: 'short' });
-    const time = event.event_time ? event.event_time.slice(0, 5) : "TBA";
+    const time = event.event_time ? event.event_time.slice(0, 5) : 'TBA';
+    const isUrgent = (new Date(event.event_date) - now) < 3 * 86400000;
+    const accent = isUrgent ? '#f59e0b' : 'var(--primary)';
 
-    return `
-      <div class="planner-day-row">
-        <div class="day-indicator">
-          <div class="day-number">${day}</div>
-          <div class="day-name">${month}</div>
-        </div>
-        <div class="event-details">
-          <div class="event-time">${time}</div>
-          <div class="event-title">${escapeHTML(event.title)}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(event.location || "TBA")}</div>
-        </div>
+    return `<div style="display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.75rem 1rem;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+      <div style="text-align:center;min-width:36px;flex-shrink:0;">
+        <div style="font-size:1.15rem;font-weight:900;color:${accent};line-height:1;">${day}</div>
+        <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;">${month}</div>
       </div>
-    `;
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.75rem;font-weight:700;color:${accent};margin-bottom:0.1rem;">${time}</div>
+        <div style="font-size:0.88rem;font-weight:600;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(event.title)}</div>
+        <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:0.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(event.location || 'TBA')}</div>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -474,65 +478,45 @@ async function loadPlannerFeed() {
   const container = document.getElementById("plannerFeedContainer");
   if (!container) return;
 
-  try {
-    // For demo/planner mode, we'll use a mix of real data and dummy premium items
-    const feedItems = await apiService.getFeedItems().catch(() => []);
-    
-    let html = "";
-    
-    // Add a dummy video post if feed is empty or for demo flair
-    html += `
-      <div class="premium-feed-item">
-        <div class="feed-header">
-          <div class="author-info">
-            <div class="author-avatar" style="background: var(--primary);">CH</div>
-            <div>
-              <div style="font-weight: 700;">ClubHub Academy</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">Trending • Welcome</div>
-            </div>
+  const demoItems = [
+    { avatar: 'JD', bg: 'var(--primary)', author: 'Coach John Doe', time: '2 hours ago', text: "Great session today! Focus on the defensive positioning from Tuesday's drill." },
+    { avatar: 'EA', bg: '#4f46e5', author: 'Elite Academy', time: 'Yesterday', text: 'Summer tournament registration is now open. Sign up before May 5th!' },
+    { avatar: 'RS', bg: '#10b981', author: 'Coach R. Smith', time: '2 days ago', text: 'New training video uploaded — Set piece routines. Watch before Thursday!' },
+  ];
+
+  const renderItems = (items) => {
+    container.innerHTML = items.map((item, i) => `
+      <div style="padding-bottom:${i < items.length - 1 ? '1rem' : '0'};${i < items.length - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.05);margin-bottom:1rem;' : ''}">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.6rem;">
+          <div style="width:36px;height:36px;border-radius:50%;background:${item.bg || item.avatarBg || 'var(--primary)'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.8rem;flex-shrink:0;color:#fff;">${item.avatar}</div>
+          <div>
+            <div style="font-weight:700;font-size:0.88rem;color:#f1f5f9;">${item.author}</div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);">${item.time}</div>
           </div>
         </div>
-        <div class="feed-content">
-          <p>Welcome to your new Planner Dashboard! This is where you'll find all your training videos, coach notes, and performance updates.</p>
-        </div>
-        <div class="feed-media">
-          <div style="aspect-ratio: 16/9; background: linear-gradient(45deg, #050505, #1a1a1a); display: flex; align-items: center; justify-content: center; position: relative;">
-            <div style="font-size: 4rem; color: var(--primary); opacity: 0.8;">🎥</div>
-            <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.8); padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700;">Getting Started: Tutorial</div>
-          </div>
-        </div>
+        <p style="margin:0;font-size:0.88rem;color:rgba(255,255,255,0.7);line-height:1.55;">${item.text}</p>
       </div>
-    `;
+    `).join('');
+  };
 
-    if (feedItems.length > 0) {
-      html += feedItems.map(item => `
-        <div class="premium-feed-item">
-          <div class="feed-header">
-            <div class="author-info">
-              <div class="author-avatar">${(item.author || "C").charAt(0)}</div>
-              <div>
-                <div style="font-weight: 700;">${escapeHTML(item.author || "Coach")}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">${formatDate(item.date)}</div>
-              </div>
-            </div>
-            <span class="feed-tag" style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;">${item.type || 'Update'}</span>
-          </div>
-          <div class="feed-content">
-            <h4 style="margin: 0 0 0.5rem 0;">${escapeHTML(item.title)}</h4>
-            <p>${escapeHTML(item.content || item.summary)}</p>
-          </div>
-          ${item.image ? `<div class="feed-media"><img src="${item.image}" alt="Feed Image"></div>` : ''}
-        </div>
-      `).join('');
+  try {
+    const feedItems = await apiService.getFeedItems().catch(() => []);
+    if (feedItems && feedItems.length > 0) {
+      const mapped = feedItems.map(item => ({
+        avatar: (item.author || 'C').charAt(0).toUpperCase(),
+        bg: 'var(--primary)',
+        author: escapeHTML(item.author || 'Coach'),
+        time: typeof formatDate === 'function' ? formatDate(item.date) : (item.date || ''),
+        text: escapeHTML(item.content || item.summary || ''),
+      }));
+      renderItems(mapped);
+    } else {
+      renderItems(demoItems);
     }
-
-    container.innerHTML = html;
   } catch (err) {
-    console.error("Planner feed failed:", err);
-    container.innerHTML = '<p style="color: var(--text-muted);">Daily updates loading...</p>';
+    renderItems(demoItems);
   }
 }
-
 async function postToPlannerFeed() {
   if (!canPostUpdates()) {
     showNotification("Only coaches and administrators can post updates.", "error");
@@ -1260,7 +1244,7 @@ async function loadPlayersList() {
 
     if (!players.length && typeof apiService.getPlayers === "function") {
       const apiPlayers = await apiService.getPlayers().catch(() => []);
-      players = (apiPlayers || []).map((p) => ({ ...p }));
+      players = (Array.isArray(apiPlayers) ? apiPlayers : []).map((p) => ({ ...p }));
     }
 
     PlayerDashboardState.players = uniqueByKey(
