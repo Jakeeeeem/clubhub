@@ -170,49 +170,49 @@ const TournamentUI = {
             
             .connector-line { 
                 position: absolute; 
-                right: -2rem; 
-                width: 2rem; 
+                right: -4rem; 
+                width: 4rem; 
                 height: 2px; 
-                background: var(--primary);
+                background: linear-gradient(90deg, var(--primary), rgba(220, 38, 38, 0.2));
                 z-index: 1;
                 top: 50%;
-                opacity: 0.8;
+                opacity: 0.6;
             }
             .bracket-round:not(:last-child) .match-wrapper:nth-child(odd)::after {
                 content: '';
                 position: absolute;
-                right: -2rem;
+                right: -4rem;
                 top: 50%;
                 width: 2px;
                 height: 100%;
                 background: var(--primary);
                 z-index: 0;
-                opacity: 0.4;
+                opacity: 0.3;
+                box-shadow: 0 0 10px rgba(220, 38, 38, 0.2);
             }
             .bracket-round:not(:last-child) .match-wrapper:nth-child(even)::after {
                 content: '';
                 position: absolute;
-                right: -2rem;
+                right: -4rem;
                 bottom: 50%;
                 width: 2px;
                 height: 100%;
                 background: var(--primary);
                 z-index: 0;
-                opacity: 0.4;
+                opacity: 0.3;
+                box-shadow: 0 0 10px rgba(220, 38, 38, 0.2);
             }
-            
-            /* Middle connector to next stage */
             .bracket-round:not(:last-child) .match-wrapper:nth-child(odd)::before {
                 content: '';
                 position: absolute;
-                right: -4rem;
-                top: calc(100% + 1.25rem);
+                right: -6rem;
+                top: 100%;
                 width: 2rem;
                 height: 2px;
                 background: var(--primary);
                 display: block;
                 z-index: 1;
-                opacity: 0.8;
+                opacity: 0.6;
             }
 
             /* Adjust vertical bridge for specific rounds if needed, but flex-justify usually handles it */

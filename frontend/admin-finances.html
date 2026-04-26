@@ -161,37 +161,8 @@
     <main class="main dashboard-main">
         <div class="container dashboard-container">
 
-            <!-- Page Title -->
-            <div style="margin-bottom:1.5rem;">
-                <h1 class="neon-text" style="font-size:1.6rem;margin:0;" id="dashOrgName">Admin Dashboard</h1>
-                <p style="color:var(--text-muted);font-size:0.88rem;margin-top:0.25rem;">Manage your group's members,
-                    events, and revenue</p>
-            </div>
 
             <!-- Dashboard Sections -->
-            <!-- Dashboard Overview Stats (Finance Version) -->
-            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1.25rem; margin-bottom:2rem;">
-                <div class="stat-card">
-                    <span class="stat-label">Total Revenue</span>
-                    <span class="stat-number">£12,450.00</span>
-                    <div class="stat-change">↑ 18% vs last month</div>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Subscribers</span>
-                    <span class="stat-number">184</span>
-                    <div class="stat-change" style="color:#60a5fa;">↑ 12 new this week</div>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Active Plans</span>
-                    <span class="stat-number">8</span>
-                    <div class="stat-change" style="color:var(--text-muted);">Current active tiers</div>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">Payout Status</span>
-                    <span class="stat-number" style="color:#4ade80; font-size:1.6rem;">Verified</span>
-                    <div class="stat-change">Next payout: 28 Apr</div>
-                </div>
-            </div>
 
             <div id="overview" class="dashboard-section" style="display:none;">
                 <div class="stats-row"
@@ -343,15 +314,22 @@
 
             <!-- Teams Section -->
             <div id="teams" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <div class="section-title" style="margin:0;">⚽ Squads & Teams</div>
-                    <button class="btn btn-primary" onclick="openModal('createTeamModal')">+ Create Team</button>
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2.5rem; background:rgba(255,255,255,0.02); padding:2rem; border-radius:24px; border:1px solid rgba(255,255,255,0.05);">
+                    <div>
+                        <h1 style="margin:0; color:#fff; font-size:2.2rem; font-weight:900; letter-spacing:-1px;">Squads & Teams</h1>
+                        <p style="color:var(--text-muted); margin-top:0.5rem; font-size:1rem;">Organize your athletes into competitive divisions and training groups</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('createTeamModal')" style="padding:1.1rem 2rem; font-weight:800; border-radius:16px; box-shadow: 0 10px 30px rgba(220, 67, 67, 0.3);">
+                        <span>+</span> Create New Squad
+                    </button>
                 </div>
-                <div class="dash-grid" id="teamsListContainer"
-                    style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
+
+                <div class="dash-grid" id="teamsListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:2rem;">
                     <!-- Dynamically loaded -->
-                    <div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">Loading
-                        squads...</div>
+                    <div style="grid-column:1/-1; padding:5rem; text-align:center; background:rgba(255,255,255,0.02); border:2px dashed rgba(255,255,255,0.05); border-radius:24px;">
+                        <div class="loader" style="margin:0 auto 1.5rem;"></div>
+                        <p style="color:var(--text-muted); font-size:1.1rem; font-weight:600;">Synchronizing squad data...</p>
+                    </div>
                 </div>
             </div>
 
@@ -428,68 +406,94 @@
             </div>
 
             <div id="finances" class="dashboard-section active" style="display:block; padding:1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <div class="section-title" style="margin:0;">💳 Financial Suite</div>
-                    <div style="display:flex; gap:0.5rem;">
-                        <button class="btn btn-text btn-small active" id="finTabStripe" onclick="showFinanceTab('stripe')">Stripe Connect</button>
-                        <button class="btn btn-text btn-small" id="finTabPlans" onclick="showFinanceTab('plans')">Subscription Plans</button>
+                <!-- Finance Hub Header -->
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2.5rem; background:rgba(255,255,255,0.02); padding:2rem; border-radius:24px; border:1px solid rgba(255,255,255,0.05);">
+                    <div>
+                        <h1 style="margin:0; color:#fff; font-size:2.2rem; font-weight:900; letter-spacing:-1px;">Finance Hub</h1>
+                        <p style="color:var(--text-muted); margin-top:0.5rem; font-size:1rem;">Manage your club's revenue, subscriptions, and payouts</p>
+                    </div>
+                    <div style="display:flex; background:rgba(0,0,0,0.2); padding:6px; border-radius:14px; border:1px solid rgba(255,255,255,0.05);">
+                        <button class="btn btn-text btn-small active" id="finTabStripe" onclick="showFinanceTab('stripe')" style="padding:0.75rem 1.5rem; border-radius:10px;">Stripe Connection</button>
+                        <button class="btn btn-text btn-small" id="finTabPlans" onclick="showFinanceTab('plans')" style="padding:0.75rem 1.5rem; border-radius:10px;">Subscription Plans</button>
+                    </div>
+                </div>
+
+                <!-- Financial Stats Cards (Always Visible) -->
+                <div class="dash-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1.5rem; margin-bottom:2.5rem;">
+                    <div class="glass-card" style="padding:1.5rem; border-left: 4px solid var(--primary);">
+                        <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px;">Total Revenue</span>
+                        <span style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">£4,280.50</span>
+                        <span style="font-size:0.8rem; color:#4ade80; font-weight:700;">↑ 12% vs last month</span>
+                    </div>
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px;">Active Subscriptions</span>
+                        <span style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">184</span>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">98% retention rate</span>
+                    </div>
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px;">Next Payout</span>
+                        <span style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">£1,140.20</span>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">Scheduled: May 1st</span>
+                    </div>
+                    <div class="glass-card" style="padding:1.5rem;">
+                        <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px;">Pending Invoices</span>
+                        <span style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">12</span>
+                        <span style="font-size:0.8rem; color:#ef4444; font-weight:700;">Awaiting payment</span>
                     </div>
                 </div>
 
                 <!-- Stripe Onboarding View -->
                 <div id="finance-stripe-view">
-                    <div class="glass-card" style="padding:4rem 2rem; text-align:center; max-width:800px; margin:0 auto; background:rgba(0,0,0,0.4); border:2px solid rgba(255,255,255,0.05); border-radius:24px;">
+                    <div class="glass-card" style="padding:4rem 2rem; text-align:center; max-width:800px; margin:0 auto; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.07); border-radius:32px; box-shadow: 0 40px 100px rgba(0,0,0,0.4);">
                         
-                        <!-- Initial State: Prominent Not Connected View -->
+                        <!-- Initial State -->
                         <div id="stripe-onboarding-box">
-                            <div style="font-size:5rem; margin-bottom:2rem;">💳</div>
-                            <h2 style="margin-bottom:1rem; color:#fff; font-size:2.4rem; font-weight:900; letter-spacing:-1px;">Connect with Stripe</h2>
-                            <p style="color:var(--text-muted); margin-bottom:3rem; font-size:1.15rem; max-width:600px; margin-left:auto; margin-right:auto; line-height:1.7;">To start accepting payments, managing club subscriptions, and receiving automatic payouts, you must link your group to a Stripe account.</p>
-                            
-                            <div style="background:rgba(255,255,255,0.03); padding:2rem; border-radius:20px; border:1px dashed rgba(255,255,255,0.1); margin-bottom:3rem; display:inline-block;">
-                                <div style="display:flex; align-items:center; gap:1.5rem; text-align:left;">
-                                    <div style="width:48px; height:48px; background:rgba(220,38,38,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.2rem;"><i class="fa fa-info-circle"></i></div>
-                                    <div>
-                                        <div style="color:#fff; font-weight:700; font-size:1rem;">Not Connected</div>
-                                        <div style="color:var(--text-muted); font-size:0.85rem;">Status: Awaiting onboarding</div>
-                                    </div>
-                                </div>
+                            <div style="width:100px; height:100px; background:rgba(100, 95, 255, 0.1); border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 2.5rem; border:1px solid rgba(100, 95, 255, 0.2);">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#635bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 7c0-5.333-8-5.333-8 0"/><path d="M10 7v14"/><path d="M7 21h11"/><path d="M6 13h7"/></svg>
                             </div>
-
-                            <div style="display:block;">
-                                <button class="btn btn-primary" onclick="startStripeOnboarding()" id="connect-stripe-btn" style="padding:1.5rem 4rem; font-size:1.3rem; font-weight:800; border-radius:18px; box-shadow: 0 15px 45px rgba(220, 38, 38, 0.4); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                                    <i class="fa fa-bolt" style="margin-right:1rem;"></i> Connect Stripe Now
+                            <h2 style="margin-bottom:1rem; color:#fff; font-size:2.6rem; font-weight:900; letter-spacing:-1.5px;">Link your club to Stripe</h2>
+                            <p style="color:var(--text-muted); margin-bottom:3.5rem; font-size:1.1rem; max-width:600px; margin-left:auto; margin-right:auto; line-height:1.8;">Enable automated membership billing, ticket sales, and instant payouts. Join thousands of elite sports groups managing their finances with ClubHub and Stripe.</p>
+                            
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:2rem;">
+                                <button class="btn btn-primary" onclick="UnifiedNav.manageStripeAccount()" id="connect-stripe-btn" style="padding:1.5rem 4rem; font-size:1.3rem; font-weight:800; border-radius:20px; background:linear-gradient(135deg, #635bff, #dc4343); border:none; box-shadow: 0 20px 40px rgba(99, 91, 255, 0.3); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                                    <i class="fa fa-bolt" style="margin-right:1rem;"></i> Start Stripe Onboarding
                                 </button>
-                                <p style="margin-top:1.5rem; font-size:0.85rem; color:rgba(255,255,255,0.3);">Powered by <strong>Stripe Connect</strong> • Secure & Encrypted</p>
+                                <div style="display:flex; align-items:center; gap:0.75rem; opacity:0.6;">
+                                    <span style="font-size:0.85rem; color:var(--text-muted);">Verified Merchant Status</span>
+                                    <div style="width:4px; height:4px; background:rgba(255,255,255,0.2); border-radius:50%;"></div>
+                                    <span style="font-size:0.85rem; color:var(--text-muted);">PCI Level 1 Compliant</span>
+                                </div>
                             </div>
                         </div>
 
                         <div id="stripe-status-loading" style="display:none;">
-                            <div class="loader" style="margin:2rem auto;"></div>
-                            <p style="color:var(--text-muted); font-size:1.1rem;">Verifying Stripe connection...</p>
+                            <div class="loader" style="margin:2rem auto; width:60px; height:60px;"></div>
+                            <p style="color:var(--text-muted); font-size:1.2rem; font-weight:600;">Synchronizing with Stripe...</p>
                         </div>
 
                         <div id="stripe-connected-box" style="display:none;">
-                            <div style="font-size:5rem; margin-bottom:2rem; filter: drop-shadow(0 0 15px rgba(74,222,128,0.4));">✅</div>
-                            <h2 style="margin-bottom:0.5rem; color:#fff; font-size:2.2rem; font-weight:900; letter-spacing:-1px;">Stripe Connected</h2>
-                            <p style="color:var(--text-muted); margin-bottom:3rem; font-size:1.1rem;">Your club is currently active and receiving payments.</p>
+                            <div style="width:100px; height:100px; background:rgba(74, 222, 128, 0.1); border-radius:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 2.5rem; border:1px solid rgba(74, 222, 128, 0.2);">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <h2 style="margin-bottom:0.5rem; color:#fff; font-size:2.4rem; font-weight:900; letter-spacing:-1px;">Stripe is Active</h2>
+                            <p style="color:var(--text-muted); margin-bottom:3.5rem; font-size:1.1rem;">Your club is successfully connected to Stripe and accepting live payments.</p>
                             
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:3rem; max-width:600px; margin-left:auto; margin-right:auto;">
-                                <div style="background:rgba(255,255,255,0.03); padding:1.5rem; border-radius:20px; border:1px solid rgba(255,255,255,0.1); text-align:left;">
-                                    <span style="display:block; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:0.5rem; font-weight:700;">Payouts</span>
-                                    <span id="payout-status" style="font-weight:900; color:#4ade80; font-size:1.4rem;">Enabled</span>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:3.5rem; max-width:600px; margin-left:auto; margin-right:auto;">
+                                <div style="background:rgba(255,255,255,0.02); padding:2rem; border-radius:24px; border:1px solid rgba(255,255,255,0.05); text-align:left;">
+                                    <span style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:0.75rem; font-weight:800;">Payouts</span>
+                                    <span id="payout-status" style="font-weight:900; color:#4ade80; font-size:1.6rem; display:flex; align-items:center; gap:0.5rem;">● Enabled</span>
                                 </div>
-                                <div style="background:rgba(255,255,255,0.03); padding:1.5rem; border-radius:20px; border:1px solid rgba(255,255,255,0.1); text-align:left;">
-                                    <span style="display:block; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:0.5rem; font-weight:700;">Verification</span>
-                                    <span id="account-status" style="font-weight:900; color:#4ade80; font-size:1.4rem;">Verified</span>
+                                <div style="background:rgba(255,255,255,0.02); padding:2rem; border-radius:24px; border:1px solid rgba(255,255,255,0.05); text-align:left;">
+                                    <span style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:0.75rem; font-weight:800;">Account</span>
+                                    <span id="account-status" style="font-weight:900; color:#4ade80; font-size:1.6rem; display:flex; align-items:center; gap:0.5rem;">● Verified</span>
                                 </div>
                             </div>
 
-                            <div style="display:flex; flex-direction:column; gap:1.25rem; max-width:400px; margin:0 auto;">
-                                <button class="btn btn-secondary" onclick="manageStripeAccount()" style="width:100%; padding:1.2rem; font-size:1.1rem; font-weight:700; border-radius:14px; background:rgba(255,255,255,0.05);">
-                                    <i class="fa fa-external-link" style="margin-right:0.75rem;"></i> Go to Stripe Dashboard
+                            <div style="display:flex; flex-direction:column; gap:1.25rem; max-width:440px; margin:0 auto;">
+                                <button class="btn btn-secondary" onclick="UnifiedNav.manageStripeAccount()" style="width:100%; padding:1.4rem; font-size:1.1rem; font-weight:800; border-radius:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);">
+                                    <i class="fa fa-external-link" style="margin-right:0.75rem;"></i> Launch Stripe Dashboard
                                 </button>
-                                <button class="btn btn-text" onclick="checkStripeStatus()" style="font-size:0.9rem; opacity:0.6; padding:1rem;">Re-sync Status</button>
+                                <button class="btn btn-text" onclick="checkStripeStatus()" style="font-size:0.9rem; opacity:0.5; padding:1rem; font-weight:600;">Re-validate Connection</button>
                             </div>
                         </div>
                     </div>
@@ -497,57 +501,30 @@
 
                 <!-- Subscription Plans View -->
                 <div id="finance-plans-view" style="display:none;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2.5rem; padding:0 1rem;">
                         <div>
-                            <h2 style="margin:0; color:#fff; font-size:1.6rem; font-weight:800;">Subscription Plans</h2>
-                            <p style="color:var(--text-muted); font-size:0.95rem; margin-top:0.25rem;">Manage your recurring revenue streams and membership tiers</p>
+                            <h2 style="margin:0; color:#fff; font-size:1.8rem; font-weight:900; letter-spacing:-0.5px;">Subscription Plans</h2>
+                            <p style="color:var(--text-muted); font-size:1rem; margin-top:0.35rem;">Define membership tiers and recurring payment structures</p>
                         </div>
-                        <button class="btn btn-primary" onclick="openModal('createPlanModal')" style="padding:0.75rem 1.5rem; font-weight:700;">+ Create New Plan</button>
+                        <button class="btn btn-primary" onclick="openModal('createPlanModal')" style="padding:1rem 2rem; font-weight:800; border-radius:16px; box-shadow: 0 10px 25px rgba(220, 67, 67, 0.2);">
+                            <span>+</span> Create New Plan
+                        </button>
                     </div>
 
-                    <div class="glass-card" style="padding:0; overflow:hidden; border-radius:20px;">
+                    <div class="glass-card" style="padding:0; overflow:hidden; border-radius:24px; border:1px solid rgba(255,255,255,0.05);">
                         <div class="table-responsive">
                             <table style="width:100%; text-align:left; border-collapse:collapse;">
                                 <thead>
-                                    <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; background:rgba(255,255,255,0.03);">
-                                        <th style="padding:1.5rem;">Plan Details</th>
-                                        <th style="padding:1.5rem;">Price</th>
-                                        <th style="padding:1.5rem;">Subscribers</th>
-                                        <th style="padding:1.5rem;">Status</th>
-                                        <th style="padding:1.5rem; text-align:right;">Actions</th>
+                                    <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; background:rgba(255,255,255,0.03); font-weight:800;">
+                                        <th style="padding:1.75rem 2rem;">Plan Tier</th>
+                                        <th style="padding:1.75rem 2rem;">Pricing Structure</th>
+                                        <th style="padding:1.75rem 2rem;">Enrollment</th>
+                                        <th style="padding:1.75rem 2rem;">Stripe Status</th>
+                                        <th style="padding:1.75rem 2rem; text-align:right;">Operations</th>
                                     </tr>
                                 </thead>
-                                <tbody id="paymentPlansTableBody" style="font-size:0.95rem;">
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:1.5rem;">
-                                            <strong style="display:block; color:#fff; font-size:1.1rem;">Monthly Academy Fee</strong>
-                                            <span style="color:var(--text-muted); font-size:0.85rem;">Full training access + match fees</span>
-                                        </td>
-                                        <td style="padding:1.5rem;"><span style="color:#4ade80; font-weight:900; font-size:1.1rem;">£45.00</span> / month</td>
-                                        <td style="padding:1.5rem;"><span class="badge" style="background:rgba(59,130,246,0.1); color:#60a5fa; padding:0.4rem 0.8rem;">142 Active</span></td>
-                                        <td style="padding:1.5rem;"><span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span></td>
-                                        <td style="padding:1.5rem; text-align:right;">
-                                            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
-                                                <button class="btn btn-text btn-small" onclick="editPlan('plan_1')">Edit</button>
-                                                <button class="btn btn-text btn-small" onclick="assignPlan('plan_1')">Assign</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td style="padding:1.5rem;">
-                                            <strong style="display:block; color:#fff; font-size:1.1rem;">Elite Training Add-on</strong>
-                                            <span style="color:var(--text-muted); font-size:0.85rem;">Additional performance coaching sessions</span>
-                                        </td>
-                                        <td style="padding:1.5rem;"><span style="color:#4ade80; font-weight:900; font-size:1.1rem;">£25.00</span> / month</td>
-                                        <td style="padding:1.5rem;"><span class="badge" style="background:rgba(59,130,246,0.1); color:#60a5fa; padding:0.4rem 0.8rem;">42 Active</span></td>
-                                        <td style="padding:1.5rem;"><span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span></td>
-                                        <td style="padding:1.5rem; text-align:right;">
-                                            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
-                                                <button class="btn btn-text btn-small" onclick="editPlan('plan_2')">Edit</button>
-                                                <button class="btn btn-text btn-small" onclick="assignPlan('plan_2')">Assign</button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                <tbody id="paymentPlansTableBody" style="font-size:1rem;">
+                                    <!-- Dynamic rows -->
                                 </tbody>
                             </table>
                         </div>
@@ -555,20 +532,44 @@
                 </div>
             </div>
 
-                <!-- Financial Stats Preview below -->
-                <div class="dash-grid"
-                    style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:2rem;">
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <div class="section-title">📊 Revenue Overview</div>
-                        <div
-                            style="height:150px; display:flex; align-items:center; justify-content:center; border:1px dashed rgba(255,255,255,0.1); border-radius:12px; color:var(--text-muted); font-size:0.85rem;">
-                            Revenue chart will appear here
+                <!-- Secondary Revenue Breakdown -->
+                <div class="dash-grid" style="display:grid; grid-template-columns:1.5fr 1fr; gap:2rem; margin-top:3rem;">
+                    <div class="glass-card" style="padding:2rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                            <h3 style="margin:0; color:#fff; font-size:1.25rem; font-weight:800;">Revenue Velocity</h3>
+                            <select style="background:rgba(255,255,255,0.05); border:none; color:var(--text-muted); padding:0.5rem 1rem; border-radius:10px; font-size:0.85rem; font-weight:700;">
+                                <option>Last 30 Days</option>
+                                <option>Last 6 Months</option>
+                                <option>Year to Date</option>
+                            </select>
+                        </div>
+                        <div style="height:250px; display:flex; align-items:center; justify-content:center; border:2px dashed rgba(255,255,255,0.05); border-radius:20px; color:rgba(255,255,255,0.2); font-weight:700;">
+                            Interactive Financial Visualization Engine
                         </div>
                     </div>
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <div class="section-title">🔔 Recent Transactions</div>
-                        <div id="financeTransactions" style="font-size:0.85rem; color:var(--text-muted);">
-                            No recent transactions found.
+                    <div class="glass-card" style="padding:2rem;">
+                        <h3 style="margin:0 0 2rem; color:#fff; font-size:1.25rem; font-weight:800;">Audit Log</h3>
+                        <div id="financeTransactions" style="display:flex; flex-direction:column; gap:1.25rem;">
+                            <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem;">
+                                    <strong style="color:#fff;">Subscription Renewal</strong>
+                                    <span style="color:#4ade80; font-weight:800;">+£45.00</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                                    <span>James Wilson</span>
+                                    <span>2 mins ago</span>
+                                </div>
+                            </div>
+                            <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem;">
+                                    <strong style="color:#fff;">Kit Purchase</strong>
+                                    <span style="color:#4ade80; font-weight:800;">+£22.50</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                                    <span>Sarah Palmer</span>
+                                    <span>45 mins ago</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

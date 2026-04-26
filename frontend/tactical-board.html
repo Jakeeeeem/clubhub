@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical Strategy Board — ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="design-system.css">
+    <link rel="stylesheet" href="unified-nav.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --pitch-green: #2d5a27;
+            --pitch-line: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            background: #0a0a0c;
+            overflow-x: hidden;
+        }
+
+        .tactical-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            height: calc(100vh - 70px);
+            gap: 1.5rem;
+            padding: 1.5rem;
+            margin-top: 70px;
+        }
+
+        /* Left Sidebar: Assets & Tools */
+        .assets-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Center: The Pitch */
+        .pitch-viewport {
+            background: rgba(0,0,0,0.3);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .pitch-canvas {
+            width: 95%;
+            aspect-ratio: 2/3;
+            background: var(--pitch-green);
+            background-image: url('https://w0.peakpx.com/wallpaper/384/261/HD-wallpaper-football-pitch-soccer-field-top-view-soccer-concepts-soccer-background-football.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 4px solid var(--pitch-line);
+            border-radius: 12px;
+            position: relative;
+            cursor: crosshair;
+        }
+
+        /* Pins (Players/Equipment) */
+        .tactical-pin {
+            position: absolute;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: white;
+            cursor: grab;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s;
+            user-select: none;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .tactical-pin.animating {
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tactical-pin:active {
+            cursor: grabbing;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .player-home { background: linear-gradient(135deg, #ef4444, #991b1b); border: 2px solid white; }
+        .player-away { background: linear-gradient(135deg, #3b82f6, #1e40af); border: 2px solid white; }
+        .equipment { background: transparent; font-size: 1.5rem; box-shadow: none; border: none; }
+
+        /* Equipment Tray */
+        .eq-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .eq-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: center;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .eq-item:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+        }
+
+        .eq-item i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        /* Animation Timeline */
+        .timeline-controls {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 15, 20, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .timeline-btn {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .timeline-btn:hover { opacity: 1; }
+
+        /* Right Sidebar: Details */
+        .details-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .formation-preview {
+            aspect-ratio: 4/3;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            margin-top: 1rem;
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 1200px) {
+            .tactical-container {
+                grid-template-columns: 240px 1fr;
+            }
+            .details-sidebar { display: none; }
+        }
+
+        @media (max-width: 991px) {
+            .tactical-container {
+                grid-template-columns: 1fr;
+            }
+            .assets-sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
+    
+    <header class="header"></header>
+
+    <div class="tactical-container">
+        <!-- Asset Tray -->
+        <aside class="assets-sidebar">
+            <div class="glass-card" style="padding:1.5rem;">
+                <h3 style="color:#fff; margin-bottom:1rem; font-size:1.1rem;">🏟️ Pitch Assets</h3>
+                
+                <div class="nav-group-title" style="margin-top:0;">Squad Players</div>
+                <div class="eq-grid" style="margin-bottom:1.5rem;">
+                    <div class="eq-item" draggable="true" data-type="player" ondragstart="handleTrayDragStart(event, 'player', 'P')">
+                        <span style="font-size:1.5rem;">👤</span>
+                        <span style="display:block; font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem;">Player</span>
+                    </div>
+                </div>
+
+                <div class="nav-group-title">Equipment</div>
+                <div class="eq-grid">
+                    <div class="eq-item" draggable="true" data-type="cone" ondragstart="handleTrayDragStart(event, 'cone')">
+                        <span>🟠</span>
+                        <span style="display:block; font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem;">Cone</span>
+                    </div>
+                    <div class="eq-item" draggable="true" data-type="goal" ondragstart="handleTrayDragStart(event, 'goal')">
+                        <span>🥅</span>
+                        <span style="display:block; font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem;">Goal</span>
+                    </div>
+                    <div class="eq-item" draggable="true" data-type="hurdle" ondragstart="handleTrayDragStart(event, 'hurdle')">
+                        <span>🚧</span>
+                        <span style="display:block; font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem;">Hurdle</span>
+                    </div>
+                    <div class="eq-item" draggable="true" data-type="bib-blue" ondragstart="handleTrayDragStart(event, 'bib-blue')">
+                        <span>👕</span>
+                        <span style="display:block; font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem;">Blue Bib</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" style="width:100%; margin-top:2rem;" onclick="TacticalBoard.clearEquipment()">Clear All Equipment</button>
+            </div>
+        </aside>
+
+        <!-- Main Pitch -->
+        <main class="pitch-viewport">
+            <div id="activePitchArea" class="pitch-canvas">
+                <!-- Pins are rendered here -->
+            </div>
+
+            <!-- Timeline Controls -->
+            <div class="timeline-controls">
+                <button class="timeline-btn" onclick="TacticalBoard.prevFrame()" title="Previous Frame">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                
+                <button class="btn btn-primary" id="playAnimationBtn" onclick="TacticalBoard.togglePlayback()" style="border-radius:50px; min-width:100px;">
+                    ▶ Play
+                </button>
+
+                <button class="timeline-btn" onclick="TacticalBoard.nextFrame()" title="Next Frame">
+                    <i class="fas fa-step-forward"></i>
+                </button>
+
+                <div style="width:1px; height:20px; background:rgba(255,255,255,0.1);"></div>
+
+                <div id="currentFrameLabel" style="font-size:0.85rem; font-weight:700; color:#fff; min-width:80px; text-align:center;">
+                    Frame 1/1
+                </div>
+
+                <button class="btn btn-secondary btn-small" onclick="TacticalBoard.addFrame()" style="border-radius:50px;">
+                    + New Frame
+                </button>
+            </div>
+        </main>
+
+        <!-- Scenario Controls -->
+        <aside class="details-sidebar">
+            <div class="glass-card" style="padding:1.5rem;">
+                <h3 style="color:#fff; margin-bottom:1rem; font-size:1.1rem;">📋 Scenario Details</h3>
+                
+                <div class="form-group">
+                    <label>Base Formation</label>
+                    <select id="tacticalFormationSelect" onchange="TacticalBoard.setFormation(this.value)" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:12px;">
+                        <option value="4-3-3">4-3-3 (Attack)</option>
+                        <option value="4-4-2">4-4-2 (Classic)</option>
+                        <option value="3-5-2">3-5-2 (Balanced)</option>
+                        <option value="5-3-2">5-3-2 (Defensive)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top:1.5rem;">
+                    <label>Scenario Description</label>
+                    <textarea placeholder="Explain the objective of this drill..." style="width:100%; height:100px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:12px; padding:0.75rem; font-size:0.85rem; resize:none;"></textarea>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:1rem; margin-top:2rem;">
+                    <button class="btn btn-primary" style="width:100%; padding:1rem;" onclick="TacticalBoard.saveFormation()">
+                        <i class="fas fa-save" style="margin-right:0.5rem;"></i> Save Scenario
+                    </button>
+                    <button class="btn btn-secondary" style="width:100%; padding:1rem;" onclick="TacticalBoard.shareToFeed()">
+                        <i class="fas fa-share-alt" style="margin-right:0.5rem;"></i> Share with Team
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-card" style="padding:1.5rem;">
+                <h3 style="color:#fff; margin-bottom:0.5rem; font-size:1rem;">💡 Pro Tip</h3>
+                <p style="color:var(--text-muted); font-size:0.8rem; line-height:1.5;">
+                    Add multiple frames to create an animated sequence. Click 'Play' to visualize player movement and transitions during the drill.
+                </p>
+            </div>
+        </aside>
+    </div>
+
+    <script src="app-state.js"></script>
+    <script src="api-service.js?v=20260424_v3"></script>
+    <script src="unified-nav.js?v=20260424_v3"></script>
+    <script src="tactical-logic.js?v=20260424_v3"></script>
+    <script>
+        function handleTrayDragStart(e, type, label = '') {
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+                source: 'tray',
+                type: type,
+                label: label
+            }));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.initializeTacticalBoard) {
+                window.initializeTacticalBoard();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -2449,135 +2449,75 @@ if (typeof ApiService === 'undefined') {
     const demoClubs = [
       {
         id: "demo-club-id",
-        name: "Pro Group Demo",
+        name: "ClubHub United Academy",
         location: "London, UK",
         sport: "Football",
-        member_count: 142,
+        member_count: 184,
         is_primary: true,
         logo_url: "images/logo.png",
-        description: "Premier demo football club showcasing ClubHub features",
+        description: "Premier professional academy showcasing elite development pathways.",
         founded_year: 1995,
         colors: { primary: "#dc2626", secondary: "#ffffff" },
-      },
-      {
-        id: "g2",
-        name: "Riverside Academy",
-        location: "Manchester, UK",
-        sport: "Football",
-        member_count: 85,
-        is_primary: false,
-        logo_url: "images/logo.png",
-        description: "Elite youth development center focused on technical excellence.",
-        founded_year: 2010,
-        colors: { primary: "#2563eb", secondary: "#ffffff" },
-      },
-      {
-        id: "g3",
-        name: "Metro Sports Group",
-        location: "London, UK",
-        sport: "Multi-Sport",
-        member_count: 320,
-        is_primary: false,
-        logo_url: "images/logo.png",
-        description: "A community sports hub offering tennis, football, and swimming.",
-        founded_year: 1988,
-        colors: { primary: "#16a34a", secondary: "#ffffff" },
       }
+    ];
+
+    const players = [
+      { id: "p1", first_name: "Marcus", last_name: "Thompson", email: "marcus.t@example.com", position: "Forward", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t1", team_name: "Under 16s Squad" },
+      { id: "p2", first_name: "Liam", last_name: "Brown", email: "liam.b@example.com", position: "Midfielder", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t1", team_name: "Under 16s Squad" },
+      { id: "p3", first_name: "David", last_name: "Williams", email: "david.w@example.com", position: "Goalkeeper", role: "player", payment_status: "paid", plan_name: "Monthly Training Fee", team_id: "t2", team_name: "Under 12s Academy" },
+      { id: "p4", first_name: "Jordan", last_name: "Smith", email: "jordan.s@example.com", position: "Defender", role: "player", payment_status: "pending", plan_name: "Monthly Training Fee", team_id: "t2", team_name: "Under 12s Academy" },
+      { id: "p5", first_name: "Leo", last_name: "Messi", email: "leo.m@example.com", position: "Forward", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t3", team_name: "First Team" },
+      { id: "p6", first_name: "Sarah", last_name: "Davies", email: "sarah.d@example.com", position: "Midfielder", role: "player", payment_status: "paid", plan_name: "Monthly Training Fee", team_id: "t2", team_name: "Under 12s Academy" },
+      { id: "p7", first_name: "Tom", last_name: "Harris", email: "tom.h@example.com", position: "Defender", role: "player", payment_status: "overdue", plan_name: null, team_id: "t1", team_name: "Under 16s Squad" },
+      { id: "p8", first_name: "Jack", last_name: "Grealish", email: "jack.g@example.com", position: "Winger", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t3", team_name: "First Team" },
+      { id: "p9", first_name: "Harry", last_name: "Kane", email: "harry.k@example.com", position: "Striker", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t3", team_name: "First Team" },
+      { id: "p10", first_name: "Bukayo", last_name: "Saka", email: "bukayo.s@example.com", position: "Winger", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t3", team_name: "First Team" }
+    ];
+
+    const staff = [
+      { id: "s1", first_name: "Alex", last_name: "Morgan", role: "coach", email: "alex.m@clubhub.com", phone: "+44 7700 900111", join_date: "2023-01-10", verified_scout: true, team_id: "t2" },
+      { id: "s2", first_name: "Sam", last_name: "Riley", role: "coach", email: "sam.r@clubhub.com", phone: "+44 7700 900222", join_date: "2023-02-15", verified_scout: false, team_id: "t1" },
+      { id: "s3", first_name: "David", last_name: "Webb", role: "coach", email: "david.w@clubhub.com", phone: "+44 7700 900333", join_date: "2022-11-20", verified_scout: true, team_id: "t3" },
+      { id: "s4", first_name: "Jürgen", last_name: "Klopp", role: "staff", email: "klopp@clubhub.com", phone: "+44 7700 900444", join_date: "2021-11-20", verified_scout: false }
+    ];
+
+    const teams = [
+      { id: "t1", name: "Under 16s Squad", coach_name: "Sam Riley", coachId: "s2", player_count: 3, ageGroup: "U16", groupId: "demo-club-id" },
+      { id: "t2", name: "Under 12s Academy", coach_name: "Alex Morgan", coachId: "s1", player_count: 3, ageGroup: "U12", groupId: "demo-club-id" },
+      { id: "t3", name: "First Team", coach_name: "David Webb", coachId: "s3", player_count: 4, ageGroup: "Senior", groupId: "demo-club-id" }
     ];
 
     return {
       groups: demoClubs,
-      clubs: demoClubs, // Added for compatibility
-      players: [
-        { id: "demo-player-id", first_name: "David", last_name: "Williams", email: "demo-player@clubhub.com", position: "Forward", payment_status: "paid", attendance_rate: 95, date_of_birth: "2006-05-15", monthly_fee: 50.0, team_name: "Under 18s Elite", team_id: "t1" },
-        { id: "p2", first_name: "Jordan", last_name: "Smith", email: "jordan@example.com", position: "Midfielder", payment_status: "pending", attendance_rate: 88, date_of_birth: "2007-08-22", monthly_fee: 50.0, team_name: "Under 18s Elite", team_id: "t1" },
-        { id: "p3", first_name: "Leo", last_name: "Messi", email: "leo@example.com", position: "Forward", payment_status: "paid", attendance_rate: 100, date_of_birth: "1987-06-24", monthly_fee: 500.0, team_name: "Under 16s Development", team_id: "t2" },
-        { id: "p4", first_name: "Marcus", last_name: "Thompson", email: "marcus@example.com", position: "Defender", payment_status: "paid", attendance_rate: 92, date_of_birth: "2005-11-03", monthly_fee: 45.0, team_name: "First Team", team_id: "t3" },
-        { id: "p5", first_name: "Sarah", last_name: "Davies", email: "sarah@example.com", position: "Midfielder", payment_status: "paid", attendance_rate: 85, date_of_birth: "2008-02-14", monthly_fee: 40.0, team_name: "Riverside U16", team_id: "t4" },
-        { id: "p6", first_name: "Tom", last_name: "Harris", email: "tom@example.com", position: "Goalkeeper", payment_status: "overdue", attendance_rate: 78, date_of_birth: "2006-09-30", monthly_fee: 50.0, team_name: "Under 18s Elite", team_id: "t1" }
-      ],
-      staff: [
-        {
-          id: "demo-coach-id",
-          first_name: "Michael",
-          last_name: "Thompson",
-          role: "Head Coach",
-          email: "demo-coach@clubhub.com",
-          phone: "+44 7700 900111",
-          join_date: "2023-01-10",
-          verified_scout: true
-        },
-        {
-          id: "s3",
-          first_name: "Jürgen",
-          last_name: "Klopp",
-          role: "Technical Lead",
-          email: "klopp@example.com",
-          phone: "+44 7700 900333",
-          join_date: "2021-11-20"
-        }
-      ],
-      teams: [
-        { id: "t1", name: "Under 18s Elite", members: 22, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["demo-player-id", "p2", "p6"], sport: "Football", ageGroup: "U18", groupId: "demo-club-id" },
-        { id: "t2", name: "Under 16s Development", members: 18, coach: "Michael Thompson", coachId: "demo-coach-id", players: ["p3"], sport: "Football", ageGroup: "U16", groupId: "demo-club-id" },
-        { id: "t3", name: "First Team", members: 25, coach: "Jürgen Klopp", coachId: "s3", players: ["p4"], sport: "Football", ageGroup: "Senior", groupId: "demo-club-id" },
-        { id: "t4", name: "Riverside U16", members: 20, coach: "Sarah Evans", coachId: "s4", players: ["p5"], sport: "Football", ageGroup: "U16", groupId: "g2" },
-        { id: "t5", name: "Metro Tennis A", members: 12, coach: "John Doe", coachId: "s5", players: [], sport: "Tennis", ageGroup: "Adult", groupId: "g3" }
-      ],
+      clubs: demoClubs,
+      players: players,
+      staff: staff,
+      teams: teams,
       tournaments: [
-        { id: "mock_t1", title: "Elite Academy Premier League", event_date: "2026-04-20", status: "Live", type: "league" },
-        { id: "mock_t2", title: "ClubHub Knockout Cup", event_date: "2026-05-15", status: "Active", type: "knockout" }
+        { id: "tour_1", title: "Elite Academy Premier League", date: "2026-04-20", status: "Live", type: "league" },
+        { id: "tour_2", title: "ClubHub Knockout Cup", date: "2026-05-15", status: "Active", type: "knockout" }
       ],
       events: [
         { id: "e1", title: "Summer Talent ID Camp", date: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0], time: "09:00", location: "Main Stadium", type: "camp", status: "upcoming", description: "Our flagship talent identification camp for ages 8-16.", attendees: 45 },
-        { id: "e2", title: "Elite Training Session", date: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0], time: "18:30", location: "Field A", type: "training", status: "upcoming", team_name: "Under 18s Elite", team_id: "t1" },
-        { id: "e3", title: "Match vs United FC", date: new Date(Date.now() + 86400000 * 4).toISOString().split("T")[0], time: "14:00", location: "Away Ground", type: "match", status: "upcoming", team_name: "First Team", team_id: "t3" },
-        { id: "e4", title: "Riverside Technical Clinic", date: new Date(Date.now() + 86400000 * 1).toISOString().split("T")[0], time: "17:00", location: "Riverside Pitch", type: "clinic", status: "upcoming", team_name: "Riverside U16", team_id: "t4" },
-        { id: "e5", title: "Metro Tennis Open Day", date: new Date(Date.now() + 86400000 * 10).toISOString().split("T")[0], time: "10:00", location: "Metro Court 1", type: "open-day", status: "upcoming", team_name: "Metro Tennis A", team_id: "t5" },
-        { id: "mock_t1", title: "Elite Academy Premier League", date: "2026-04-20", type: "tournament", status: "Live" },
-        { id: "mock_t2", title: "ClubHub Knockout Cup", date: "2026-05-15", type: "tournament", status: "Active" }
-      ],
-      bookings: [
-        { id: "b1", event_id: "e1", event_title: "Summer Talent ID Camp", date: new Date(Date.now() + 86400000 * 7).toISOString(), status: "confirmed", qr_code: "DEMO_QR_CODE_123", amount: 45 },
-        { id: "b2", event_id: "v-book-1", event_title: "Main Stadium Rental", date: new Date(Date.now() + 86400000 * 3).toISOString(), status: "confirmed", location: "Main Stadium", amount: 50 }
+        { id: "e2", title: "Elite Training Session", date: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0], time: "18:30", location: "Field A", type: "training", status: "upcoming", team_name: "Under 16s Squad", team_id: "t1" },
+        { id: "e3", title: "First Team Match Day", date: new Date(Date.now() + 86400000 * 4).toISOString().split("T")[0], time: "14:00", location: "Home Stadium", type: "match", status: "upcoming", team_name: "First Team", team_id: "t3" }
       ],
       payments: [
-        {
-          id: "pay1",
-          amount: 50,
-          status: "paid",
-          description: "Monthly Subscription - June",
-          date: new Date().toISOString(),
-          player_name: "David Williams",
-          method: "Stripe",
-        }
+        { id: "pay1", amount: 75, status: "paid", description: "Monthly Subscription - Marcus Thompson", date: new Date().toISOString(), player_name: "Marcus Thompson", method: "Stripe" },
+        { id: "pay2", amount: 35, status: "paid", description: "Training Fee - Sarah Davies", date: new Date(Date.now() - 86400000).toISOString(), player_name: "Sarah Davies", method: "Apple Pay" }
       ],
       feed: [
         {
           id: "f1",
           title: "New Tactical Analysis Tool Launched",
           excerpt: "Analyze your team's performance with our new professional-grade tactical board.",
-          content: "We're excited to announce the rollout of our new tactical analysis board for all coaches.",
           imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800",
           date: new Date().toISOString(),
-          author: "ClubHub Admin",
-          type: "announcement",
-          roles: ["coach", "admin"]
+          type: "announcement"
         }
       ],
       messages: [
-        {
-          id: "m2",
-          threadId: "t2",
-          senderId: "demo-coach-id",
-          senderName: "Michael Thompson",
-          subject: "Training Session Change",
-          body: "Hi team, training tomorrow is moved to 6 PM at Field B.",
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          priority: "normal",
-          type: "team",
-          category: "Schedule"
-        }
+        { id: "m1", threadId: "t1", senderName: "Alex Morgan", subject: "Academy Update", body: "Check the new schedule for U12s.", timestamp: new Date().toISOString() }
       ],
       listings: [
         {

@@ -662,13 +662,22 @@
         };
 
         async function fetchTeamPlayers(teamName) {
-            // Simulated API call
-            return [
-                { id: 'p1', name: 'Marcus Thompson' },
-                { id: 'p2', name: 'Liam Brown' },
-                { id: 'p3', name: 'James Wilson' },
-                { id: 'p4', name: 'Sam Riley' }
-            ];
+            try {
+                const data = await apiService.getAdminDashboardData();
+                const allPlayers = data.players || [];
+                // Find players assigned to this team name
+                const filtered = allPlayers.filter(p => p.team_name === teamName);
+                
+                if (filtered.length === 0) {
+                    // Fallback to all players if none found specifically for this team in demo
+                    return allPlayers.map(p => ({ id: p.id, name: `${p.first_name} ${p.last_name}` }));
+                }
+                
+                return filtered.map(p => ({ id: p.id, name: `${p.first_name} ${p.last_name}` }));
+            } catch (e) {
+                console.warn("Failed to fetch players for scorer selection", e);
+                return [];
+            }
         }
 
         window.addScorerField = function(side) {

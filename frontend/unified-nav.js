@@ -2211,14 +2211,11 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
     else if (p.includes("player-") || p.includes("schedule") || p.includes("performance")) finalRole = "player";
     else if (dashboardMode === "player") finalRole = "player";
     
-    // Safety check: if user is admin but on a coach page, stay admin (we'll handle redirect or view switch)
+    // Safety check: if user is admin but on a coach page, stay admin
     if (userRole === "admin" && finalRole === "coach") {
-        // If they are on a coach page, we allow them to see it as coach OR redirect
-        // For now, let's keep them as Admin so they see Admin sidebar
         finalRole = "admin";
     }
-    else if (localStorage.getItem("isDemoSession") === "true") {
-        // Fallback for demo session based on page
+
     const finalIsSuperAdmin = finalRole === "superadmin";
     const finalIsAdmin = finalRole === "admin";
     const finalIsCoach = finalRole === "coach";
@@ -2314,10 +2311,6 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
         `;
     }
 
-    nav.innerHTML = menuHtml;
-    this.stripHashLinks(nav);
-
-    console.log("✅ Sidebar Menu Rendered for:", finalRole);
     nav.innerHTML = menuHtml;
     this.stripHashLinks(nav);
 

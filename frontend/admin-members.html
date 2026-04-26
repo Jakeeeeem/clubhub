@@ -551,6 +551,35 @@
             </form>
         </div>
     </div>
+
+    <!-- Assign Plan Modal -->
+    <div id="assignPlanModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width:450px;">
+            <span class="close" onclick="closeModal('assignPlanModal')">&times;</span>
+            <div style="text-align:center; margin-bottom:1.5rem;">
+                <div style="width:50px; height:50px; background:rgba(220,38,38,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:1.5rem;">💳</div>
+                <h2 class="neon-text" style="font-size:1.3rem; margin:0;">Assign Subscription Plan</h2>
+                <p id="assignPlanMemberName" style="color:var(--text-muted); font-size:0.9rem; margin-top:0.5rem;">Member Name</p>
+            </div>
+            <form id="assignPlanForm" onsubmit="handleAssignPlan(event)">
+                <input type="hidden" id="assignPlanMemberId">
+                <div class="form-group">
+                    <label>Select Plan</label>
+                    <select id="planSelect" style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:10px;" required>
+                        <option value="">-- Loading Plans --</option>
+                    </select>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:10px; margin-top:1rem; border:1px solid rgba(255,255,255,0.05);">
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">This will create a recurring subscription for the member via Stripe. They will receive an email to confirm their payment details.</p>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('assignPlanModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Assign Plan →</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="app-state.js"></script>
     <script src="api-service.js?v=20260424_v3"></script>
     <script src="enhanced-login-handler.js"></script>
@@ -584,7 +613,7 @@
 
         async function loadMembers() {
             const container = document.getElementById('membersListContainer');
-            const tbody = container ? container.querySelector('tbody') : null;
+            const tbody = document.getElementById('membersTableBody');
             if (!tbody) return;
 
             try {
@@ -596,19 +625,33 @@
                     return;
                 }
 
-                tbody.innerHTML = members.map(m => `
+                tbody.innerHTML = members.map(m => {
+                    const isPlayer = (m.role || '').toLowerCase() === 'player';
+                    const planBadge = isPlayer ? (m.plan_name ? `<span class="badge" style="background:rgba(220,38,38,0.1); color:var(--primary); font-size:0.7rem; margin-top:0.25rem; display:block;">${m.plan_name}</span>` : `<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-muted); font-size:0.7rem; margin-top:0.25rem; display:block;">No Plan</span>`) : '';
+                    
+                    return `
                     <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                        <td data-label="Name" style="padding:1rem 0;">${m.first_name} ${m.last_name}</td>
-                        <td data-label="Role" style="padding:1rem 0;">${m.role || 'Member'}</td>
-                        <td data-label="Squad" style="padding:1rem 0;">${m.team_name || 'N/A'}</td>
+                        <td data-label="Name" style="padding:1rem 0;">
+                            <div style="font-weight:700; color:#fff;">${m.first_name} ${m.last_name}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${m.email || ''}</div>
+                        </td>
+                        <td data-label="Role" style="padding:1rem 0;">
+                            <span class="badge" style="background:rgba(255,255,255,0.05); color:#fff; font-size:0.7rem;">${(m.role || 'Member').toUpperCase()}</span>
+                        </td>
+                        <td data-label="Squad" style="padding:1rem 0; color:var(--text-muted);">${m.team_name || 'N/A'}</td>
                         <td data-label="Status" style="padding:1rem 0;">
                             <span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
+                            ${planBadge}
                         </td>
                         <td data-label="Actions" style="padding:1rem 0; text-align:right;">
-                            <button class="btn btn-text btn-small" onclick="showNotification('Member details coming soon', 'info')">View</button>
+                            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                                ${isPlayer ? `<button class="btn btn-text btn-small" style="color:var(--primary);" onclick="openAssignPlanModal('${m.id}', '${m.first_name} ${m.last_name}')">Assign Plan</button>` : ''}
+                                <button class="btn btn-text btn-small" onclick="showNotification('Member details coming soon', 'info')">View</button>
+                                <button class="btn btn-text btn-small" style="color:#f87171;" onclick="deleteMember('${m.id}')">🗑️</button>
+                            </div>
                         </td>
                     </tr>
-                `).join('');
+                `}).join('');
             } catch (e) {
                 console.error("Failed to load members:", e);
                 tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--accent-red);">Failed to load members.</td></tr>';
@@ -799,14 +842,63 @@
                 });
                 if (data && data.url) {
                     window.location.href = data.url;
-                } else {
-                    throw new Error(data?.error || "Failed to get management link");
                 }
             } catch (err) {
-                console.error("Stripe management error:", err);
-                showNotification("Error opening Stripe dashboard: " + err.message, "error");
+                showNotification("Error opening Stripe dashboard", "error");
             }
         }
+
+        // --- Assign Plan Logic ---
+        window.openAssignPlanModal = async function(memberId, name) {
+            const m = document.getElementById('assignPlanModal');
+            if (!m) return;
+            
+            document.getElementById('assignPlanMemberId').value = memberId;
+            document.getElementById('assignPlanMemberName').textContent = name;
+            m.style.display = 'flex';
+            
+            const select = document.getElementById('planSelect');
+            select.innerHTML = '<option value="">Loading plans...</option>';
+            
+            try {
+                const plans = await apiService.getSubscriptionPlans();
+                if (plans && plans.length > 0) {
+                    select.innerHTML = plans.map(p => `<option value="${p.id}">${p.name} (£${p.amount}/${p.interval})</option>`).join('');
+                } else {
+                    select.innerHTML = '<option value="">No active plans found</option>';
+                }
+            } catch (err) {
+                select.innerHTML = '<option value="">Error loading plans</option>';
+            }
+        };
+
+        window.handleAssignPlan = async function(e) {
+            e.preventDefault();
+            const memberId = document.getElementById('assignPlanMemberId').value;
+            const planId = document.getElementById('planSelect').value;
+            
+            if (!planId) return;
+            
+            try {
+                await apiService.post('/api/payments/assign-plan', { memberId, planId });
+                showNotification("Plan assigned successfully!", "success");
+                closeModal('assignPlanModal');
+                loadMembers();
+            } catch (err) {
+                showNotification("Failed to assign plan: " + err.message, "error");
+            }
+        };
+
+        window.deleteMember = async function(id) {
+            if (!confirm("Are you sure you want to remove this member?")) return;
+            try {
+                await apiService.delete(`/api/members/${id}`);
+                showNotification("Member removed", "success");
+                loadMembers();
+            } catch (err) {
+                showNotification("Failed to remove member", "error");
+            }
+        };
 
         // --- Scouting: Admin approvals loader ---
         async function loadScoutApprovals() {
