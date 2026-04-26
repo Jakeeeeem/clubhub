@@ -494,16 +494,42 @@ if (typeof ApiService === 'undefined') {
         }
     }
 
+    // --- MEMBER CREATION/DELETION ---
     if (endpoint.includes("/members") || endpoint.includes("/staff") || (endpoint.includes("/players") && !endpoint.includes("/dashboard"))) {
         const fb = this.getAdminDashboardFallback();
         const currentId = user.groupId || user.clubId || "demo-club-id";
         
+        if (method === "POST") {
+            const body = JSON.parse(options.body || "{}");
+            const newMember = {
+                id: "demo-" + Date.now(),
+                ...body,
+                created_at: new Date().toISOString(),
+                clubId: currentId,
+                status: 'active'
+            };
+            
+            if (endpoint.includes("/staff") || body.role === "coach") {
+                fb.staff.push(newMember);
+            } else {
+                fb.players.push(newMember);
+            }
+            
+            return { success: true, message: "Member added to demo session", member: newMember };
+        }
+
+        if (method === "DELETE") {
+            const id = endpoint.split('/').pop();
+            fb.players = fb.players.filter(p => p.id !== id);
+            fb.staff = fb.staff.filter(s => s.id !== id);
+            return { success: true, message: "Member removed from demo session" };
+        }
+
         const filteredPlayers = fb.players.filter(p => {
             const team = fb.teams.find(t => t.id === p.team_id);
             return team && team.groupId === currentId;
         });
 
-        // Handle role filtering
         if (endpoint.includes("role=coach")) return { success: true, coaches: fb.staff.filter(s => s.role.toLowerCase().includes("coach")) };
         return { 
             success: true, 
@@ -513,85 +539,62 @@ if (typeof ApiService === 'undefined') {
         };
     }
 
-    // --- VENUES & TOURNAMENTS ---
-    if (endpoint.includes("/venues")) {
+    // --- EVENTS, VENUES, TOURNAMENTS ---
+    if (endpoint.includes("/events") || endpoint.includes("/venues") || endpoint.includes("/tournaments") || endpoint.includes("/pitches")) {
         const fb = this.getAdminDashboardFallback();
-        return fb.pitches || [];
+        
+        if (method === "POST") {
+            const body = JSON.parse(options.body || "{}");
+            const newItem = {
+                id: "demo-" + Date.now(),
+                ...body,
+                status: 'active',
+                created_at: new Date().toISOString()
+            };
+
+            if (endpoint.includes("/venues") || endpoint.includes("/pitches")) {
+                fb.pitches = fb.pitches || [];
+                fb.pitches.push(newItem);
+            } else if (endpoint.includes("/tournaments")) {
+                fb.tournaments = fb.tournaments || [];
+                fb.tournaments.push(newItem);
+            } else {
+                fb.events.push(newItem);
+            }
+
+            return { success: true, message: "Item added to demo session", data: newItem };
+        }
+
+        if (method === "DELETE") {
+            const id = endpoint.split('/').pop();
+            fb.events = (fb.events || []).filter(e => e.id !== id);
+            fb.tournaments = (fb.tournaments || []).filter(t => t.id !== id);
+            fb.pitches = (fb.pitches || []).filter(p => p.id !== id);
+            return { success: true, message: "Item removed from demo session" };
+        }
+
+        if (endpoint.includes("/venues") || endpoint.includes("/pitches")) return fb.pitches || [];
+        if (endpoint.includes("/tournaments")) return fb.tournaments || [];
+        return fb.events || [];
     }
 
-    if (endpoint.match(/\/tournaments\/.*\/dashboard/)) {
-        return {
-            teams: [
-                { id: "t1", team_name: "Red Dragons", status: "approved" },
-                { id: "t2", team_name: "Blue Sharks", status: "approved" },
-                { id: "t3", team_name: "Green Giants", status: "approved" },
-                { id: "t4", team_name: "Yellow Stars", status: "approved" },
-                { id: "t5", team_name: "Black Knights", status: "approved" },
-                { id: "t6", team_name: "White Eagles", status: "approved" },
-                { id: "t7", team_name: "Silver Foxes", status: "approved" },
-                { id: "t8", team_name: "Golden Bears", status: "approved" }
-            ],
-            groups: [],
-            pitches: [],
-            matches: [
-                { id: "m1", round_number: 1, home_team: "Red Dragons", away_team: "Blue Sharks", home_score: 2, away_score: 1, played: true },
-                { id: "m2", round_number: 1, home_team: "Green Giants", away_team: "Yellow Stars", home_score: null, away_score: null, played: false },
-                { id: "m3", round_number: 1, home_team: "Black Knights", away_team: "White Eagles", home_score: 3, away_score: 0, played: true },
-                { id: "m4", round_number: 1, home_team: "Silver Foxes", away_team: "Golden Bears", home_score: null, away_score: null, played: false },
-                { id: "m5", round_number: 2, home_team: "Red Dragons", away_team: "Green Giants", home_score: null, away_score: null, played: false },
-                { id: "m6", round_number: 2, home_team: "Black Knights", away_team: "Silver Foxes", home_score: null, away_score: null, played: false },
-                { id: "m7", round_number: 3, home_team: "TBD", away_team: "TBD", home_score: null, away_score: null, played: false }
-            ],
-            stages: [{ id: "s1", name: "Knockout Stage" }]
-        };
-    }
-    
-    if (endpoint.includes("/generate-fixtures")) {
-        return { success: true };
-    }
-
-    if (endpoint.includes("/tournaments") || endpoint.includes("/events")) {
+    // --- EMAIL SENDING ---
+    if (endpoint.includes("/email/send")) {
         const fb = this.getAdminDashboardFallback();
-        return fb.tournaments || fb.events || [];
-    }
+        const body = JSON.parse(options.body || "{}");
+        
+        // Push email notification to feed
+        fb.feed.unshift({
+            id: "email-" + Date.now(),
+            author: "System",
+            title: "📧 Email Sent: " + (body.subject || "No Subject"),
+            content: `Sent to: ${body.to || body.recipient}. Preview: ${body.body || body.message}`,
+            date: new Date().toISOString(),
+            type: "activity"
+        });
 
-    // --- BIBS INVENTORY ---
-    if (endpoint.includes("/bibs")) {
-        if (method === "POST") return { success: true, message: "Demo bib added" };
-        if (method === "DELETE") return { success: true, message: "Demo bib removed" };
-        return [
-            { id: "bib1", color: "Orange", total_quantity: 24, available_quantity: 20, price: 0 },
-            { id: "bib2", color: "Blue", total_quantity: 24, available_quantity: 24, price: 0 }
-        ];
+        return { success: true, message: "Email sent (Simulated & Logged)" };
     }
-
-    // --- MESSAGES & FEED ---
-    if (endpoint.includes("/messages") || endpoint.includes("/feed") || endpoint.includes("/activity")) {
-        const fb = this.getAdminDashboardFallback();
-        return { success: true, messages: [], activity: fb.activity || [], feed: fb.feed || [] };
-    }
-
-    // --- PLATFORM ADMIN ---
-    if (endpoint.includes("/platform-admin")) {
-      return { 
-        success: true, 
-        stats: { total_users: 1242, total_groups: 86 }, 
-        groups: this.getAdminDashboardFallback().groups || [], 
-        users: [], 
-        verifications: [],
-        scout_verifications: [
-            { id: "scout-1", first_name: "David", last_name: "Beckham", club_name: "LA Galaxy", status: "pending", created_at: new Date().toISOString() },
-            { id: "scout-2", first_name: "Zinedine", last_name: "Zidane", club_name: "Real Madrid", status: "pending", created_at: new Date().toISOString() }
-        ]
-      };
-    }
-
-    // --- GENERIC SUCCESS FOR OTHER DASHBOARD REQUESTS ---
-    if (endpoint.includes("/admin") || endpoint.includes("/coach") || endpoint.includes("/player")) {
-      return { success: true, data: [] };
-    }
-
-    if (endpoint.includes("/api/health") || endpoint.includes("/health")) return { status: "healthy", service: "ClubHub Demo" };
 
     // --- STRIPE CONNECT ---
     if (endpoint.includes("/payments/stripe/connect/status")) {
@@ -603,21 +606,13 @@ if (typeof ApiService === 'undefined') {
         };
     }
     if (endpoint.includes("/payments/stripe/connect/onboard")) {
-        // Simulate setting connection status for demo purposes
         localStorage.setItem("stripeConnected", "true");
-        return { 
-            url: "https://connect.stripe.com/express/onboarding/demo_session_branded",
-            success: true 
-        };
+        return { url: "https://connect.stripe.com/express/onboarding/demo_session_branded", success: true };
     }
     if (endpoint.includes("/payments/stripe/connect/manage")) {
-        return { 
-            url: "https://dashboard.stripe.com/test/express/demo_branded_dashboard",
-            success: true 
-        };
+        return { url: "https://dashboard.stripe.com/test/express/demo_branded_dashboard", success: true };
     }
 
-    // Fallback for everything else in demo mode to prevent 403 crashes
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     if (isDemo) return { success: true, data: [] };
 
@@ -2470,33 +2465,24 @@ if (typeof ApiService === 'undefined') {
 
   getAdminDashboardFallback() {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
-    console.log(
-      isDemo
-        ? "✨ Using Rich Demo Admin Dashboard Data"
-        : "📚 Using admin dashboard fallback data",
-    );
+    
+    if (!isDemo) {
+        return {
+          groups: [], clubs: [], players: [], staff: [], events: [], teams: [], payments: [], products: [], campaigns: [], listings: [], tournaments: [],
+          statistics: { total_groups: 0, total_players: 0, total_staff: 0, total_events: 0, total_teams: 0, monthly_revenue: 0 }
+        };
+    }
 
-    if (!isDemo)
-      return {
-        groups: [],
-        players: [],
-        staff: [],
-        events: [],
-        teams: [],
-        payments: [],
-        products: [],
-        campaigns: [],
-        listings: [],
-        statistics: {
-          total_groups: 0,
-          total_players: 0,
-          total_staff: 0,
-          total_events: 0,
-          total_teams: 0,
-          monthly_revenue: 0,
-        },
-      };
+    // Initialize Demo Cache if not exists
+    if (!this._demoCache) {
+      console.log("✨ Initializing Persistent Demo Cache");
+      this._demoCache = this._getInitialDemoData();
+    }
+    
+    return this._demoCache;
+  }
 
+  _getInitialDemoData() {
     const demoClubs = [
       {
         id: "demo-club-id",
