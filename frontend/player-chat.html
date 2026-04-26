@@ -212,7 +212,7 @@
         </div>
 
         <!-- 💬 Squad Messenger Section -->
-        <div id="player-club-messenger" class="dashboard-section active" style="display:block; style="display: none;">
+        <div id="player-club-messenger" class="dashboard-section active" style="display:block;">
           <div class="glass-panel" id="player-messenger-mount" style="height: 80vh; overflow: hidden;"></div>
         </div>
 
@@ -1397,8 +1397,23 @@
   <script>
     // Wire messenger section to shared SquadMessenger
     let _playerMessengerMounted = false;
-    const _origShowPlayerSection = typeof showPlayerSection === 'function' ? showPlayerSection : null;
     document.addEventListener('DOMContentLoaded', () => {
+      // Auto-mount messenger on page load since this IS the chat page
+      if (window.SquadMessenger) {
+        SquadMessenger.mount('player-messenger-mount');
+        _playerMessengerMounted = true;
+        SquadMessenger.load();
+      } else {
+        // Retry once scripts have fully loaded
+        setTimeout(() => {
+          if (window.SquadMessenger && !_playerMessengerMounted) {
+            SquadMessenger.mount('player-messenger-mount');
+            _playerMessengerMounted = true;
+            SquadMessenger.load();
+          }
+        }, 800);
+      }
+
       // Intercept section switching at the navigation layer
       if (window.UnifiedNav && window.UnifiedNav.onSectionChange) {
         const _orig = window.UnifiedNav.onSectionChange;
