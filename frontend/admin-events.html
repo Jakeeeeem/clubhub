@@ -436,7 +436,7 @@
                         <h3 style="margin-bottom:0.5rem; color:#fff;">Connect with Stripe</h3>
                         <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">To start accepting
                             payments from members and parents, you need to link your group to a Stripe account.</p>
-                        <button class="btn btn-primary" onclick="startStripeOnboarding()" id="connect-stripe-btn"
+                        <button class="btn btn-primary" onclick="UnifiedNav.manageStripeAccount()" id="connect-stripe-btn"
                             style="padding:0.8rem 2rem;">
                             <i class="fa fa-plug" style="margin-right:0.5rem;"></i> Connect with Stripe
                         </button>
@@ -464,7 +464,7 @@
                         </div>
 
                         <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                            <button class="btn btn-secondary" onclick="manageStripeAccount()" style="width:100%;">
+                            <button class="btn btn-secondary" onclick="UnifiedNav.manageStripeAccount()" style="width:100%;">
                                 <i class="fa fa-external-link" style="margin-right:0.5rem;"></i> Go to Stripe Dashboard
                             </button>
                             <button class="btn btn-text" onclick="checkStripeStatus()"
@@ -623,9 +623,13 @@
                             <label>Capacity (Places)</label>
                             <input type="number" name="capacity" placeholder="0 for unlimited">
                         </div>
-                        <div class="form-group" style="display:flex; align-items:center; gap:0.5rem; margin-top:1.5rem;">
+                        <div class="form-group" style="display:flex; align-items:center; gap:0.5rem; margin-top:1rem;">
                             <input type="checkbox" name="sendEmail" id="sendEmailCheckbox" style="width:18px; height:18px;">
                             <label for="sendEmailCheckbox" style="margin:0; font-size:0.85rem;">Send email to participants now</label>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:center; gap:0.5rem; margin-top:1rem;">
+                            <input type="checkbox" name="bib_management" id="event-bib-mgmt" style="width:18px; height:18px;">
+                            <label for="event-bib-mgmt" style="margin:0; font-size:0.85rem; color: #4ade80; font-weight: 600;">Enable Bib Management</label>
                         </div>
                     </div>
                 </div>
@@ -790,7 +794,8 @@
                 type: formData.get('type'),
                 capacity: parseInt(formData.get('capacity')) || 0,
                 team_id: formData.get('target') === 'global' ? null : formData.get('target'),
-                notify_members: formData.get('sendEmail') === 'on'
+                notify_members: formData.get('sendEmail') === 'on',
+                bib_management: formData.get('bib_management') === 'on'
             };
 
             try {

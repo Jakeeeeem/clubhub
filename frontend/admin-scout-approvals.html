@@ -416,7 +416,7 @@
                         <h3 style="margin-bottom:0.5rem; color:#fff;">Connect with Stripe</h3>
                         <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">To start accepting
                             payments from members and parents, you need to link your group to a Stripe account.</p>
-                        <button class="btn btn-primary" onclick="startStripeOnboarding()" id="connect-stripe-btn"
+                        <button class="btn btn-primary" onclick="UnifiedNav.manageStripeAccount()" id="connect-stripe-btn"
                             style="padding:0.8rem 2rem;">
                             <i class="fa fa-plug" style="margin-right:0.5rem;"></i> Connect with Stripe
                         </button>
@@ -444,7 +444,7 @@
                         </div>
 
                         <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                            <button class="btn btn-secondary" onclick="manageStripeAccount()" style="width:100%;">
+                            <button class="btn btn-secondary" onclick="UnifiedNav.manageStripeAccount()" style="width:100%;">
                                 <i class="fa fa-external-link" style="margin-right:0.5rem;"></i> Go to Stripe Dashboard
                             </button>
                             <button class="btn btn-text" onclick="checkStripeStatus()"
@@ -758,44 +758,7 @@
             }
         }
 
-        async function startStripeOnboarding() {
-            try {
-                const btn = document.getElementById('connect-stripe-btn');
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Redirecting...';
-
-                const data = await apiService.makeRequest('/payments/stripe/connect/onboard', {
-                    method: 'POST'
-                });
-
-                if (data && data.url) {
-                    window.location.href = data.url;
-                } else {
-                    throw new Error(data?.error || "Failed to get onboarding URL");
-                }
-            } catch (err) {
-                showNotification("Error starting onboarding: " + err.message, "error");
-                const btn = document.getElementById('connect-stripe-btn');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-plug"></i> Connect with Stripe';
-            }
-        }
-
-        async function manageStripeAccount() {
-            try {
-                const data = await apiService.makeRequest('/payments/stripe/connect/login-link', {
-                    method: 'POST'
-                });
-                if (data && data.url) {
-                    window.location.href = data.url;
-                } else {
-                    throw new Error(data?.error || "Failed to get management link");
-                }
-            } catch (err) {
-                console.error("Stripe management error:", err);
-                showNotification("Error opening Stripe dashboard: " + err.message, "error");
-            }
-        }
+        // Local stripe functions removed in favor of UnifiedNav
 
         // --- Scouting: Admin approvals loader ---
         async function loadScoutApprovals() {

@@ -775,43 +775,7 @@
             }
         }
 
-        async function startStripeOnboarding() {
-            try {
-                const btn = document.getElementById('connect-stripe-btn');
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Redirecting to Stripe...';
-
-                const data = await apiService.makeRequest('/payments/stripe/connect/onboard', {
-                    method: 'POST'
-                });
-
-                if (data && data.url) {
-                    window.location.href = data.url;
-                } else {
-                    throw new Error(data?.error || "Failed to get onboarding URL");
-                }
-            } catch (err) {
-                showNotification("Error: " + err.message, "error");
-                const btn = document.getElementById('connect-stripe-btn');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-bolt"></i> Connect My Club to Stripe';
-            }
-        }
-
-        async function manageStripeAccount() {
-            try {
-                const data = await apiService.makeRequest('/payments/stripe/connect/login-link', {
-                    method: 'POST'
-                });
-                if (data && data.url) {
-                    window.location.href = data.url;
-                } else {
-                    throw new Error(data?.error || "Failed to get login link");
-                }
-            } catch (err) {
-                showNotification("Error: " + err.message, "error");
-            }
-        }
+        // Local stripe functions removed in favor of UnifiedNav.managedStripeAccount
 
         document.addEventListener('DOMContentLoaded', () => {
             if (window.location.hash === '#finances' || document.getElementById('finances').classList.contains('active')) {

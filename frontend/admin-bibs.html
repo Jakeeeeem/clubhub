@@ -211,30 +211,42 @@
     <script src="app-state.js"></script>
     <script src="api-service.js?v=20260424_v3"></script>
     <script src="unified-nav.js?v=20260424_v3"></script>
-    <script>
-        async function loadTeamRoster(teamId) {
+          async function loadTeamRoster(targetId) {
             const container = document.getElementById('rosterContainer');
             if (!container || typeof apiService === 'undefined') return;
             
             try {
-                const data = await apiService.getAdminDashboardData();
-                const players = (data.players || []).filter(p => p.team_id === teamId || p.teamId === teamId);
+                let players = [];
+                if (targetId.startsWith('event_')) {
+                    const eventId = targetId.replace('event_', '');
+                    players = await apiService.getEventRoster(eventId);
+                    // Standardize keys if needed (event roster might have user_id instead of id)
+                    players = players.map(p => ({
+                        ...p,
+                        id: p.id || p.user_id,
+                        first_name: p.first_name || 'Member',
+                        last_name: p.last_name || ''
+                    }));
+                } else {
+                    const data = await apiService.getAdminDashboardData();
+                    players = (data.players || []).filter(p => p.team_id === targetId || p.teamId === targetId);
+                }
                 
                 if (players.length === 0) {
-                    container.innerHTML = '<div style="padding:3rem; text-align:center; color:var(--text-muted);">No players found in this squad.</div>';
+                    container.innerHTML = '<div style="padding:3rem; text-align:center; color:var(--text-muted);">No players found for this selection.</div>';
                     return;
                 }
 
                 container.innerHTML = players.map(p => `
                     <div class="player-row">
-                        <div class="user-avatar-sm" style="background:rgba(255,255,255,0.05);">${p.first_name[0]}</div>
+                        <div class="user-avatar-sm" style="background:rgba(255,255,255,0.05);">${(p.first_name || 'M')[0]}</div>
                         <div style="flex:1;">
                             <strong style="display:block; color:#fff; font-size:0.9rem;">${p.first_name} ${p.last_name}</strong>
                             <span style="font-size:0.75rem; color:var(--text-muted);">${p.position || 'Unassigned'}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:1.5rem;">
                             <div class="form-group" style="margin:0; width:60px;">
-                                <input type="number" placeholder="#" min="1" max="99" style="padding:0.4rem; text-align:center; font-size:0.8rem; border-radius:6px; background:rgba(0,0,0,0.3);">
+                                <input type="number" placeholder="#" min="1" max="99" style="padding:0.4rem; text-align:center; font-size:0.8rem; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
                             </div>
                             <div class="bib-selector">
                                 <div class="bib-pill" style="background:#ef4444;" title="Red" onclick="setPlayerBib(this, 'red')"></div>
@@ -246,8 +258,11 @@
                     </div>
                 `).join('');
             } catch (e) {
+                console.error("Roster load error:", e);
                 container.innerHTML = '<div style="padding:3rem; text-align:center; color:#f87171;">Failed to load roster.</div>';
             }
+        }
+ }
         }
 
         function setPlayerBib(el, color) {
@@ -269,18 +284,36 @@
             showNotification("New training session created.", "success");
         }
 
-        async function loadTeams() {
+        async function loadTargets() {
             if (typeof apiService === 'undefined') return;
             try {
                 const data = await apiService.getAdminDashboardData();
                 const teams = data.teams || [];
+                
+                // Fetch events to find those with bib_management enabled
+                const { events } = await apiService.getEvents();
+                const bibEvents = (events || []).filter(e => e.bib_management);
+
                 const selector = document.getElementById('teamSelector');
-                if (teams.length > 0) {
-                    selector.innerHTML = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-                    loadTeamRoster(teams[0].id);
+                
+                let html = '<optgroup label="Squads">';
+                html += teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+                html += '</optgroup>';
+                
+                if (bibEvents.length > 0) {
+                    html += '<optgroup label="Events">';
+                    html += bibEvents.map(e => `<option value="event_${e.id}">Event: ${e.title}</option>`).join('');
+                    html += '</optgroup>';
                 }
+
+                selector.innerHTML = html;
+                
+                // Load default
+                if (teams.length > 0) loadTeamRoster(teams[0].id);
+                else if (bibEvents.length > 0) loadTeamRoster(`event_${bibEvents[0].id}`);
+                
             } catch (e) {
-                console.error("Failed to load teams", e);
+                console.error("Failed to load targets", e);
             }
         }
 
@@ -302,10 +335,15 @@
 
                 list.innerHTML = inventoryArray.map(item => `
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.9rem; color:var(--text-muted);"><span class="bib-color-dot" style="background:${(item.color || 'gray').toLowerCase()};"></span>${item.color || 'Unnamed'} Set</span>
+                        <span style="font-size:0.9rem; color:var(--text-muted);"><span class="bib-color-dot" data-color="${(item.color || 'gray').toLowerCase()}"></span>${item.color || 'Unnamed'} Set</span>
                         <span style="font-weight:700;">${item.available_quantity || 0}/${item.total_quantity || 0}</span>
                     </div>
                 `).join('');
+
+                // Apply colors after render to avoid IDE CSS parsing issues with template literals
+                list.querySelectorAll('.bib-color-dot').forEach(dot => {
+                    dot.style.backgroundColor = dot.getAttribute('data-color');
+                });
 
                 if (editList) {
                     editList.innerHTML = inventoryArray.map(item => `
@@ -390,7 +428,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadTeams();
+            loadTargets();
             loadInventory();
         });
     </script>

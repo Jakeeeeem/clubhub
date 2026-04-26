@@ -935,6 +935,7 @@ const UnifiedNav = {
         <div class="logo-area-wrapper desktop-only" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
           <div class="dash-header-left" style="display:flex; align-items:center; gap:2rem;">
             <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
+            <div id="header-family-switcher-container" class="header-family-switcher-wrapper" style="display:flex; align-items:center;"></div>
           </div>
 
           <div class="mode-toggle-container desktop-only" style="margin: 0 1rem;">
@@ -983,35 +984,20 @@ const UnifiedNav = {
     // For mobile devices, we want the switcher in the header if space allows, 
     // or we ensure it's in the mobile sidebar.
     const isMobile = window.innerWidth < 992;
-    if (isMobile) {
-      const mobTarget = document.getElementById("header-mobile-switcher-target");
-      if (mobTarget) {
-          this.renderGroupSwitcher(mobTarget);
-      } else {
-          // Fallback to sidebar target if header target is missing on mobile
-          const sideTarget = document.getElementById("sidebar-switcher-target");
-          if (sideTarget) this.renderGroupSwitcher(sideTarget);
-      }
-    } else {
-      const desktopTarget = document.getElementById("header-group-switcher-container");
-      if (desktopTarget) this.renderGroupSwitcher(desktopTarget);
-    }
-
-
-    // Inject Group Switcher (or Family Switcher for player page) into #header-org-switcher
-    const switcherSlot = document.getElementById("header-org-switcher");
-    if (switcherSlot && !switcherSlot.dataset.mounted) {
-      switcherSlot.dataset.mounted = "1";
+    
+    // Inject Group Switcher (or Family Switcher for player page) into available slots
+    const groupSlot = document.getElementById("header-group-switcher-container") || document.getElementById("header-org-switcher");
+    const familySlot = document.getElementById("header-family-switcher-container") || document.getElementById("family-switcher-target");
+    
+    if (groupSlot) {
       const userRole = this.getUserRole();
-      const isPlayerPage = window.location.href.includes(
-        "player-dashboard.html",
-      );
-
-      if (isPlayerPage || userRole === "player") {
-        this.renderFamilySwitcher(switcherSlot);
-      } else {
-        this.renderGroupSwitcher(switcherSlot);
+      if (userRole !== "player" && userRole !== "parent") {
+         this.renderGroupSwitcher(groupSlot);
       }
+    }
+    
+    if (familySlot) {
+       this.renderFamilySwitcher(familySlot);
     }
 
     this.renderTopTabs();
@@ -1145,7 +1131,7 @@ const UnifiedNav = {
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const userRole = this.getUserRole();
-    const isPlayer = window.location.href.includes("player-dashboard.html") || userRole === "player";
+    const isPlayer = window.location.href.includes("player-") || userRole === "player" || userRole === "parent" || this.getCurrentMode() === "player";
 
     const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
     
@@ -1520,23 +1506,24 @@ const UnifiedNav = {
             
             let resp;
             if (status && status.is_connected) {
-                // If already connected, get the management/login link to their branded dashboard
+                // Get the branded management login link
                 resp = await apiService.getStripeManageLink();
             } else {
-                // If not connected, get the branded onboarding link
+                // Get the branded ClubHub connection link
                 resp = await apiService.getStripeOnboardLink();
             }
 
             if (resp && resp.url) {
-                window.open(resp.url, "_blank", "width=800,height=900,scrollbars=yes");
+                console.log("🚀 Redirecting to Live Branded Stripe Portal:", resp.url);
+                // Use location.href strictly to guarantee navigation
+                window.location.href = resp.url;
                 return;
             }
         }
-        // Fallback to generic dashboard if service call fails
-        window.open("https://dashboard.stripe.com/test/connect/accounts", "_blank");
+        showNotification("Stripe service is not responding. Please try again later.", "error");
     } catch (err) {
-        console.error("Failed to manage Stripe account:", err);
-        showNotification("Stripe service temporarily unavailable", "error");
+        console.error("Stripe Error:", err);
+        showNotification("Connection to Stripe failed. Please ensure you are logged in.", "error");
     } finally {
         showLoading(false);
     }
@@ -2427,7 +2414,9 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
     } else {
       menuHtml = `
                     <div class="nav-group-title">Main Hub</div>
+                    <div id="sidebar-family-switcher-container" style="padding: 0.25rem 0.75rem 0.75rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); margin-bottom: 0.5rem;"></div>
                     <a href="player-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'overview')" class="sidebar-link ${isActive('player-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="player-dashboard.html#family" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'player-family')" class="sidebar-link ${p.includes('family') ? 'active' : ''}">${ICONS.nav.players}<span>My Family Hub</span></a>
                     <a href="player-dashboard.html#schedule" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'schedule')" class="sidebar-link ${p.includes('schedule') ? 'active' : ''}">${ICONS.nav.training}<span>Schedule</span></a>
                     <a href="player-dashboard.html#teams" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'teams')" class="sidebar-link ${p.includes('teams') ? 'active' : ''}">${ICONS.nav.teams}<span>My Teams</span></a>
                     <a href="player-performance.html" onclick="return UnifiedNav.handleNavClick(event, 'player-performance.html', 'performance')" class="sidebar-link ${isActive('player-performance.html') || p.includes('performance') ? 'active' : ''}">${ICONS.nav.players}<span>Performance</span></a>
@@ -2449,6 +2438,13 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
     }
 
     nav.innerHTML = menuHtml;
+    
+    // Render family switcher in sidebar if placeholder exists
+    const sideFamilySlot = document.getElementById("sidebar-family-switcher-container");
+    if (sideFamilySlot) {
+        this.renderFamilySwitcher(sideFamilySlot);
+    }
+
     this.stripHashLinks(nav);
 
     console.log("✅ Sidebar Menu Rendered for:", finalRole);
