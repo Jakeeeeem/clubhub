@@ -215,6 +215,36 @@ router.post(
 );
 
 /**
+ * @route   GET /api/tournaments
+ * @desc    Get all tournaments for the organization
+ */
+router.get("/", authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    let clubId =
+      (req.orgContext && req.orgContext.organization_id) ||
+      req.user.organization_id ||
+      req.user.groupId ||
+      req.user.clubId;
+    if (!clubId) {
+      const clubRes = await query(
+        "SELECT id FROM organizations WHERE owner_id = $1 LIMIT 1",
+        [req.user.id],
+      );
+      clubId = clubRes.rows[0]?.id;
+    }
+
+    const result = await query(
+      "SELECT * FROM events WHERE club_id = $1 AND event_type = 'tournament' ORDER BY event_date DESC",
+      [clubId],
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Get tournaments error:", error);
+    res.status(500).json({ error: "Failed to fetch tournaments" });
+  }
+});
+
+/**
  * @route   POST /api/tournaments
  * @desc    Create a new tournament event and register internal teams
  */
@@ -281,6 +311,33 @@ router.post("/", authenticateToken, requireOrganization, async (req, res) => {
     res
       .status(500)
       .json({ error: "Failed to create tournament", detail: err.message });
+  }
+});
+
+/**
+ * @route   DELETE /api/tournaments/:id
+ * @desc    Delete Tournament
+ */
+router.delete("/:id", authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Check if tournament exists
+    const eventRes = await query("SELECT id FROM events WHERE id = $1 AND event_type = 'tournament'", [id]);
+    if (eventRes.rows.length === 0) {
+      return res.status(404).json({ error: "Tournament not found" });
+    }
+
+    await withTransaction(async (client) => {
+      // Delete tournament teams
+      await client.query("DELETE FROM tournament_teams WHERE event_id = $1", [id]);
+      // Delete event
+      await client.query("DELETE FROM events WHERE id = $1", [id]);
+    });
+
+    res.json({ message: "Tournament deleted successfully" });
+  } catch (error) {
+    console.error("Delete tournament error:", error);
+    res.status(500).json({ error: "Failed to delete tournament" });
   }
 });
 
