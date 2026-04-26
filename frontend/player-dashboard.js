@@ -18,6 +18,8 @@ if (typeof PlayerDashboardState === 'undefined') PlayerDashboardState = {
   family: [], // Added from instruction
   upcomingEvents: [], // Added from instruction
   availableClubs: [],
+  matches: [],
+  tournamentMatches: [],
   stripe: {
     linked: false,
     payouts_enabled: false,
@@ -425,6 +427,7 @@ function loadPlayerOverview() {
   loadPerformanceSummary();
   loadOverviewFeed();
   loadDailyPlanner();
+  loadFullSchedule();
   loadPlannerFeed();
 }
 
@@ -531,6 +534,76 @@ function loadDailyPlanner() {
         </div>
       </div>`;
   }).join('');
+}
+
+/**
+ * Loads the full-page schedule section with all activities
+ */
+function loadFullSchedule() {
+  const container = document.getElementById("fullScheduleContainer");
+  if (!container) return;
+
+  const events = PlayerDashboardState.events || [];
+  const bookings = PlayerDashboardState.bookings || [];
+  const tournaments = PlayerDashboardState.tournaments || [];
+  const matches = PlayerDashboardState.matches || [];
+
+  const allActivities = [
+    ...events.map(e => ({ ...e, type: e.event_type || 'training' })),
+    ...bookings.map(b => ({ ...b, title: b.title || b.venue_name || 'Booking', type: 'venue' })),
+    ...tournaments.map(t => ({ ...t, title: t.name || 'Tournament', type: 'tournament' })),
+    ...matches.map(m => ({ ...m, title: `${m.home_team} vs ${m.away_team}`, type: 'match' }))
+  ];
+
+  const now = new Date().setHours(0,0,0,0);
+  const upcoming = allActivities
+    .filter(e => {
+        const d = new Date(e.event_date || e.date || e.start_date);
+        return d && !isNaN(d) && d >= now;
+    })
+    .sort((a, b) => new Date(a.event_date || a.date || a.start_date) - new Date(b.event_date || b.date || b.start_date));
+
+  if (upcoming.length === 0) {
+    container.innerHTML = `<div class="glass-card" style="padding: 2rem; text-align: center; opacity: 0.6;">No upcoming activities scheduled.</div>`;
+    return;
+  }
+
+  let html = '';
+  upcoming.forEach(item => {
+    const d = new Date(item.event_date || item.date || item.start_date);
+    const time = item.event_time || item.time || (item.start_time ? item.start_time.slice(0, 5) : 'TBA');
+    
+    let color = 'var(--primary)';
+    if (item.type === 'tournament') color = '#f59e0b';
+    else if (item.type === 'match') color = '#3b82f6';
+    else if (item.type === 'venue') color = '#10b981';
+
+    html += `
+      <div class="activity-card" style="display: flex; gap: 1.5rem; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.08); border-left: 6px solid ${color}; transition: all 0.2s; cursor: pointer;">
+        <div style="text-align: center; min-width: 70px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 1rem;">
+          <div style="font-size: 1.5rem; font-weight: 900; color: ${color}; line-height: 1;">${d.getDate()}</div>
+          <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5); text-transform: uppercase; font-weight: 700; margin-top: 4px;">${d.toLocaleString('default', { month: 'short' })}</div>
+        </div>
+        <div style="flex: 1;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+             <div style="display: flex; align-items: center; gap: 0.5rem;">
+               <span style="background: ${color}22; color: ${color}; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid ${color}44;">${item.type}</span>
+               <span style="font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.5);">${d.toLocaleString('default', { weekday: 'long' })}</span>
+             </div>
+             <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">${time}</span>
+          </div>
+          <h3 style="margin: 0; font-size: 1.15rem; color: #fff;">${escapeHTML(item.title || item.name || 'Activity')}</h3>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; color: rgba(255,255,255,0.4); font-size: 0.85rem;">
+            📍 ${escapeHTML(item.location || item.venue_name || 'TBA')}
+          </div>
+        </div>
+        <div style="display: flex; align-items: center;">
+           <button class="btn btn-secondary btn-small" onclick="viewEventDetails('${item.id}')">View Details</button>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
 }
 
 /**
@@ -1154,43 +1227,38 @@ function loadTeamEvents() {
         badgeColor = '#3b82f6';
         badgeText = 'Match';
       }
+      const time = e.event_time || e.time || (e.start_time ? e.start_time.slice(0, 5) : 'TBA');
+      
+      let color = 'var(--primary)';
+      if (isMatch) color = '#3b82f6';
+      else if (e.event_type === 'tournament') color = '#f59e0b';
 
       return `
-        <div class="activity-card" style="display: flex; gap: 1rem; padding: 1.25rem; background: rgba(255,255,255,0.03); border-radius: 14px; margin-bottom: 0.75rem; border: 1px solid rgba(255,255,255,0.06);">
-          <div style="text-align: center; min-width: 45px;">
-            <div style="font-size: 1.2rem; font-weight: 800; color: ${badgeColor};">${date.getDate()}</div>
-            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase;">${date.toLocaleString('default', { month: 'short' })}</div>
+        <div class="activity-card" style="display: flex; gap: 1.5rem; padding: 1.25rem; background: rgba(255,255,255,0.03); border-radius: 14px; margin-bottom: 0.75rem; border: 1px solid rgba(255,255,255,0.08); border-left: 5px solid ${color};">
+          <div style="text-align: center; min-width: 60px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 1rem;">
+            <div style="font-size: 1.25rem; font-weight: 800; color: ${color}; line-height: 1;">${date.getDate()}</div>
+            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); text-transform: uppercase;">${date.toLocaleString('default', { month: 'short' })}</div>
           </div>
           <div style="flex: 1;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
-               <span style="font-size: 0.65rem; font-weight: 800; color: ${badgeColor}; text-transform: uppercase; letter-spacing: 0.5px;">${badgeText}</span>
-               <span style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">${e.event_time || e.time || 'TBA'}</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+               <div style="display: flex; align-items: center; gap: 0.4rem;">
+                 <span style="background: ${color}22; color: ${color}; font-size: 0.6rem; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase;">${e.event_type || (isMatch ? 'Match' : 'Event')}</span>
+                 <span style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">${date.toLocaleString('default', { weekday: 'short' })}</span>
+               </div>
+               <span style="font-size: 0.8rem; font-weight: 700; color: #fff;">${time}</span>
             </div>
-            <h4 style="margin: 0; font-size: 1rem;">${escapeHTML(e.title || e.name || (isMatch ? `${e.home_team} vs ${e.away_team}` : 'Team Event'))}</h4>
-            <p style="margin: 4px 0 0; font-size: 0.8rem; color: rgba(255,255,255,0.4);">📍 ${escapeHTML(e.location || e.venue_name || 'Team Grounds')}</p>
+            <h4 style="margin: 0; font-size: 1rem; color: #fff;">${escapeHTML(e.title || e.name || (isMatch ? `${e.home_team} vs ${e.away_team}` : 'Team Event'))}</h4>
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem; color: rgba(255,255,255,0.4); font-size: 0.8rem;">
+               📍 ${escapeHTML(e.location || e.venue_name || 'Team Grounds')}
+            </div>
           </div>
-          <div style="display: flex; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-small btn-primary" onclick="submitAvailability('${e.id}')">Availability</button>
+            <button class="btn btn-small btn-success" style="background:#28a745; border-color:#28a745;" onclick="checkInEvent('${e.id}')">📍 I'm Here</button>
             <button class="btn btn-secondary btn-small" onclick="viewEventDetails('${e.id}')">Details</button>
           </div>
         </div>
       `;
-    })
-      const isUpcoming = new Date(e.event_date) >= new Date();
-      if (!isUpcoming) return "";
-
-      return `
-      <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-left: 4px solid var(--accent-color); margin-bottom: 0.5rem;">
-          <div>
-              <h4 style="margin:0;">${escapeHTML(e.title)} <span style="font-size:0.8rem; opacity:0.7;">(${escapeHTML(e.event_type || "Event")})</span></h4>
-              <p style="margin:0.2rem 0;">📅 ${formatDate(e.event_date)} at ${e.event_time ? e.event_time.slice(0, 5) : "TBA"} | 📍 ${escapeHTML(e.location || "TBA")}</p>
-          </div>
-          <div style="display: flex; gap: 0.5rem;">
-              <button class="btn btn-small btn-primary" onclick="submitAvailability('${e.id}')">Availability</button>
-              <button class="btn btn-small btn-success" style="background:#28a745; border-color:#28a745;" onclick="checkInEvent('${e.id}')">📍 I'm Here</button>
-              <button class="btn btn-small btn-secondary" onclick="viewEventDetails('${e.id}')">Details</button>
-          </div>
-      </div>
-    `;
     })
     .join("");
 }
