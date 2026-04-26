@@ -603,9 +603,28 @@ if (typeof ApiService === 'undefined') {
         return { success: true, message: "Email sent (Simulated & Logged)" };
     }
 
-    // --- STRIPE CONNECT --- always hit real API, never mock
+    // --- STRIPE CONNECT ---
     if (endpoint.includes("/payments/stripe/connect")) {
-        return null; // Pass through to real backend
+        // If in demo mode, we MUST mock these to avoid malformed JWT errors on the backend
+        if (localStorage.getItem("isDemoSession") === "true") {
+            console.log("🛡️ Demo Mode: Mocking Stripe Connect response");
+            if (endpoint.includes("/onboard")) {
+                return { success: true, url: window.location.href, message: "Demo Mode: Stripe onboarding simulated." };
+            }
+            if (endpoint.includes("/status")) {
+                return { 
+                    linked: true, 
+                    payouts_enabled: true, 
+                    details_submitted: true, 
+                    charges_enabled: true,
+                    requirements: { currently_due: [] }
+                };
+            }
+            if (endpoint.includes("/manage")) {
+                return { success: true, url: "https://dashboard.stripe.com/test/dashboard", message: "Demo Mode: Stripe dashboard simulated." };
+            }
+        }
+        return null; // Pass through to real backend for live sessions
     }
 
     const isDemo = localStorage.getItem("isDemoSession") === "true";
