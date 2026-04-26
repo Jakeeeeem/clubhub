@@ -935,7 +935,6 @@ const UnifiedNav = {
         <div class="logo-area-wrapper desktop-only" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
           <div class="dash-header-left" style="display:flex; align-items:center; gap:2rem;">
             <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
-            <div id="header-family-switcher-container" class="header-family-switcher-wrapper" style="display:flex; align-items:center;"></div>
           </div>
 
           <div class="mode-toggle-container desktop-only" style="margin: 0 1rem;">
@@ -955,11 +954,11 @@ const UnifiedNav = {
             <div id="stripe-header-btn-container"></div>
             <div id="notif-header-btn-container"></div>
             
+            <div id="header-family-switcher-container" class="header-family-switcher-wrapper" style="display:flex; align-items:center;"></div>
+
             <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
-                 style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.35rem 0.75rem; border-radius:999px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); transition:all 0.2s;">
-              <span class="user-name" id="header-user-name" style="font-size:0.85rem; font-weight:600;">${name}</span>
-              <div class="user-avatar-sm" id="header-user-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0;">${initial}</div>
-              <i class="fa fa-chevron-down" style="font-size:0.7rem; opacity:0.5;"></i>
+                 style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+              <div class="user-avatar-sm" id="header-user-avatar" style="width:34px; height:34px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; flex-shrink:0; border:2px solid rgba(255,255,255,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.2);">${initial}</div>
             </div>
           </div>
         </div>
@@ -1161,13 +1160,15 @@ const UnifiedNav = {
 
     container.innerHTML = `
         <div class="family-switcher" style="position: relative;" id="familySwitcher">
-            <button class="family-trigger" onclick="event.stopPropagation(); document.getElementById('familyDropdown').classList.toggle('open')" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; color: white;">
-                <div style="width: 18px; height: 18px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800;">👪</div>
-                <span style="font-size: 0.8rem; font-weight: 600;">${currentName}</span>
-                <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <button class="family-trigger" onclick="event.stopPropagation(); document.getElementById('familyDropdown').classList.toggle('open')" style="display: flex; align-items: center; gap: 0.65rem; padding: 0.4rem 0.85rem; background: rgba(255, 255, 255, 0.05); border: 1px solid white; border-radius: 40px; cursor: pointer; color: white; transition: all 0.25s; font-family: 'Outfit', sans-serif; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+                <div style="width: 22px; height: 22px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; border: 1.5px solid rgba(255,255,255,0.4);">
+                    ${activePlayerId ? (family.find(f => f.id == activePlayerId)?.first_name?.charAt(0) || "P") : (user.firstName?.charAt(0) || "U")}
+                </div>
+                <span class="switcher-label" style="font-size: 0.82rem; font-weight: 700; color: #fff; letter-spacing: 0.1px;">${currentName}</span>
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" style="margin-left: 2px; opacity: 0.8;"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
             </button>
-            <div class="family-dropdown" id="familyDropdown" style="position: absolute; top: calc(100% + 5px); right: 0; width: 180px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1100; display: none; padding: 0.5rem;">
-                <div style="font-size: 0.7rem; color: var(--text-muted); padding: 0.25rem 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Switch Profile</div>
+            <div class="family-dropdown" id="familyDropdown" style="position: absolute; top: calc(100% + 10px); right: 0; width: 220px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); z-index: 1100; display: none; padding: 0.75rem; backdrop-filter: blur(20px);">
+                <div style="font-size: 0.65rem; color: var(--text-muted); padding: 0.25rem 0.5rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; margin-bottom: 0.5rem;">Switch Profile</div>
                 <div class="family-item ${!activePlayerId ? 'active' : ''}" onclick="UnifiedNav.switchProfile(null)" style="padding: 0.5rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; font-size: 0.85rem; background: ${!activePlayerId ? 'rgba(220,38,38,0.1)' : 'transparent'};">
                     <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">${(user.firstName || 'U').charAt(0)}</div>
                     <span>Main Profile</span>
