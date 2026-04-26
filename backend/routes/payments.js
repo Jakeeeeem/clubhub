@@ -164,6 +164,7 @@ router.get("/stripe/connect/status", authenticateToken, async (req, res) => {
   try {
     const account = await getOrCreateStripeConnectAccount(req.user);
     const response = {
+      connected: true,      // Frontend compatibility
       linked: true,
       account_id: account.id,
       stripeAccountId: account.id, // For frontend compatibility

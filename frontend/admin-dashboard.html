@@ -856,10 +856,12 @@
                 const data = await apiService.makeRequest('/payments/stripe/connect/status');
 
                 loading.style.display = 'none';
-                if (data && data.connected) {
+                // Support all field name variants: backend returns 'linked', demo returns 'is_connected'/'charges_enabled'
+                const isConnected = !!(data && (data.connected || data.linked || data.is_connected || data.charges_enabled));
+                if (isConnected) {
                     connectedBox.style.display = 'block';
-                    document.getElementById('payout-status').textContent = data.payouts_enabled ? 'Enabled' : 'Pending';
-                    document.getElementById('account-status').textContent = data.details_submitted ? 'Verified' : 'Incomplete';
+                    document.getElementById('payout-status').textContent = (data.payouts_enabled || data.charges_enabled) ? 'Enabled' : 'Pending';
+                    document.getElementById('account-status').textContent = data.details_submitted ? 'Verified' : 'Active';
                 } else {
                     onboardBox.style.display = 'block';
                 }
@@ -896,11 +898,10 @@
 
         async function manageStripeAccount() {
             try {
-                const data = await apiService.makeRequest('/payments/stripe/connect/login-link', {
-                    method: 'POST'
-                });
+                // Use GET /payments/stripe/connect/manage — the correct backend endpoint
+                const data = await apiService.makeRequest('/payments/stripe/connect/manage');
                 if (data && data.url) {
-                    window.location.href = data.url;
+                    window.open(data.url, '_blank');
                 } else {
                     throw new Error(data?.error || "Failed to get management link");
                 }

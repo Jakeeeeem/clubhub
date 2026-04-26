@@ -603,21 +603,9 @@ if (typeof ApiService === 'undefined') {
         return { success: true, message: "Email sent (Simulated & Logged)" };
     }
 
-    // --- STRIPE CONNECT ---
-    if (endpoint.includes("/payments/stripe/connect/status")) {
-        return { 
-            is_connected: localStorage.getItem("stripeConnected") === "true",
-            charges_enabled: localStorage.getItem("stripeConnected") === "true",
-            details_submitted: localStorage.getItem("stripeConnected") === "true",
-            account_id: "acct_demo_123"
-        };
-    }
-    if (endpoint.includes("/payments/stripe/connect/onboard")) {
-        localStorage.setItem("stripeConnected", "true");
-        return { url: "https://connect.stripe.com/express/onboarding/demo_session_branded", success: true };
-    }
-    if (endpoint.includes("/payments/stripe/connect/manage")) {
-        return { url: "https://dashboard.stripe.com/test/express/demo_branded_dashboard", success: true };
+    // --- STRIPE CONNECT --- always hit real API, never mock
+    if (endpoint.includes("/payments/stripe/connect")) {
+        return null; // Pass through to real backend
     }
 
     const isDemo = localStorage.getItem("isDemoSession") === "true";
