@@ -1,4 +1,8 @@
 /* Landing page header: solid dark bar overlaying the hero image */
+.clubhub-unified:not(.dashboard-view) {
+  padding-top: 0 !important;
+}
+
 .clubhub-unified:not(.dashboard-view) header.header,
 .clubhub-unified:not(.dashboard-view) .pro-header {
   background: rgba(10, 10, 12, 0.92) !important;

@@ -407,12 +407,8 @@
 
             <div id="messenger" class="dashboard-section" style="display:none; padding:1.5rem;">
                 <div class="section-title">💬 Admin Messenger</div>
-                <div class="glass-card"
-                    style="height:500px; display:flex; align-items:center; justify-content:center; flex-direction:column; color:var(--text-muted);">
-                    <i class="fa fa-comments" style="font-size:3rem; margin-bottom:1rem; opacity:0.3;"></i>
-                    <p>Select a conversation to start messaging</p>
-                    <button class="btn btn-secondary" style="margin-top:1rem;">New Message</button>
-                </div>
+                <!-- Admin Messenger — mounted by squad-messenger.js -->
+                <div id="admin-messenger-mount"></div>
             </div>
 
             <div id="scout-approvals" class="dashboard-section" style="display:none; padding:1.5rem;">
@@ -541,10 +537,9 @@
                         </div>
                     </div>
                 </div>
-                <div id="messenger" class="dashboard-section" style="display:none; padding:0.5rem;">
-                    <!-- Admin Messenger — mounted by squad-messenger.js -->
-                    <div id="admin-messenger-mount"></div>
-                </div>
+            <div id="tactical-board-v2" class="dashboard-section" style="display:none; padding:1.5rem;">
+                <!-- Tactical Board placeholder or secondary view -->
+            </div>
 
             </div>
         </div>

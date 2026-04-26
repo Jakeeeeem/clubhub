@@ -221,6 +221,13 @@ if (typeof ApiService === 'undefined') {
       if (type === "all") return allMessages;
       return allMessages.filter(msg => msg.type === type);
     }
+    if (localStorage.getItem('isDemoSession') === 'true') {
+      return [
+        { id: 'm1', sender_id: 'coach-1', sender_name: 'Coach Sam', receiver_id: 'admin-1', sender_role: 'coach', content: 'The U16 registration forms are looking good. Just need to add the medical field.', created_at: new Date().toISOString(), read: false },
+        { id: 'm2', sender_id: 'parent-1', sender_name: 'Sarah Thompson', receiver_id: 'admin-1', sender_role: 'parent', content: 'Hi, I had a question about the upcoming summer camp fees.', created_at: new Date(Date.now() - 3600000).toISOString(), read: true },
+        { id: 'm3', sender_id: 'admin-1', sender_name: 'Admin', receiver_id: 'coach-2', sender_role: 'admin', content: 'New training bibs have been ordered for the Under 14s.', created_at: new Date(Date.now() - 86400000).toISOString(), read: true }
+      ];
+    }
     return await this.makeRequest(`/messages?type=${type}`);
   }
 

@@ -143,11 +143,18 @@
     }
 
     .dashboard-view .main, 
-    .dashboard-view .dashboard-main {
+    .dashboard-view .dashboard-main,
+    .dashboard-view .app-container {
         padding-top: 80px !important;
         margin-left: 280px !important; /* Sidebar width — use margin, not padding */
         width: calc(100% - 280px) !important;
         transition: margin-left 0.28s cubic-bezier(0.16, 1, 0.3, 1), width 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    /* Global Catch-All: Offset any direct container if sidebar is present */
+    .dashboard-view .container:not(.pro-header .container) {
+        margin-left: 0 !important;
+        margin-right: auto !important;
     }
 
     body.sidebar-collapsed .dashboard-view .main,

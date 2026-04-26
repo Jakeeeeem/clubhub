@@ -2334,7 +2334,7 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
     
     // URL-based overrides (if user is navigating to a specific dash)
     if (p.includes("super-admin")) finalRole = "superadmin";
-    else if (p.includes("admin-") || p.includes("members") || p.includes("teams")) finalRole = "admin";
+    else if (p.includes("admin-") || p.includes("members") || p.includes("teams") || p.includes("form-builder")) finalRole = "admin";
     else if (p.includes("scout-") || p.includes("scouting")) finalRole = "scout";
     else if (p.includes("coach-")) finalRole = "coach";
     else if (p.includes("player-") || p.includes("schedule") || p.includes("performance")) finalRole = "player";

@@ -439,7 +439,7 @@ function loadDailyPlanner() {
   
   // Combine all possible schedule sources
   const allActivities = [
-    ...(PlayerDashboardState.events || []).map(e => ({ ...e, type: e.event_type || 'event' })),
+    ...(PlayerDashboardState.events || []).map(e => ({ ...e, type: e.event_type || 'training' })),
     ...(PlayerDashboardState.bookings || []).map(b => ({ ...b, title: b.title || b.venue_name || 'Booking', type: 'venue' })),
     ...(PlayerDashboardState.tournaments || []).map(t => ({ ...t, title: t.name || 'Tournament', type: 'tournament' })),
     ...(PlayerDashboardState.matches || []).map(m => ({ ...m, title: `${m.home_team} vs ${m.away_team}`, type: 'match' }))
@@ -450,52 +450,86 @@ function loadDailyPlanner() {
     .sort((a, b) => new Date(a.event_date || a.date || a.start_date) - new Date(b.event_date || b.date || b.start_date))
     .slice(0, 8);
 
-  const displayItems = upcoming.length > 0 ? upcoming : [
-    { event_date: new Date(Date.now() + 2*86400000).toISOString(), event_time: '18:00', title: 'Elite Training Session', location: 'Main Pitch, Elite Academy' },
-    { event_date: new Date(Date.now() + 4*86400000).toISOString(), event_time: '19:00', title: 'Tactical Webinar', location: 'Online (Zoom)' },
-    { event_date: new Date(Date.now() + 15*86400000).toISOString(), event_time: '09:00', title: 'Summer Tournament', location: 'City Sports Arena' },
-    { event_date: new Date(Date.now() + 23*86400000).toISOString(), event_time: '14:00', title: 'U18 Friendly Match', location: 'Riverside FC Ground' },
-  ];
+  if (upcoming.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 2rem; text-align: center; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;">📅</div>
+        <p style="color: rgba(255,255,255,0.4); margin: 0; font-size: 0.9rem;">No upcoming events scheduled yet.</p>
+        <button class="btn btn-text btn-small" style="margin-top: 1rem; color: var(--primary);" onclick="showPlayerSection('event-finder')">Browse Events</button>
+      </div>
+    `;
+    return;
+  }
 
-  container.style.cssText = 'display:flex;flex-direction:column;gap:0.6rem;';
+  container.style.cssText = 'display:flex;flex-direction:column;gap:0.75rem;';
 
-  container.innerHTML = upcoming.map(event => {
+  container.innerHTML = upcoming.map((event, index) => {
     const date = new Date(event.event_date || event.date || event.start_date);
     const day = date.getDate();
     const month = date.toLocaleString('default', { month: 'short' });
     const time = event.event_time ? event.event_time.slice(0, 5) : (event.start_time ? event.start_time.slice(0, 5) : 'TBA');
-    const isUrgent = (date - now) < 3 * 86400000;
+    const isNextUp = index === 0;
     
     let accent = 'var(--primary)';
     let typeLabel = (event.type || 'Activity').toUpperCase();
+    let icon = '🎯';
     
-    if (event.type === 'tournament' || event.event_type === 'tournament') {
-      accent = '#f59e0b'; // Amber for tournaments
-      typeLabel = '🏆 TOURNAMENT';
-    } else if (event.type === 'match' || event.event_type === 'match') {
-      accent = '#3b82f6'; // Blue for matches
-      typeLabel = '⚽ GAME';
+    if (event.type === 'tournament') {
+      accent = '#f59e0b'; // Amber
+      typeLabel = 'Tournament';
+      icon = '🏆';
+    } else if (event.type === 'match') {
+      accent = '#3b82f6'; // Blue
+      typeLabel = 'Match Day';
+      icon = '⚽';
     } else if (event.type === 'venue') {
-      accent = '#10b981'; // Green for venue bookings
-      typeLabel = '🏟️ VENUE';
-    } else if (isUrgent) {
-      accent = 'var(--accent-red)';
+      accent = '#10b981'; // Green
+      typeLabel = 'Facility Booking';
+      icon = '🏟️';
+    } else {
+      typeLabel = 'Training Session';
+      icon = '👟';
     }
 
-    return `<div style="display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.75rem 1rem;transition:all 0.2s;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.06)';this.style.transform='translateX(4px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.transform='translateX(0)'">
-      <div style="text-align:center;min-width:36px;flex-shrink:0;">
-        <div style="font-size:1.15rem;font-weight:900;color:${accent};line-height:1;">${day}</div>
-        <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;">${month}</div>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.2rem;">
-          <span style="font-size:0.65rem; font-weight:800; color:${accent}; letter-spacing:0.5px;">${typeLabel}</span>
-          <span style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.5);">${time}</span>
+    return `
+      <div class="schedule-card ${isNextUp ? 'next-up-highlight' : ''}" 
+           style="display:flex; align-items:stretch; gap:0; background:rgba(255,255,255,0.03); border:1px solid ${isNextUp ? 'rgba(220,38,38,0.3)' : 'rgba(255,255,255,0.06)'}; border-radius:12px; overflow:hidden; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor:pointer; position:relative;"
+           onmouseover="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='${accent}';this.style.transform='translateX(6px)'"
+           onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='${isNextUp ? 'rgba(220,38,38,0.3)' : 'rgba(255,255,255,0.06)'}';this.style.transform='translateX(0)'">
+        
+        ${isNextUp ? `<div style="position:absolute; top:0; right:0; background:var(--primary); color:white; font-size:0.6rem; font-weight:800; padding:2px 8px; border-radius:0 0 0 8px; text-transform:uppercase; letter-spacing:1px; z-index:10;">Next Up</div>` : ''}
+        
+        <!-- Date Stripe -->
+        <div style="background:${accent}; width:4px; flex-shrink:0;"></div>
+        
+        <!-- Date Box -->
+        <div style="padding:0.75rem 1rem; background:rgba(255,255,255,0.02); display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:60px; border-right:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:1.25rem; font-weight:900; color:#fff; line-height:1;">${day}</div>
+          <div style="font-size:0.7rem; font-weight:700; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1px;">${month}</div>
         </div>
-        <div style="font-size:0.88rem;font-weight:600;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(event.title || event.name || 'Activity')}</div>
-        <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:0.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ${escapeHTML(event.location || event.venue_name || 'TBA')}</div>
-      </div>
-    </div>`;
+
+        <!-- Content -->
+        <div style="flex:1; padding:0.85rem 1.25rem; min-width:0; display:flex; flex-direction:column; justify-content:center;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+               <span style="font-size:0.9rem;">${icon}</span>
+               <span style="font-size:0.68rem; font-weight:800; color:${accent}; text-transform:uppercase; letter-spacing:1px;">${typeLabel}</span>
+            </div>
+            ${isNextUp ? '<span style="font-size:0.6rem; font-weight:900; background:var(--primary); color:white; padding:2px 8px; border-radius:100px; text-transform:uppercase; animation: pulse-glow 2s infinite;">Next Up</span>' : ''}
+          </div>
+          <div style="font-size:0.95rem; font-weight:700; color:#f8fafc; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:0.15rem;">${escapeHTML(event.title || event.name || 'Activity')}</div>
+          <div style="display:flex; align-items:center; gap:1rem;">
+             <div style="font-size:0.75rem; color:rgba(255,255,255,0.4); display:flex; align-items:center; gap:0.25rem;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                ${time}
+             </div>
+             <div style="font-size:0.75rem; color:rgba(255,255,255,0.4); display:flex; align-items:center; gap:0.25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                ${escapeHTML(event.location || event.venue_name || 'TBA')}
+             </div>
+          </div>
+        </div>
+      </div>`;
   }).join('');
 }
 
