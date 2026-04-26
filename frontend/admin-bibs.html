@@ -292,28 +292,30 @@
             try {
                 const inventory = await apiService.get('/api/bibs');
                 
-                if (inventory.length === 0) {
+                const inventoryArray = Array.isArray(inventory) ? inventory : [];
+                
+                if (inventoryArray.length === 0) {
                     list.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">No inventory found.</div>';
                     if (editList) editList.innerHTML = '<p style="color:var(--text-muted);">No sets added yet.</p>';
                     return;
                 }
 
-                list.innerHTML = inventory.map(item => `
+                list.innerHTML = inventoryArray.map(item => `
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.9rem; color:var(--text-muted);"><span class="bib-color-dot" style="background:${item.color.toLowerCase()};"></span>${item.color} Set</span>
-                        <span style="font-weight:700;">${item.available_quantity}/${item.total_quantity}</span>
+                        <span style="font-size:0.9rem; color:var(--text-muted);"><span class="bib-color-dot" style="background:${(item.color || 'gray').toLowerCase()};"></span>${item.color || 'Unnamed'} Set</span>
+                        <span style="font-weight:700;">${item.available_quantity || 0}/${item.total_quantity || 0}</span>
                     </div>
                 `).join('');
 
                 if (editList) {
-                    editList.innerHTML = inventory.map(item => `
+                    editList.innerHTML = inventoryArray.map(item => `
                         <div style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:1rem; align-items:center; margin-bottom:1rem; padding:0.75rem; background:rgba(255,255,255,0.03); border-radius:8px;">
                             <strong style="color:#fff;">${item.color}</strong>
                             <div class="form-group" style="margin:0;">
                                 <input type="number" value="${item.total_quantity}" onchange="updateInventory('${item.id}', {totalQuantity: this.value})">
                             </div>
                             <div class="form-group" style="margin:0;">
-                                <input type="number" step="0.01" value="${item.price}" onchange="updateInventory('${item.id}', {price: this.value})">
+                                <input type="number" step="0.01" value="${item.price || 0}" onchange="updateInventory('${item.id}', {price: this.value})">
                             </div>
                             <button class="btn btn-text" onclick="deleteInventory('${item.id}')" style="color:#f87171;">🗑️</button>
                         </div>
