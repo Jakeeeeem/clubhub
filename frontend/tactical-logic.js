@@ -35,23 +35,76 @@ const TacticalBoard = {
     currentFrame: 0,
     isPlaying: false,
     playbackInterval: null,
+    allPlayers: [],
     
     // Initialize the board
-    init() {
+    async init() {
         console.log("⚽ Initializing Tactical Board Pro...");
-        this.frames = [JSON.parse(JSON.stringify(FORMATIONS["4-3-3"].map((p, i) => ({
+        this.frames = [FORMATIONS["4-3-3"].map((p, i) => ({
             id: `player-${i}`,
             type: 'player',
             role: p.role,
             x: p.x,
             y: p.y,
-            label: p.role
-        }))))];
+            label: p.role,
+            team: 'home'
+        }))];
         
         this.setupPitchListeners();
-        this.setupEquipmentListeners();
+        await this.loadSquad();
         this.render();
         this.updateUI();
+    },
+
+    async loadSquad() {
+        const tray = document.getElementById('playerTray');
+        if (!tray || typeof apiService === 'undefined') return;
+
+        try {
+            const data = await apiService.getAdminDashboardData();
+            this.allPlayers = data.players || [];
+            this.renderPlayerTray(this.allPlayers);
+        } catch (e) {
+            console.warn("Failed to load players for tactical tray", e);
+            tray.innerHTML = '<div style="grid-column: span 2; text-align:center; padding:1rem; color:#f87171; font-size:0.75rem;">Failed to load squad</div>';
+        }
+    },
+
+    renderPlayerTray(players) {
+        const tray = document.getElementById('playerTray');
+        if (!tray) return;
+
+        if (players.length === 0) {
+            tray.innerHTML = '<div style="grid-column: span 2; text-align:center; padding:1rem; color:var(--text-muted); font-size:0.75rem;">No players found</div>';
+            return;
+        }
+
+        tray.innerHTML = players.map(p => {
+            const initials = `${p.first_name?.[0] || ''}${p.last_name?.[0] || ''}`.toUpperCase();
+            const fullName = `${p.first_name} ${p.last_name}`;
+            return `
+                <div class="eq-item" draggable="true" ondragstart="TacticalBoard.handleTrayDragStart(event, 'player', '${initials}', '${fullName}')">
+                    <div style="width:30px; height:30px; background:var(--primary); border-radius:50%; margin:0 auto 0.5rem; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:800; color:#fff;">${initials}</div>
+                    <span style="display:block; font-size:0.65rem; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.last_name}</span>
+                </div>
+            `;
+        }).join('');
+    },
+
+    filterPlayers(query) {
+        const filtered = this.allPlayers.filter(p => 
+            `${p.first_name} ${p.last_name}`.toLowerCase().includes(query.toLowerCase())
+        );
+        this.renderPlayerTray(filtered);
+    },
+
+    handleTrayDragStart(e, type, label, fullName) {
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+            source: 'tray',
+            type: type,
+            label: label,
+            fullName: fullName
+        }));
     },
 
     setupPitchListeners() {
@@ -74,7 +127,7 @@ const TacticalBoard = {
             try {
                 const parsed = JSON.parse(data);
                 if (parsed.source === 'tray') {
-                    this.addElement(parsed.type, x, y, parsed.label);
+                    this.addElement(parsed.type, x, y, parsed.label, parsed);
                 } else if (parsed.source === 'pin') {
                     this.updateElementPos(parsed.id, x, y);
                 }
@@ -97,7 +150,7 @@ const TacticalBoard = {
         });
     },
 
-    addElement(type, x, y, label = '') {
+    addElement(type, x, y, label = '', parsedData = {}) {
         const id = `${type}-${Date.now()}`;
         const icons = { cone: '🟠', goal: '🥅', hurdle: '🚧', 'bib-blue': '👕', 'bib-red': '🔴' };
         
@@ -110,6 +163,7 @@ const TacticalBoard = {
 
         if (type === 'player') {
             newEl.label = label || 'P';
+            newEl.fullName = parsedData.fullName || '';
         } else {
             newEl.icon = icons[type] || '⚙️';
         }
@@ -240,6 +294,13 @@ const TacticalBoard = {
                         id: el.id
                     }));
                 });
+                
+                // Clicking a player allows swapping with a real player
+                pin.onclick = (e) => {
+                    e.stopPropagation();
+                    if (el.type === 'player') this.showPlayerSwapMenu(el.id);
+                };
+                
                 pitch.appendChild(pin);
             }
 
@@ -251,6 +312,7 @@ const TacticalBoard = {
             
             pin.style.left = `${el.x}%`;
             pin.style.top = `${el.y}%`;
+            pin.title = el.fullName || el.label || '';
             pin.innerHTML = el.type === 'player' ? `<span>${el.label}</span>` : el.icon;
         });
     },
@@ -297,6 +359,57 @@ const TacticalBoard = {
             console.error("Share error:", err);
             alert("Failed to share to feed");
         }
+    },
+
+    showPlayerSwapMenu(elementId) {
+        const modalId = 'swapPlayerModal';
+        let modal = document.getElementById(modalId);
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = modalId;
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:400px;">
+                <div class="modal-header">
+                    <h2>Assign Player to Position</h2>
+                    <div class="modal-close" onclick="closeModal('${modalId}')">&times;</div>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Select Player from Squad</label>
+                        <select id="swapPlayerSelect" onchange="TacticalBoard.confirmSwap('${elementId}', this.value)" style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:10px;">
+                            <option value="">-- Choose Player --</option>
+                            ${this.allPlayers.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('')}
+                            <option value="reset">-- Reset to Generic --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `;
+        modal.style.display = 'block';
+    },
+
+    confirmSwap(elementId, playerId) {
+        const frame = this.frames[this.currentFrame];
+        const el = frame.find(item => item.id === elementId);
+        if (!el) return;
+
+        if (playerId === 'reset') {
+            el.label = el.role || 'P';
+            el.fullName = '';
+        } else {
+            const player = this.allPlayers.find(p => p.id === playerId);
+            if (player) {
+                el.label = (player.first_name[0] + player.last_name[0]).toUpperCase();
+                el.fullName = `${player.first_name} ${player.last_name}`;
+            }
+        }
+
+        closeModal('swapPlayerModal');
+        this.render();
     }
 };
 

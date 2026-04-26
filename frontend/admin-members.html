@@ -264,7 +264,7 @@
                     </div>
                     <div id="membersListContainer">
                         <div class="table-responsive">
-                            <table style="width:100%; text-align:left; border-collapse:collapse;">
+                            <table id="adminMembersTable" style="width:100%; text-align:left; border-collapse:collapse;">
                                 <thead>
                                     <tr
                                         style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
@@ -475,108 +475,199 @@
 
     <!-- Create Team Modal -->
     <div id="createTeamModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('createTeamModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create New Team</h2>
-            <form id="createTeamForm" onsubmit="handleCreateTeam(event)">
-                <div class="form-group">
-                    <label>Team Name</label>
-                    <input type="text" name="teamName" placeholder="e.g. Under 14s A" required>
-                </div>
-                <div class="form-group">
-                    <label>Assign Head Coach</label>
-                    <select name="coachId" id="coachSelect">
-                        <option value="">-- Select Coach --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Registration Form (Jotform)</label>
-                    <select name="formId" id="formSelect">
-                        <option value="">-- No custom form --</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('createTeamModal')"
-                        style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Team</button>
-                </div>
-            </form>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Team</h2>
+                <div class="modal-close" onclick="closeModal('createTeamModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="createTeamForm" onsubmit="handleCreateTeam(event)">
+                    <div class="form-group">
+                        <label>Team Name</label>
+                        <input type="text" name="teamName" placeholder="e.g. Under 14s A" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Assign Head Coach</label>
+                        <select name="coachId" id="coachSelect">
+                            <option value="">-- Select Coach --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Form (Jotform)</label>
+                        <select name="formId" id="formSelect">
+                            <option value="">-- No custom form --</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createTeamModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="createTeamForm">Create Team</button>
+            </div>
         </div>
     </div>
 
     <!-- Add Member Modal -->
     <div id="addMemberModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('addMemberModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Add New Member</h2>
-            <form id="addMemberForm" onsubmit="event.preventDefault(); alert('Member invite sent!'); closeModal('addMemberModal');">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" placeholder="e.g. member@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Role</label>
-                    <select style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                        <option value="player">Player</option>
-                        <option value="parent">Parent</option>
-                        <option value="staff">Staff / Coach</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Send Invite</button>
-                </div>
-            </form>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Member</h2>
+                <div class="modal-close" onclick="closeModal('addMemberModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm" onsubmit="handleInviteMember(event)">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" id="addFirstName" placeholder="e.g. John" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="addLastName" placeholder="e.g. Doe" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="addEmail" placeholder="e.g. member@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="addRole" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;" onchange="togglePlayerFields(this.value)">
+                            <option value="player">Player</option>
+                            <option value="parent">Parent</option>
+                            <option value="staff">Staff / Coach</option>
+                        </select>
+                    </div>
+                    <div id="playerOnlyFields">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" id="addDOB">
+                            </div>
+                            <div class="form-group">
+                                <label>Position</label>
+                                <input type="text" id="addPosition" placeholder="e.g. Forward">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Assign to Squad (Optional)</label>
+                            <select id="addSquadSelect" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
+                                <option value="">-- No Squad --</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
+                <script>
+                    function togglePlayerFields(role) {
+                        const playerFields = document.getElementById('playerOnlyFields');
+                        if (playerFields) {
+                            playerFields.style.display = role === 'player' ? 'block' : 'none';
+                        }
+                    }
+                </script>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="addMemberForm">Send Invite</button>
+            </div>
         </div>
     </div>
 
-    <!-- Add Event Modal -->
     <div id="addEventModal" class="modal" style="display:none;">
         <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('addEventModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create Group Event</h2>
-            <form id="addEventForm" onsubmit="event.preventDefault(); alert('Event created!'); closeModal('addEventModal');">
-                <div class="form-group">
-                    <label>Event Title</label>
-                    <input type="text" placeholder="e.g. Weekly Training" required>
-                </div>
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" required>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Event</button>
-                </div>
-            </form>
+            <div class="modal-header">
+                <h2>Create Group Event</h2>
+                <div class="modal-close" onclick="closeModal('addEventModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="addEventForm" onsubmit="event.preventDefault(); alert('Event created!'); closeModal('addEventModal');">
+                    <div class="form-group">
+                        <label>Event Title</label>
+                        <input type="text" placeholder="e.g. Weekly Training" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="addEventForm">Create Event</button>
+            </div>
         </div>
     </div>
 
     <!-- Assign Plan Modal -->
     <div id="assignPlanModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:450px;">
-            <span class="close" onclick="closeModal('assignPlanModal')">&times;</span>
-            <div style="text-align:center; margin-bottom:1.5rem;">
-                <div style="width:50px; height:50px; background:rgba(220,38,38,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:1.5rem;">💳</div>
-                <h2 class="neon-text" style="font-size:1.3rem; margin:0;">Assign Subscription Plan</h2>
-                <p id="assignPlanMemberName" style="color:var(--text-muted); font-size:0.9rem; margin-top:0.5rem;">Member Name</p>
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Assign Subscription Plan</h2>
+                <div class="modal-close" onclick="closeModal('assignPlanModal')">&times;</div>
             </div>
-            <form id="assignPlanForm" onsubmit="handleAssignPlan(event)">
-                <input type="hidden" id="assignPlanMemberId">
-                <div class="form-group">
-                    <label>Select Plan</label>
-                    <select id="planSelect" style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:10px;" required>
-                        <option value="">-- Loading Plans --</option>
-                    </select>
+            <div class="modal-body">
+                <div style="text-align:center; margin-bottom:1.5rem;">
+                    <div style="width:50px; height:50px; background:rgba(220,38,38,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:1.5rem;">💳</div>
+                    <p id="assignPlanMemberName" style="color:#fff; font-size:1.1rem; font-weight:700;">Member Name</p>
                 </div>
-                <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:10px; margin-top:1rem; border:1px solid rgba(255,255,255,0.05);">
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">This will create a recurring subscription for the member via Stripe. They will receive an email to confirm their payment details.</p>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('assignPlanModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Assign Plan →</button>
-                </div>
-            </form>
+                <form id="assignPlanForm" onsubmit="handleAssignPlan(event)">
+                    <input type="hidden" id="assignPlanMemberId">
+                    <div class="form-group">
+                        <label>Select Plan</label>
+                        <select id="planSelect" required style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); color:#fff; border-radius:12px;">
+                            <option value="">-- Loading Plans --</option>
+                        </select>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:10px; margin-top:1rem; border:1px solid var(--glass-border);">
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">This will create a recurring subscription for the member via Stripe. They will receive an email to confirm their payment details.</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('assignPlanModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="assignPlanForm">Assign Plan →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Member Modal -->
+    <div id="editMemberModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Edit Member Details</h2>
+                <div class="modal-close" onclick="closeModal('editMemberModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="editMemberForm" onsubmit="handleEditMember(event)">
+                    <input type="hidden" id="editMemberId">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="editFirstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="editLastName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="editEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="editRole" style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); color:#fff; border-radius:12px;">
+                            <option value="player">Player</option>
+                            <option value="parent">Parent</option>
+                            <option value="staff">Staff / Coach</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editMemberModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="editMemberForm">Save Changes</button>
+            </div>
         </div>
     </div>
 
@@ -605,11 +696,34 @@
 
             // Load initial data
             if (window.DashboardLoaders) {
-                DashboardLoaders.initAdmin();
+                // Call specialized loaders for members
+                loadMembers();
+                DashboardLoaders.loadStats();
+                DashboardLoaders.loadActivityFeed();
+                DashboardLoaders.loadTeams();
             }
+            loadTeamsForDropdown();
             // default tab
             const tp = document.getElementById('tabPlatform'); if (tp) tp.classList.add('active');
         });
+
+        async function loadTeamsForDropdown() {
+            const select = document.getElementById('addSquadSelect');
+            if (!select) return;
+            try {
+                const { teams } = await apiService.get('/api/teams');
+                if (teams && teams.length > 0) {
+                    teams.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = t.name;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.warn("Failed to load squads for dropdown", e);
+            }
+        }
 
         async function loadMembers() {
             const container = document.getElementById('membersListContainer');
@@ -618,7 +732,9 @@
 
             try {
                 const data = await apiService.getAdminDashboardData();
-                const members = data.players || [];
+                const players = data.players || [];
+                const staff = data.staff || [];
+                const members = [...staff, ...players];
                 
                 if (members.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
@@ -630,7 +746,7 @@
                     const planBadge = isPlayer ? (m.plan_name ? `<span class="badge" style="background:rgba(220,38,38,0.1); color:var(--primary); font-size:0.7rem; margin-top:0.25rem; display:block;">${m.plan_name}</span>` : `<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-muted); font-size:0.7rem; margin-top:0.25rem; display:block;">No Plan</span>`) : '';
                     
                     return `
-                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                    <tr data-id="${m.id}">
                         <td data-label="Name" style="padding:1rem 0;">
                             <div style="font-weight:700; color:#fff;">${m.first_name} ${m.last_name}</div>
                             <div style="font-size:0.75rem; color:var(--text-muted);">${m.email || ''}</div>
@@ -645,8 +761,8 @@
                         </td>
                         <td data-label="Actions" style="padding:1rem 0; text-align:right;">
                             <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                                ${isPlayer ? `<button class="btn btn-text btn-small" style="color:var(--primary);" onclick="openAssignPlanModal('${m.id}', '${m.first_name} ${m.last_name}')">Assign Plan</button>` : ''}
-                                <button class="btn btn-text btn-small" onclick="showNotification('Member details coming soon', 'info')">View</button>
+                                ${isPlayer ? `<button class="btn btn-text btn-small" style="color:var(--accent-cyan);" onclick="openAssignPlanModal('${m.id}', '${m.first_name} ${m.last_name}')">Assign Plan</button>` : ''}
+                                <button class="btn btn-text btn-small" onclick="openEditMemberModal('${m.id}', '${m.first_name}', '${m.last_name}', '${m.email}', '${m.role}')">Edit</button>
                                 <button class="btn btn-text btn-small" style="color:#f87171;" onclick="deleteMember('${m.id}')">🗑️</button>
                             </div>
                         </td>
@@ -754,15 +870,6 @@
             }
         }
 
-        function openModal(id) {
-            const m = document.getElementById(id);
-            if (m) m.style.display = 'flex';
-        }
-
-        function closeModal(id) {
-            const m = document.getElementById(id);
-            if (m) m.style.display = 'none';
-        }
 
         function showSection(sectionId) {
             console.log("Showing section:", sectionId);            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
@@ -886,6 +993,35 @@
                 loadMembers();
             } catch (err) {
                 showNotification("Failed to assign plan: " + err.message, "error");
+            }
+        };
+
+        window.openEditMemberModal = function(id, first, last, email, role) {
+            document.getElementById('editMemberId').value = id;
+            document.getElementById('editFirstName').value = first;
+            document.getElementById('editLastName').value = last;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editRole').value = (role || 'player').toLowerCase();
+            openModal('editMemberModal');
+        };
+
+        window.handleEditMember = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editMemberId').value;
+            const data = {
+                first_name: document.getElementById('editFirstName').value,
+                last_name: document.getElementById('editLastName').value,
+                email: document.getElementById('editEmail').value,
+                role: document.getElementById('editRole').value
+            };
+
+            try {
+                await apiService.post(`/api/members/${id}/update`, data);
+                showNotification("Member updated successfully!", "success");
+                closeModal('editMemberModal');
+                loadMembers();
+            } catch (err) {
+                showNotification("Failed to update member: " + err.message, "error");
             }
         };
 

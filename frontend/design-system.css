@@ -178,8 +178,6 @@ body.clubhub-unified {
     width: 100%;
     overflow-x: auto;
     border-radius: var(--radius-lg);
-    background: hsla(0, 0%, 100%, 0.02);
-    border: 1px solid var(--glass-border);
     margin-bottom: 2rem;
 }
 
@@ -406,7 +404,7 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 0 4px var(--primary-glow);
 }
 
-/* Modal Improvements */
+/* Premium Modal System */
 .modal {
     display: none;
     position: fixed;
@@ -419,7 +417,7 @@ input:focus, select:focus, textarea:focus {
     backdrop-filter: blur(12px);
     overflow-y: auto;
     padding: 2rem 1rem;
-    align-items: flex-start; /* Fix for tall modals */
+    align-items: center;
     justify-content: center;
 }
 
@@ -431,33 +429,109 @@ input:focus, select:focus, textarea:focus {
     background: var(--bg-obsidian);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
-    padding: 2rem;
+    padding: 0;
     box-shadow: 0 20px 60px rgba(0,0,0,0.8);
     max-width: 100%;
+    width: 500px;
     max-height: 90vh;
-    overflow-y: auto;
-    margin-top: auto;
-    margin-bottom: auto;
+    overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.02);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-family: var(--font-heading);
+    letter-spacing: -0.5px;
+}
+
+.modal-body {
+    padding: 2rem;
+    overflow-y: auto;
     scrollbar-width: thin;
 }
 
-.modal-content::-webkit-scrollbar {
-    width: 6px;
+.modal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.01);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
 }
 
-.modal-content::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1);
-    border-radius: 10px;
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    outline: none !important;
+    font-size: 1.2rem;
+    line-height: 1;
 }
 
-.modal-content.glass-card {
-    overflow-y: auto !important; /* Override glass-card overflow:hidden */
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+    border-color: var(--primary);
 }
+
+.modal-close:focus {
+    box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+/* Detail Row for Premium Look */
+.modal-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-detail-row:last-child {
+    border-bottom: none;
+}
+
+.modal-detail-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.modal-detail-value {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
 @media (max-width: 600px) {
     .modal-content {
-        padding: 1.5rem;
+        width: 100%;
         margin: 1rem;
-        width: calc(100% - 2rem);
+        border-radius: var(--radius-lg);
+    }
+    .modal-header, .modal-body, .modal-footer {
+        padding: 1.25rem;
     }
 }

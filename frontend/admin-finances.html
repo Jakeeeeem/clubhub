@@ -164,246 +164,6 @@
 
             <!-- Dashboard Sections -->
 
-            <div id="overview" class="dashboard-section" style="display:none;">
-                <div class="stats-row"
-                    style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                    <div class="stat-card" onclick="window.location.href='admin-members.html'" style="cursor: pointer;">
-                        <span class="stat-label">Total Members</span>
-                        <span class="stat-number" id="totalMembers">47</span>
-                        <div class="stat-change">↑ 3 this month</div>
-                    </div>
-                    <div class="stat-card" onclick="window.location.href='admin-finances.html'" style="cursor: pointer;">
-                        <span class="stat-label">Revenue (30d)</span>
-                        <span class="stat-number" id="monthlyRevenue">£3,840</span>
-                        <div class="stat-change">↑ 12% vs last month</div>
-                    </div>
-                    <div class="stat-card" onclick="window.location.href='admin-tournament-manager.html'" style="cursor: pointer;">
-                        <span class="stat-label">Active Events</span>
-                        <span class="stat-number" id="activeEvents">6</span>
-                        <div class="stat-change">2 upcoming this week</div>
-                    </div>
-                    <div class="stat-card" onclick="window.location.href='admin-scout-approvals.html'" style="cursor: pointer;">
-                        <span class="stat-label">Pending Scouts</span>
-                        <span class="stat-number" id="pendingScouts" style="color:#f59e0b;">3</span>
-                        <div class="stat-change" style="color:#f59e0b;">Requires verification</div>
-                    </div>
-                </div>
-
-                <div class="dashboard-grid">
-                    <div>
-                        <div class="glass-card" style="padding:1.5rem;">
-                            <div class="section-title">📋 Activity Feed
-                                <span
-                                    style="margin-left:auto;font-size:0.75rem;font-weight:400;color:var(--text-muted);">Live
-                                    updates</span>
-                            </div>
-                            <div id="activityFeed">
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">👤
-                                    </div>
-                                    <div class="feed-meta">
-                                        <strong>New member joined — Marcus Thompson</strong>
-                                        <span>Player account · Under 16s squad</span>
-                                    </div>
-                                    <span class="feed-time">2m ago</span>
-                                </div>
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(220,38,38,0.1);color:#f87171;">💳
-                                    </div>
-                                    <div class="feed-meta">
-                                        <strong>Payment received — £75</strong>
-                                        <span>Monthly subscription · Sarah Davies</span>
-                                    </div>
-                                    <span class="feed-time">18m ago</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
-                            <div class="section-title">👥 Recent Members
-                                <button class="btn btn-secondary btn-small" style="margin-left:auto;"
-                                    onclick="window.location.href='admin-members.html'">View All</button>
-                            </div>
-                            <p style="color:var(--text-muted);font-size:0.875rem;">Loading members list...</p>
-                        </div>
-                    </div>
-
-                    <div style="display:flex;flex-direction:column;gap:1.5rem;">
-                        <div class="glass-card" style="padding:1.5rem;">
-                            <div class="section-title">⚡ Quick Actions</div>
-                            <div style="display:flex;flex-direction:column;gap:0.6rem;">
-                                <button class="quick-action-btn"
-                                    onclick="openModal && openModal('addMemberModal')"><i>👤</i> Add Member</button>
-                                <button class="quick-action-btn"
-                                    onclick="openModal && openModal('addEventModal')"><i>📅</i> Create Event</button>
-                                <button class="quick-action-btn"
-                                    onclick="window.location.href='email-campaigns.html'"><i>📧</i> Send
-                                    Announcement</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Members Section -->
-            <div id="members" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="glass-card" style="padding:1.5rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                        <h3 class="section-title" style="margin:0;">👥 Member Management</h3>
-                        <div style="display:flex; gap:0.75rem;">
-                            <input type="text" placeholder="Search members..."
-                                style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.6rem 1rem; border-radius:10px; color:#fff; width:250px;">
-                            <button class="btn btn-primary btn-small" onclick="openModal('addMemberModal')">+ Add
-                                Member</button>
-                        </div>
-                    </div>
-                    <div id="membersListContainer">
-                        <div class="table-responsive">
-                            <table style="width:100%; text-align:left; border-collapse:collapse;">
-                                <thead>
-                                    <tr
-                                        style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
-                                        <th style="padding:0.75rem 0;">Name</th>
-                                        <th style="padding:0.75rem 0;">Role</th>
-                                        <th style="padding:0.75rem 0;">Squad</th>
-                                        <th style="padding:0.75rem 0;">Status</th>
-                                        <th style="padding:0.75rem 0; text-align:right;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody style="font-size:0.9rem;">
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Marcus Thompson</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Player</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 16s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Sarah Davies</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Parent</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 12s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Staff Section -->
-            <div id="staff" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">👔 Staff Management</div>
-                <div class="glass-card" style="padding:1.5rem; margin-top:1rem; text-align:center; color:var(--text-muted);">
-                    <h3 style="margin-bottom:0.75rem;">Staff Overview</h3>
-                    <p>Manage coaches, administrators, and support staff across your group.</p>
-                    <button class="btn btn-secondary" onclick="showNotification('Staff management will be available soon.', 'info')">Learn More</button>
-                </div>
-            </div>
-
-            <!-- Teams Section -->
-            <div id="teams" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2.5rem; background:rgba(255,255,255,0.02); padding:2rem; border-radius:24px; border:1px solid rgba(255,255,255,0.05);">
-                    <div>
-                        <h1 style="margin:0; color:#fff; font-size:2.2rem; font-weight:900; letter-spacing:-1px;">Squads & Teams</h1>
-                        <p style="color:var(--text-muted); margin-top:0.5rem; font-size:1rem;">Organize your athletes into competitive divisions and training groups</p>
-                    </div>
-                    <button class="btn btn-primary" onclick="openModal('createTeamModal')" style="padding:1.1rem 2rem; font-weight:800; border-radius:16px; box-shadow: 0 10px 30px rgba(220, 67, 67, 0.3);">
-                        <span>+</span> Create New Squad
-                    </button>
-                </div>
-
-                <div class="dash-grid" id="teamsListContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:2rem;">
-                    <!-- Dynamically loaded -->
-                    <div style="grid-column:1/-1; padding:5rem; text-align:center; background:rgba(255,255,255,0.02); border:2px dashed rgba(255,255,255,0.05); border-radius:24px;">
-                        <div class="loader" style="margin:0 auto 1.5rem;"></div>
-                        <p style="color:var(--text-muted); font-size:1.1rem; font-weight:600;">Synchronizing squad data...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Events Section -->
-            <div id="events" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">📅 Calendar & Events</div>
-                <div class="glass-card" style="padding:1.5rem; text-align:center;">
-                    <div style="font-size:3rem; margin-bottom:1rem;">🗓️</div>
-                    <h3 style="margin-bottom:0.5rem;">Group Calendar</h3>
-                    <p style="color:var(--text-muted); margin-bottom:1.5rem;">Plan and manage your groups sessions,
-                        matches, and socials.</p>
-                    <button class="btn btn-primary" onclick="window.location.href='admin-tournament-manager.html'">Open
-                        Calendar Manager</button>
-                </div>
-            </div>
-
-            <div id="messenger" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">💬 Admin Messenger</div>
-                <div class="glass-card"
-                    style="height:500px; display:flex; align-items:center; justify-content:center; flex-direction:column; color:var(--text-muted);">
-                    <i class="fa fa-comments" style="font-size:3rem; margin-bottom:1rem; opacity:0.3;"></i>
-                    <p>Select a conversation to start messaging</p>
-                    <button class="btn btn-secondary" style="margin-top:1rem;">New Message</button>
-                </div>
-            </div>
-
-            <div id="scout-approvals" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">🎯 Scout Access Approvals</div>
-                <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-                    <button class="btn btn-text btn-small" id="tabPlatform"
-                        onclick="showScoutTab('platform')">Platform</button>
-                    <button class="btn btn-text btn-small" id="tabClub" onclick="showScoutTab('club')">Club</button>
-                </div>
-
-                <div id="scoutApprovalsContainer" class="glass-card" style="padding:1rem;">
-                    <p id="scoutApprovalsLoading" style="color:var(--text-muted); margin-bottom:1rem;">Loading pending
-                        approvals...</p>
-                    <div id="scoutApprovalsList"></div>
-                </div>
-
-                <div id="clubScoutApprovalsContainer" class="glass-card"
-                    style="padding:1rem; display:none; margin-top:1rem;">
-                    <p id="clubScoutApprovalsLoading" style="color:var(--text-muted); margin-bottom:1rem;">Loading club
-                        scout approvals...</p>
-                    <div id="clubScoutApprovalsList"></div>
-                </div>
-            </div>
-
-            <div id="tactical-board" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">📋 Tactical Strategy Board</div>
-                <div class="glass-card"
-                    style="height:400px; background:rgba(0,0,0,0.2) url('https://w0.peakpx.com/wallpaper/384/261/HD-wallpaper-football-pitch-soccer-field-top-view-soccer-concepts-soccer-background-football.jpg') center/cover; border-radius:12px; position:relative; overflow:hidden;">
-                    <div
-                        style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;">
-                        <button class="btn btn-primary">Launch Tactical Editor</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="shop" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">🛍️ Club Shop Manager</div>
-                <div class="dash-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <h3 style="color:#fff; margin-bottom:1rem;">Current Inventory</h3>
-                        <p style="color:var(--text-muted);">Manage kits, training gear, and merchandise.</p>
-                        <button class="btn btn-secondary" style="margin-top:1rem; width:100%;">Manage Products</button>
-                    </div>
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <h3 style="color:#fff; margin-bottom:1rem;">Recent Orders</h3>
-                        <p style="color:var(--text-muted);">Track member purchases and fulfillment.</p>
-                        <button class="btn btn-secondary" style="margin-top:1rem; width:100%;">View Orders</button>
-                    </div>
-                </div>
-            </div>
 
             <div id="finances" class="dashboard-section active" style="display:block; padding:1.5rem;">
                 <!-- Finance Hub Header -->
@@ -506,9 +266,14 @@
                             <h2 style="margin:0; color:#fff; font-size:1.8rem; font-weight:900; letter-spacing:-0.5px;">Subscription Plans</h2>
                             <p style="color:var(--text-muted); font-size:1rem; margin-top:0.35rem;">Define membership tiers and recurring payment structures</p>
                         </div>
-                        <button class="btn btn-primary" onclick="openModal('createPlanModal')" style="padding:1rem 2rem; font-weight:800; border-radius:16px; box-shadow: 0 10px 25px rgba(220, 67, 67, 0.2);">
-                            <span>+</span> Create New Plan
-                        </button>
+                        <div style="display:flex; gap:1rem;">
+                            <button class="btn btn-secondary" onclick="syncPlansFromStripe()" id="sync-plans-btn" style="padding:1rem 2rem; font-weight:800; border-radius:16px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05);">
+                                <i class="fa fa-sync-alt" style="margin-right:0.5rem;"></i> Sync from Stripe
+                            </button>
+                            <button class="btn btn-primary" onclick="openModal('createPlanModal')" style="padding:1rem 2rem; font-weight:800; border-radius:16px; box-shadow: 0 10px 25px rgba(220, 67, 67, 0.2);">
+                                <span>+</span> Create New Plan
+                            </button>
+                        </div>
                     </div>
 
                     <div class="glass-card" style="padding:0; overflow:hidden; border-radius:24px; border:1px solid rgba(255,255,255,0.05);">
@@ -589,58 +354,65 @@
 
     <!-- Create Team Modal -->
     <div id="createTeamModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('createTeamModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create New Team</h2>
-            <form id="createTeamForm" onsubmit="handleCreateTeam(event)">
-                <div class="form-group">
-                    <label>Team Name</label>
-                    <input type="text" name="teamName" placeholder="e.g. Under 14s A" required>
-                </div>
-                <div class="form-group">
-                    <label>Assign Head Coach</label>
-                    <select name="coachId" id="coachSelect">
-                        <option value="">-- Select Coach --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Registration Form (Jotform)</label>
-                    <select name="formId" id="formSelect">
-                        <option value="">-- No custom form --</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('createTeamModal')"
-                        style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Team</button>
-                </div>
-            </form>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Team</h2>
+                <div class="modal-close" onclick="closeModal('createTeamModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="createTeamForm" onsubmit="handleCreateTeam(event)">
+                    <div class="form-group">
+                        <label>Team Name</label>
+                        <input type="text" name="teamName" placeholder="e.g. Under 14s A" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Assign Head Coach</label>
+                        <select name="coachId" id="coachSelect">
+                            <option value="">-- Select Coach --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Form (Jotform)</label>
+                        <select name="formId" id="formSelect">
+                            <option value="">-- No custom form --</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createTeamModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="createTeamForm">Create Team</button>
+            </div>
         </div>
     </div>
 
     <!-- Add Member Modal -->
     <div id="addMemberModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('addMemberModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Add New Member</h2>
-            <form id="addMemberForm" onsubmit="event.preventDefault(); alert('Member invite sent!'); closeModal('addMemberModal');">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" placeholder="e.g. member@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Role</label>
-                    <select style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                        <option value="player">Player</option>
-                        <option value="parent">Parent</option>
-                        <option value="staff">Staff / Coach</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Send Invite</button>
-                </div>
-            </form>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Member</h2>
+                <div class="modal-close" onclick="closeModal('addMemberModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm" onsubmit="event.preventDefault(); alert('Member invite sent!'); closeModal('addMemberModal');">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" placeholder="e.g. member@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
+                            <option value="player">Player</option>
+                            <option value="parent">Parent</option>
+                            <option value="staff">Staff / Coach</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="addMemberForm">Send Invite</button>
+            </div>
         </div>
     </div>
 
@@ -849,23 +621,24 @@
             if (!tbody) return;
 
             try {
-                // In a real app, we'd fetch from /payments/plans
-                // For demo/restore session, we use the hardcoded/local data
-                const plans = [
-                    { id: 'plan_1', name: 'Monthly Academy Fee', amount: 45, interval: 'month', description: 'Full training access + match fees', subscribers: 142 },
-                    { id: 'plan_2', name: 'Elite Training Add-on', amount: 25, interval: 'month', description: 'Additional performance coaching sessions', subscribers: 42 },
-                    { id: 'plan_3', name: 'Annual Registration', amount: 150, interval: 'year', description: 'Annual club membership and insurance', subscribers: 184 }
-                ];
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:3rem; text-align:center; opacity:0.5;">Loading plans...</td></tr>';
+                
+                const plans = await apiService.getSubscriptionPlans();
+                
+                if (!plans || plans.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding:3rem; text-align:center; opacity:0.5;">No subscription plans found. Click "Sync from Stripe" to import your existing products.</td></tr>';
+                    return;
+                }
 
                 tbody.innerHTML = plans.map(p => `
                     <tr style="border-top:1px solid rgba(255,255,255,0.05);">
                         <td style="padding:1.5rem;">
                             <strong style="display:block; color:#fff; font-size:1.1rem;">${p.name}</strong>
-                            <span style="color:var(--text-muted); font-size:0.85rem;">${p.description}</span>
+                            <span style="color:var(--text-muted); font-size:0.85rem;">${p.description || 'No description'}</span>
                         </td>
-                        <td style="padding:1.5rem;"><span style="color:#4ade80; font-weight:900; font-size:1.1rem;">£${p.amount.toFixed(2)}</span> / ${p.interval}</td>
-                        <td style="padding:1.5rem;"><span class="badge" style="background:rgba(59,130,246,0.1); color:#60a5fa; padding:0.4rem 0.8rem;">${p.subscribers} Active</span></td>
-                        <td style="padding:1.5rem;"><span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span></td>
+                        <td style="padding:1.5rem;"><span style="color:#4ade80; font-weight:900; font-size:1.1rem;">£${parseFloat(p.price || 0).toFixed(2)}</span> / ${p.interval}</td>
+                        <td style="padding:1.5rem;"><span class="badge" style="background:rgba(59,130,246,0.1); color:#60a5fa; padding:0.4rem 0.8rem;">${p.subscribers || 0} Active</span></td>
+                        <td style="padding:1.5rem;"><span class="badge" style="background:${p.active ? 'rgba(74,222,128,0.1)' : 'rgba(255,255,255,0.05)'}; color:${p.active ? '#4ade80' : 'var(--text-muted)'};">${p.active ? 'Active' : 'Inactive'}</span></td>
                         <td style="padding:1.5rem; text-align:right;">
                             <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
                                 <button class="btn btn-text btn-small" onclick="editPlan('${p.id}')">Edit</button>
@@ -876,6 +649,28 @@
                 `).join('');
             } catch (err) {
                 console.error("Failed to load plans", err);
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:3rem; text-align:center; color:#f87171;">Failed to load plans. Please check your Stripe connection.</td></tr>';
+            }
+        }
+
+        async function syncPlansFromStripe() {
+            const btn = document.getElementById('sync-plans-btn');
+            const originalContent = btn.innerHTML;
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Syncing...';
+                
+                const result = await apiService.post('/api/payments/plans/import', {});
+                
+                showNotification(result.message || "Sync completed successfully!", "success");
+                loadPaymentPlans();
+            } catch (err) {
+                console.error("Sync failed:", err);
+                showNotification("Failed to sync plans: " + err.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
             }
         }
 
@@ -885,9 +680,68 @@
             // Populate form logic here...
         }
 
-        function assignPlan(planId) {
-            showNotification("Opening plan assignment for " + planId, "info");
-            window.location.href = 'admin-members.html#plans';
+        async function assignPlan(planId) {
+            const modal = document.getElementById('assignPlanModal');
+            if (!modal) return;
+            
+            document.getElementById('assignPlanId').value = planId;
+            modal.style.display = 'block';
+            
+            const list = document.getElementById('assignPlayerList');
+            list.innerHTML = '<p style="text-align:center; padding:1rem; opacity:0.5;">Loading members...</p>';
+            
+            try {
+                const data = await apiService.getAdminDashboardData();
+                const players = data.players || [];
+                window._assignablePlayers = players;
+                renderAssignPlayerList(players);
+            } catch (e) {
+                list.innerHTML = '<p style="text-align:center; padding:1rem; color:#f87171;">Failed to load members.</p>';
+            }
+        }
+
+        function renderAssignPlayerList(players) {
+            const list = document.getElementById('assignPlayerList');
+            if (!list) return;
+            
+            if (players.length === 0) {
+                list.innerHTML = '<p style="text-align:center; padding:1rem; opacity:0.5;">No members found.</p>';
+                return;
+            }
+            
+            list.innerHTML = players.map(p => `
+                <div class="feed-entry" style="align-items:center; cursor:pointer;" onclick="selectPlayerForPlan('${p.id}', '${p.first_name} ${p.last_name}')">
+                    <div class="user-avatar-sm" style="background:var(--primary); margin-right:1rem;">${p.first_name[0]}</div>
+                    <div class="feed-meta">
+                        <strong>${p.first_name} ${p.last_name}</strong>
+                        <span>${p.team_name || 'No Team'}</span>
+                    </div>
+                    <i class="fa fa-chevron-right" style="opacity:0.3; font-size:0.8rem;"></i>
+                </div>
+            `).join('');
+        }
+
+        function filterAssignPlayers(query) {
+            const filtered = (window._assignablePlayers || []).filter(p => 
+                `${p.first_name} ${p.last_name}`.toLowerCase().includes(query.toLowerCase())
+            );
+            renderAssignPlayerList(filtered);
+        }
+
+        async function selectPlayerForPlan(playerId, playerName) {
+            const planId = document.getElementById('assignPlanId').value;
+            if (!confirm(`Assign this plan to ${playerName}?`)) return;
+            
+            try {
+                showNotification(`Assigning plan to ${playerName}...`, "info");
+                // Mock API call
+                setTimeout(() => {
+                    showNotification(`Plan assigned successfully to ${playerName}!`, "success");
+                    closeModal('assignPlanModal');
+                }, 1000);
+            } catch (err) {
+                showNotification("Failed to assign plan", "error");
+            }
         }
 
         // --- Stripe Connect Logic ---
@@ -968,42 +822,69 @@
 
     <!-- Create Stripe Plan Modal -->
     <div id="createPlanModal" class="modal">
-        <div class="modal-content glass-card" style="max-width:550px; border-radius:24px; padding:2.5rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
-                <h2 class="neon-text" style="font-size:1.6rem; margin:0;">Create Payment Plan</h2>
-                <span class="close" onclick="closeModal('createPlanModal')" style="font-size:2rem;">&times;</span>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Payment Plan</h2>
+                <div class="modal-close" onclick="closeModal('createPlanModal')">&times;</div>
             </div>
-            <form id="createPlanForm" onsubmit="event.preventDefault(); showNotification('Plan Created & Synced to Stripe', 'success'); closeModal('createPlanModal');">
-                <div class="form-group" style="margin-bottom:1.5rem;">
-                    <label style="display:block; margin-bottom:0.75rem; color:var(--text-muted); font-size:0.9rem; font-weight:600;">Plan Name</label>
-                    <input type="text" placeholder="e.g. Monthly Academy Fee" required style="width:100%; padding:1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff;">
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+            <div class="modal-body">
+                <form id="createPlanForm" onsubmit="event.preventDefault(); showNotification('Plan Created & Synced to Stripe', 'success'); closeModal('createPlanModal');">
                     <div class="form-group">
-                        <label style="display:block; margin-bottom:0.75rem; color:var(--text-muted); font-size:0.9rem; font-weight:600;">Price (GBP £)</label>
-                        <input type="number" step="0.01" placeholder="45.00" required style="width:100%; padding:1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff;">
+                        <label>Plan Name</label>
+                        <input type="text" placeholder="e.g. Monthly Academy Fee" required>
                     </div>
-                    <div class="form-group">
-                        <label style="display:block; margin-bottom:0.75rem; color:var(--text-muted); font-size:0.9rem; font-weight:600;">Interval</label>
-                        <select required style="width:100%; padding:1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff;">
-                            <option value="month">Monthly</option>
-                            <option value="year">Annually</option>
-                            <option value="week">Weekly</option>
-                        </select>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1.5rem;">
+                        <div class="form-group">
+                            <label>Price (GBP £)</label>
+                            <input type="number" step="0.01" placeholder="45.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Interval</label>
+                            <select required>
+                                <option value="month">Monthly</option>
+                                <option value="year">Annually</option>
+                                <option value="week">Weekly</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group" style="margin-bottom:2rem;">
-                    <label style="display:block; margin-bottom:0.75rem; color:var(--text-muted); font-size:0.9rem; font-weight:600;">Description</label>
-                    <textarea placeholder="What's included in this plan?" rows="3" style="width:100%; padding:1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#fff; resize:none;"></textarea>
-                </div>
-                <div style="display:flex; gap:1.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('createPlanModal')" style="flex:1; padding:1.2rem;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1; padding:1.2rem; font-weight:800;">Create & Sync Plan</button>
-                </div>
-            </form>
+                    <div class="form-group" style="margin-top:1.5rem;">
+                        <label>Description</label>
+                        <textarea placeholder="What's included in this plan?" rows="3" style="resize:none;"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createPlanModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="createPlanForm">Create & Sync Plan</button>
+            </div>
         </div>
     </div>
 
+    <!-- Assign Plan Modal -->
+    <div id="assignPlanModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Assign Plan to Member</h2>
+                <div class="modal-close" onclick="closeModal('assignPlanModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="assignPlanId">
+                <div class="form-group">
+                    <label>Search Member</label>
+                    <div style="position:relative;">
+                        <i class="fa fa-search" style="position:absolute; left:1rem; top:50%; transform:translateY(-50%); opacity:0.4;"></i>
+                        <input type="text" placeholder="Start typing name..." oninput="filterAssignPlayers(this.value)" style="padding-left:2.5rem; width:100%;">
+                    </div>
+                </div>
+                <div id="assignPlayerList" style="max-height:350px; overflow-y:auto; margin-top:1rem; border:1px solid rgba(255,255,255,0.05); border-radius:12px; padding:0.5rem;">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('assignPlanModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

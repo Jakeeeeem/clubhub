@@ -3177,7 +3177,6 @@ main.main.home-main {
     width: 100%;
     margin-top: 1.5rem;
     border-radius: 16px;
-    border: 1px solid var(--border-color);
     background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(10px);
 }

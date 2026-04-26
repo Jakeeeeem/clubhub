@@ -1,5 +1,6 @@
 const express = require("express");
 const { query } = require("../config/database");
+const { syncProductToStripe } = require("../services/stripe-service");
 const {
   authenticateToken,
   requireOrganization,
@@ -91,14 +92,15 @@ router.post(
         capacity,
         facilities,
         hourlyRate,
+        entryPrice,
         imageUrl,
         organizationId,
       } = req.body;
 
       const result = await query(
         `
-            INSERT INTO venues (name, location, description, capacity, facilities, hourly_rate, image_url, organization_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO venues (name, location, description, capacity, facilities, hourly_rate, entry_price, image_url, organization_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
         `,
         [
@@ -108,12 +110,26 @@ router.post(
           capacity,
           JSON.stringify(facilities || []),
           hourlyRate || 0,
+          entryPrice || 0,
           imageUrl,
           organizationId,
         ],
       );
 
-      res.status(201).json(result.rows[0]);
+      const savedVenue = result.rows[0];
+
+      // Sync with Stripe if entryPrice is set
+      if (entryPrice > 0) {
+          await syncProductToStripe({
+              type: 'venue',
+              id: savedVenue.id,
+              name: `${name} Entry`,
+              price: entryPrice,
+              clubId: organizationId
+          });
+      }
+
+      res.status(201).json(savedVenue);
     } catch (error) {
       console.error("Create venue error:", error);
       res.status(500).json({ error: "Failed to create venue" });

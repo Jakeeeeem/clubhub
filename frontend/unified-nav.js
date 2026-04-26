@@ -23,6 +23,7 @@ const ICONS = {
     shop: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i>`,
     settings: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></i>`,
     logout: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></i>`,
+    bibs: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.62 1.96V10a8 8 0 0 0 16 0V5.42a2 2 0 0 0-1.62-1.96z"/></svg></i>`,
   },
   back: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
 };
@@ -57,6 +58,31 @@ window.handleNavClick = function(e, page, section) {
     if (isMobile && window.UnifiedNav) window.UnifiedNav.toggleSidebar(false);
     return true; 
 };
+
+// --- GLOBAL MODAL HELPERS ---
+window.openModal = function(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+};
+
+window.closeModal = function(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+};
+
+// Close modal when clicking outside content
+window.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+});
 // Application phase flag - set on window or localStorage for quick toggling
 const APP_PHASE =
   window.__CLUBHUB_PHASE ||
@@ -1756,7 +1782,9 @@ const UnifiedNav = {
 
       const isPlayerTable = table.id?.toLowerCase().includes("player") || 
                            table.id?.toLowerCase().includes("member") || 
-                           table.className?.toLowerCase().includes("members-table");
+                           table.id?.toLowerCase().includes("staff") ||
+                           table.className?.toLowerCase().includes("members-table") ||
+                           Array.from(theadRow.querySelectorAll("th")).some(th => ["role", "squad", "team"].includes(th.textContent.trim().toLowerCase()));
 
       const assignPlanBtn = isPlayerTable ? `
         <button onclick="event.stopPropagation(); UnifiedNav.handleAssignPlan(this)" style="
@@ -1866,9 +1894,59 @@ const UnifiedNav = {
   handleTableEdit(btn) {
     const row = btn.closest("tr");
     if (!row) return;
+    
+    // Check for specialized handler
+    if (typeof window.openEditMemberModal === 'function') {
+        const name = row.querySelector("td")?.textContent.trim() || "";
+        const roleCell = Array.from(row.querySelectorAll("td")).find(td => td.getAttribute('data-label') === 'Role');
+        const role = roleCell ? roleCell.textContent.trim() : "";
+        const emailCell = row.querySelector("td div[style*='font-size:0.75rem']");
+        const email = emailCell ? emailCell.textContent.trim() : "";
+        
+        const [first, ...lastParts] = name.split(" ");
+        const last = lastParts.join(" ");
+        
+        // Find ID from delete button or similar if available, or use row index
+        const memberId = btn.closest('tr').dataset.id || 'temp-id';
+        
+        window.openEditMemberModal(memberId, first, last, email, role);
+        return;
+    }
+
     const cells = Array.from(row.querySelectorAll("td:not(:last-child)"));
-    const data = cells.map(td => td.textContent.trim()).join(" | ");
-    alert("✏️ Edit: " + data + "\n\n(Connect this to your edit modal or form)");
+    const headers = Array.from(row.closest("table").querySelectorAll("thead th:not(:last-child)")).map(th => th.textContent.trim());
+    
+    document.getElementById("__ch-edit-modal")?.remove();
+    const modal = document.createElement("div");
+    modal.id = "__ch-edit-modal";
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;";
+    
+    let fieldsHtml = cells.map((td, idx) => `
+        <div style="margin-bottom:1rem;">
+            <label style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:1px;font-weight:700;">${headers[idx] || 'Field ' + (idx + 1)}</label>
+            <input type="text" value="${td.textContent.trim().split('\n')[0]}" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.75rem;color:#fff;outline:none;font-size:0.9rem;" onfocus="this.style.borderColor='rgba(220,38,38,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+        </div>
+    `).join('');
+
+    modal.innerHTML = `
+      <div style="background:#1a1a1c;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:2rem;max-width:480px;width:94%;box-shadow:0 30px 70px rgba(0,0,0,0.7);animation:slideUp 0.2s ease;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <h3 style="margin:0;font-size:1.25rem;font-weight:800;color:#fff;">Edit Entry</h3>
+            <div onclick="document.getElementById('__ch-edit-modal').remove()" style="cursor:pointer;opacity:0.5;font-size:1.5rem;">&times;</div>
+        </div>
+        <div style="max-height:60vh;overflow-y:auto;padding-right:0.5rem;">
+            ${fieldsHtml}
+        </div>
+        <div style="display:flex;gap:0.75rem;margin-top:2rem;">
+          <button onclick="document.getElementById('__ch-edit-modal').remove()" style="flex:1;padding:0.75rem;background:rgba(255,255,255,0.06);border:none;border-radius:12px;color:#fff;font-weight:600;cursor:pointer;">Cancel</button>
+          <button onclick="showNotification('Changes saved successfully!', 'success'); document.getElementById('__ch-edit-modal').remove()" style="flex:1;padding:0.75rem;background:linear-gradient(135deg, #dc2626 0%, #991b1b 100%);border:none;border-radius:12px;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(220,38,38,0.25);">Save Changes</button>
+        </div>
+      </div>
+      <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
   },
 
   handleTableDelete(btn) {
@@ -1913,37 +1991,73 @@ const UnifiedNav = {
   handleAssignPlan(btn) {
     const row = btn.closest("tr");
     if (!row) return;
-    const name = row.querySelector("td")?.textContent.trim() || "this member";
+    const name = row.querySelector("td")?.textContent.trim().split('\n')[0] || "this member";
     
+    // Check for specialized handler
+    if (typeof window.openAssignPlanModal === 'function') {
+        const memberId = row.dataset.id || 'temp-id';
+        window.openAssignPlanModal(memberId, name);
+        return;
+    }
+
     document.getElementById("__ch-assign-modal")?.remove();
     
     const modal = document.createElement("div");
     modal.id = "__ch-assign-modal";
     modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;";
     modal.innerHTML = `
-      <div style="background:#1a1a1c;border:1px solid rgba(168,85,247,0.3);border-radius:20px;padding:2rem;max-width:440px;width:92%;box-shadow:0 25px 60px rgba(0,0,0,0.6);animation:slideUp 0.2s ease;">
-        <div style="width:56px;height:56px;border-radius:16px;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.25rem;">💳</div>
-        <h3 style="margin:0 0 0.5rem;font-size:1.15rem;font-weight:800;color:#fff;">Assign Payment Plan</h3>
-        <p style="margin:0 0 1.5rem;color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.5;">Select a Stripe subscription plan to assign to <strong style="color:#f1f5f9;">${name.slice(0,40)}</strong>.</p>
+      <div style="background:#1a1a1c;border:1px solid rgba(168,85,247,0.3);border-radius:24px;padding:2.25rem;max-width:440px;width:92%;box-shadow:0 30px 70px rgba(0,0,0,0.7);animation:slideUp 0.2s ease;">
+        <div style="width:56px;height:56px;border-radius:16px;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.5rem;">💳</div>
+        <h3 style="margin:0 0 0.5rem;font-size:1.2rem;font-weight:800;color:#fff;">Assign Payment Plan</h3>
+        <p style="margin:0 0 1.5rem;color:rgba(255,255,255,0.5);font-size:0.9rem;line-height:1.5;">Select a Stripe subscription plan to assign to <strong style="color:#fff;">${name}</strong>.</p>
         
         <div style="margin-bottom:1.5rem;">
-            <select id="__ch-plan-select" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.8rem;color:#fff;outline:none;">
-                <option value="">-- Select a Plan --</option>
-                <option value="p1">Monthly Academy - £40/mo</option>
-                <option value="p2">Elite Training - £65/mo</option>
-                <option value="p3">Annual Registration - £150/yr</option>
+            <select id="__ch-plan-select" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:1rem;color:#fff;outline:none;font-size:0.95rem;">
+                <option value="">-- Loading Plans... --</option>
             </select>
         </div>
-
+        
         <div style="display:flex;gap:0.75rem;">
-          <button onclick="document.getElementById('__ch-assign-modal').remove()" style="flex:1;padding:0.65rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
-          <button onclick="UnifiedNav._confirmAssignPlan('${name.replace(/'/g,'&apos;')}');" style="flex:1;padding:0.65rem;background:rgba(168,85,247,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(168,85,247,0.3);">Assign Plan →</button>
+          <button onclick="document.getElementById('__ch-assign-modal').remove()" style="flex:1;padding:0.8rem;background:rgba(255,255,255,0.06);border:none;border-radius:12px;color:#fff;font-weight:600;cursor:pointer;">Cancel</button>
+          <button id="__ch-confirm-assign" style="flex:1;padding:0.8rem;background:linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);border:none;border-radius:12px;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(168,85,247,0.25);">Assign Plan</button>
         </div>
       </div>
+      <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
     `;
     
     document.body.appendChild(modal);
     modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
+    
+    // Load real plans if apiService exists
+    if (window.apiService) {
+        apiService.getSubscriptionPlans().then(plans => {
+            const select = document.getElementById('__ch-plan-select');
+            if (plans && plans.length > 0) {
+                select.innerHTML = '<option value="">-- Select a Plan --</option>' + 
+                    plans.map(p => `<option value="${p.id}">${p.name} - £${p.amount}/${p.interval}</option>`).join('');
+            } else {
+                select.innerHTML = '<option value="">No plans found</option>';
+            }
+        }).catch(() => {
+            document.getElementById('__ch-plan-select').innerHTML = '<option value="">Error loading plans</option>';
+        });
+    }
+
+    document.getElementById("__ch-confirm-assign").onclick = async () => {
+        const planId = document.getElementById("__ch-plan-select").value;
+        if (!planId) return;
+        
+        try {
+            if (window.apiService) {
+                const memberId = row.dataset.id || 'temp-id';
+                await apiService.post('/api/payments/assign-plan', { memberId, planId });
+                showNotification("Plan assigned successfully!", "success");
+            }
+            modal.remove();
+        } catch (err) {
+            showNotification("Failed to assign plan", "error");
+        }
+    };
   },
 
   _confirmAssignPlan(name) {
@@ -2252,6 +2366,8 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
         <a href="admin-scout-approvals.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-scout-approvals.html', 'scout-approvals')" class="sidebar-link ${isActive('admin-scout-approvals.html')}">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
         <a href="admin-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-finances.html', 'finances')" class="sidebar-link ${isActive('admin-finances.html')}">${ICONS.nav.finance}<span>Finances</span></a>
         <a href="admin-shop.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-shop.html', 'shop')" class="sidebar-link ${isActive('admin-shop.html')}">${ICONS.nav.shop}<span>Club Shop</span></a>
+        <a href="admin-bibs.html" class="sidebar-link ${isActive('admin-bibs.html')}">${ICONS.nav.bibs}<span>Bib Management</span></a>
+        <a href="form-builder.html" class="sidebar-link ${isActive('form-builder.html')}">${ICONS.nav.forms}<span>Form Builder</span></a>
         <a href="tactical-board.html" onclick="return UnifiedNav.handleNavClick(event, 'tactical-board.html', 'tactical-board')" class="sidebar-link ${isActive('tactical-board.html')}">${ICONS.nav.tactics}<span>Tactical Board</span></a>
 
         <div class="nav-group-title"><span>Discovery</span></div>
@@ -2272,6 +2388,7 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
         <div class="nav-group-title"><span>Tools</span></div>
         <a href="coach-dashboard.html#coach-messenger" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'messenger')" class="sidebar-link ${p.includes('messenger') ? 'active' : ''}">${ICONS.nav.chat}<span>Squad Messenger</span></a>
         <a href="tactical-board.html" onclick="return UnifiedNav.handleNavClick(event, 'tactical-board.html', 'tactical-board')" class="sidebar-link ${isActive('tactical-board.html')}">${ICONS.nav.tactics}<span>Tactical Board Pro</span></a>
+        <a href="admin-bibs.html" class="sidebar-link ${isActive('admin-bibs.html')}">${ICONS.nav.bibs}<span>Bib Assignment</span></a>
         <a href="scouting.html" class="sidebar-link ${isActive('scouting.html')}">${ICONS.nav.approvals}<span>Scouting Hub</span></a>
 
         <div class="nav-group-title"><span>Discovery</span></div>

@@ -553,17 +553,43 @@
 
     <!-- Add Event Modal -->
     <div id="addEventModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:500px;">
+        <div class="modal-content glass-card" style="max-width:600px;">
             <span class="close" onclick="closeModal('addEventModal')">&times;</span>
             <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create Group Event</h2>
-            <form id="addEventForm" onsubmit="event.preventDefault(); alert('Event created!'); closeModal('addEventModal');">
+            <form id="addEventForm" onsubmit="event.preventDefault(); alert('Event created! QR code generated for entry.'); closeModal('addEventModal');">
                 <div class="form-group">
                     <label>Event Title</label>
                     <input type="text" placeholder="e.g. Weekly Training" required>
                 </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" required>
+                    </div>
+                </div>
                 <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" required>
+                    <label>Place / Venue Name</label>
+                    <input type="text" placeholder="e.g. Main Stadium" required>
+                </div>
+                <div class="form-group">
+                    <label>Address Information</label>
+                    <input type="text" placeholder="e.g. 123 Sports Ln, City" required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label>Price for Entry (Optional)</label>
+                        <input type="number" step="0.01" placeholder="e.g. 5.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Form (Optional)</label>
+                        <select style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
+                            <option value="">-- No form required --</option>
+                        </select>
+                    </div>
                 </div>
                 <div style="display:flex; gap:1rem; margin-top:2rem;">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')" style="flex:1;">Cancel</button>

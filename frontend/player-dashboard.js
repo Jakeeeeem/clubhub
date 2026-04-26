@@ -2741,39 +2741,43 @@ function viewTeamDetails(teamId) {
       ")</p>"
     : "<p><strong>Coach:</strong> Not assigned</p>";
 
-  modal.innerHTML =
-    '<div class="modal-content" style="max-width:600px;">' +
-    '<div class="modal-header">' +
-    "<h2>" +
-    escapeHTML(team.name) +
-    "</h2>" +
-    '<button class="close" onclick="closeModal(\'teamDetailsModal\')">&times;</button>' +
-    "</div>" +
-    '<div class="modal-body">' +
-    "<p><strong>Age Group:</strong> " +
-    escapeHTML(team.age_group || "Not specified") +
-    "</p>" +
-    "<p><strong>Sport:</strong> " +
-    escapeHTML(team.sport || "Not specified") +
-    "</p>" +
-    "<p><strong>Your Position:</strong> " +
-    escapeHTML(team.player_position || "Not assigned") +
-    "</p>" +
-    "<p><strong>Your Jersey Number:</strong> " +
-    escapeHTML(team.jersey_number || "Not assigned") +
-    "</p>" +
-    coachInfo +
-    "<p><strong>Description:</strong> " +
-    escapeHTML(team.description || "No description available") +
-    "</p>" +
-    '<div style="margin-top:1rem;">' +
-    '<button class="btn btn-primary" onclick="viewTeamEvents(\'' +
-    team.id +
-    "'); closeModal('teamDetailsModal')\">View Team Events</button>" +
-    '<button class="btn btn-secondary" onclick="closeModal(\'teamDetailsModal\')">Close</button>' +
-    "</div>" +
-    "</div>" +
-    "</div>";
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:500px;">
+        <div class="modal-header">
+            <h2>${escapeHTML(team.name)}</h2>
+            <div class="modal-close" onclick="closeModal('teamDetailsModal')">&times;</div>
+        </div>
+        <div class="modal-body">
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">Age Group</span>
+                <span class="modal-detail-value">${escapeHTML(team.age_group || "Not specified")}</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">Sport</span>
+                <span class="modal-detail-value">${escapeHTML(team.sport || "Not specified")}</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">Your Position</span>
+                <span class="modal-detail-value">${escapeHTML(team.player_position || "Not assigned")}</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">Jersey Number</span>
+                <span class="modal-detail-value">${escapeHTML(team.jersey_number || "Not assigned")}</span>
+            </div>
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">Coach</span>
+                <span class="modal-detail-value">${team.coach ? escapeHTML(team.coach.name) : 'Not assigned'}</span>
+            </div>
+            <div style="margin-top:1.5rem;">
+                <label style="font-size:0.85rem; color:var(--text-muted); font-weight:600; display:block; margin-bottom:0.5rem;">Description</label>
+                <p style="font-size:0.9rem; line-height:1.6; color:rgba(255,255,255,0.7);">${escapeHTML(team.description || "No description available")}</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary" onclick="viewTeamEvents('${team.id}'); closeModal('teamDetailsModal')">View Team Events</button>
+            <button class="btn btn-secondary" onclick="closeModal('teamDetailsModal')">Close</button>
+        </div>
+    </div>`;
   document.body.appendChild(modal);
 }
 

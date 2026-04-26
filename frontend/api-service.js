@@ -12,15 +12,11 @@ if (typeof ApiService === 'undefined') {
     const isLocalIP = /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(location.hostname);
     
     if (isLocalhost || isLocalIP) {
-        // Only auto-enable demo mode if the user hasn't explicitly disabled it
-        // AND they aren't already logged in with a real token
-        if (localStorage.getItem('isDemoSession') !== 'false' && !localStorage.getItem('authToken')) {
-            localStorage.setItem('isDemoSession', 'true');
-            localStorage.setItem('authToken', 'demo-token');
-        } else if (localStorage.getItem('authToken') && localStorage.getItem('authToken') !== 'demo-token') {
-            // If they have a real token, ensure demo mode is OFF unless explicitly requested
-            if (localStorage.getItem('isDemoSession') === 'true' && localStorage.getItem('isDemoSession_manual') !== 'true') {
-                localStorage.setItem('isDemoSession', 'false');
+        // Developer Override: Turn OFF demo mode automatically so real local database works
+        if (localStorage.getItem('isDemoSession') === 'true' && localStorage.getItem('isDemoSession_manual') !== 'true') {
+            localStorage.setItem('isDemoSession', 'false');
+            if (localStorage.getItem('authToken') === 'demo-token') {
+                localStorage.removeItem('authToken');
             }
         }
     }
@@ -548,6 +544,16 @@ if (typeof ApiService === 'undefined') {
         return fb.tournaments || fb.events || [];
     }
 
+    // --- BIBS INVENTORY ---
+    if (endpoint.includes("/bibs")) {
+        if (method === "POST") return { success: true, message: "Demo bib added" };
+        if (method === "DELETE") return { success: true, message: "Demo bib removed" };
+        return [
+            { id: "bib1", color: "Orange", total_quantity: 24, available_quantity: 20, price: 0 },
+            { id: "bib2", color: "Blue", total_quantity: 24, available_quantity: 24, price: 0 }
+        ];
+    }
+
     // --- MESSAGES & FEED ---
     if (endpoint.includes("/messages") || endpoint.includes("/feed") || endpoint.includes("/activity")) {
         const fb = this.getAdminDashboardFallback();
@@ -983,7 +989,17 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getPaymentPlans() {
-    return (await this.makeRequest("/payments/plans")).plans;
+    try {
+      const response = await this.makeRequest("/payments/plans");
+      return response.plans || response || [];
+    } catch (e) {
+      console.warn("Failed to fetch plans", e);
+      return [];
+    }
+  }
+
+  async getSubscriptionPlans() {
+    return this.getPaymentPlans();
   }
 
   async createPaymentPlan({

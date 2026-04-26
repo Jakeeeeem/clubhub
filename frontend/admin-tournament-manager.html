@@ -191,7 +191,10 @@
     <!-- Create Tournament Modal -->
     <div id="createTournamentModal" class="modal">
         <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('createTournamentModal')">&times;</span>
+            <div class="modal-header">
+                <h2>Create Tournament</h2>
+                <div class="modal-close" onclick="closeModal('createTournamentModal')">&times;</div>
+            </div>
             <div style="text-align:center; margin-bottom:2rem;">
                 <div style="width:64px; height:64px; background:rgba(220,38,38,0.1); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:2rem; border:1px solid rgba(220,38,38,0.2);">🏆</div>
                 <h2 class="neon-text" style="margin:0;">Create Tournament</h2>
@@ -230,7 +233,10 @@
     <!-- Setup League Modal -->
     <div id="setupLeagueModal" class="modal">
         <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('setupLeagueModal')">&times;</span>
+            <div class="modal-header">
+                <h2>Setup New League</h2>
+                <div class="modal-close" onclick="closeModal('setupLeagueModal')">&times;</div>
+            </div>
             <div style="text-align:center; margin-bottom:2rem;">
                 <div style="width:64px; height:64px; background:rgba(59,130,246,0.1); border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:2rem; border:1px solid rgba(59,130,246,0.2);">🛡️</div>
                 <h2 class="neon-text" style="margin:0;">Setup New League</h2>
@@ -268,7 +274,10 @@
     <!-- Match Management Modal (Enhanced with Scorers) -->
     <div id="matchManageModal" class="modal">
         <div class="modal-content glass-card" style="max-width:550px;">
-            <span class="close" onclick="closeModal('matchManageModal')">&times;</span>
+            <div class="modal-header">
+                <h2>Update Match Result</h2>
+                <div class="modal-close" onclick="closeModal('matchManageModal')">&times;</div>
+            </div>
             <div style="text-align:center; margin-bottom:1.5rem;">
                 <h2 class="neon-text" style="font-size:1.4rem; margin:0;">Update Match Result</h2>
                 <p id="matchTeamsHeader" style="color:var(--text-muted); font-size:0.9rem; font-weight:700; margin-top:0.5rem;">Team A vs Team B</p>
@@ -328,7 +337,10 @@
     <!-- Settings Modal -->
     <div id="editCompModal" class="modal">
         <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('editCompModal')">&times;</span>
+            <div class="modal-header">
+                <h2>Competition Settings</h2>
+                <div class="modal-close" onclick="closeModal('editCompModal')">&times;</div>
+            </div>
             <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Competition Settings</h2>
             <form id="editCompForm" onsubmit="handleSaveSettings(event)">
                 <div class="form-group">
@@ -361,7 +373,10 @@
     <!-- Select Team Modal -->
     <div id="selectTeamModal" class="modal">
         <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('selectTeamModal')">&times;</span>
+            <div class="modal-header">
+                <h2>Add Team to Competition</h2>
+                <div class="modal-close" onclick="closeModal('selectTeamModal')">&times;</div>
+            </div>
             <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Add Team to Competition</h2>
             <div id="availableTeamsList" style="display:flex; flex-direction:column; gap:0.75rem; max-height:300px; overflow-y:auto; padding:0.5rem;">
                 <!-- Loaded via JS -->
@@ -379,16 +394,6 @@
     <script src="unified-nav.js"></script>
     <script src="coach-dashboard.js"></script> 
     <script>
-        // --- Core Utility Functions (Exposed to Window) ---
-        window.openModal = function(id) {
-            const m = document.getElementById(id);
-            if (m) m.style.display = 'block';
-        };
-
-        window.closeModal = function(id) {
-            const m = document.getElementById(id);
-            if (m) m.style.display = 'none';
-        };
 
         window.showNotification = function(msg, type) {
             if (window.UnifiedNav && window.UnifiedNav.showNotification) {

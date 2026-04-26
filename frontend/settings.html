@@ -63,48 +63,50 @@
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: 1.1rem 1.4rem;
-            border-radius: 16px;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
             color: var(--text-muted);
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.95rem;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            background: transparent;
-            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             cursor: pointer;
             text-align: left;
         }
 
         .nav-item i {
-            font-size: 1.2rem;
-            opacity: 0.7;
+            font-size: 1.1rem;
+            opacity: 0.6;
             font-style: normal;
         }
 
         .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.1);
             color: #fff;
+            transform: translateX(4px);
         }
 
         .nav-item.active {
-            background: rgba(220, 67, 67, 0.1);
-            color: var(--primary);
-            border-color: rgba(220, 67, 67, 0.2);
-            box-shadow: 0 4px 15px rgba(220, 67, 67, 0.1);
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(220, 38, 38, 0.05));
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.15);
         }
 
         .nav-item.active i {
             opacity: 1;
+            color: var(--primary);
         }
 
         .settings-content {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 28px;
-            padding: 3rem;
-            backdrop-filter: blur(15px);
+            background: rgba(15, 15, 20, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 2.5rem;
             min-height: 600px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         .section-title {
@@ -329,16 +331,18 @@
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
     <header class="header"></header>
 
-    <main class="main" style="padding-top: 80px;">
-        <div class="settings-container">
-            <div class="settings-header">
+    <main class="main dashboard-main">
+        <div class="container dashboard-container">
+            <div class="settings-header" style="padding-top: 1rem; align-items: flex-start; margin-bottom: 2rem;">
                 <div>
-                    <h1>Settings</h1>
-                    <p>Manage your professional profile and security</p>
+                    <h1 class="neon-text" style="font-size: 2.4rem; margin-bottom: 0.5rem;">Club Settings</h1>
+                    <p style="color: var(--text-muted);">Manage your club's global configuration and security.</p>
                 </div>
-                <button class="sign-out-btn" onclick="UnifiedNav.logout()">
-                    <span>🚪</span> Sign Out
-                </button>
+                <div style="display:flex; gap:1rem;">
+                    <button class="btn btn-secondary" onclick="UnifiedNav.logout()" style="border-radius: 12px; font-weight:700;">
+                        Sign Out
+                    </button>
+                </div>
             </div>
 
             <div class="settings-grid">

@@ -110,11 +110,33 @@ async function enhancedInvitePlayer() {
                           </div>
                       </div>
                       
-                      <div class="form-group" style="margin-bottom: 1.5rem;">
-                          <label for="inviteDateOfBirth" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Date of Birth *</label>
-                          <input type="date" id="inviteDateOfBirth" required 
-                                 max="2010-12-31" min="1950-01-01"
-                                 style="width: 100%; padding: 0.875rem; background: var(--background-base); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-family: sans-serif;"> <!-- Font fix for input type date -->
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                          <div class="form-group">
+                              <label for="inviteDateOfBirth" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Date of Birth *</label>
+                              <input type="date" id="inviteDateOfBirth" required 
+                                     max="2025-12-31" min="1950-01-01"
+                                     style="width: 100%; padding: 0.875rem; background: var(--background-base); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-family: sans-serif;">
+                          </div>
+                          <div class="form-group">
+                              <label for="invitePhone" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Phone (optional)</label>
+                              <input type="tel" id="invitePhone" placeholder="+44..." style="width: 100%; padding: 0.875rem; background: var(--background-base); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-size: 1rem;">
+                          </div>
+                      </div>
+
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                          <div class="form-group">
+                              <label for="inviteGender" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Gender</label>
+                              <select id="inviteGender" style="width: 100%; padding: 0.875rem; background: var(--background-base); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-size: 1rem;">
+                                  <option value="">Select Gender</option>
+                                  <option value="male">Male</option>
+                                  <option value="female">Female</option>
+                                  <option value="other">Other / Prefer not to say</option>
+                              </select>
+                          </div>
+                          <div class="form-group">
+                              <label for="invitePosition" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Position / Specialism</label>
+                              <input type="text" id="invitePosition" placeholder="e.g. Striker, Midfielder" style="width: 100%; padding: 0.875rem; background: var(--background-base); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-size: 1rem;">
+                          </div>
                       </div>
                       
                       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
@@ -155,8 +177,13 @@ async function enhancedInvitePlayer() {
                           </div>
                       </div>
                       
+                      <div class="form-group" style="margin-bottom: 1.5rem;">
+                          <label for="inviteBio" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Player Bio / Notes</label>
+                          <textarea id="inviteBio" rows="2" placeholder="Briefly describe the player's background or skills..." style="width: 100%; padding: 0.875rem; background: var(--background-base); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-size: 1rem; resize: vertical;"></textarea>
+                      </div>
+
                       <div class="form-group" style="margin-bottom: 2rem;">
-                          <label for="inviteMessage" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Personal Message</label>
+                          <label for="inviteMessage" style="display: block; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Email Message (Optional)</label>
                           <textarea id="inviteMessage" rows="3" placeholder="Welcome to our club! We'd love to have you join our team..." style="width: 100%; padding: 0.875rem; background: var(--background-base); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-size: 1rem; resize: vertical;"></textarea>
                       </div>
                       
@@ -214,9 +241,13 @@ async function handleEmailInviteSubmission(e) {
       email: document.getElementById("inviteEmail").value,
       firstName: document.getElementById("inviteFirstName").value,
       lastName: document.getElementById("inviteLastName").value,
-      dateOfBirth: document.getElementById("inviteDateOfBirth").value, // 🔥 NEW
+      dateOfBirth: document.getElementById("inviteDateOfBirth").value,
+      phone: document.getElementById("invitePhone").value,
+      gender: document.getElementById("inviteGender").value,
+      position: document.getElementById("invitePosition").value,
+      bio: document.getElementById("inviteBio").value,
       clubRole: document.getElementById("inviteRole").value,
-      teamId: document.getElementById("inviteTeam").value || null, // 🔥 NEW
+      teamId: document.getElementById("inviteTeam").value || null,
       message: document.getElementById("inviteMessage").value,
       clubId: InviteSystemState.currentClub?.id || AppState.clubs?.[0]?.id,
       isPublic: false,

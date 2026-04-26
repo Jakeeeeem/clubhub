@@ -194,11 +194,12 @@
                 <h3 style="color:#fff; margin-bottom:1rem; font-size:1.1rem;">🏟️ Pitch Assets</h3>
                 
                 <div class="nav-group-title" style="margin-top:0;">Squad Players</div>
-                <div class="eq-grid" style="margin-bottom:1.5rem;">
-                    <div class="eq-item" draggable="true" data-type="player" ondragstart="handleTrayDragStart(event, 'player', 'P')">
-                        <span style="font-size:1.5rem;">👤</span>
-                        <span style="display:block; font-size:0.7rem; color:var(--text-muted); margin-top:0.5rem;">Player</span>
-                    </div>
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <input type="text" id="playerSearch" placeholder="Search players..." oninput="TacticalBoard.filterPlayers(this.value)" style="width:100%; padding:0.6rem; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff; font-size:0.8rem;">
+                </div>
+                <div id="playerTray" class="eq-grid" style="margin-bottom:1.5rem; max-height:300px; overflow-y:auto; padding-right:5px;">
+                    <!-- Dynamically loaded -->
+                    <div style="grid-column: span 2; text-align:center; padding:1rem; color:var(--text-muted); font-size:0.75rem;">Loading squad...</div>
                 </div>
 
                 <div class="nav-group-title">Equipment</div>

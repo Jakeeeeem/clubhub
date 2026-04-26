@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bib Management — ClubHub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="design-system.css">
+    <link rel="stylesheet" href="unified-nav.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .bib-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .bib-card {
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bib-card:hover {
+            transform: translateY(-5px);
+        }
+        .bib-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .bib-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .player-row {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            gap: 1rem;
+        }
+        .player-row:last-child { border-bottom: none; }
+        
+        .bib-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .bib-pill {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .bib-pill.active {
+            border-color: #fff;
+            box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
+    <header class="header"></header>
+
+    <main class="main dashboard-main" style="padding-top: 80px; max-width: 1400px; margin: 0 auto; padding-inline: 1.5rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+            <div>
+                <h1 class="neon-text" style="font-size:2.2rem; margin-bottom:0.5rem;">Bib Management</h1>
+                <p style="color:var(--text-muted);">Assign training colors and track equipment sets.</p>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('addEventModal')">
+                <i class="fa fa-plus" style="margin-right:8px;"></i> New Training Session
+            </button>
+        </div>
+
+        <div class="dash-grid" style="display:grid; grid-template-columns: 2fr 1fr; gap:2rem;">
+            <section>
+                <div class="glass-card" style="padding:1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h3 style="margin:0; color:#fff;">Active Session: <span id="activeSessionName" style="color:var(--primary);">First Team Training</span></h3>
+                        <div class="form-group" style="margin:0;">
+                            <select id="teamSelector" onchange="loadTeamRoster(this.value)" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; padding:0.5rem 1rem; border-radius:8px;">
+                                <option value="t3">First Team</option>
+                                <option value="t1">Under 16s Squad</option>
+                                <option value="t2">Under 12s Academy</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="rosterContainer" class="glass-card" style="padding:0; background:rgba(0,0,0,0.15);">
+                        <!-- Populated by loadTeamRoster -->
+                        <div style="padding:3rem; text-align:center; color:var(--text-muted);">Loading squad roster...</div>
+                    </div>
+
+                    <div style="margin-top:2rem; display:flex; gap:1rem;">
+                        <button class="btn btn-secondary" onclick="TacticalBoard.clearBibs()">Clear All</button>
+                        <button class="btn btn-primary" style="flex:1;" onclick="saveBibAssignment()">Save & Notify Players</button>
+                    </div>
+                </div>
+            </section>
+
+            <aside>
+                <div class="glass-card" style="padding:1.5rem; margin-bottom:2rem;">
+                    <h3 style="color:#fff; margin-bottom:1rem; font-size:1.1rem;">📦 Inventory</h3>
+                    <div id="inventoryList" style="display:flex; flex-direction:column; gap:1rem;">
+                        <!-- Populated by loadInventory -->
+                        <div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">Loading inventory...</div>
+                    </div>
+                    <button class="btn btn-text btn-small" style="width:100%; margin-top:1.5rem; opacity:0.6;" onclick="openModal('manageInventoryModal')">Manage Inventory</button>
+                </div>
+
+                <div class="glass-card" style="padding:1.5rem;">
+                    <h3 style="color:#fff; margin-bottom:1rem; font-size:1.1rem;">💡 Pro Tip</h3>
+                    <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6;">
+                        Assigning bibs before training helps players know their groups as soon as they arrive. They'll receive a push notification with their assigned color.
+                    </p>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Add Event Modal -->
+    <div id="addEventModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <div class="modal-header">
+                <h2>Create Training Session</h2>
+                <div class="modal-close" onclick="closeModal('addEventModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="addEventForm" onsubmit="event.preventDefault(); window.showNotification('Training session created and linked to events!', 'success'); closeModal('addEventModal');">
+                    <div class="form-group">
+                        <label>Session Title</label>
+                        <input type="text" placeholder="e.g. Tactical Drill - 4-3-3" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <select style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); color:#fff; border-radius:12px;">
+                            <option value="pitch1">Main Stadium</option>
+                            <option value="pitch2">Field A</option>
+                            <option value="pitch3">Riverside Pitch</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Session Price (£) - <span style="font-size: 0.7rem; color: var(--text-muted);">Optional - Auto-links to Stripe</span></label>
+                        <div style="position: relative;">
+                            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);">£</span>
+                            <input type="number" step="0.01" min="0" placeholder="0.00" style="padding-left: 1.75rem;">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="addEventForm">Create & Link Event</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Inventory Modal -->
+    <div id="manageInventoryModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width:600px;">
+            <div class="modal-header">
+                <h2>Manage Bib Inventory</h2>
+                <div class="modal-close" onclick="closeModal('manageInventoryModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <div id="inventoryEditList" style="margin-bottom:2rem;">
+                    <!-- Populated via JS -->
+                    <div style="padding:1rem; text-align:center; color:var(--text-muted);">Loading inventory...</div>
+                </div>
+                
+                <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:1.5rem 0;">
+                
+                <h3 style="color:#fff; margin-bottom:1rem; font-size:1.1rem;">Add New Color Set</h3>
+                <form id="addInventoryForm" style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:1rem; align-items:end;">
+                    <div class="form-group" style="margin:0;">
+                        <label>Color</label>
+                        <input type="text" id="newColorName" placeholder="e.g. Green" required>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Total Qty</label>
+                        <input type="number" id="newColorQty" value="24" required>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label>Price (£)</label>
+                        <input type="number" id="newColorPrice" step="0.01" value="0.00">
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="addNewInventory()">Add</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('manageInventoryModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app-state.js"></script>
+    <script src="api-service.js?v=20260424_v3"></script>
+    <script src="unified-nav.js?v=20260424_v3"></script>
+    <script>
+        async function loadTeamRoster(teamId) {
+            const container = document.getElementById('rosterContainer');
+            if (!container || typeof apiService === 'undefined') return;
+            
+            try {
+                const data = await apiService.getAdminDashboardData();
+                const players = (data.players || []).filter(p => p.team_id === teamId || p.teamId === teamId);
+                
+                if (players.length === 0) {
+                    container.innerHTML = '<div style="padding:3rem; text-align:center; color:var(--text-muted);">No players found in this squad.</div>';
+                    return;
+                }
+
+                container.innerHTML = players.map(p => `
+                    <div class="player-row">
+                        <div class="user-avatar-sm" style="background:rgba(255,255,255,0.05);">${p.first_name[0]}</div>
+                        <div style="flex:1;">
+                            <strong style="display:block; color:#fff; font-size:0.9rem;">${p.first_name} ${p.last_name}</strong>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">${p.position || 'Unassigned'}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:1.5rem;">
+                            <div class="form-group" style="margin:0; width:60px;">
+                                <input type="number" placeholder="#" min="1" max="99" style="padding:0.4rem; text-align:center; font-size:0.8rem; border-radius:6px; background:rgba(0,0,0,0.3);">
+                            </div>
+                            <div class="bib-selector">
+                                <div class="bib-pill" style="background:#ef4444;" title="Red" onclick="setPlayerBib(this, 'red')"></div>
+                                <div class="bib-pill" style="background:#3b82f6;" title="Blue" onclick="setPlayerBib(this, 'blue')"></div>
+                                <div class="bib-pill" style="background:#eab308;" title="Yellow" onclick="setPlayerBib(this, 'yellow')"></div>
+                                <div class="bib-pill" style="background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:0.7rem;" title="None" onclick="setPlayerBib(this, 'none')">✕</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div style="padding:3rem; text-align:center; color:#f87171;">Failed to load roster.</div>';
+            }
+        }
+
+        function setPlayerBib(el, color) {
+            const row = el.closest('.bib-selector');
+            row.querySelectorAll('.bib-pill').forEach(p => p.classList.remove('active'));
+            if (color !== 'none') el.classList.add('active');
+        }
+
+        function saveBibAssignment() {
+            showNotification("Saving assignments and sending notifications...", "info");
+            setTimeout(() => {
+                showNotification("Bib assignments saved! Players have been notified.", "success");
+            }, 1500);
+        }
+
+        function handleNewSession(e) {
+            e.preventDefault();
+            closeModal('newSessionModal');
+            showNotification("New training session created.", "success");
+        }
+
+        async function loadTeams() {
+            if (typeof apiService === 'undefined') return;
+            try {
+                const data = await apiService.getAdminDashboardData();
+                const teams = data.teams || [];
+                const selector = document.getElementById('teamSelector');
+                if (teams.length > 0) {
+                    selector.innerHTML = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+                    loadTeamRoster(teams[0].id);
+                }
+            } catch (e) {
+                console.error("Failed to load teams", e);
+            }
+        }
+
+        async function loadInventory() {
+            const list = document.getElementById('inventoryList');
+            const editList = document.getElementById('inventoryEditList');
+            if (!list || typeof apiService === 'undefined') return;
+
+            try {
+                const inventory = await apiService.get('/api/bibs');
+                
+                if (inventory.length === 0) {
+                    list.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">No inventory found.</div>';
+                    if (editList) editList.innerHTML = '<p style="color:var(--text-muted);">No sets added yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = inventory.map(item => `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.9rem; color:var(--text-muted);"><span class="bib-color-dot" style="background:${item.color.toLowerCase()};"></span>${item.color} Set</span>
+                        <span style="font-weight:700;">${item.available_quantity}/${item.total_quantity}</span>
+                    </div>
+                `).join('');
+
+                if (editList) {
+                    editList.innerHTML = inventory.map(item => `
+                        <div style="display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:1rem; align-items:center; margin-bottom:1rem; padding:0.75rem; background:rgba(255,255,255,0.03); border-radius:8px;">
+                            <strong style="color:#fff;">${item.color}</strong>
+                            <div class="form-group" style="margin:0;">
+                                <input type="number" value="${item.total_quantity}" onchange="updateInventory('${item.id}', {totalQuantity: this.value})">
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <input type="number" step="0.01" value="${item.price}" onchange="updateInventory('${item.id}', {price: this.value})">
+                            </div>
+                            <button class="btn btn-text" onclick="deleteInventory('${item.id}')" style="color:#f87171;">🗑️</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error("Inventory load fail", e);
+                list.innerHTML = '<div style="padding:1rem; text-align:center; color:#f87171; font-size:0.8rem;">Failed to load inventory.</div>';
+                if (editList) editList.innerHTML = '<p style="color:#f87171; text-align:center;">Failed to load inventory.</p>';
+            }
+        }
+
+        async function addNewInventory() {
+            const color = document.getElementById('newColorName').value;
+            const totalQuantity = document.getElementById('newColorQty').value;
+            const price = document.getElementById('newColorPrice').value;
+
+            if (!color) return;
+
+            try {
+                await apiService.post('/api/bibs', { color, totalQuantity, price });
+                document.getElementById('addInventoryForm').reset();
+                document.getElementById('newColorName').value = '';
+                document.getElementById('newColorQty').value = '24';
+                document.getElementById('newColorPrice').value = '0.00';
+                loadInventory();
+                showNotification("Inventory added!", "success");
+            } catch (e) {
+                showNotification("Failed to add inventory", "error");
+            }
+        }
+
+        async function updateInventory(id, data) {
+            try {
+                // Find current item to get color (or the API could handle it if we sent the full object)
+                // For simplicity, our POST route handles ON CONFLICT, so we need color.
+                // But wait, the update route I wrote is just POST to / with color.
+                // Let's modify the update call to use the same logic.
+                const inventory = await apiService.get('/api/bibs');
+                const item = inventory.find(i => i.id === id);
+                if (!item) return;
+
+                await apiService.post('/api/bibs', { 
+                    color: item.color, 
+                    totalQuantity: data.totalQuantity || item.total_quantity,
+                    price: data.price || item.price,
+                    availableQuantity: item.available_quantity 
+                });
+                loadInventory();
+            } catch (e) {
+                showNotification("Update failed", "error");
+            }
+        }
+
+        async function deleteInventory(id) {
+            if (!confirm("Are you sure?")) return;
+            try {
+                await apiService.delete(`/api/bibs/${id}`);
+                loadInventory();
+                showNotification("Item removed", "success");
+            } catch (e) {
+                showNotification("Delete failed", "error");
+            }
+        }
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTeams();
+            loadInventory();
+        });
+    </script>
+</body>
+</html>

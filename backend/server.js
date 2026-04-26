@@ -318,6 +318,7 @@ app.use("/api/tactical", require("./routes/tactical")); // Tactical formations s
 app.use("/api/forms", formRoutes); // Dynamic Form Builder
 app.use("/api/training", require("./routes/training")); // Training & Drills System
 app.use("/api/messages", require("./routes/messages"));
+app.use("/api/bibs", require("./routes/bibs"));
 
 // Handle 404 for API routes specifically
 app.use("/api/*", (req, res) => {

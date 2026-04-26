@@ -73,6 +73,12 @@ router.post(
         paymentPlanId = null, // 🔥 NEW
         planPrice = null, // 🔥 NEW
         planStartDate = null, // 🔥 NEW
+        position = "",
+        phone = "",
+        gender = "",
+        sport = "",
+        location = "",
+        bio = "",
       } = req.body;
 
       // Get user's club
@@ -203,9 +209,15 @@ router.post(
         status,
         payment_plan_id,
         plan_price,
-        plan_start_date
+        plan_start_date,
+        position,
+        phone,
+        gender,
+        sport,
+        location,
+        bio
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14, $15)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14, $15, $16, $17, $18, $19, $20, $21)
       RETURNING *, token as invite_token, role as club_role
     `,
         [
@@ -224,6 +236,12 @@ router.post(
           paymentPlanId || null,
           planPrice || null,
           planStartDate || null,
+          position || null,
+          phone || null,
+          gender || null,
+          sport || null,
+          location || null,
+          bio || null,
         ],
       );
 

@@ -1,5 +1,6 @@
 const express = require("express");
 const { query, queries, withTransaction } = require("../config/database");
+const { syncProductToStripe } = require("../services/stripe-service");
 const {
   authenticateToken,
   requireOrganization,
@@ -114,7 +115,15 @@ router.get("/", optionalAuth, async (req, res) => {
       paramCount++;
       queryText += ` AND e.club_id = $${paramCount}`;
       queryParams.push(clubId);
-    } else if (req.query.public === "true") {
+    } 
+
+    if (req.query.managerId) {
+      paramCount++;
+      queryText += ` AND e.created_by = $${paramCount}`;
+      queryParams.push(req.query.managerId);
+    }
+    
+    if (!clubId && req.query.public === "true") {
       // Allow fetching global public events
       queryText += ` AND e.is_public = true`;
     } else if (req.user) {
@@ -457,6 +466,19 @@ router.post(
           }
         }
       });
+      
+      // Sync each event with Stripe if price is set
+      for (const ev of createdEvents) {
+          if (ev.price > 0) {
+              await syncProductToStripe({
+                  type: 'event',
+                  id: ev.id,
+                  name: ev.title,
+                  price: ev.price,
+                  clubId: ev.club_id
+              });
+          }
+      }
 
       res.status(201).json({
         message:

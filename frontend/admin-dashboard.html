@@ -557,82 +557,90 @@
         <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
     </nav>
 
-    <!-- Create Team Modal -->
     <div id="createTeamModal" class="modal" style="display:none;">
         <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('createTeamModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create New Team</h2>
-            <form id="createTeamForm" onsubmit="handleCreateTeam(event)">
-                <div class="form-group">
-                    <label>Team Name</label>
-                    <input type="text" name="teamName" placeholder="e.g. Under 14s A" required>
-                </div>
-                <div class="form-group">
-                    <label>Assign Head Coach</label>
-                    <select name="coachId" id="coachSelect">
-                        <option value="">-- Select Coach --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Registration Form (Jotform)</label>
-                    <select name="formId" id="formSelect">
-                        <option value="">-- No custom form --</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('createTeamModal')"
-                        style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Team</button>
-                </div>
-            </form>
+            <div class="modal-header">
+                <h2>Create New Team</h2>
+                <div class="modal-close" onclick="closeModal('createTeamModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="createTeamForm" onsubmit="handleCreateTeam(event)">
+                    <div class="form-group">
+                        <label>Team Name</label>
+                        <input type="text" name="teamName" placeholder="e.g. Under 14s A" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Assign Head Coach</label>
+                        <select name="coachId" id="coachSelect">
+                            <option value="">-- Select Coach --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Form (Jotform)</label>
+                        <select name="formId" id="formSelect">
+                            <option value="">-- No custom form --</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createTeamModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="createTeamForm">Create Team</button>
+            </div>
         </div>
     </div>
 
-    <!-- Add Member Modal -->
     <div id="addMemberModal" class="modal" style="display:none;">
         <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('addMemberModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Add New Member</h2>
-            <form id="addMemberForm" onsubmit="event.preventDefault(); alert('Member invite sent!'); closeModal('addMemberModal');">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" placeholder="e.g. member@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Role</label>
-                    <select style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                        <option value="player">Player</option>
-                        <option value="parent">Parent</option>
-                        <option value="staff">Staff / Coach</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Send Invite</button>
-                </div>
-            </form>
+            <div class="modal-header">
+                <h2>Add New Member</h2>
+                <div class="modal-close" onclick="closeModal('addMemberModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm" onsubmit="event.preventDefault(); alert('Member invite sent!'); closeModal('addMemberModal');">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" placeholder="e.g. member@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
+                            <option value="player">Player</option>
+                            <option value="parent">Parent</option>
+                            <option value="staff">Staff / Coach</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="addMemberForm">Send Invite</button>
+            </div>
         </div>
     </div>
 
-    <!-- Add Event Modal -->
     <div id="addEventModal" class="modal" style="display:none;">
         <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('addEventModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create Group Event</h2>
-            <form id="addEventForm" onsubmit="event.preventDefault(); alert('Event created!'); closeModal('addEventModal');">
-                <div class="form-group">
-                    <label>Event Title</label>
-                    <input type="text" placeholder="e.g. Weekly Training" required>
-                </div>
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" required>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Event</button>
-                </div>
-            </form>
+            <div class="modal-header">
+                <h2>Create Group Event</h2>
+                <div class="modal-close" onclick="closeModal('addEventModal')">&times;</div>
+            </div>
+            <div class="modal-body">
+                <form id="addEventForm" onsubmit="event.preventDefault(); alert('Event created!'); closeModal('addEventModal');">
+                    <div class="form-group">
+                        <label>Event Title</label>
+                        <input type="text" placeholder="e.g. Weekly Training" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="addEventForm">Create Event</button>
+            </div>
         </div>
     </div>
     <script src="app-state.js?v=20260424_v3"></script>
@@ -821,15 +829,6 @@
             }
         }
 
-        function openModal(id) {
-            const m = document.getElementById(id);
-            if (m) m.style.display = 'flex';
-        }
-
-        function closeModal(id) {
-            const m = document.getElementById(id);
-            if (m) m.style.display = 'none';
-        }
 
         function showSection(sectionId) {
             console.log("Showing section:", sectionId);            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
