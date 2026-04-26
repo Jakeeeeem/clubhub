@@ -603,39 +603,6 @@ if (typeof ApiService === 'undefined') {
         return { success: true, message: "Email sent (Simulated & Logged)" };
     }
 
-    // --- INVITATIONS ---
-    if (endpoint.includes("/invites")) {
-        if (localStorage.getItem("isDemoSession") === "true") {
-            const fb = this.getAdminDashboardFallback();
-            if (endpoint.includes("/generate")) {
-                const body = JSON.parse(options.body || "{}");
-                const invite = {
-                    id: "inv-" + Date.now(),
-                    token: "demo-token-" + Date.now(),
-                    email: body.email,
-                    role: body.role || "player",
-                    status: "sent",
-                    created_at: new Date().toISOString()
-                };
-                
-                fb.feed.unshift({
-                    id: "feed-inv-" + Date.now(),
-                    author: "System",
-                    title: "📧 Invite Sent: " + body.email,
-                    content: `Invitation for ${body.first_name || 'New Member'} (${invite.role}) created and sent successfully.`,
-                    date: new Date().toISOString(),
-                    type: "activity"
-                });
-                
-                return { success: true, invite };
-            }
-            if (endpoint.includes("/sent")) {
-                return { success: true, invites: [] };
-            }
-        }
-        return null;
-    }
-
     // --- STRIPE CONNECT ---
     if (endpoint.includes("/payments/stripe/connect")) {
         // If in demo mode, we MUST mock these to avoid malformed JWT errors on the backend
