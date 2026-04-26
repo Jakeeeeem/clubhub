@@ -82,10 +82,18 @@ async function getOrCreateStripeConnectAccount(user) {
     let accountId = dbUser.stripe_account_id;
 
     if (!accountId) {
-      // Create a Standard Connect account instead of Express to avoid platform profile issues
+      // Use 'express' for the premium branded onboarding experience
       const account = await stripe.accounts.create({
-        type: "standard", // Changed from 'express'
+        type: "express",
         email: dbUser.email,
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+        business_profile: {
+          name: `${dbUser.first_name} ${dbUser.last_name}'s Club`,
+          url: process.env.FRONTEND_URL || "https://clubhubsports.io",
+        },
         settings: {
           payouts: {
             schedule: {
@@ -282,6 +290,7 @@ router.post("/stripe/connect/onboard", authenticateToken, async (req, res) => {
       refresh_url,
       return_url,
       type: "account_onboarding",
+      collect: "currently_due", // Ensures branding is prioritized during onboarding
     });
 
     res.json({ url: link.url });

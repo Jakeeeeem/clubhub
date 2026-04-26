@@ -593,6 +593,30 @@ if (typeof ApiService === 'undefined') {
 
     if (endpoint.includes("/api/health") || endpoint.includes("/health")) return { status: "healthy", service: "ClubHub Demo" };
 
+    // --- STRIPE CONNECT ---
+    if (endpoint.includes("/payments/stripe/connect/status")) {
+        return { 
+            is_connected: localStorage.getItem("stripeConnected") === "true",
+            charges_enabled: localStorage.getItem("stripeConnected") === "true",
+            details_submitted: localStorage.getItem("stripeConnected") === "true",
+            account_id: "acct_demo_123"
+        };
+    }
+    if (endpoint.includes("/payments/stripe/connect/onboard")) {
+        // Simulate setting connection status for demo purposes
+        localStorage.setItem("stripeConnected", "true");
+        return { 
+            url: "https://connect.stripe.com/express/onboarding/demo_session_branded",
+            success: true 
+        };
+    }
+    if (endpoint.includes("/payments/stripe/connect/manage")) {
+        return { 
+            url: "https://dashboard.stripe.com/test/express/demo_branded_dashboard",
+            success: true 
+        };
+    }
+
     // Fallback for everything else in demo mode to prevent 403 crashes
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     if (isDemo) return { success: true, data: [] };

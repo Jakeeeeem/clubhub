@@ -436,10 +436,19 @@ function loadDailyPlanner() {
   if (!container) return;
 
   const now = new Date();
-  const upcoming = (PlayerDashboardState.events || [])
-    .filter(e => e.event_date && new Date(e.event_date) >= now)
-    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
-    .slice(0, 5);
+  
+  // Combine all possible schedule sources
+  const allActivities = [
+    ...(PlayerDashboardState.events || []).map(e => ({ ...e, type: e.event_type || 'event' })),
+    ...(PlayerDashboardState.bookings || []).map(b => ({ ...b, title: b.title || b.venue_name || 'Booking', type: 'venue' })),
+    ...(PlayerDashboardState.tournaments || []).map(t => ({ ...t, title: t.name || 'Tournament', type: 'tournament' })),
+    ...(PlayerDashboardState.matches || []).map(m => ({ ...m, title: `${m.home_team} vs ${m.away_team}`, type: 'match' }))
+  ];
+
+  const upcoming = allActivities
+    .filter(e => (e.event_date || e.date || e.start_date) && new Date(e.event_date || e.date || e.start_date) >= now)
+    .sort((a, b) => new Date(a.event_date || a.date || a.start_date) - new Date(b.event_date || b.date || b.start_date))
+    .slice(0, 8);
 
   const displayItems = upcoming.length > 0 ? upcoming : [
     { event_date: new Date(Date.now() + 2*86400000).toISOString(), event_time: '18:00', title: 'Elite Training Session', location: 'Main Pitch, Elite Academy' },
@@ -450,23 +459,41 @@ function loadDailyPlanner() {
 
   container.style.cssText = 'display:flex;flex-direction:column;gap:0.6rem;';
 
-  container.innerHTML = displayItems.map(event => {
-    const date = new Date(event.event_date);
+  container.innerHTML = upcoming.map(event => {
+    const date = new Date(event.event_date || event.date || event.start_date);
     const day = date.getDate();
     const month = date.toLocaleString('default', { month: 'short' });
-    const time = event.event_time ? event.event_time.slice(0, 5) : 'TBA';
-    const isUrgent = (new Date(event.event_date) - now) < 3 * 86400000;
-    const accent = isUrgent ? '#f59e0b' : 'var(--primary)';
+    const time = event.event_time ? event.event_time.slice(0, 5) : (event.start_time ? event.start_time.slice(0, 5) : 'TBA');
+    const isUrgent = (date - now) < 3 * 86400000;
+    
+    let accent = 'var(--primary)';
+    let typeLabel = (event.type || 'Activity').toUpperCase();
+    
+    if (event.type === 'tournament' || event.event_type === 'tournament') {
+      accent = '#f59e0b'; // Amber for tournaments
+      typeLabel = '🏆 TOURNAMENT';
+    } else if (event.type === 'match' || event.event_type === 'match') {
+      accent = '#3b82f6'; // Blue for matches
+      typeLabel = '⚽ GAME';
+    } else if (event.type === 'venue') {
+      accent = '#10b981'; // Green for venue bookings
+      typeLabel = '🏟️ VENUE';
+    } else if (isUrgent) {
+      accent = 'var(--accent-red)';
+    }
 
-    return `<div style="display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.75rem 1rem;transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+    return `<div style="display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.75rem 1rem;transition:all 0.2s;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,0.06)';this.style.transform='translateX(4px)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.transform='translateX(0)'">
       <div style="text-align:center;min-width:36px;flex-shrink:0;">
         <div style="font-size:1.15rem;font-weight:900;color:${accent};line-height:1;">${day}</div>
         <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;">${month}</div>
       </div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:0.75rem;font-weight:700;color:${accent};margin-bottom:0.1rem;">${time}</div>
-        <div style="font-size:0.88rem;font-weight:600;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(event.title)}</div>
-        <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:0.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(event.location || 'TBA')}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.2rem;">
+          <span style="font-size:0.65rem; font-weight:800; color:${accent}; letter-spacing:0.5px;">${typeLabel}</span>
+          <span style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.5);">${time}</span>
+        </div>
+        <div style="font-size:0.88rem;font-weight:600;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(event.title || event.name || 'Activity')}</div>
+        <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:0.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📍 ${escapeHTML(event.location || event.venue_name || 'TBA')}</div>
       </div>
     </div>`;
   }).join('');
@@ -582,42 +609,78 @@ function loadUpcomingEvents() {
   if (!el) return;
 
   const now = new Date();
-  const list = PlayerDashboardState.events
-    .filter((e) => e.event_date && new Date(e.event_date) > now)
-    .sort((a, b) => new Date(a.event_date) - new Date(b.event_date))
-    .slice(0, 5);
+  
+  // Use unified activity source
+  const allActivities = [
+    ...(PlayerDashboardState.events || []).map(e => ({ ...e, type: e.event_type || 'event' })),
+    ...(PlayerDashboardState.bookings || []).map(b => ({ ...b, title: b.title || b.venue_name || 'Booking', type: 'venue' })),
+    ...(PlayerDashboardState.tournaments || []).map(t => ({ ...t, title: t.name || 'Tournament', type: 'tournament' })),
+    ...(PlayerDashboardState.matches || []).map(m => ({ ...m, title: `${m.home_team} vs ${m.away_team}`, type: 'match' }))
+  ];
+
+  const list = allActivities
+    .filter(e => (e.event_date || e.date || e.start_date) && new Date(e.event_date || e.date || e.start_date) > now)
+    .sort((a, b) => new Date(a.event_date || a.date || a.start_date) - new Date(b.event_date || b.date || b.start_date))
+    .slice(0, 10);
 
   if (list.length === 0) {
-    el.innerHTML = "<p>No upcoming events</p>";
+    el.innerHTML = `
+      <div class="glass-card" style="text-align: center; padding: 3rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📅</div>
+        <p style="color: var(--text-muted);">No upcoming activities found.</p>
+        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="showPlayerSection('event-finder')">Explore Events</button>
+      </div>
+    `;
     return;
   }
 
   const eventsHTML = list
     .map((event) => {
-      const eventTime = event.event_time
-        ? " at " + escapeHTML(event.event_time)
-        : "";
-      return (
-        '<div class="item-list-item">' +
-        '<div class="item-info">' +
-        "<h4>" +
-        escapeHTML(event.title || "Event") +
-        "</h4>" +
-        "<p>" +
-        formatDate(event.event_date) +
-        eventTime +
-        "</p>" +
-        "<p>Price: " +
-        formatCurrency(event.price || 0) +
-        "</p>" +
-        "</div>" +
-        '<div class="item-actions">' +
-        '<button class="btn btn-small btn-primary" onclick="bookEvent(\'' +
-        event.id +
-        "')\">Book</button>" +
-        "</div>" +
-        "</div>"
-      );
+      const date = new Date(event.event_date || event.date || event.start_date);
+      const timeStr = event.event_time ? event.event_time.slice(0, 5) : (event.start_time ? event.start_time.slice(0, 5) : 'TBA');
+      
+      let typeLabel = (event.type || 'Event').toUpperCase();
+      let icon = '📅';
+      let accent = 'var(--primary)';
+
+      if (event.type === 'tournament' || event.event_type === 'tournament') {
+        typeLabel = '🏆 Tournament';
+        icon = '🏆';
+        accent = '#f59e0b';
+      } else if (event.type === 'match' || event.event_type === 'match') {
+        typeLabel = '⚽ Match';
+        icon = '⚽';
+        accent = '#3b82f6';
+      } else if (event.type === 'venue') {
+        typeLabel = '🏟️ Venue Booking';
+        icon = '🏟️';
+        accent = '#10b981';
+      }
+
+      return `
+        <div class="premium-card" style="padding: 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.06)'">
+          <div style="display: flex; gap: 1.25rem; align-items: center;">
+            <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; line-height: 1;">
+              <span style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 2px;">${date.toLocaleString('default', { month: 'short' })}</span>
+              <span style="font-size: 1.2rem; color: ${accent};">${date.getDate()}</span>
+            </div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                <span style="font-size: 0.65rem; font-weight: 800; color: ${accent}; text-transform: uppercase; letter-spacing: 0.5px;">${typeLabel}</span>
+                <span style="font-size: 0.7rem; color: rgba(255,255,255,0.4);">• ${timeStr}</span>
+              </div>
+              <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700;">${escapeHTML(event.title || event.name || 'Event')}</h4>
+              <p style="margin: 4px 0 0; font-size: 0.8rem; color: rgba(255,255,255,0.5);">📍 ${escapeHTML(event.location || event.venue_name || 'TBA')}</p>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+             ${event.price ? `<span style="font-weight: 700; font-size: 0.95rem;">${formatCurrency(event.price)}</span>` : ''}
+             <button class="btn btn-primary" style="padding: 0.6rem 1.2rem; border-radius: 10px;" onclick="bookEvent('${event.id || event.tournament_id || event.booking_id}')">
+               ${event.type === 'venue' ? 'Details' : 'Book'}
+             </button>
+          </div>
+        </div>
+      `;
     })
     .join("");
 
@@ -1021,20 +1084,63 @@ function loadTeamEvents() {
   if (!container) return;
 
   const teamIds = PlayerDashboardState.teams.map((t) => t.id);
-  const events = PlayerDashboardState.events.filter((e) =>
-    teamIds.includes(e.team_id),
-  );
+  
+  // Combine team events, matches, and tournament games
+  const allTeamActivities = [
+    ...(PlayerDashboardState.events || []).filter(e => teamIds.includes(e.team_id)),
+    ...(PlayerDashboardState.matches || []).filter(m => teamIds.includes(m.home_team_id) || teamIds.includes(m.away_team_id)),
+    ...(PlayerDashboardState.tournamentMatches || []).filter(tm => teamIds.includes(tm.team_id))
+  ];
 
-  if (events.length === 0) {
-    container.innerHTML = "<p>No team events found</p>";
+  if (allTeamActivities.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 2rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+        <p style="color: rgba(255,255,255,0.4); margin: 0;">No scheduled events or matches found for your teams.</p>
+      </div>
+    `;
     return;
   }
 
   // Sort by date
-  events.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+  allTeamActivities.sort((a, b) => new Date(a.event_date || a.date) - new Date(b.event_date || b.date));
 
-  container.innerHTML = events
+  container.innerHTML = allTeamActivities
     .map((e) => {
+      const date = new Date(e.event_date || e.date);
+      const isMatch = !!(e.home_team || e.away_team);
+      const isTournament = e.event_type === 'tournament' || e.tournament_id;
+      
+      let badgeColor = 'var(--primary)';
+      let badgeText = 'Training';
+      
+      if (isTournament) {
+        badgeColor = '#f59e0b';
+        badgeText = 'Tournament';
+      } else if (isMatch) {
+        badgeColor = '#3b82f6';
+        badgeText = 'Match';
+      }
+
+      return `
+        <div class="activity-card" style="display: flex; gap: 1rem; padding: 1.25rem; background: rgba(255,255,255,0.03); border-radius: 14px; margin-bottom: 0.75rem; border: 1px solid rgba(255,255,255,0.06);">
+          <div style="text-align: center; min-width: 45px;">
+            <div style="font-size: 1.2rem; font-weight: 800; color: ${badgeColor};">${date.getDate()}</div>
+            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase;">${date.toLocaleString('default', { month: 'short' })}</div>
+          </div>
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
+               <span style="font-size: 0.65rem; font-weight: 800; color: ${badgeColor}; text-transform: uppercase; letter-spacing: 0.5px;">${badgeText}</span>
+               <span style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">${e.event_time || e.time || 'TBA'}</span>
+            </div>
+            <h4 style="margin: 0; font-size: 1rem;">${escapeHTML(e.title || e.name || (isMatch ? `${e.home_team} vs ${e.away_team}` : 'Team Event'))}</h4>
+            <p style="margin: 4px 0 0; font-size: 0.8rem; color: rgba(255,255,255,0.4);">📍 ${escapeHTML(e.location || e.venue_name || 'Team Grounds')}</p>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <button class="btn btn-secondary btn-small" onclick="viewEventDetails('${e.id}')">Details</button>
+          </div>
+        </div>
+      `;
+    })
       const isUpcoming = new Date(e.event_date) >= new Date();
       if (!isUpcoming) return "";
 

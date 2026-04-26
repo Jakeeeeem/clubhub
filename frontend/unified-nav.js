@@ -1514,32 +1514,47 @@ const UnifiedNav = {
   async manageStripeAccount() {
     try {
         if (typeof apiService !== 'undefined') {
-            const resp = await apiService.makeRequest('/payments/stripe/onboarding-link', { method: 'POST' });
+            showLoading(true);
+            const status = await apiService.getStripeConnectStatus();
+            
+            let resp;
+            if (status && status.is_connected) {
+                // If already connected, get the management/login link to their branded dashboard
+                resp = await apiService.getStripeManageLink();
+            } else {
+                // If not connected, get the branded onboarding link
+                resp = await apiService.getStripeOnboardLink();
+            }
+
             if (resp && resp.url) {
                 window.open(resp.url, "_blank", "width=800,height=900,scrollbars=yes");
                 return;
             }
         }
-        // Fallback
-        const stripeUrl = "https://dashboard.stripe.com/test/connect/accounts"; 
-        window.open(stripeUrl, "_blank", "width=800,height=900,scrollbars=yes");
-    } catch (err) {
-        console.error("Failed to get Stripe link:", err);
+        // Fallback to generic dashboard if service call fails
         window.open("https://dashboard.stripe.com/test/connect/accounts", "_blank");
+    } catch (err) {
+        console.error("Failed to manage Stripe account:", err);
+        showNotification("Stripe service temporarily unavailable", "error");
+    } finally {
+        showLoading(false);
     }
   },
 
   async checkStripeStatus() {
-    const btn = document.getElementById("stripe-connect-btn");
+    const btn = document.getElementById("stripe-connect-btn") || document.querySelector(".stripe-header-btn button");
     if (!btn || typeof apiService === "undefined") return;
 
     try {
       const status = await apiService.getStripeConnectStatus();
       if (status && status.is_connected) {
-        btn.style.backgroundColor = "rgba(74, 222, 128, 0.15)";
-        btn.style.color = "#4ade80";
-        btn.style.borderColor = "rgba(74, 222, 128, 0.3)";
-        btn.innerHTML = '<i class="fa fa-check-circle" style="margin-right: 6px;"></i> Stripe Linked';
+        btn.style.backgroundColor = "#22c55e"; // Success Green
+        btn.style.color = "white";
+        btn.style.borderColor = "rgba(34, 197, 94, 0.4)";
+        btn.innerHTML = '<i class="fa fa-check-circle" style="margin-right: 6px;"></i> Connected';
+        localStorage.setItem("stripeConnected", "true");
+      } else {
+        localStorage.setItem("stripeConnected", "false");
       }
     } catch (err) {
       console.warn("Stripe status check failed:", err);
@@ -2410,6 +2425,7 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
       menuHtml = `
                     <div class="nav-group-title">Main Hub</div>
                     <a href="player-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'overview')" class="sidebar-link ${isActive('player-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
+                    <a href="player-dashboard.html#teams" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'teams')" class="sidebar-link ${p.includes('teams') ? 'active' : ''}">${ICONS.nav.teams}<span>My Teams</span></a>
                     <a href="player-schedule.html" onclick="return UnifiedNav.handleNavClick(event, 'player-schedule.html', 'schedule')" class="sidebar-link ${isActive('player-schedule.html') || p.includes('schedule') ? 'active' : ''}">${ICONS.nav.training}<span>My Schedule</span></a>
                     <a href="player-performance.html" onclick="return UnifiedNav.handleNavClick(event, 'player-performance.html', 'performance')" class="sidebar-link ${isActive('player-performance.html') || p.includes('performance') ? 'active' : ''}">${ICONS.nav.players}<span>Performance</span></a>
                     <a href="player-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'player-finances.html', 'payments')" class="sidebar-link ${isActive('player-finances.html') || p.includes('payments') ? 'active' : ''}">${ICONS.nav.finance}<span>My Finances</span></a>
