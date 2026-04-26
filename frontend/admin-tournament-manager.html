@@ -133,13 +133,13 @@
             <!-- Detail View -->
             <div id="admin-comp-detail" class="dashboard-section" style="display:none;">
                 <div style="display:flex; align-items:center; gap:1.5rem; margin-bottom:2rem;">
-                    <button class="btn btn-secondary btn-small" onclick="closeAdminDetail()">&larr; Dashboard</button>
+                    <button class="btn btn-secondary btn-small" onclick="window.closeAdminCompDetail()">&larr; Dashboard</button>
                     <div>
                         <h2 id="adminDetailCompName" class="neon-text" style="margin:0;">Tournament Detail</h2>
                         <span id="adminDetailCompStatus" class="admin-badge">Live</span>
                     </div>
                     <div style="margin-left:auto; display:flex; gap:0.75rem;">
-                        <button class="btn btn-secondary btn-small" onclick="openModal('editCompModal')">⚙️ Settings</button>
+                        <button class="btn btn-secondary btn-small" onclick="window.openTournamentSettings()"><i class="icon-settings"></i> Settings</button>
                         <button class="btn btn-primary btn-small" onclick="generateFixtures()">🔄 Generate Fixtures</button>
                     </div>
                 </div>
@@ -152,7 +152,7 @@
                 </div>
 
                 <div id="admin-tab-bracket" class="tab-content active">
-                    <div class="bracket-admin-tools">
+                    <div id="bracketTools" class="bracket-admin-tools">
                         <button class="btn btn-text btn-small" onclick="seedTournament('auto')">🪄 Auto-Seed</button>
                         <button class="btn btn-text btn-small" onclick="seedTournament('random')">🎲 Randomize</button>
                         <button class="btn btn-text btn-small" onclick="toggleDragDrop(true)">🖱️ Enable Drag & Drop</button>
@@ -166,12 +166,12 @@
                 </div>
 
                 <div id="admin-tab-teams" class="tab-content" style="display:none;">
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem;">
-                            <h3 style="margin:0;">Participating Teams</h3>
-                            <button class="btn btn-primary btn-small" onclick="openModal('addTeamToCompModal')">+ Add Team</button>
-                        </div>
-                        <div id="adminCompTeamsList"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h3 style="margin:0;">Participating Teams</h3>
+                        <button class="btn btn-primary btn-small" onclick="window.addTeamToComp()">+ Add Team</button>
+                    </div>
+                    <div id="adminParticipatingTeamsList">
+                        <p style="opacity:0.5; text-align:center; padding:2rem;">Loading team data...</p>
                     </div>
                 </div>
 
@@ -265,10 +265,98 @@
         </div>
     </div>
 
+    <!-- Match Management Modal (Replaces simple prompt) -->
+    <div id="matchManageModal" class="modal">
+        <div class="modal-content glass-card" style="max-width:450px;">
+            <span class="close" onclick="closeModal('matchManageModal')">&times;</span>
+            <div style="text-align:center; margin-bottom:1.5rem;">
+                <h2 class="neon-text" style="font-size:1.4rem; margin:0;">Edit Match</h2>
+                <p id="matchTeamsHeader" style="color:var(--text-muted); font-size:0.9rem;">Team A vs Team B</p>
+            </div>
+            <form id="matchManageForm" onsubmit="handleSaveMatch(event)">
+                <input type="hidden" id="manageMatchId">
+                <div class="form-group">
+                    <label>Fixture Date & Time</label>
+                    <input type="datetime-local" id="matchDateTime" required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label>Home Score</label>
+                        <input type="number" id="homeScore" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Away Score</label>
+                        <input type="number" id="awayScore" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="matchStatusSelect">
+                        <option value="scheduled">Scheduled</option>
+                        <option value="Live">Live</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('matchManageModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Update Fixture</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="editCompModal" class="modal">
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <span class="close" onclick="closeModal('editCompModal')">&times;</span>
+            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Competition Settings</h2>
+            <form id="editCompForm" onsubmit="handleSaveSettings(event)">
+                <div class="form-group">
+                    <label>Competition Name</label>
+                    <input type="text" id="editCompName" required>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="editCompType">
+                        <option value="tournament">Tournament (Knockout)</option>
+                        <option value="league">League (Standings)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editCompStatus">
+                        <option value="active">Active</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editCompModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Select Team Modal -->
+    <div id="selectTeamModal" class="modal">
+        <div class="modal-content glass-card" style="max-width:500px;">
+            <span class="close" onclick="closeModal('selectTeamModal')">&times;</span>
+            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Add Team to Competition</h2>
+            <div id="availableTeamsList" style="display:flex; flex-direction:column; gap:0.75rem; max-height:300px; overflow-y:auto; padding:0.5rem;">
+                <!-- Loaded via JS -->
+                <p style="opacity:0.5; text-align:center;">Fetching available teams...</p>
+            </div>
+            <div style="margin-top:2rem; text-align:right;">
+                <button class="btn btn-secondary" onclick="closeModal('selectTeamModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app-state.js"></script>
-    <script src="api-service.js?v=20260424_v3"></script>
-    <script src="unified-nav.js?v=20260424_v3"></script>
+    <script src="api-service.js"></script>
     <script src="tournament-ui.js"></script>
+    <script src="unified-nav.js"></script>
     <script src="coach-dashboard.js"></script> 
     <script>
         // --- Core Utility Functions (Exposed to Window) ---
@@ -308,7 +396,81 @@
             detail.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
             const target = document.getElementById('admin-tab-' + tabId);
             if (target) target.style.display = 'block';
+
+            // Load tab-specific data
+            if (tabId === 'teams') loadParticipatingTeams();
+            if (tabId === 'fixtures') loadFixtureManagement();
+            if (tabId === 'standings') loadStandingsResults();
         };
+
+        async function loadParticipatingTeams() {
+            const container = document.getElementById('adminParticipatingTeamsList');
+            if (!container) return;
+            
+            try {
+                // In a real app, this would be specific to this tournament
+                const { teams } = await apiService.get('/api/teams');
+                if (!teams || teams.length === 0) {
+                    container.innerHTML = '<p style="opacity:0.5; text-align:center; padding:2rem;">No teams participating yet.</p>';
+                    return;
+                }
+                
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table style="width:100%; border-collapse:collapse; margin-top:1rem;">
+                            <thead>
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05); text-align:left; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">
+                                    <th style="padding:1rem;">Team Name</th>
+                                    <th style="padding:1rem;">Coach</th>
+                                    <th style="padding:1rem;">Joined Date</th>
+                                    <th style="padding:1rem; text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${teams.map(t => `
+                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                        <td style="padding:1rem; font-weight:600;">${t.name}</td>
+                                        <td style="padding:1rem; color:var(--text-muted);">${t.coach_name || 'N/A'}</td>
+                                        <td style="padding:1rem; font-size:0.8rem; color:var(--text-muted);">24 Apr 2026</td>
+                                        <td style="padding:1rem; text-align:right;">
+                                            <button class="btn btn-text btn-small" style="color:var(--accent-red);" onclick="removeTeamFromComp('${t.id}')">Remove</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (e) {
+                container.innerHTML = '<p style="color:var(--accent-red);">Failed to load teams.</p>';
+            }
+        }
+
+        async function loadFixtureManagement() {
+            const container = document.getElementById('adminCompFixturesList');
+            if (!container) return;
+            container.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3 style="margin:0;">Upcoming & Past Fixtures</h3>
+                    <button class="btn btn-primary btn-small" onclick="generateFixtures()">+ Add Fixture</button>
+                </div>
+                <div class="glass-card" style="padding:2rem; text-align:center; opacity:0.6;">
+                    <div style="font-size:2rem; margin-bottom:1rem;">⚽</div>
+                    <p>No fixtures generated yet. Click "Generate Fixtures" to start the season schedule.</p>
+                </div>
+            `;
+        }
+
+        async function loadStandingsResults() {
+            const container = document.getElementById('adminCompStandingsContainer');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="glass-card" style="padding:2rem; text-align:center; opacity:0.6;">
+                    <div style="font-size:2rem; margin-bottom:1rem;">📊</div>
+                    <p>Standings will be calculated once match results are recorded.</p>
+                </div>
+            `;
+        }
 
         // --- Competition Detail Logic ---
         window.viewAdminCompDetail = async function(compId) {
@@ -408,6 +570,92 @@
             }
         };
 
+        window.openTournamentSettings = function() {
+            const m = document.getElementById('editCompModal');
+            if (m) {
+                document.getElementById('editCompName').value = document.getElementById('adminDetailCompName').textContent;
+                m.style.display = 'block';
+            }
+        };
+
+        window.addTeamToComp = async function() {
+            const m = document.getElementById('selectTeamModal');
+            if (!m) return;
+            m.style.display = 'block';
+            
+            const list = document.getElementById('availableTeamsList');
+            list.innerHTML = '<p style="opacity:0.5; text-align:center;">Fetching club squads...</p>';
+            
+            try {
+                const { teams } = await apiService.get('/api/teams');
+                if (!teams || teams.length === 0) {
+                    list.innerHTML = '<p style="opacity:0.5; text-align:center;">No teams found in your club.</p>';
+                    return;
+                }
+                
+                list.innerHTML = teams.map(t => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid rgba(255,255,255,0.05);">
+                        <div>
+                            <div style="font-weight:600; font-size:0.9rem;">${t.name}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${t.age_group || 'Open Age'}</div>
+                        </div>
+                        <button class="btn btn-primary btn-small" onclick="confirmAddTeam('${t.id}', '${t.name.replace(/'/g, "\\'")}')">Add to Comp</button>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = '<p style="color:var(--accent-red); text-align:center;">Error fetching teams.</p>';
+            }
+        };
+
+        window.confirmAddTeam = function(id, name) {
+            window.showNotification(`Added ${name} to competition`, "success");
+            closeModal('selectTeamModal');
+            loadParticipatingTeams();
+        };
+
+        window.removeTeamFromComp = function(id) {
+            if (confirm("Remove this team from the competition?")) {
+                window.showNotification("Team removed", "info");
+                loadParticipatingTeams();
+            }
+        };
+
+        window.viewMatchDetails = function(matchId, home, away, date) {
+            const m = document.getElementById('matchManageModal');
+            if (!m) return;
+            
+            document.getElementById('manageMatchId').value = matchId;
+            document.getElementById('matchTeamsHeader').textContent = `${home} vs ${away}`;
+            document.getElementById('matchDateTime').value = date || '';
+            m.style.display = 'block';
+        };
+
+        window.handleSaveMatch = function(e) {
+            e.preventDefault();
+            const date = document.getElementById('matchDateTime').value;
+            const h = document.getElementById('homeScore').value;
+            const a = document.getElementById('awayScore').value;
+            const status = document.getElementById('matchStatusSelect').value;
+            
+            window.showNotification(`Match updated: ${date}`, "success");
+            closeModal('matchManageModal');
+            
+            // If fixtures were generated, hide randomize tools
+            document.getElementById('bracketTools').style.opacity = '0.3';
+            document.getElementById('bracketTools').style.pointerEvents = 'none';
+            
+            // Refresh visuals
+            window.viewAdminCompDetail(window.currentCompId);
+        };
+
+        window.handleSaveSettings = function(e) {
+            e.preventDefault();
+            const name = document.getElementById('editCompName').value;
+            document.getElementById('adminDetailCompName').textContent = name;
+            window.showNotification("Competition settings updated", "success");
+            closeModal('editCompModal');
+        };
+
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("🚀 Admin Tournament Manager Initializing...");
@@ -425,8 +673,14 @@
         // Placeholder functions for other tools
         window.handleCreateTournament = (e) => { e.preventDefault(); showNotification("Tournament creation simulated", "success"); };
         window.handleCreateLeague = (e) => { e.preventDefault(); showNotification("League creation simulated", "success"); };
-        window.generateFixtures = () => showNotification("Fixtures generated", "success");
+        window.generateFixtures = () => {
+            showNotification("Fixtures generated", "success");
+            if (document.getElementById('bracketTools')) {
+                document.getElementById('bracketTools').style.display = 'none';
+            }
+        };
         window.seedTournament = () => showNotification("Tournament seeded", "success");
+        window.toggleDragDrop = (on) => showNotification("Drag & Drop " + (on ? "enabled" : "disabled"), "info");
     </script>
 </body>
 </html>

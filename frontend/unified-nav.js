@@ -2289,6 +2289,9 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
         <a href="admin-shop.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-shop.html', 'shop')" class="sidebar-link ${isActive('admin-shop.html')}">${ICONS.nav.shop}<span>Club Shop</span></a>
         <a href="admin-tactical-board.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-tactical-board.html', 'tactical-board')" class="sidebar-link ${isActive('admin-tactical-board.html')}">${ICONS.nav.tactics}<span>Tactical Board</span></a>
 
+        <div class="nav-group-title"><span>System</span></div>
+        <a href="player-settings.html" class="sidebar-link ${isActive('player-settings.html')}">${ICONS.nav.settings}<span>Group Settings</span></a>
+
         <div class="nav-group-title"><span>Discovery</span></div>
         <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
         <a href="team-finder.html" class="sidebar-link ${isActive('team-finder.html')}">${ICONS.nav.players}<span>Team Finder</span></a>

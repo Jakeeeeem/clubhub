@@ -52,8 +52,11 @@ const TournamentUI = {
                                 const awayWinner = played && (m.away_score > m.home_score);
                                 
                                 return `
-                                <div class="match-wrapper">
-                                    <div class="match-card ${played ? 'played' : ''}" onclick="if(window.viewMatchDetails) viewMatchDetails('${m.id}')">
+                                 <div class="match-wrapper">
+                                    <div class="match-card ${played ? 'played' : ''}" onclick="if(window.viewMatchDetails) viewMatchDetails('${m.id}', '${m.home_team || 'TBD'}', '${m.away_team || 'TBD'}', '${m.date || ''}')">
+                                        <div style="padding: 0.75rem 1.25rem 0.2rem;">
+                                            <div class="match-date">${m.date || 'Date TBD'}</div>
+                                        </div>
                                         <div class="team ${homeWinner ? 'winner' : ''}">
                                             <span class="team-name">${m.home_team || 'TBD'}</span>
                                             <span class="score">${m.home_score ?? '-'}</span>
@@ -165,7 +168,51 @@ const TournamentUI = {
             .score { font-family: 'JetBrains Mono', monospace; font-weight: 600; min-width: 28px; text-align: center; background: rgba(255,255,255,0.05); border-radius: 6px; padding: 4px 8px; font-size: 0.9rem; }
             .live-indicator { position: absolute; top: -10px; right: 10px; background: #dc2626; color: white; font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 100px; box-shadow: 0 0 15px rgba(220, 38, 38, 0.6); animation: pulse 2s infinite; letter-spacing: 1px; }
             
-            .connector-line { position: absolute; right: -4rem; width: 4rem; height: 2px; background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(220, 38, 38, 0.3)); }
+            .connector-line { 
+                position: absolute; 
+                right: -2rem; 
+                width: 2rem; 
+                height: 2px; 
+                background: linear-gradient(90deg, var(--primary, #dc2626) 0%, rgba(220, 38, 38, 0.6) 100%); 
+                box-shadow: 0 0 10px rgba(220, 38, 38, 0.1);
+                z-index: 1;
+            }
+            .bracket-round:not(:last-child) .match-wrapper::after {
+                content: '';
+                position: absolute;
+                right: -2rem;
+                top: 50%;
+                width: 2px;
+                height: calc(100% + 2.5rem);
+                background: rgba(220, 38, 38, 0.4);
+                display: block;
+                z-index: 0;
+            }
+            .bracket-round:not(:last-child) .match-wrapper:nth-child(even)::after {
+                top: auto;
+                bottom: 50%;
+            }
+            
+            /* The outbound line from the vertical bridge to the next round's card */
+            .bracket-round:not(:last-child) .match-wrapper:nth-child(odd)::before {
+                content: '';
+                position: absolute;
+                right: -4rem;
+                top: calc(50% + 1.25rem + 25%); /* Approximate middle of the vertical bridge */
+                width: 2rem;
+                height: 2px;
+                background: linear-gradient(90deg, rgba(220, 38, 38, 0.4) 0%, var(--primary) 100%);
+                display: block;
+                z-index: 1;
+            }
+
+            /* Adjust vertical bridge for specific rounds if needed, but flex-justify usually handles it */
+            .bracket-round:not(:last-child) .match-wrapper:only-child::after,
+            .bracket-round:not(:last-child) .match-wrapper:only-child::before {
+                display: none;
+            }
+            
+            .match-date { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; opacity: 0.8; }
             
             .fifa-table-container { background: rgba(10, 10, 15, 0.3); border-radius: 24px; border: 1px solid rgba(255,255,255,0.04); overflow: hidden; backdrop-filter: blur(25px); box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
             .fifa-table { width: 100%; border-collapse: collapse; text-align: left; }
