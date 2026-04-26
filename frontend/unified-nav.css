@@ -31,11 +31,11 @@
     .user-avatar-sm { width: 32px !important; height: 32px !important; }
 }
 
-/* 🛡️ Legacy Navigation Shield: Prevent old UI from surfacing */
-#loggedInNav, 
-#loggedOutNav, 
-.nav-buttons:not(.pro-header .nav-buttons),
-.user-info:not(.pro-header .user-info) {
+/* 🛡️ Legacy Navigation Shield: Prevent old UI from surfacing on dashboards */
+.dashboard-view #loggedInNav, 
+.dashboard-view #loggedOutNav, 
+.dashboard-view .nav-buttons:not(.pro-header .nav-buttons),
+.dashboard-view .user-info:not(.pro-header .user-info) {
     display: none !important;
 }
 
