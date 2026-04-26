@@ -862,6 +862,17 @@ const UnifiedNav = {
     header.classList.add("unified-header");
     document.body.classList.add("dashboard-view");
     
+    // FORCE RE-RENDER if user-name exists (old structure) or if new container is missing
+    const hasOldStructure = header.querySelector('.user-name');
+    const hasNewStructure = header.querySelector('#header-family-switcher-container');
+    
+    if (header.querySelector('.logo-area-wrapper') && hasNewStructure && !hasOldStructure) {
+        this.renderHeaderSwitcher();
+        this.renderFamilySwitcher();
+        this.renderHeaderNotifications();
+        this.renderStripeHeaderButton();
+        return;
+    }
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const name = (
@@ -876,31 +887,7 @@ const UnifiedNav = {
     const isSubPage = path.includes("-") && !path.includes("dashboard");
     const userRole = this.getUserRole();
 
-    // If header already has our unified container, don't wipe it (prevents switcher flicker)
-    if (header.querySelector('.logo-area-wrapper')) {
-        this.renderHeaderSwitcher();
-        this.renderFamilySwitcher();
-        this.renderHeaderNotifications();
-        this.renderStripeHeaderButton();
-        
-        // Ensure mode toggle is present even on already rendered headers
-        if (!header.querySelector('.mode-toggle-container') && window.innerWidth >= 992) {
-            const right = header.querySelector('.dash-header-right');
-            if (right) {
-                const container = document.createElement('div');
-                container.className = 'mode-toggle-container desktop-only';
-                container.style.margin = '0 1rem';
-                container.innerHTML = `
-                    <div class="header-mode-toggle" id="header-mode-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.08);">
-                        <div class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Groups Hub</div>
-                        <div class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Player Pro</div>
-                    </div>
-                `;
-                right.parentNode.insertBefore(container, right);
-            }
-        }
-        return;
-    }
+    // Only skip re-render if the new family-on-right structure is PRESENT
 
     header.innerHTML = `
       <div class="nav-container nav container" style="display:flex; align-items:center; width:100%; height:100%;">
@@ -984,10 +971,8 @@ const UnifiedNav = {
     // or we ensure it's in the mobile sidebar.
     const isMobile = window.innerWidth < 992;
     
-    // Inject Group Switcher (or Family Switcher for player page) into available slots
-    const groupSlot = document.getElementById("header-group-switcher-container") || document.getElementById("header-org-switcher");
-    const familySlot = document.getElementById("header-family-switcher-container") || document.getElementById("family-switcher-target");
-    
+    // Inject Group Switcher into left slot
+    const groupSlot = document.getElementById("header-group-switcher-container");
     if (groupSlot) {
       const userRole = this.getUserRole();
       if (userRole !== "player" && userRole !== "parent") {
@@ -995,6 +980,8 @@ const UnifiedNav = {
       }
     }
     
+    // Inject Family Switcher into right slot
+    const familySlot = document.getElementById("header-family-switcher-container");
     if (familySlot) {
        this.renderFamilySwitcher(familySlot);
     }
@@ -1125,7 +1112,11 @@ const UnifiedNav = {
   },
 
   renderFamilySwitcher(targetContainer) {
-    const container = targetContainer || document.getElementById("header-family-switcher-container") || document.getElementById("family-switcher-target");
+    const isPlayerPage = window.location.href.includes("player-dashboard.html");
+    const container = targetContainer || 
+                      (isPlayerPage ? document.getElementById("header-family-switcher-container") : null) ||
+                      document.getElementById("header-family-switcher-container") || 
+                      document.getElementById("family-switcher-target");
     if (!container) return;
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
