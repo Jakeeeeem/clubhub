@@ -98,6 +98,11 @@ app.use(
       "Origin",
       "Cache-Control",
       "X-HTTP-Method-Override",
+      // Custom ClubHub headers sent by api-service.js
+      "x-group-id",
+      "x-club-id",
+      "x-organization-id",
+      "x-manager-id",
     ],
     preflightContinue: false,
     optionsSuccessStatus: 204,

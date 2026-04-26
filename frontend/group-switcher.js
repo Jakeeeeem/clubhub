@@ -116,8 +116,10 @@ if (window.__groupSwitcherDefined) {
       try {
         const svc = window.apiService || (typeof apiService !== "undefined" ? apiService : null);
         if (!svc) throw new Error("apiService not available");
-        const response = await svc.makeRequest("/auth/context");
-        if (response.success) {
+
+        // Use getContext() which has the full demo-mode fallback built in
+        const response = await svc.getContext();
+        if (response && response.success) {
           // Determine if user is Platform Admin
           const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
           this.isPlatformAdmin =
@@ -144,27 +146,26 @@ if (window.__groupSwitcherDefined) {
             `Switcher: Found ${groups.length} member groups. Admin: ${this.isPlatformAdmin}`,
           );
 
-          // If Platform Admin, fetch ALL organizations
-          if (this.isPlatformAdmin) {
+          // If Platform Admin, fetch ALL organizations (only when not in demo mode)
+          const isDemo = localStorage.getItem("isDemoSession") === "true";
+          if (this.isPlatformAdmin && !isDemo) {
             try {
               console.log(
                 "Switcher: Platform Admin detected, fetching all platform clubs...",
               );
-              const allGroupsResponse = await (window.apiService || apiService).makeRequest(
+              const allGroupsResponse = await svc.makeRequest(
                 "/platform-admin/groups?limit=1000",
               );
               if (allGroupsResponse && allGroupsResponse.groups) {
                 console.log(
                   `Switcher: Loaded ${allGroupsResponse.groups.length} platform clubs.`,
                 );
-                // Map to match the format from /auth/context
                 const platformGroups = allGroupsResponse.groups.map((g) => ({
                   id: g.id,
                   name: g.name,
                   role: "platform_admin",
                   logo: g.logo,
                 }));
-                // Deduplicate and merge
                 const existingIds = new Set(groups.map((g) => g.id));
                 const uniqueNew = platformGroups.filter((g) => !existingIds.has(g.id));
                 groups = [...groups, ...uniqueNew];
@@ -209,10 +210,10 @@ if (window.__groupSwitcherDefined) {
           this.currentGroup =
             response.currentGroup || response.currentOrganization;
 
-          // 🛡️ RECOVERY: If groups are still empty but user is authenticated, try one more endpoint
-          if (this.groups.length === 0) {
+          // 🛡️ RECOVERY: If groups are still empty but user is authenticated and not in demo, try one more endpoint
+          if (this.groups.length === 0 && !isDemo) {
               try {
-                  const fallback = await (window.apiService || apiService).makeRequest("/groups/my");
+                  const fallback = await svc.makeRequest("/groups/my");
                   if (fallback && fallback.groups) {
                       this.groups = fallback.groups;
                       this.allGroups = fallback.groups;

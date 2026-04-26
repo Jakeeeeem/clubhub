@@ -195,15 +195,14 @@
 
                 <!-- Right Column -->
                 <div style="display:flex;flex-direction:column;gap:1.5rem;">
-                    <!-- Quick Actions -->
                     <div class="glass-card" style="padding:1.5rem;">
                         <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">⚡ Quick Actions</div>
                         <div style="display:flex;flex-direction:column;gap:0.6rem;">
-                            <button class="quick-action-btn" onclick="openModal('addEventModal')">🏃 Plan Training Session</button>
-                            <button class="quick-action-btn" onclick="showCoachSection('players')">📝 Write Player Review</button>
-                            <button class="quick-action-btn" onclick="showCoachSection('messenger')">📨 Message Squad</button>
-                            <button class="quick-action-btn" onclick="showCoachSection('players')">📊 View Squad Stats</button>
-                            <button class="quick-action-btn">👤 Review Application</button>
+                            <button class="quick-action-btn" onclick="openModal('addEventModal')"><i>🏃</i> Plan Training Session</button>
+                            <button class="quick-action-btn" onclick="showCoachSection('players')"><i>📝</i> Write Player Review</button>
+                            <button class="quick-action-btn" onclick="showCoachSection('coach-messenger')"><i>📨</i> Message Squad</button>
+                            <button class="quick-action-btn" onclick="showCoachSection('tactical-board')"><i>📋</i> Tactical Board</button>
+                            <button class="quick-action-btn" onclick="window.location.href='coach-players.html'"><i>👤</i> Review Applications</button>
                         </div>
                     </div>
 

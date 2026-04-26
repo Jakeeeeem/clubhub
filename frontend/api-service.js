@@ -7,18 +7,29 @@ if (typeof ApiService === 'undefined') {
     this.retryCount = {};
     this.maxRetries = 2;
 
-    // Auto-enable demo mode on localhost or local network IPs unless explicitly disabled
+    // Smart demo mode detection:
+    // Only disable demo mode if the user has a REAL JWT (not a demo-bypass or demo-token).
+    // This allows test-direct-login users to stay in demo mode while still letting
+    // real backend connections work when a real auth token is present.
     const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     const isLocalIP = /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(location.hostname);
-    
+
     if (isLocalhost || isLocalIP) {
-        // Developer Override: Turn OFF demo mode automatically so real local database works
-        if (localStorage.getItem('isDemoSession') === 'true' && localStorage.getItem('isDemoSession_manual') !== 'true') {
+        const storedToken = localStorage.getItem('authToken') || '';
+        const isDemoToken = !storedToken
+            || storedToken === 'demo-token'
+            || storedToken.startsWith('demo-bypass-token')
+            || storedToken.startsWith('demo-');
+
+        // Only force-disable demo mode if we have a REAL token (proper JWT with dots)
+        const hasRealToken = !isDemoToken && storedToken.split('.').length === 3;
+
+        if (hasRealToken && localStorage.getItem('isDemoSession') === 'true'
+            && localStorage.getItem('isDemoSession_manual') !== 'true') {
+            // Real JWT found → switch to live backend mode
             localStorage.setItem('isDemoSession', 'false');
-            if (localStorage.getItem('authToken') === 'demo-token') {
-                localStorage.removeItem('authToken');
-            }
         }
+        // If no real token, leave demo mode as whatever the user set it to
     }
     
     this.isDemo = localStorage.getItem("isDemoSession") === "true";
