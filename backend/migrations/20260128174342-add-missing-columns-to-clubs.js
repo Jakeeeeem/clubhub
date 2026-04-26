@@ -15,10 +15,11 @@ exports.setup = function (options, seedLink) {
 };
 
 exports.up = function (db) {
-  return db
-    .addColumn("clubs", "contact_email", { type: "string" })
-    .then(() => db.addColumn("clubs", "contact_phone", { type: "string" }))
-    .then(() => db.addColumn("clubs", "stripe_account_id", { type: "string" }));
+  return db.runSql(`
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS contact_email VARCHAR(255);
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS contact_phone VARCHAR(50);
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS stripe_account_id VARCHAR(255);
+  `);
 };
 
 exports.down = function (db) {

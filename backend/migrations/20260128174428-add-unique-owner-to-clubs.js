@@ -15,7 +15,7 @@ exports.setup = function (options, seedLink) {
 };
 
 exports.up = function (db) {
-  return db.addIndex("clubs", "idx_clubs_owner_id", ["owner_id"], true);
+  return db.addIndex("clubs", "idx_clubs_owner_id", ["owner_id"], false);
 };
 
 exports.down = function (db) {

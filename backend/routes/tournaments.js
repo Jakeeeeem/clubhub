@@ -62,7 +62,7 @@ router.computeNumRounds = computeNumRounds;
  */
 router.post(
   "/register",
-  optionalAuth,
+  (req, res, next) => require("../middleware/auth").optionalAuth(req, res, next),
   [
     body("eventId").isUUID(),
     body("teamName").notEmpty(),

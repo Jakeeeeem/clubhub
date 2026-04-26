@@ -30,6 +30,14 @@ async function api(method, path, body = null, token = null) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
   if (adminOrgId) headers['x-group-id'] = adminOrgId;
 
+  // Auto-inject organizationId into body for POST/PUT if missing
+  if (['POST', 'PUT', 'PATCH'].includes(method) && body && adminOrgId && !body.organizationId && !body.clubId && !body.club_id && !body.organization_id) {
+    body.organizationId = adminOrgId;
+    body.clubId = adminOrgId;
+    body.club_id = adminOrgId;
+    body.organization_id = adminOrgId;
+  }
+
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers,
@@ -52,10 +60,11 @@ describe('1. Signup Flow', () => {
     const { status, ok, data } = await api('POST', '/auth/register', {
       email,
       password,
-      first_name: 'Integration',
-      last_name: 'Test',
-      account_type: 'organization',
-      organization_name: `Test FC ${RUN_ID}`,
+      firstName: 'Integration',
+      lastName: 'Test',
+      accountType: 'organization',
+      organizationName: `Test FC ${RUN_ID}`,
+      orgTypes: ['club'],
     });
 
     expect(status).toBe(201);
@@ -65,7 +74,7 @@ describe('1. Signup Flow', () => {
 
     // Persist for subsequent tests
     adminToken = data.token;
-    adminOrgId = data.user.groupId || data.user.clubId || data.currentGroup?.id;
+    adminOrgId = data.user.groupId || data.user.clubId || data.currentGroup?.id || data.user.club?.id || data.currentOrganization?.id;
   });
 
   test('POST /auth/login → logs in with the new credentials', async () => {
@@ -84,20 +93,21 @@ describe('1. Signup Flow', () => {
 
     expect(status).toBe(200);
     expect(ok).toBe(true);
-    expect(data).toHaveProperty('currentGroup');
-    const role = (data.currentGroup.user_role || data.currentGroup.role || '').toLowerCase();
+    const org = data.currentOrganization || data.currentGroup;
+    expect(org).toBeTruthy();
+    const role = (org.user_role || org.role || '').toLowerCase();
     expect(['admin', 'owner', 'organization']).toContain(role);
   });
 });
 
 // ─── 2. CREATE MEMBER ─────────────────────────────────────────────────────────
 describe('2. Create Member (Player)', () => {
-  test('POST /members → creates a new player with full profile data', async () => {
-    const { status, ok, data } = await api('POST', '/members', {
-      first_name: 'Alex',
-      last_name: `Player-${RUN_ID}`,
+  test('POST /players → creates a new player with full profile data', async () => {
+    const { status, ok, data } = await api('POST', '/players', {
+      firstName: 'Alex',
+      lastName: `Player-${RUN_ID}`,
       email: `player-${RUN_ID}@clubhub.test`,
-      date_of_birth: '2005-06-15',
+      dateOfBirth: '2005-06-15',
       position: 'Midfielder',
       role: 'player',
       phone: '07700900000',
@@ -110,8 +120,8 @@ describe('2. Create Member (Player)', () => {
     console.log('✅ Created member:', createdMemberId);
   });
 
-  test('GET /members → new member appears in the list', async () => {
-    const { status, ok, data } = await api('GET', '/members', null, adminToken);
+  test('GET /players → new member appears in the list', async () => {
+    const { status, ok, data } = await api('GET', '/players', null, adminToken);
 
     expect(status).toBe(200);
     expect(ok).toBe(true);
@@ -121,14 +131,14 @@ describe('2. Create Member (Player)', () => {
     expect(list.length).toBeGreaterThan(0);
   });
 
-  test('GET /members/:id → retrieves the created member by ID', async () => {
+  test('GET /players/:id → retrieves the created member by ID', async () => {
     if (!createdMemberId) return; // skip if create failed
 
-    const { status, ok, data } = await api('GET', `/members/${createdMemberId}`, null, adminToken);
+    const { status, ok, data } = await api('GET', `/players/${createdMemberId}`, null, adminToken);
 
     expect(status).toBe(200);
     expect(ok).toBe(true);
-    expect(data.first_name || data.player?.first_name).toBe('Alex');
+    expect(data.firstName || data.player?.firstName || data.first_name).toBe('Alex');
   });
 });
 
@@ -169,13 +179,13 @@ describe('4. Create Event', () => {
 
     const { status, ok, data } = await api('POST', '/events', {
       title: `Integration Test Event ${RUN_ID}`,
-      event_date: eventDate,
-      start_time: '10:00',
-      end_time: '12:00',
+      eventDate: eventDate,
+      startTime: '10:00',
+      endTime: '12:00',
       venue_name: 'Test Stadium',
       address: '123 Main Street, Manchester',
-      entry_price: 5.00,
-      event_type: 'training',
+      entryPrice: 5.00,
+      eventType: 'training',
       description: 'Auto-created by integration test',
       venueId: createdVenueId || null,
     }, adminToken);
@@ -212,11 +222,14 @@ describe('5. Create Tournament', () => {
       .toISOString().split('T')[0];
 
     const { status, ok, data } = await api('POST', '/tournaments', {
+      name: `Test Cup ${RUN_ID}`,
       title: `Test Cup ${RUN_ID}`,
+      type: 'knockout',
       format: 'knockout',
-      event_date: startDate,
-      max_teams: 8,
-      entry_fee: 25.00,
+      startDate: startDate,
+      eventDate: startDate,
+      maxTeams: 8,
+      entryFee: 25.00,
       venue_name: 'Test Stadium',
       address: '123 Main Street, Manchester',
       description: 'Integration test tournament',

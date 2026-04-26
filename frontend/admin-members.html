@@ -822,6 +822,21 @@
             }
         }
 
+        async function viewTeam(id) {
+            window.location.href = `admin-teams.html?id=${id}`;
+        }
+
+        async function deleteTeam(id) {
+            if (!confirm("Are you sure you want to delete this team? All player assignments will be removed.")) return;
+            try {
+                await apiService.delete(`/api/teams/${id}`);
+                showNotification("Team deleted successfully", "success");
+                loadTeams();
+            } catch (err) {
+                showNotification("Failed to delete team", "error");
+            }
+        }
+
         async function loadAvailableCoaches() {
             const select = document.getElementById('coachSelect');
             if (!select) return;
@@ -864,9 +879,59 @@
                 closeModal('createTeamModal');
                 loadTeams();
                 if (typeof showAlert === 'function') showAlert('Team created successfully!', 'Success', 'success');
+                else showNotification("Team created successfully!", "success");
             } catch (err) {
                 console.error("Team creation failed:", err);
                 showNotification("Failed to create team: " + err.message, "error");
+            }
+        }
+
+        async function handleInviteMember(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn ? btn.innerHTML : "Invite Member";
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = 'Sending...';
+            }
+
+            const formData = new FormData(e.target);
+            const email = formData.get('email');
+            
+            // Demo mode bypass
+            if (localStorage.getItem('isDemoSession') === 'true') {
+                showNotification("Demo Mode: Invitation simulated for " + email, "success");
+                closeModal('addMemberModal');
+                e.target.reset();
+                return;
+            }
+
+            const data = {
+                email: email,
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                clubRole: formData.get('role'),
+                teamId: formData.get('squadId') || null,
+                message: formData.get('message') || "",
+                isPublic: false
+            };
+
+            try {
+                const response = await apiService.generateGroupInvite(data);
+                if (response.success) {
+                    showNotification("Invitation sent to " + email, "success");
+                    closeModal('addMemberModal');
+                    e.target.reset();
+                    loadMembers();
+                }
+            } catch (err) {
+                console.error("Invite failed:", err);
+                showNotification(err.message || "Failed to send invitation", "error");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
             }
         }
 

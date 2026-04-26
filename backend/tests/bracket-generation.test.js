@@ -20,6 +20,10 @@ jest.mock("../middleware/auth", () => {
       req.user.organization_id = "test-group-id";
       next();
     },
+    optionalAuth: (req, res, next) => {
+      req.user = { id: 'test-user-id', email: "test@example.com", groupId: "test-group-id" };
+      next();
+    },
   };
 });
 

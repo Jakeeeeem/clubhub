@@ -15,10 +15,7 @@ exports.setup = function (options, seedLink) {
 };
 
 exports.up = function (db) {
-  return db.addColumn("users", "email_verified", {
-    type: "boolean",
-    defaultValue: false,
-  });
+  return db.runSql('ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false');
 };
 
 exports.down = function (db) {

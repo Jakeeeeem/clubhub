@@ -73,14 +73,14 @@ exports.up = function (db) {
       }),
     )
     .then(() =>
-      db.addIndex("staff", "idx_staff_user_club", ["user_id", "club_id"], true),
+      db.addIndex("staff", "idx_staff_user_club", ["user_id", "club_id"], false),
     )
     .then(() =>
       db.addIndex(
         "team_coaches",
         "idx_team_coaches_team_coach",
         ["team_id", "coach_id"],
-        true,
+        false,
       ),
     )
     .then(() =>
@@ -88,7 +88,7 @@ exports.up = function (db) {
         "players",
         "idx_players_email_club",
         ["email", "club_id"],
-        true,
+        false,
       ),
     )
     .then(() =>

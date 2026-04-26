@@ -27,7 +27,7 @@ SELECT
     LOWER(REGEXP_REPLACE(
         REGEXP_REPLACE(c.name, '[^a-zA-Z0-9\s-]', '', 'g'),
         '\s+', '-', 'g'
-    )),
+    )) || '-' || c.id::text,
     c.description,
     c.sport,
     c.location,
@@ -100,7 +100,8 @@ AND NOT EXISTS (
     SELECT 1 FROM organization_members om 
     WHERE om.organization_id = p.club_id 
     AND om.user_id = p.user_id
-);
+)
+ON CONFLICT (organization_id, user_id) DO NOTHING;
 
 -- ============================================================================
 -- 4. MIGRATE STAFF TO ORGANIZATION MEMBERS
@@ -133,7 +134,8 @@ AND NOT EXISTS (
     SELECT 1 FROM organization_members om 
     WHERE om.organization_id = s.club_id 
     AND om.user_id = s.user_id
-);
+)
+ON CONFLICT (organization_id, user_id) DO NOTHING;
 
 -- ============================================================================
 -- 5. CREATE USER PREFERENCES FOR EXISTING USERS
