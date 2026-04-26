@@ -2371,10 +2371,12 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
         <div class="nav-group-title"><span>Management</span></div>
         <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('admin-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Dashboard</span></a>
         <a href="admin-members.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-members.html', 'members')" class="sidebar-link ${isActive('admin-members.html')}">${ICONS.nav.players}<span>Members</span></a>
-        <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>Teams & Squads</span></a>
+        <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>My Teams</span></a>
         <a href="admin-events.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-events.html', 'events')" class="sidebar-link ${isActive('admin-events.html')}">${ICONS.nav.events}<span>Event Manager</span></a>
+        <a href="admin-venues.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-venues.html', 'venues')" class="sidebar-link ${isActive('admin-venues.html')}">${ICONS.nav.venue}<span>My Venues</span></a>
         <a href="admin-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-tournament-manager.html', 'tournament-manager')" class="sidebar-link sidebar-sublink ${isActive('admin-tournament-manager.html')}" style="padding-left: 2.5rem; opacity: 0.85; font-size: 0.85rem;">${ICONS.nav.trophy}<span>Competition Management</span></a>
         <a href="admin-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-chat.html', 'messenger')" class="sidebar-link ${isActive('admin-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
+        <a href="admin-academy-tv.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-academy-tv.html', 'academy-tv')" class="sidebar-link ${isActive('admin-academy-tv.html')}">📺<span>Academy TV</span></a>
 
         <div class="nav-group-title"><span>Operations</span></div>
         <a href="admin-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-finances.html', 'finances')" class="sidebar-link ${isActive('admin-finances.html')}">${ICONS.nav.finance}<span>Finances</span></a>
@@ -2394,9 +2396,12 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
       menuHtml = `
         <div class="nav-group-title"><span>Coaching Hub</span></div>
         <a href="coach-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'overview')" class="sidebar-link ${isActive('coach-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
+        <a href="admin-members.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-members.html', 'members')" class="sidebar-link ${isActive('admin-members.html')}">${ICONS.nav.players}<span>Squad Manager</span></a>
+        <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>My Teams</span></a>
+        <a href="admin-events.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-events.html', 'events')" class="sidebar-link ${isActive('admin-events.html')}">${ICONS.nav.events}<span>Event Manager</span></a>
+        <a href="admin-venues.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-venues.html', 'venues')" class="sidebar-link ${isActive('admin-venues.html')}">${ICONS.nav.venue}<span>My Venues</span></a>
         <a href="coach-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tournament-manager.html', 'tournament-manager')" class="sidebar-link ${isActive('coach-tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Hub</span></a>
-        <a href="coach-dashboard.html#coach-players" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'players')" class="sidebar-link ${p.includes('players') ? 'active' : ''}">${ICONS.nav.players}<span>Squad Manager</span></a>
-        <a href="coach-dashboard.html#coach-teams" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'teams')" class="sidebar-link ${p.includes('teams') ? 'active' : ''}">${ICONS.nav.teams}<span>My Teams</span></a>
+        <a href="admin-academy-tv.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-academy-tv.html', 'academy-tv')" class="sidebar-link ${isActive('admin-academy-tv.html')}">📺<span>Academy TV</span></a>
         
         <div class="nav-group-title"><span>Tools</span></div>
         <a href="coach-dashboard.html#coach-messenger" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'messenger')" class="sidebar-link ${p.includes('messenger') ? 'active' : ''}">${ICONS.nav.chat}<span>Squad Messenger</span></a>
@@ -2425,6 +2430,7 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
                     <a href="player-dashboard.html#schedule" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'schedule')" class="sidebar-link ${p.includes('schedule') ? 'active' : ''}">${ICONS.nav.training}<span>Schedule</span></a>
                     <a href="player-dashboard.html#teams" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'teams')" class="sidebar-link ${p.includes('teams') ? 'active' : ''}">${ICONS.nav.teams}<span>My Teams</span></a>
                     <a href="player-performance.html" onclick="return UnifiedNav.handleNavClick(event, 'player-performance.html', 'performance')" class="sidebar-link ${isActive('player-performance.html') || p.includes('performance') ? 'active' : ''}">${ICONS.nav.players}<span>Performance</span></a>
+                    <a href="player-academy-tv.html" onclick="return UnifiedNav.handleNavClick(event, 'player-academy-tv.html', 'academy-tv')" class="sidebar-link ${isActive('player-academy-tv.html')}">📺<span>Academy TV</span></a>
                     <a href="player-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'player-finances.html', 'payments')" class="sidebar-link ${isActive('player-finances.html') || p.includes('payments') ? 'active' : ''}">${ICONS.nav.finance}<span>Finances</span></a>
                     
                     <div class="nav-group-title">Services</div>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venue Manager — ClubHub</title>
+    <link rel="stylesheet" href="styles.css?v=20260424_v3">
+    <link rel="stylesheet" href="design-system.css?v=20260424_v3">
+    <link rel="stylesheet" href="unified-nav.css?v=20260424_v3">
+    <link rel="stylesheet" href="group-switcher.css?v=20260424_v3">
+</head>
+
+<body class="clubhub-unified dashboard-page">
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
+    <header class="header"></header>
+
+    <main class="main dashboard-main">
+        <div class="container dashboard-container">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+                <div>
+                    <h1 class="neon-text" style="font-size: 2rem; margin: 0;">🏟️ Venue Manager</h1>
+                    <p style="color: var(--text-muted); margin-top: 0.5rem;">Manage your club's pitches, courts, and training facilities.</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('addVenueModal')">+ Add New Venue</button>
+            </div>
+
+            <!-- Venue Cards -->
+            <div id="venueGrid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                <!-- Dynamically loaded venues -->
+                <div style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.5;">
+                    <div class="loader" style="margin-bottom: 1rem;"></div>
+                    Loading facilities...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Venue Modal -->
+    <div id="addVenueModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="neon-text">Add Club Venue</h2>
+                <span class="close" onclick="closeModal('addVenueModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addVenueForm" onsubmit="handleAddVenue(event)">
+                    <div class="form-group">
+                        <label>Venue Name</label>
+                        <input type="text" id="venueName" placeholder="e.g. Riverside Training Ground" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Address / Location</label>
+                        <input type="text" id="venueAddress" placeholder="e.g. 123 Sports Way, London" required>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Facility Type</label>
+                            <select id="venueType">
+                                <option value="pitch">Grass Pitch</option>
+                                <option value="astro">AstroTurf / 3G</option>
+                                <option value="indoor">Indoor Hall</option>
+                                <option value="gym">Gym / Studio</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Capacity</label>
+                            <input type="number" id="venueCapacity" value="22">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('addVenueModal')" style="flex: 1;">Cancel</button>
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">Save Venue</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app-state.js?v=20260424_v3"></script>
+    <script src="api-service.js?v=20260424_v3"></script>
+    <script src="unified-nav.js?v=20260424_v3"></script>
+    <script src="group-switcher.js?v=20260424_v3"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVenues();
+        });
+
+        async function loadVenues() {
+            const container = document.getElementById('venueGrid');
+            try {
+                // Real API call
+                const venues = await apiService.get('/api/venues');
+                
+                if (!venues || venues.length === 0) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+                            <p style="color: var(--text-muted);">No venues created yet.</p>
+                            <button class="btn btn-secondary btn-small" style="margin-top: 1rem;" onclick="openModal('addVenueModal')">Create Your First Venue</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = venues.map(v => `
+                    <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.25rem;">${v.name}</h3>
+                                <span class="badge" style="background: rgba(220,38,38,0.1); color: var(--primary); font-size: 0.7rem; text-transform: uppercase; margin-top: 0.25rem;">${v.type || 'Facility'}</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">👥 Cap: ${v.capacity || 'N/A'}</div>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; flex: 1;">📍 ${v.address}</p>
+                        <div style="display: flex; gap: 0.5rem; margin-top: auto;">
+                            <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="editVenue('${v.id}')">Edit</button>
+                            <button class="btn btn-text btn-small" onclick="deleteVenue('${v.id}')">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.warn("Venue load failed, using fallbacks");
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #f87171;">Failed to load live venues.</div>`;
+            }
+        }
+
+        async function handleAddVenue(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const data = {
+                name: document.getElementById('venueName').value,
+                address: document.getElementById('venueAddress').value,
+                type: document.getElementById('venueType').value,
+                capacity: parseInt(document.getElementById('venueCapacity').value)
+            };
+
+            try {
+                btn.disabled = true;
+                btn.textContent = 'Saving...';
+                await apiService.post('/api/venues', data);
+                closeModal('addVenueModal');
+                loadVenues();
+                if (window.showNotification) showNotification('Venue added successfully', 'success');
+            } catch (err) {
+                alert("Failed to save venue: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Venue';
+            }
+        }
+
+        function deleteVenue(id) {
+            if (confirm("Delete this venue?")) {
+                apiService.delete(`/api/venues/${id}`).then(() => loadVenues());
+            }
+        }
+    </script>
+</body>
+
+</html>

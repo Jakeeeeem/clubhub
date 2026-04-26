@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academy TV - ClubHub</title>
+  <link rel="stylesheet" href="styles.css?v=20260424_v3">
+  <link rel="stylesheet" href="design-system.css?v=20260424_v3">
+  <link rel="stylesheet" href="unified-nav.css?v=20260424_v3">
+  <link rel="stylesheet" href="group-switcher.css?v=20260424_v3">
+  <style>
+    .video-card {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .video-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(220, 38, 38, 0.15);
+    }
+    .video-card:hover .play-btn {
+      background: var(--primary) !important;
+      transform: scale(1.2);
+    }
+    .category-badge {
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+
+<body class="clubhub-unified dashboard-page">
+  <script>window.UNIFIED_NAV_ENABLED = true;</script>
+  <header class="header"></header>
+
+  <main class="main dashboard-main">
+    <div class="container dashboard-container">
+      <div style="margin-bottom: 2.5rem;">
+        <h1 class="neon-text" style="font-size: 2.5rem; margin: 0;">📺 Academy TV</h1>
+        <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 1.1rem;">Your personal library of professional drills, tactics, and fitness sessions.</p>
+      </div>
+
+      <!-- Featured Section -->
+      <div id="featuredVideo" class="glass-panel" style="padding: 0; margin-bottom: 3rem; overflow: hidden; border: 1px solid rgba(220,38,38,0.2); display: grid; grid-template-columns: 1.5fr 1fr; min-height: 400px;">
+        <div id="featuredPlayer" style="background: #000; display: flex; align-items: center; justify-content: center; position: relative;">
+          <div style="position: absolute; inset: 0; background: url('https://w0.peakpx.com/wallpaper/384/261/HD-wallpaper-football-pitch-soccer-field-top-view-soccer-concepts-soccer-background-football.jpg') center/cover; opacity: 0.3;"></div>
+          <button class="btn-play" style="z-index: 2; width: 80px; height: 80px; border-radius: 50%; border: none; background: var(--primary); color: white; font-size: 2rem; cursor: pointer;">▶</button>
+        </div>
+        <div style="padding: 2.5rem; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(90deg, rgba(0,0,0,0.8), transparent);">
+          <span class="category-badge" style="margin-bottom: 1rem; width: fit-content;">Featured Session</span>
+          <h2 id="fTitle" style="font-size: 2rem; margin: 0 0 1rem; font-family: 'Outfit', sans-serif;">Mastering the Modern Attack</h2>
+          <p id="fDesc" style="color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem;">A deep dive into positional play and transitions. Learn how the world's best teams exploit space in the final third.</p>
+          <div style="display: flex; gap: 2rem;">
+            <div style="text-align: center;">
+              <div style="font-size: 1.5rem; font-weight: 800; color: #fff;">24m</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Duration</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 1.5rem; font-weight: 800; color: #fff;">Elite</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Level</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories & Filter -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div class="tabs" style="border: none; margin: 0;">
+          <button class="tab-btn active" onclick="filterGallery('All')">All Sessions</button>
+          <button class="tab-btn" onclick="filterGallery('Tactics')">Tactics</button>
+          <button class="tab-btn" onclick="filterGallery('Drills')">Skills & Drills</button>
+          <button class="tab-btn" onclick="filterGallery('Fitness')">Fitness</button>
+        </div>
+        <input type="text" id="pVideoSearch" placeholder="Search sessions..." 
+          style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.7rem 1.5rem; border-radius: 30px; color: #fff; width: 300px;"
+          oninput="renderGallery()">
+      </div>
+
+      <!-- Video Grid -->
+      <div id="playerVideoGrid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+        <!-- Videos loaded here -->
+      </div>
+    </div>
+  </main>
+
+  <script src="app-state.js?v=20260424_v3"></script>
+  <script src="api-service.js?v=20260424_v3"></script>
+  <script src="training.js?v=20260424_v3"></script>
+  <script src="unified-nav.js?v=20260424_v3"></script>
+  <script src="group-switcher.js?v=20260424_v3"></script>
+
+  <script>
+    let playerDrills = [];
+    let activeFilter = 'All';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadPlayerAcademy();
+    });
+
+    async function loadPlayerAcademy() {
+      try {
+        const data = await TrainingService.getDrills();
+        playerDrills = data.drills || [];
+        
+        // Mock data if empty
+        if (playerDrills.length === 0) {
+            playerDrills = [
+                { id: 'p1', title: 'Speed & Agility', category: 'Fitness', difficulty: 'Intermediate', duration_minutes: 15, description: 'Explosive movements and change of direction.', demo_video_url: '#' },
+                { id: 'p2', title: 'Ball Mastery 101', category: 'Drills', difficulty: 'Beginner', duration_minutes: 10, description: 'Core technical skills for every player.', demo_video_url: '#' },
+                { id: 'p3', title: 'Defensive Positioning', category: 'Tactics', difficulty: 'Advanced', duration_minutes: 25, description: 'Zonal marking and communication.', demo_video_url: '#' },
+                { id: 'p4', title: 'Precision Passing', category: 'Drills', difficulty: 'Intermediate', duration_minutes: 12, description: 'Short and long range accuracy test.', demo_video_url: '#' },
+                { id: 'p5', title: 'Strength Core', category: 'Fitness', difficulty: 'Beginner', duration_minutes: 20, description: 'Building the foundation for physical play.', demo_video_url: '#' }
+            ];
+        }
+        
+        updateFeatured(playerDrills[0]);
+        renderGallery();
+      } catch (err) {
+        console.error("Player library fail:", err);
+      }
+    }
+
+    function updateFeatured(video) {
+        if (!video) return;
+        document.getElementById('fTitle').textContent = video.title;
+        document.getElementById('fDesc').textContent = video.description;
+    }
+
+    function renderGallery() {
+      const container = document.getElementById('playerVideoGrid');
+      const search = document.getElementById('pVideoSearch').value.toLowerCase();
+      
+      const filtered = playerDrills.filter(v => {
+        const matchesTab = activeFilter === 'All' || v.category === activeFilter;
+        const matchesSearch = v.title.toLowerCase().includes(search);
+        return matchesTab && matchesSearch;
+      });
+
+      container.innerHTML = filtered.map(v => `
+        <div class="glass-card video-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="watchVideo('${v.demo_video_url}')">
+          <div style="aspect-ratio: 16/9; background: #111; position: relative;">
+             <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.8), transparent);"></div>
+             <div class="play-btn" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                <span style="font-size: 2.5rem; color: #fff;">▶</span>
+             </div>
+             <div style="position: absolute; top: 1rem; left: 1rem;">
+                <span class="category-badge">${v.category}</span>
+             </div>
+          </div>
+          <div style="padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+               <h3 style="margin: 0; font-size: 1.1rem; color: #fff;">${v.title}</h3>
+               <span style="font-size: 0.75rem; color: var(--primary); font-weight: 800;">${v.difficulty}</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${v.description}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterGallery(tab) {
+      activeFilter = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent === (tab === 'Drills' ? 'Skills & Drills' : tab === 'All' ? 'All Sessions' : tab));
+      });
+      renderGallery();
+    }
+
+    function watchVideo(url) {
+        // In a real app, this would open a premium overlay player. For now, we open the link.
+        if (url === '#' || !url) {
+            alert("This video is coming soon! Check back later.");
+            return;
+        }
+        window.open(url, '_blank');
+    }
+  </script>
+</body>
+
+</html>

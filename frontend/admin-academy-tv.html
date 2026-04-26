@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academy TV Manager - ClubHub</title>
+  <link rel="stylesheet" href="styles.css?v=20260424_v3">
+  <link rel="stylesheet" href="design-system.css?v=20260424_v3">
+  <link rel="stylesheet" href="unified-nav.css?v=20260424_v3">
+  <link rel="stylesheet" href="group-switcher.css?v=20260424_v3">
+</head>
+
+<body class="clubhub-unified dashboard-page">
+  <script>window.UNIFIED_NAV_ENABLED = true;</script>
+  <header class="header"></header>
+
+  <main class="main dashboard-main">
+    <div class="container dashboard-container">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+        <div>
+          <h1 class="neon-text" style="font-size: 2rem; margin: 0;">📺 Academy TV</h1>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">Manage your club's training video library and drill assignments.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('addVideoModal')">+ Upload / Add Video</button>
+      </div>
+
+      <!-- Filters & Tabs -->
+      <div class="glass-panel" style="padding: 1rem; margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between;">
+        <div class="tabs" style="border: none; margin: 0;">
+          <button class="tab-btn active" onclick="filterVideos('All')">All Videos</button>
+          <button class="tab-btn" onclick="filterVideos('Tactics')">Tactics</button>
+          <button class="tab-btn" onclick="filterVideos('Drills')">Technical Drills</button>
+          <button class="tab-btn" onclick="filterVideos('Fitness')">Fitness & Strength</button>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <input type="text" id="videoSearch" placeholder="Search videos..." 
+            style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.6rem 1rem; border-radius: 10px; color: #fff; width: 250px;"
+            oninput="handleVideoSearch()">
+        </div>
+      </div>
+
+      <!-- Video Grid -->
+      <div id="academyTVGrid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+        <!-- Videos will be loaded here -->
+        <div style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.5;">
+          <div class="loader" style="margin-bottom: 1rem;"></div>
+          Initialising Library...
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Video Modal -->
+  <div id="addVideoModal" class="modal" style="display:none;">
+    <div class="modal-content glass-card" style="max-width: 550px;">
+      <div class="modal-header">
+        <h2 class="neon-text">Add Training Video</h2>
+        <span class="close" onclick="closeModal('addVideoModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="addVideoForm" onsubmit="handleAddVideo(event)">
+          <div class="form-group">
+            <label>Video Title</label>
+            <input type="text" id="vTitle" placeholder="e.g. Mastering the Cruyff Turn" required>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label>Category</label>
+              <select id="vCategory" required>
+                <option value="Drills">Technical Drills</option>
+                <option value="Tactics">Tactics</option>
+                <option value="Fitness">Fitness & Strength</option>
+                <option value="Match Review">Match Review</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Difficulty</label>
+              <select id="vDifficulty" required>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate" selected>Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Video URL (YouTube, Vimeo, or Direct Link)</label>
+            <input type="url" id="vUrl" placeholder="https://www.youtube.com/watch?v=..." required>
+            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem;">Paste the public link to the video file or YouTube page.</p>
+          </div>
+
+          <div class="form-group">
+            <label>Duration (Minutes)</label>
+            <input type="number" id="vDuration" value="15" min="1">
+          </div>
+
+          <div class="form-group">
+            <label>Description / Coaching Points</label>
+            <textarea id="vDescription" rows="4" placeholder="What should the players focus on?"></textarea>
+          </div>
+
+          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('addVideoModal')" style="flex: 1;">Cancel</button>
+            <button type="submit" class="btn btn-primary" style="flex: 1;">Add to Library</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app-state.js?v=20260424_v3"></script>
+  <script src="api-service.js?v=20260424_v3"></script>
+  <script src="training.js?v=20260424_v3"></script>
+  <script src="unified-nav.js?v=20260424_v3"></script>
+  <script src="group-switcher.js?v=20260424_v3"></script>
+
+  <script>
+    let allDrills = [];
+    let currentFilter = 'All';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadAcademyLibrary();
+    });
+
+    async function loadAcademyLibrary() {
+      const container = document.getElementById('academyTVGrid');
+      try {
+        const data = await TrainingService.getDrills();
+        allDrills = data.drills || [];
+        renderLibrary();
+      } catch (err) {
+        console.error("Library load fail:", err);
+        // Fallback demo data if API fails or empty
+        if (allDrills.length === 0) {
+            allDrills = [
+                { id: 'd1', title: 'Positioning & Spacing', category: 'Tactics', difficulty: 'Intermediate', duration_minutes: 20, description: 'Understanding the 4-3-3 defensive shape.', demo_video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
+                { id: 'd2', title: '1v1 Finishing Drills', category: 'Drills', difficulty: 'Advanced', duration_minutes: 15, description: 'Clinical finishing in high-pressure situations.', demo_video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
+                { id: 'd3', title: 'Agility Ladder Routine', category: 'Fitness', difficulty: 'Beginner', duration_minutes: 10, description: 'Improving footwork and reaction speed.', demo_video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }
+            ];
+        }
+        renderLibrary();
+      }
+    }
+
+    function renderLibrary() {
+      const container = document.getElementById('academyTVGrid');
+      const filtered = allDrills.filter(d => {
+        const matchesTab = currentFilter === 'All' || d.category === currentFilter;
+        const search = document.getElementById('videoSearch').value.toLowerCase();
+        const matchesSearch = d.title.toLowerCase().includes(search) || d.category.toLowerCase().includes(search);
+        return matchesTab && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.5;">No videos found for this category.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(drill => `
+        <div class="glass-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+          <div style="aspect-ratio: 16/9; background: #000; position: relative;">
+            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4);">
+              <span style="font-size: 3rem; color: #fff; cursor: pointer;" onclick="previewVideo('${drill.demo_video_url}')">▶</span>
+            </div>
+            <div style="position: absolute; top: 1rem; left: 1rem; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">
+              ${drill.category}
+            </div>
+          </div>
+          <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+              <h3 style="margin: 0; font-size: 1.1rem; color: #fff;">${drill.title}</h3>
+              <span style="font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 700;">⏱ ${drill.duration_minutes}m</span>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; flex: 1;">${drill.description}</p>
+            <div style="display: flex; gap: 0.5rem; margin-top: auto;">
+              <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="openAssignModal('${drill.id}')">Assign to Team</button>
+              <button class="btn btn-text btn-small" onclick="deleteVideo('${drill.id}')">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterVideos(tab) {
+      currentFilter = tab;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent === (tab === 'Drills' ? 'Technical Drills' : tab === 'Fitness' ? 'Fitness & Strength' : tab === 'All' ? 'All Videos' : tab));
+      });
+      renderLibrary();
+    }
+
+    function handleVideoSearch() {
+      renderLibrary();
+    }
+
+    async function handleAddVideo(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const originalText = btn.textContent;
+      
+      const payload = {
+        title: document.getElementById('vTitle').value,
+        category: document.getElementById('vCategory').value,
+        difficulty: document.getElementById('vDifficulty').value,
+        demo_video_url: document.getElementById('vUrl').value,
+        duration_minutes: parseInt(document.getElementById('vDuration').value),
+        description: document.getElementById('vDescription').value
+      };
+
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+        
+        await TrainingService.createDrill(payload);
+        
+        if (typeof showNotification === 'function') showNotification('Video added to library!', 'success');
+        closeModal('addVideoModal');
+        e.target.reset();
+        await loadAcademyLibrary();
+      } catch (err) {
+        console.error("Add video fail:", err);
+        alert("Action failed: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    async function deleteVideo(id) {
+       if (!confirm("Are you sure you want to remove this video from the library?")) return;
+       try {
+         await TrainingService.deleteDrill(id);
+         await loadAcademyLibrary();
+       } catch (err) {
+         alert("Delete failed: " + err.message);
+       }
+    }
+
+    function previewVideo(url) {
+      // Basic logic to handle YouTube/Vimeo embed conversion if needed
+      let embedUrl = url;
+      if (url.includes('youtube.com/watch?v=')) {
+          const id = url.split('v=')[1].split('&')[0];
+          embedUrl = `https://www.youtube.com/embed/${id}`;
+      }
+      window.open(embedUrl, '_blank');
+    }
+
+    function openAssignModal(drillId) {
+      alert("Assignment feature coming in the next update! You will be able to target specific squads or individual players for mandatory review.");
+    }
+  </script>
+</body>
+
+</html>
