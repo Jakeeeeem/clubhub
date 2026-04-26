@@ -436,87 +436,114 @@
             </div>
 
             <div id="finances" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">💰 Stripe Connect Hub</div>
-
-                <div class="glass-card" style="padding:2rem; text-align:center; max-width:600px; margin:0 auto;">
-                    <div id="stripe-status-loading">
-                        <p style="color:var(--text-muted);">Checking Stripe connection status...</p>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <div class="section-title" style="margin:0;">💰 Financial Management</div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button class="btn btn-text btn-small active" id="finTabStripe" onclick="showFinanceTab('stripe')">Stripe Connect</button>
+                        <button class="btn btn-text btn-small" id="finTabPlans" onclick="showFinanceTab('plans')">Subscription Plans</button>
                     </div>
+                </div>
 
-                    <div id="stripe-onboarding-box" style="display:none;">
-                        <div style="font-size:3rem; margin-bottom:1rem;">💳</div>
-                        <h3 style="margin-bottom:0.5rem; color:#fff;">Connect with Stripe</h3>
-                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">To start accepting
-                            payments from members and parents, you need to link your group to a Stripe account.</p>
-                        <button class="btn btn-primary" onclick="startStripeOnboarding()" id="connect-stripe-btn"
-                            style="padding:0.8rem 2rem;">
-                            <i class="fa fa-plug" style="margin-right:0.5rem;"></i> Connect with Stripe
-                        </button>
-                    </div>
-
-                    <div id="stripe-connected-box" style="display:none;">
-                        <div style="font-size:3rem; margin-bottom:1rem;">✅</div>
-                        <h3 style="margin-bottom:0.5rem; color:#fff;">Stripe Connected</h3>
-                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Your group is ready
-                            to receive payments. Payments are automatically synced to your Stripe dashboard.</p>
-
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
-                            <div
-                                style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
-                                <span
-                                    style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Payouts</span>
-                                <span id="payout-status" style="font-weight:700; color:#4ade80;">Enabled</span>
-                            </div>
-                            <div
-                                style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
-                                <span
-                                    style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Status</span>
-                                <span id="account-status" style="font-weight:700; color:#4ade80;">Verified</span>
-                            </div>
+                <div id="finance-stripe-view">
+                    <div class="glass-card" style="padding:2rem; text-align:center; max-width:600px; margin:0 auto;">
+                        <div id="stripe-status-loading">
+                            <p style="color:var(--text-muted);">Checking Stripe connection status...</p>
                         </div>
 
-                        <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                            <button class="btn btn-secondary" onclick="manageStripeAccount()" style="width:100%;">
-                                <i class="fa fa-external-link" style="margin-right:0.5rem;"></i> Go to Stripe Dashboard
+                        <div id="stripe-onboarding-box" style="display:none;">
+                            <div style="font-size:3rem; margin-bottom:1rem;">💳</div>
+                            <h3 style="margin-bottom:0.5rem; color:#fff;">Connect with Stripe</h3>
+                            <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">To start accepting payments from members and parents, you need to link your group to a Stripe account.</p>
+                            <button class="btn btn-primary" onclick="startStripeOnboarding()" id="connect-stripe-btn" style="padding:0.8rem 2rem;">
+                                <i class="fa fa-plug" style="margin-right:0.5rem;"></i> Connect with Stripe
                             </button>
-                            <button class="btn btn-text" onclick="checkStripeStatus()"
-                                style="font-size:0.8rem; opacity:0.6;">Refresh Status</button>
+                        </div>
+
+                        <div id="stripe-connected-box" style="display:none;">
+                            <div style="font-size:3rem; margin-bottom:1rem;">✅</div>
+                            <h3 style="margin-bottom:0.5rem; color:#fff;">Stripe Connected</h3>
+                            <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Your group is ready to receive payments. Payments are automatically synced to your Stripe dashboard.</p>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+                                <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+                                    <span style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Payouts</span>
+                                    <span id="payout-status" style="font-weight:700; color:#4ade80;">Enabled</span>
+                                </div>
+                                <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
+                                    <span style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Status</span>
+                                    <span id="account-status" style="font-weight:700; color:#4ade80;">Verified</span>
+                                </div>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                                <button class="btn btn-secondary" onclick="manageStripeAccount()" style="width:100%;">
+                                    <i class="fa fa-external-link" style="margin-right:0.5rem;"></i> Go to Stripe Dashboard
+                                </button>
+                                <button class="btn btn-text" onclick="checkStripeStatus()" style="font-size:0.8rem; opacity:0.6;">Refresh Status</button>
+                            </div>
+                        </div>
+
+                        <div id="stripe-error-box" style="display:none;">
+                            <div style="color:#f87171; margin-bottom:1rem;"><i class="fa fa-exclamation-triangle" style="font-size:2rem;"></i></div>
+                            <h3 style="color:#fff;">Stripe Connection Error</h3>
+                            <p id="stripe-error-msg" style="color:var(--text-muted); margin:0.5rem 0 1.5rem; font-size:0.9rem;">Failed to connect to Stripe service.</p>
+                            <button class="btn btn-secondary" onclick="checkStripeStatus()">Try Again</button>
                         </div>
                     </div>
 
-                    <div id="stripe-error-box" style="display:none;">
-                        <div style="color:#f87171; margin-bottom:1rem;"><i class="fa fa-exclamation-triangle"
-                                style="font-size:2rem;"></i></div>
-                        <h3 style="color:#fff;">Stripe Connection Error</h3>
-                        <p id="stripe-error-msg"
-                            style="color:var(--text-muted); margin:0.5rem 0 1.5rem; font-size:0.9rem;">Failed to connect
-                            to Stripe service.</p>
-                        <button class="btn btn-secondary" onclick="checkStripeStatus()">Try Again</button>
-                    </div>
-                </div>
-
-                <!-- Financial Stats Preview below -->
-                <div class="dash-grid"
-                    style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:2rem;">
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <div class="section-title">📊 Revenue Overview</div>
-                        <div
-                            style="height:150px; display:flex; align-items:center; justify-content:center; border:1px dashed rgba(255,255,255,0.1); border-radius:12px; color:var(--text-muted); font-size:0.85rem;">
-                            Revenue chart will appear here
+                    <div class="dash-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:2rem;">
+                        <div class="glass-card" style="padding:1.5rem;">
+                            <div class="section-title">📊 Revenue Overview</div>
+                            <div style="height:150px; display:flex; align-items:center; justify-content:center; border:1px dashed rgba(255,255,255,0.1); border-radius:12px; color:var(--text-muted); font-size:0.85rem;">Revenue chart will appear here</div>
                         </div>
-                    </div>
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <div class="section-title">🔔 Recent Transactions</div>
-                        <div id="financeTransactions" style="font-size:0.85rem; color:var(--text-muted);">
-                            No recent transactions found.
+                        <div class="glass-card" style="padding:1.5rem;">
+                            <div class="section-title">🔔 Recent Transactions</div>
+                            <div id="financeTransactions" style="font-size:0.85rem; color:var(--text-muted);">No recent transactions found.</div>
                         </div>
                     </div>
                 </div>
-                <div id="messenger" class="dashboard-section" style="display:none; padding:0.5rem;">
-                    <!-- Admin Messenger — mounted by squad-messenger.js -->
-                    <div id="admin-messenger-mount"></div>
-                </div>
 
+                <div id="finance-plans-view" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                        <h3 style="margin:0; color:#fff;">Subscription Plans</h3>
+                        <button class="btn btn-primary btn-small" onclick="openModal('createPlanModal')">+ Create Plan</button>
+                    </div>
+                    <div class="glass-card" style="padding:0;">
+                        <div class="table-responsive">
+                            <table style="width:100%; text-align:left; border-collapse:collapse;">
+                                <thead>
+                                    <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; background:rgba(255,255,255,0.02);">
+                                        <th style="padding:1rem;">Plan Name</th>
+                                        <th style="padding:1rem;">Amount</th>
+                                        <th style="padding:1rem;">Interval</th>
+                                        <th style="padding:1rem;">Subscribers</th>
+                                        <th style="padding:1rem; text-align:right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentPlansTableBody" style="font-size:0.9rem;">
+                                    <tr>
+                                        <td style="padding:1rem; font-weight:600;">Monthly Training Fee</td>
+                                        <td style="padding:1rem;">£35.00</td>
+                                        <td style="padding:1rem;">Monthly</td>
+                                        <td style="padding:1rem;">42 Players</td>
+                                        <td style="padding:1rem; text-align:right;">
+                                            <button class="btn btn-text btn-small" onclick="editPlan('plan_123')">Edit</button>
+                                            <button class="btn btn-text btn-small" onclick="assignPlan('plan_123')">Assign</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:1rem; font-weight:600;">Annual Membership</td>
+                                        <td style="padding:1rem;">£120.00</td>
+                                        <td style="padding:1rem;">Yearly</td>
+                                        <td style="padding:1rem;">128 Players</td>
+                                        <td style="padding:1rem; text-align:right;">
+                                            <button class="btn btn-text btn-small" onclick="editPlan('plan_456')">Edit</button>
+                                            <button class="btn btn-text btn-small" onclick="assignPlan('plan_456')">Assign</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -835,6 +862,44 @@
             }
         }
 
+        // --- Finance Logic ---
+        function showFinanceTab(tab) {
+            const stripeView = document.getElementById('finance-stripe-view');
+            const plansView = document.getElementById('finance-plans-view');
+            const stripeTab = document.getElementById('finTabStripe');
+            const plansTab = document.getElementById('finTabPlans');
+
+            if (tab === 'plans') {
+                stripeView.style.display = 'none';
+                plansView.style.display = 'block';
+                stripeTab.classList.remove('active');
+                plansTab.classList.add('active');
+            } else {
+                stripeView.style.display = 'block';
+                plansView.style.display = 'none';
+                stripeTab.classList.add('active');
+                plansTab.classList.remove('active');
+            }
+        }
+
+        async function handleCreatePlan(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            showNotification(`Plan "${formData.get('planName')}" created successfully!`, "success");
+            closeModal('createPlanModal');
+        }
+
+        function editPlan(id) {
+            showNotification("Edit Plan: " + id, "info");
+        }
+
+        function assignPlan(id) {
+            const teamId = prompt("Enter Team ID to assign this plan to:");
+            if (teamId) {
+                showNotification(`Plan ${id} assigned to Team ${teamId}`, "success");
+            }
+        }
+
         // --- Stripe Connect Logic ---
         async function checkStripeStatus() {
             const loading = document.getElementById('stripe-status-loading');
@@ -1032,6 +1097,41 @@
             }
         }
     </script>
+    <!-- Create Plan Modal -->
+    <div id="createPlanModal" class="modal" style="display:none;">
+        <div class="modal-content glass-card" style="max-width:450px;">
+            <span class="close" onclick="closeModal('createPlanModal')">&times;</span>
+            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create Payment Plan</h2>
+            <form onsubmit="handleCreatePlan(event)">
+                <div class="form-group">
+                    <label>Plan Name</label>
+                    <input type="text" name="planName" placeholder="e.g. Monthly Academy Fee" required>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div class="form-group">
+                        <label>Amount (£)</label>
+                        <input type="number" name="amount" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Frequency</label>
+                        <select name="interval">
+                            <option value="month">Monthly</option>
+                            <option value="year">Yearly</option>
+                            <option value="one-time">One-Time</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description (Optional)</label>
+                    <textarea name="desc" placeholder="Details shown to parents/players..." style="min-height:80px;"></textarea>
+                </div>
+                <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createPlanModal')" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 
 </html>
