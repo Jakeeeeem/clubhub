@@ -501,50 +501,7 @@ if (typeof ApiService === 'undefined') {
         }
     }
 
-    // --- MEMBER CREATION/DELETION ---
-    if (endpoint.includes("/members") || endpoint.includes("/staff") || (endpoint.includes("/players") && !endpoint.includes("/dashboard"))) {
-        const fb = this.getAdminDashboardFallback();
-        const currentId = user.groupId || user.clubId || "demo-club-id";
-        
-        if (method === "POST") {
-            const body = JSON.parse(options.body || "{}");
-            const newMember = {
-                id: "demo-" + Date.now(),
-                ...body,
-                created_at: new Date().toISOString(),
-                clubId: currentId,
-                status: 'active'
-            };
-            
-            if (endpoint.includes("/staff") || body.role === "coach") {
-                fb.staff.push(newMember);
-            } else {
-                fb.players.push(newMember);
-            }
-            
-            return { success: true, message: "Member added to demo session", member: newMember };
-        }
 
-        if (method === "DELETE") {
-            const id = endpoint.split('/').pop();
-            fb.players = fb.players.filter(p => p.id !== id);
-            fb.staff = fb.staff.filter(s => s.id !== id);
-            return { success: true, message: "Member removed from demo session" };
-        }
-
-        const filteredPlayers = fb.players.filter(p => {
-            const team = fb.teams.find(t => t.id === p.team_id);
-            return team && team.groupId === currentId;
-        });
-
-        if (endpoint.includes("role=coach")) return { success: true, coaches: fb.staff.filter(s => s.role.toLowerCase().includes("coach")) };
-        return { 
-            success: true, 
-            players: filteredPlayers.length > 0 ? filteredPlayers : fb.players, 
-            members: filteredPlayers.length > 0 ? filteredPlayers : fb.players, 
-            staff: fb.staff || [] 
-        };
-    }
 
     // --- EVENTS, VENUES, TOURNAMENTS ---
     if (endpoint.includes("/events") || endpoint.includes("/venues") || endpoint.includes("/tournaments") || endpoint.includes("/pitches")) {
@@ -584,52 +541,6 @@ if (typeof ApiService === 'undefined') {
         if (endpoint.includes("/tournaments")) return fb.tournaments || [];
         return fb.events || [];
     }
-
-    // --- EMAIL SENDING ---
-    if (endpoint.includes("/email/send")) {
-        const fb = this.getAdminDashboardFallback();
-        const body = JSON.parse(options.body || "{}");
-        
-        // Push email notification to feed
-        fb.feed.unshift({
-            id: "email-" + Date.now(),
-            author: "System",
-            title: "📧 Email Sent: " + (body.subject || "No Subject"),
-            content: `Sent to: ${body.to || body.recipient}. Preview: ${body.body || body.message}`,
-            date: new Date().toISOString(),
-            type: "activity"
-        });
-
-        return { success: true, message: "Email sent (Simulated & Logged)" };
-    }
-
-    // --- STRIPE CONNECT ---
-    if (endpoint.includes("/payments/stripe/connect")) {
-        // If in demo mode, we MUST mock these to avoid malformed JWT errors on the backend
-        if (localStorage.getItem("isDemoSession") === "true") {
-            console.log("🛡️ Demo Mode: Mocking Stripe Connect response");
-            if (endpoint.includes("/onboard")) {
-                const returnUrl = window.location.pathname.split('/').pop() || 'player-dashboard.html';
-                return { success: true, url: `stripe-onboarding-sim.html?return_url=${returnUrl}`, message: "Demo Mode: Stripe onboarding simulated." };
-            }
-            if (endpoint.includes("/status")) {
-                return { 
-                    linked: true, 
-                    payouts_enabled: true, 
-                    details_submitted: true, 
-                    charges_enabled: true,
-                    requirements: { currently_due: [] }
-                };
-            }
-            if (endpoint.includes("/manage")) {
-                return { success: true, url: "https://dashboard.stripe.com/test/dashboard", message: "Demo Mode: Stripe dashboard simulated." };
-            }
-        }
-        return null; // Pass through to real backend for live sessions
-    }
-
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-    if (isDemo) return { success: true, data: [] };
 
     return null;
   }
