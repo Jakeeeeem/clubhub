@@ -324,11 +324,25 @@
                         <div class="section-title" style="margin:0;">⚽ Squads & Teams</div>
                         <button class="btn btn-primary" onclick="openModal('createTeamModal')">+ Create Team</button>
                     </div>
-                    <div class="dash-grid" id="teamsListContainer"
-                        style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
-                        <!-- Dynamically loaded -->
-                        <div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">Loading
-                            squads...</div>
+                    <div class="glass-card" style="padding:0; overflow:hidden;">
+                        <div class="table-responsive">
+                            <table style="width:100%; text-align:left; border-collapse:collapse;">
+                                <thead>
+                                    <tr style="color:var(--text-muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; background:rgba(255,255,255,0.02);">
+                                        <th style="padding:1.25rem 1.5rem;">Squad Name</th>
+                                        <th style="padding:1.25rem 1.5rem;">Lead Coach</th>
+                                        <th style="padding:1.25rem 1.5rem;">Players</th>
+                                        <th style="padding:1.25rem 1.5rem; text-align:right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teamsTableBody" style="font-size:0.9rem;">
+                                    <!-- Dynamically loaded -->
+                                    <tr>
+                                        <td colspan="4" style="padding:3rem; text-align:center; color:var(--text-muted);">Loading squads...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -675,38 +689,39 @@
         }
 
         async function loadTeams() {
-            const container = document.getElementById('teamsListContainer');
-            if (!container) return;
+            const tbody = document.getElementById('teamsTableBody');
+            if (!tbody) return;
             try {
-                    const { teams } = await apiService.get('/api/teams');
-                    let teamsToRender = teams;
+                    const response = await apiService.get('/api/teams') || {};
+                    let teamsToRender = response.teams || [];
+                    
                     if ((!teamsToRender || teamsToRender.length === 0) && localStorage.getItem('isDemoSession') === 'true') {
-                        // Demo fallback teams for local visual testing
                         teamsToRender = [
-                            { id: 'demo-team-1', name: 'Under 12s', coach_name: 'Alex Morgan', player_count: 14 },
-                            { id: 'demo-team-2', name: 'Under 16s', coach_name: 'Sam Riley', player_count: 18 },
+                            { id: 'demo-team-1', name: 'Under 12s Academy', coach_name: 'Alex Morgan', player_count: 14 },
+                            { id: 'demo-team-2', name: 'Under 16s Squad', coach_name: 'Sam Riley', player_count: 18 },
+                            { id: 'demo-team-3', name: 'First Team', coach_name: 'David Webb', player_count: 22 },
                         ];
                     }
 
                     if (!teamsToRender || teamsToRender.length === 0) {
-                        container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
+                        tbody.innerHTML = '<tr><td colspan="4" style="padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</td></tr>';
                         return;
                     }
-                    container.innerHTML = teamsToRender.map(t => `
-                    <div class="glass-card" style="padding:1.25rem; border:1px solid rgba(255,255,255,0.05);">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
-                            <h3 style="font-size:1.1rem; margin-bottom:0.25rem;">${t.name}</h3>
-                            <span class="badge" style="background:rgba(96,165,250,0.1); color:#60a5fa; font-size:0.7rem;">${t.player_count || 0} Players</span>
-                        </div>
-                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Coach: ${t.coach_name || 'Unassigned'}</p>
-                        <div style="display:flex; gap:0.5rem;">
-                            <button class="btn btn-secondary btn-small" style="flex:1;" onclick="viewTeam('${t.id}', '${t.name}')">Manage Squad</button>
-                            <button class="btn btn-text btn-small" onclick="deleteTeam('${t.id}')">🗑️</button>
-                        </div>
-                    </div>
+                    tbody.innerHTML = teamsToRender.map(t => `
+                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                        <td style="padding:1.25rem 1.5rem; font-weight:700; color:#fff;">${t.name}</td>
+                        <td style="padding:1.25rem 1.5rem;">${t.coach_name || 'Unassigned'}</td>
+                        <td style="padding:1.25rem 1.5rem;"><span class="badge" style="background:rgba(96,165,250,0.1); color:#60a5fa;">${t.player_count || 0} Players</span></td>
+                        <td style="padding:1.25rem 1.5rem; text-align:right;">
+                            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                                <button class="btn btn-text btn-small" onclick="viewTeam('${t.id}')">Edit</button>
+                                <button class="btn btn-text btn-small" style="color:#f87171;" onclick="deleteTeam('${t.id}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
                 `).join('');
             } catch (e) {
-                container.innerHTML = '<p style="color:#f87171;">Failed to load teams.</p>';
+                tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; color:#f87171;">Failed to load teams.</td></tr>';
             }
         }
 

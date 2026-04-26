@@ -173,37 +173,46 @@ const TournamentUI = {
                 right: -2rem; 
                 width: 2rem; 
                 height: 2px; 
-                background: linear-gradient(90deg, var(--primary, #dc2626) 0%, rgba(220, 38, 38, 0.6) 100%); 
-                box-shadow: 0 0 10px rgba(220, 38, 38, 0.1);
+                background: var(--primary);
                 z-index: 1;
+                top: 50%;
+                opacity: 0.8;
             }
-            .bracket-round:not(:last-child) .match-wrapper::after {
+            .bracket-round:not(:last-child) .match-wrapper:nth-child(odd)::after {
                 content: '';
                 position: absolute;
                 right: -2rem;
                 top: 50%;
                 width: 2px;
-                height: calc(100% + 2.5rem);
-                background: rgba(220, 38, 38, 0.4);
-                display: block;
+                height: 100%;
+                background: var(--primary);
                 z-index: 0;
+                opacity: 0.4;
             }
             .bracket-round:not(:last-child) .match-wrapper:nth-child(even)::after {
-                top: auto;
+                content: '';
+                position: absolute;
+                right: -2rem;
                 bottom: 50%;
+                width: 2px;
+                height: 100%;
+                background: var(--primary);
+                z-index: 0;
+                opacity: 0.4;
             }
             
-            /* The outbound line from the vertical bridge to the next round's card */
+            /* Middle connector to next stage */
             .bracket-round:not(:last-child) .match-wrapper:nth-child(odd)::before {
                 content: '';
                 position: absolute;
                 right: -4rem;
-                top: calc(50% + 1.25rem + 25%); /* Approximate middle of the vertical bridge */
+                top: calc(100% + 1.25rem);
                 width: 2rem;
                 height: 2px;
-                background: linear-gradient(90deg, rgba(220, 38, 38, 0.4) 0%, var(--primary) 100%);
+                background: var(--primary);
                 display: block;
                 z-index: 1;
+                opacity: 0.8;
             }
 
             /* Adjust vertical bridge for specific rounds if needed, but flex-justify usually handles it */

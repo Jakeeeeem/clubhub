@@ -11,6 +11,7 @@ window.DashboardLoaders = {
         this.loadRecentMembers();
         this.loadTeams();
         this.loadStaff();
+        this.loadAllMembers();
         this.loadScoutApprovals();
     },
 
@@ -119,6 +120,46 @@ window.DashboardLoaders = {
                 </tr>
             `).join('');
         } catch (e) { }
+    },
+
+    async loadAllMembers() {
+        const tbody = document.getElementById('membersTableBody');
+        if (!tbody) return;
+        try {
+            const response = await apiService.get('/api/members') || {};
+            let players = response.players || [];
+            
+            if ((!players || players.length === 0) && localStorage.getItem('isDemoSession') === 'true') {
+                players = [
+                    { id: 'p1', first_name: 'Marcus', last_name: 'Thompson', role: 'Player', team_name: 'Under 16s', status: 'Active' },
+                    { id: 'p2', first_name: 'Sarah', last_name: 'Davies', role: 'Parent', team_name: 'Under 12s', status: 'Active' },
+                    { id: 'p3', first_name: 'James', last_name: 'Wilson', role: 'Player', team_name: 'First Team', status: 'Active' },
+                    { id: 'p4', first_name: 'Emma', last_name: 'Knight', role: 'Coach', team_name: 'Under 14s', status: 'Active' },
+                    { id: 'p5', first_name: 'Oliver', last_name: 'Smith', role: 'Player', team_name: 'Under 16s', status: 'Active' }
+                ];
+            }
+
+            if (!players || players.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:3rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = players.map(p => `
+                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                    <td data-label="Name" style="padding:1rem 0; font-weight:600; color:#fff;"> ${p.first_name} ${p.last_name}</td>
+                    <td data-label="Role" style="padding:1rem 0;">${p.role || (p.is_staff ? 'Coach' : 'Player')}</td>
+                    <td data-label="Squad" style="padding:1rem 0;">${p.team_name || 'Unassigned'}</td>
+                    <td data-label="Status" style="padding:1rem 0;">
+                        <span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">${p.status || 'Active'}</span>
+                    </td>
+                    <td data-label="Actions" style="padding:1rem 0; text-align:right;">
+                        <!-- Actions auto-injected by unified-nav.js -->
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:#f87171;">Failed to load members.</td></tr>';
+        }
     },
 
     async loadScoutApprovals() {

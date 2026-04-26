@@ -275,30 +275,9 @@
                                         <th style="padding:0.75rem 0; text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody style="font-size:0.9rem;">
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Marcus Thompson</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Player</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 16s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Sarah Davies</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Parent</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 12s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
-                                        </td>
+                                <tbody id="membersTableBody" style="font-size:0.9rem;">
+                                    <tr>
+                                        <td colspan="5" style="padding:3rem; text-align:center; color:var(--text-muted);">Loading members...</td>
                                     </tr>
                                 </tbody>
                             </table>

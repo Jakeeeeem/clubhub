@@ -265,41 +265,61 @@
         </div>
     </div>
 
-    <!-- Match Management Modal (Replaces simple prompt) -->
+    <!-- Match Management Modal (Enhanced with Scorers) -->
     <div id="matchManageModal" class="modal">
-        <div class="modal-content glass-card" style="max-width:450px;">
+        <div class="modal-content glass-card" style="max-width:550px;">
             <span class="close" onclick="closeModal('matchManageModal')">&times;</span>
             <div style="text-align:center; margin-bottom:1.5rem;">
-                <h2 class="neon-text" style="font-size:1.4rem; margin:0;">Edit Match</h2>
-                <p id="matchTeamsHeader" style="color:var(--text-muted); font-size:0.9rem;">Team A vs Team B</p>
+                <h2 class="neon-text" style="font-size:1.4rem; margin:0;">Update Match Result</h2>
+                <p id="matchTeamsHeader" style="color:var(--text-muted); font-size:0.9rem; font-weight:700; margin-top:0.5rem;">Team A vs Team B</p>
             </div>
             <form id="matchManageForm" onsubmit="handleSaveMatch(event)">
                 <input type="hidden" id="manageMatchId">
-                <div class="form-group">
-                    <label>Fixture Date & Time</label>
-                    <input type="datetime-local" id="matchDateTime" required>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                    <div class="form-group">
-                        <label>Home Score</label>
-                        <input type="number" id="homeScore" placeholder="0">
+                <input type="hidden" id="manageHomeTeamId">
+                <input type="hidden" id="manageAwayTeamId">
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem; background:rgba(255,255,255,0.02); padding:1.5rem; border-radius:16px; border:1px solid rgba(255,255,255,0.05);">
+                    <div class="form-group" style="margin:0;">
+                        <label id="homeTeamLabel" style="color:#fff; font-weight:800; margin-bottom:0.75rem; display:block;">Home Team</label>
+                        <input type="number" id="homeScore" placeholder="0" style="font-size:1.5rem; text-align:center; height:60px; font-weight:800; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1);">
+                        <div style="margin-top:1rem;">
+                            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Scorers</label>
+                            <div id="homeScorersContainer" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
+                                <!-- Dynamic player selects -->
+                            </div>
+                            <button type="button" class="btn btn-text btn-small" onclick="addScorerField('home')" style="color:var(--primary); padding:0; margin-top:0.5rem;">+ Add Scorer</button>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Away Score</label>
-                        <input type="number" id="awayScore" placeholder="0">
+                    <div class="form-group" style="margin:0;">
+                        <label id="awayTeamLabel" style="color:#fff; font-weight:800; margin-bottom:0.75rem; display:block;">Away Team</label>
+                        <input type="number" id="awayScore" placeholder="0" style="font-size:1.5rem; text-align:center; height:60px; font-weight:800; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1);">
+                        <div style="margin-top:1rem;">
+                            <label style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Scorers</label>
+                            <div id="awayScorersContainer" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:0.5rem;">
+                                <!-- Dynamic player selects -->
+                            </div>
+                            <button type="button" class="btn btn-text btn-small" onclick="addScorerField('away')" style="color:var(--primary); padding:0; margin-top:0.5rem;">+ Add Scorer</button>
+                        </div>
                     </div>
                 </div>
+
                 <div class="form-group">
-                    <label>Status</label>
+                    <label>Match Status</label>
                     <select id="matchStatusSelect">
                         <option value="scheduled">Scheduled</option>
                         <option value="Live">Live</option>
-                        <option value="completed">Completed</option>
+                        <option value="completed">Completed (Final Result)</option>
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label>Fixture Date & Time</label>
+                    <input type="datetime-local" id="matchDateTime">
+                </div>
+
                 <div style="display:flex; gap:1rem; margin-top:2rem;">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('matchManageModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Update Fixture</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Save Result & Progression</button>
                 </div>
             </form>
         </div>
@@ -620,31 +640,77 @@
             }
         };
 
-        window.viewMatchDetails = function(matchId, home, away, date) {
+        window.viewMatchDetails = async function(matchId, home, away, date) {
             const m = document.getElementById('matchManageModal');
             if (!m) return;
             
             document.getElementById('manageMatchId').value = matchId;
             document.getElementById('matchTeamsHeader').textContent = `${home} vs ${away}`;
             document.getElementById('matchDateTime').value = date || '';
+            document.getElementById('homeTeamLabel').textContent = home;
+            document.getElementById('awayTeamLabel').textContent = away;
+            
+            // Clear previous scorers
+            document.getElementById('homeScorersContainer').innerHTML = '';
+            document.getElementById('awayScorersContainer').innerHTML = '';
+            
+            // Load players for these teams (Mocked for now, would fetch from API)
+            window._currentMatchHomePlayers = await fetchTeamPlayers(home);
+            window._currentMatchAwayPlayers = await fetchTeamPlayers(away);
+            
             m.style.display = 'block';
+        };
+
+        async function fetchTeamPlayers(teamName) {
+            // Simulated API call
+            return [
+                { id: 'p1', name: 'Marcus Thompson' },
+                { id: 'p2', name: 'Liam Brown' },
+                { id: 'p3', name: 'James Wilson' },
+                { id: 'p4', name: 'Sam Riley' }
+            ];
+        }
+
+        window.addScorerField = function(side) {
+            const container = document.getElementById(`${side}ScorersContainer`);
+            const players = side === 'home' ? window._currentMatchHomePlayers : window._currentMatchAwayPlayers;
+            
+            const div = document.createElement('div');
+            div.style.display = 'flex';
+            div.style.gap = '0.5rem';
+            
+            const select = document.createElement('select');
+            select.className = 'form-control btn-small';
+            select.style.flex = '1';
+            select.innerHTML = players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-text btn-small';
+            removeBtn.textContent = '×';
+            removeBtn.onclick = () => div.remove();
+            
+            div.appendChild(select);
+            div.appendChild(removeBtn);
+            container.appendChild(div);
         };
 
         window.handleSaveMatch = function(e) {
             e.preventDefault();
-            const date = document.getElementById('matchDateTime').value;
-            const h = document.getElementById('homeScore').value;
-            const a = document.getElementById('awayScore').value;
+            const id = document.getElementById('manageMatchId').value;
+            const hScore = parseInt(document.getElementById('homeScore').value || 0);
+            const aScore = parseInt(document.getElementById('awayScore').value || 0);
             const status = document.getElementById('matchStatusSelect').value;
             
-            window.showNotification(`Match updated: ${date}`, "success");
+            window.showNotification(`Match result saved: ${hScore} - ${aScore}`, "success");
+            
+            if (status === 'completed') {
+                const winner = hScore > aScore ? document.getElementById('homeTeamLabel').textContent : 
+                              aScore > hScore ? document.getElementById('awayTeamLabel').textContent : 'Draw';
+                window.showNotification(`${winner} advances to next round!`, "info");
+            }
+            
             closeModal('matchManageModal');
-            
-            // If fixtures were generated, hide randomize tools
-            document.getElementById('bracketTools').style.opacity = '0.3';
-            document.getElementById('bracketTools').style.pointerEvents = 'none';
-            
-            // Refresh visuals
             window.viewAdminCompDetail(window.currentCompId);
         };
 
