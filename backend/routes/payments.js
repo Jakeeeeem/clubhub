@@ -278,19 +278,16 @@ router.post("/stripe/connect/onboard", authenticateToken, async (req, res) => {
   try {
     const account = await getOrCreateStripeConnectAccount(req.user);
 
-    const refresh_url =
-      (process.env.FRONTEND_URL || "https://clubhubsports.io") +
-      "/admin-dashboard.html";
-    const return_url =
-      (process.env.FRONTEND_URL || "https://clubhubsports.io") +
-      "/admin-dashboard.html";
+    const base_url = (process.env.FRONTEND_URL || "https://clubhubsports.io").replace(/\/$/, "");
+    const refresh_url = `${base_url}/admin-dashboard.html`;
+    const return_url = `${base_url}/admin-dashboard.html`;
 
     const link = await stripe.accountLinks.create({
       account: account.id,
       refresh_url,
       return_url,
       type: "account_onboarding",
-      collect: "currently_due", // Ensures branding is prioritized during onboarding
+      collect: "currently_due", // Prioritize branding and immediate requirements
     });
 
     res.json({ url: link.url });
@@ -320,15 +317,15 @@ router.get("/stripe/connect/manage", authenticateToken, async (req, res) => {
         linkError.message,
       );
 
-      const return_url =
-        (process.env.FRONTEND_URL || "https://clubhubsports.io") +
-        "/admin-dashboard.html";
+      const base_url = (process.env.FRONTEND_URL || "https://clubhubsports.io").replace(/\/$/, "");
+      const return_url = `${base_url}/admin-dashboard.html`;
 
       const link = await stripe.accountLinks.create({
         account: account.id,
         refresh_url: return_url,
         return_url,
         type: "account_update",
+        collect: "currently_due", // Keep it branded if they need to finish setup
       });
 
       return res.json({ url: link.url });
