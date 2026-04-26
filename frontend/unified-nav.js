@@ -2360,7 +2360,6 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
                 <a href="super-admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'super-admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('super-admin-dashboard.html')}">${ICONS.nav.overview}<span>Admin Console</span></a>
                 
                 <div class="nav-group-title">Operations</div>
-                <a href="scouting.html" class="sidebar-link ${isActive('scouting.html')}">${ICONS.nav.approvals}<span>Scouting Hub</span></a>
                 <a href="venue-booking.html" class="sidebar-link ${isActive('venue-booking.html')}">${ICONS.nav.venue}<span>Venue Booking</span></a>
 
                 <div class="nav-group-title">Discovery</div>
@@ -2378,7 +2377,6 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
         <a href="admin-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-chat.html', 'messenger')" class="sidebar-link ${isActive('admin-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
 
         <div class="nav-group-title"><span>Operations</span></div>
-        <a href="admin-scout-approvals.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-scout-approvals.html', 'scout-approvals')" class="sidebar-link ${isActive('admin-scout-approvals.html')}">${ICONS.nav.approvals}<span>Scout Approvals</span></a>
         <a href="admin-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-finances.html', 'finances')" class="sidebar-link ${isActive('admin-finances.html')}">${ICONS.nav.finance}<span>Finances</span></a>
         <a href="admin-shop.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-shop.html', 'shop')" class="sidebar-link ${isActive('admin-shop.html')}">${ICONS.nav.shop}<span>Club Shop</span></a>
         <a href="admin-bibs.html" class="sidebar-link ${isActive('admin-bibs.html')}">${ICONS.nav.bibs}<span>Bib Management</span></a>
@@ -2404,7 +2402,6 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
         <a href="coach-dashboard.html#coach-messenger" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'messenger')" class="sidebar-link ${p.includes('messenger') ? 'active' : ''}">${ICONS.nav.chat}<span>Squad Messenger</span></a>
         <a href="tactical-board.html" onclick="return UnifiedNav.handleNavClick(event, 'tactical-board.html', 'tactical-board')" class="sidebar-link ${isActive('tactical-board.html')}">${ICONS.nav.tactics}<span>Tactical Board Pro</span></a>
         <a href="admin-bibs.html" class="sidebar-link ${isActive('admin-bibs.html')}">${ICONS.nav.bibs}<span>Bib Assignment</span></a>
-        <a href="scouting.html" class="sidebar-link ${isActive('scouting.html')}">${ICONS.nav.approvals}<span>Scouting Hub</span></a>
 
         <div class="nav-group-title"><span>Discovery</span></div>
         <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>

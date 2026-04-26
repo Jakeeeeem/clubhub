@@ -410,136 +410,33 @@ if (typeof ApiService === 'undefined') {
 
     // --- GROUP LISTS ---
     if (endpoint.includes("/clubs") && !endpoint.includes("/platform-admin/organizations")) {
-      if (method === "POST") return { success: true, id: "new-group" };
-      return this.getAdminDashboardFallback().groups || [];
+      if (localStorage.getItem("isDemoSession") === "true") {
+          return this.getAdminDashboardFallback().groups || [];
+      }
     }
 
     // --- DASHBOARDS ---
     if (endpoint.includes("/dashboard/admin") || endpoint.includes("/admin/stats")) {
-        const fb = this.getAdminDashboardFallback();
-        const currentId = user.groupId || user.clubId || "demo-club-id";
-        
-        // Filter data for the current group
-        const filteredPlayers = fb.players.filter(p => p.groupId === currentId || p.clubId === currentId || p.team_id?.startsWith('t') || true); // Defaulting to true for demo simplicity but smarter filtering is better
-        
-        // Smarter filtering: if it's a specific demo club, only show its teams
-        const filteredTeams = fb.teams.filter(t => t.groupId === currentId);
-        const filteredPlayersFinal = fb.players.filter(p => {
-            const team = fb.teams.find(t => t.id === p.team_id);
-            return team && team.groupId === currentId;
-        });
-
-        if (endpoint.includes("/stats")) {
-            return {
-                totalMembers: filteredPlayersFinal.length + fb.staff.length,
-                monthlyRevenue: fb.statistics.monthly_revenue || 3840,
-                activeEvents: fb.events.length,
-                pendingScouts: 3
-            };
-        }
-        return {
-            ...fb,
-            players: filteredPlayersFinal.length > 0 ? filteredPlayersFinal : fb.players.slice(0, 5),
-            teams: filteredTeams.length > 0 ? filteredTeams : fb.teams.slice(0, 3)
-        };
-    }
-    if (endpoint.includes("/dashboard/player") || endpoint.includes("/players/dashboard")) return this.getPlayerDashboardFallback();
-    if (endpoint.includes("/dashboard/coach")) return this.getCoachDashboardFallback();
-
-    // --- TEAMS & MEMBERS ---
-    if (endpoint.includes("/teams")) {
-        const fb = this.getAdminDashboardFallback();
-        const currentId = user.groupId || user.clubId || "demo-club-id";
-        const filteredTeams = fb.teams.filter(t => t.groupId === currentId);
-        return { success: true, teams: filteredTeams.length > 0 ? filteredTeams : fb.teams };
-    }
-    if (endpoint.includes("/events") || endpoint.includes("/tournaments")) {
         if (localStorage.getItem("isDemoSession") === "true") {
-            if (endpoint.includes("eventType=tournament") || endpoint.includes("/tournaments")) {
-                return [
-                    { id: "mock_t1", title: "Elite Academy Premier League", event_date: "2026-04-20", status: "Live", type: "league" },
-                    { id: "mock_t2", title: "ClubHub Knockout Cup", event_date: "2026-05-15", status: "Active", type: "knockout" }
-                ];
-            }
-            // Regular events
-            return this.getAdminDashboardFallback().events || [];
-        }
-    }
-
-    if (endpoint.includes("/events") && endpoint.includes("/result") && method === "POST") {
-        if (localStorage.getItem("isDemoSession") === "true") {
-            const body = JSON.parse(options.body || "{}");
             const fb = this.getAdminDashboardFallback();
-            
-            // Add a main result entry to the feed
-            const mainEntry = {
-                id: "feed-" + Date.now(),
-                author: "System",
-                title: "Match Result Logged",
-                content: `Final Score: ${body.home_score} - ${body.away_score}. Result: ${body.result.toUpperCase()}`,
-                date: new Date().toISOString()
-            };
-            fb.feed.unshift(mainEntry);
-
-            // Add entries for scorers
-            if (body.playerStats && body.playerStats.length > 0) {
-                body.playerStats.forEach(stat => {
-                    const player = fb.players.find(p => p.id === stat.playerId);
-                    if (stat.goals > 0 && player) {
-                        fb.feed.unshift({
-                            id: "feed-goal-" + Date.now() + "-" + player.id,
-                            author: player.first_name + " " + player.last_name,
-                            title: "⚽ Goal Scored!",
-                            content: `${player.first_name} scored ${stat.goals} goal(s) in today's match.`,
-                            date: new Date().toISOString()
-                        });
-                    }
-                });
+            if (endpoint.includes("/stats")) {
+                return {
+                    totalMembers: fb.players.length + fb.staff.length,
+                    monthlyRevenue: fb.statistics.monthly_revenue || 3840,
+                    activeEvents: fb.events.length,
+                    pendingScouts: 3
+                };
             }
-            
-            return { success: true, message: "Result saved to demo session" };
+            return fb;
         }
     }
 
-
-
-    // --- EVENTS, VENUES, TOURNAMENTS ---
-    if (endpoint.includes("/events") || endpoint.includes("/venues") || endpoint.includes("/tournaments") || endpoint.includes("/pitches")) {
-        const fb = this.getAdminDashboardFallback();
-        
-        if (method === "POST") {
-            const body = JSON.parse(options.body || "{}");
-            const newItem = {
-                id: "demo-" + Date.now(),
-                ...body,
-                status: 'active',
-                created_at: new Date().toISOString()
-            };
-
-            if (endpoint.includes("/venues") || endpoint.includes("/pitches")) {
-                fb.pitches = fb.pitches || [];
-                fb.pitches.push(newItem);
-            } else if (endpoint.includes("/tournaments")) {
-                fb.tournaments = fb.tournaments || [];
-                fb.tournaments.push(newItem);
-            } else {
-                fb.events.push(newItem);
-            }
-
-            return { success: true, message: "Item added to demo session", data: newItem };
-        }
-
-        if (method === "DELETE") {
-            const id = endpoint.split('/').pop();
-            fb.events = (fb.events || []).filter(e => e.id !== id);
-            fb.tournaments = (fb.tournaments || []).filter(t => t.id !== id);
-            fb.pitches = (fb.pitches || []).filter(p => p.id !== id);
-            return { success: true, message: "Item removed from demo session" };
-        }
-
-        if (endpoint.includes("/venues") || endpoint.includes("/pitches")) return fb.pitches || [];
-        if (endpoint.includes("/tournaments")) return fb.tournaments || [];
-        return fb.events || [];
+    if (endpoint.includes("/dashboard/player") || endpoint.includes("/players/dashboard")) {
+        if (localStorage.getItem("isDemoSession") === "true") return this.getPlayerDashboardFallback();
+    }
+    
+    if (endpoint.includes("/dashboard/coach")) {
+        if (localStorage.getItem("isDemoSession") === "true") return this.getCoachDashboardFallback();
     }
 
     return null;
