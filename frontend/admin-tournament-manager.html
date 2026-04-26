@@ -294,8 +294,9 @@
             console.log("🔙 Closing competition detail");
             const list = document.getElementById('admin-comp-list');
             const detail = document.getElementById('admin-comp-detail');
-            if (list) list.style.display = 'block';
-            if (detail) detail.style.display = 'none';
+            if (list) list.classList.add('active');
+            if (detail) detail.classList.remove('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         window.switchAdminTab = function(btn, tabId) {
@@ -321,9 +322,9 @@
             }
 
             try {
-                // Show detail view immediately
-                list.style.display = 'none';
-                detail.style.display = 'block';
+                // Show detail view immediately using .active class
+                list.classList.remove('active');
+                detail.classList.add('active');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
                 const visualContainer = 'adminTournamentBracketVisual';
