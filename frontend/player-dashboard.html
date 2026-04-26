@@ -498,6 +498,21 @@
         </div>
       </div>
 
+      <!-- Schedule -->
+      <div id="player-schedule" class="dashboard-section">
+        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
+            <h2 class="neon-text">My Schedule</h2>
+            <div style="display:flex; gap:1rem;">
+               <button class="btn btn-secondary btn-small" onclick="loadPlayerOverview()">🔄 Refresh</button>
+            </div>
+          </div>
+          <div id="fullScheduleContainer" class="activity-card-list">
+            <p style="color:var(--text-muted);">Loading your full schedule...</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Teams -->
       <div id="player-teams" class="dashboard-section">
         <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">

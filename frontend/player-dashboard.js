@@ -425,6 +425,7 @@ function loadPlayerOverview() {
   loadPerformanceSummary();
   loadOverviewFeed();
   loadDailyPlanner();
+  loadFullSchedule();
   loadPlannerFeed();
 }
 
@@ -530,6 +531,61 @@ function loadDailyPlanner() {
           </div>
         </div>
       </div>`;
+  }).join('');
+}
+
+/**
+ * Loads the full-page schedule section with all activities
+ */
+function loadFullSchedule() {
+  const container = document.getElementById("fullScheduleContainer");
+  if (!container) return;
+
+  const allActivities = [
+    ...(PlayerDashboardState.events || []).map(e => ({ ...e, type: e.event_type || 'training' })),
+    ...(PlayerDashboardState.bookings || []).map(b => ({ ...b, title: b.title || b.venue_name || 'Booking', type: 'venue' })),
+    ...(PlayerDashboardState.tournaments || []).map(t => ({ ...t, title: t.name || 'Tournament', type: 'tournament' })),
+    ...(PlayerDashboardState.matches || []).map(m => ({ ...m, title: `${m.home_team} vs ${m.away_team}`, type: 'match' }))
+  ];
+
+  const upcoming = allActivities
+    .filter(e => (e.event_date || e.date || e.start_date) && new Date(e.event_date || e.date || e.start_date) >= new Date(new Date().setHours(0,0,0,0)))
+    .sort((a, b) => new Date(a.event_date || a.date || a.start_date) - new Date(b.event_date || b.date || b.start_date));
+
+  if (upcoming.length === 0) {
+    container.innerHTML = `<div class="glass-card" style="padding: 2rem; text-align: center; opacity: 0.6;">No upcoming scheduled activities.</div>`;
+    return;
+  }
+
+  container.innerHTML = upcoming.map(e => {
+    const date = new Date(e.event_date || e.date || e.start_date);
+    const dateStr = date.toLocaleDateString('default', { weekday: 'short', day: 'numeric', month: 'short' });
+    const timeStr = e.event_time || e.time || 'TBA';
+    
+    let accent = 'var(--primary)';
+    if (e.type === 'tournament') accent = '#f59e0b';
+    else if (e.type === 'match') accent = '#3b82f6';
+    else if (e.type === 'venue') accent = '#10b981';
+
+    return `
+      <div class="activity-card" style="display: flex; gap: 1rem; padding: 1.25rem; background: rgba(255,255,255,0.03); border-radius: 14px; margin-bottom: 0.75rem; border: 1px solid rgba(255,255,255,0.06); border-left: 4px solid ${accent};">
+        <div style="text-align: center; min-width: 60px;">
+          <div style="font-size: 1.25rem; font-weight: 800; color: ${accent};">${date.getDate()}</div>
+          <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase;">${date.toLocaleString('default', { month: 'short' })}</div>
+        </div>
+        <div style="flex: 1;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.25rem;">
+             <span style="font-size: 0.65rem; font-weight: 800; color: ${accent}; text-transform: uppercase; letter-spacing: 0.5px;">${e.type || 'Event'}</span>
+             <span style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">${timeStr}</span>
+          </div>
+          <h4 style="margin: 0; font-size: 1rem;">${escapeHTML(e.title || e.name || 'Team Event')}</h4>
+          <p style="margin: 4px 0 0; font-size: 0.8rem; color: rgba(255,255,255,0.4);">📍 ${escapeHTML(e.location || e.venue_name || 'TBA')}</p>
+        </div>
+        <div style="display: flex; align-items: center; gap:0.5rem;">
+          <button class="btn btn-secondary btn-small" onclick="viewEventDetails('${e.id}')">View</button>
+        </div>
+      </div>
+    `;
   }).join('');
 }
 
@@ -1155,6 +1211,9 @@ function loadTeamEvents() {
         badgeText = 'Match';
       }
 
+      // Filter for upcoming events only
+      if (new Date(e.event_date || e.date) < new Date(new Date().setHours(0,0,0,0))) return "";
+
       return `
         <div class="activity-card" style="display: flex; gap: 1rem; padding: 1.25rem; background: rgba(255,255,255,0.03); border-radius: 14px; margin-bottom: 0.75rem; border: 1px solid rgba(255,255,255,0.06);">
           <div style="text-align: center; min-width: 45px;">
@@ -1169,28 +1228,13 @@ function loadTeamEvents() {
             <h4 style="margin: 0; font-size: 1rem;">${escapeHTML(e.title || e.name || (isMatch ? `${e.home_team} vs ${e.away_team}` : 'Team Event'))}</h4>
             <p style="margin: 4px 0 0; font-size: 0.8rem; color: rgba(255,255,255,0.4);">📍 ${escapeHTML(e.location || e.venue_name || 'Team Grounds')}</p>
           </div>
-          <div style="display: flex; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-small btn-primary" onclick="submitAvailability('${e.id}')">Availability</button>
+            <button class="btn btn-small btn-success" style="background:#28a745; border-color:#28a745;" onclick="checkInEvent('${e.id}')">📍 I'm Here</button>
             <button class="btn btn-secondary btn-small" onclick="viewEventDetails('${e.id}')">Details</button>
           </div>
         </div>
       `;
-    })
-      const isUpcoming = new Date(e.event_date) >= new Date();
-      if (!isUpcoming) return "";
-
-      return `
-      <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; border-left: 4px solid var(--accent-color); margin-bottom: 0.5rem;">
-          <div>
-              <h4 style="margin:0;">${escapeHTML(e.title)} <span style="font-size:0.8rem; opacity:0.7;">(${escapeHTML(e.event_type || "Event")})</span></h4>
-              <p style="margin:0.2rem 0;">📅 ${formatDate(e.event_date)} at ${e.event_time ? e.event_time.slice(0, 5) : "TBA"} | 📍 ${escapeHTML(e.location || "TBA")}</p>
-          </div>
-          <div style="display: flex; gap: 0.5rem;">
-              <button class="btn btn-small btn-primary" onclick="submitAvailability('${e.id}')">Availability</button>
-              <button class="btn btn-small btn-success" style="background:#28a745; border-color:#28a745;" onclick="checkInEvent('${e.id}')">📍 I'm Here</button>
-              <button class="btn btn-small btn-secondary" onclick="viewEventDetails('${e.id}')">Details</button>
-          </div>
-      </div>
-    `;
     })
     .join("");
 }
