@@ -1033,7 +1033,7 @@ if (typeof ApiService === 'undefined') {
         groupId: "demo-club-id",
       },
       "demo-admin@clubhub.com": {
-        id: "demo-pro-admin-id",
+        id: "a575b4f0-99a1-4b33-a661-5f81f4acaeee", // Real seeded UUID
         first_name: "John",
         last_name: "Smith",
         account_type: "group",
@@ -1042,7 +1042,7 @@ if (typeof ApiService === 'undefined') {
         groupId: "demo-club-id",
       },
       "demo-coach@clubhub.com": {
-        id: "demo-pro-coach-id",
+        id: "9e64ccf6-9c75-4354-acc9-9c74be7085d7", // Real seeded UUID
         first_name: "Michael",
         last_name: "Thompson",
         account_type: "coach",

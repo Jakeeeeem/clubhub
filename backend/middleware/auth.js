@@ -60,12 +60,15 @@ function authenticateToken(req, res, next) {
             if (orgResult.rows[0]) {
                 user.organization_id = orgResult.rows[0].organization_id;
             } else {
-                // Last ditch fallback: find ANY active organization
-                const anyOrg = await pool.query("SELECT id FROM organizations LIMIT 1");
-                if (anyOrg.rows[0]) user.organization_id = anyOrg.rows[0].id;
+                // Final fallback for demo session context
+                const ELITE_PRO_ACADEMY_ID = 'd359a5fb-0787-4dde-9631-d30a9d8e827f';
+                if (!user.organization_id || email === 'demo-admin@clubhub.com' || email === 'demo-coach@clubhub.com') {
+                    user.organization_id = ELITE_PRO_ACADEMY_ID;
+                }
             }
         } catch (e) {
-            console.warn("Bypass org lookup failed:", e);
+            console.warn("Bypass org lookup failed, using elite fallback:", e);
+            user.organization_id = 'd359a5fb-0787-4dde-9631-d30a9d8e827f';
         }
 
         req.user = user;

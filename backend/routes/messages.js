@@ -29,8 +29,8 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
               u.first_name || ' ' || u.last_name as sender_name,
               target.first_name || ' ' || target.last_name as receiver_name
        FROM messages m
-       JOIN users u ON m.sender_id = u.id
-       JOIN users target ON m.receiver_id = target.id
+       LEFT JOIN users u ON m.sender_id = u.id
+       LEFT JOIN users target ON m.receiver_id = target.id
        WHERE m.organization_id = $2
          AND (
            m.type = 'announcement'

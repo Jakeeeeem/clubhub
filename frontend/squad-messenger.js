@@ -174,9 +174,13 @@ const SquadMessenger = {
       const currentUser = SquadMessenger._currentUser();
       const role = currentUser.userType || currentUser.account_type || 'player';
 
-      // Everyone can message - fetch group members via the squad endpoint
+      // Everyone can message - fetch group members
       let contacts = [];
       try {
+        // Admin/Org accounts should go straight to members list
+        if (role === 'admin' || role === 'organization' || role === 'group') {
+           throw new Error("Skip coach endpoint for admin");
+        }
         const squadRes = await apiService.makeRequest('/coach/squad');
         if (squadRes && Array.isArray(squadRes.players)) {
           contacts = contacts.concat(squadRes.players.map(p => ({ ...p, _role: 'player' })));
