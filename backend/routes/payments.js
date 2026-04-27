@@ -282,8 +282,8 @@ router.post("/stripe/connect/onboard", authenticateToken, async (req, res) => {
     const account = await getOrCreateStripeConnectAccount(req.user);
 
     const base_url = (process.env.FRONTEND_URL || "https://clubhubsports.io").replace(/\/$/, "");
-    const refresh_url = `${base_url}/admin-dashboard.html`;
-    const return_url = `${base_url}/admin-dashboard.html`;
+    const refresh_url = `${base_url}/admin-dashboard.html?stripe_return=true`;
+    const return_url = `${base_url}/admin-dashboard.html?stripe_return=true`;
 
     const link = await stripe.accountLinks.create({
       account: account.id,
@@ -321,7 +321,7 @@ router.get("/stripe/connect/manage", authenticateToken, async (req, res) => {
       );
 
       const base_url = (process.env.FRONTEND_URL || "https://clubhubsports.io").replace(/\/$/, "");
-      const return_url = `${base_url}/admin-dashboard.html`;
+      const return_url = `${base_url}/admin-dashboard.html?stripe_return=true`;
 
       const link = await stripe.accountLinks.create({
         account: account.id,

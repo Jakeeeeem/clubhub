@@ -93,6 +93,18 @@ const APP_PHASE =
 const UnifiedNav = {
   init() {
     console.log("🚀 UnifiedNav: Initializing standard navigation...");
+    
+    // Check if we are returning from a Stripe connection in a new window
+    if (window.opener && location.search.includes('stripe_return=true')) {
+        console.log("✅ Stripe return detected. Refreshing parent and closing window...");
+        try {
+            window.opener.location.reload();
+            window.close();
+            return; // Stop further init in this child window
+        } catch (e) {
+            console.warn("Could not reload opener/close window:", e);
+        }
+    }
     // Guard: make init idempotent to avoid duplicate header injection
     if (this._initialized) {
       console.log("♻️ UnifiedNav: already initialized; skipping.");
@@ -1567,9 +1579,13 @@ const UnifiedNav = {
             }
 
             if (resp && resp.url) {
-                console.log("🚀 Redirecting to Live Branded Stripe Portal:", resp.url);
-                // Use location.href strictly to guarantee navigation
-                window.location.href = resp.url;
+                console.log("🚀 Opening Live Branded Stripe Portal in new window:", resp.url);
+                
+                // Open in new window/tab
+                window.open(resp.url, '_blank');
+                
+                // Optional: Provide visual feedback that a window was opened
+                showNotification("Stripe onboarding opened in new tab.", "info");
                 return;
             }
         }
