@@ -469,18 +469,9 @@ if (typeof ApiService === 'undefined') {
     if (endpoint.includes("/payments/stripe/connect/status") || endpoint.includes("/payments/stripe/account")) {
       return {
         success: true,
-        is_connected: true,
-        linked: true,
-        payouts_enabled: true,
-        details_submitted: true,
+        is_connected: false, // Force them to connect so they can see the live page
+        linked: false,
         account_id: "acct_demo_123"
-      };
-    }
-
-    if (endpoint.includes("/payments/stripe/connect/onboard") || endpoint.includes("/payments/stripe/connect/manage")) {
-      return {
-        success: true,
-        url: "#stripe-demo-portal"
       };
     }
 
@@ -2488,15 +2479,38 @@ if (typeof ApiService === 'undefined') {
         applications: [],
       };
 
-    return {
-      player: {
+    const activeId = localStorage.getItem("activePlayerId") || "demo-player-id";
+    let player = {
         first_name: "David",
         last_name: "Williams",
         position: "Forward",
         attendance_rate: 95,
         id: "demo-player-id",
         email: "demo-player@clubhub.com",
-      },
+    };
+
+    if (activeId === "child-1") {
+        player = {
+            first_name: "Alex",
+            last_name: "Morgan",
+            position: "Midfielder",
+            attendance_rate: 88,
+            id: "child-1",
+            email: "alex@morgan.com"
+        };
+    } else if (activeId === "child-2") {
+        player = {
+            first_name: "Sam",
+            last_name: "Kerr",
+            position: "Striker",
+            attendance_rate: 92,
+            id: "child-2",
+            email: "sam@kerr.com"
+        };
+    }
+
+    return {
+      player: player,
       groups: [
         {
           id: "demo-club-id",
@@ -2508,11 +2522,11 @@ if (typeof ApiService === 'undefined') {
       teams: [
         {
           id: "t1",
-          name: "Under 18s Elite",
+          name: activeId === "child-1" ? "Academy U16" : "Under 18s Elite",
           coach: { name: "Michael Thompson" },
           coachId: "demo-coach-id",
-          age_group: "U18",
-          position: "Forward"
+          age_group: activeId === "child-1" ? "U16" : "U18",
+          position: player.position
         },
       ],
       events: [
@@ -2540,14 +2554,14 @@ if (typeof ApiService === 'undefined') {
           id: "pay1",
           amount: 50,
           status: "paid",
-          description: "Monthly Subscription - June",
+          description: `Monthly Subscription - June (${player.first_name})`,
           date: new Date().toISOString(),
         },
         {
           id: "pay2",
           amount: 50,
           status: "pending",
-          description: "Monthly Subscription - July",
+          description: `Monthly Subscription - July (${player.first_name})`,
           date: new Date(Date.now() + 86400000 * 30).toISOString(),
         },
       ],
