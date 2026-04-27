@@ -20,9 +20,9 @@ async function seedMasterDemo() {
       console.log("👤 Creating 10+ Demo Users...");
       const usersData = [
         {
-          email: "admin@demo.com",
+          email: "demo-admin@clubhub.com",
           role: "admin",
-          fname: "Master",
+          fname: "Demo",
           lname: "Admin",
         },
         {
@@ -95,7 +95,7 @@ async function seedMasterDemo() {
         {
           id: orgIds[0],
           name: "Elite Pro Academy",
-          slug: "elite-pro",
+          slug: "elite-pro-academy",
           types: ["academy"],
           location: "London, UK",
           sport: "Football",
@@ -156,7 +156,7 @@ async function seedMasterDemo() {
             o.types,
             o.location,
             o.sport,
-            userMap["admin@demo.com"],
+            userMap["demo-admin@clubhub.com"],
           ],
         );
       }
@@ -169,7 +169,7 @@ async function seedMasterDemo() {
       let clubForElite = null;
       const existingClub = await client.query(
         "SELECT id FROM clubs WHERE owner_id = $1 LIMIT 1",
-        [userMap["admin@demo.com"]],
+        [userMap["demo-admin@clubhub.com"]],
       );
       if (existingClub.rows.length) {
         clubForElite = existingClub.rows[0].id;
@@ -187,7 +187,7 @@ async function seedMasterDemo() {
             orgInfo.rows[0].name || "Demo Club",
             orgInfo.rows[0].location || "Unknown",
             "Football",
-            userMap["admin@demo.com"],
+            userMap["demo-admin@clubhub.com"],
             ["club"],
           ],
         );
@@ -200,7 +200,7 @@ async function seedMasterDemo() {
       // Resolve a valid club id for staff.club_id (prefer existing club owned by admin)
       let clubForStaffRes = await client.query(
         "SELECT id FROM clubs WHERE owner_id = $1 LIMIT 1",
-        [userMap["admin@demo.com"]],
+        [userMap["demo-admin@clubhub.com"]],
       );
       let clubForStaff = clubForStaffRes.rows.length
         ? clubForStaffRes.rows[0].id
@@ -224,7 +224,7 @@ async function seedMasterDemo() {
             orgInfo.rows[0].name || "Demo Club",
             orgInfo.rows[0].location || "Unknown",
             "Football",
-            userMap["admin@demo.com"],
+            userMap["demo-admin@clubhub.com"],
             ["club"],
           ],
         );
@@ -422,7 +422,7 @@ async function seedMasterDemo() {
             tourTitles[t],
             (t - 2) * 15,
             clubForElite,
-            userMap["admin@demo.com"],
+            userMap["demo-admin@clubhub.com"],
           ],
         );
         const tournamentId = tournamentRes.rows[0].id;

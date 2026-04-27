@@ -57,7 +57,26 @@ if (typeof ApiService === 'undefined') {
    * If it's a 'demo-token-' (bypass) or real JWT, we hit the backend.
    */
   shouldMock() {
-    return localStorage.getItem("isDemoSession") === "true";
+    const isDemo = localStorage.getItem("isDemoSession") === "true";
+    if (!isDemo) return false;
+
+    // --- LIVE DATA OVERRIDE FOR ADMINS ---
+    // If the user is an admin or organization, we want to hit the REAL backend
+    try {
+      const userJson = localStorage.getItem("currentUser");
+      if (userJson) {
+        const user = JSON.parse(userJson);
+        const role = (user.role || user.account_type || user.userType || "").toLowerCase();
+        if (role === 'admin' || role === 'organization' || role === 'platform_admin' || user.is_platform_admin) {
+            console.log("🚀 Admin role detected: Bypassing mock for live database data.");
+            return false;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to parse user for mock check:", e);
+    }
+    
+    return isDemo;
   }
 
   // Generic GET method for dashboard loaders
@@ -288,7 +307,7 @@ if (typeof ApiService === 'undefined') {
 
     try {
       // 🛡️ INTERCEPT REQUESTS IN DEMO MODE
-      if (localStorage.getItem("isDemoSession") === "true") {
+      if (this.shouldMock()) {
         const interceptResult = await this._interceptDemoRequest(endpoint, options);
         if (interceptResult !== null) {
           console.log(`🛡️ Intercepted Demo Request: ${options.method || "GET"} ${endpoint}`, interceptResult);
@@ -419,28 +438,6 @@ if (typeof ApiService === 'undefined') {
     if (endpoint.includes("/dashboard/coach")) {
         if (localStorage.getItem("isDemoSession") === "true") return this.getCoachDashboardFallback();
     }
-
-    // --- PAYMENTS & STRIPE ---
-    if (endpoint.includes("/payments/config")) {
-      return {
-        publishableKey: "pk_test_51RZtoWRthpGbefAaTaclnZlyGGcfJoYwqXUk8np1GC11EYv1VL0Z3UACVf8bbGjN7fiVvqbFiwM5ya96smTH5OTS008Hh1GnFi",
-        success: true
-      };
-    }
-
-
-
-    if (endpoint.includes("/payments/plans")) {
-      return [
-        { id: 'plan-1', name: 'Monthly Training', amount: 45, interval: 'month', currency: 'gbp' },
-        { id: 'plan-2', name: 'Term Pass', amount: 120, interval: 'quarter', currency: 'gbp' }
-      ];
-    }
-
-    if (endpoint.includes("/payments/plan/current")) {
-      return { success: true, plan: null, message: 'No active plan' };
-    }
-
 
     // --- MESSAGING & NOTIFICATIONS ---
     if (endpoint.includes("/messages")) {
