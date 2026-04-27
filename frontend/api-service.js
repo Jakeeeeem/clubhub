@@ -439,6 +439,32 @@ if (typeof ApiService === 'undefined') {
         if (localStorage.getItem("isDemoSession") === "true") return this.getCoachDashboardFallback();
     }
 
+    // --- PAYMENTS & STRIPE ---
+    if (endpoint.includes("/payments/config")) {
+      return {
+        publishableKey: "pk_test_51RZtoWRthpGbefAaTaclnZlyGGcfJoYwqXUk8np1GC11EYv1VL0Z3UACVf8bbGjN7fiVvqbFiwM5ya96smTH5OTS008Hh1GnFi",
+        success: true
+      };
+    }
+
+    if (endpoint.includes("/payments/stripe/connect/status") || endpoint.includes("/payments/stripe/account")) {
+      return {
+        success: true,
+        is_connected: true,
+        linked: true,
+        payouts_enabled: true,
+        details_submitted: true,
+        account_id: "acct_demo_123"
+      };
+    }
+
+    if (endpoint.includes("/payments/stripe/connect/onboard") || endpoint.includes("/payments/stripe/connect/manage")) {
+      return {
+        success: true,
+        url: "#stripe-demo-portal"
+      };
+    }
+
     return null;
   }
 
