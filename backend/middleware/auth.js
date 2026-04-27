@@ -28,17 +28,45 @@ function authenticateToken(req, res, next) {
   if (token && token.startsWith("demo-bypass-token:")) {
     const email = token.split(":")[1];
     return pool.query("SELECT id, email, account_type, is_platform_admin FROM users WHERE email = $1", [email])
-      .then(r => {
+      .then(async r => {
+        let user;
         if (r.rows[0]) {
-          req.user = { 
-              id: r.rows[0].id, 
-              email: r.rows[0].email, 
-              accountType: r.rows[0].account_type,
-              isPlatformAdmin: r.rows[0].email === 'demo-admin@clubhub.com' ? true : (r.rows[0].is_platform_admin || false)
+          const dbUser = r.rows[0];
+          user = { 
+              id: dbUser.id, 
+              email: dbUser.email, 
+              accountType: dbUser.account_type,
+              isPlatformAdmin: dbUser.email === 'demo-admin@clubhub.com' ? true : (dbUser.is_platform_admin || false)
           };
-          return next();
+        } else {
+          user = { 
+            id: 'demo-id', 
+            email: email, 
+            accountType: 'organization', 
+            role: 'admin',
+            isPlatformAdmin: true 
+          };
         }
-        req.user = { id: 'demo-id', email, accountType: 'organization', role: 'admin' };
+
+        // --- FETCH DEFAULT ORGANIZATION FOR BYPASS ---
+        try {
+            const orgResult = await pool.query(
+                "SELECT organization_id FROM organization_members WHERE user_id = $1 AND status = 'active' LIMIT 1",
+                [user.id]
+            );
+            if (orgResult.rows[0]) {
+                user.organization_id = orgResult.rows[0].organization_id;
+            } else {
+                // Last ditch fallback: find ANY active organization
+                const anyOrg = await pool.query("SELECT id FROM organizations LIMIT 1");
+                if (anyOrg.rows[0]) user.organization_id = anyOrg.rows[0].id;
+            }
+        } catch (e) {
+            console.warn("Bypass org lookup failed:", e);
+        }
+
+        req.user = user;
+        console.log("✅ Bypass successful for user:", user.email, "with Org:", user.organization_id);
         return next();
       });
   }

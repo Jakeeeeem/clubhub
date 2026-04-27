@@ -564,11 +564,11 @@
         </div>
     </div>
     <script src="app-state.js"></script>
-    <script src="api-service.js?v=20260427_v1"></script>
-    <script src="enhanced-login-handler.js"></script>
-    <script src="group-switcher.js?v=20260427_v1"></script>
-    <script src="pwa-install.js"></script>
-    <script src="unified-nav.js?v=20260427_v1"></script>
+    <script src="api-service.js?v=20260427_v2"></script>
+    <script src="enhanced-login-handler.js?v=20260427_v2"></script>
+    <script src="group-switcher.js?v=20260427_v2"></script>
+    <script src="pwa-install.js?v=20260427_v2"></script>
+    <script src="unified-nav.js?v=20260427_v2"></script>
     <script src="squad-messenger.js"></script>
 
     <script>
@@ -706,12 +706,21 @@
                 target.style.display = 'block';
                 if (sectionId === 'finances') checkStripeStatus();
                 if (sectionId === 'teams') loadTeams();
-                if (sectionId === 'messenger' && window.SquadMessenger) {
-                    if (!window._adminMessengerMounted) {
-                        SquadMessenger.mount('admin-messenger-mount');
-                        window._adminMessengerMounted = true;
-                    }
-                    SquadMessenger.load();
+                if (sectionId === 'messenger') {
+                    const tryMount = () => {
+                        if (window.SquadMessenger) {
+                            if (!window._adminMessengerMounted) {
+                                console.log("✨ Mounting Admin Messenger...");
+                                SquadMessenger.mount('admin-messenger-mount');
+                                window._adminMessengerMounted = true;
+                            }
+                            SquadMessenger.load();
+                        } else {
+                            console.warn("⏳ SquadMessenger not loaded; retrying in 500ms...");
+                            setTimeout(tryMount, 500);
+                        }
+                    };
+                    tryMount();
                 }
             }
         }

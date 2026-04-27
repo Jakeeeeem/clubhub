@@ -313,9 +313,9 @@ if (typeof ApiService === 'undefined') {
     try {
       // 🛡️ INTERCEPT REQUESTS IN DEMO MODE
       if (localStorage.getItem("isDemoSession") === "true") {
-        console.log(`🛡️ Intercepting Demo Request: ${options.method || "GET"} ${endpoint}`);
         const interceptResult = await this._interceptDemoRequest(endpoint, options);
         if (interceptResult !== null) {
+          console.log(`🛡️ Intercepted Demo Request: ${options.method || "GET"} ${endpoint}`, interceptResult);
           return interceptResult;
         }
       }

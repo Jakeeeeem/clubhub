@@ -122,12 +122,13 @@ if (window.__groupSwitcherDefined) {
         if (response && response.success) {
           // Determine if user is Platform Admin
           const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-          this.isPlatformAdmin =
+          this.isPlatformAdmin = 
             user.is_platform_admin === true ||
             user.isPlatformAdmin === true ||
             user.role === "superadmin" ||
-            response.user?.isPlatformAdmin ||
-            response.user?.is_platform_admin;
+            user.email === 'demo-admin@clubhub.com' || // Force for demo admin
+            !!response.user?.isPlatformAdmin ||
+            !!response.user?.is_platform_admin;
 
           // Sync back to localStorage if we found out they are admin from response
           if (
