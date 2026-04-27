@@ -108,6 +108,10 @@ async function switchToChildProfile(childId, childClubId) {
         await apiService.refreshContext();
 
         showNotification(`Switched to ${childClubId} organization`, "info");
+        
+        // RELOAD to ensure all scripts and context are updated
+        setTimeout(() => window.location.reload(), 500);
+        return;
       }
     }
 
@@ -119,7 +123,7 @@ async function switchToChildProfile(childId, childClubId) {
     showPlayerSection(PlayerDashboardState.activeSection || "overview");
 
     // Update profile switcher in UnifiedNav to reflect new profile
-    if (window.UnifiedNav) window.UnifiedNav.renderProfileSwitcher();
+    if (window.UnifiedNav) window.UnifiedNav.renderFamilySwitcher();
 
     showNotification("Switched to child's profile", "success");
   } catch (err) {
@@ -149,7 +153,7 @@ async function switchProfile(id) {
     showLoading(true);
     await loadPlayerDataWithFallback();
     showPlayerSection(PlayerDashboardState.activeSection);
-    if (window.UnifiedNav) window.UnifiedNav.renderProfileSwitcher(); // Refresh sidebar profile switcher
+    if (window.UnifiedNav) window.UnifiedNav.renderFamilySwitcher(); // Refresh sidebar profile switcher
     showNotification("Profile switched successfully", "success");
   } catch (err) {
     console.error("Failed to switch profile:", err);
