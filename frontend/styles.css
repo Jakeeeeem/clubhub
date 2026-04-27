@@ -3402,10 +3402,13 @@ main.main.home-main {
 }
 
 .modal.active,
-.modal[style*="display: block"] {
+.modal[style*="display: block"],
+.modal[style*="display: flex"] {
     display: flex !important;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    padding-top: 5vh;
+    padding-bottom: 5vh;
 }
 
 .modal-content {

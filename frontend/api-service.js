@@ -344,16 +344,12 @@ if (typeof ApiService === 'undefined') {
       const isSuper = user.is_platform_admin === true || user.role === "superadmin";
       const role = user.activePlayerId ? "player" : user.role || "admin";
       
-      let groups = [
-        { id: "demo-club-id", name: "Pro Group Demo", role: isSuper ? "owner" : role, user_role: isSuper ? "owner" : role },
-        { id: "demo-coach-org-2", name: "Secondary Academy", role: isSuper ? "owner" : "coach", user_role: isSuper ? "owner" : "coach" },
-        { id: "demo-player-org", name: "Elite Academy (Player)", role: isSuper ? "owner" : "player", user_role: isSuper ? "owner" : "player", player_id: "demo-player-id", player_name: "Jordan Smith" }
-      ];
-
-      if (isSuper) {
-        groups.push({ id: "org-3", name: "Westside United", role: "owner", user_role: "owner" });
-        groups.push({ id: "org-4", name: "London Lions", role: "owner", user_role: "owner" });
-      }
+      const demoData = this.getAdminDashboardFallback();
+      let groups = demoData.groups.map(g => ({
+        ...g,
+        role: isSuper ? "owner" : (g.id === "demo-player-org" ? "player" : (g.id === "demo-coach-org-2" ? "coach" : role)),
+        user_role: isSuper ? "owner" : (g.id === "demo-player-org" ? "player" : (g.id === "demo-coach-org-2" ? "coach" : role))
+      }));
 
       return {
         success: true,
@@ -361,8 +357,9 @@ if (typeof ApiService === 'undefined') {
         currentGroup: groups.find(g => g.id === (user.groupId || "demo-club-id")) || groups[0],
         groups: groups,
         family: [
-          { id: "child-1", first_name: "Alex", last_name: "Morgan", club_id: "demo-club-id", role: "player" },
-          { id: "child-2", first_name: "Sam", last_name: "Kerr", club_id: "demo-coach-org-2", role: "player" }
+          { id: "demo-player-id", first_name: "Jordan", last_name: "Smith", club_id: "demo-player-org", role: "player", relationship: "Child", avatar: "JS" },
+          { id: "child-1", first_name: "Alex", last_name: "Smith", club_id: "demo-club-id", role: "player", relationship: "Child", avatar: "AS" },
+          { id: "child-2", first_name: "Sam", last_name: "Kerr", club_id: "demo-coach-org-2", role: "player", relationship: "Child", avatar: "SK" }
         ]
       };
     }
@@ -396,6 +393,8 @@ if (typeof ApiService === 'undefined') {
       else localStorage.removeItem("activePlayerId");
 
       console.log("♻️ Demo Group Switch:", { groupId: user.groupId, role: user.role, player: user.activePlayerId });
+      
+      // Force page reload after a short delay in demo mode to simulate realistic state refresh
       return { success: true, message: "Group switched (Demo)", groupId: user.groupId, role: user.role };
     }
 
@@ -403,8 +402,9 @@ if (typeof ApiService === 'undefined') {
     // --- PLAYER FAMILY ---
     if (endpoint.includes("/players/family")) {
       return [
-        { id: "demo-family-1", first_name: "Alex", last_name: "Morgan", relationship: "Self", player_id: "demo-player-id" },
-        { id: "demo-family-2", first_name: "Sam", last_name: "Kerr", relationship: "Child", player_id: "child-1" }
+        { id: "demo-player-id", first_name: "Jordan", last_name: "Smith", club_id: "demo-player-org", role: "player", relationship: "Self" },
+        { id: "child-1", first_name: "Alex", last_name: "Morgan", club_id: "demo-club-id", role: "player", relationship: "Child" },
+        { id: "child-2", first_name: "Sam", last_name: "Kerr", club_id: "demo-coach-org-2", role: "player", relationship: "Child" }
       ];
     }
 
@@ -459,12 +459,56 @@ if (typeof ApiService === 'undefined') {
     }
 
     // --- PAYMENTS & STRIPE ---
-    // User requested Stripe to not be mocked and work like real in demo mode for testing
     if (endpoint.includes("/payments/config")) {
       return {
         publishableKey: "pk_test_51RZtoWRthpGbefAaTaclnZlyGGcfJoYwqXUk8np1GC11EYv1VL0Z3UACVf8bbGjN7fiVvqbFiwM5ya96smTH5OTS008Hh1GnFi",
         success: true
       };
+    }
+
+    // Demo intercepts for status/plan calls (demo-token can't auth against real API)
+    if (endpoint.includes("/payments/stripe/connect/status") || endpoint.includes("/payments/stripe/account")) {
+      return {
+        success: true,
+        is_connected: false,
+        linked: false,
+        account_id: null
+      };
+    }
+
+    // Demo intercepts for Stripe Connect onboarding & management
+    if (endpoint.includes("/payments/stripe/connect/onboard")) {
+      return {
+        success: true,
+        url: null,
+        demo: true,
+        message: "Stripe onboarding is not available in demo mode."
+      };
+    }
+
+    if (endpoint.includes("/payments/stripe/connect/manage")) {
+      return {
+        success: true,
+        url: null,
+        demo: true,
+        message: "Stripe management is not available in demo mode."
+      };
+    }
+
+    if (endpoint.includes("/payments/plans")) {
+      return [
+        { id: 'plan-1', name: 'Monthly Training', amount: 45, interval: 'month', currency: 'gbp' },
+        { id: 'plan-2', name: 'Term Pass', amount: 120, interval: 'quarter', currency: 'gbp' }
+      ];
+    }
+
+    if (endpoint.includes("/payments/plan/current")) {
+      return { success: true, plan: null, message: 'No active plan' };
+    }
+
+    // Notifications also fail with demo-token
+    if (endpoint.includes("/notifications")) {
+      return [];
     }
 
     return null;
@@ -2337,7 +2381,7 @@ if (typeof ApiService === 'undefined') {
     const demoClubs = [
       {
         id: "demo-club-id",
-        name: "ClubHub United Academy",
+        name: "Pro Group Demo",
         location: "London, UK",
         sport: "Football",
         member_count: 184,
@@ -2346,6 +2390,30 @@ if (typeof ApiService === 'undefined') {
         description: "Premier professional academy showcasing elite development pathways.",
         founded_year: 1995,
         colors: { primary: "#dc2626", secondary: "#ffffff" },
+      },
+      {
+        id: "demo-coach-org-2",
+        name: "Secondary Academy",
+        location: "Manchester, UK",
+        sport: "Football",
+        member_count: 92,
+        is_primary: false,
+        logo_url: "images/logo.png",
+        description: "Focusing on youth development and community engagement.",
+        founded_year: 2010,
+        colors: { primary: "#2563eb", secondary: "#ffffff" },
+      },
+      {
+        id: "demo-player-org",
+        name: "Elite Academy (Player)",
+        location: "Birmingham, UK",
+        sport: "Football",
+        member_count: 310,
+        is_primary: false,
+        logo_url: "images/logo.png",
+        description: "Elite player pathways and advanced scouting network.",
+        founded_year: 2005,
+        colors: { primary: "#059669", secondary: "#ffffff" },
       }
     ];
 

@@ -558,6 +558,12 @@ const UnifiedNav = {
     const badge = document.getElementById("header-notif-badge");
     if (!list) return;
 
+    // In demo mode, show empty notifications without hitting the API
+    if (localStorage.getItem("isDemoSession") === "true") {
+      if (badge) badge.style.display = "none";
+      return;
+    }
+
     try {
       if (typeof apiService === "undefined") return;
       const res = await apiService.makeRequest("/notifications");
@@ -1139,13 +1145,14 @@ const UnifiedNav = {
     container.style.display = "flex";
     const activePlayerId = localStorage.getItem("activePlayerId");
 
-    // For players: always show family switcher even if empty (so they can add members)
+    // Only show family switcher in Player mode
     const modeNow = this.getCurrentMode();
     const roleNow = (this.getUserRole() || '').toLowerCase();
     const isPlayerView = modeNow === 'player' || roleNow === 'player' || roleNow === 'parent';
     
-    if (family.length === 0 && !isPlayerView) {
+    if (!isPlayerView) {
         container.innerHTML = "";
+        container.style.display = "none";
         return;
     }
 
@@ -1232,12 +1239,39 @@ const UnifiedNav = {
   },
 
   async switchToChildProfile(childId, childClubId) {
-    console.log(`🔄 UnifiedNav: Switching to child: ${childId}`);
+    console.log(`🔄 UnifiedNav: Switching to child: ${childId}, club: ${childClubId}`);
     
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    user.activePlayerId = childId;
-    localStorage.setItem("activePlayerId", childId);
-    localStorage.setItem("currentUser", JSON.stringify(user));
+    const currentGroupId = user.groupId || user.currentGroupId;
+
+    if (childClubId && currentGroupId !== childClubId) {
+        console.log(`🔄 UnifiedNav: Child is in diff group (${childClubId}). Switching group...`);
+        try {
+            if (typeof apiService !== 'undefined') {
+                const res = await apiService.makeRequest("/auth/switch-group", {
+                    method: "POST",
+                    body: JSON.stringify({ organizationId: childClubId })
+                });
+                
+                if (res.success) {
+                    if (res.token) localStorage.setItem("authToken", res.token);
+                    const updatedUser = { ...user, groupId: childClubId, activePlayerId: childId };
+                    if (res.user) Object.assign(updatedUser, res.user, { activePlayerId: childId });
+                    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+                }
+            }
+        } catch (err) {
+            console.error("Failed to switch to child's group:", err);
+            // Fallback to local change
+            user.activePlayerId = childId;
+            localStorage.setItem("activePlayerId", childId);
+            localStorage.setItem("currentUser", JSON.stringify(user));
+        }
+    } else {
+        user.activePlayerId = childId;
+        localStorage.setItem("activePlayerId", childId);
+        localStorage.setItem("currentUser", JSON.stringify(user));
+    }
 
     // If on player dashboard, use its native switcher if available
     if (typeof window.switchToChildProfile === 'function') {
@@ -1500,6 +1534,12 @@ const UnifiedNav = {
 
   async manageStripeAccount() {
     try {
+        // In demo mode, show a friendly message instead of hitting the real API
+        if (localStorage.getItem("isDemoSession") === "true") {
+            showNotification("💳 Stripe Connect is available on live accounts. Sign up to connect your Stripe and start accepting payments!", "info");
+            return;
+        }
+
         if (typeof apiService !== 'undefined') {
             showLoading(true);
             const status = await apiService.getStripeConnectStatus();
@@ -1530,6 +1570,12 @@ const UnifiedNav = {
   },
 
   async checkStripeStatus() {
+    // Skip real API check in demo mode
+    if (localStorage.getItem("isDemoSession") === "true") {
+      localStorage.setItem("stripeConnected", "false");
+      return;
+    }
+
     const btn = document.getElementById("stripe-connect-btn") || document.querySelector(".stripe-header-btn button");
     if (!btn || typeof apiService === "undefined") return;
 

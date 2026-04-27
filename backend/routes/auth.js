@@ -559,6 +559,30 @@ router.post(
                     );
                   }
                   console.log(`✅ Demo club created with team and players`);
+
+                  // Create some "Personal" family members for the Admin to demo the Player Pro switcher
+                  console.log("👪 Creating demo family members for Admin...");
+                  const familyMembers = [
+                    { first: "Jordan", last: "Smith", pos: "Midfielder", dob: "2010-05-12" },
+                    { first: "Alex", last: "Smith", pos: "Forward", dob: "2012-08-24" }
+                  ];
+
+                  for (const f of familyMembers) {
+                    await query(
+                      `INSERT INTO players (first_name, last_name, email, date_of_birth, position, club_id, user_id)
+                       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                      [
+                        f.first,
+                        f.last,
+                        `${f.first.toLowerCase()}.smith@demo.com`,
+                        f.dob,
+                        f.pos,
+                        clubId,
+                        user.id // Linked to the admin as their "children"
+                      ]
+                    );
+                  }
+                  console.log(`✅ Demo family created for Admin account`);
                 }
               }
 
@@ -1149,16 +1173,18 @@ router.get("/context", authenticateToken, async (req, res) => {
 
     const organizations = orgsResult.rows;
 
-    console.log("🔍 Context - User orgs:", {
+    // Fetch family members (players linked to this user_id)
+    const familyResult = await query(
+      `SELECT id, first_name, last_name, club_id, position, 'player' as role, 'Child' as relationship 
+       FROM players WHERE user_id = $1`,
+      [userId]
+    );
+    const family = familyResult.rows;
+
+    console.log("🔍 Context - User orgs/family:", {
       userId,
-      account_type: user.account_type,
-      saved_org_id: user.current_organization_id,
       orgCount: organizations.length,
-      orgs: organizations.map((o) => ({
-        id: o.id,
-        name: o.name,
-        role: o.role,
-      })),
+      familyCount: family.length
     });
 
     // Determine current organization
@@ -1269,6 +1295,7 @@ router.get("/context", authenticateToken, async (req, res) => {
       },
       currentOrganization: currentOrg,
       organizations: organizations,
+      family: family,
       hasMultipleOrganizations: organizations.length > 1,
     });
   } catch (error) {
@@ -1335,6 +1362,47 @@ router.post("/switch-organization", authenticateToken, async (req, res) => {
       .status(500)
       .json({ success: false, error: "Failed to switch organization" });
   }
+});
+
+// Alias for switch-organization (used by frontend)
+router.post("/switch-group", authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { organizationId } = req.body;
+
+        if (!organizationId) {
+            return res.status(400).json({ success: false, error: "Group ID is required" });
+        }
+
+        // Verify membership
+        const memberCheck = await query(
+            `SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2 AND status = 'active'
+             UNION
+             SELECT 1 FROM players WHERE user_id = $1 AND club_id = $2`,
+            [userId, organizationId]
+        );
+
+        if (memberCheck.rows.length === 0) {
+            // Check if platform admin
+            const userCheck = await query("SELECT is_platform_admin FROM users WHERE id = $1", [userId]);
+            if (!userCheck.rows[0]?.is_platform_admin) {
+                return res.status(403).json({ success: false, error: "Access denied to this group" });
+            }
+        }
+
+        // Update preference
+        await query(
+            `INSERT INTO user_preferences (user_id, current_organization_id)
+             VALUES ($1, $2)
+             ON CONFLICT (user_id) DO UPDATE SET current_organization_id = $2, updated_at = NOW()`,
+            [userId, organizationId]
+        );
+
+        res.json({ success: true, message: "Group switched successfully" });
+    } catch (error) {
+        console.error("Switch group error:", error);
+        res.status(500).json({ success: false, error: "Failed to switch group" });
+    }
 });
 
 // Profile update
