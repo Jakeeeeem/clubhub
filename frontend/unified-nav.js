@@ -558,12 +558,6 @@ const UnifiedNav = {
     const badge = document.getElementById("header-notif-badge");
     if (!list) return;
 
-    // In demo mode, show empty notifications without hitting the API
-    if (localStorage.getItem("isDemoSession") === "true") {
-      if (badge) badge.style.display = "none";
-      return;
-    }
-
     try {
       if (typeof apiService === "undefined") return;
       const res = await apiService.makeRequest("/notifications");
@@ -1459,7 +1453,7 @@ const UnifiedNav = {
       userRole === "platform_admin";
     const isAdmin =
       url.includes("admin-dashboard.html") || userRole === "admin";
-    const isDashboard = url.includes("dashboard") || url.includes("finder");
+    const isDashboard = url.includes("dashboard") || url.includes("finder") || url.includes("chat");
 
     if (!isDashboard) return;
 
@@ -2386,9 +2380,9 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
     
     // URL-based overrides (if user is navigating to a specific dash)
     if (p.includes("super-admin")) finalRole = "superadmin";
-    else if (p.includes("admin-") || p.includes("members") || p.includes("teams") || p.includes("form-builder")) finalRole = "admin";
-    else if (p.includes("scout-") || p.includes("scouting")) finalRole = "scout";
-    else if (p.includes("coach-")) finalRole = "coach";
+    else if (p.includes("admin") || p.includes("members") || p.includes("teams") || p.includes("form-builder")) finalRole = "admin";
+    else if (p.includes("scout") || p.includes("scouting")) finalRole = "scout";
+    else if (p.includes("coach")) finalRole = "coach";
     else if (p.includes("player-") || p.includes("schedule") || p.includes("performance")) finalRole = "player";
     else if (dashboardMode === "player") finalRole = "player";
     

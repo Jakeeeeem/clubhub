@@ -343,29 +343,6 @@ if (typeof ApiService === 'undefined') {
     if (endpoint.includes("/health")) {
       return { status: 'healthy', demo: true };
     }
-    if (endpoint.includes("/auth/context")) {
-      const isSuper = user.is_platform_admin === true || user.role === "superadmin";
-      const role = user.activePlayerId ? "player" : user.role || "admin";
-      
-      const demoData = this.getAdminDashboardFallback();
-      let groups = demoData.groups.map(g => ({
-        ...g,
-        role: isSuper ? "owner" : (g.id === "demo-player-org" ? "player" : (g.id === "demo-coach-org-2" ? "coach" : role)),
-        user_role: isSuper ? "owner" : (g.id === "demo-player-org" ? "player" : (g.id === "demo-coach-org-2" ? "coach" : role))
-      }));
-
-      return {
-        success: true,
-        user: { ...user, is_active: true },
-        currentGroup: groups.find(g => g.id === (user.groupId || "demo-club-id")) || groups[0],
-        groups: groups,
-        family: [
-          { id: "demo-player-id", first_name: "Jordan", last_name: "Smith", club_id: "demo-player-org", role: "player", relationship: "Child", avatar: "JS" },
-          { id: "child-1", first_name: "Alex", last_name: "Smith", club_id: "demo-club-id", role: "player", relationship: "Child", avatar: "AS" },
-          { id: "child-2", first_name: "Sam", last_name: "Kerr", club_id: "demo-coach-org-2", role: "player", relationship: "Child", avatar: "SK" }
-        ]
-      };
-    }
 
     // --- GROUP SWITCHING ---
     if (endpoint.includes("/auth/switch-group") || endpoint.includes("/auth/switch")) {

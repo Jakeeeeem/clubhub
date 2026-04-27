@@ -579,11 +579,9 @@
                 if (!ok) { window.location.href = 'index.html'; return; }
             }
 
-            // Route to section if hash exists
-            const hash = window.location.hash.substring(1);
-            if (hash) {
-                showSection(hash);
-            }
+            // Route to section if hash exists, otherwise default to messenger for this page
+            const hash = window.location.hash.substring(1) || 'messenger';
+            showSection(hash);
 
             // Load initial data
             loadDashboardStats();
