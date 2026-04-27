@@ -4,572 +4,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard — ClubHub</title>
-    <meta name="description" content="ClubHub - The ultimate sports group management platform">
+    <title>Messenger — ClubHub Admin</title>
+    <meta name="description" content="ClubHub Admin Messenger - Secure team communication">
     <meta name="theme-color" content="#dc4343">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ClubHub">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/png" href="/images/logo.png">
-    <link rel="apple-touch-icon" href="/images/logo.png">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="unified-nav.css">
     <style>
-        .feed-entry {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            align-items: flex-start;
-        }
-
-        .feed-entry:last-child {
-            border-bottom: none;
-        }
-
-        .feed-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .feed-meta {
-            flex: 1;
-        }
-
-        .feed-meta strong {
-            display: block;
-            font-size: 0.9rem;
-            color: #f1f5f9;
-            margin-bottom: 2px;
-        }
-
-        .feed-meta span {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-        }
-
-        .feed-time {
-            font-size: 0.72rem;
-            color: rgba(255, 255, 255, 0.3);
-            white-space: nowrap;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.07);
+        .messenger-container {
+            height: calc(100vh - 140px);
+            min-height: 600px;
+            background: rgba(255, 255, 255, 0.02);
             border-radius: 16px;
-            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .stat-card .stat-label {
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-        }
-
-        .stat-card .stat-number {
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: #fff;
-            display: block;
-            margin-top: 0.25rem;
-        }
-
-        .stat-card .stat-change {
-            font-size: 0.78rem;
-            margin-top: 0.25rem;
-            color: #4ade80;
-        }
-
-        .quick-action-btn {
+        .messenger-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 0.85rem 1rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 12px;
-            color: #f1f5f9;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all .2s;
-            text-align: left;
+            justify-content: space-between;
         }
 
-        .quick-action-btn:hover {
-            background: rgba(220, 38, 38, 0.08);
-            border-color: rgba(220, 38, 38, 0.3);
-        }
-
-        .quick-action-btn i {
-            font-size: 1.1rem;
-        }
-
-        .section-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        @media(max-width:768px) {
-            .dash-grid {
-                grid-template-columns: 1fr !important;
-            }
-
-            .stats-row {
-                grid-template-columns: 1fr 1fr !important;
+        @media (max-width: 991px) {
+            .messenger-container {
+                height: calc(100vh - 180px);
             }
         }
     </style>
 </head>
 
-    <script>
-        // Auto-enable demo session on localhost for visual tests
-        try {
-            if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
-                localStorage.setItem('isDemoSession', 'true');
-                localStorage.setItem('authToken', 'demo-token');
-                if (!localStorage.getItem('currentUser')) {
-                    localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-admin', first_name: 'Demo', last_name: 'Admin', role: 'admin', account_type: 'organization' }));
-                }
-            }
-        } catch (e) { console.warn('Demo auto-enable failed', e); }
-    </script>
 <body>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
 
-    <!-- Unified Navigation will inject the Header and Sidebar automatically -->
     <header class="header"></header>
 
     <main class="main dashboard-main">
         <div class="container dashboard-container">
-
             <!-- Page Title -->
             <div style="margin-bottom:1.5rem;">
-                <h1 class="neon-text" style="font-size:1.6rem;margin:0;" id="dashOrgName">Admin Dashboard</h1>
-                <p style="color:var(--text-muted);font-size:0.88rem;margin-top:0.25rem;">Manage your group's members,
-                    events, and revenue</p>
+                <h1 class="neon-text" style="font-size:1.6rem;margin:0;">Club Messenger</h1>
+                <p style="color:var(--text-muted);font-size:0.88rem;margin-top:0.25rem;">Secure communication for your squads and staff</p>
             </div>
 
-            <!-- Dashboard Sections -->
-            <div id="overview" class="dashboard-section">
-                <div class="stats-row"
-                    style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                    <div class="stat-card" onclick="window.location.href='admin-members.html'" style="cursor: pointer;">
-                        <span class="stat-label">Total Members</span>
-                        <span class="stat-number" id="totalMembers">47</span>
-                        <div class="stat-change">↑ 3 this month</div>
-                    </div>
-                    <div class="stat-card" onclick="window.location.href='admin-finances.html'" style="cursor: pointer;">
-                        <span class="stat-label">Revenue (30d)</span>
-                        <span class="stat-number" id="monthlyRevenue">£3,840</span>
-                        <div class="stat-change">↑ 12% vs last month</div>
-                    </div>
-                    <div class="stat-card" onclick="window.location.href='admin-tournament-manager.html'" style="cursor: pointer;">
-                        <span class="stat-label">Active Events</span>
-                        <span class="stat-number" id="activeEvents">6</span>
-                        <div class="stat-change">2 upcoming this week</div>
-                    </div>
-                    <div class="stat-card" onclick="window.location.href='admin-scout-approvals.html'" style="cursor: pointer; display: none;">
-                        <span class="stat-label">Pending Scouts</span>
-                        <span class="stat-number" id="pendingScouts" style="color:#f59e0b;">3</span>
-                        <div class="stat-change" style="color:#f59e0b;">Requires verification</div>
-                    </div>
-                </div>
-
-                <div class="dashboard-grid">
-                    <div>
-                        <div class="glass-card" style="padding:1.5rem;">
-                            <div class="section-title">📋 Activity Feed
-                                <span
-                                    style="margin-left:auto;font-size:0.75rem;font-weight:400;color:var(--text-muted);">Live
-                                    updates</span>
-                            </div>
-                            <div id="activityFeed">
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">👤
-                                    </div>
-                                    <div class="feed-meta">
-                                        <strong>New member joined — Marcus Thompson</strong>
-                                        <span>Player account · Under 16s squad</span>
-                                    </div>
-                                    <span class="feed-time">2m ago</span>
-                                </div>
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(220,38,38,0.1);color:#f87171;">💳
-                                    </div>
-                                    <div class="feed-meta">
-                                        <strong>Payment received — £75</strong>
-                                        <span>Monthly subscription · Sarah Davies</span>
-                                    </div>
-                                    <span class="feed-time">18m ago</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
-                            <div class="section-title">👥 Recent Members
-                                <button class="btn btn-secondary btn-small" style="margin-left:auto;"
-                                    onclick="window.location.href='admin-members.html'">View All</button>
-                            </div>
-                            <p style="color:var(--text-muted);font-size:0.875rem;">Loading members list...</p>
-                        </div>
-                    </div>
-
-                    <div style="display:flex;flex-direction:column;gap:1.5rem;">
-                        <div class="glass-card" style="padding:1.5rem;">
-                            <div class="section-title">⚡ Quick Actions</div>
-                            <div style="display:flex;flex-direction:column;gap:0.6rem;">
-                                <button class="quick-action-btn"
-                                    onclick="openModal && openModal('addMemberModal')"><i>👤</i> Add Member</button>
-                                <button class="quick-action-btn"
-                                    onclick="openModal && openModal('addEventModal')"><i>📅</i> Create Event</button>
-                                <button class="quick-action-btn"
-                                    onclick="window.location.href='email-campaigns.html'"><i>📧</i> Send
-                                    Announcement</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Members Section -->
-            <div id="members" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="glass-card" style="padding:1.5rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                        <h3 class="section-title" style="margin:0;">👥 Member Management</h3>
-                        <div style="display:flex; gap:0.75rem;">
-                            <input type="text" placeholder="Search members..."
-                                style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:0.6rem 1rem; border-radius:10px; color:#fff; width:250px;">
-                            <button class="btn btn-primary btn-small" onclick="openModal('addMemberModal')">+ Add
-                                Member</button>
-                        </div>
-                    </div>
-                    <div id="membersListContainer">
-                        <div class="table-responsive">
-                            <table style="width:100%; text-align:left; border-collapse:collapse;">
-                                <thead>
-                                    <tr
-                                        style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
-                                        <th style="padding:0.75rem 0;">Name</th>
-                                        <th style="padding:0.75rem 0;">Role</th>
-                                        <th style="padding:0.75rem 0;">Squad</th>
-                                        <th style="padding:0.75rem 0;">Status</th>
-                                        <th style="padding:0.75rem 0; text-align:right;">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody style="font-size:0.9rem;">
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Marcus Thompson</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Player</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 16s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Sarah Davies</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Parent</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 12s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Staff Section -->
-            <div id="staff" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">👔 Staff Management</div>
-                <div class="glass-card" style="padding:1.5rem; margin-top:1rem; text-align:center; color:var(--text-muted);">
-                    <h3 style="margin-bottom:0.75rem;">Staff Overview</h3>
-                    <p>Manage coaches, administrators, and support staff across your group.</p>
-                    <button class="btn btn-secondary" onclick="showNotification('Staff management will be available soon.', 'info')">Learn More</button>
-                </div>
-            </div>
-
-            <!-- Teams Section -->
-            <div id="teams" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <div class="section-title" style="margin:0;">⚽ Squads & Teams</div>
-                    <button class="btn btn-primary" onclick="openModal('createTeamModal')">+ Create Team</button>
-                </div>
-                <div class="dash-grid" id="teamsListContainer"
-                    style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
-                    <!-- Dynamically loaded -->
-                    <div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">Loading
-                        squads...</div>
-                </div>
-            </div>
-
-            <!-- Events Section -->
-            <div id="events" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">📅 Calendar & Events</div>
-                <div class="glass-card" style="padding:1.5rem; text-align:center;">
-                    <div style="font-size:3rem; margin-bottom:1rem;">🗓️</div>
-                    <h3 style="margin-bottom:0.5rem;">Group Calendar</h3>
-                    <p style="color:var(--text-muted); margin-bottom:1.5rem;">Plan and manage your groups sessions,
-                        matches, and socials.</p>
-                    <button class="btn btn-primary" onclick="window.location.href='admin-tournament-manager.html'">Open
-                        Calendar Manager</button>
-                </div>
-            </div>
-
-            <div id="messenger" class="dashboard-section" style="display:none; padding:0.4rem;">
-                <div class="section-title" style="padding: 1rem 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom:0;">💬 Admin Messenger</div>
-                <div id="admin-messenger-mount" style="height: calc(100vh - 280px); min-height: 550px;"></div>
-            </div>
-
-            <div id="scout-approvals" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">🎯 Scout Access Approvals</div>
-                <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-                    <button class="btn btn-text btn-small" id="tabPlatform"
-                        onclick="showScoutTab('platform')">Platform</button>
-                    <button class="btn btn-text btn-small" id="tabClub" onclick="showScoutTab('club')">Club</button>
-                </div>
-
-                <div id="scoutApprovalsContainer" class="glass-card" style="padding:1rem;">
-                    <p id="scoutApprovalsLoading" style="color:var(--text-muted); margin-bottom:1rem;">Loading pending
-                        approvals...</p>
-                    <div id="scoutApprovalsList"></div>
-                </div>
-
-                <div id="clubScoutApprovalsContainer" class="glass-card"
-                    style="padding:1rem; display:none; margin-top:1rem;">
-                    <p id="clubScoutApprovalsLoading" style="color:var(--text-muted); margin-bottom:1rem;">Loading club
-                        scout approvals...</p>
-                    <div id="clubScoutApprovalsList"></div>
-                </div>
-            </div>
-
-            <div id="tactical-board" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">📋 Tactical Strategy Board</div>
-                <div class="glass-card"
-                    style="height:400px; background:rgba(0,0,0,0.2) url('https://w0.peakpx.com/wallpaper/384/261/HD-wallpaper-football-pitch-soccer-field-top-view-soccer-concepts-soccer-background-football.jpg') center/cover; border-radius:12px; position:relative; overflow:hidden;">
-                    <div
-                        style="position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center;">
-                        <button class="btn btn-primary">Launch Tactical Editor</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="shop" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">🛍️ Club Shop Manager</div>
-                <div class="dash-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <h3 style="color:#fff; margin-bottom:1rem;">Current Inventory</h3>
-                        <p style="color:var(--text-muted);">Manage kits, training gear, and merchandise.</p>
-                        <button class="btn btn-secondary" style="margin-top:1rem; width:100%;">Manage Products</button>
-                    </div>
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <h3 style="color:#fff; margin-bottom:1rem;">Recent Orders</h3>
-                        <p style="color:var(--text-muted);">Track member purchases and fulfillment.</p>
-                        <button class="btn btn-secondary" style="margin-top:1rem; width:100%;">View Orders</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="finances" class="dashboard-section" style="display:none; padding:1.5rem;">
-                <div class="section-title">💰 Stripe Connect Hub</div>
-
-                <div class="glass-card" style="padding:2rem; text-align:center; max-width:600px; margin:0 auto;">
-                    <div id="stripe-status-loading">
-                        <p style="color:var(--text-muted);">Checking Stripe connection status...</p>
-                    </div>
-
-                    <div id="stripe-onboarding-box" style="display:none;">
-                        <div style="font-size:3rem; margin-bottom:1rem;">💳</div>
-                        <h3 style="margin-bottom:0.5rem; color:#fff;">Connect with Stripe</h3>
-                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">To start accepting
-                            payments from members and parents, you need to link your group to a Stripe account.</p>
-                        <button class="btn btn-primary" onclick="startStripeOnboarding()" id="connect-stripe-btn"
-                            style="padding:0.8rem 2rem;">
-                            <i class="fa fa-plug" style="margin-right:0.5rem;"></i> Connect with Stripe
-                        </button>
-                    </div>
-
-                    <div id="stripe-connected-box" style="display:none;">
-                        <div style="font-size:3rem; margin-bottom:1rem;">✅</div>
-                        <h3 style="margin-bottom:0.5rem; color:#fff;">Stripe Connected</h3>
-                        <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Your group is ready
-                            to receive payments. Payments are automatically synced to your Stripe dashboard.</p>
-
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
-                            <div
-                                style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
-                                <span
-                                    style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Payouts</span>
-                                <span id="payout-status" style="font-weight:700; color:#4ade80;">Enabled</span>
-                            </div>
-                            <div
-                                style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,0.05);">
-                                <span
-                                    style="display:block; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Status</span>
-                                <span id="account-status" style="font-weight:700; color:#4ade80;">Verified</span>
-                            </div>
-                        </div>
-
-                        <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                            <button class="btn btn-secondary" onclick="manageStripeAccount()" style="width:100%;">
-                                <i class="fa fa-external-link" style="margin-right:0.5rem;"></i> Go to Stripe Dashboard
-                            </button>
-                            <button class="btn btn-text" onclick="checkStripeStatus()"
-                                style="font-size:0.8rem; opacity:0.6;">Refresh Status</button>
-                        </div>
-                    </div>
-
-                    <div id="stripe-error-box" style="display:none;">
-                        <div style="color:#f87171; margin-bottom:1rem;"><i class="fa fa-exclamation-triangle"
-                                style="font-size:2rem;"></i></div>
-                        <h3 style="color:#fff;">Stripe Connection Error</h3>
-                        <p id="stripe-error-msg"
-                            style="color:var(--text-muted); margin:0.5rem 0 1.5rem; font-size:0.9rem;">Failed to connect
-                            to Stripe service.</p>
-                        <button class="btn btn-secondary" onclick="checkStripeStatus()">Try Again</button>
-                    </div>
-                </div>
-
-                <div class="dash-grid"
-                    style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:2rem;">
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <div class="section-title">📊 Revenue Overview</div>
-                        <div
-                            style="height:150px; display:flex; align-items:center; justify-content:center; border:1px dashed rgba(255,255,255,0.1); border-radius:12px; color:var(--text-muted); font-size:0.85rem;">
-                            Revenue chart will appear here
-                        </div>
-                    </div>
-                    <div class="glass-card" style="padding:1.5rem;">
-                        <div class="section-title">🔔 Recent Transactions</div>
-                        <div id="financeTransactions" style="font-size:0.85rem; color:var(--text-muted);">
-                            No recent transactions found.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Single Messenger Section -->
+            <div class="messenger-container">
+                <div id="admin-messenger-mount" style="flex: 1;"></div>
             </div>
         </div>
     </main>
 
-    <!-- Mobile Bottom Nav -->
-    <nav class="pro-bottom-nav mobile-only">
-        <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
-    </nav>
-
-    <!-- Create Team Modal -->
-    <div id="createTeamModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('createTeamModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create New Team</h2>
-            <form id="createTeamForm" onsubmit="handleCreateTeam(event)">
-                <div class="form-group">
-                    <label>Team Name</label>
-                    <input type="text" name="teamName" placeholder="e.g. Under 14s A" required>
-                </div>
-                <div class="form-group">
-                    <label>Assign Head Coach</label>
-                    <select name="coachId" id="coachSelect">
-                        <option value="">-- Select Coach --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Registration Form (Jotform)</label>
-                    <select name="formId" id="formSelect">
-                        <option value="">-- No custom form --</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('createTeamModal')"
-                        style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Team</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Add Member Modal -->
-    <div id="addMemberModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('addMemberModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Add New Member</h2>
-            <form id="addMemberForm" onsubmit="event.preventDefault(); alert('Member invite sent!'); closeModal('addMemberModal');">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" placeholder="e.g. member@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Role</label>
-                    <select style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                        <option value="player">Player</option>
-                        <option value="parent">Parent</option>
-                        <option value="staff">Staff / Coach</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Send Invite</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Add Event Modal -->
-    <div id="addEventModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('addEventModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Create Group Event</h2>
-            <form id="addEventForm" onsubmit="event.preventDefault(); alert('Event created!'); closeModal('addEventModal');">
-                <div class="form-group">
-                    <label>Event Title</label>
-                    <input type="text" placeholder="e.g. Weekly Training" required>
-                </div>
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" required>
-                </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Create Event</button>
-                </div>
-            </form>
-        </div>
-    </div>
     <script src="app-state.js"></script>
     <script src="api-service.js?v=20260427_v2"></script>
     <script src="enhanced-login-handler.js?v=20260427_v2"></script>
     <script src="group-switcher.js?v=20260427_v2"></script>
     <script src="pwa-install.js?v=20260427_v2"></script>
     <script src="unified-nav.js?v=20260427_v2"></script>
-    <script src="squad-messenger.js"></script>
+    <script src="squad-messenger.js?v=20260427_v2"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -579,342 +74,27 @@
                 if (!ok) { window.location.href = 'index.html'; return; }
             }
 
-            // Route to section if hash exists, otherwise default to messenger for this page
-            const hash = window.location.hash.substring(1) || 'messenger';
-            showSection(hash);
-
-            // Load initial data
-            loadDashboardStats();
-            loadTeams();
-            loadAvailableCoaches();
-            loadAvailableForms();
-            loadScoutApprovals();
-            // default tab
-            const tp = document.getElementById('tabPlatform'); if (tp) tp.classList.add('active');
+            // Mount messenger immediately
+            mountMessenger();
         });
 
-        async function loadDashboardStats() {
-            if (typeof apiService === 'undefined') return;
-            try {
-                const stats = await apiService.get('/api/admin/stats');
-                if (stats) {
-                    if (stats.totalMembers !== undefined) document.getElementById('totalMembers').textContent = stats.totalMembers;
-                    if (stats.monthlyRevenue !== undefined) document.getElementById('monthlyRevenue').textContent = '£' + stats.monthlyRevenue.toLocaleString();
-                    if (stats.activeEvents !== undefined) document.getElementById('activeEvents').textContent = stats.activeEvents;
+        async function mountMessenger() {
+            if (typeof SquadMessenger !== 'undefined') {
+                console.log("🚀 Mounting SquadMessenger...");
+                try {
+                    await SquadMessenger.mount('admin-messenger-mount', {
+                        showHeader: false,
+                        compact: false
+                    });
+                    console.log("✅ Messenger mounted successfully");
+                } catch (err) {
+                    console.error("❌ Messenger mount failed:", err);
+                    document.getElementById('admin-messenger-mount').innerHTML = 
+                        '<div style="padding: 2rem; color: #f87171;">Messenger failed to initialize. Please refresh.</div>';
                 }
-            } catch (e) { console.warn("Live stats fail, using demo data"); }
-        }
-
-        async function loadTeams() {
-            const container = document.getElementById('teamsListContainer');
-            if (!container) return;
-            try {
-                    const { teams } = await apiService.get('/api/teams');
-                    let teamsToRender = teams;
-                    if ((!teamsToRender || teamsToRender.length === 0) && localStorage.getItem('isDemoSession') === 'true') {
-                        // Demo fallback teams for local visual testing
-                        teamsToRender = [
-                            { id: 'demo-team-1', name: 'Under 12s', coach_name: 'Alex Morgan', player_count: 14 },
-                            { id: 'demo-team-2', name: 'Under 16s', coach_name: 'Sam Riley', player_count: 18 },
-                        ];
-                    }
-
-                    if (!teamsToRender || teamsToRender.length === 0) {
-                        container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
-                        return;
-                    }
-                    container.innerHTML = teamsToRender.map(t => `
-                    <div class="glass-card" style="padding:1.25rem; border:1px solid rgba(255,255,255,0.05);">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
-                            <h3 style="font-size:1.1rem; margin-bottom:0.25rem;">${t.name}</h3>
-                            <span class="badge" style="background:rgba(96,165,250,0.1); color:#60a5fa; font-size:0.7rem;">${t.player_count || 0} Players</span>
-                        </div>
-                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Coach: ${t.coach_name || 'Unassigned'}</p>
-                        <div style="display:flex; gap:0.5rem;">
-                            <button class="btn btn-secondary btn-small" style="flex:1;" onclick="viewTeam('${t.id}')">Manage</button>
-                            <button class="btn btn-text btn-small" onclick="deleteTeam('${t.id}')">🗑️</button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (e) {
-                container.innerHTML = '<p style="color:#f87171;">Failed to load teams.</p>';
-            }
-        }
-
-        async function loadAvailableCoaches() {
-            const select = document.getElementById('coachSelect');
-            if (!select) return;
-            try {
-                const { coaches } = await apiService.get('/api/members?role=coach');
-                coaches.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.id;
-                    opt.textContent = `${c.first_name} ${c.last_name}`;
-                    select.appendChild(opt);
-                });
-            } catch (e) { }
-        }
-
-        async function loadAvailableForms() {
-            const select = document.getElementById('formSelect');
-            if (!select) return;
-            try {
-                const { forms } = await apiService.get('/api/forms');
-                forms.forEach(f => {
-                    const opt = document.createElement('option');
-                    opt.value = f.id;
-                    opt.textContent = f.title;
-                    select.appendChild(opt);
-                });
-            } catch (e) { }
-        }
-
-        async function handleCreateTeam(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = {
-                name: formData.get('teamName'),
-                coach_id: formData.get('coachId') || null,
-                form_id: formData.get('formId') || null
-            };
-
-            try {
-                await apiService.post('/api/teams', data);
-                closeModal('createTeamModal');
-                loadTeams();
-                if (typeof showAlert === 'function') showAlert('Team created successfully!', 'Success', 'success');
-            } catch (err) {
-                console.error("Team creation failed:", err);
-                showNotification("Failed to create team: " + err.message, "error");
-            }
-        }
-
-        function openModal(id) {
-            const m = document.getElementById(id);
-            if (m) m.style.display = 'flex';
-        }
-
-        function closeModal(id) {
-            const m = document.getElementById(id);
-            if (m) m.style.display = 'none';
-        }
-
-        function showSection(sectionId) {
-            console.log("Showing section:", sectionId);            document.querySelectorAll('.dashboard-section').forEach(s => s.style.display = 'none');
-            const target = document.getElementById(sectionId);
-            if (target) {
-                target.style.display = 'block';
-                if (sectionId === 'finances') checkStripeStatus();
-                if (sectionId === 'teams') loadTeams();
-                if (sectionId === 'messenger') {
-                    const tryMount = () => {
-                        if (window.SquadMessenger) {
-                            if (!window._adminMessengerMounted) {
-                                console.log("✨ Mounting Admin Messenger...");
-                                SquadMessenger.mount('admin-messenger-mount');
-                                window._adminMessengerMounted = true;
-                            }
-                            SquadMessenger.load();
-                        } else {
-                            console.warn("⏳ SquadMessenger not loaded; retrying in 500ms...");
-                            setTimeout(tryMount, 500);
-                        }
-                    };
-                    tryMount();
-                }
-            }
-        }
-
-        // --- Stripe Connect Logic ---
-        async function checkStripeStatus() {
-            const loading = document.getElementById('stripe-status-loading');
-            const onboardBox = document.getElementById('stripe-onboarding-box');
-            const connectedBox = document.getElementById('stripe-connected-box');
-            const errorBox = document.getElementById('stripe-error-box');
-
-            loading.style.display = 'block';
-            onboardBox.style.display = 'none';
-            connectedBox.style.display = 'none';
-            errorBox.style.display = 'none';
-
-            try {
-                const data = await apiService.makeRequest('/payments/stripe/connect/status');
-
-                loading.style.display = 'none';
-                if (data && data.connected) {
-                    connectedBox.style.display = 'block';
-                    document.getElementById('payout-status').textContent = data.payouts_enabled ? 'Enabled' : 'Pending';
-                    document.getElementById('account-status').textContent = data.details_submitted ? 'Verified' : 'Incomplete';
-                } else {
-                    onboardBox.style.display = 'block';
-                }
-            } catch (err) {
-                console.error("Stripe status check failed:", err);
-                loading.style.display = 'none';
-                errorBox.style.display = 'block';
-                document.getElementById('stripe-error-msg').textContent = "Connection refused. Please ensure backend is running.";
-            }
-        }
-
-        async function startStripeOnboarding() {
-            try {
-                const btn = document.getElementById('connect-stripe-btn');
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Redirecting...';
-
-                const data = await apiService.makeRequest('/payments/stripe/connect/onboard', {
-                    method: 'POST'
-                });
-
-                if (data && data.url) {
-                    window.location.href = data.url;
-                } else {
-                    throw new Error(data?.error || "Failed to get onboarding URL");
-                }
-            } catch (err) {
-                showNotification("Error starting onboarding: " + err.message, "error");
-                const btn = document.getElementById('connect-stripe-btn');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-plug"></i> Connect with Stripe';
-            }
-        }
-
-        async function manageStripeAccount() {
-            try {
-                const data = await apiService.makeRequest('/payments/stripe/connect/login-link', {
-                    method: 'POST'
-                });
-                if (data && data.url) {
-                    window.location.href = data.url;
-                } else {
-                    throw new Error(data?.error || "Failed to get management link");
-                }
-            } catch (err) {
-                console.error("Stripe management error:", err);
-                showNotification("Error opening Stripe dashboard: " + err.message, "error");
-            }
-        }
-
-        // --- Scouting: Admin approvals loader ---
-        async function loadScoutApprovals() {
-            const loading = document.getElementById('scoutApprovalsLoading');
-            const list = document.getElementById('scoutApprovalsList');
-            if (!loading || !list || typeof apiService === 'undefined') return;
-            loading.style.display = 'block';
-            list.innerHTML = '';
-            try {
-                const requests = await apiService.getPlatformScoutVerifications('pending');
-                loading.style.display = 'none';
-                if (!requests || !requests.length) {
-                    list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending scout approval requests at this time.</div>';
-                    return;
-                }
-
-                list.innerHTML = requests.map(r => `
-                    <div class="feed-entry" style="align-items:center;">
-                        <div class="feed-icon" style="background:rgba(59,130,246,0.08); color:#60a5fa;">🕵️</div>
-                        <div class="feed-meta">
-                            <strong>${r.name || r.display_name || 'Unknown'}</strong>
-                            <span style="display:block; color:var(--text-muted); font-size:0.85rem;">${r.email || r.contact || ''} · Requested: ${new Date(r.created_at).toLocaleString()}</span>
-                            <div style="margin-top:0.5rem;"><em style="color:var(--text-muted);">${(r.notes || '').substring(0, 200)}</em></div>
-                        </div>
-                        <div style="margin-left:1rem; display:flex; gap:0.5rem;">
-                            <button class="btn btn-primary btn-small" onclick="resolveApproval('${r.id}','approved')">Approve</button>
-                            <button class="btn btn-text btn-small" onclick="resolveApproval('${r.id}','rejected')">Reject</button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (err) {
-                loading.style.display = 'none';
-                console.error('Failed to load scout approvals', err);
-                list.innerHTML = '<div style="padding:1rem; color:#f87171;">Failed to load pending approvals.</div>';
-            }
-        }
-
-        async function resolveApproval(id, status) {
-            const confirmMsg = status === 'approved' ? 'Approve this scout?' : 'Reject this scout?';
-            if (!confirm(confirmMsg)) return;
-            try {
-                await apiService.resolvePlatformScoutVerification(id, status, 'Processed via admin dashboard');
-                showNotification('Request ' + status, 'success');
-                loadScoutApprovals();
-            } catch (err) {
-                console.error('Resolve failed', err);
-                showNotification('Failed to update request: ' + (err.message || err), 'error');
-            }
-        }
-
-        function showScoutTab(which) {
-            const platformBox = document.getElementById('scoutApprovalsContainer');
-            const clubBox = document.getElementById('clubScoutApprovalsContainer');
-            document.getElementById('tabPlatform').classList.remove('active');
-            document.getElementById('tabClub').classList.remove('active');
-            if (which === 'club') {
-                platformBox.style.display = 'none';
-                clubBox.style.display = 'block';
-                document.getElementById('tabClub').classList.add('active');
-                loadClubScoutApprovals();
             } else {
-                clubBox.style.display = 'none';
-                platformBox.style.display = 'block';
-                document.getElementById('tabPlatform').classList.add('active');
-                loadScoutApprovals();
-            }
-        }
-
-        // Club-level approvals: fetch staff for current club and show those not yet club-verified
-        async function loadClubScoutApprovals() {
-            const loading = document.getElementById('clubScoutApprovalsLoading');
-            const list = document.getElementById('clubScoutApprovalsList');
-            if (!loading || !list || typeof apiService === 'undefined') return;
-            loading.style.display = 'block';
-            list.innerHTML = '';
-            try {
-                const ctx = await apiService.getContext();
-                const clubId = ctx?.currentGroup?.id;
-                if (!clubId) throw new Error('No club context');
-
-                const resp = await apiService.makeRequest(`/staff/club/${clubId}`);
-                loading.style.display = 'none';
-                const staff = resp?.all || [];
-                const pending = staff.filter(s => !s.club_verified_scout && (s.can_manage_scouting || (s.permissions || []).includes('scouting')));
-
-                if (!pending.length) {
-                    list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending club scout approvals at this time.</div>';
-                    return;
-                }
-
-                list.innerHTML = pending.map(s => `
-                    <div class="feed-entry" style="align-items:center;">
-                        <div class="feed-icon" style="background:rgba(220,38,38,0.06); color:#dc2626;">🛡️</div>
-                        <div class="feed-meta">
-                            <strong>${s.first_name || s.display_name || ''} ${s.last_name || ''}</strong>
-                            <span style="display:block; color:var(--text-muted); font-size:0.85rem;">${s.email || s.phone || ''} · Added: ${new Date(s.created_at).toLocaleString()}</span>
-                            <div style="margin-top:0.5rem;"><em style="color:var(--text-muted);">${(s.notes || '').substring(0, 200)}</em></div>
-                        </div>
-                        <div style="margin-left:1rem; display:flex; gap:0.5rem;">
-                            <button class="btn btn-primary btn-small" onclick="resolveClubApproval('${s.id}',true)">Approve</button>
-                            <button class="btn btn-text btn-small" onclick="resolveClubApproval('${s.id}',false)">Reject</button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (err) {
-                loading.style.display = 'none';
-                console.error('Failed to load club scout approvals', err);
-                list.innerHTML = '<div style="padding:1rem; color:#f87171;">Failed to load club approvals.</div>';
-            }
-        }
-
-        async function resolveClubApproval(staffId, verified) {
-            const confirmMsg = verified ? 'Mark this staff member as a verified scout for your club?' : 'Mark this staff member as NOT verified?';
-            if (!confirm(confirmMsg)) return;
-            try {
-                await apiService.verifyClubScout(staffId, verified);
-                showNotification('Club scout status updated', 'success');
-                loadClubScoutApprovals();
-            } catch (err) {
-                console.error('Club verify failed', err);
-                showNotification('Failed to update club scout status: ' + (err.message || err), 'error');
+                console.warn("⏳ SquadMessenger not yet loaded, retrying in 500ms...");
+                setTimeout(mountMessenger, 500);
             }
         }
     </script>

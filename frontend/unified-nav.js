@@ -1426,6 +1426,7 @@ const UnifiedNav = {
    * Inspired by Threads/Premium app UX
    */
   renderTopTabs() {
+    return; // Disabled: we are using sidebar links instead of top tabs.
     const header = document.querySelector(".pro-header, header.header");
     if (!header) return;
 
