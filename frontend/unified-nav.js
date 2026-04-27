@@ -948,10 +948,8 @@ const UnifiedNav = {
             <div id="notif-header-btn-container" style="display:flex;"></div>
             
             <div class="user-action-group" style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.03); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.06);">
-                <div id="header-family-switcher-container" class="header-family-switcher-wrapper" style="display:flex; align-items:center;"></div>
-
                 <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
-                    style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'none' : 'flex'}; align-items:center; gap:0.65rem; cursor:pointer; transition:all 0.2s; padding: 0 0.75rem 0 0.25rem;">
+                    style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'none' : 'flex'}; align-items:center; gap:0.65rem; cursor:pointer; transition:all 0.2s; padding: 0 0.75rem 0 0.75rem;">
                     <div class="user-avatar-sm" id="header-user-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; border:1.5px solid rgba(255,255,255,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">${initial}</div>
                     <span class="user-name-text desktop-only" style="font-size:0.8rem; font-weight:700; color:white;">${name}</span>
                     <svg class="group-switcher-arrow" width="8" height="8" viewBox="0 0 12 12" fill="none" style="opacity: 0.5;"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -981,20 +979,9 @@ const UnifiedNav = {
     // or we ensure it's in the mobile sidebar.
     const isMobile = window.innerWidth < 992;
     
-    // Inject Group Switcher into left slot
-    const groupSlot = document.getElementById("header-group-switcher-container");
-    if (groupSlot) {
-      const userRole = this.getUserRole();
-      if (userRole !== "player" && userRole !== "parent") {
-         this.renderGroupSwitcher(groupSlot);
-      }
-    }
+    // Switchers now move to sidebar by request
+    this.renderSidebar();
     
-    // Inject Family Switcher into right slot
-    const familySlot = document.getElementById("header-family-switcher-container");
-    if (familySlot) {
-       this.renderFamilySwitcher(familySlot);
-    }
 
     this.renderTopTabs();
   },
@@ -1047,7 +1034,10 @@ const UnifiedNav = {
                     </div>
 
                     <div class="sidebar-footer" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.5rem;">
-                        ${window.innerWidth < 992 ? '<div id="sidebar-switcher-target" style="width: 100%; margin-bottom: 0.25rem;"></div>' : ''}
+                        ${window.innerWidth < 992 ? `
+                            <div id="sidebar-switcher-target" style="width: 100%; margin-bottom: 0.5rem;"></div>
+                            <div id="sidebar-family-switcher-container" style="width: 100%; margin-bottom: 1rem;"></div>
+                        ` : ''}
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                             <a href="settings.html" class="sidebar-link" style="margin:0; justify-content: center; padding: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 0.75rem;">
@@ -1087,23 +1077,26 @@ const UnifiedNav = {
   },
 
   initSidebarSwitcher() {
-    const target = document.getElementById("sidebar-switcher-target");
-    if (!target) return;
-
-    const checkSwitcher = () => {
+    const groupTarget = document.getElementById("sidebar-switcher-target");
+    const familyTarget = document.getElementById("sidebar-family-switcher-container");
+    
+    if (groupTarget) {
       if (typeof GroupSwitcher !== "undefined") {
-        GroupSwitcher.render(target);
+        GroupSwitcher.render(groupTarget);
       } else {
         const script = document.createElement("script");
         script.src = "group-switcher.js";
         script.onload = () => {
           if (typeof GroupSwitcher !== "undefined")
-            GroupSwitcher.render(target);
+            GroupSwitcher.render(groupTarget);
         };
         document.head.appendChild(script);
       }
-    };
-    checkSwitcher();
+    }
+
+    if (familyTarget) {
+        this.renderFamilySwitcher(familyTarget);
+    }
   },
 
   renderGroupSwitcher(container) {
@@ -1122,10 +1115,9 @@ const UnifiedNav = {
   },
 
   renderFamilySwitcher(targetContainer) {
-    const isPlayerPage = window.location.href.includes("player-dashboard.html");
+    const isMobile = window.innerWidth < 992;
     const container = targetContainer || 
-                      (isPlayerPage ? document.getElementById("header-family-switcher-container") : null) ||
-                      document.getElementById("header-family-switcher-container") || 
+                      (isMobile ? document.getElementById("sidebar-family-switcher-container") : document.getElementById("header-family-switcher-container")) || 
                       document.getElementById("family-switcher-target");
     if (!container) return;
 
@@ -1160,43 +1152,63 @@ const UnifiedNav = {
         ? (family.find(f => f.id == activePlayerId)?.first_name || "Profile")
         : (user.firstName || user.first_name || "Main");
 
+    const triggerStyles = isMobile 
+        ? "display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.75rem; padding: 0.6rem 0.85rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; color: white; transition: all 0.2s; font-family: 'Inter', sans-serif;"
+        : "display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.75rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 999px; cursor: pointer; color: white; transition: all 0.2s; font-family: 'Inter', sans-serif;";
+    
+    const dropdownPos = isMobile 
+        ? "bottom: calc(100% + 12px); left: 0; right: 0; border-radius: 12px;" 
+        : "top: calc(100% + 12px); right: 0; width: 220px; border-radius: 12px;";
+
     container.innerHTML = `
-        <div class="family-switcher" style="position: relative;" id="familySwitcher">
-            <button class="family-trigger" onclick="event.stopPropagation(); document.getElementById('familyDropdown').classList.toggle('open')" style="display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.75rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 999px; cursor: pointer; color: white; transition: all 0.2s; font-family: 'Inter', sans-serif;">
-                <div style="width: 20px; height: 20px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; border: 1px solid rgba(255,255,255,0.3);">
-                    ${activePlayerId ? (family.find(f => f.id == activePlayerId)?.first_name?.charAt(0) || "P") : (user.firstName?.charAt(0) || "U")}
+        <div class="family-switcher" style="position: relative; ${isMobile ? 'width: 100%;' : ''}" id="familySwitcher">
+            <button class="family-trigger" onclick="event.stopPropagation(); document.getElementById('familyDropdown').classList.toggle('open')" style="${triggerStyles}">
+                <div style="display: flex; align-items: center; gap: ${isMobile ? '0.75rem' : '0.6rem'};">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(255,255,255,0.2);">
+                        ${activePlayerId ? (family.find(f => f.id == activePlayerId)?.first_name?.charAt(0) || "P") : (user.firstName?.charAt(0) || "U")}
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                        ${isMobile ? '<span style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">Switch Profile</span>' : ''}
+                        <span class="switcher-label" style="font-size: 0.85rem; font-weight: 600; color: #fff; letter-spacing: -0.1px;">${currentName}</span>
+                    </div>
                 </div>
-                <span class="switcher-label" style="font-size: 0.85rem; font-weight: 600; color: #fff; letter-spacing: -0.1px;">${currentName}</span>
-                <svg class="group-switcher-arrow" width="8" height="8" viewBox="0 0 12 12" fill="none" style="margin-left: 2px; opacity: 0.5;"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                <svg class="group-switcher-arrow" width="10" height="10" viewBox="0 0 12 12" fill="none" style="opacity: 0.5; transition: transform 0.3s; margin-left: ${isMobile ? '0' : '4px'};"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
             </button>
-            <div class="family-dropdown" id="familyDropdown" style="position: absolute; top: calc(100% + 12px); right: 0; width: 220px; background: #111; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.7); z-index: 1100; display: none; padding: 0.75rem; backdrop-filter: blur(30px);">
+            <div class="family-dropdown" id="familyDropdown" style="position: absolute; ${dropdownPos} background: #111; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 40px rgba(0,0,0,0.7); z-index: 1100; display: none; padding: 0.75rem; backdrop-filter: blur(30px);">
                 <div style="font-size: 0.65rem; color: rgba(255,255,255,0.3); padding: 0.25rem 0.5rem; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 800; margin-bottom: 0.5rem;">Switch Profile</div>
-                <div class="family-item ${!activePlayerId ? 'active' : ''}" onclick="UnifiedNav.switchProfile(null)" style="padding: 0.5rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; font-size: 0.85rem; background: ${!activePlayerId ? 'rgba(220,38,38,0.1)' : 'transparent'};">
-                    <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">${(user.firstName || 'U').charAt(0)}</div>
-                    <span>Main Profile</span>
+                <div class="family-item ${!activePlayerId ? 'active' : ''}" onclick="UnifiedNav.switchProfile(null)" style="padding: 0.65rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; font-size: 0.85rem; transition: all 0.2s;">
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700;">${(user.firstName || 'U').charAt(0)}</div>
+                    <span style="font-weight: 500;">Main Profile</span>
                 </div>
                 ${family.map(f => `
-                    <div class="family-item ${activePlayerId == f.id ? 'active' : ''}" onclick="UnifiedNav.switchToChildProfile('${f.id}', '${f.club_id || ""}')" style="padding: 0.5rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; font-size: 0.85rem; background: ${activePlayerId == f.id ? 'rgba(220,38,38,0.1)' : 'transparent'};">
-                        <div style="width: 20px; height: 20px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 0.6rem;">${(f.first_name || 'F').charAt(0)}</div>
-                        <span>${f.first_name}</span>
+                    <div class="family-item ${activePlayerId == f.id ? 'active' : ''}" onclick="UnifiedNav.switchToChildProfile('${f.id}', '${f.club_id || ""}')" style="padding: 0.65rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; font-size: 0.85rem; transition: all 0.2s;">
+                        <div style="width: 24px; height: 24px; border-radius: 50%; background: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700;">${(f.first_name || 'F').charAt(0)}</div>
+                        <span style="font-weight: 500;">${f.first_name}</span>
                     </div>
                 `).join('')}
                 <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:0.5rem;padding-top:0.5rem; display: flex; flex-direction: column; gap: 0.25rem;">
-                    <div onclick="document.getElementById('familyDropdown')?.classList.remove('open'); if(typeof openAddChildModal==='function'){openAddChildModal();}else{window.location.href='player-dashboard.html#family';}" style="padding:0.5rem;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--primary);border:1px dashed rgba(220,38,38,0.3);">
-                        <div style="width:20px;height:20px;border-radius:50%;background:rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;">+</div>
-                        <span>Add Family Member</span>
-                    </div>
-                    <div onclick="UnifiedNav.logout()" style="padding:0.5rem;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:#ef4444;">
-                        <span style="font-size:1.1rem; width:20px; text-align:center;">🚪</span>
-                        <span>Sign Out</span>
+                    <div onclick="document.getElementById('familyDropdown')?.classList.remove('open'); if(typeof openAddChildModal==='function'){openAddChildModal();}else{window.location.href='player-dashboard.html#family';}" style="padding:0.65rem;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:0.75rem;font-size:0.82rem;color:var(--primary);border:1px dashed rgba(220,38,38,0.2); transition:all 0.2s;">
+                        <div style="width:24px;height:24px;border-radius:50%;background:rgba(220,38,38,0.1);display:flex;align-items:center;justify-content:center;font-size:0.9rem;font-weight:800;">+</div>
+                        <span style="font-weight: 600;">Add Family Member</span>
                     </div>
                 </div>
             </div>
         </div>
         <style>
-            .family-dropdown.open { display: block !important; }
-            .family-item:hover { background: rgba(255,255,255,0.05) !important; }
-            .family-item.active { border: 1px solid rgba(220,38,38,0.2); }
+            .family-dropdown.open { display: block !important; animation: ${isMobile ? 'slideUp' : 'slideDown'} 0.2s ease-out; }
+            .family-item:hover { background: rgba(255,255,255,0.06) !important; transform: translateX(2px); }
+            .family-item.active { background: rgba(220,38,38,0.1) !important; border: 1px solid rgba(220,38,38,0.2) !important; }
+            .family-trigger:hover { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.2) !important; }
+            .family-trigger:hover .group-switcher-arrow { transform: translateY(2px); opacity: 1 !important; }
+            
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes slideDown {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
         </style>
     `;
     
@@ -1355,7 +1367,8 @@ const UnifiedNav = {
                         <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 28px;">
                         <span class="logo-text desktop-only">ClubHub</span>
                     </div>
-                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="flex: 1; min-width: 0;"></div>
+                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper desktop-only" style="flex: 1; min-width: 0;"></div>
+                    <div id="header-family-switcher-container" class="header-family-switcher-wrapper desktop-only" style="margin-left: 0.5rem;"></div>
                 </div>
 
                 <div class="mode-toggle-container desktop-only">
