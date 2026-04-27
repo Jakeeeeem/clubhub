@@ -339,7 +339,10 @@ if (typeof ApiService === 'undefined') {
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const method = options.method || "GET";
 
-    // --- AUTH CONTEXT ---
+    // --- SYSTEM & AUTH ---
+    if (endpoint.includes("/health")) {
+      return { status: 'healthy', demo: true };
+    }
     if (endpoint.includes("/auth/context")) {
       const isSuper = user.is_platform_admin === true || user.role === "superadmin";
       const role = user.activePlayerId ? "player" : user.role || "admin";
@@ -467,12 +470,14 @@ if (typeof ApiService === 'undefined') {
     }
 
     // Demo intercepts for status/plan calls (demo-token can't auth against real API)
-    if (endpoint.includes("/payments/stripe/connect/status") || endpoint.includes("/payments/stripe/account")) {
+    if (endpoint.includes("payments/stripe/connect/status") || endpoint.includes("payments/stripe/account")) {
+      console.log("🛡️ Demo Intercept: Returning mock Stripe status");
       return {
         success: true,
         is_connected: false,
         linked: false,
-        account_id: null
+        account_id: null,
+        demo: true
       };
     }
 
@@ -507,8 +512,9 @@ if (typeof ApiService === 'undefined') {
     }
 
     // Notifications also fail with demo-token
-    if (endpoint.includes("/notifications")) {
-      return [];
+    if (endpoint.includes("notifications")) {
+      console.log("🛡️ Demo Intercept: Returning empty notifications");
+      return { success: true, notifications: [], demo: true };
     }
 
     return null;

@@ -14,9 +14,9 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="apple-touch-icon" href="/images/logo.png">
-    <link rel="stylesheet" href="styles.css?v=20260424_v4">
-    <link rel="stylesheet" href="design-system.css?v=20260424_v4">
-    <link rel="stylesheet" href="unified-nav.css?v=20260424_v4">
+    <link rel="stylesheet" href="styles.css?v=20260427_v1">
+    <link rel="stylesheet" href="design-system.css?v=20260427_v1">
+    <link rel="stylesheet" href="unified-nav.css?v=20260427_v1">
     <script>
         // CRITICAL: Force Service Worker Unregistration if stuck on old version
         (function() {
@@ -636,14 +636,14 @@
             </div>
         </div>
     </div>
-    <script src="app-state.js?v=20260424_v4"></script>
-    <script src="api-service.js?v=20260424_v4"></script>
-    <script src="enhanced-login-handler.js?v=20260424_v4"></script>
-    <script src="group-switcher.js?v=20260424_v4"></script>
-    <script src="pwa-install.js?v=20260424_v4"></script>
-    <script src="unified-nav.js?v=20260424_v4"></script>
-    <script src="squad-messenger.js?v=20260424_v4"></script>
-    <script src="dashboard-loaders.js?v=20260424_v4"></script>
+    <script src="app-state.js?v=20260427_v1"></script>
+    <script src="api-service.js?v=20260427_v1"></script>
+    <script src="enhanced-login-handler.js?v=20260427_v1"></script>
+    <script src="group-switcher.js?v=20260427_v1"></script>
+    <script src="pwa-install.js?v=20260427_v1"></script>
+    <script src="unified-nav.js?v=20260427_v1"></script>
+    <script src="squad-messenger.js?v=20260427_v1"></script>
+    <script src="dashboard-loaders.js?v=20260427_v1"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -851,6 +851,13 @@
             onboardBox.style.display = 'none';
             connectedBox.style.display = 'none';
             errorBox.style.display = 'none';
+
+            // Demo bypass for Stripe status check
+            if (localStorage.getItem("isDemoSession") === "true") {
+                loading.style.display = 'none';
+                onboardBox.style.display = 'block';
+                return;
+            }
 
             try {
                 const data = await apiService.makeRequest('/payments/stripe/connect/status');

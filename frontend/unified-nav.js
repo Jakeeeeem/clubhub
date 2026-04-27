@@ -567,7 +567,17 @@ const UnifiedNav = {
     try {
       if (typeof apiService === "undefined") return;
       const res = await apiService.makeRequest("/notifications");
-      const notifs = Array.isArray(res) ? res : [];
+      
+      // Handle both array and object response formats
+      let notifs = [];
+      if (Array.isArray(res)) {
+          notifs = res;
+      } else if (res && Array.isArray(res.notifications)) {
+          notifs = res.notifications;
+      } else if (res && res.activity && Array.isArray(res.activity)) {
+          notifs = res.activity;
+      }
+
       const unreadCount = notifs.filter((n) => !n.read).length;
 
       if (unreadCount > 0) {
@@ -1591,6 +1601,10 @@ const UnifiedNav = {
 
     const btn = document.getElementById("stripe-connect-btn") || document.querySelector(".stripe-header-btn button");
     if (!btn || typeof apiService === "undefined") return;
+    // Skip check in demo mode
+    if (localStorage.getItem("isDemoSession") === "true") {
+      return;
+    }
 
     try {
       const status = await apiService.getStripeConnectStatus();
