@@ -82,11 +82,9 @@
             if (typeof SquadMessenger !== 'undefined') {
                 console.log("🚀 Mounting SquadMessenger...");
                 try {
-                    await SquadMessenger.mount('admin-messenger-mount', {
-                        showHeader: false,
-                        compact: false
-                    });
-                    console.log("✅ Messenger mounted successfully");
+                    await SquadMessenger.mount('admin-messenger-mount');
+                    await SquadMessenger.load();
+                    console.log("✅ Messenger mounted and loaded successfully");
                 } catch (err) {
                     console.error("❌ Messenger mount failed:", err);
                     document.getElementById('admin-messenger-mount').innerHTML = 

@@ -163,11 +163,13 @@ async function getOrCreateStripeConnectAccount(user) {
 router.get("/stripe/connect/status", authenticateToken, async (req, res) => {
   try {
     const account = await getOrCreateStripeConnectAccount(req.user);
+    const isConnected = !!(account.details_submitted && account.payouts_enabled);
+    
     const response = {
-      connected: true,      // Frontend compatibility
-      linked: true,
+      connected: isConnected,
+      linked: !!account.details_submitted,
       account_id: account.id,
-      stripeAccountId: account.id, // For frontend compatibility
+      stripeAccountId: account.id, 
       payouts_enabled: !!account.payouts_enabled,
       details_submitted: !!account.details_submitted,
       requirements: account.requirements?.currently_due || [],

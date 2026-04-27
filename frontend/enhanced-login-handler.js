@@ -113,8 +113,15 @@ async function handleLogin(e) {
       setTimeout(() => {
         window.location.href = decodeURIComponent(returnUrl);
       }, 1000);
-    } else {
-      // Determine where to redirect based on user type
+    // --- HARDENED BYPASS SYNC ---
+    // If this was a bypass, we MUST refresh the context from the REAL backend 
+    // to ensure our local 'currentUser.id' matches the database UUID for messaging.
+    if (localStorage.getItem("isDemoSession") === "true" && typeof apiService !== 'undefined') {
+        console.log("🔄 Syncing bypass session with live backend context...");
+        await apiService.refreshContext();
+    }
+
+    // Determine where to redirect based on user type
       const redirectUrl = await determineUserRedirect(response.user);
       console.log("🏠 Redirecting to:", redirectUrl);
       showNotification("Login successful!", "success");

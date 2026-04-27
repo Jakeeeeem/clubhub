@@ -51,6 +51,7 @@ if (typeof ApiService === 'undefined') {
     this.context = null;
 
     // Scouting Methods
+    // Scouting Methods
     this.getScoutWatchlist = () => this.makeRequest("/scouting/watchlist");
     this.toggleWatchlist = (playerId, notes = "") => 
         this.makeRequest("/scouting/watchlist", {
@@ -74,6 +75,20 @@ if (typeof ApiService === 'undefined') {
     this._mockMessages = null;
   }
 
+  /**
+   * Determine if we should return mock data or hit the live API.
+   * We only return mock data if isDemoSession is true AND we have a basic demo token.
+   * If it's a 'demo-token-' (bypass) or real JWT, we hit the backend.
+   */
+  shouldMock() {
+    const isDemo = localStorage.getItem("isDemoSession") === "true";
+    const token = localStorage.getItem("authToken") || "";
+    if (isDemo && (token.startsWith("demo-token-") || token.split('.').length === 3)) {
+        return false;
+    }
+    return isDemo;
+  }
+
   // Generic GET method for dashboard loaders
   async get(endpoint, options = {}) {
     return this.makeRequest(endpoint, { ...options, method: 'GET' });
@@ -83,9 +98,7 @@ if (typeof ApiService === 'undefined') {
     if (this.context) return this.context;
 
     // 🛡️ Demo session bypass
-    const token = localStorage.getItem("authToken");
-    const isDemoToken = !token || token === "demo-token";
-    if (localStorage.getItem("isDemoSession") === "true" && isDemoToken) {
+    if (this.shouldMock()) {
       console.log("🛡️ Returning mock context for demo session");
       const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
 
@@ -203,9 +216,8 @@ if (typeof ApiService === 'undefined') {
     return "http://localhost:3000/api";
   }
 
-  // Messaging & Feed Methods
   async getFeedItems(role = "all") {
-    if (localStorage.getItem("isDemoSession") === "true") {
+    if (this.shouldMock()) {
       const allItems = this.getAdminDashboardFallback().feed;
       if (role === "all") return allItems;
       return allItems.filter(item => 
@@ -216,23 +228,16 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getMessages(type = "all") {
-    if (localStorage.getItem("isDemoSession") === "true") {
+    if (this.shouldMock()) {
       const allMessages = this.getAdminDashboardFallback().messages;
       if (type === "all") return allMessages;
       return allMessages.filter(msg => msg.type === type);
-    }
-    if (localStorage.getItem('isDemoSession') === 'true') {
-      return [
-        { id: 'm1', sender_id: 'coach-1', sender_name: 'Coach Sam', receiver_id: 'admin-1', sender_role: 'coach', content: 'The U16 registration forms are looking good. Just need to add the medical field.', created_at: new Date().toISOString(), read: false },
-        { id: 'm2', sender_id: 'parent-1', sender_name: 'Sarah Thompson', receiver_id: 'admin-1', sender_role: 'parent', content: 'Hi, I had a question about the upcoming summer camp fees.', created_at: new Date(Date.now() - 3600000).toISOString(), read: true },
-        { id: 'm3', sender_id: 'admin-1', sender_name: 'Admin', receiver_id: 'coach-2', sender_role: 'admin', content: 'New training bibs have been ordered for the Under 14s.', created_at: new Date(Date.now() - 86400000).toISOString(), read: true }
-      ];
     }
     return await this.makeRequest(`/messages?type=${type}`);
   }
 
   async sendMessage(messageData) {
-    if (localStorage.getItem("isDemoSession") === "true") {
+    if (this.shouldMock()) {
       console.log("🛡️ Demo mode: Simulating message send", messageData);
       return { success: true, message: "Message sent (simulated)" };
     }
@@ -1947,10 +1952,8 @@ if (typeof ApiService === 'undefined') {
   // =========================== DASHBOARD METHODS ===========================
 
   async getAdminDashboardData() {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-
-    // In demo mode, return fallback immediately without hitting real API
-    if (isDemo) {
+    // In demo mode, return fallback immediately without hitting real API UNLESS it's a bypass token
+    if (this.shouldMock()) {
       console.log(
         "🛡️ Demo session – returning admin dashboard fallback immediately",
       );

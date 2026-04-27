@@ -17,12 +17,21 @@ window.DashboardLoaders = {
 
     async loadStats() {
         try {
-            const stats = await apiService.get('/admin/stats');
-            if (stats) {
-                if (document.getElementById('totalMembers')) document.getElementById('totalMembers').textContent = stats.totalMembers || 0;
-                if (document.getElementById('monthlyRevenue')) document.getElementById('monthlyRevenue').textContent = '£' + (stats.monthlyRevenue || 0).toLocaleString();
-                if (document.getElementById('activeEvents')) document.getElementById('activeEvents').textContent = stats.activeEvents || 0;
-                if (document.getElementById('pendingScouts')) document.getElementById('pendingScouts').textContent = stats.pendingScouts || 0;
+            const stats = await apiService.get('/admin');
+            if (stats && stats.statistics) {
+                const s = stats.statistics;
+                if (document.getElementById('totalMembers')) {
+                    document.getElementById('totalMembers').textContent = s.total_players || 0;
+                }
+                if (document.getElementById('monthlyRevenue')) {
+                    document.getElementById('monthlyRevenue').textContent = '£' + (s.monthly_revenue || 0).toLocaleString();
+                }
+                if (document.getElementById('activeEvents')) {
+                    document.getElementById('activeEvents').textContent = s.total_events || 0;
+                }
+                if (document.getElementById('pendingScouts')) {
+                    document.getElementById('pendingScouts').textContent = s.pending_invites || 0;
+                }
             }
         } catch (e) { console.warn("Stats load failed", e); }
     },

@@ -1390,8 +1390,8 @@ const UnifiedNav = {
                         </div>
                     ` : `
                         ${(this.getUserRole() === "admin" || this.getUserRole() === "organization" || this.getUserRole() === "platform_admin") ? `
-                        <button id="stripe-connect-btn" class="btn btn-secondary btn-small desktop-only" style="margin-right: 1rem; border-color: rgba(255,255,255,0.1);" onclick="UnifiedNav.manageStripeAccount()">
-                            <i class="fa fa-cc-stripe" style="margin-right: 6px;"></i> Stripe
+                        <button id="stripe-connect-btn" class="btn btn-secondary btn-small desktop-only" style="margin-right: 1rem; border-color: rgba(255,255,255,0.1); background-color: #6366f1; color: white;" onclick="UnifiedNav.manageStripeAccount()">
+                            <i class="fa fa-cc-stripe" style="margin-right: 6px;"></i> Connect Stripe
                         </button>
                         ` : ""}
                         

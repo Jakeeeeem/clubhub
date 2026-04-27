@@ -51,7 +51,10 @@ function authenticateToken(req, res, next) {
         // --- FETCH DEFAULT ORGANIZATION FOR BYPASS ---
         try {
             const orgResult = await pool.query(
-                "SELECT organization_id FROM organization_members WHERE user_id = $1 AND status = 'active' LIMIT 1",
+                `SELECT organization_id FROM organization_members 
+                 WHERE user_id = $1 AND status = 'active' 
+                 ORDER BY (CASE WHEN organization_id = 'd359a5fb-0787-4dde-9631-d30a9d8e827f' THEN 0 ELSE 1 END) ASC 
+                 LIMIT 1`,
                 [user.id]
             );
             if (orgResult.rows[0]) {
