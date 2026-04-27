@@ -469,36 +469,7 @@ if (typeof ApiService === 'undefined') {
       };
     }
 
-    // Demo intercepts for status/plan calls (demo-token can't auth against real API)
-    if (endpoint.includes("payments/stripe/connect/status") || endpoint.includes("payments/stripe/account")) {
-      console.log("🛡️ Demo Intercept: Returning mock Stripe status");
-      return {
-        success: true,
-        is_connected: false,
-        linked: false,
-        account_id: null,
-        demo: true
-      };
-    }
 
-    // Demo intercepts for Stripe Connect onboarding & management
-    if (endpoint.includes("/payments/stripe/connect/onboard")) {
-      return {
-        success: true,
-        url: null,
-        demo: true,
-        message: "Stripe onboarding is not available in demo mode."
-      };
-    }
-
-    if (endpoint.includes("/payments/stripe/connect/manage")) {
-      return {
-        success: true,
-        url: null,
-        demo: true,
-        message: "Stripe management is not available in demo mode."
-      };
-    }
 
     if (endpoint.includes("/payments/plans")) {
       return [
@@ -511,11 +482,6 @@ if (typeof ApiService === 'undefined') {
       return { success: true, plan: null, message: 'No active plan' };
     }
 
-    // Notifications also fail with demo-token
-    if (endpoint.includes("notifications")) {
-      console.log("🛡️ Demo Intercept: Returning empty notifications");
-      return { success: true, notifications: [], demo: true };
-    }
 
     return null;
   }

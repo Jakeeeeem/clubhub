@@ -1501,6 +1501,7 @@ const UnifiedNav = {
         { id: "events", label: "Events", icon: "📅" },
         { id: "finances", label: "Finance", icon: "💰" },
         { id: "staff", label: "Staff", icon: "👔" },
+        { id: "messenger", label: "Messenger", icon: "💬" },
       ];
     } else if (isSuperAdmin) {
       tabs = [
@@ -1593,18 +1594,8 @@ const UnifiedNav = {
   },
 
   async checkStripeStatus() {
-    // Skip real API check in demo mode
-    if (localStorage.getItem("isDemoSession") === "true") {
-      localStorage.setItem("stripeConnected", "false");
-      return;
-    }
-
     const btn = document.getElementById("stripe-connect-btn") || document.querySelector(".stripe-header-btn button");
     if (!btn || typeof apiService === "undefined") return;
-    // Skip check in demo mode
-    if (localStorage.getItem("isDemoSession") === "true") {
-      return;
-    }
 
     try {
       const status = await apiService.getStripeConnectStatus();
