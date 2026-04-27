@@ -1509,6 +1509,12 @@ const UnifiedNav = {
             }
 
             if (resp && resp.url) {
+                // If it's a mock demo link, showing a notification is better than a literal # redirect
+                if (resp.url.startsWith('#')) {
+                    showNotification("Redirecting to Stripe Express... (Mocked for Demo)", "success");
+                    return;
+                }
+                
                 console.log("🚀 Redirecting to Live Branded Stripe Portal:", resp.url);
                 // Use location.href strictly to guarantee navigation
                 window.location.href = resp.url;

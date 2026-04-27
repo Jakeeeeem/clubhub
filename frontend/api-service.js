@@ -415,6 +415,25 @@ if (typeof ApiService === 'undefined') {
       }
     }
 
+    if (endpoint.includes("/members") || endpoint.includes("/players")) {
+      if (localStorage.getItem("isDemoSession") === "true") {
+          const fb = this.getAdminDashboardFallback();
+          return { players: fb.players, staff: fb.staff, success: true };
+      }
+    }
+
+    if (endpoint.includes("/teams")) {
+      if (localStorage.getItem("isDemoSession") === "true") {
+          return { teams: this.getAdminDashboardFallback().teams, success: true };
+      }
+    }
+
+    if (endpoint.includes("/feed")) {
+      if (localStorage.getItem("isDemoSession") === "true") {
+          return { activity: this.getAdminDashboardFallback().activity || [], success: true };
+      }
+    }
+
     // --- DASHBOARDS ---
     if (endpoint.includes("/dashboard/admin") || endpoint.includes("/admin/stats")) {
         if (localStorage.getItem("isDemoSession") === "true") {

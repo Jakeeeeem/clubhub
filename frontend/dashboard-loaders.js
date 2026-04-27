@@ -17,7 +17,7 @@ window.DashboardLoaders = {
 
     async loadStats() {
         try {
-            const stats = await apiService.get('/api/admin/stats');
+            const stats = await apiService.get('/admin/stats');
             if (stats) {
                 if (document.getElementById('totalMembers')) document.getElementById('totalMembers').textContent = stats.totalMembers || 0;
                 if (document.getElementById('monthlyRevenue')) document.getElementById('monthlyRevenue').textContent = '£' + (stats.monthlyRevenue || 0).toLocaleString();
@@ -31,7 +31,7 @@ window.DashboardLoaders = {
         const container = document.getElementById('activityFeed');
         if (!container) return;
         try {
-            const { activity } = await apiService.get('/api/feed');
+            const { activity } = await apiService.get('/feed');
             if (!activity || activity.length === 0) return;
             
             container.innerHTML = activity.map(a => `
@@ -53,7 +53,7 @@ window.DashboardLoaders = {
         const container = document.getElementById('recentMembersList');
         if (!container) return;
         try {
-            const { players } = await apiService.get('/api/members');
+            const { players } = await apiService.get('/members');
             if (!players || players.length === 0) {
                 container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No recent members.</p>';
                 return;
@@ -78,7 +78,7 @@ window.DashboardLoaders = {
         const container = document.getElementById('teamsListContainer') || document.getElementById('adminTeamsContainer');
         if (!container) return;
         try {
-            const { teams } = await apiService.get('/api/teams');
+            const { teams } = await apiService.get('/teams');
             if (!teams || teams.length === 0) {
                 container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
                 return;
@@ -103,7 +103,7 @@ window.DashboardLoaders = {
         const tableBody = document.getElementById('staffTableBody');
         if (!tableBody) return;
         try {
-            const { staff } = await apiService.get('/api/members?role=coach');
+            const { staff } = await apiService.get('/members?role=coach');
             if (!staff || staff.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; opacity:0.5;">No staff found</td></tr>';
                 return;
@@ -126,7 +126,7 @@ window.DashboardLoaders = {
         const tbody = document.getElementById('membersTableBody');
         if (!tbody) return;
         try {
-            const response = await apiService.get('/api/members') || {};
+            const response = await apiService.get('/members') || {};
             let players = response.players || [];
             
             if ((!players || players.length === 0) && localStorage.getItem('isDemoSession') === 'true') {
