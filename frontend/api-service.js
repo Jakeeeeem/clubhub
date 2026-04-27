@@ -111,7 +111,7 @@ if (typeof ApiService === 'undefined') {
         success: true,
         user: user,
         currentGroup: {
-          id: user.groupId || "demo-club-id",
+          id: user.groupId || "d359a5fb-0787-4dde-9631-d30a9d8e827f",
           name: user.activePlayerId
             ? "Elite Academy (Player)"
             : "Pro Group Demo",
@@ -1030,7 +1030,7 @@ if (typeof ApiService === 'undefined') {
         is_platform_admin: true,
         userType: "admin",
         role: "superadmin",
-        groupId: "demo-club-id",
+        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
       },
       "demo-admin@clubhub.com": {
         id: "a575b4f0-99a1-4b33-a661-5f81f4acaeee", // Real seeded UUID
@@ -1039,7 +1039,7 @@ if (typeof ApiService === 'undefined') {
         account_type: "group",
         userType: "group",
         role: "admin",
-        groupId: "demo-club-id",
+        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
       },
       "demo-coach@clubhub.com": {
         id: "9e64ccf6-9c75-4354-acc9-9c74be7085d7", // Real seeded UUID
@@ -1048,7 +1048,7 @@ if (typeof ApiService === 'undefined') {
         account_type: "coach",
         userType: "coach",
         role: "coach",
-        groupId: "demo-club-id",
+        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
       },
       "demo-player@clubhub.com": {
         id: "demo-pro-player-id",
@@ -1057,7 +1057,7 @@ if (typeof ApiService === 'undefined') {
         account_type: "player",
         userType: "player",
         role: "player",
-        groupId: "demo-club-id",
+        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
       },
       "admin@clubhub.com": {
         id: "demo-admin-id",
@@ -1066,7 +1066,7 @@ if (typeof ApiService === 'undefined') {
         account_type: "admin",
         userType: "admin",
         role: "admin",
-        groupId: "demo-club-id",
+        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
       },
       "coach@clubhub.com": {
         id: "demo-coach-id",
@@ -1075,7 +1075,7 @@ if (typeof ApiService === 'undefined') {
         account_type: "coach",
         userType: "coach",
         role: "coach",
-        groupId: "demo-club-id",
+        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
       },
       "player@clubhub.com": {
         id: "demo-player-id",
@@ -1084,7 +1084,7 @@ if (typeof ApiService === 'undefined') {
         account_type: "player",
         userType: "player",
         role: "player",
-        groupId: "demo-club-id",
+        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
       },
     };
 

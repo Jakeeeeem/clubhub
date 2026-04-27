@@ -25,8 +25,15 @@ function authenticateToken(req, res, next) {
     });
   }
 
-  if (token && token.startsWith("demo-bypass-token:")) {
-    const email = token.split(":")[1];
+  if (token && (token.startsWith("demo-bypass-token:") || token.startsWith("demo-token-"))) {
+    let email;
+    if (token.startsWith("demo-bypass-token:")) {
+        email = token.split(":")[1];
+    } else {
+        // Handle format: demo-token-role-email
+        const parts = token.split("-");
+        email = parts[parts.length - 1]; // Assume last part is email
+    }
     return pool.query("SELECT id, email, account_type, is_platform_admin FROM users WHERE email = $1", [email])
       .then(async r => {
         let user;
@@ -40,7 +47,7 @@ function authenticateToken(req, res, next) {
           };
         } else {
           user = { 
-            id: 'demo-id', 
+            id: 'a575b4f0-99a1-4b33-a661-5f81f4acaeee', // Hardcoded fallback UUID (matches demo-admin)
             email: email, 
             accountType: 'organization', 
             role: 'admin',
@@ -122,9 +129,20 @@ async function injectOrgContext(req, res, next) {
   try {
     const userId = req.user.id;
     // Check for an organization header, otherwise look up the user's current preference
-    const orgHeader = req.headers["x-organization-id"];
-
+    const orgHeader = req.headers["x-organization-id"] || req.headers["x-club-id"];
     let orgId = orgHeader;
+
+    // 🛡️ UUID Validation to prevent postgres crashes on mock strings
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const isBypass = req.headers.authorization?.includes("demo-token-");
+
+    if (orgId && !uuidRegex.test(orgId)) {
+        if (isBypass) {
+            orgId = 'd359a5fb-0787-4dde-9631-d30a9d8e827f'; // Elite Pro Academy fallback
+        } else {
+            orgId = null;
+        }
+    }
 
     if (!orgId) {
       const prefs = await pool.query(
