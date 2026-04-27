@@ -1553,12 +1553,6 @@ const UnifiedNav = {
 
   async manageStripeAccount() {
     try {
-        // In demo mode, show a friendly message instead of hitting the real API
-        if (localStorage.getItem("isDemoSession") === "true") {
-            showNotification("💳 Stripe Connect is available on live accounts. Sign up to connect your Stripe and start accepting payments!", "info");
-            return;
-        }
-
         if (typeof apiService !== 'undefined') {
             showLoading(true);
             const status = await apiService.getStripeConnectStatus();
