@@ -456,7 +456,7 @@ const UnifiedNav = {
         container = existing.querySelector("#pro-bottom-nav-content");
         if (!container) {
           container = document.createElement("div");
-          container.id = "pro-bottom-nav-content";
+          container.id = 'pro-bottom-nav-content';
           existing.appendChild(container);
         }
       } else {
@@ -464,7 +464,7 @@ const UnifiedNav = {
         nav.className = "pro-bottom-nav mobile-only unified-bottom-nav";
         const inner = document.createElement("div");
         inner.className = "bottom-nav-container";
-        inner.id = "pro-bottom-nav-content";
+        inner.id = 'pro-bottom-nav-content';
         nav.appendChild(inner);
         document.body.appendChild(nav);
       }
@@ -941,13 +941,14 @@ const UnifiedNav = {
             <div id="stripe-header-btn-container" style="display:flex;"></div>
             <div id="notif-header-btn-container" style="display:flex;"></div>
             
-            <!-- Family Switcher + Profile Avatar grouped on far right -->
-            <div class="user-action-group" style="display:flex; align-items:center; gap:0.75rem; background:rgba(255,255,255,0.03); padding:4px 4px 4px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.06);">
+            <div class="user-action-group" style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.03); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.06);">
                 <div id="header-family-switcher-container" class="header-family-switcher-wrapper" style="display:flex; align-items:center;"></div>
 
                 <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
-                    style="display:flex; align-items:center; cursor:pointer; transition:all 0.2s;">
-                    <div class="user-avatar-sm" id="header-user-avatar" style="width:32px; height:32px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; border:1.5px solid rgba(255,255,255,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">${initial}</div>
+                    style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'none' : 'flex'}; align-items:center; gap:0.65rem; cursor:pointer; transition:all 0.2s; padding: 0 0.75rem 0 0.25rem;">
+                    <div class="user-avatar-sm" id="header-user-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; border:1.5px solid rgba(255,255,255,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">${initial}</div>
+                    <span class="user-name-text desktop-only" style="font-size:0.8rem; font-weight:700; color:white;">${name}</span>
+                    <svg class="group-switcher-arrow" width="8" height="8" viewBox="0 0 12 12" fill="none" style="opacity: 0.5;"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
                 </div>
             </div>
           </div>
@@ -1173,10 +1174,14 @@ const UnifiedNav = {
                         <span>${f.first_name}</span>
                     </div>
                 `).join('')}
-                <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:0.5rem;padding-top:0.5rem;">
-                    <div onclick="document.getElementById('familyDropdown')?.classList.remove('open'); if(typeof openAddChildModal==='function'){openAddChildModal();}else{window.location.href='player-dashboard.html#family';}" style="padding:0.5rem;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;font-size:0.82rem;color:var(--primary);border:1px dashed rgba(220,38,38,0.3);">
+                <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:0.5rem;padding-top:0.5rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                    <div onclick="document.getElementById('familyDropdown')?.classList.remove('open'); if(typeof openAddChildModal==='function'){openAddChildModal();}else{window.location.href='player-dashboard.html#family';}" style="padding:0.5rem;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--primary);border:1px dashed rgba(220,38,38,0.3);">
                         <div style="width:20px;height:20px;border-radius:50%;background:rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;">+</div>
                         <span>Add Family Member</span>
+                    </div>
+                    <div onclick="UnifiedNav.logout()" style="padding:0.5rem;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:#ef4444;">
+                        <span style="font-size:1.1rem; width:20px; text-align:center;">🚪</span>
+                        <span>Sign Out</span>
                     </div>
                 </div>
             </div>
@@ -2354,7 +2359,7 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
         <div class="nav-group-title"><span>Management</span></div>
         <a href="admin-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-dashboard.html', 'overview')" class="sidebar-link ${isActive('admin-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Dashboard</span></a>
         <a href="admin-members.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-members.html', 'members')" class="sidebar-link ${isActive('admin-members.html')}">${ICONS.nav.players}<span>Members</span></a>
-        <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>My Teams</span></a>
+        <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>Teams</span></a>
         <a href="admin-events.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-events.html', 'events')" class="sidebar-link ${isActive('admin-events.html')}">${ICONS.nav.events}<span>Event Manager</span></a>
         <a href="admin-venues.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-venues.html', 'venues')" class="sidebar-link ${isActive('admin-venues.html')}">${ICONS.nav.venue}<span>Venue Management</span></a>
         <a href="admin-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-tournament-manager.html', 'tournament-manager')" class="sidebar-link sidebar-sublink ${isActive('admin-tournament-manager.html')}" style="padding-left: 2.5rem; opacity: 0.85; font-size: 0.85rem;">${ICONS.nav.trophy}<span>Competition Management</span></a>
@@ -2380,7 +2385,7 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
         <div class="nav-group-title"><span>Coaching Hub</span></div>
         <a href="coach-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'overview')" class="sidebar-link ${isActive('coach-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
         <a href="admin-members.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-members.html', 'members')" class="sidebar-link ${isActive('admin-members.html')}">${ICONS.nav.players}<span>Squad Manager</span></a>
-        <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>My Teams</span></a>
+        <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>Squads & Teams</span></a>
         <a href="admin-events.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-events.html', 'events')" class="sidebar-link ${isActive('admin-events.html')}">${ICONS.nav.events}<span>Event Manager</span></a>
         <a href="admin-venues.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-venues.html', 'venues')" class="sidebar-link ${isActive('admin-venues.html')}">${ICONS.nav.venue}<span>My Venues</span></a>
         <a href="coach-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tournament-manager.html', 'tournament-manager')" class="sidebar-link ${isActive('coach-tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Hub</span></a>

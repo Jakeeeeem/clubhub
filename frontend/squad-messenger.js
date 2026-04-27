@@ -48,12 +48,10 @@ const SquadMessenger = {
           <div style="padding:1rem 1.25rem; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
             <span style="font-weight:700; font-size:0.95rem;">💬 Messages</span>
             <div style="display:flex; gap:0.5rem;">
-              ${isPlayer ? `
-                <button class="btn btn-secondary btn-small" onclick="SquadMessenger.showMassMessage()" title="Message entire squad">📢 Squad</button>
-              ` : `
+              ${isPlayer ? '' : `
                 <button class="btn btn-secondary btn-small" onclick="SquadMessenger.showMassMessage()" title="Broadcast to group">📢 Broadcast</button>
+                <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()">+ New</button>
               `}
-              <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()">+ New</button>
             </div>
           </div>
 
@@ -67,8 +65,8 @@ const SquadMessenger = {
           <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.07);">
             <button id="sq-tab-convos" onclick="SquadMessenger.switchTab('convos')"
               style="flex:1; padding:0.6rem; background:rgba(220,38,38,0.08); color:#f87171; border:none; border-bottom:2px solid var(--primary); font-size:0.8rem; font-weight:600; cursor:pointer;">Conversations</button>
-            <button id="sq-tab-contacts" onclick="SquadMessenger.switchTab('contacts')"
-              style="flex:1; padding:0.6rem; background:transparent; color:rgba(255,255,255,0.4); border:none; border-bottom:2px solid transparent; font-size:0.8rem; font-weight:600; cursor:pointer;">Contacts</button>
+            ${isPlayer ? '' : `<button id="sq-tab-contacts" onclick="SquadMessenger.switchTab('contacts')"
+              style="flex:1; padding:0.6rem; background:transparent; color:rgba(255,255,255,0.4); border:none; border-bottom:2px solid transparent; font-size:0.8rem; font-weight:600; cursor:pointer;">Contacts</button>`}
           </div>
 
           <!-- Conversation List -->
@@ -179,21 +177,29 @@ const SquadMessenger = {
       // Everyone can message - fetch group members via the squad endpoint
       let contacts = [];
       try {
-        const squadRes = await apiService.makeRequest('/api/coach/squad');
+        const squadRes = await apiService.makeRequest('/coach/squad');
         if (squadRes && Array.isArray(squadRes.players)) {
           contacts = contacts.concat(squadRes.players.map(p => ({ ...p, _role: 'player' })));
         }
-      } catch (e) { /* player endpoint may 403 for non-coaches */ }
+      } catch (e) {
+        // If coach endpoint fails (e.g. for Admin), try the general members endpoint
+        if (role === 'admin' || role === 'organization') {
+           const memRes = await apiService.makeRequest('/members');
+           if (memRes && Array.isArray(memRes.players)) {
+             contacts = contacts.concat(memRes.players.map(p => ({ ...p, _role: 'player' })));
+           }
+        }
+      }
 
       try {
-        const staffRes = await apiService.makeRequest('/api/members?role=coach');
+        const staffRes = await apiService.makeRequest('/members?role=coach');
         if (staffRes && Array.isArray(staffRes.coaches)) {
           contacts = contacts.concat(staffRes.coaches.map(c => ({ ...c, _role: 'coach' })));
         }
       } catch (e) {}
 
       try {
-        const adminRes = await apiService.makeRequest('/api/members?role=admin');
+        const adminRes = await apiService.makeRequest('/members?role=admin');
         if (adminRes && Array.isArray(adminRes.admins || adminRes.members)) {
           const admins = adminRes.admins || adminRes.members || [];
           contacts = contacts.concat(admins.filter(a => a.role === 'admin' || a.userType === 'admin').map(a => ({ ...a, _role: 'admin' })));
