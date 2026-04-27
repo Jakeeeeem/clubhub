@@ -7,31 +7,7 @@ if (typeof ApiService === 'undefined') {
     this.retryCount = {};
     this.maxRetries = 2;
 
-    // Smart demo mode detection:
-    // Only disable demo mode if the user has a REAL JWT (not a demo-bypass or demo-token).
-    // This allows test-direct-login users to stay in demo mode while still letting
-    // real backend connections work when a real auth token is present.
-    const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    const isLocalIP = /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(location.hostname);
-
-    if (isLocalhost || isLocalIP) {
-        const storedToken = localStorage.getItem('authToken') || '';
-        const isDemoToken = !storedToken
-            || storedToken === 'demo-token'
-            || storedToken.startsWith('demo-bypass-token')
-            || storedToken.startsWith('demo-');
-
-        // Only force-disable demo mode if we have a REAL token (proper JWT with dots)
-        const hasRealToken = !isDemoToken && storedToken.split('.').length === 3;
-
-        if (hasRealToken && localStorage.getItem('isDemoSession') === 'true'
-            && localStorage.getItem('isDemoSession_manual') !== 'true') {
-            // Real JWT found → switch to live backend mode
-            localStorage.setItem('isDemoSession', 'false');
-        }
-        // If no real token, leave demo mode as whatever the user set it to
-    }
-    
+    // Persistence of demo mode: always read from localStorage
     this.isDemo = localStorage.getItem("isDemoSession") === "true";
     
     // Signal to other scripts that unified nav is active (Dashboard pages only)
@@ -81,12 +57,7 @@ if (typeof ApiService === 'undefined') {
    * If it's a 'demo-token-' (bypass) or real JWT, we hit the backend.
    */
   shouldMock() {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-    const token = localStorage.getItem("authToken") || "";
-    if (isDemo && (token.startsWith("demo-token-") || token.split('.').length === 3)) {
-        return false;
-    }
-    return isDemo;
+    return localStorage.getItem("isDemoSession") === "true";
   }
 
   // Generic GET method for dashboard loaders
@@ -400,10 +371,16 @@ if (typeof ApiService === 'undefined') {
       }
     }
 
-    if (endpoint.includes("/members") || endpoint.includes("/players")) {
+    if (endpoint.includes("/members") || endpoint.includes("/players") || endpoint.includes("/coach/squad")) {
       if (localStorage.getItem("isDemoSession") === "true") {
           const fb = this.getAdminDashboardFallback();
-          return { players: fb.players, staff: fb.staff, success: true };
+          // Match the response format expected for /coach/squad as well
+          return { 
+            players: fb.players, 
+            staff: fb.staff, 
+            members: fb.players, // Compatibility
+            success: true 
+          };
       }
     }
 
@@ -465,6 +442,23 @@ if (typeof ApiService === 'undefined') {
     }
 
 
+    // --- MESSAGING & NOTIFICATIONS ---
+    if (endpoint.includes("/messages")) {
+      if (method === "GET") {
+        return this.getAdminDashboardFallback().messages || [];
+      }
+      if (method === "POST" || method === "PATCH") {
+        return { success: true, message: "Demo action successful" };
+      }
+    }
+
+    if (endpoint.includes("/notifications")) {
+      return [
+        { id: "n1", title: "Welcome to ClubHub", message: "Explore your new dashboard.", type: "system", created_at: new Date().toISOString() },
+        { id: "n2", title: "Meeting Reminder", message: "Staff meeting tomorrow at 10 AM.", type: "reminder", created_at: new Date().toISOString() }
+      ];
+    }
+
     return null;
   }
 
@@ -488,8 +482,9 @@ if (typeof ApiService === 'undefined') {
       const isDemo = localStorage.getItem("isDemoSession") === "true";
       const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-      if ((response.status === 401 || response.status === 403) && (isDemo || isLocal)) {
+      if ((response.status === 401 || response.status === 403 || response.status >= 500) && (isDemo || isLocal)) {
         try {
+          console.warn(`⚠️ API Error ${response.status} on ${endpoint} - Attempting demo fallback...`);
           const fallback = await this._interceptDemoRequest(endpoint, options);
           if (fallback !== null) return fallback;
         } catch (e) {
@@ -2425,7 +2420,26 @@ if (typeof ApiService === 'undefined') {
         }
       ],
       messages: [
-        { id: "m1", threadId: "t1", senderName: "Alex Morgan", subject: "Academy Update", body: "Check the new schedule for U12s.", timestamp: new Date().toISOString() }
+        { 
+          id: "m1", 
+          sender_id: "s1", 
+          receiver_id: "demo-pro-admin-id", 
+          sender_name: "Alex Morgan", 
+          receiver_name: "Admin",
+          content: "Check the new schedule for U12s. We have some changes for Friday.", 
+          created_at: new Date(Date.now() - 3600000).toISOString(),
+          read: false
+        },
+        { 
+          id: "m2", 
+          sender_id: "demo-pro-admin-id", 
+          receiver_id: "s1", 
+          sender_name: "Admin", 
+          receiver_name: "Alex Morgan",
+          content: "Thanks Alex, I'll take a look now.", 
+          created_at: new Date(Date.now() - 3000000).toISOString(),
+          read: true
+        }
       ],
       listings: [
         {

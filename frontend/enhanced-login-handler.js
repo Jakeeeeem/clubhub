@@ -322,6 +322,20 @@ async function determineUserRedirect(user) {
   });
 
   // 0. EXPLICIT DEMO REDIRECTS - Force correct dashboard for demo accounts
+  const isDemoAccount = 
+    userEmail === "demo-admin@clubhub.com" ||
+    userEmail === "admin@proclubdemo.com" ||
+    userEmail === "demo-coach@clubhub.com" ||
+    userEmail === "coach@proclubdemo.com" ||
+    userEmail === "demo-player@clubhub.com" ||
+    userEmail === "player@proclubdemo.com" ||
+    userEmail === "superadmin@clubhub.com";
+
+  if (isDemoAccount) {
+    console.log("🛡️ Demo account detected - forcing isDemoSession=true");
+    localStorage.setItem("isDemoSession", "true");
+  }
+
   if (
     userEmail === "demo-admin@clubhub.com" ||
     userEmail === "admin@proclubdemo.com"
