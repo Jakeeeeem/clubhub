@@ -459,19 +459,11 @@ if (typeof ApiService === 'undefined') {
     }
 
     // --- PAYMENTS & STRIPE ---
+    // User requested Stripe to not be mocked and work like real in demo mode for testing
     if (endpoint.includes("/payments/config")) {
       return {
         publishableKey: "pk_test_51RZtoWRthpGbefAaTaclnZlyGGcfJoYwqXUk8np1GC11EYv1VL0Z3UACVf8bbGjN7fiVvqbFiwM5ya96smTH5OTS008Hh1GnFi",
         success: true
-      };
-    }
-
-    if (endpoint.includes("/payments/stripe/connect/status") || endpoint.includes("/payments/stripe/account")) {
-      return {
-        success: true,
-        is_connected: false, // Force them to connect so they can see the live page
-        linked: false,
-        account_id: "acct_demo_123"
       };
     }
 
