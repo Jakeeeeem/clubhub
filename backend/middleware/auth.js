@@ -157,6 +157,15 @@ async function injectOrgContext(req, res, next) {
       return next();
     }
 
+    // UUID validation helper
+    const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+    if (!isUUID(orgId) || !isUUID(userId)) {
+      console.warn(`⚠️ Invalid UUID format detected: Org[${orgId}], User[${userId}]. Skipping context injection.`);
+      req.orgContext = null;
+      return next();
+    }
+
     // Get membership and role
     const memberResult = await pool.query(
       `
