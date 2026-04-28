@@ -38,9 +38,9 @@ async function seedMasterDemo() {
           lname: "Scout",
         },
         {
-          email: "coach@demo.com",
+          email: "demo-coach@clubhub.com",
           role: "coach",
-          fname: "Elite",
+          fname: "Demo",
           lname: "Coach",
         },
         {
@@ -50,10 +50,10 @@ async function seedMasterDemo() {
           lname: "Lead",
         },
         {
-          email: "parent@demo.com",
+          email: "demo-player@clubhub.com",
           role: "player",
-          fname: "Supportive",
-          lname: "Parent",
+          fname: "Demo",
+          lname: "Player",
         },
         {
           email: "referee@demo.com",

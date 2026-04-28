@@ -67,8 +67,17 @@ if (typeof ApiService === 'undefined') {
       if (userJson) {
         const user = JSON.parse(userJson);
         const role = (user.role || user.account_type || user.userType || "").toLowerCase();
-        if (role === 'admin' || role === 'organization' || role === 'platform_admin' || user.is_platform_admin) {
-            console.log("🚀 Admin role detected: Bypassing mock for live database data.");
+        const email = (user.email || "").toLowerCase();
+        const isDemoEmail = [
+          'demo-admin@clubhub.com', 
+          'demo-coach@clubhub.com', 
+          'demo-player@clubhub.com',
+          'superadmin@clubhub.com'
+        ].includes(email);
+
+        if (role === 'admin' || role === 'organization' || role === 'platform_admin' || 
+            role === 'coach' || role === 'player' || isDemoEmail) {
+            console.log(`🚀 Live Demo detected (${email || role}): Bypassing mock for real data.`);
             return false;
         }
       }
