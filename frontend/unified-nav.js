@@ -2252,7 +2252,7 @@ const UnifiedNav = {
   initSwipeGestures() {
     let startX = 0;
     let currentX = 0;
-    const threshold = 100;
+    const swipeThreshold = 70;
     const sidebar = document.getElementById("pro-sidebar");
     
     if (!sidebar) return;
@@ -2272,11 +2272,11 @@ const UnifiedNav = {
         if (!isMobile) return;
 
         // Swipe right from edge (open)
-        if (startX < 50 && diff > threshold) {
+        if (startX < 50 && diff > swipeThreshold) {
             this.toggleSidebar(true);
         }
         // Swipe left (close)
-        if (sidebar.classList.contains('active') && diff < -threshold) {
+        if (sidebar.classList.contains('active') && diff < -swipeThreshold) {
             this.toggleSidebar(false);
         }
 

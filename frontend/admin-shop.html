@@ -152,7 +152,7 @@
             }
         } catch (e) { console.warn('Demo auto-enable failed', e); }
     </script>
-<body>
+<body class="clubhub-unified dashboard-page">
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
 
     <!-- Unified Navigation will inject the Header and Sidebar automatically -->
@@ -171,7 +171,7 @@
             <!-- Dashboard Sections -->
             <div id="overview" class="dashboard-section">
                 <div class="stats-row"
-                    style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem;">
                     <div class="stat-card" onclick="window.location.href='admin-members.html'" style="cursor: pointer;">
                         <span class="stat-label">Total Members</span>
                         <span class="stat-number" id="totalMembers">47</span>
@@ -489,10 +489,6 @@
         </div>
     </main>
 
-    <!-- Mobile Bottom Nav -->
-    <nav class="pro-bottom-nav mobile-only">
-        <div class="bottom-nav-container" id="pro-bottom-nav-content"></div>
-    </nav>
 
     <!-- Create Team Modal -->
     <div id="createTeamModal" class="modal" style="display:none;">
