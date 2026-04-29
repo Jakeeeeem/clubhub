@@ -60,32 +60,22 @@ if (typeof ApiService === 'undefined') {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     if (!isDemo) return false;
 
-    // --- LIVE DATA OVERRIDE FOR ADMINS ---
-    // If the user is an admin or organization, we want to hit the REAL backend
     try {
-      const userJson = localStorage.getItem("currentUser");
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        const role = (user.role || user.account_type || user.userType || "").toLowerCase();
-        const email = (user.email || "").toLowerCase();
-        const isDemoEmail = [
-          'demo-admin@clubhub.com', 
-          'demo-coach@clubhub.com', 
-          'demo-player@clubhub.com',
-          'superadmin@clubhub.com'
-        ].includes(email);
+      const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      const role = (user.role || "").toLowerCase();
 
-        if (role === 'admin' || role === 'organization' || role === 'platform_admin' || 
-            role === 'coach' || role === 'player' || isDemoEmail) {
-            console.log(`🚀 Live Demo detected (${email || role}): Bypassing mock for real data.`);
-            return false;
-        }
+      // Only bypass mock in demo session if explicitly told to OR if it's a platform admin
+      // This ensures the demo is STABLE and doesn't 500/404 during a pitch.
+      if (role === 'platform_admin' || (localStorage.getItem("forceLiveData") === "true")) {
+        console.log(`🚀 Live testing detected (${role}): Bypassing mock for real data.`);
+        return false;
       }
     } catch (e) {
       console.warn("Failed to parse user for mock check:", e);
     }
-    
-    return isDemo;
+
+    console.log("🛡️ Demo Mode Active: Serving mock data for stability.");
+    return true;
   }
 
   // Generic GET method for dashboard loaders
@@ -106,9 +96,17 @@ if (typeof ApiService === 'undefined') {
       const role = user.activePlayerId ? "player" : user.role || "admin";
 
       const demoClubs = this.getAdminDashboardFallback().groups;
+      
+      // Mock family data for demo stability
+      const mockFamily = [
+        { id: 'f1', first_name: 'Leo', last_name: 'Junior', club_id: 'demo-club-id' },
+        { id: 'f2', first_name: 'Mia', last_name: 'Junior', club_id: 'demo-club-id' }
+      ];
+
       this.context = {
         success: true,
         user: user,
+        family: mockFamily,
         currentGroup: {
           id: user.groupId || "d359a5fb-0787-4dde-9631-d30a9d8e827f",
           name: user.activePlayerId
@@ -121,6 +119,10 @@ if (typeof ApiService === 'undefined') {
         organizations: demoClubs, // Compatibility
         clubs: demoClubs, // Compatibility
       };
+      
+      // Sync local storage for switcher immediate detection
+      localStorage.setItem("userFamily", JSON.stringify(mockFamily));
+      
       return this.context;
     }
 
@@ -399,7 +401,7 @@ if (typeof ApiService === 'undefined') {
       }
     }
 
-    if (endpoint.includes("/members") || endpoint.includes("/players") || endpoint.includes("/coach/squad")) {
+    if (endpoint.includes("/members") || endpoint.includes("/players") || endpoint.includes("/coach/squad") || endpoint === "/members") {
       if (localStorage.getItem("isDemoSession") === "true") {
           const fb = this.getAdminDashboardFallback();
           // Match the response format expected for /coach/squad as well
@@ -407,6 +409,7 @@ if (typeof ApiService === 'undefined') {
             players: fb.players, 
             staff: fb.staff, 
             members: fb.players, // Compatibility
+            coaches: fb.staff.filter(s => s.role === 'coach'),
             success: true 
           };
       }
@@ -425,7 +428,7 @@ if (typeof ApiService === 'undefined') {
     }
 
     // --- DASHBOARDS ---
-    if (endpoint.includes("/dashboard/admin") || endpoint.includes("/admin/stats")) {
+    if (endpoint === "/admin" || endpoint.includes("/dashboard/admin") || endpoint.includes("/admin/stats")) {
         if (localStorage.getItem("isDemoSession") === "true") {
             const fb = this.getAdminDashboardFallback();
             if (endpoint.includes("/stats")) {
@@ -488,7 +491,7 @@ if (typeof ApiService === 'undefined') {
       const isDemo = localStorage.getItem("isDemoSession") === "true";
       const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-      if ((response.status === 401 || response.status === 403 || response.status >= 500) && (isDemo || isLocal)) {
+      if ((response.status === 401 || response.status === 403 || response.status === 404 || response.status >= 500) && (isDemo || isLocal)) {
         try {
           console.warn(`⚠️ API Error ${response.status} on ${endpoint} - Attempting demo fallback...`);
           const fallback = await this._interceptDemoRequest(endpoint, options);

@@ -16,36 +16,38 @@
   <header class="header"></header>
 
   <main class="main dashboard-main">
-    <div class="container dashboard-container">
-      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
-        <div>
-          <h1 class="neon-text" style="font-size: 2rem; margin: 0;">📺 Academy TV</h1>
-          <p style="color: var(--text-muted); margin-top: 0.5rem;">Manage your club's training video library and drill assignments.</p>
+    <div id="overview" class="dashboard-section active" style="display: block;">
+      <div class="container dashboard-container">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+          <div>
+            <h1 class="neon-text" style="font-size: 2rem; margin: 0;">📺 Academy TV</h1>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Manage your club's training video library and drill assignments.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('addVideoModal')">+ Upload / Add Video</button>
         </div>
-        <button class="btn btn-primary" onclick="openModal('addVideoModal')">+ Upload / Add Video</button>
-      </div>
 
-      <!-- Filters & Tabs -->
-      <div class="glass-panel" style="padding: 1rem; margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between;">
-        <div class="tabs" style="border: none; margin: 0;">
-          <button class="tab-btn active" onclick="filterVideos('All')">All Videos</button>
-          <button class="tab-btn" onclick="filterVideos('Tactics')">Tactics</button>
-          <button class="tab-btn" onclick="filterVideos('Drills')">Technical Drills</button>
-          <button class="tab-btn" onclick="filterVideos('Fitness')">Fitness & Strength</button>
+        <!-- Filters & Tabs -->
+        <div class="glass-panel" style="padding: 1rem; margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between;">
+          <div class="tabs" style="border: none; margin: 0;">
+            <button class="tab-btn active" onclick="filterVideos('All')">All Videos</button>
+            <button class="tab-btn" onclick="filterVideos('Tactics')">Tactics</button>
+            <button class="tab-btn" onclick="filterVideos('Drills')">Technical Drills</button>
+            <button class="tab-btn" onclick="filterVideos('Fitness')">Fitness & Strength</button>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="videoSearch" placeholder="Search videos..." 
+              style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.6rem 1rem; border-radius: 10px; color: #fff; width: 250px;"
+              oninput="handleVideoSearch()">
+          </div>
         </div>
-        <div style="display: flex; gap: 0.5rem;">
-          <input type="text" id="videoSearch" placeholder="Search videos..." 
-            style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.6rem 1rem; border-radius: 10px; color: #fff; width: 250px;"
-            oninput="handleVideoSearch()">
-        </div>
-      </div>
 
-      <!-- Video Grid -->
-      <div id="academyTVGrid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
-        <!-- Videos will be loaded here -->
-        <div style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.5;">
-          <div class="loader" style="margin-bottom: 1rem;"></div>
-          Initialising Library...
+        <!-- Video Grid -->
+        <div id="academyTVGrid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+          <!-- Videos will be loaded here -->
+          <div style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.5;">
+            <div class="loader" style="margin-bottom: 1rem;"></div>
+            Initialising Library...
+          </div>
         </div>
       </div>
     </div>

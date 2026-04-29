@@ -1034,7 +1034,7 @@ const UnifiedNav = {
                     <div class="sidebar-footer" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.5rem;">
                         ${window.innerWidth < 992 ? `
                             <div id="sidebar-switcher-target" style="width: 100%; margin-bottom: 0.5rem;"></div>
-                            <div id="sidebar-family-switcher-container" style="width: 100%; margin-bottom: 1rem;"></div>
+                            <div id="sidebar-family-switcher-container" class="mobile-only" style="width: 100%; margin-bottom: 1rem;"></div>
                         ` : ''}
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
@@ -1114,10 +1114,20 @@ const UnifiedNav = {
 
   renderFamilySwitcher(targetContainer) {
     const isMobile = window.innerWidth < 992;
+    
+    // Logic: If we are on desktop, only render in the header. 
+    // If we are on mobile, only render in the sidebar (unless a targetContainer is explicitly provided).
     const container = targetContainer || 
                       (isMobile ? document.getElementById("sidebar-family-switcher-container") : document.getElementById("header-family-switcher-container")) || 
                       document.getElementById("family-switcher-target");
+    
     if (!container) return;
+
+    // Prevent rendering in sidebar on desktop
+    if (!isMobile && container.id === "sidebar-family-switcher-container") {
+        container.style.display = "none";
+        return;
+    }
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const userRole = this.getUserRole();
@@ -2530,7 +2540,7 @@ const UnifiedNav = {
     } else {
       menuHtml = `
                     <div class="nav-group-title">Main Hub</div>
-                    <div id="sidebar-family-switcher-container" style="padding: 0.25rem 0.75rem 0.75rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); margin-bottom: 0.5rem;"></div>
+                    <div id="sidebar-family-switcher-container" class="mobile-only" style="padding: 0.25rem 0.75rem 0.75rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); margin-bottom: 0.5rem;"></div>
                     <a href="player-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'overview')" class="sidebar-link ${isActive('player-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
                     <a href="player-dashboard.html#family" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'player-family')" class="sidebar-link ${p.includes('family') ? 'active' : ''}">${ICONS.nav.players}<span>My Family Hub</span></a>
                     <a href="player-dashboard.html#schedule" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'schedule')" class="sidebar-link ${p.includes('schedule') ? 'active' : ''}">${ICONS.nav.training}<span>Schedule</span></a>
