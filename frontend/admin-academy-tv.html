@@ -5,10 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Academy TV Manager - ClubHub</title>
-  <link rel="stylesheet" href="styles.css?v=20260429_v10">
-  <link rel="stylesheet" href="design-system.css?v=20260429_v10">
-  <link rel="stylesheet" href="unified-nav.css?v=20260429_v10">
-  <link rel="stylesheet" href="group-switcher.css?v=20260429_v10">
+  <link rel="stylesheet" href="styles.css?v=20260429_v11">
+  <link rel="stylesheet" href="design-system.css?v=20260429_v11">
+  <link rel="stylesheet" href="unified-nav.css?v=20260429_v11">
+  <link rel="stylesheet" href="group-switcher.css?v=20260429_v11">
 </head>
 
 <body class="clubhub-unified dashboard-page">
@@ -112,11 +112,11 @@
     </div>
   </div>
 
-  <script src="app-state.js?v=20260429_v10"></script>
-  <script src="api-service.js?v=20260429_v10"></script>
-  <script src="training.js?v=20260429_v10"></script>
-  <script src="unified-nav.js?v=20260429_v10"></script>
-  <script src="group-switcher.js?v=20260429_v10"></script>
+  <script src="app-state.js?v=20260429_v11"></script>
+  <script src="api-service.js?v=20260429_v11"></script>
+  <script src="training.js?v=20260429_v11"></script>
+  <script src="unified-nav.js?v=20260429_v11"></script>
+  <script src="group-switcher.js?v=20260429_v11"></script>
 
   <script>
     let allDrills = [];
@@ -164,7 +164,7 @@
         <div class="glass-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
           <div style="aspect-ratio: 16/9; background: #000; position: relative;">
             <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4);">
-              <span style="font-size: 3rem; color: #fff; cursor: pointer;" onclick="previewVideo('${drill.demo_video_url}')">▶</span>
+              <span style="font-size: 3rem; color: #fff; cursor: pointer;" onclick="previewVideo('${drill.demo_video_url}', '${drill.title}')">▶</span>
             </div>
             <div style="position: absolute; top: 1rem; left: 1rem; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">
               ${drill.category}
@@ -240,14 +240,18 @@
        }
     }
 
-    function previewVideo(url) {
-      // Basic logic to handle YouTube/Vimeo embed conversion if needed
-      let embedUrl = url;
-      if (url.includes('youtube.com/watch?v=')) {
-          const id = url.split('v=')[1].split('&')[0];
-          embedUrl = `https://www.youtube.com/embed/${id}`;
+    function previewVideo(url, title = "Video Preview") {
+      if (window.UnifiedNav && typeof window.UnifiedNav.openVideoModal === 'function') {
+          window.UnifiedNav.openVideoModal(title, url);
+      } else {
+          // Fallback if modal system fails
+          let embedUrl = url;
+          if (url.includes('youtube.com/watch?v=')) {
+              const id = url.split('v=')[1].split('&')[0];
+              embedUrl = `https://www.youtube.com/embed/${id}`;
+          }
+          window.open(embedUrl, '_blank');
       }
-      window.open(embedUrl, '_blank');
     }
 
     function openAssignModal(drillId) {

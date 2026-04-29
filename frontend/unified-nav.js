@@ -2802,10 +2802,28 @@ const UnifiedNav = {
     });
 
     // 3. Ensure dynamic elements are rendered
-    // Disabled redundant header switcher as it is now in the sidebar
-    // this.renderHeaderSwitcher();
     this.renderHeaderNotifications();
     this.renderStripeHeaderButton();
+
+    // 4. Ensure Video Modal exists for openVideoModal to work
+    if (!document.getElementById("videoPlayerModal")) {
+        const videoModalHtml = `
+          <div id="videoPlayerModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.95); z-index:100000;">
+            <div class="modal-content" style="max-width:1000px; width:95%; background:transparent; box-shadow:none; padding:0; position:relative;">
+              <button class="btn btn-secondary" onclick="closeModal('videoPlayerModal')" style="position:absolute; top:-40px; right:0; border-radius:50%; width:36px; height:36px; padding:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white;">✕</button>
+              <div id="videoPlayerContainer" style="aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+                <!-- Iframe/Video injected here -->
+              </div>
+              <div id="videoPlayerTitle" style="margin-top:1rem; font-size:1.2rem; font-weight:700; color:white; text-align:center; font-family:var(--font-heading);"></div>
+            </div>
+          </div>
+        `;
+        const div = document.createElement('div');
+        div.innerHTML = videoModalHtml;
+        document.body.appendChild(div.firstElementChild);
+    }
+
+    console.log("✅ UnifiedNav Init Complete.");
   },
 
   /**

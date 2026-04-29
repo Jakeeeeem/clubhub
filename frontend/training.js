@@ -28,9 +28,14 @@ const TrainingService = {
   },
 
   // ── Drill Library ──────────────────────────────────────────
-  getDrills(filters = {}) {
-    const params = new URLSearchParams(filters).toString();
-    return this._fetch(`/training/drills${params ? '?' + params : ''}`);
+  async getDrills(filters = {}) {
+    try {
+      const params = new URLSearchParams(filters).toString();
+      return await this._fetch(`/training/drills${params ? '?' + params : ''}`);
+    } catch (err) {
+      console.warn("TrainingService: getDrills failed", err);
+      return { drills: [] };
+    }
   },
 
   getDrill(id) { return this._fetch(`/training/drills/${id}`); },
