@@ -56,9 +56,12 @@ if (typeof ApiService === 'undefined') {
    * We only return mock data if isDemoSession is true AND we have a basic demo token.
    * If it's a 'demo-token-' (bypass) or real JWT, we hit the backend.
    */
+  /**
+   * Determine if we should return mock data or hit the live API.
+   * User requested "all working data not mock" - forcing live data for everything.
+   */
   shouldMock() {
-    // User requested "all working data not mock" - forcing live data for everything.
-    console.log("🌐 Forcing Live API: Mocking disabled by configuration.");
+    // FORCE LIVE DATA for all requests as per user request
     return false;
   }
 
@@ -3471,17 +3474,17 @@ if (typeof ApiService === 'undefined') {
       method: "PATCH",
       body: JSON.stringify({ verified }),
     });
-  }
+    }
   }
 
-  // Expose class to window to avoid redeclaration on subsequent loads
+  // Expose class to window
   window.ApiService = ApiService;
+}
 
-  // Create and export a singleton instance
-  // Use window.apiService to avoid redeclaration errors if script is loaded twice
-  if (!window.apiService) {
-    window.apiService = new ApiService();
-  }
+// Create and export a singleton instance
+// This is OUTSIDE the if block to ensure it runs even if script is re-loaded
+if (!window.apiService && typeof ApiService !== 'undefined') {
+  window.apiService = new ApiService();
 }
 
 // Enhanced error handling and logging
