@@ -257,7 +257,7 @@ const UnifiedNav = {
     const fullUrl = window.location.href.toLowerCase();
     
     const isLoggedIn = !!(token && user);
-    const isDashboardPath = /dashboard|members|teams|events|finances|shop|performance|schedule|scout|finder|finder-/.test(path) || /finder/.test(fullUrl);
+    const isDashboardPath = /dashboard|members|teams|events|finances|shop|schedule|scout|finder|finder-/.test(path) || /finder/.test(fullUrl);
     const isLanding = (fileName === "index.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html") && !fullUrl.includes('#');
 
     if (isDashboardPath && !isLoggedIn && !isDemo) {
@@ -268,7 +268,7 @@ const UnifiedNav = {
     }
 
     const isDesktop = window.matchMedia("(min-width: 992px)").matches;
-    const dashboardMarkers = ["dashboard", "admin-", "coach-", "player-", "super-admin-", "scout-", "finder", "booking", "messenger", "performance", "finances", "schedule", "chat", "shop"];
+    const dashboardMarkers = ["dashboard", "admin-", "coach-", "player-", "super-admin-", "scout-", "finder", "booking", "messenger", "finances", "schedule", "chat", "shop"];
     const hasDashboardPattern = dashboardMarkers.some(marker => fullUrl.includes(marker));
     const hasDashboardClass = document.body.classList.contains("dashboard-view") || document.body.classList.contains("app-layout");
     const hasDashboardMarker = !!(document.querySelector('.dashboard-main') || document.querySelector('.finder-container') || document.querySelector('.dashboard-container'));
@@ -2315,7 +2315,7 @@ const UnifiedNav = {
     const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
     
     // Explicit player path check
-    if (/player-|schedule|performance|finances|shop|chat/.test(url)) return "player";
+    if (/player-|schedule|finances|shop|chat/.test(url)) return "player";
     
     // Fallback to role-based default
     if (userRole === "player" || userRole === "parent") return "player";
@@ -2440,7 +2440,7 @@ const UnifiedNav = {
 
     const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
     
-    const isPlayer = /player-|schedule|performance|finances|shop|chat/.test(url) || userRole === "player" || userRole === "parent";
+    const isPlayer = /player-|schedule|finances|shop|chat/.test(url) || userRole === "player" || userRole === "parent";
     const isSuperAdmin = userRole === "platform_admin" || userRole === "superadmin" || url.includes("super-admin");
     const isCoach = userRole === "coach" || userRole === "staff" || url.includes("coach-");
     const isScout = userRole === "scout" || url.includes("scout-") || url.includes("scouting");
@@ -2451,7 +2451,7 @@ const UnifiedNav = {
     // Player detection
     const dashboardMode = localStorage.getItem("dashboardMode") || "group";
     const isPlayerRole = userRole === "player" || userRole === "parent" || !!localStorage.getItem("activePlayerId") || dashboardMode === "player";
-    const isPlayerUrl = /player-|schedule|performance|finances|shop|chat/.test(url);
+    const isPlayerUrl = /player-|schedule|finances|shop|chat/.test(url);
     
     // Final logic: Explicit role first, then URL fallback
     let finalRole = (userRole || "player").toLowerCase();
@@ -2462,7 +2462,7 @@ const UnifiedNav = {
     else if (p.includes("admin") || p.includes("members") || p.includes("teams") || p.includes("form-builder")) finalRole = "admin";
     else if (p.includes("scout") || p.includes("scouting")) finalRole = "scout";
     else if (p.includes("coach")) finalRole = "coach";
-    else if (p.includes("player-") || p.includes("schedule") || p.includes("performance")) finalRole = "player";
+    else if (p.includes("player-") || p.includes("schedule")) finalRole = "player";
     else if (dashboardMode === "player") finalRole = "player";
     
     // Safety check: if user is admin but on a coach page, stay admin
@@ -2556,7 +2556,6 @@ const UnifiedNav = {
                     <a href="player-dashboard.html#family" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'player-family')" class="sidebar-link ${p.includes('family') ? 'active' : ''}">${ICONS.nav.players}<span>My Family Hub</span></a>
                     <a href="player-dashboard.html#schedule" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'schedule')" class="sidebar-link ${p.includes('schedule') ? 'active' : ''}">${ICONS.nav.training}<span>Schedule</span></a>
                     <a href="player-dashboard.html#teams" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'teams')" class="sidebar-link ${p.includes('teams') ? 'active' : ''}">${ICONS.nav.teams}<span>My Teams</span></a>
-                    <a href="player-performance.html" onclick="return UnifiedNav.handleNavClick(event, 'player-performance.html', 'performance')" class="sidebar-link ${isActive('player-performance.html') || p.includes('performance') ? 'active' : ''}" style="display: none;">${ICONS.nav.players}<span>Performance</span></a>
                     <a href="player-academy-tv.html" onclick="return UnifiedNav.handleNavClick(event, 'player-academy-tv.html', 'academy-tv')" class="sidebar-link ${isActive('player-academy-tv.html')}">${ICONS.nav.academy}<span>Academy TV</span></a>
                     <a href="player-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'player-finances.html', 'payments')" class="sidebar-link ${isActive('player-finances.html') || p.includes('payments') ? 'active' : ''}">${ICONS.nav.finance}<span>Finances</span></a>
                     
