@@ -210,7 +210,12 @@ if (typeof ApiService === 'undefined') {
         item.roles.includes("all") || item.roles.includes(role.toLowerCase())
       );
     }
-    return await this.makeRequest(`/feed?role=${role}`);
+    try {
+      return await this.makeRequest(`/feed?role=${role}`);
+    } catch (err) {
+      console.warn(`⚠️ Feed endpoint not available (${role}):`, err);
+      return []; // Return empty instead of crashing the dashboard
+    }
   }
 
   async getMessages(type = "all") {
@@ -3482,9 +3487,9 @@ if (typeof ApiService === 'undefined') {
 }
 
 // Create and export a singleton instance
-// This is OUTSIDE the if block to ensure it runs even if script is re-loaded
-if (!window.apiService && typeof ApiService !== 'undefined') {
-  window.apiService = new ApiService();
+// Use window.ApiService explicitly to ensure it's found even if local scoping is tricky
+if (!window.apiService && typeof window.ApiService !== 'undefined') {
+  window.apiService = new window.ApiService();
 }
 
 // Enhanced error handling and logging

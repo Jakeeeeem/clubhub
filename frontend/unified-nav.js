@@ -976,6 +976,10 @@ const UnifiedNav = {
       </div>
     `;
 
+    // Switchers now move to sidebar by request
+    // CRITICAL: Sidebar must render BEFORE switcher components on mobile so containers exist
+    this.renderSidebar();
+
     // CRITICAL: Call renderers immediately after HTML injection to ensure switchers appear
     this.renderHeaderSwitcher();
     this.renderFamilySwitcher();
@@ -989,15 +993,6 @@ const UnifiedNav = {
     if (notifContainer) this.renderHeaderNotifications(notifContainer);
 
     this.syncUserData();
-
-    // On mobile, also render switcher in the header target if it exists
-    // For mobile devices, we want the switcher in the header if space allows, 
-    // or we ensure it's in the mobile sidebar.
-    const isMobile = window.innerWidth < 992;
-    
-    // Switchers now move to sidebar by request
-    this.renderSidebar();
-    
 
     this.renderTopTabs();
   },
