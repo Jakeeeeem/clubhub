@@ -74,6 +74,29 @@ if (window.__groupSwitcherDefined) {
       .pro-sidebar .group-switcher { width: 100%; margin-bottom: 1rem; }
       .pro-sidebar .group-switcher-trigger { width: 100%; background: rgba(0,0,0,0.2); }
       .pro-sidebar .group-switcher-dropdown { left: 0; width: calc(var(--sidebar-width, 280px) - 24px); }
+
+      /* Mobile Header Overrides */
+      @media (max-width: 991px) {
+        .group-switcher-dropdown { 
+          width: calc(100vw - 32px); 
+          max-width: 340px; 
+          left: 50% !important; 
+          transform: translateX(-50%) translateY(-12px); 
+        }
+        .group-switcher-dropdown.open { transform: translateX(-50%) translateY(0); }
+        .group-switcher-trigger { min-width: auto; width: 100%; }
+        
+        /* When inside sidebar on mobile */
+        .pro-sidebar .group-switcher-dropdown {
+          left: 0 !important;
+          transform: translateY(-12px) !important;
+          width: calc(100% - 16px) !important;
+          margin: 0 8px;
+        }
+        .pro-sidebar .group-switcher-dropdown.open {
+          transform: translateY(0) !important;
+        }
+      }
     `;
     document.head.appendChild(style);
   }

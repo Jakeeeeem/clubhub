@@ -196,7 +196,7 @@ async function seedMasterDemo() {
 
       // Ensure demo coaches exist in `staff` so teams can reference coach_id
       const staffMap = {};
-      const coachEmails = ["coach@demo.com", "coach2@demo.com"];
+      const coachEmails = ["demo-coach@clubhub.com", "coach2@demo.com"];
       // Resolve a valid club id for staff.club_id (prefer existing club owned by admin)
       let clubForStaffRes = await client.query(
         "SELECT id FROM clubs WHERE owner_id = $1 LIMIT 1",
@@ -329,7 +329,7 @@ async function seedMasterDemo() {
           `INSERT INTO players (user_id, first_name, last_name, email, date_of_birth, position, club_id)
             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
           [
-            userMap["parent@demo.com"],
+            userMap["demo-player@clubhub.com"],
             fname,
             lname,
             `player${i}@demo.com`,
@@ -518,7 +518,7 @@ async function seedMasterDemo() {
       // --- 10. TACTICS ---
       console.log("📋 Creating Tactical Formations for all coaches...");
       const formations = ["4-3-3", "4-4-2", "3-5-2", "4-2-3-1", "4-1-4-1"];
-      const coaches = [staffMap["coach@demo.com"], staffMap["coach2@demo.com"]];
+      const coaches = coachEmails.map(email => staffMap[email]).filter(id => id);
 
       for (const coachId of coaches) {
         for (let f = 0; f < 3; f++) {

@@ -6072,3 +6072,171 @@ input:focus + .toggle-slider {
         grid-template-columns: 1fr !important;
     }
 }
+
+/* ============================================================================
+   GLOBAL MOBILE UI OVERRIDES (Ensure all pages render well on small screens)
+   ============================================================================ */
+@media (max-width: 991px) {
+    /* 1. Force all dashboard grids to stack */
+    .dashboard-grid, .dash-grid, .grid-2, .grid-3, .grid-4, .stats-grid, .stats-row, .stat-group, .card-grid, .dashboard-card-strip {
+        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1.25rem !important;
+    }
+
+    /* 2. Catch-all for inline style grids */
+    div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    /* 3. Stat blocks specifically - allow 2 columns on medium mobile if not too crowded */
+    @media (min-width: 480px) {
+        .stats-grid, .stats-row, .stat-group, .dashboard-card-strip {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+        }
+    }
+
+    /* 4. Swipable Horizontal Tabs for all dashboard sections */
+    .tabs, .dashboard-tabs, .tab-buttons {
+        display: flex !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 0.75rem !important;
+        gap: 0.5rem !important;
+        scrollbar-width: none !important;
+        margin-left: -1rem !important;
+        margin-right: -1rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    .tabs::-webkit-scrollbar { display: none !important; }
+    .tabs button, .tab-btn, .tab-item {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* 5. Universal Table to Card Conversion */
+    .dashboard-section table:not(.no-mobile-cards) {
+        display: block !important;
+        width: 100% !important;
+    }
+    .dashboard-section table:not(.no-mobile-cards) thead {
+        display: none !important;
+    }
+    .dashboard-section table:not(.no-mobile-cards) tbody,
+    .dashboard-section table:not(.no-mobile-cards) tr,
+    .dashboard-section table:not(.no-mobile-cards) td {
+        display: block !important;
+        width: 100% !important;
+    }
+    .dashboard-section table:not(.no-mobile-cards) tr {
+        background: rgba(255,255,255,0.03) !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        border-radius: 16px !important;
+        padding: 1rem !important;
+        margin-bottom: 1.25rem !important;
+        position: relative !important;
+    }
+    .dashboard-section table:not(.no-mobile-cards) td {
+        border: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 0.75rem 0 !important;
+        text-align: right !important;
+        font-size: 0.9rem !important;
+    }
+    .dashboard-section table:not(.no-mobile-cards) td:last-child {
+        border-bottom: none !important;
+    }
+    .dashboard-section table:not(.no-mobile-cards) td[data-label]::before {
+        content: attr(data-label) !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        font-size: 0.65rem !important;
+        color: var(--text-muted) !important;
+        text-align: left !important;
+        margin-right: 1rem !important;
+    }
+
+    /* 6. Layout Sidebar Stacking */
+    .dashboard-layout-sidebar, .layout-with-sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2rem !important;
+    }
+    .dashboard-layout-sidebar > aside, .layout-sidebar {
+        width: 100% !important;
+        order: 2 !important;
+    }
+    .dashboard-layout-sidebar > main, .layout-main {
+        width: 100% !important;
+        order: 1 !important;
+    }
+
+    /* 7. Tactical Board Fixes */
+    .equipment-tray {
+        flex-direction: row !important;
+        height: auto !important;
+        overflow-x: auto !important;
+        padding: 1rem !important;
+        background: rgba(0,0,0,0.2) !important;
+        border-radius: 12px !important;
+        margin-bottom: 1rem !important;
+    }
+    .pitch-container {
+        min-height: 350px !important;
+        touch-action: none !important;
+    }
+    .tactical-sidebar {
+        width: 100% !important;
+        margin-top: 1rem !important;
+    }
+
+    /* 8. Container Normalization */
+    .dashboard-container, .container {
+        padding: 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    /* 9. Header Stacking for flex sections */
+    .section-header, .panel-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 1rem !important;
+    }
+    .section-header .btn, .panel-header .btn {
+        width: 100% !important;
+    }
+
+    /* 10. Forms & Inputs */
+    .profile-form .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+    input, select, textarea {
+        font-size: 16px !important; /* Fixes iOS zoom */
+    }
+
+    /* 11. Messaging */
+    .messenger-container {
+        grid-template-columns: 1fr !important;
+        height: calc(100vh - 120px) !important;
+    }
+    .messenger-sidebar {
+        display: none !important; /* Hide list when thread is open, or use a toggle */
+    }
+    .messenger-sidebar.active {
+        display: flex !important;
+        position: absolute !important;
+        inset: 0 !important;
+        z-index: 100 !important;
+    }
+}

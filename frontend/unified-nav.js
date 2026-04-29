@@ -915,29 +915,11 @@ const UnifiedNav = {
       <div class="nav-container nav container" style="display:flex; align-items:center; width:100%; height:100%;">
 
         <!-- MOBILE HEADER: Back | Centered Logo | Profile -->
-        <div class="logo-area-wrapper mobile-only" style="display:flex; align-items:center; justify-content:space-between; width:100%; position:relative;">
-          
-          <div class="header-left-actions" style="display:flex; align-items:center; gap:0.5rem;">
-            ${isSubPage ? `
-              <div class="back-button" onclick="window.history.back()" style="width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); border-radius:10px;">
-                ${ICONS.back}
-              </div>
-            ` : `
-              <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="display:flex; align-items:center; justify-content:center;">
+        <div class="logo-area-wrapper mobile-only" style="display: flex; align-items: center; gap: 0.85rem;">
+            <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
                 ${ICONS.menu}
-              </div>
-            `}
-          </div>
-          
-          <div class="mobile-logo-centered" style="position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:0.5rem;" onclick="window.location.href='index.html'">
-            <img src="images/logo.png" alt="Logo" style="height:28px; filter:drop-shadow(0 0 10px rgba(220,38,38,0.3));">
-            <span style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.1rem; color:var(--primary);">ClubHub</span>
-          </div>
-
-          <div class="header-right-actions" style="display:flex; align-items:center; gap:0.5rem;">
-             <div id="header-mobile-switcher-target" style="display:flex; align-items:center;"></div>
-             <div class="mobile-profile-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width:36px; height:36px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem; border:2px solid rgba(255,255,255,0.1);">${initial}</div>
-          </div>
+            </div>
+            <img src="/images/logo.png" alt="ClubHub" style="height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
         </div>
 
         <!-- DESKTOP HEADER: Page Title + Group Switcher | Right Actions -->
@@ -1035,15 +1017,15 @@ const UnifiedNav = {
 
       // Build inner HTML for aside
       const asideInner = `
-                    <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem; position: relative;">
-                        <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem;">
-                            <img src="images/logo.png" alt="Logo" style="width: 32px; height: 32px;">
-                            <span style="font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px;">ClubHub</span>
-                        </div>
-                        <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; width: 42px; height: 42px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                            ${ICONS.close}
-                        </button>
+                <div class="sidebar-header" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <img src="/images/logo.png" alt="Logo" style="width: 32px; height: 32px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
+                        <span style="font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; color: #fff;">ClubHub <span style="color: var(--primary);">PRO</span></span>
                     </div>
+                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer;">
+                        ${ICONS.close}
+                    </button>
+                </div>
 
                     <div id="sidebar-nav-content" class="sidebar-nav" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
                         <!-- Populated by renderMenu() -->
@@ -1337,20 +1319,24 @@ const UnifiedNav = {
     const header = document.querySelector("header.header, .pro-header");
     if (!header) return;
 
-    let nav = header.querySelector(".nav-container, .nav");
-    if (!nav) return;
-
-    // Add Hamburger if missing (Mobile only)
-    if (
-      !nav.querySelector("#side-menu-trigger") &&
-      !nav.querySelector(".side-menu-trigger")
-    ) {
-      const trigger = document.createElement("div");
-      trigger.className = "side-menu-trigger mobile-only";
-      trigger.id = "side-menu-trigger";
-      trigger.onclick = () => UnifiedNav.toggleSidebar(true);
-      trigger.innerHTML = ICONS.menu;
-      nav.insertBefore(trigger, nav.firstChild);
+    // Mobile Menu Button (Hamburger)
+    if (!document.getElementById('side-menu-trigger')) {
+        const trigger = document.createElement('div');
+        trigger.id = "side-menu-trigger";
+        trigger.className = "side-menu-trigger mobile-only";
+        trigger.innerHTML = ICONS.menu;
+        trigger.onclick = () => UnifiedNav.toggleSidebar(true);
+        
+        // Insert at the beginning of the header logo area or before nav-buttons
+        const header = document.querySelector('.pro-header, .header');
+        if (header) {
+            const navButtons = header.querySelector('.nav-buttons');
+            if (navButtons) {
+                header.insertBefore(trigger, navButtons.previousSibling || navButtons);
+            } else {
+                header.prepend(trigger);
+            }
+        }
     }
   },
 
@@ -1694,54 +1680,69 @@ const UnifiedNav = {
       navHtml = `
                 <a href="scout-dashboard.html" class="bottom-nav-link active" onclick="if(typeof showScoutSection === 'function') { showScoutSection('discovery'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <span>Discover</span>
                 </a>
                 <a href="scout-dashboard.html" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('watchlist'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                    <span>Watchlist</span>
                 </a>
                 <a href="scout-dashboard.html" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span>Chat</span>
                 </a>
                 <a href="scout-dashboard.html" class="bottom-nav-link" onclick="if(typeof showScoutSection === 'function') { showScoutSection('analytics'); return false; }">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    <span>Market</span>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    <span>More</span>
                 </a>
             `;
     } else if (isSuperAdmin) {
       navHtml = `
                 <a href="super-admin-dashboard.html" class="bottom-nav-link active" onclick="if(typeof showSection === 'function') { showSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>Console</span>
                 </a>
                 <a href="super-admin-dashboard.html" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('groups'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3"></path><path d="M19 21V11"></path><path d="M5 21V11"></path></svg>
+                    <span>Groups</span>
                 </a>
                 <a href="super-admin-dashboard.html" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('users'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Users</span>
                 </a>
                 <a href="super-admin-dashboard.html" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('activity'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    <span>Logs</span>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    <span>More</span>
                 </a>
             `;
     } else {
       navHtml = `
                 <a href="admin-dashboard.html" class="bottom-nav-link active" onclick="if(typeof showSection === 'function') { showSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span>Home</span>
                 </a>
                 <a href="admin-dashboard.html" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('members'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Members</span>
                 </a>
                 <a href="tournament-manager.html" class="bottom-nav-link">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>Events</span>
                 </a>
                 <a href="admin-dashboard.html" class="bottom-nav-link" onclick="if(typeof showSection === 'function') { showSection('finances'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    <span>Finance</span>
                 </a>
                 <a href="#" class="bottom-nav-link" onclick="UnifiedNav.toggleSidebar(true); return false;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    <span>More</span>
                 </a>
             `;
     }
@@ -2209,29 +2210,33 @@ const UnifiedNav = {
     if (show) {
       sidebar.classList.add("active");
       overlay.classList.add("active");
-      // Ensure inline display is set so CSS cascade doesn't accidentally keep it hidden
-      try { sidebar.style.setProperty('display','flex','important'); } catch (e) {}    const userRole = (localStorage.getItem("userType") || localStorage.getItem("userRole") || "").toLowerCase();
-    let finalRole = userRole;
+      document.body.classList.add("sidebar-open");
+      
+      // Ensure specific display properties for cross-browser reliability
+      try { 
+        sidebar.style.setProperty('display','flex','important');
+        overlay.style.setProperty('display','block','important');
+      } catch (e) {}
 
-    // Critical Fallback: Use URL if role is missing in storage
-    if (!finalRole) {
-        if (isDashboard) {
-            if (p.includes("admin")) finalRole = "admin";
-            else if (p.includes("coach")) finalRole = "coach";
-            else if (p.includes("scout")) finalRole = "scout";
-            else if (p.includes("player")) finalRole = "player";
-        }
-    }
-    
-    // Default to player if still unknown but on a dashboard
-    if (!finalRole && isDashboard) finalRole = "player";
-try { overlay.style.setProperty('display','block','important'); } catch (e) {}
       this.syncUserData();
     } else {
       sidebar.classList.remove("active");
       overlay.classList.remove("active");
-      try { sidebar.style.removeProperty('display'); } catch (e) {}
-      try { overlay.style.removeProperty('display'); } catch (e) {}
+      document.body.classList.remove("sidebar-open");
+
+      try { 
+        sidebar.style.removeProperty('display');
+        overlay.style.removeProperty('display');
+      } catch (e) {}
+      
+      // Also close any open dropdowns inside sidebar
+      const switchers = sidebar.querySelectorAll('.group-switcher-dropdown.open');
+      switchers.forEach(s => s.classList.remove('open'));
+    }
+
+    // Initialize swipe gestures if not already done
+    if (!this._swipeInitialized) {
+        this.initSwipeGestures();
     }
 
     if (show) {
@@ -2239,6 +2244,48 @@ try { overlay.style.setProperty('display','block','important'); } catch (e) {}
       if (notifDropdown) notifDropdown.style.display = "none";
       this.toggleProfileDropdown(false);
     }
+  },
+
+  /**
+   * Add premium swipe gestures for sidebar
+   */
+  initSwipeGestures() {
+    let startX = 0;
+    let currentX = 0;
+    const threshold = 100;
+    const sidebar = document.getElementById("pro-sidebar");
+    
+    if (!sidebar) return;
+
+    document.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        currentX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+        const diff = currentX - startX;
+        const isMobile = window.innerWidth <= 991;
+
+        if (!isMobile) return;
+
+        // Swipe right from edge (open)
+        if (startX < 50 && diff > threshold) {
+            this.toggleSidebar(true);
+        }
+        // Swipe left (close)
+        if (sidebar.classList.contains('active') && diff < -threshold) {
+            this.toggleSidebar(false);
+        }
+
+        startX = 0;
+        currentX = 0;
+    });
+
+    this._swipeInitialized = true;
+    console.log("📲 Swipe gestures initialized for sidebar");
   },
 
   getCurrentMode() {

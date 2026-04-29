@@ -454,10 +454,10 @@
                             <tbody>
                                 ${teams.map(t => `
                                     <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                        <td style="padding:1rem; font-weight:600;">${t.name}</td>
-                                        <td style="padding:1rem; color:var(--text-muted);">${t.coach_name || 'N/A'}</td>
-                                        <td style="padding:1rem; font-size:0.8rem; color:var(--text-muted);">24 Apr 2026</td>
-                                        <td style="padding:1rem; text-align:right;">
+                                        <td style="padding:1rem; font-weight:600;" data-label="Team Name">${t.name}</td>
+                                        <td style="padding:1rem; color:var(--text-muted);" data-label="Coach">${t.coach_name || 'N/A'}</td>
+                                        <td style="padding:1rem; font-size:0.8rem; color:var(--text-muted);" data-label="Joined Date">24 Apr 2026</td>
+                                        <td style="padding:1rem; text-align:right;" data-label="Actions">
                                             <button class="btn btn-text btn-small" style="color:var(--accent-red);" onclick="removeTeamFromComp('${t.id}')">Remove</button>
                                         </td>
                                     </tr>

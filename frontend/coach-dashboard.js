@@ -222,21 +222,21 @@ async function loadCoachPlayers() {
       if (container.tagName === 'TBODY') {
         container.innerHTML = players.map(p => `
           <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-            <td style="padding:1rem 0;">
+            <td style="padding:1rem 0;" data-label="Player Name">
               <div style="display:flex; align-items:center; gap:0.75rem;">
                 <div class="player-av">${(p.first_name || 'P').charAt(0)}</div>
                 <span>${p.first_name} ${p.last_name}</span>
               </div>
             </td>
-            <td style="padding:1rem 0;">${p.team_name || 'Main Squad'}</td>
-            <td style="padding:1rem 0;">${p.position || 'Forward'}</td>
-            <td style="padding:1rem 0;">${p.age || '16'}</td>
-            <td style="padding:1rem 0;">
+            <td style="padding:1rem 0;" data-label="Team">${p.team_name || 'Main Squad'}</td>
+            <td style="padding:1rem 0;" data-label="Position">${p.position || 'Forward'}</td>
+            <td style="padding:1rem 0;" data-label="Age">${p.age || '16'}</td>
+            <td style="padding:1rem 0;" data-label="Attendance">
               <div style="width:100%; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden;">
                 <div style="width:85%; height:100%; background:#4ade80;"></div>
               </div>
             </td>
-            <td style="padding:1rem 0; text-align:right;">
+            <td style="padding:1rem 0; text-align:right;" data-label="Actions">
               <button class="btn btn-text btn-small" onclick="viewPlayerProfile('${p.id}')">View</button>
             </td>
           </tr>
