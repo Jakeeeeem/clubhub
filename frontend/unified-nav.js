@@ -92,8 +92,23 @@ const APP_PHASE =
 
 const UnifiedNav = {
   init() {
+    // Guard: make init idempotent to avoid duplicate header injection
+    if (this._initialized) {
+      console.log("♻️ UnifiedNav: already initialized; skipping.");
+      return;
+    }
+    this._initialized = true;
     console.log("🚀 UnifiedNav: Initializing standard navigation...");
-    
+
+    // 🛡️ Early mock data injection for demo stability
+    if (localStorage.getItem('isDemoSession') === 'true' && !localStorage.getItem('userFamily')) {
+      const mockFamily = [
+        { id: 'f1', first_name: 'Leo', last_name: 'Junior', club_id: 'demo-club-id' },
+        { id: 'f2', first_name: 'Mia', last_name: 'Junior', club_id: 'demo-club-id' }
+      ];
+      localStorage.setItem("userFamily", JSON.stringify(mockFamily));
+    }
+
     // Check if we are returning from a Stripe connection in a new window
     if (window.opener && location.search.includes('stripe_return=true')) {
         console.log("✅ Stripe return detected. Refreshing parent and closing window...");
@@ -106,10 +121,6 @@ const UnifiedNav = {
         }
     }
     // Guard: make init idempotent to avoid duplicate header injection
-    if (this._initialized) {
-      console.log("♻️ UnifiedNav: already initialized; skipping.");
-      return;
-    }
     this._initialized = true;
     
     // ⚡ SYSTEM RESET & SYNC: check for ?reset=system to clear all state
@@ -1130,31 +1141,21 @@ const UnifiedNav = {
     }
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    const userRole = this.getUserRole();
-    const isPlayer = window.location.href.includes("player-") || userRole === "player" || userRole === "parent" || this.getCurrentMode() === "player";
-
+    const modeNow = this.getCurrentMode();
+    const roleNow = (this.getUserRole() || '').toLowerCase();
+    const isPlayerView = modeNow === 'player' || roleNow === 'player' || roleNow === 'parent';
     const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
     
-    // Show family switcher for players OR anyone with family members (e.g. admin who is also a parent)
-    if (!isPlayer && family.length === 0) {
+    // In Player mode, we should ALWAYS show the switcher if we have family members.
+    // If we're an admin in player mode, we still want to see our kids.
+    if (!isPlayerView || family.length === 0) {
       container.innerHTML = "";
       container.style.display = "none";
       return;
     }
-    
+
     container.style.display = "flex";
     const activePlayerId = localStorage.getItem("activePlayerId");
-
-    // Only show family switcher in Player mode
-    const modeNow = this.getCurrentMode();
-    const roleNow = (this.getUserRole() || '').toLowerCase();
-    const isPlayerView = modeNow === 'player' || roleNow === 'player' || roleNow === 'parent';
-    
-    if (!isPlayerView) {
-        container.innerHTML = "";
-        container.style.display = "none";
-        return;
-    }
 
     const currentName = activePlayerId 
         ? (family.find(f => f.id == activePlayerId)?.first_name || "Profile")

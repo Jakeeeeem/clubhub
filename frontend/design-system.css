@@ -434,7 +434,7 @@ input:focus, select:focus, textarea:focus {
     max-width: 100%;
     width: 500px;
     max-height: 90vh;
-    overflow: hidden;
+    overflow-y: auto;
     position: relative;
     display: flex;
     flex-direction: column;
