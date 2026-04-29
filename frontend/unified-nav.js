@@ -101,12 +101,16 @@ const UnifiedNav = {
     console.log("🚀 UnifiedNav: Initializing standard navigation...");
 
     // 🛡️ Early mock data injection for demo stability
-    if (localStorage.getItem('isDemoSession') === 'true' && !localStorage.getItem('userFamily')) {
-      const mockFamily = [
-        { id: 'f1', first_name: 'Leo', last_name: 'Junior', club_id: 'demo-club-id' },
-        { id: 'f2', first_name: 'Mia', last_name: 'Junior', club_id: 'demo-club-id' }
-      ];
-      localStorage.setItem("userFamily", JSON.stringify(mockFamily));
+    if (localStorage.getItem('isDemoSession') === 'true') {
+      const existingFamily = localStorage.getItem('userFamily');
+      if (!existingFamily || existingFamily === '[]') {
+        const mockFamily = [
+          { id: 'f1', first_name: 'Leo', last_name: 'Junior', club_id: 'demo-club-id' },
+          { id: 'f2', first_name: 'Mia', last_name: 'Junior', club_id: 'demo-club-id' }
+        ];
+        localStorage.setItem("userFamily", JSON.stringify(mockFamily));
+        console.log("🛡️ UnifiedNav: Injected mock family data for demo.");
+      }
     }
 
     // Check if we are returning from a Stripe connection in a new window
@@ -1132,7 +1136,10 @@ const UnifiedNav = {
                       (isMobile ? document.getElementById("sidebar-family-switcher-container") : document.getElementById("header-family-switcher-container")) || 
                       document.getElementById("family-switcher-target");
     
-    if (!container) return;
+    if (!container) {
+        console.warn("⚠️ Family Switcher: No target container found (header/sidebar/manual).");
+        return;
+    }
 
     // Prevent rendering in sidebar on desktop
     if (!isMobile && container.id === "sidebar-family-switcher-container") {
@@ -1145,10 +1152,12 @@ const UnifiedNav = {
     const roleNow = (this.getUserRole() || '').toLowerCase();
     const isPlayerView = modeNow === 'player' || roleNow === 'player' || roleNow === 'parent';
     const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
+    const isDemo = localStorage.getItem('isDemoSession') === 'true';
     
-    // In Player mode, we should ALWAYS show the switcher if we have family members.
-    // If we're an admin in player mode, we still want to see our kids.
-    if (!isPlayerView || family.length === 0) {
+    console.log(`🔍 Family Switcher Check: mode=${modeNow}, role=${roleNow}, isPlayerView=${isPlayerView}, familyCount=${family.length}`);
+
+    // In Player mode, we should ALWAYS show the switcher if we have family members OR if it's a demo
+    if (!isPlayerView || (family.length === 0 && !isDemo)) {
       container.innerHTML = "";
       container.style.display = "none";
       return;
