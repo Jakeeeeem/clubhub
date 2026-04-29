@@ -2502,6 +2502,7 @@ const UnifiedNav = {
         <a href="admin-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-tournament-manager.html', 'tournament-manager')" class="sidebar-link sidebar-sublink ${isActive('admin-tournament-manager.html')}" style="padding-left: 2.5rem; opacity: 0.85; font-size: 0.85rem;">${ICONS.nav.trophy}<span>Competition Management</span></a>
         <a href="admin-chat.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-chat.html', 'messenger')" class="sidebar-link ${isActive('admin-chat.html')}">${ICONS.nav.chat}<span>Messenger</span></a>
         <a href="admin-academy-tv.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-academy-tv.html', 'academy-tv')" class="sidebar-link ${isActive('admin-academy-tv.html')}">${ICONS.nav.academy}<span>Academy TV</span></a>
+        <a href="admin-email-test.html" class="sidebar-link ${isActive('admin-email-test.html')}">📧 <span>Email Tester</span></a>
 
         <div class="nav-group-title"><span>Operations</span></div>
         <a href="admin-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-finances.html', 'finances')" class="sidebar-link ${isActive('admin-finances.html')}">${ICONS.nav.finance}<span>Finances</span></a>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Tester — ClubHub Admin</title>
+    <link rel="stylesheet" href="styles.css?v=20260429_v10">
+    <link rel="stylesheet" href="design-system.css?v=20260429_v10">
+    <link rel="stylesheet" href="unified-nav.css?v=20260429_v10">
+</head>
+<body class="clubhub-unified dashboard-page">
+    <header class="header"></header>
+
+    <main class="main dashboard-main">
+        <div class="container dashboard-container">
+            <div style="margin-bottom: 2rem;">
+                <h1 class="neon-text" style="font-size: 2rem; margin: 0;">📧 Email Delivery Tester</h1>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Verify your SMTP and notification templates are working correctly.</p>
+            </div>
+
+            <div class="glass-card" style="max-width: 600px; padding: 2rem;">
+                <form id="emailTestForm" onsubmit="sendTestEmail(event)">
+                    <div class="form-group">
+                        <label>Recipient Email</label>
+                        <input type="email" id="testRecipient" placeholder="your@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email Template</label>
+                        <select id="testTemplate">
+                            <option value="welcome">Welcome Email</option>
+                            <option value="invite">Group Invitation</option>
+                            <option value="payment_success">Payment Confirmation</option>
+                            <option value="event_reminder">Event Reminder</option>
+                            <option value="custom">Custom Message (Plain Text)</option>
+                        </select>
+                    </div>
+
+                    <div id="customMessageArea" class="form-group" style="display: none;">
+                        <label>Message Body</label>
+                        <textarea id="testBody" rows="5" placeholder="Enter your test message here..."></textarea>
+                    </div>
+
+                    <button type="submit" id="sendBtn" class="btn btn-primary" style="width: 100%; padding: 1rem; margin-top: 1rem;">🚀 Send Test Email</button>
+                </form>
+
+                <div id="testResult" style="margin-top: 1.5rem; display: none; padding: 1rem; border-radius: 8px; font-size: 0.9rem;"></div>
+            </div>
+
+            <div style="margin-top: 3rem;">
+                <h3 style="margin-bottom: 1rem;">Recent Test Logs</h3>
+                <div id="testLogs" class="glass-card" style="padding: 1rem; font-family: monospace; font-size: 0.85rem; max-height: 300px; overflow-y: auto;">
+                    <div style="color: var(--text-muted);">No recent logs.</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="api-service.js?v=20260429_v10"></script>
+    <script src="unified-nav.js?v=20260429_v10"></script>
+    <script>
+        document.getElementById('testTemplate').addEventListener('change', (e) => {
+            document.getElementById('customMessageArea').style.display = e.target.value === 'custom' ? 'block' : 'none';
+        });
+
+        async function sendTestEmail(e) {
+            e.preventDefault();
+            const btn = document.getElementById('sendBtn');
+            const resultDiv = document.getElementById('testResult');
+            const logsDiv = document.getElementById('testLogs');
+            
+            const data = {
+                to: document.getElementById('testRecipient').value,
+                template: document.getElementById('testTemplate').value,
+                message: document.getElementById('testBody').value
+            };
+
+            try {
+                btn.disabled = true;
+                btn.textContent = '⏳ Processing...';
+                resultDiv.style.display = 'none';
+
+                // API call to test endpoint
+                const res = await apiService.post('/api/admin/test-email', data);
+
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = 'rgba(74, 222, 128, 0.1)';
+                resultDiv.style.color = '#4ade80';
+                resultDiv.style.border = '1px solid rgba(74, 222, 128, 0.2)';
+                resultDiv.textContent = `✅ Success! Email sent to ${data.to}. Check your inbox.`;
+
+                const log = document.createElement('div');
+                log.style.marginBottom = '0.5rem';
+                log.innerHTML = `<span style="color:#4ade80;">[${new Date().toLocaleTimeString()}]</span> SENT: ${data.template} to ${data.to}`;
+                if (logsDiv.querySelector('.text-muted')) logsDiv.innerHTML = '';
+                logsDiv.prepend(log);
+
+            } catch (err) {
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+                resultDiv.style.color = '#f87171';
+                resultDiv.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+                resultDiv.textContent = `❌ Error: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Send Test Email';
+            }
+        }
+    </script>
+</body>
+</html>
