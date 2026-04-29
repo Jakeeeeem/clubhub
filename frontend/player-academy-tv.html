@@ -5,10 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Academy TV - ClubHub</title>
-  <link rel="stylesheet" href="styles.css?v=20260429_v11">
-  <link rel="stylesheet" href="design-system.css?v=20260429_v11">
-  <link rel="stylesheet" href="unified-nav.css?v=20260429_v11">
-  <link rel="stylesheet" href="group-switcher.css?v=20260429_v11">
+  <link rel="stylesheet" href="styles.css?v=20260429_v12">
+  <link rel="stylesheet" href="design-system.css?v=20260429_v12">
+  <link rel="stylesheet" href="unified-nav.css?v=20260429_v12">
+  <link rel="stylesheet" href="group-switcher.css?v=20260429_v12">
   <style>
     .video-card {
       transition: all 0.3s ease;
@@ -90,11 +90,11 @@
     </div>
   </main>
 
-  <script src="app-state.js?v=20260429_v11"></script>
-  <script src="api-service.js?v=20260429_v11"></script>
-  <script src="training.js?v=20260429_v11"></script>
-  <script src="unified-nav.js?v=20260429_v11"></script>
-  <script src="group-switcher.js?v=20260429_v11"></script>
+  <script src="app-state.js?v=20260429_v12"></script>
+  <script src="api-service.js?v=20260429_v12"></script>
+  <script src="training.js?v=20260429_v12"></script>
+  <script src="unified-nav.js?v=20260429_v12"></script>
+  <script src="group-switcher.js?v=20260429_v12"></script>
 
   <script>
     let playerDrills = [];
@@ -131,6 +131,10 @@
         if (!video) return;
         document.getElementById('fTitle').textContent = video.title;
         document.getElementById('fDesc').textContent = video.description;
+        const playBtn = document.querySelector('.btn-play');
+        if (playBtn) {
+            playBtn.onclick = () => watchVideo(video.demo_video_url, video.title);
+        }
     }
 
     function renderGallery() {
@@ -144,7 +148,7 @@
       });
 
       container.innerHTML = filtered.map(v => `
-        <div class="glass-card video-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="watchVideo('${v.demo_video_url}')">
+        <div class="glass-card video-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="watchVideo('${v.demo_video_url}', '${v.title}')">
           <div style="aspect-ratio: 16/9; background: #111; position: relative;">
              <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.8), transparent);"></div>
              <div class="play-btn" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
@@ -173,13 +177,18 @@
       renderGallery();
     }
 
-    function watchVideo(url) {
-        // In a real app, this would open a premium overlay player. For now, we open the link.
-        if (url === '#' || !url) {
-            alert("This video is coming soon! Check back later.");
+    function watchVideo(url, title = "Training Session") {
+        if (!url || url === '#' || url === '') {
+            if (window.showNotification) showNotification("This video is coming soon!", "info");
+            else alert("This video is coming soon! Check back later.");
             return;
         }
-        window.open(url, '_blank');
+
+        if (window.UnifiedNav && typeof window.UnifiedNav.openVideoModal === 'function') {
+            window.UnifiedNav.openVideoModal(title, url);
+        } else {
+            window.open(url, '_blank');
+        }
     }
   </script>
 </body>
