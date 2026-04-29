@@ -473,7 +473,7 @@ if (typeof ApiService === 'undefined') {
       const isDemo = localStorage.getItem("isDemoSession") === "true";
       const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-      if ((response.status === 401 || response.status === 403 || response.status === 404 || response.status >= 500) && (isDemo || isLocal)) {
+      if ((response.status === 401 || response.status === 403 || response.status === 404 || response.status >= 500) && this.shouldMock()) {
         try {
           console.warn(`⚠️ API Error ${response.status} on ${endpoint} - Attempting demo fallback...`);
           const fallback = await this._interceptDemoRequest(endpoint, options);
