@@ -962,6 +962,8 @@ const UnifiedNav = {
             <div id="notif-header-btn-container" style="display:flex;"></div>
             
             <div class="user-action-group" style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.03); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.06);">
+                <div id="header-family-switcher-container" class="desktop-only" style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'flex' : 'none'}; align-items:center;"></div>
+                
                 <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
                     style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'none' : 'flex'}; align-items:center; gap:0.65rem; cursor:pointer; transition:all 0.2s; padding: 0 0.75rem 0 0.75rem;">
                     <div class="user-avatar-sm" id="header-user-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; border:1.5px solid rgba(255,255,255,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">${initial}</div>
@@ -1157,8 +1159,8 @@ const UnifiedNav = {
     
     console.log(`🔍 Family Switcher Check: mode=${modeNow}, role=${roleNow}, isPlayerView=${isPlayerView}, familyCount=${family.length}`);
 
-    // In Player mode, we should ALWAYS show the switcher if we have family members OR if it's a demo
-    if (!isPlayerView || (family.length === 0 && !isDemo)) {
+    // In Player mode, we should ALWAYS show the switcher to indicate context
+    if (!isPlayerView) {
       container.innerHTML = "";
       container.style.display = "none";
       return;
@@ -2310,6 +2312,9 @@ const UnifiedNav = {
   },
 
   getCurrentMode() {
+    const storedMode = localStorage.getItem("dashboardMode");
+    if (storedMode) return storedMode;
+
     const url = window.location.href;
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
