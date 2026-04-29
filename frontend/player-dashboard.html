@@ -17,9 +17,9 @@
   <link rel="icon" type="image/png" href="/images/logo.png">
   <link rel="apple-touch-icon" href="/images/logo.png">
 
-  <link rel="stylesheet" href="styles.css?v=20260429_v8" />
-  <link rel="stylesheet" href="group-switcher.css?v=20260429_v8">
-  <link rel="stylesheet" href="unified-nav.css?v=20260429_v8">
+  <link rel="stylesheet" href="styles.css?v=20260429_v9" />
+  <link rel="stylesheet" href="group-switcher.css?v=20260429_v9">
+  <link rel="stylesheet" href="unified-nav.css?v=20260429_v9">
   <script>
       // CRITICAL: Force Service Worker Unregistration if stuck on old version
       (function() {
@@ -42,13 +42,13 @@
       })();
   </script>
   <script src="https://js.stripe.com/v3/"></script>
-  <script src="app-state.js?v=20260429_v8"></script>
-  <script src="api-service.js?v=20260429_v8"></script>
-  <script src="group-switcher.js?v=20260429_v8"></script>
-  <script src="workspace-manager.js?v=20260429_v8"></script>
-  <link rel="stylesheet" href="tour-service.css?v=20260429_v8">
-  <script src="tour-service.js?v=20260429_v8"></script>
-  <link rel="stylesheet" href="design-system.css?v=20260429_v8">
+  <script src="app-state.js?v=20260429_v9"></script>
+  <script src="api-service.js?v=20260429_v9"></script>
+  <script src="group-switcher.js?v=20260429_v9"></script>
+  <script src="workspace-manager.js?v=20260429_v9"></script>
+  <link rel="stylesheet" href="tour-service.css?v=20260429_v9">
+  <script src="tour-service.js?v=20260429_v9"></script>
+  <link rel="stylesheet" href="design-system.css?v=20260429_v9">
   <script>
     // Head-level demo auto-enable to set auth before any other scripts run
     try {
@@ -308,28 +308,36 @@
               <button class="btn btn-secondary" style="font-size:0.8rem;padding:0.4rem 1rem;">See All</button>
             </div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.2s;" 
+                   onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"
+                   onclick="UnifiedNav.openVideoModal('Defensive Shape Drills', 'https://www.youtube.com/watch?v=SAn_209YFvA')">
                 <div style="aspect-ratio:16/9;background:linear-gradient(135deg,rgba(220,38,38,0.4),rgba(220,38,38,0.1));display:flex;align-items:center;justify-content:center;font-size:2rem;">▶️</div>
                 <div style="padding:0.75rem;">
                   <div style="font-weight:700;font-size:0.88rem;margin-bottom:0.25rem;">Defensive Shape Drills</div>
                   <div style="font-size:0.75rem;color:rgba(255,255,255,0.45);">Coach J. Doe · 12 min</div>
                 </div>
               </div>
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.2s;" 
+                   onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"
+                   onclick="UnifiedNav.openVideoModal('Passing Under Pressure', 'https://www.youtube.com/watch?v=K3H5mK14jX0')">
                 <div style="aspect-ratio:16/9;background:linear-gradient(135deg,rgba(79,70,229,0.4),rgba(79,70,229,0.1));display:flex;align-items:center;justify-content:center;font-size:2rem;">▶️</div>
                 <div style="padding:0.75rem;">
                   <div style="font-weight:700;font-size:0.88rem;margin-bottom:0.25rem;">Passing Under Pressure</div>
                   <div style="font-size:0.75rem;color:rgba(255,255,255,0.45);">Coach Smith · 8 min</div>
                 </div>
               </div>
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.2s;" 
+                   onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"
+                   onclick="UnifiedNav.openVideoModal('Set Piece Routines', 'https://www.youtube.com/watch?v=vVjH96MhSps')">
                 <div style="aspect-ratio:16/9;background:linear-gradient(135deg,rgba(16,185,129,0.4),rgba(16,185,129,0.1));display:flex;align-items:center;justify-content:center;font-size:2rem;">▶️</div>
                 <div style="padding:0.75rem;">
                   <div style="font-weight:700;font-size:0.88rem;margin-bottom:0.25rem;">Set Piece Routines</div>
                   <div style="font-size:0.75rem;color:rgba(255,255,255,0.45);">Academy · 15 min</div>
                 </div>
               </div>
-              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.2s;" 
+                   onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'"
+                   onclick="UnifiedNav.openVideoModal('1v1 Defending', 'https://www.youtube.com/watch?v=f-B5HnF57zM')">
                 <div style="aspect-ratio:16/9;background:linear-gradient(135deg,rgba(245,158,11,0.4),rgba(245,158,11,0.1));display:flex;align-items:center;justify-content:center;font-size:2rem;">▶️</div>
                 <div style="padding:0.75rem;">
                   <div style="font-weight:700;font-size:0.88rem;margin-bottom:0.25rem;">1v1 Defending</div>
@@ -949,7 +957,7 @@
   </script>
 
   <!-- Stripe service -->
-  <script src="stripe-service.js?v=20260429_v8"></script>
+  <script src="stripe-service.js?v=20260429_v9"></script>
 
   <!-- Optional script.js - load without breaking if missing -->
   <script>
@@ -1133,8 +1141,8 @@
   </div>
 
   <!-- Player dashboard -->
-  <script src="dialog-service.js?v=20260429_v8"></script>
-  <script src="player-dashboard.js?v=20260429_v8"></script>
+  <script src="dialog-service.js?v=20260429_v9"></script>
+  <script src="player-dashboard.js?v=20260429_v9"></script>
 
   <!-- Initialize -->
   <script>
@@ -1331,6 +1339,16 @@
   </div>
 
   <!-- PPV Unlock Modal -->
+  <div id="videoPlayerModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.95); z-index:100000;">
+    <div class="modal-content" style="max-width:1000px; width:95%; background:transparent; box-shadow:none; padding:0; position:relative;">
+      <button class="btn btn-secondary" onclick="closeModal('videoPlayerModal')" style="position:absolute; top:-40px; right:0; border-radius:50%; width:36px; height:36px; padding:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white;">✕</button>
+      <div id="videoPlayerContainer" style="aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+        <!-- Iframe/Video injected here -->
+      </div>
+      <div id="videoPlayerTitle" style="margin-top:1rem; font-size:1.2rem; font-weight:700; color:white; text-align:center; font-family:var(--font-heading);"></div>
+    </div>
+  </div>
+
   <div id="ppvUnlockModal" class="modal" style="display:none; z-index: 99999;">
     <div class="modal-content"
       style="max-width: 500px; text-align: center; border-radius: 12px; border: 1px solid var(--primary);">
@@ -1489,12 +1507,12 @@
 
 
   <!-- Core Dependencies -->
-  <script src="enhanced-login-handler.js?v=20260429_v8"></script>
-  <script src="training.js?v=20260429_v8"></script>
-  <script src="pwa-install.js?v=20260429_v8"></script>
-  <script src="unified-nav.js?v=20260429_v8"></script>
-  <script src="squad-messenger.js?v=20260429_v8"></script>
-  <script src="player-dashboard.js?v=20260429_v8"></script>
+  <script src="enhanced-login-handler.js?v=20260429_v9"></script>
+  <script src="training.js?v=20260429_v9"></script>
+  <script src="pwa-install.js?v=20260429_v9"></script>
+  <script src="unified-nav.js?v=20260429_v9"></script>
+  <script src="squad-messenger.js?v=20260429_v9"></script>
+  <script src="player-dashboard.js?v=20260429_v9"></script>
   <script>
     // Wire messenger section to shared SquadMessenger
     let _playerMessengerMounted = false;

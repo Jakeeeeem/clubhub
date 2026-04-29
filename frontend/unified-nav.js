@@ -2806,6 +2806,64 @@ const UnifiedNav = {
     this.renderHeaderNotifications();
     this.renderStripeHeaderButton();
   },
+
+  /**
+   * Global Video Player Modal
+   * Supports direct video URLs and YouTube/Vimeo embeds
+   */
+  openVideoModal(title, videoUrl) {
+    const modal = document.getElementById("videoPlayerModal");
+    const container = document.getElementById("videoPlayerContainer");
+    const titleEl = document.getElementById("videoPlayerTitle");
+
+    if (!modal || !container) {
+      console.warn("Video modal elements not found in DOM.");
+      // Fallback: open in new tab
+      window.open(videoUrl, "_blank");
+      return;
+    }
+
+    let embedHtml = "";
+    const url = videoUrl.trim();
+
+    // YouTube Detection & Conversion
+    if (url.includes("youtube.com") || url.includes("youtu.be")) {
+      let videoId = "";
+      if (url.includes("v=")) {
+        videoId = url.split("v=")[1].split("&")[0];
+      } else if (url.includes("youtu.be/")) {
+        videoId = url.split("youtu.be/")[1].split("?")[0];
+      } else if (url.includes("embed/")) {
+        videoId = url.split("embed/")[1].split("?")[0];
+      }
+      embedHtml = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    } 
+    // Vimeo Detection
+    else if (url.includes("vimeo.com")) {
+      const videoId = url.split("/").pop();
+      embedHtml = `<iframe src="https://player.vimeo.com/video/${videoId}?autoplay=1" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+    }
+    // Direct Video Link (MP4, etc)
+    else {
+      embedHtml = `<video src="${url}" controls autoplay style="width:100%; height:100%; display:block; object-fit:contain;"></video>`;
+    }
+
+    container.innerHTML = embedHtml;
+    if (titleEl) titleEl.textContent = title || "Academy Video";
+    
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+
+    // Clean up on close (stop video)
+    const originalClose = window.closeModal;
+    window.closeModal = function(id) {
+        if (id === 'videoPlayerModal') {
+            container.innerHTML = "";
+            window.closeModal = originalClose;
+        }
+        originalClose(id);
+    };
+  },
 };
 
 // Initialize on load

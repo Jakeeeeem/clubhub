@@ -186,10 +186,17 @@ async function openDrillDetail(drillId, assignmentId) {
       </div>
 
       ${drill.demo_video_url ? `
-        <div style="margin-bottom:1.5rem; border-radius:16px; overflow:hidden; background:#000;">
-          <video controls style="width:100%; max-height:300px; display:block;" src="${drill.demo_video_url}">
-            <source src="${drill.demo_video_url}">
-          </video>
+        <div style="margin-bottom:1.5rem; border-radius:16px; overflow:hidden; background:#000; position:relative; cursor:pointer;" onclick="UnifiedNav.openVideoModal('${drill.title}', '${drill.demo_video_url}')">
+          ${drill.demo_video_url.includes('youtube.com') || drill.demo_video_url.includes('youtu.be') ? `
+            <div style="aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05);">
+              <div style="font-size:3rem; color:rgba(255,255,255,0.5);">▶️</div>
+              <div style="position:absolute; bottom:1rem; left:1rem; right:1rem; font-size:0.75rem; color:rgba(255,255,255,0.4); text-align:center;">Click to watch full screen</div>
+            </div>
+          ` : `
+            <video controls style="width:100%; max-height:300px; display:block;" src="${drill.demo_video_url}">
+              <source src="${drill.demo_video_url}">
+            </video>
+          `}
         </div>` : `
         <div class="glass-panel" style="padding:2rem; text-align:center; margin-bottom:1.5rem; color:var(--text-muted);">
           📹 No demo video yet
