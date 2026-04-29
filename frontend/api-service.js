@@ -57,25 +57,9 @@ if (typeof ApiService === 'undefined') {
    * If it's a 'demo-token-' (bypass) or real JWT, we hit the backend.
    */
   shouldMock() {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-    if (!isDemo) return false;
-
-    try {
-      const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      const role = (user.role || "").toLowerCase();
-
-      // Only bypass mock in demo session if explicitly told to OR if it's a platform admin
-      // This ensures the demo is STABLE and doesn't 500/404 during a pitch.
-      if (role === 'platform_admin' || (localStorage.getItem("forceLiveData") === "true")) {
-        console.log(`🚀 Live testing detected (${role}): Bypassing mock for real data.`);
-        return false;
-      }
-    } catch (e) {
-      console.warn("Failed to parse user for mock check:", e);
-    }
-
-    console.log("🛡️ Demo Mode Active: Serving mock data for stability.");
-    return true;
+    // User requested "all working data not mock" - forcing live data for everything.
+    console.log("🌐 Forcing Live API: Mocking disabled by configuration.");
+    return false;
   }
 
   // Generic GET method for dashboard loaders
@@ -96,12 +80,15 @@ if (typeof ApiService === 'undefined') {
       const role = user.activePlayerId ? "player" : user.role || "admin";
 
       const demoClubs = this.getAdminDashboardFallback().groups;
-      
-      // Mock family data for demo stability
       const mockFamily = [
         { id: 'f1', first_name: 'Leo', last_name: 'Junior', club_id: 'demo-club-id' },
         { id: 'f2', first_name: 'Mia', last_name: 'Junior', club_id: 'demo-club-id' }
       ];
+      
+      // 🛡️ Sync local storage if needed for demo
+      if (!localStorage.getItem('userFamily') || localStorage.getItem('userFamily') === '[]') {
+        localStorage.setItem("userFamily", JSON.stringify(mockFamily));
+      }
 
       this.context = {
         success: true,
@@ -109,19 +96,14 @@ if (typeof ApiService === 'undefined') {
         family: mockFamily,
         currentGroup: {
           id: user.groupId || "d359a5fb-0787-4dde-9631-d30a9d8e827f",
-          name: user.activePlayerId
-            ? "Elite Academy (Player)"
-            : "Pro Group Demo",
+          name: user.activePlayerId ? "Elite Academy (Player)" : "Pro Group Demo",
           role: role,
           user_role: role,
         },
         groups: demoClubs,
-        organizations: demoClubs, // Compatibility
-        clubs: demoClubs, // Compatibility
+        organizations: demoClubs,
+        clubs: demoClubs
       };
-      
-      // Sync local storage for switcher immediate detection
-      localStorage.setItem("userFamily", JSON.stringify(mockFamily));
       
       return this.context;
     }

@@ -100,8 +100,9 @@ const UnifiedNav = {
     this._initialized = true;
     console.log("🚀 UnifiedNav: Initializing standard navigation...");
 
-    // 🛡️ Early mock data injection for demo stability
-    if (localStorage.getItem('isDemoSession') === 'true') {
+    // 🛡️ Fallback mock data injection for demo stability
+    // ONLY runs if we are in demo mode AND no real data is present.
+    if (localStorage.getItem('isDemoSession') === 'true' && localStorage.getItem('forceLiveData') !== 'true') {
       const existingFamily = localStorage.getItem('userFamily');
       if (!existingFamily || existingFamily === '[]') {
         const mockFamily = [
@@ -109,7 +110,7 @@ const UnifiedNav = {
           { id: 'f2', first_name: 'Mia', last_name: 'Junior', club_id: 'demo-club-id' }
         ];
         localStorage.setItem("userFamily", JSON.stringify(mockFamily));
-        console.log("🛡️ UnifiedNav: Injected mock family data for demo.");
+        console.log("🛡️ UnifiedNav: Injected mock family data for demo fallback.");
       }
     }
 
