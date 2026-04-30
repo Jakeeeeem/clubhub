@@ -31,58 +31,58 @@ const ICONS = {
 
 // --- GLOBAL LINK HANDLER ---
 // Standardizes behavior across the entire platform
-window.handleNavClick = function(e, page, section) {
-    const isMobile = window.innerWidth < 992;
-    const currentPath = window.location.pathname.toLowerCase();
-    
-    console.log(`🔗 NavClick: Target=${page} Section=${section} Current=${currentPath}`);
+window.handleNavClick = function (e, page, section) {
+  const isMobile = window.innerWidth < 992;
+  const currentPath = window.location.pathname.toLowerCase();
 
-    // Get current filename
-    const currentFile = currentPath.split('/').pop() || 'index.html';
-    const targetFile = page.toLowerCase();
+  console.log(`🔗 NavClick: Target=${page} Section=${section} Current=${currentPath}`);
 
-    // Only intercept if we are already on the target page
-    if (currentFile === targetFile) {
-        const showFn = window.showSection || window.showPlayerSection || window.showCoachSection || window.showScoutSection;
-        if (typeof showFn === 'function' && section) {
-            e.preventDefault();
-            showFn(section);
-            if (isMobile && window.UnifiedNav) window.UnifiedNav.toggleSidebar(false);
-            
-            // Update hash for deep linking
-            window.location.hash = section;
-            return false;
-        }
+  // Get current filename
+  const currentFile = currentPath.split('/').pop() || 'index.html';
+  const targetFile = page.toLowerCase();
+
+  // Only intercept if we are already on the target page
+  if (currentFile === targetFile) {
+    const showFn = window.showSection || window.showPlayerSection || window.showCoachSection || window.showScoutSection;
+    if (typeof showFn === 'function' && section) {
+      e.preventDefault();
+      showFn(section);
+      if (isMobile && window.UnifiedNav) window.UnifiedNav.toggleSidebar(false);
+
+      // Update hash for deep linking
+      window.location.hash = section;
+      return false;
     }
-    
-    // Otherwise, allow normal navigation to the href
-    if (isMobile && window.UnifiedNav) window.UnifiedNav.toggleSidebar(false);
-    return true; 
+  }
+
+  // Otherwise, allow normal navigation to the href
+  if (isMobile && window.UnifiedNav) window.UnifiedNav.toggleSidebar(false);
+  return true;
 };
 
 // --- GLOBAL MODAL HELPERS ---
-window.openModal = function(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
+window.openModal = function (id) {
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
 };
 
-window.closeModal = function(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
+window.closeModal = function (id) {
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
 };
 
 // Close modal when clicking outside content
 window.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal')) {
-        e.target.style.display = 'none';
-        document.body.style.overflow = '';
-    }
+  if (e.target.classList.contains('modal')) {
+    e.target.style.display = 'none';
+    document.body.style.overflow = '';
+  }
 });
 // Application phase flag - set on window or localStorage for quick toggling
 const APP_PHASE =
@@ -116,49 +116,49 @@ const UnifiedNav = {
 
     // Check if we are returning from a Stripe connection in a new window
     if (window.opener && location.search.includes('stripe_return=true')) {
-        console.log("✅ Stripe return detected. Refreshing parent and closing window...");
-        try {
-            window.opener.location.reload();
-            window.close();
-            return; // Stop further init in this child window
-        } catch (e) {
-            console.warn("Could not reload opener/close window:", e);
-        }
+      console.log("✅ Stripe return detected. Refreshing parent and closing window...");
+      try {
+        window.opener.location.reload();
+        window.close();
+        return; // Stop further init in this child window
+      } catch (e) {
+        console.warn("Could not reload opener/close window:", e);
+      }
     }
     // Guard: make init idempotent to avoid duplicate header injection
     this._initialized = true;
-    
+
     // ⚡ SYSTEM RESET & SYNC: check for ?reset=system to clear all state
     const CURRENT_VERSION = "2.1.3";
     const storedVersion = localStorage.getItem("CH_UI_VERSION");
     const urlParams = new URLSearchParams(window.location.search);
-    
+
     if (urlParams.get('reset') === 'system' || (storedVersion && storedVersion !== CURRENT_VERSION)) {
-        console.warn("⚡ System Sync: Clearing legacy cache for version " + CURRENT_VERSION);
-        
-        // Save critical flags before clearing
-        const isDemo = localStorage.getItem('isDemoSession');
-        const token = localStorage.getItem('authToken');
-        const user = localStorage.getItem('currentUser');
-        
-        localStorage.clear();
-        
-        // Restore session to prevent forced logout unless it's a manual reset
-        if (urlParams.get('reset') !== 'system') {
-            if (isDemo) localStorage.setItem('isDemoSession', isDemo);
-            if (token) localStorage.setItem('authToken', token);
-            if (user) localStorage.setItem('currentUser', user);
-        }
-        
-        localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
-        
-        if (urlParams.get('reset') === 'system' || (storedVersion && storedVersion !== CURRENT_VERSION)) {
-            console.log("♻️ Version mismatch or manual reset, reloading...");
-            window.location.href = window.location.origin + window.location.pathname;
-            return;
-        }
+      console.warn("⚡ System Sync: Clearing legacy cache for version " + CURRENT_VERSION);
+
+      // Save critical flags before clearing
+      const isDemo = localStorage.getItem('isDemoSession');
+      const token = localStorage.getItem('authToken');
+      const user = localStorage.getItem('currentUser');
+
+      localStorage.clear();
+
+      // Restore session to prevent forced logout unless it's a manual reset
+      if (urlParams.get('reset') !== 'system') {
+        if (isDemo) localStorage.setItem('isDemoSession', isDemo);
+        if (token) localStorage.setItem('authToken', token);
+        if (user) localStorage.setItem('currentUser', user);
+      }
+
+      localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
+
+      if (urlParams.get('reset') === 'system' || (storedVersion && storedVersion !== CURRENT_VERSION)) {
+        console.log("♻️ Version mismatch or manual reset, reloading...");
+        window.location.href = window.location.origin + window.location.pathname;
+        return;
+      }
     } else if (!storedVersion) {
-        localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
+      localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
     }
 
     // Ensure every page has the basic shell before adding the unified header/sidebar
@@ -249,22 +249,22 @@ const UnifiedNav = {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
     let user = null;
     try {
-        if (userJson && userJson !== "undefined" && userJson !== "null") user = JSON.parse(userJson);
-    } catch(e) {}
-    
+      if (userJson && userJson !== "undefined" && userJson !== "null") user = JSON.parse(userJson);
+    } catch (e) { }
+
     const path = window.location.pathname.toLowerCase();
     const fileName = path.split('/').pop() || 'index.html';
     const fullUrl = window.location.href.toLowerCase();
-    
+
     const isLoggedIn = !!(token && user);
     const isDashboardPath = /dashboard|members|teams|events|finances|shop|schedule|scout|finder|finder-/.test(path) || /finder/.test(fullUrl);
     const isLanding = (fileName === "index.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html") && !fullUrl.includes('#');
 
     if (isDashboardPath && !isLoggedIn && !isDemo) {
-        console.warn("🔒 Unauthorized access to dashboard. Redirecting...");
-        document.body.style.display = "none";
-        window.location.href = "login.html";
-        return;
+      console.warn("🔒 Unauthorized access to dashboard. Redirecting...");
+      document.body.style.display = "none";
+      window.location.href = "login.html";
+      return;
     }
 
     const isDesktop = window.matchMedia("(min-width: 992px)").matches;
@@ -274,14 +274,14 @@ const UnifiedNav = {
     const hasDashboardMarker = !!(document.querySelector('.dashboard-main') || document.querySelector('.finder-container') || document.querySelector('.dashboard-container'));
 
     const isLandingPage = isLanding;
-    
+
     // isDashboard should only be true if it matches dashboard patterns AND is NOT the landing page
     const isDashboard = !isLandingPage && (hasDashboardPattern || hasDashboardClass || hasDashboardMarker || window.UNIFIED_NAV_ENABLED === true || isLoggedIn);
 
-    console.log("📍 UnifiedNav Detection:", { 
-      isDesktop, 
-      isDashboard, 
-      isLandingPage, 
+    console.log("📍 UnifiedNav Detection:", {
+      isDesktop,
+      isDashboard,
+      isLandingPage,
       isLoggedIn,
       path,
       fileName,
@@ -289,7 +289,7 @@ const UnifiedNav = {
       hasClass: hasDashboardClass,
       hasMarker: hasDashboardMarker
     });
-    
+
     if (localStorage.getItem('sidebarCollapsed') === 'true') {
       document.body.classList.add('sidebar-collapsed');
     }
@@ -304,20 +304,20 @@ const UnifiedNav = {
     }
     // 🛡️ Context Sync: Ensure we have latest roles and family data for switcher
     if (typeof apiService !== 'undefined' && typeof apiService.getContext === 'function') {
-        try {
-            apiService.getContext()
-                .then(context => {
-                    if (context && context.family) {
-                        localStorage.setItem("userFamily", JSON.stringify(context.family));
-                        this.renderFamilySwitcher();
-                    }
-                })
-                .catch(e => {
-                    console.warn("⚠️ UnifiedNav: Context sync failed (expected if non-admin)", e);
-                });
-        } catch (e) {
-            console.warn("⚠️ UnifiedNav: Context sync execution failed", e);
-        }
+      try {
+        apiService.getContext()
+          .then(context => {
+            if (context && context.family) {
+              localStorage.setItem("userFamily", JSON.stringify(context.family));
+              this.renderFamilySwitcher();
+            }
+          })
+          .catch(e => {
+            console.warn("⚠️ UnifiedNav: Context sync failed (expected if non-admin)", e);
+          });
+      } catch (e) {
+        console.warn("⚠️ UnifiedNav: Context sync execution failed", e);
+      }
     }
 
     // ── STAGE 1: Core Layout ───────────────────────────────────────────
@@ -525,9 +525,9 @@ const UnifiedNav = {
   switchFamilyProfile(id) {
     console.log("🔄 UnifiedNav: Switching family profile to:", id);
     if (!id) {
-        localStorage.removeItem("activePlayerId");
+      localStorage.removeItem("activePlayerId");
     } else {
-        localStorage.setItem("activePlayerId", id);
+      localStorage.setItem("activePlayerId", id);
     }
     window.location.reload();
   },
@@ -589,15 +589,15 @@ const UnifiedNav = {
     try {
       if (typeof apiService === "undefined") return;
       const res = await apiService.makeRequest("/notifications");
-      
+
       // Handle both array and object response formats
       let notifs = [];
       if (Array.isArray(res)) {
-          notifs = res;
+        notifs = res;
       } else if (res && Array.isArray(res.notifications)) {
-          notifs = res.notifications;
+        notifs = res.notifications;
       } else if (res && res.activity && Array.isArray(res.activity)) {
-          notifs = res.activity;
+        notifs = res.activity;
       }
 
       const unreadCount = notifs.filter((n) => !n.read).length;
@@ -651,7 +651,7 @@ const UnifiedNav = {
     const isAdmin = userRole === "admin" || userRole === "platform_admin" || userRole === "organization";
     // More robust dashboard check
     const isDashboard = !document.body.classList.contains("landing-view") || window.location.pathname.includes("dashboard") || window.location.pathname.includes("finder");
-    
+
     // Check connection status from user object or localStorage
 
     // Check connection status from user object or localStorage
@@ -899,17 +899,17 @@ const UnifiedNav = {
     }
     header.classList.add("unified-header");
     document.body.classList.add("dashboard-view");
-    
+
     // FORCE RE-RENDER if user-name exists (old structure) or if new container is missing
     const hasOldStructure = header.querySelector('.user-name');
     const hasNewStructure = header.querySelector('#header-family-switcher-container');
-    
+
     if (header.querySelector('.logo-area-wrapper') && hasNewStructure && !hasOldStructure) {
-        this.renderHeaderSwitcher();
-        this.renderFamilySwitcher();
-        this.renderHeaderNotifications();
-        this.renderStripeHeaderButton();
-        return;
+      this.renderHeaderSwitcher();
+      this.renderFamilySwitcher();
+      this.renderHeaderNotifications();
+      this.renderStripeHeaderButton();
+      return;
     }
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
@@ -984,7 +984,7 @@ const UnifiedNav = {
     this.renderHeaderSwitcher();
     this.renderFamilySwitcher();
     this.updateModeUI();
-    
+
     // Inject Stripe button and notifications into their containers
     const stripeContainer = document.getElementById("stripe-header-btn-container");
     if (stripeContainer) this.renderStripeHeaderButton(stripeContainer);
@@ -1013,7 +1013,7 @@ const UnifiedNav = {
         ov.id = "sidebar-overlay";
         ov.className = "sidebar-overlay";
         document.body.appendChild(ov);
-        try { ov.style.removeProperty('display'); } catch (e) {}
+        try { ov.style.removeProperty('display'); } catch (e) { }
       }
 
       const url = window.location.href;
@@ -1023,8 +1023,8 @@ const UnifiedNav = {
         if (userData && userData !== "undefined" && userData !== "null") {
           user = JSON.parse(userData);
         }
-      } catch (e) {}
-      
+      } catch (e) { }
+
       const userRole = localStorage.getItem("userType") || "";
       const isPlayer = url.includes("player-dashboard.html") || userRole === "player";
 
@@ -1079,12 +1079,12 @@ const UnifiedNav = {
             `;
 
       const existingSidebar = document.getElementById("pro-sidebar") || document.querySelector(".pro-sidebar");
-      
+
       if (existingSidebar) {
         if (!existingSidebar.id) existingSidebar.id = "pro-sidebar";
         existingSidebar.innerHTML = asideInner;
         // ensure any placeholder inline display does not block visibility when `.active` is toggled
-        try { existingSidebar.style.removeProperty('display'); } catch (e) {}
+        try { existingSidebar.style.removeProperty('display'); } catch (e) { }
       } else {
         const aside = document.createElement("aside");
         aside.className = "pro-sidebar";
@@ -1103,7 +1103,7 @@ const UnifiedNav = {
   initSidebarSwitcher() {
     const groupTarget = document.getElementById("sidebar-switcher-target");
     const familyTarget = document.getElementById("sidebar-family-switcher-container");
-    
+
     if (groupTarget) {
       if (typeof GroupSwitcher !== "undefined") {
         GroupSwitcher.render(groupTarget);
@@ -1119,7 +1119,7 @@ const UnifiedNav = {
     }
 
     if (familyTarget) {
-        this.renderFamilySwitcher(familyTarget);
+      this.renderFamilySwitcher(familyTarget);
     }
   },
 
@@ -1140,22 +1140,22 @@ const UnifiedNav = {
 
   renderFamilySwitcher(targetContainer) {
     const isMobile = window.innerWidth < 992;
-    
+
     // Logic: If we are on desktop, only render in the header. 
     // If we are on mobile, only render in the sidebar (unless a targetContainer is explicitly provided).
-    const container = targetContainer || 
-                      (isMobile ? document.getElementById("sidebar-family-switcher-container") : document.getElementById("header-family-switcher-container")) || 
-                      document.getElementById("family-switcher-target");
-    
+    const container = targetContainer ||
+      (isMobile ? document.getElementById("sidebar-family-switcher-container") : document.getElementById("header-family-switcher-container")) ||
+      document.getElementById("family-switcher-target");
+
     if (!container) {
-        console.warn("⚠️ Family Switcher: No target container found (header/sidebar/manual).");
-        return;
+      console.warn("⚠️ Family Switcher: No target container found (header/sidebar/manual).");
+      return;
     }
 
     // Prevent rendering in sidebar on desktop
     if (!isMobile && container.id === "sidebar-family-switcher-container") {
-        container.style.display = "none";
-        return;
+      container.style.display = "none";
+      return;
     }
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
@@ -1164,7 +1164,7 @@ const UnifiedNav = {
     const isPlayerView = modeNow === 'player' || roleNow === 'player' || roleNow === 'parent';
     const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
     const isDemo = localStorage.getItem('isDemoSession') === 'true';
-    
+
     console.log(`🔍 Family Switcher Check: mode=${modeNow}, role=${roleNow}, isPlayerView=${isPlayerView}, familyCount=${family.length}`);
 
     // In Player mode, we should ALWAYS show the switcher to indicate context
@@ -1177,17 +1177,17 @@ const UnifiedNav = {
     container.style.display = "flex";
     const activePlayerId = localStorage.getItem("activePlayerId");
 
-    const currentName = activePlayerId 
-        ? (family.find(f => f.id == activePlayerId)?.first_name || "Profile")
-        : (user.firstName || user.first_name || "Main");
+    const currentName = activePlayerId
+      ? (family.find(f => f.id == activePlayerId)?.first_name || "Profile")
+      : (user.firstName || user.first_name || "Main");
 
-    const triggerStyles = isMobile 
-        ? "display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.75rem; padding: 0.6rem 0.85rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; color: white; transition: all 0.2s; font-family: 'Inter', sans-serif;"
-        : "display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.75rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 999px; cursor: pointer; color: white; transition: all 0.2s; font-family: 'Inter', sans-serif;";
-    
-    const dropdownPos = isMobile 
-        ? "bottom: calc(100% + 12px); left: 0; right: 0; border-radius: 12px;" 
-        : "top: calc(100% + 12px); right: 0; width: 220px; border-radius: 12px;";
+    const triggerStyles = isMobile
+      ? "display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.75rem; padding: 0.6rem 0.85rem; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; color: white; transition: all 0.2s; font-family: 'Inter', sans-serif;"
+      : "display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.75rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 999px; cursor: pointer; color: white; transition: all 0.2s; font-family: 'Inter', sans-serif;";
+
+    const dropdownPos = isMobile
+      ? "bottom: calc(100% + 12px); left: 0; right: 0; border-radius: 12px;"
+      : "top: calc(100% + 12px); right: 0; width: 220px; border-radius: 12px;";
 
     container.innerHTML = `
         <div class="family-switcher" style="position: relative; ${isMobile ? 'width: 100%;' : ''}" id="familySwitcher">
@@ -1240,17 +1240,17 @@ const UnifiedNav = {
             }
         </style>
     `;
-    
+
     // Add outside click listener
     if (!this._familyClickBound) {
-        document.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('familyDropdown');
-            const trigger = document.querySelector('.family-trigger');
-            if (dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target) && !trigger.contains(e.target)) {
-                dropdown.classList.remove('open');
-            }
-        });
-        this._familyClickBound = true;
+      document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('familyDropdown');
+        const trigger = document.querySelector('.family-trigger');
+        if (dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target) && !trigger.contains(e.target)) {
+          dropdown.classList.remove('open');
+        }
+      });
+      this._familyClickBound = true;
     }
   },
 
@@ -1258,65 +1258,65 @@ const UnifiedNav = {
     console.log("🔄 UnifiedNav: Switching profile to:", id);
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     if (!id) {
-        localStorage.removeItem("activePlayerId");
-        delete user.activePlayerId;
+      localStorage.removeItem("activePlayerId");
+      delete user.activePlayerId;
     } else {
-        localStorage.setItem("activePlayerId", id);
-        user.activePlayerId = id;
+      localStorage.setItem("activePlayerId", id);
+      user.activePlayerId = id;
     }
     localStorage.setItem("currentUser", JSON.stringify(user));
-    
+
     // If on player dashboard, use its native switcher if available
     if (typeof window.switchProfile === 'function') {
-        return window.switchProfile(id);
+      return window.switchProfile(id);
     }
-    
+
     // Otherwise reload or redirect
     if (window.location.href.includes('player-dashboard.html')) {
-        window.location.reload();
+      window.location.reload();
     } else {
-        window.location.href = 'player-dashboard.html';
+      window.location.href = 'player-dashboard.html';
     }
   },
 
   async switchToChildProfile(childId, childClubId) {
     console.log(`🔄 UnifiedNav: Switching to child: ${childId}, club: ${childClubId}`);
-    
+
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const currentGroupId = user.groupId || user.currentGroupId;
 
     if (childClubId && currentGroupId !== childClubId) {
-        console.log(`🔄 UnifiedNav: Child is in diff group (${childClubId}). Switching group...`);
-        try {
-            if (typeof apiService !== 'undefined') {
-                const res = await apiService.makeRequest("/auth/switch-group", {
-                    method: "POST",
-                    body: JSON.stringify({ organizationId: childClubId })
-                });
-                
-                if (res.success) {
-                    if (res.token) localStorage.setItem("authToken", res.token);
-                    const updatedUser = { ...user, groupId: childClubId, activePlayerId: childId };
-                    if (res.user) Object.assign(updatedUser, res.user, { activePlayerId: childId });
-                    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-                }
-            }
-        } catch (err) {
-            console.error("Failed to switch to child's group:", err);
-            // Fallback to local change
-            user.activePlayerId = childId;
-            localStorage.setItem("activePlayerId", childId);
-            localStorage.setItem("currentUser", JSON.stringify(user));
+      console.log(`🔄 UnifiedNav: Child is in diff group (${childClubId}). Switching group...`);
+      try {
+        if (typeof apiService !== 'undefined') {
+          const res = await apiService.makeRequest("/auth/switch-group", {
+            method: "POST",
+            body: JSON.stringify({ organizationId: childClubId })
+          });
+
+          if (res.success) {
+            if (res.token) localStorage.setItem("authToken", res.token);
+            const updatedUser = { ...user, groupId: childClubId, activePlayerId: childId };
+            if (res.user) Object.assign(updatedUser, res.user, { activePlayerId: childId });
+            localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+          }
         }
-    } else {
+      } catch (err) {
+        console.error("Failed to switch to child's group:", err);
+        // Fallback to local change
         user.activePlayerId = childId;
         localStorage.setItem("activePlayerId", childId);
         localStorage.setItem("currentUser", JSON.stringify(user));
+      }
+    } else {
+      user.activePlayerId = childId;
+      localStorage.setItem("activePlayerId", childId);
+      localStorage.setItem("currentUser", JSON.stringify(user));
     }
 
     // If on player dashboard, use its native switcher if available
     if (typeof window.switchToChildProfile === 'function') {
-        return window.switchToChildProfile(childId, childClubId);
+      return window.switchToChildProfile(childId, childClubId);
     }
 
     // Otherwise redirect to player dashboard with context
@@ -1325,20 +1325,20 @@ const UnifiedNav = {
 
   renderHeaderSwitcher() {
     // 1. Desktop Header Switcher (Left side)
-    const hContainer = document.getElementById("header-group-switcher-container") || 
-                       document.getElementById("header-org-switcher");
-    
+    const hContainer = document.getElementById("header-group-switcher-container") ||
+      document.getElementById("header-org-switcher");
+
     if (hContainer) {
-        // ALWAYS try to render group switcher if it exists
-        if (!hContainer.__groupSwitcherInstance) {
-            this.renderGroupSwitcher(hContainer);
-        }
+      // ALWAYS try to render group switcher if it exists
+      if (!hContainer.__groupSwitcherInstance) {
+        this.renderGroupSwitcher(hContainer);
+      }
     }
 
     // 2. Mobile Sidebar Switcher
     const sContainer = document.getElementById("sidebar-switcher-target");
     if (sContainer && !sContainer.__groupSwitcherInstance) {
-        this.renderGroupSwitcher(sContainer);
+      this.renderGroupSwitcher(sContainer);
     }
   },
 
@@ -1352,22 +1352,22 @@ const UnifiedNav = {
 
     // Mobile Menu Button (Hamburger)
     if (!document.getElementById('side-menu-trigger')) {
-        const trigger = document.createElement('div');
-        trigger.id = "side-menu-trigger";
-        trigger.className = "side-menu-trigger mobile-only";
-        trigger.innerHTML = ICONS.menu;
-        trigger.onclick = () => UnifiedNav.toggleSidebar(true);
-        
-        // Insert at the beginning of the header logo area or before nav-buttons
-        const header = document.querySelector('.pro-header, .header');
-        if (header) {
-            const navButtons = header.querySelector('.nav-buttons');
-            if (navButtons) {
-                header.insertBefore(trigger, navButtons.previousSibling || navButtons);
-            } else {
-                header.prepend(trigger);
-            }
+      const trigger = document.createElement('div');
+      trigger.id = "side-menu-trigger";
+      trigger.className = "side-menu-trigger mobile-only";
+      trigger.innerHTML = ICONS.menu;
+      trigger.onclick = () => UnifiedNav.toggleSidebar(true);
+
+      // Insert at the beginning of the header logo area or before nav-buttons
+      const header = document.querySelector('.pro-header, .header');
+      if (header) {
+        const navButtons = header.querySelector('.nav-buttons');
+        if (navButtons) {
+          header.insertBefore(trigger, navButtons.previousSibling || navButtons);
+        } else {
+          header.prepend(trigger);
         }
+      }
     }
   },
 
@@ -1400,14 +1400,15 @@ const UnifiedNav = {
 
                 <!-- Center/Logo area -->
                 <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 1; min-width: 0;">
-                    <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 22px;">
+                    <img src="/images/logo.png" alt="Logo" class="logo-img" style="height: 22px;">
                     <span class="logo-text desktop-only" style="margin-left: 0.5rem; font-weight: 800; font-size: 1.1rem;">ClubHub</span>
                 </div>
 
                 <!-- Right Side: Profile/Actions -->
                 <div class="header-actions" style="display: flex; align-items: center; gap: 0.75rem; z-index: 10;">
-                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper desktop-only"></div>
-                    <div id="header-family-switcher-container" class="header-family-switcher-wrapper desktop-only"></div>
+                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper ${isMobile ? 'mobile-hidden' : 'desktop-only'}" style="${isMobile ? 'display:none !important;' : ''}"></div>
+                    <div id="header-family-switcher-container" class="header-family-switcher-wrapper ${isMobile ? 'mobile-hidden' : 'desktop-only'}" style="${isMobile ? 'display:none !important;' : ''}"></div>
+                    <div id="header-notifications-container" class="header-notif-wrapper"></div>
                     
                     ${!isLoggedIn ? `
                         <div class="header-auth" style="display: flex; gap: 0.5rem; align-items: center;">
@@ -1531,29 +1532,29 @@ const UnifiedNav = {
       <div id="top-headline-tabs" class="top-headline-tabs mobile-only">
         <div class="tabs-scroll-container">
           ${tabs
-            .map(
-              (tab) => `
+        .map(
+          (tab) => `
             <button class="headline-tab ${tab.id === "overview" ? "active" : ""}" 
                     onclick="${isPlayer ? "showPlayerSection" : isCoach ? "showCoachSection" : isScout ? "showScoutSection" : "showSection"}('${tab.id}'); UnifiedNav.setActiveTab(this);">
               <span class="tab-icon">${tab.icon}</span>
               <span class="tab-label">${tab.label}</span>
             </button>
           `,
-            )
-            .join("")}
+        )
+        .join("")}
         </div>
       </div>
     `;
 
     header.insertAdjacentHTML("afterend", tabsHTML);
     document.body.classList.add("has-top-tabs");
-    
+
     // Ensure horizontal scrolling is enabled and active tab is visible
     setTimeout(() => {
-        const activeTab = document.querySelector('.headline-tab.active');
-        if (activeTab) {
-            activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
+      const activeTab = document.querySelector('.headline-tab.active');
+      if (activeTab) {
+        activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
     }, 100);
   },
 
@@ -1571,36 +1572,36 @@ const UnifiedNav = {
 
   async manageStripeAccount() {
     try {
-        if (typeof apiService !== 'undefined') {
-            showLoading(true);
-            const status = await apiService.getStripeConnectStatus();
-            
-            let resp;
-            if (status && status.is_connected) {
-                // Get the branded management login link
-                resp = await apiService.getStripeManageLink();
-            } else {
-                // Get the branded ClubHub connection link
-                resp = await apiService.getStripeOnboardLink();
-            }
+      if (typeof apiService !== 'undefined') {
+        showLoading(true);
+        const status = await apiService.getStripeConnectStatus();
 
-            if (resp && resp.url) {
-                console.log("🚀 Opening Live Branded Stripe Portal in new window:", resp.url);
-                
-                // Open in new window/tab
-                window.open(resp.url, '_blank');
-                
-                // Optional: Provide visual feedback that a window was opened
-                showNotification("Stripe onboarding opened in new tab.", "info");
-                return;
-            }
+        let resp;
+        if (status && status.is_connected) {
+          // Get the branded management login link
+          resp = await apiService.getStripeManageLink();
+        } else {
+          // Get the branded ClubHub connection link
+          resp = await apiService.getStripeOnboardLink();
         }
-        showNotification("Stripe service is not responding. Please try again later.", "error");
+
+        if (resp && resp.url) {
+          console.log("🚀 Opening Live Branded Stripe Portal in new window:", resp.url);
+
+          // Open in new window/tab
+          window.open(resp.url, '_blank');
+
+          // Optional: Provide visual feedback that a window was opened
+          showNotification("Stripe onboarding opened in new tab.", "info");
+          return;
+        }
+      }
+      showNotification("Stripe service is not responding. Please try again later.", "error");
     } catch (err) {
-        console.error("Stripe Error:", err);
-        showNotification("Connection to Stripe failed. Please ensure you are logged in.", "error");
+      console.error("Stripe Error:", err);
+      showNotification("Connection to Stripe failed. Please ensure you are logged in.", "error");
     } finally {
-        showLoading(false);
+      showLoading(false);
     }
   },
 
@@ -1873,11 +1874,11 @@ const UnifiedNav = {
         theadRow.appendChild(th);
       }
 
-      const isPlayerTable = table.id?.toLowerCase().includes("player") || 
-                           table.id?.toLowerCase().includes("member") || 
-                           table.id?.toLowerCase().includes("staff") ||
-                           table.className?.toLowerCase().includes("members-table") ||
-                           Array.from(theadRow.querySelectorAll("th")).some(th => ["role", "squad", "team"].includes(th.textContent.trim().toLowerCase()));
+      const isPlayerTable = table.id?.toLowerCase().includes("player") ||
+        table.id?.toLowerCase().includes("member") ||
+        table.id?.toLowerCase().includes("staff") ||
+        table.className?.toLowerCase().includes("members-table") ||
+        Array.from(theadRow.querySelectorAll("th")).some(th => ["role", "squad", "team"].includes(th.textContent.trim().toLowerCase()));
 
       const assignPlanBtn = isPlayerTable ? `
         <button onclick="event.stopPropagation(); UnifiedNav.handleAssignPlan(this)" style="
@@ -1949,33 +1950,33 @@ const UnifiedNav = {
             if (target.tagName === 'TBODY' || target.tagName === 'TR') {
               const table = target.closest('table');
               if (table) {
-                  table.removeAttribute('data-actions-injected');
-                  needsUpdate = true;
+                table.removeAttribute('data-actions-injected');
+                needsUpdate = true;
               }
             } else if (target.tagName === 'TABLE') {
-                needsUpdate = true;
+              needsUpdate = true;
             } else if (target.querySelector && target.querySelector('table')) {
-                needsUpdate = true;
+              needsUpdate = true;
             }
           }
         });
-        
+
         if (needsUpdate || document.querySelector("table:not([data-actions-injected])")) {
-            document.querySelectorAll("table").forEach((table) => {
-              if (table.dataset.actionsInjected) return;
-              
-              const headers = Array.from(table.querySelectorAll("thead th")).map((th) => th.textContent.trim());
-              if (headers.length > 0) {
-                  table.querySelectorAll("tbody tr").forEach((row) => {
-                    row.querySelectorAll("td").forEach((td, index) => {
-                      if (headers[index] && !td.getAttribute("data-label")) {
-                        td.setAttribute("data-label", headers[index]);
-                      }
-                    });
-                  });
-              }
-              injectActionButtons(table);
-            });
+          document.querySelectorAll("table").forEach((table) => {
+            if (table.dataset.actionsInjected) return;
+
+            const headers = Array.from(table.querySelectorAll("thead th")).map((th) => th.textContent.trim());
+            if (headers.length > 0) {
+              table.querySelectorAll("tbody tr").forEach((row) => {
+                row.querySelectorAll("td").forEach((td, index) => {
+                  if (headers[index] && !td.getAttribute("data-label")) {
+                    td.setAttribute("data-label", headers[index]);
+                  }
+                });
+              });
+            }
+            injectActionButtons(table);
+          });
         }
       });
       window.__tableObserver.observe(document.body, { childList: true, subtree: true });
@@ -1987,33 +1988,33 @@ const UnifiedNav = {
   handleTableEdit(btn) {
     const row = btn.closest("tr");
     if (!row) return;
-    
+
     // Check for specialized handler
     if (typeof window.openEditMemberModal === 'function') {
-        const name = row.querySelector("td")?.textContent.trim() || "";
-        const roleCell = Array.from(row.querySelectorAll("td")).find(td => td.getAttribute('data-label') === 'Role');
-        const role = roleCell ? roleCell.textContent.trim() : "";
-        const emailCell = row.querySelector("td div[style*='font-size:0.75rem']");
-        const email = emailCell ? emailCell.textContent.trim() : "";
-        
-        const [first, ...lastParts] = name.split(" ");
-        const last = lastParts.join(" ");
-        
-        // Find ID from delete button or similar if available, or use row index
-        const memberId = btn.closest('tr').dataset.id || 'temp-id';
-        
-        window.openEditMemberModal(memberId, first, last, email, role);
-        return;
+      const name = row.querySelector("td")?.textContent.trim() || "";
+      const roleCell = Array.from(row.querySelectorAll("td")).find(td => td.getAttribute('data-label') === 'Role');
+      const role = roleCell ? roleCell.textContent.trim() : "";
+      const emailCell = row.querySelector("td div[style*='font-size:0.75rem']");
+      const email = emailCell ? emailCell.textContent.trim() : "";
+
+      const [first, ...lastParts] = name.split(" ");
+      const last = lastParts.join(" ");
+
+      // Find ID from delete button or similar if available, or use row index
+      const memberId = btn.closest('tr').dataset.id || 'temp-id';
+
+      window.openEditMemberModal(memberId, first, last, email, role);
+      return;
     }
 
     const cells = Array.from(row.querySelectorAll("td:not(:last-child)"));
     const headers = Array.from(row.closest("table").querySelectorAll("thead th:not(:last-child)")).map(th => th.textContent.trim());
-    
+
     document.getElementById("__ch-edit-modal")?.remove();
     const modal = document.createElement("div");
     modal.id = "__ch-edit-modal";
     modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;";
-    
+
     let fieldsHtml = cells.map((td, idx) => `
         <div style="margin-bottom:1rem;">
             <label style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:1px;font-weight:700;">${headers[idx] || 'Field ' + (idx + 1)}</label>
@@ -2037,7 +2038,7 @@ const UnifiedNav = {
       </div>
       <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
     `;
-    
+
     document.body.appendChild(modal);
     modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
   },
@@ -2046,10 +2047,10 @@ const UnifiedNav = {
     const row = btn.closest("tr");
     if (!row) return;
     const first = row.querySelector("td")?.textContent.trim() || "this item";
-    
+
     // Remove any existing modal
     document.getElementById("__ch-delete-modal")?.remove();
-    
+
     const modal = document.createElement("div");
     modal.id = "__ch-delete-modal";
     modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;";
@@ -2057,7 +2058,7 @@ const UnifiedNav = {
       <div style="background:#1a1a1c;border:1px solid rgba(220,38,38,0.3);border-radius:20px;padding:2rem;max-width:400px;width:90%;box-shadow:0 25px 60px rgba(0,0,0,0.6);animation:slideUp 0.2s ease;">
         <div style="width:56px;height:56px;border-radius:16px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.25rem;">🗑️</div>
         <h3 style="margin:0 0 0.5rem;font-size:1.15rem;font-weight:800;color:#fff;">Delete Item</h3>
-        <p style="margin:0 0 1.5rem;color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.5;">Are you sure you want to delete "<strong style="color:#f1f5f9;">${first.slice(0,40)}</strong>"? This action cannot be undone.</p>
+        <p style="margin:0 0 1.5rem;color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.5;">Are you sure you want to delete "<strong style="color:#f1f5f9;">${first.slice(0, 40)}</strong>"? This action cannot be undone.</p>
         <div style="display:flex;gap:0.75rem;">
           <button onclick="document.getElementById('__ch-delete-modal').remove()" style="flex:1;padding:0.65rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
           <button id="__ch-confirm-delete" style="flex:1;padding:0.65rem;background:rgba(220,38,38,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(220,38,38,0.3);">Delete</button>
@@ -2065,12 +2066,12 @@ const UnifiedNav = {
       </div>
       <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Close on backdrop click
     modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
-    
+
     // Confirm action
     document.getElementById("__ch-confirm-delete").onclick = () => {
       modal.remove();
@@ -2085,16 +2086,16 @@ const UnifiedNav = {
     const row = btn.closest("tr");
     if (!row) return;
     const name = row.querySelector("td")?.textContent.trim().split('\n')[0] || "this member";
-    
+
     // Check for specialized handler
     if (typeof window.openAssignPlanModal === 'function') {
-        const memberId = row.dataset.id || 'temp-id';
-        window.openAssignPlanModal(memberId, name);
-        return;
+      const memberId = row.dataset.id || 'temp-id';
+      window.openAssignPlanModal(memberId, name);
+      return;
     }
 
     document.getElementById("__ch-assign-modal")?.remove();
-    
+
     const modal = document.createElement("div");
     modal.id = "__ch-assign-modal";
     modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;";
@@ -2117,47 +2118,47 @@ const UnifiedNav = {
       </div>
       <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
     `;
-    
+
     document.body.appendChild(modal);
     modal.addEventListener("click", (e) => { if (e.target === modal) modal.remove(); });
-    
+
     // Load real plans if apiService exists
     if (window.apiService) {
-        apiService.getSubscriptionPlans().then(plans => {
-            const select = document.getElementById('__ch-plan-select');
-            if (plans && plans.length > 0) {
-                select.innerHTML = '<option value="">-- Select a Plan --</option>' + 
-                    plans.map(p => `<option value="${p.id}">${p.name} - £${p.amount}/${p.interval}</option>`).join('');
-            } else {
-                select.innerHTML = '<option value="">No plans found</option>';
-            }
-        }).catch(() => {
-            document.getElementById('__ch-plan-select').innerHTML = '<option value="">Error loading plans</option>';
-        });
+      apiService.getSubscriptionPlans().then(plans => {
+        const select = document.getElementById('__ch-plan-select');
+        if (plans && plans.length > 0) {
+          select.innerHTML = '<option value="">-- Select a Plan --</option>' +
+            plans.map(p => `<option value="${p.id}">${p.name} - £${p.amount}/${p.interval}</option>`).join('');
+        } else {
+          select.innerHTML = '<option value="">No plans found</option>';
+        }
+      }).catch(() => {
+        document.getElementById('__ch-plan-select').innerHTML = '<option value="">Error loading plans</option>';
+      });
     }
 
     document.getElementById("__ch-confirm-assign").onclick = async () => {
-        const planId = document.getElementById("__ch-plan-select").value;
-        if (!planId) return;
-        
-        try {
-            if (window.apiService) {
-                const memberId = row.dataset.id || 'temp-id';
-                await apiService.post('/api/payments/assign-plan', { memberId, planId });
-                showNotification("Plan assigned successfully!", "success");
-            }
-            modal.remove();
-        } catch (err) {
-            showNotification("Failed to assign plan", "error");
+      const planId = document.getElementById("__ch-plan-select").value;
+      if (!planId) return;
+
+      try {
+        if (window.apiService) {
+          const memberId = row.dataset.id || 'temp-id';
+          await apiService.post('/api/payments/assign-plan', { memberId, planId });
+          showNotification("Plan assigned successfully!", "success");
         }
+        modal.remove();
+      } catch (err) {
+        showNotification("Failed to assign plan", "error");
+      }
     };
   },
 
   _confirmAssignPlan(name) {
     const plan = document.getElementById("__ch-plan-select")?.value;
-    if(!plan) { alert("Please select a plan"); return; }
+    if (!plan) { alert("Please select a plan"); return; }
     document.getElementById("__ch-assign-modal").remove();
-    
+
     const toast = document.createElement("div");
     toast.style.cssText = "position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(22,163,74,0.95);color:#fff;padding:0.75rem 1.5rem;border-radius:12px;font-weight:700;font-size:0.88rem;z-index:999999;box-shadow:0 8px 25px rgba(0,0,0,0.4);animation:slideUp 0.3s ease;";
     toast.textContent = "✅ Plan assigned successfully to " + name.slice(0, 30);
@@ -2176,14 +2177,14 @@ const UnifiedNav = {
       <div style="background:#1a1a1c;border:1px solid rgba(220,38,38,0.25);border-radius:20px;padding:2rem;max-width:440px;width:92%;box-shadow:0 25px 60px rgba(0,0,0,0.6);animation:slideUp 0.2s ease;">
         <div style="width:56px;height:56px;border-radius:16px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.25);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.25rem;">🏆</div>
         <h3 style="margin:0 0 0.35rem;font-size:1.15rem;font-weight:800;color:#fff;">Register Interest</h3>
-        <p style="margin:0 0 1.25rem;color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.5;">You're registering interest for <strong style="color:#f1f5f9;">${(title || '').slice(0,50)}</strong>. A coach or admin will confirm your place.</p>
+        <p style="margin:0 0 1.25rem;color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.5;">You're registering interest for <strong style="color:#f1f5f9;">${(title || '').slice(0, 50)}</strong>. A coach or admin will confirm your place.</p>
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem;margin-bottom:1.25rem;">
           <label style="font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:0.5rem;">Note for Coach (optional)</label>
           <textarea id="__ch-event-note" placeholder="e.g. I'll need transport, dietary requirements..." style="width:100%;background:transparent;border:none;color:#fff;font-size:0.88rem;resize:none;outline:none;height:64px;line-height:1.5;"></textarea>
         </div>
         <div style="display:flex;gap:0.75rem;">
           <button onclick="document.getElementById('__ch-event-modal').remove()" style="flex:1;padding:0.65rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
-          <button onclick="UnifiedNav._confirmEventRegister('${(title||'').replace(/'/g,'&apos;')}'); document.getElementById('__ch-event-modal').remove();" style="flex:1;padding:0.65rem;background:rgba(220,38,38,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(220,38,38,0.3);">Register →</button>
+          <button onclick="UnifiedNav._confirmEventRegister('${(title || '').replace(/'/g, '&apos;')}'); document.getElementById('__ch-event-modal').remove();" style="flex:1;padding:0.65rem;background:rgba(220,38,38,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(220,38,38,0.3);">Register →</button>
         </div>
       </div>
       <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
@@ -2231,12 +2232,12 @@ const UnifiedNav = {
       sidebar.classList.add("active");
       overlay.classList.add("active");
       document.body.classList.add("sidebar-open");
-      
+
       // Ensure specific display properties for cross-browser reliability
-      try { 
-        sidebar.style.setProperty('display','flex','important');
-        overlay.style.setProperty('display','block','important');
-      } catch (e) {}
+      try {
+        sidebar.style.setProperty('display', 'flex', 'important');
+        overlay.style.setProperty('display', 'block', 'important');
+      } catch (e) { }
 
       this.syncUserData();
     } else {
@@ -2244,11 +2245,11 @@ const UnifiedNav = {
       overlay.classList.remove("active");
       document.body.classList.remove("sidebar-open");
 
-      try { 
+      try {
         sidebar.style.removeProperty('display');
         overlay.style.removeProperty('display');
-      } catch (e) {}
-      
+      } catch (e) { }
+
       // Also close any open dropdowns inside sidebar
       const switchers = sidebar.querySelectorAll('.group-switcher-dropdown.open');
       switchers.forEach(s => s.classList.remove('open'));
@@ -2256,7 +2257,7 @@ const UnifiedNav = {
 
     // Initialize swipe gestures if not already done
     if (!this._swipeInitialized) {
-        this.initSwipeGestures();
+      this.initSwipeGestures();
     }
 
     if (show) {
@@ -2274,34 +2275,34 @@ const UnifiedNav = {
     let currentX = 0;
     const swipeThreshold = 70;
     const sidebar = document.getElementById("pro-sidebar");
-    
+
     if (!sidebar) return;
 
     document.addEventListener('touchstart', (e) => {
-        startX = e.touches[0].clientX;
+      startX = e.touches[0].clientX;
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
-        currentX = e.touches[0].clientX;
+      currentX = e.touches[0].clientX;
     }, { passive: true });
 
     document.addEventListener('touchend', () => {
-        const diff = currentX - startX;
-        const isMobile = window.innerWidth <= 991;
+      const diff = currentX - startX;
+      const isMobile = window.innerWidth <= 991;
 
-        if (!isMobile) return;
+      if (!isMobile) return;
 
-        // Swipe right from edge (open)
-        if (startX < 50 && diff > swipeThreshold) {
-            this.toggleSidebar(true);
-        }
-        // Swipe left (close)
-        if (sidebar.classList.contains('active') && diff < -swipeThreshold) {
-            this.toggleSidebar(false);
-        }
+      // Swipe right from edge (open)
+      if (startX < 50 && diff > swipeThreshold) {
+        this.toggleSidebar(true);
+      }
+      // Swipe left (close)
+      if (sidebar.classList.contains('active') && diff < -swipeThreshold) {
+        this.toggleSidebar(false);
+      }
 
-        startX = 0;
-        currentX = 0;
+      startX = 0;
+      currentX = 0;
     });
 
     this._swipeInitialized = true;
@@ -2315,10 +2316,10 @@ const UnifiedNav = {
     const url = window.location.href;
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
-    
+
     // Explicit player path check
     if (/player-|schedule|finances|shop|chat/.test(url)) return "player";
-    
+
     // Fallback to role-based default
     if (userRole === "player" || userRole === "parent") return "player";
     return "group";
@@ -2424,9 +2425,9 @@ const UnifiedNav = {
   renderMenu() {
     const nav = document.getElementById("sidebar-nav-content");
     if (!nav) {
-        console.warn("⚠️ UnifiedNav: #sidebar-nav-content not found! Retrying in 100ms...");
-        setTimeout(() => this.renderMenu(), 100);
-        return;
+      console.warn("⚠️ UnifiedNav: #sidebar-nav-content not found! Retrying in 100ms...");
+      setTimeout(() => this.renderMenu(), 100);
+      return;
     }
 
     console.log("🚀 UnifiedNav: renderMenu() executing...");
@@ -2438,27 +2439,27 @@ const UnifiedNav = {
       if (userData && userData !== "undefined" && userData !== "null") {
         user = JSON.parse(userData);
       }
-    } catch (e) {}
+    } catch (e) { }
 
     const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
-    
+
     const isPlayer = /player-|schedule|finances|shop|chat/.test(url) || userRole === "player" || userRole === "parent";
     const isSuperAdmin = userRole === "platform_admin" || userRole === "superadmin" || url.includes("super-admin");
     const isCoach = userRole === "coach" || userRole === "staff" || url.includes("coach-");
     const isScout = userRole === "scout" || url.includes("scout-") || url.includes("scouting");
-    
+
     // Admin detection (Group/Org admin)
     const isAdmin = userRole === "admin" || userRole === "organization" || userRole === "owner" || /admin-|members|teams|events/.test(url);
-    
+
     // Player detection
     const dashboardMode = localStorage.getItem("dashboardMode") || "group";
     const isPlayerRole = userRole === "player" || userRole === "parent" || !!localStorage.getItem("activePlayerId") || dashboardMode === "player";
     const isPlayerUrl = /player-|schedule|finances|shop|chat/.test(url);
-    
+
     // Final logic: Explicit role first, then URL fallback
     let finalRole = (userRole || "player").toLowerCase();
     const p = window.location.pathname.toLowerCase();
-    
+
     // URL-based overrides (if user is navigating to a specific dash)
     if (p.includes("super-admin")) finalRole = "superadmin";
     else if (p.includes("admin") || p.includes("members") || p.includes("teams") || p.includes("form-builder")) finalRole = "admin";
@@ -2466,10 +2467,10 @@ const UnifiedNav = {
     else if (p.includes("coach")) finalRole = "coach";
     else if (p.includes("player-") || p.includes("schedule")) finalRole = "player";
     else if (dashboardMode === "player") finalRole = "player";
-    
+
     // Safety check: if user is admin but on a coach page, stay admin
     if (userRole === "admin" && finalRole === "coach") {
-        finalRole = "admin";
+      finalRole = "admin";
     }
 
     const finalIsSuperAdmin = finalRole === "superadmin";
@@ -2577,11 +2578,11 @@ const UnifiedNav = {
     }
 
     nav.innerHTML = menuHtml;
-    
+
     // Render family switcher in sidebar if placeholder exists
     const sideFamilySlot = document.getElementById("sidebar-family-switcher-container");
     if (sideFamilySlot) {
-        this.renderFamilySwitcher(sideFamilySlot);
+      this.renderFamilySwitcher(sideFamilySlot);
     }
 
     this.stripHashLinks(nav);
@@ -2711,16 +2712,16 @@ const UnifiedNav = {
   performMobileUXSweep() {
     const isMobile = window.innerWidth <= 991;
     if (!isMobile) {
-        document.querySelectorAll('.mobile-only').forEach(el => el.style.display = 'none');
-        return;
+      document.querySelectorAll('.mobile-only').forEach(el => el.style.display = 'none');
+      return;
     }
 
     // 1. Ensure correct viewport meta is present
     if (!document.querySelector('meta[name="viewport"]')) {
-        const meta = document.createElement('meta');
-        meta.name = "viewport";
-        meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
-        document.head.appendChild(meta);
+      const meta = document.createElement('meta');
+      meta.name = "viewport";
+      meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+      document.head.appendChild(meta);
     }
 
     // 2. Process all tables to ensure card-mode works
@@ -2728,7 +2729,7 @@ const UnifiedNav = {
 
     // 3. Global layout fixes
     document.body.style.overflowX = "hidden";
-    
+
     const main = document.querySelector("main, .dashboard-main, .dashboard-container, #overview, #members");
     if (main) {
       main.style.paddingBottom = "100px";
@@ -2747,9 +2748,9 @@ const UnifiedNav = {
     // 4. Force grid stacking if missed by CSS
     const grids = document.querySelectorAll('.dash-grid, .dashboard-grid, .grid-2, .grid-3');
     grids.forEach(g => {
-        g.style.display = "grid";
-        g.style.gridTemplateColumns = "1fr";
-        g.style.width = "100%";
+      g.style.display = "grid";
+      g.style.gridTemplateColumns = "1fr";
+      g.style.width = "100%";
     });
 
     // 5. Fix full-screen height issues on iOS
@@ -2809,7 +2810,7 @@ const UnifiedNav = {
 
     // 4. Ensure Video Modal exists for openVideoModal to work
     if (!document.getElementById("videoPlayerModal")) {
-        const videoModalHtml = `
+      const videoModalHtml = `
           <div id="videoPlayerModal" class="modal" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.95); z-index:100000;">
             <div class="modal-content" style="max-width:1000px; width:95%; background:transparent; box-shadow:none; padding:0; position:relative;">
               <button class="btn btn-secondary" onclick="closeModal('videoPlayerModal')" style="position:absolute; top:-40px; right:0; border-radius:50%; width:36px; height:36px; padding:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white;">✕</button>
@@ -2820,9 +2821,9 @@ const UnifiedNav = {
             </div>
           </div>
         `;
-        const div = document.createElement('div');
-        div.innerHTML = videoModalHtml;
-        document.body.appendChild(div.firstElementChild);
+      const div = document.createElement('div');
+      div.innerHTML = videoModalHtml;
+      document.body.appendChild(div.firstElementChild);
     }
 
     console.log("✅ UnifiedNav Init Complete.");
@@ -2858,7 +2859,7 @@ const UnifiedNav = {
         videoId = url.split("embed/")[1].split("?")[0];
       }
       embedHtml = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-    } 
+    }
     // Vimeo Detection
     else if (url.includes("vimeo.com")) {
       const videoId = url.split("/").pop();
@@ -2871,18 +2872,18 @@ const UnifiedNav = {
 
     container.innerHTML = embedHtml;
     if (titleEl) titleEl.textContent = title || "Academy Video";
-    
+
     modal.style.display = "flex";
     document.body.style.overflow = "hidden";
 
     // Clean up on close (stop video)
     const originalClose = window.closeModal;
-    window.closeModal = function(id) {
-        if (id === 'videoPlayerModal') {
-            container.innerHTML = "";
-            window.closeModal = originalClose;
-        }
-        originalClose(id);
+    window.closeModal = function (id) {
+      if (id === 'videoPlayerModal') {
+        container.innerHTML = "";
+        window.closeModal = originalClose;
+      }
+      originalClose(id);
     };
   },
 };

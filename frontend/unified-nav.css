@@ -1024,7 +1024,7 @@ header.header .nav-container,
     pointer-events: auto;
 }
 
-/* Mobile Sidebar - Premium Refined Width */
+/* Mobile Sidebar - Standardized Robust Transform */
 @media (max-width: 991px) {
     :root {
         --sidebar-width: 300px;
@@ -1032,15 +1032,19 @@ header.header .nav-container,
     
     .pro-sidebar {
         border-right: 1px solid rgba(255,255,255,0.08);
-        left: -300px;
+        left: 0 !important;
+        transform: translateX(-100%) !important;
         width: 300px !important;
         max-width: 85% !important;
-        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s !important;
         z-index: 5000 !important;
+        visibility: hidden;
     }
     
     .pro-sidebar.active {
-        transform: translateX(300px);
+        transform: translateX(0) !important;
+        visibility: visible !important;
+        display: flex !important;
     }
     
     .sidebar-header {
