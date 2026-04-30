@@ -1387,20 +1387,20 @@ const UnifiedNav = {
 
     const isMobile = window.innerWidth < 992;
     header.innerHTML = `
-            <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 1rem; position: relative;">
+            <div class="nav-container" style="display: flex; align-items: center; width: 100%; padding: 0 0.75rem; height: 100%;">
                 <!-- Left Side: Back + Burger -->
-                <div style="display: flex; align-items: center; gap: 0.5rem; z-index: 10;">
-                    <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
-                        <i class="fa fa-arrow-left" style="font-size: 0.9rem;"></i>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
+                    <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
+                        <i class="fa fa-arrow-left" style="font-size: 0.85rem;"></i>
                     </button>
-                    <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="margin:0 !important; width: 36px !important; height: 36px !important;">
+                    <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="margin:0 !important; width: 34px !important; height: 34px !important;">
                         ${ICONS.menu}
                     </div>
                 </div>
 
-                <!-- Center: Logo -->
-                <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer; display: flex; align-items: center; justify-content: center; position: absolute; left: 50%; transform: translateX(-50%); z-index: 5;">
-                    <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 24px;">
+                <!-- Center/Logo area -->
+                <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 1; min-width: 0;">
+                    <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 22px;">
                     <span class="logo-text desktop-only" style="margin-left: 0.5rem; font-weight: 800; font-size: 1.1rem;">ClubHub</span>
                 </div>
 
