@@ -3504,5 +3504,5 @@ window.addEventListener("error", function (event) {
 });
 
 console.log(
-  "✅ Complete Production API Service loaded with proper environment detection!",
+  "✅ Complete Production API Service loaded (v20260429_v18) with proper environment detection!",
 );

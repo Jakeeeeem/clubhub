@@ -98,7 +98,7 @@ const UnifiedNav = {
       return;
     }
     this._initialized = true;
-    console.log("🚀 UnifiedNav: Initializing standard navigation...");
+    console.log("🚀 UnifiedNav: Initializing standard navigation (v20260429_v18)...");
 
     // 🛡️ Fallback mock data injection for demo stability
     // ONLY runs if we are in demo mode AND no real data is present.
@@ -1387,57 +1387,59 @@ const UnifiedNav = {
 
     const isMobile = window.innerWidth < 992;
     header.innerHTML = `
-            <div class="nav-container" style="display: flex; align-items: center; width: 100%; padding: 0 0.75rem; height: 100%;">
-                <!-- Left Side: Back + Burger -->
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
-                    <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
-                        <i class="fa fa-arrow-left" style="font-size: 0.85rem;"></i>
+            <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 1rem; height: 100%;">
+                <!-- Left Side: Back Button (Mobile Only) -->
+                <div class="header-left" style="display: flex; align-items: center; min-width: 44px;">
+                    <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
+                        <i class="fa fa-arrow-left" style="font-size: 0.9rem;"></i>
                     </button>
-                    <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="margin:0 !important; width: 34px !important; height: 34px !important;">
+                </div>
+
+                <!-- Center: Logo (Centered on Mobile) -->
+                <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 1; min-width: 0;">
+                    <img src="/images/logo.png" alt="Logo" class="logo-img" style="height: 24px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.2));">
+                    <span class="logo-text desktop-only" style="margin-left: 0.6rem; font-weight: 800; font-size: 1.15rem; letter-spacing: -0.5px;">ClubHub</span>
+                </div>
+
+                <!-- Right Side: Burger (Mobile) / Profile (Desktop) -->
+                <div class="header-right" style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; min-width: 44px; z-index: 10;">
+                    <!-- Notification Bell (Shared) -->
+                    <div id="header-notifications-container" class="header-notif-wrapper"></div>
+
+                    <!-- Burger (Mobile Only) -->
+                    <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="margin:0 !important; width: 36px !important; height: 36px !important; background: rgba(220, 38, 38, 0.12); border-radius: 10px; border: 1px solid rgba(220, 38, 38, 0.2); display: flex !important; align-items: center; justify-content: center;">
                         ${ICONS.menu}
                     </div>
-                </div>
 
-                <!-- Center/Logo area -->
-                <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 1; min-width: 0;">
-                    <img src="/images/logo.png" alt="Logo" class="logo-img" style="height: 22px;">
-                    <span class="logo-text desktop-only" style="margin-left: 0.5rem; font-weight: 800; font-size: 1.1rem;">ClubHub</span>
-                </div>
-
-                <!-- Right Side: Profile/Actions -->
-                <div class="header-actions" style="display: flex; align-items: center; gap: 0.75rem; z-index: 10;">
-                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper ${isMobile ? 'mobile-hidden' : 'desktop-only'}" style="${isMobile ? 'display:none !important;' : ''}"></div>
-                    <div id="header-family-switcher-container" class="header-family-switcher-wrapper ${isMobile ? 'mobile-hidden' : 'desktop-only'}" style="${isMobile ? 'display:none !important;' : ''}"></div>
-                    <div id="header-notifications-container" class="header-notif-wrapper"></div>
+                    <!-- Profile & Switchers (Desktop Only) -->
+                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper desktop-only"></div>
+                    <div id="header-family-switcher-container" class="header-family-switcher-wrapper desktop-only"></div>
                     
                     ${!isLoggedIn ? `
-                        <div class="header-auth" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <div class="header-auth desktop-only" style="display: flex; gap: 0.5rem; align-items: center;">
                             <a href="login.html" class="btn btn-secondary btn-small">Login</a>
                         </div>
                     ` : `
-                        ${(this.getUserRole() === "admin" || this.getUserRole() === "organization" || this.getUserRole() === "platform_admin") ? `
-                        <button id="stripe-connect-btn" class="btn btn-secondary btn-small desktop-only" style="margin-right: 0.5rem; background-color: #6366f1; color: white;" onclick="UnifiedNav.manageStripeAccount()">
-                            <i class="fa fa-cc-stripe"></i> Connect
-                        </button>
-                        ` : ""}
-                        
-                        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)" style="display: flex; align-items: center; cursor: pointer;">
-                            <div class="user-details desktop-only" style="text-align: right; margin-right: 0.5rem;">
+                        <div class="user-profile-trigger desktop-only" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)" style="display: flex; align-items: center; cursor: pointer;">
+                            <div class="user-details" style="text-align: right; margin-right: 0.6rem;">
                                 <span class="user-name" id="header-user-name" style="display: block; font-weight: 700; font-size: 0.85rem;">${user ? user.first_name : 'User'}</span>
-                                <span style="display: block; font-size: 0.65rem; opacity: 0.6;">Profile</span>
+                                <span style="display: block; font-size: 0.6rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px;">Account</span>
                             </div>
-                            <div class="user-avatar-sm" id="header-user-avatar" style="width: 32px; height: 32px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem;">${user ? (user.first_name ? user.first_name[0] : '?') : '?'}</div>
+                            <div class="user-avatar-sm" id="header-user-avatar" style="width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.15); font-size: 0.85rem; background: linear-gradient(135deg, #dc2626, #991b1b);">${user ? (user.first_name ? user.first_name[0] : '?') : '?'}</div>
                         </div>
                     `}
                 </div>
             </div>
         `;
 
-    this.renderHeaderSwitcher();
-    this.renderFamilySwitcher();
-    this.updateModeUI();
-    this.renderTopTabs();
-    this.checkStripeStatus();
+    // Deferred rendering for switchers to ensure DOM is ready
+    requestAnimationFrame(() => {
+        this.renderHeaderSwitcher();
+        this.renderFamilySwitcher();
+        this.updateModeUI();
+        this.renderTopTabs();
+        this.checkStripeStatus();
+    });
   },
 
   /**
