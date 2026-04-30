@@ -4,7 +4,10 @@
  */
 
 const TrainingService = {
-  baseUrl: window.API_BASE_URL || '/api',
+  // Use the global apiService baseURL if available, otherwise fallback to /api
+  get baseUrl() {
+    return (window.apiService && window.apiService.baseURL) || window.API_BASE_URL || '/api';
+  },
 
   // Auth header
   _headers() {

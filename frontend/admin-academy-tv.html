@@ -5,10 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Academy TV Manager - ClubHub</title>
-  <link rel="stylesheet" href="styles.css?v=20260429_v12">
-  <link rel="stylesheet" href="design-system.css?v=20260429_v12">
-  <link rel="stylesheet" href="unified-nav.css?v=20260429_v12">
-  <link rel="stylesheet" href="group-switcher.css?v=20260429_v12">
+  <link rel="stylesheet" href="styles.css?v=20260429_v14">
+  <link rel="stylesheet" href="design-system.css?v=20260429_v14">
+  <link rel="stylesheet" href="unified-nav.css?v=20260429_v14">
+  <link rel="stylesheet" href="group-switcher.css?v=20260429_v14">
 </head>
 
 <body class="clubhub-unified dashboard-page">
@@ -112,11 +112,11 @@
     </div>
   </div>
 
-  <script src="app-state.js?v=20260429_v12"></script>
-  <script src="api-service.js?v=20260429_v12"></script>
-  <script src="training.js?v=20260429_v12"></script>
-  <script src="unified-nav.js?v=20260429_v12"></script>
-  <script src="group-switcher.js?v=20260429_v12"></script>
+  <script src="app-state.js?v=20260429_v14"></script>
+  <script src="api-service.js?v=20260429_v14"></script>
+  <script src="training.js?v=20260429_v14"></script>
+  <script src="unified-nav.js?v=20260429_v14"></script>
+  <script src="group-switcher.js?v=20260429_v14"></script>
 
   <script>
     let allDrills = [];
@@ -137,9 +137,9 @@
         // Fallback demo data if API fails or empty
         if (allDrills.length === 0) {
             allDrills = [
-                { id: 'd1', title: 'Positioning & Spacing', category: 'Tactics', difficulty: 'Intermediate', duration_minutes: 20, description: 'Understanding the 4-3-3 defensive shape.', demo_video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
-                { id: 'd2', title: '1v1 Finishing Drills', category: 'Drills', difficulty: 'Advanced', duration_minutes: 15, description: 'Clinical finishing in high-pressure situations.', demo_video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
-                { id: 'd3', title: 'Agility Ladder Routine', category: 'Fitness', difficulty: 'Beginner', duration_minutes: 10, description: 'Improving footwork and reaction speed.', demo_video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }
+                { id: 'd1', title: 'Positioning & Spacing', category: 'Tactics', difficulty: 'Intermediate', duration_minutes: 20, description: 'Understanding the 4-3-3 defensive shape.', demo_video_url: 'https://www.youtube.com/watch?v=SAn_209YFvA' },
+                { id: 'd2', title: '1v1 Finishing Drills', category: 'Drills', difficulty: 'Advanced', duration_minutes: 15, description: 'Clinical finishing in high-pressure situations.', demo_video_url: 'https://www.youtube.com/watch?v=K3H5mK14jX0' },
+                { id: 'd3', title: 'Agility Ladder Routine', category: 'Fitness', difficulty: 'Beginner', duration_minutes: 10, description: 'Improving footwork and reaction speed.', demo_video_url: 'https://www.youtube.com/watch?v=vVjH96MhSps' }
             ];
         }
         renderLibrary();
