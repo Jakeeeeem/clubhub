@@ -1030,14 +1030,27 @@ const UnifiedNav = {
 
       // Build inner HTML for aside
       const asideInner = `
-                <div class="sidebar-header" style="padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <img src="/images/logo.png" alt="Logo" style="width: 32px; height: 32px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
-                        <span style="font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; color: #fff;">ClubHub <span style="color: var(--primary);">PRO</span></span>
+                <div class="sidebar-header" style="padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <img src="/images/logo.png" alt="Logo" style="width: 28px; height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
+                            <span style="font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; color: #fff;">ClubHub <span style="color: var(--primary);">PRO</span></span>
+                        </div>
+                        <button class="sidebar-close mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; cursor: pointer;">
+                            <i class="fa fa-times"></i>
+                        </button>
                     </div>
-                    <button class="sidebar-burger mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; cursor: pointer;">
-                        ${ICONS.close}
-                    </button>
+
+                    <!-- Mobile Profile Orientation -->
+                    <div class="mobile-only" style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 1rem;">
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; color: white; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                            ${user ? (user.first_name ? user.first_name[0] : '?') : '?'}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 700; font-size: 1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user ? user.first_name + ' ' + (user.last_name || '') : 'Guest User'}</div>
+                            <div style="font-size: 0.7rem; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">${userRole.replace('_', ' ')}</div>
+                        </div>
+                    </div>
                 </div>
 
                     <div id="sidebar-nav-content" class="sidebar-nav" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
@@ -1374,57 +1387,46 @@ const UnifiedNav = {
 
     const isMobile = window.innerWidth < 992;
     header.innerHTML = `
-            <div class="nav-container">
-                <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:transparent; color:inherit; font-size:1.2rem; padding:0.5rem; margin-right:0.5rem; cursor:pointer;">
-                    ←
-                </button>
-                <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
-                    ${ICONS.menu}
-                </div>
-
-                <div class="dash-header-left" style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
-                    <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-                        <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 28px;">
-                        <span class="logo-text desktop-only">ClubHub</span>
-                    </div>
-                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper desktop-only" style="flex: 1; min-width: 0;"></div>
-                    <div id="header-family-switcher-container" class="header-family-switcher-wrapper desktop-only" style="margin-left: 0.5rem;"></div>
-                </div>
-
-                <div class="mode-toggle-container desktop-only">
-                    <div class="header-mode-toggle" id="header-mode-toggle">
-                        <div class="mode-pill" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')">Groups Hub</div>
-                        <div class="mode-pill" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')">Player Pro</div>
+            <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 1rem; position: relative;">
+                <!-- Left Side: Back + Burger -->
+                <div style="display: flex; align-items: center; gap: 0.5rem; z-index: 10;">
+                    <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
+                        <i class="fa fa-arrow-left" style="font-size: 0.9rem;"></i>
+                    </button>
+                    <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="margin:0 !important; width: 36px !important; height: 36px !important;">
+                        ${ICONS.menu}
                     </div>
                 </div>
 
-                <div class="header-actions">
+                <!-- Center: Logo -->
+                <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer; display: flex; align-items: center; justify-content: center; position: absolute; left: 50%; transform: translateX(-50%); z-index: 5;">
+                    <img src="images/logo.png" alt="Logo" class="logo-img" style="height: 24px;">
+                    <span class="logo-text desktop-only" style="margin-left: 0.5rem; font-weight: 800; font-size: 1.1rem;">ClubHub</span>
+                </div>
+
+                <!-- Right Side: Profile/Actions -->
+                <div class="header-actions" style="display: flex; align-items: center; gap: 0.75rem; z-index: 10;">
+                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper desktop-only"></div>
+                    <div id="header-family-switcher-container" class="header-family-switcher-wrapper desktop-only"></div>
+                    
                     ${!isLoggedIn ? `
-                        <div class="header-auth" style="display: flex; gap: 0.75rem; align-items: center;">
+                        <div class="header-auth" style="display: flex; gap: 0.5rem; align-items: center;">
                             <a href="login.html" class="btn btn-secondary btn-small">Login</a>
-                            <a href="signup.html" class="btn btn-primary btn-small">Get Started</a>
                         </div>
                     ` : `
                         ${(this.getUserRole() === "admin" || this.getUserRole() === "organization" || this.getUserRole() === "platform_admin") ? `
-                        <button id="stripe-connect-btn" class="btn btn-secondary btn-small desktop-only" style="margin-right: 1rem; border-color: rgba(255,255,255,0.1); background-color: #6366f1; color: white;" onclick="UnifiedNav.manageStripeAccount()">
-                            <i class="fa fa-cc-stripe" style="margin-right: 6px;"></i> Connect Stripe
+                        <button id="stripe-connect-btn" class="btn btn-secondary btn-small desktop-only" style="margin-right: 0.5rem; background-color: #6366f1; color: white;" onclick="UnifiedNav.manageStripeAccount()">
+                            <i class="fa fa-cc-stripe"></i> Connect
                         </button>
                         ` : ""}
                         
-                        <div class="action-btn desktop-only" style="margin-right: 1rem;" onclick="typeof showPlayerSection !== 'undefined' ? showPlayerSection('notifications') : (typeof showSection !== 'undefined' ? showSection('notifications') : null); return false;">
-                            <i class="fa fa-bell-o"></i>
-                            <span class="badge" id="header-notif-badge" style="display:none">0</span>
-                        </div>
-
-                        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <div class="user-details desktop-only" style="text-align: right; margin-right: 0.5rem;" onclick="event.stopPropagation(); window.location.href='player-settings.html'">
-                                <span class="user-name" id="header-user-name" style="display: block; font-weight: 700; font-size: 0.9rem;">${user ? user.first_name : 'User'}</span>
-                                <span style="display: block; font-size: 0.7rem; opacity: 0.6;">View Profile</span>
+                        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)" style="display: flex; align-items: center; cursor: pointer;">
+                            <div class="user-details desktop-only" style="text-align: right; margin-right: 0.5rem;">
+                                <span class="user-name" id="header-user-name" style="display: block; font-weight: 700; font-size: 0.85rem;">${user ? user.first_name : 'User'}</span>
+                                <span style="display: block; font-size: 0.65rem; opacity: 0.6;">Profile</span>
                             </div>
-                            <div class="user-avatar-sm" id="header-user-avatar" onclick="event.stopPropagation(); window.location.href='player-settings.html'">${user ? (user.first_name ? user.first_name[0] : '?') : '?'}</div>
-                            <i class="fa fa-chevron-down desktop-only" style="font-size:0.7rem; opacity:0.5; margin-left: 4px;"></i>
+                            <div class="user-avatar-sm" id="header-user-avatar" style="width: 32px; height: 32px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem;">${user ? (user.first_name ? user.first_name[0] : '?') : '?'}</div>
                         </div>
-                        <button class="btn btn-secondary btn-small desktop-only" onclick="UnifiedNav.logout()" style="margin-left: 0.5rem;">Logout</button>
                     `}
                 </div>
             </div>
