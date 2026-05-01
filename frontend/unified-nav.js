@@ -369,7 +369,7 @@ const UnifiedNav = {
         setTimeout(() => {
           const visibleSections = Array.from(document.querySelectorAll('.dashboard-section, .section')).filter(s => s.style.display !== 'none');
           if (visibleSections.length === 0) {
-            console.warn("🚨 Emergency Visibility: No section visible, forcing 'overview'");
+            // Quietly handle fallback to avoid console clutter
             const overview = document.getElementById('player-overview') || document.getElementById('overview') || document.querySelector('.dashboard-section');
             if (overview) overview.style.display = 'block';
             document.body.classList.remove('loading');

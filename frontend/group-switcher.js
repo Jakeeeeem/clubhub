@@ -137,19 +137,22 @@ if (window.__groupSwitcherDefined) {
 
     async loadGroups() {
       try {
-        let svc = window.apiService || (typeof apiService !== "undefined" ? apiService : null);
+        let svc = window.apiService || (typeof apiService !== "undefined" ? apiService : null) || (window.ApiService ? new window.ApiService() : null);
         
         // Wait up to 2 seconds for apiService to be available
         if (!svc) {
             let retries = 0;
             while (!svc && retries < 20) {
                 await new Promise(r => setTimeout(r, 100));
-                svc = window.apiService || (typeof apiService !== "undefined" ? apiService : null);
+                svc = window.apiService || (typeof apiService !== "undefined" ? apiService : null) || (window.ApiService ? new window.ApiService() : null);
                 retries++;
             }
         }
 
-        if (!svc) throw new Error("apiService not available after waiting");
+        if (!svc) {
+            console.warn("Switcher: apiService not available after waiting. Skipping group load to avoid breaking UI.");
+            return;
+        }
 
         // Use getContext() which has the full demo-mode fallback built in
         const response = await svc.getContext();

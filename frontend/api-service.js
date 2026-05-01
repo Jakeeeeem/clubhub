@@ -508,6 +508,10 @@ if (typeof ApiService === 'undefined') {
   }
 
   _handleError(error, requestId, endpoint, options) {
+    // Silence expected 404s for the feed endpoint to keep console clean
+    if (error.status === 404 && endpoint.includes('/feed')) {
+      throw error;
+    }
     console.error(`❌ API Error [${endpoint}]:`, error);
     throw error;
   }
