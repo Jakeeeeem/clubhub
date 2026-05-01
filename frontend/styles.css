@@ -6074,40 +6074,41 @@ input:focus + .toggle-slider {
 }
 
 /* ============================================================================
-   GLOBAL MOBILE UI OVERRIDES (Ensure all pages render well on small screens)
+   GLOBAL MOBILE UI OVERRIDES — Compact, Premium Dark
    ============================================================================ */
 @media (max-width: 991px) {
-    /* 1. Force all dashboard grids to stack */
+    /* 1. Dashboard grids stack */
     .dashboard-grid, .dash-grid, .grid-2, .grid-3, .grid-4, .stats-grid, .stats-row, .stat-group, .card-grid, .dashboard-card-strip {
         grid-template-columns: 1fr !important;
         display: flex !important;
         flex-direction: column !important;
-        gap: 1.25rem !important;
+        gap: 0.6rem !important;
     }
 
-    /* 2. Catch-all for inline style grids */
+    /* 2. Stat blocks — 2 cols on anything above 400px */
+    @media (min-width: 400px) {
+        .stats-grid, .stats-row, .stat-group, .dashboard-card-strip {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 0.6rem !important;
+        }
+    }
+
+    /* 3. Inline style grids */
     div[style*="grid-template-columns"] {
         grid-template-columns: 1fr !important;
         display: flex !important;
         flex-direction: column !important;
-        gap: 1rem !important;
+        gap: 0.6rem !important;
     }
 
-    /* 3. Stat blocks specifically - allow 2 columns on medium mobile if not too crowded */
-    @media (min-width: 480px) {
-        .stats-grid, .stats-row, .stat-group, .dashboard-card-strip {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-        }
-    }
-
-    /* 4. Swipable Horizontal Tabs for all dashboard sections */
+    /* 4. Horizontal swipable tabs */
     .tabs, .dashboard-tabs, .tab-buttons {
         display: flex !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
-        padding-bottom: 0.75rem !important;
-        gap: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        gap: 0.4rem !important;
         scrollbar-width: none !important;
         margin-left: -1rem !important;
         margin-right: -1rem !important;
@@ -6118,9 +6119,11 @@ input:focus + .toggle-slider {
     .tabs button, .tab-btn, .tab-item {
         white-space: nowrap !important;
         flex-shrink: 0 !important;
+        font-size: 0.78rem !important;
+        padding: 0.4rem 0.85rem !important;
     }
 
-    /* 5. Universal Table to Card Conversion */
+    /* 5. Table → Card conversion (compact premium) */
     .dashboard-section table:not(.no-mobile-cards) {
         display: block !important;
         width: 100% !important;
@@ -6136,107 +6139,134 @@ input:focus + .toggle-slider {
     }
     .dashboard-section table:not(.no-mobile-cards) tr {
         background: rgba(255,255,255,0.03) !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        border-radius: 16px !important;
-        padding: 1rem !important;
-        margin-bottom: 1.25rem !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        border-radius: 10px !important;
+        padding: 0.25rem 0.75rem !important;
+        margin-bottom: 0.5rem !important;
         position: relative !important;
     }
     .dashboard-section table:not(.no-mobile-cards) td {
         border: none !important;
-        border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+        border-bottom: 1px solid rgba(255,255,255,0.04) !important;
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        padding: 0.75rem 0 !important;
+        padding: 0.4rem 0 !important;
         text-align: right !important;
-        font-size: 0.9rem !important;
+        font-size: 0.82rem !important;
+        gap: 0.5rem !important;
     }
     .dashboard-section table:not(.no-mobile-cards) td:last-child {
         border-bottom: none !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-end !important;
+        gap: 0.35rem !important;
+        padding-top: 0.45rem !important;
+        padding-bottom: 0.45rem !important;
     }
     .dashboard-section table:not(.no-mobile-cards) td[data-label]::before {
         content: attr(data-label) !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
-        font-size: 0.65rem !important;
-        color: var(--text-muted) !important;
+        font-size: 0.6rem !important;
+        letter-spacing: 0.5px !important;
+        color: rgba(255,255,255,0.3) !important;
         text-align: left !important;
-        margin-right: 1rem !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+    /* Action buttons in last cell — compact side-by-side */
+    .dashboard-section table:not(.no-mobile-cards) td:last-child button {
+        flex: 1 !important;
+        min-width: 60px !important;
+        max-width: calc(50% - 0.2rem) !important;
+        font-size: 0.7rem !important;
+        padding: 0.35rem 0.5rem !important;
+        border-radius: 7px !important;
+        text-align: center !important;
+        justify-content: center !important;
+        display: inline-flex !important;
+        align-items: center !important;
     }
 
-    /* 6. Layout Sidebar Stacking */
-    .dashboard-layout-sidebar, .layout-with-sidebar {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 2rem !important;
-    }
-    .dashboard-layout-sidebar > aside, .layout-sidebar {
-        width: 100% !important;
-        order: 2 !important;
-    }
-    .dashboard-layout-sidebar > main, .layout-main {
-        width: 100% !important;
-        order: 1 !important;
-    }
-
-    /* 7. Tactical Board Fixes */
-    .equipment-tray {
-        flex-direction: row !important;
-        height: auto !important;
-        overflow-x: auto !important;
-        padding: 1rem !important;
-        background: rgba(0,0,0,0.2) !important;
+    /* 6. Compact glass cards */
+    .glass-card, .card, .card-elite {
+        padding: 0.85rem !important;
         border-radius: 12px !important;
-        margin-bottom: 1rem !important;
-    }
-    .pitch-container {
-        min-height: 350px !important;
-        touch-action: none !important;
-    }
-    .tactical-sidebar {
-        width: 100% !important;
-        margin-top: 1rem !important;
     }
 
-    /* 8. Container Normalization */
+    /* 7. Section header — tighter */
+    .section-header, .panel-header {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    .section-header h1, .section-header h2, .section-header h3,
+    .panel-header h1, .panel-header h2, .panel-header h3 {
+        font-size: 1rem !important;
+        margin: 0 !important;
+    }
+    .section-header .btn, .panel-header .btn {
+        font-size: 0.75rem !important;
+        padding: 0.35rem 0.75rem !important;
+    }
+
+    /* 8. Container normalisation */
     .dashboard-container, .container {
-        padding: 1rem !important;
+        padding: 0.75rem !important;
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
     }
 
-    /* 9. Header Stacking for flex sections */
-    .section-header, .panel-header {
+    /* 9. Layout sidebar stacking */
+    .dashboard-layout-sidebar, .layout-with-sidebar {
+        display: flex !important;
         flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 1rem !important;
+        gap: 0.75rem !important;
     }
-    .section-header .btn, .panel-header .btn {
-        width: 100% !important;
-    }
+    .dashboard-layout-sidebar > aside, .layout-sidebar { width: 100% !important; order: 2 !important; }
+    .dashboard-layout-sidebar > main, .layout-main { width: 100% !important; order: 1 !important; }
 
     /* 10. Forms & Inputs */
-    .profile-form .dashboard-grid {
-        grid-template-columns: 1fr !important;
-    }
-    input, select, textarea {
-        font-size: 16px !important; /* Fixes iOS zoom */
-    }
+    .profile-form .dashboard-grid { grid-template-columns: 1fr !important; }
+    input, select, textarea { font-size: 16px !important; }
 
     /* 11. Messaging */
     .messenger-container {
         grid-template-columns: 1fr !important;
         height: calc(100vh - 120px) !important;
     }
-    .messenger-sidebar {
-        display: none !important; /* Hide list when thread is open, or use a toggle */
-    }
+    .messenger-sidebar { display: none !important; }
     .messenger-sidebar.active {
         display: flex !important;
         position: absolute !important;
         inset: 0 !important;
         z-index: 100 !important;
     }
+
+    /* 12. Tactical board */
+    .equipment-tray {
+        flex-direction: row !important;
+        height: auto !important;
+        overflow-x: auto !important;
+        padding: 0.6rem !important;
+        background: rgba(0,0,0,0.2) !important;
+        border-radius: 10px !important;
+        margin-bottom: 0.75rem !important;
+    }
+    .pitch-container { min-height: 320px !important; touch-action: none !important; }
+    .tactical-sidebar { width: 100% !important; margin-top: 0.75rem !important; }
+
+    /* 13. Stat cards — compact */
+    .stat-card { padding: 0.75rem !important; }
+    .stat-value { font-size: 1.5rem !important; }
+    .stat-label { font-size: 0.7rem !important; }
+
+    /* 14. Event cards */
+    .event-card { padding: 0.75rem !important; margin-bottom: 0.5rem !important; }
 }
+
