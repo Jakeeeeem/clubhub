@@ -1037,7 +1037,7 @@ const UnifiedNav = {
 
       // Build inner HTML for aside
       const asideInner = `
-                <div class="sidebar-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="sidebar-header" style="padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 1rem;">
                     <!-- Sidebar Logo (Desktop & Mobile) -->
                     <div class="logo-area" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
                         <div style="display: flex; align-items: center; gap: 0.75rem;" onclick="window.location.href='index.html'">
@@ -1056,28 +1056,32 @@ const UnifiedNav = {
                         <button onclick="UnifiedNav.switchMode('player')" class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'player' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'player' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Player Pro</button>
                     </div>
                     
-                    <div id="sidebar-switcher-target" style="width: 100%;"></div>
-                    <div id="sidebar-family-switcher-container" class="mobile-only" style="width: 100%;"></div>
+                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                        <div id="sidebar-switcher-target" style="flex: 1; min-width: 0;"></div>
+                        <div id="sidebar-family-switcher-container" class="mobile-only" style="flex: 1; min-width: 0;"></div>
+                    </div>
                     ` : ''}
                 </div>
 
-                <div id="sidebar-nav-content" class="sidebar-nav" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
-                    <!-- Populated by renderMenu() -->
-                </div>
-
-                <div class="sidebar-footer" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.5rem;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                        <a href="settings.html" class="sidebar-link" style="margin:0; justify-content: center; padding: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 0.75rem;">
-                            <div style="width:16px; height:16px; display:flex; align-items:center;">${ICONS.nav.settings}</div> <span style="font-size: 0.75rem; margin-left: 0.4rem;">Settings</span>
-                        </a>
-                        <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="margin:0; justify-content: center; padding: 0.5rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 8px; color: #ef4444; font-size: 0.75rem;">
-                            <div style="width:16px; height:16px; display:flex; align-items:center;">${ICONS.nav.logout}</div> <span style="font-size: 0.75rem; margin-left: 0.4rem;">Logout</span>
-                        </a>
+                <div class="sidebar-scroll-area" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 2rem;">
+                    <div id="sidebar-nav-content" class="sidebar-nav" style="padding: 0.5rem;">
+                        <!-- Populated by renderMenu() -->
                     </div>
 
-                    <button class="btn btn-text" onclick="window.location.href += (window.location.href.includes('?') ? '&' : '?') + 'reset=system'" style="width: 100%; opacity: 0.3; font-size: 0.6rem; letter-spacing: 0.5px; padding: 0.25rem; color: #fff;">
-                        🔄 REFRESH
-                    </button>
+                    <div class="sidebar-menu-bottom" style="padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <a href="settings.html" class="sidebar-link" style="margin:0; justify-content: center; padding: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 0.75rem;">
+                                <div style="width:16px; height:16px; display:flex; align-items:center;">${ICONS.nav.settings}</div> <span style="font-size: 0.75rem; margin-left: 0.4rem;">Settings</span>
+                            </a>
+                            <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="margin:0; justify-content: center; padding: 0.5rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 8px; color: #ef4444; font-size: 0.75rem;">
+                                <div style="width:16px; height:16px; display:flex; align-items:center;">${ICONS.nav.logout}</div> <span style="font-size: 0.75rem; margin-left: 0.4rem;">Logout</span>
+                            </a>
+                        </div>
+
+                        <button class="btn btn-text" onclick="window.location.href += (window.location.href.includes('?') ? '&' : '?') + 'reset=system'" style="width: 100%; opacity: 0.3; font-size: 0.6rem; letter-spacing: 0.5px; padding: 0.25rem; color: #fff; margin-top: 0.5rem;">
+                            🔄 REFRESH
+                        </button>
+                    </div>
                 </div>
             `;
 
