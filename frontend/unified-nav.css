@@ -1053,7 +1053,7 @@ header.header .nav-container,
         width: 300px !important;
         max-width: 85% !important;
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s !important;
-        z-index: 5000 !important;
+        z-index: 10001 !important; /* Fixed: MUST be > 10000 for overlay */
         visibility: hidden;
     }
     

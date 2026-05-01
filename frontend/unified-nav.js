@@ -1037,7 +1037,13 @@ const UnifiedNav = {
 
       // Build inner HTML for aside
       const asideInner = `
-                <div class="sidebar-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div class="sidebar-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 1.25rem;">
+                    <!-- Sidebar Logo (Desktop & Mobile) -->
+                    <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='index.html'">
+                        <img src="/images/logo.png" alt="ClubHub" style="height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
+                        <span class="logo-text" style="font-weight: 800; font-size: 1.15rem; color: white; letter-spacing: -0.5px;">ClubHub</span>
+                    </div>
+
                     <div class="user-profile-sidebar" style="display: flex; align-items: center; gap: 1rem;">
                         <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), #991b1b); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; color: #fff; border: 1px solid rgba(255,255,255,0.1);">${user ? (user.first_name ? user.first_name[0] : '?') : '?'}</div>
                         <div class="user-info">
