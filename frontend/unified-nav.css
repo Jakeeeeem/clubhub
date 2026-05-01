@@ -450,8 +450,8 @@
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
-        width: 300px !important;
-        max-width: 85% !important;
+        width: 100% !important;
+        max-width: 100% !important;
         height: 100vh !important;
         background: #0a0a0c !important;
         z-index: 10001 !important;
@@ -1050,8 +1050,8 @@ header.header .nav-container,
         border-right: 1px solid rgba(255,255,255,0.08);
         left: 0 !important;
         transform: translateX(-100%) !important;
-        width: 300px !important;
-        max-width: 85% !important;
+        width: 100% !important;
+        max-width: 100% !important;
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s !important;
         z-index: 10001 !important; /* Fixed: MUST be > 10000 for overlay */
         visibility: hidden;

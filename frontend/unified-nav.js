@@ -1039,51 +1039,46 @@ const UnifiedNav = {
       const asideInner = `
                 <div class="sidebar-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 1.25rem;">
                     <!-- Sidebar Logo (Desktop & Mobile) -->
-                    <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='index.html'">
-                        <img src="/images/logo.png" alt="ClubHub" style="height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
-                        <span class="logo-text" style="font-weight: 800; font-size: 1.15rem; color: white; letter-spacing: -0.5px;">ClubHub</span>
-                    </div>
-
-                    <div class="user-profile-sidebar" style="display: flex; align-items: center; gap: 1rem;">
-                        <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), #991b1b); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; color: #fff; border: 1px solid rgba(255,255,255,0.1);">${user ? (user.first_name ? user.first_name[0] : '?') : '?'}</div>
-                        <div class="user-info">
-                            <div style="font-weight: 700; font-size: 1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user ? user.first_name + ' ' + (user.last_name || '') : 'Guest User'}</div>
-                            <div style="font-size: 0.7rem; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">${userRole.replace('_', ' ')}</div>
+                    <div class="logo-area" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;" onclick="window.location.href='index.html'">
+                            <img src="/images/logo.png" alt="ClubHub" style="height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
+                            <span class="logo-text" style="font-weight: 800; font-size: 1.15rem; color: white; letter-spacing: -0.5px;">ClubHub</span>
                         </div>
+                        ${window.innerWidth < 992 ? `
+                        <button onclick="UnifiedNav.toggleSidebar(false)" style="background: transparent; border: none; color: white; font-size: 1.5rem; padding: 0.5rem; margin-right: -0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+                        ` : ''}
                     </div>
 
                     <!-- Mode Switcher (Mobile UI Only) -->
                     ${window.innerWidth < 992 ? `
-                    <div class="mode-pills" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 100px; margin-top: 1.25rem; border: 1px solid rgba(255,255,255,0.08);">
+                    <div class="mode-pills" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.08);">
                         <button onclick="UnifiedNav.switchMode('group')" class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'group' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'group' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Groups Hub</button>
                         <button onclick="UnifiedNav.switchMode('player')" class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'player' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'player' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Player Pro</button>
                     </div>
+                    
+                    <div id="sidebar-switcher-target" style="width: 100%;"></div>
+                    <div id="sidebar-family-switcher-container" class="mobile-only" style="width: 100%;"></div>
                     ` : ''}
                 </div>
 
-                    <div id="sidebar-nav-content" class="sidebar-nav" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
-                        <!-- Populated by renderMenu() -->
+                <div id="sidebar-nav-content" class="sidebar-nav" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
+                    <!-- Populated by renderMenu() -->
+                </div>
+
+                <div class="sidebar-footer" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                        <a href="settings.html" class="sidebar-link" style="margin:0; justify-content: center; padding: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 0.75rem;">
+                            <div style="width:16px; height:16px; display:flex; align-items:center;">${ICONS.nav.settings}</div> <span style="font-size: 0.75rem; margin-left: 0.4rem;">Settings</span>
+                        </a>
+                        <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="margin:0; justify-content: center; padding: 0.5rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 8px; color: #ef4444; font-size: 0.75rem;">
+                            <div style="width:16px; height:16px; display:flex; align-items:center;">${ICONS.nav.logout}</div> <span style="font-size: 0.75rem; margin-left: 0.4rem;">Logout</span>
+                        </a>
                     </div>
 
-                    <div class="sidebar-footer" style="padding: 1rem; border-top: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.5rem;">
-                        ${window.innerWidth < 992 ? `
-                            <div id="sidebar-switcher-target" style="width: 100%; margin-bottom: 0.5rem;"></div>
-                            <div id="sidebar-family-switcher-container" class="mobile-only" style="width: 100%; margin-bottom: 1rem;"></div>
-                        ` : ''}
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                            <a href="settings.html" class="sidebar-link" style="margin:0; justify-content: center; padding: 0.5rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: rgba(255,255,255,0.7); font-size: 0.75rem;">
-                                <div style="width:16px; height:16px; display:flex; align-items:center;">${ICONS.nav.settings}</div> <span style="font-size: 0.75rem; margin-left: 0.4rem;">Settings</span>
-                            </a>
-                            <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="margin:0; justify-content: center; padding: 0.5rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 8px; color: #ef4444; font-size: 0.75rem;">
-                                <div style="width:16px; height:16px; display:flex; align-items:center;">${ICONS.nav.logout}</div> <span style="font-size: 0.75rem; margin-left: 0.4rem;">Logout</span>
-                            </a>
-                        </div>
-
-                        <button class="btn btn-text" onclick="window.location.href += (window.location.href.includes('?') ? '&' : '?') + 'reset=system'" style="width: 100%; opacity: 0.3; font-size: 0.6rem; letter-spacing: 0.5px; padding: 0.25rem; color: #fff;">
-                            🔄 REFRESH
-                        </button>
-                    </div>
+                    <button class="btn btn-text" onclick="window.location.href += (window.location.href.includes('?') ? '&' : '?') + 'reset=system'" style="width: 100%; opacity: 0.3; font-size: 0.6rem; letter-spacing: 0.5px; padding: 0.25rem; color: #fff;">
+                        🔄 REFRESH
+                    </button>
+                </div>
             `;
 
       const existingSidebar = document.getElementById("pro-sidebar") || document.querySelector(".pro-sidebar");
