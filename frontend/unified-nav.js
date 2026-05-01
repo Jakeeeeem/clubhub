@@ -1037,38 +1037,43 @@ const UnifiedNav = {
 
       // Build inner HTML for aside
       const asideInner = `
-                <div class="sidebar-header" style="padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 1rem;">
-                    <!-- Sidebar Logo (Desktop & Mobile) -->
-                    <div class="logo-area" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;" onclick="window.location.href='index.html'">
-                            <img src="images/logo.png" alt="ClubHub" style="height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));" onerror="this.style.display='none'">
-                            <span class="logo-text" style="font-weight: 800; font-size: 1.15rem; color: white; letter-spacing: -0.5px;">ClubHub</span>
+                <!-- Slim sticky header: logo + close only -->
+                <div class="sidebar-header" style="padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;" onclick="window.location.href='index.html'">
+                        <img src="images/logo.png" alt="ClubHub" style="height: 24px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.3));" onerror="this.style.display='none'">
+                        <span class="logo-text" style="font-weight: 800; font-size: 1.05rem; color: white; letter-spacing: -0.4px;">ClubHub</span>
+                    </div>
+                    ${window.innerWidth < 992 ? `
+                    <button onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">&times;</button>
+                    ` : ''}
+                </div>
+
+                <!-- Single scrollable area: switchers + nav + logout -->
+                <div class="sidebar-scroll-area" style="flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch;">
+
+                    ${window.innerWidth < 992 ? `
+                    <!-- Mode Switcher Pills -->
+                    <div style="padding: 1rem 1.25rem 0.5rem;">
+                        <div class="mode-pills" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.08);">
+                            <button onclick="UnifiedNav.switchMode('group')" class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'group' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'group' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Groups Hub</button>
+                            <button onclick="UnifiedNav.switchMode('player')" class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'player' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'player' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Player Pro</button>
                         </div>
-                        ${window.innerWidth < 992 ? `
-                        <button onclick="UnifiedNav.toggleSidebar(false)" style="background: transparent; border: none; color: white; font-size: 1.5rem; padding: 0.5rem; margin-right: -0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
-                        ` : ''}
                     </div>
 
-                    <!-- Mode Switcher (Mobile UI Only) -->
-                    ${window.innerWidth < 992 ? `
-                    <div class="mode-pills" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.08);">
-                        <button onclick="UnifiedNav.switchMode('group')" class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'group' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'group' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Groups Hub</button>
-                        <button onclick="UnifiedNav.switchMode('player')" class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'player' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'player' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Player Pro</button>
-                    </div>
-                    
-                    <div style="display: flex; flex-direction: column; width: 100%;">
+                    <!-- Group & Family Switchers -->
+                    <div style="padding: 0.5rem 1.25rem;">
                         <div id="sidebar-switcher-target" style="width: 100%;"></div>
                         <div id="sidebar-family-switcher-container" class="mobile-only" style="width: 100%;"></div>
                     </div>
                     ` : ''}
-                </div>
 
-                <div class="sidebar-scroll-area" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 2rem;">
-                    <div id="sidebar-nav-content" class="sidebar-nav" style="padding: 0.5rem;">
+                    <!-- Nav Links -->
+                    <div id="sidebar-nav-content" class="sidebar-nav" style="padding: 0.5rem; flex: 1;">
                         <!-- Populated by renderMenu() -->
                     </div>
 
-                    <div class="sidebar-menu-bottom" style="padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <!-- Logout at the bottom of the scroll area (not sticky) -->
+                    <div style="padding: 1rem 1.25rem 2rem; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.05);">
                         <a href="#" class="sidebar-link" onclick="UnifiedNav.logout(); return false;" style="margin:0; justify-content: center; padding: 0.75rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 8px; color: #ef4444; font-size: 0.85rem; font-weight: 600;">
                             <div style="width:16px; height:16px; display:flex; align-items:center;">${ICONS.nav.logout}</div> <span style="font-size: 0.85rem; margin-left: 0.5rem;">Logout</span>
                         </a>
