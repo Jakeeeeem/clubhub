@@ -1315,6 +1315,7 @@ header.header .nav-container,
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
     margin-bottom: 1.5rem !important;
+    border-radius: 12px;
 }
 
 /* Ensure actions column doesn't squash and is always reachable */
@@ -1343,16 +1344,155 @@ table td:last-child,
     gap: 1.5rem !important;
 }
 
-@media (max-width: 991px) {
+/* ============================================================
+   📱 MOBILE CARD-MODE TABLE SYSTEM
+   Converts all tables to labeled cards on screens < 768px
+   ============================================================ */
+@media (max-width: 767px) {
+
+    /* Wrap all tables in a scroll container so they don't overflow */
+    .table-responsive {
+        overflow-x: unset !important;
+    }
+
+    /* The core card-mode conversion */
+    .dashboard-main table,
+    .dashboard-content table,
+    .admin-table,
+    .table-container table,
+    .glass-card table,
+    table.members-table,
+    table.events-table,
+    table.payments-table,
+    table.teams-table,
+    table {
+        min-width: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    /* Hide the desktop thead */
+    table thead {
+        display: none !important;
+    }
+
+    /* Each row becomes a card */
+    table tbody tr {
+        display: block !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        margin-bottom: 0.75rem !important;
+        padding: 0.5rem 0 !important;
+        overflow: hidden !important;
+        transition: background 0.2s !important;
+    }
+
+    table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Each cell stacks vertically with its label */
+    table tbody td {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 0.55rem 1rem !important;
+        border: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+        font-size: 0.875rem !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        text-align: right !important;
+        gap: 0.5rem !important;
+    }
+
+    table tbody td:last-child {
+        border-bottom: none !important;
+        min-width: 0 !important;
+        justify-content: flex-end !important;
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem !important;
+    }
+
+    /* The data-label pseudo element as a left-aligned label */
+    table tbody td::before {
+        content: attr(data-label) !important;
+        font-size: 0.7rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.6px !important;
+        color: rgba(255, 255, 255, 0.35) !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        margin-right: auto !important;
+        text-align: left !important;
+    }
+
+    /* Action buttons wrap nicely on mobile */
+    table tbody td[data-label="Actions"],
+    table tbody td:last-child[data-label] {
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+    }
+
+    table tbody td[data-label="Actions"] button,
+    table tbody td:last-child button {
+        flex: 1 !important;
+        min-width: 70px !important;
+        justify-content: center !important;
+        font-size: 0.72rem !important;
+        padding: 0.4rem 0.5rem !important;
+    }
+
+    /* Status badges in cells */
+    table tbody td .badge,
+    table tbody td .status-badge,
+    table tbody td [class*="badge"],
+    table tbody td [class*="status"] {
+        font-size: 0.7rem !important;
+        padding: 0.2rem 0.5rem !important;
+    }
+
+    /* Avatar/image cells */
+    table tbody td .member-avatar,
+    table tbody td .user-avatar-sm,
+    table tbody td img:not(.logo-image) {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 50% !important;
+    }
+
+}
+
+/* Medium mobile (768-991) – keep horizontal scroll but improve padding */
+@media (min-width: 768px) and (max-width: 991px) {
     .dashboard-main table, 
     .dashboard-content table {
-        min-width: auto; /* Allow design-system's card-conversion to take over */
+        min-width: auto;
+        font-size: 0.875rem !important;
+    }
+
+    table th,
+    table td {
+        padding: 0.6rem 0.75rem !important;
+    }
+
+    /* Wrap tables in scroll container if not already */
+    .glass-card,
+    .table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 }
 
 /* Hide PWA floating button when bottom nav is present */
 @media (max-width: 991px) {
 }
+
 
 .bottom-nav-link {
     border-radius: 18px;
