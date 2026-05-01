@@ -98,8 +98,7 @@ const UnifiedNav = {
       return;
     }
     this._initialized = true;
-    this.status("UnifiedNav: Initializing standard navigation (v20260501_v1)...");
-    console.log("🚀 UnifiedNav: Initializing standard navigation (v20260501_v1)...");
+    console.log("🚀 UnifiedNav: Initializing standard navigation (v20260501_v2)...");
 
     // 🛡️ Fallback mock data injection for demo stability
     // ONLY runs if we are in demo mode AND no real data is present.
