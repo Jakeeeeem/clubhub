@@ -335,9 +335,8 @@ const UnifiedNav = {
           this.renderBottomNav();
           this.renderMenu();
           this.renderTopTabs();
-          this.renderMobileHeaderElements();
         } else if (isLandingPage) {
-          this.ensureLandingHeader(isLoggedIn, user);
+          this.renderHeader(); // Unified simple header for landing too
           this.toggleSidebar(false);
         }
       } else {
@@ -536,10 +535,15 @@ const UnifiedNav = {
     // Use provided container or fallback to standard header areas
     const target =
       container ||
+      document.getElementById("notif-header-btn-container-mobile") ||
+      document.getElementById("header-notifications-container") ||
       document.getElementById("notif-header-btn-container") ||
       document.querySelector(".dash-header-right") ||
       document.querySelector(".nav-right");
-    if (!target || target.querySelector(".notification-wrapper")) return;
+    if (!target) return;
+    
+    // Prevent duplicate injection
+    if (target.querySelector(".notification-wrapper")) return;
 
     const bellHTML = `
       <div class="notification-wrapper" style="position: relative; margin-right: 0.5rem; display: flex; align-items: center;">
@@ -928,47 +932,61 @@ const UnifiedNav = {
     // Only skip re-render if the new family-on-right structure is PRESENT
 
     header.innerHTML = `
-      <div class="nav-container nav container" style="display:flex; align-items:center; width:100%; height:100%;">
+      <div class="nav-container">
+        <div class="header-content-unified" style="display: flex; width: 100%; align-items: center; justify-content: space-between; height: 100%;">
+          
+          <!-- Left Section -->
+          <div class="header-section section-left">
+            <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
+                <i class="fa fa-arrow-left" style="font-size: 0.9rem;"></i>
+            </button>
+            <div id="header-group-switcher-container" class="header-org-switcher-wrapper desktop-only" style="display:flex; align-items:center;"></div>
+          </div>
 
-        <!-- MOBILE HEADER: Back | Centered Logo | Profile -->
-        <div class="logo-area-wrapper mobile-only" style="display: flex; align-items: center; gap: 0.85rem;">
-            <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
-                ${ICONS.menu}
+          <!-- Center Section (Centered on Mobile) -->
+          <div class="header-section section-center" style="cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="window.location.href='dashboard-new.html'">
+            <img src="/images/logo.png" alt="ClubHub" class="logo-img" style="height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
+            <span class="logo-text desktop-only" style="margin-left: 0.6rem; font-weight: 800; font-size: 1.15rem; letter-spacing: -0.5px; color: white;">ClubHub</span>
+          </div>
+
+          <!-- Right Section -->
+          <div class="header-section section-right" style="display: flex; align-items: center; gap: 0.75rem;">
+            
+            <!-- Mobile Actions -->
+            <div class="mobile-only" style="display: flex; align-items: center; gap: 0.5rem;">
+                <div id="notif-header-btn-container-mobile"></div>
+                <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
+                    ${ICONS.menu}
+                </div>
             </div>
-            <img src="/images/logo.png" alt="ClubHub" style="height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
-        </div>
 
-        <!-- DESKTOP HEADER: Page Title + Group Switcher | Right Actions -->
-        <div class="logo-area-wrapper desktop-only" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
-          <div class="dash-header-left" style="display:flex; align-items:center; gap:2rem;">
-            <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
-          </div>
+            <!-- Desktop Actions -->
+            <div class="desktop-only" style="display:flex; align-items:center; gap:1.25rem;">
+                <div class="mode-toggle-container">
+                    <div class="header-mode-toggle" id="header-mode-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.08);">
+                        <div class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" onclick="UnifiedNav.switchMode('group')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Groups</div>
+                        <div class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" onclick="UnifiedNav.switchMode('player')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Player</div>
+                    </div>
+                </div>
 
-          <div class="mode-toggle-container desktop-only" style="margin: 0 1rem;">
-              <div class="header-mode-toggle" id="header-mode-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.08);">
-                  <div class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" id="header-mode-group-pill" onclick="UnifiedNav.switchMode('group')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Groups Hub</div>
-                  <div class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" id="header-mode-player-pill" onclick="UnifiedNav.switchMode('player')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Player Pro</div>
-              </div>
-          </div>
-
-          <div class="dash-header-right" style="display:flex; align-items:center; gap:1.25rem;">
-            ${userRole === 'platform_admin' ? `
-              <a href="super-admin-dashboard.html" class="desktop-only" style="color:var(--primary); text-decoration:none; font-size:0.8rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; padding:0.4rem 0.8rem; background:rgba(220,38,38,0.1); border-radius:8px; border:1px solid rgba(220,38,38,0.2);">
-                <span>Console</span>
-              </a>
-            ` : ''}
-            
-            <div id="stripe-header-btn-container" style="display:flex;"></div>
-            <div id="notif-header-btn-container" style="display:flex;"></div>
-            
-            <div class="user-action-group" style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.03); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.06);">
-                <div id="header-family-switcher-container" class="desktop-only" style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'flex' : 'none'}; align-items:center;"></div>
+                ${userRole === 'platform_admin' ? `
+                  <a href="super-admin-dashboard.html" style="color:var(--primary); text-decoration:none; font-size:0.8rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; padding:0.4rem 0.8rem; background:rgba(220,38,38,0.1); border-radius:8px; border:1px solid rgba(220,38,38,0.2);">
+                    <span>Console</span>
+                  </a>
+                ` : ''}
                 
-                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
-                    style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'none' : 'flex'}; align-items:center; gap:0.65rem; cursor:pointer; transition:all 0.2s; padding: 0 0.75rem 0 0.75rem;">
-                    <div class="user-avatar-sm" id="header-user-avatar" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; border:1.5px solid rgba(255,255,255,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">${initial}</div>
-                    <span class="user-name-text desktop-only" style="font-size:0.8rem; font-weight:700; color:white;">${name}</span>
-                    <svg class="group-switcher-arrow" width="8" height="8" viewBox="0 0 12 12" fill="none" style="opacity: 0.5;"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                <div id="stripe-header-btn-container" style="display:flex;"></div>
+                <div id="notif-header-btn-container" style="display:flex;"></div>
+                
+                <div class="user-action-group" style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.03); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.06);">
+                    <div id="header-family-switcher-container" style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'flex' : 'none'}; align-items:center;"></div>
+                    
+                    <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
+                        style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'none' : 'flex'}; align-items:center; gap:0.65rem; cursor:pointer; transition:all 0.2s; padding: 0 0.75rem 0 0.75rem;">
+                        <div class="user-avatar-sm" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; border:1.5px solid rgba(255,255,255,0.2);">${initial}</div>
+                        <span class="user-name-text" style="font-size:0.8rem; font-weight:700; color:white;">${name}</span>
+                        <svg class="group-switcher-arrow" width="8" height="8" viewBox="0 0 12 12" fill="none" style="opacity: 0.5;"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    </div>
                 </div>
             </div>
           </div>
@@ -991,6 +1009,9 @@ const UnifiedNav = {
 
     const notifContainer = document.getElementById("notif-header-btn-container");
     if (notifContainer) this.renderHeaderNotifications(notifContainer);
+
+    const mobileNotifContainer = document.getElementById("notif-header-btn-container-mobile");
+    if (mobileNotifContainer) this.renderHeaderNotifications(mobileNotifContainer);
 
     this.syncUserData();
 
@@ -1030,27 +1051,22 @@ const UnifiedNav = {
 
       // Build inner HTML for aside
       const asideInner = `
-                <div class="sidebar-header" style="padding: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 1.5rem;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <img src="/images/logo.png" alt="Logo" style="width: 28px; height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
-                            <span style="font-weight: 800; font-size: 1.1rem; letter-spacing: -0.5px; color: #fff;">ClubHub <span style="color: var(--primary);">PRO</span></span>
-                        </div>
-                        <button class="sidebar-close mobile-only" onclick="UnifiedNav.toggleSidebar(false)" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; cursor: pointer;">
-                            <i class="fa fa-times"></i>
-                        </button>
-                    </div>
-
-                    <!-- Mobile Profile Orientation -->
-                    <div class="mobile-only" style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; gap: 1rem;">
-                        <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; color: white; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                            ${user ? (user.first_name ? user.first_name[0] : '?') : '?'}
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
+                <div class="sidebar-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div class="user-profile-sidebar" style="display: flex; align-items: center; gap: 1rem;">
+                        <div class="user-avatar" style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), #991b1b); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; color: #fff; border: 1px solid rgba(255,255,255,0.1);">${user ? (user.first_name ? user.first_name[0] : '?') : '?'}</div>
+                        <div class="user-info">
                             <div style="font-weight: 700; font-size: 1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user ? user.first_name + ' ' + (user.last_name || '') : 'Guest User'}</div>
                             <div style="font-size: 0.7rem; color: var(--primary); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">${userRole.replace('_', ' ')}</div>
                         </div>
                     </div>
+
+                    <!-- Mode Switcher (Mobile UI Only) -->
+                    ${window.innerWidth < 992 ? `
+                    <div class="mode-pills" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 100px; margin-top: 1.25rem; border: 1px solid rgba(255,255,255,0.08);">
+                        <button onclick="UnifiedNav.switchMode('group')" class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'group' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'group' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Groups Hub</button>
+                        <button onclick="UnifiedNav.switchMode('player')" class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'player' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'player' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Player Pro</button>
+                    </div>
+                    ` : ''}
                 </div>
 
                     <div id="sidebar-nav-content" class="sidebar-nav" style="flex: 1; overflow-y: auto; padding: 0.5rem;">
@@ -1436,6 +1452,7 @@ const UnifiedNav = {
     requestAnimationFrame(() => {
         this.renderHeaderSwitcher();
         this.renderFamilySwitcher();
+        this.renderHeaderNotifications();
         this.updateModeUI();
         this.renderTopTabs();
         this.checkStripeStatus();
