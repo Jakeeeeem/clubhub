@@ -922,17 +922,18 @@ const UnifiedNav = {
       <div class="nav-container">
         <!-- 📱 Mobile Header: Back | Centered Logo | Notifications + Burger -->
         <div class="mobile-header-active mobile-only" style="display: flex; width: 100%; align-items: center; justify-content: space-between; height: 100%; position: relative;">
-          <div class="header-section" style="width: 50px; display: flex; align-items: center;">
-            <button class="back-button" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
-                <i class="fa fa-arrow-left" style="font-size: 0.9rem;"></i>
+          <div class="header-section" style="width: 50px; display: flex; align-items: center; flex-shrink: 0;">
+            <button class="back-button" onclick="window.history.back()" style="border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:white; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </button>
           </div>
           
-          <div class="header-section" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="window.location.href='dashboard-new.html'">
-            <img src="images/logo.png" alt="ClubHub" style="height: 30px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.4));" onerror="this.style.display='none'">
+          <div class="header-section" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='index.html'">
+            <img src="images/logo.png" alt="ClubHub" style="height: 26px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.4)); flex-shrink:0;" onerror="this.style.display='none'">
+            <span style="font-weight: 800; font-size: 1rem; color: white; letter-spacing: -0.4px; white-space: nowrap;">ClubHub</span>
           </div>
 
-          <div class="header-section" style="display: flex; align-items: center; gap: 0.75rem;">
+          <div class="header-section" style="display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0;">
             <div id="notif-header-btn-container-mobile"></div>
             <div class="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(220, 38, 38, 0.15); border-radius: 12px; border: 1px solid rgba(220, 38, 38, 0.25); cursor: pointer; color: white;">
                 ${ICONS.menu}

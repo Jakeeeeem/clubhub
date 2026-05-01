@@ -1392,12 +1392,12 @@ table td:last-child,
         background: rgba(255, 255, 255, 0.05) !important;
     }
 
-    /* Each cell stacks vertically with its label */
+    /* Each cell: label on left, value on right */
     table tbody td {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        padding: 0.55rem 1rem !important;
+        padding: 0.6rem 1rem !important;
         border: none !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
         font-size: 0.875rem !important;
@@ -1405,47 +1405,81 @@ table td:last-child,
         width: 100% !important;
         box-sizing: border-box !important;
         text-align: right !important;
-        gap: 0.5rem !important;
+        gap: 1rem !important;
     }
 
-    table tbody td:last-child {
-        border-bottom: none !important;
-        min-width: 0 !important;
-        justify-content: flex-end !important;
-        flex-wrap: wrap !important;
-        gap: 0.4rem !important;
-        padding-top: 0.75rem !important;
-        padding-bottom: 0.75rem !important;
-    }
-
-    /* The data-label pseudo element as a left-aligned label */
+    /* The data-label pseudo element — left-aligned column name */
     table tbody td::before {
         content: attr(data-label) !important;
-        font-size: 0.7rem !important;
+        font-size: 0.68rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.6px !important;
         color: rgba(255, 255, 255, 0.35) !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
-        margin-right: auto !important;
         text-align: left !important;
     }
 
-    /* Action buttons wrap nicely on mobile */
+    /* Actions cell: full-width block, no space-between, stacked buttons */
     table tbody td[data-label="Actions"],
-    table tbody td:last-child[data-label] {
-        flex-wrap: wrap !important;
-        gap: 0.4rem !important;
+    table tbody td:last-child {
+        display: block !important;
+        border-bottom: none !important;
+        padding: 0.75rem 1rem 1rem !important;
     }
 
+    /* Hide the label pseudo-element for the actions row */
+    table tbody td[data-label="Actions"]::before,
+    table tbody td:last-child::before {
+        display: none !important;
+    }
+
+    /* Button container inside actions — full-width flex row */
     table tbody td[data-label="Actions"] button,
     table tbody td:last-child button {
-        flex: 1 !important;
-        min-width: 70px !important;
+        display: inline-flex !important;
+        align-items: center !important;
         justify-content: center !important;
-        font-size: 0.72rem !important;
-        padding: 0.4rem 0.5rem !important;
+        width: calc(50% - 0.25rem) !important;
+        margin: 0.2rem 0 !important;
+        font-size: 0.78rem !important;
+        padding: 0.5rem 0.5rem !important;
+        border-radius: 8px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+    }
+
+    /* Make the buttons wrap in a row */
+    table tbody td[data-label="Actions"],
+    table tbody td:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.4rem !important;
+        justify-content: flex-start !important;
+        padding: 0.6rem 1rem 1rem !important;
+    }
+
+    /* "Actions" label before buttons */
+    table tbody td[data-label="Actions"]::before {
+        content: "Actions" !important;
+        display: block !important;
+        width: 100% !important;
+        font-size: 0.68rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.6px !important;
+        color: rgba(255, 255, 255, 0.35) !important;
+        margin-bottom: 0.4rem !important;
+        text-align: left !important;
+    }
+
+    /* Each action button fills half width */
+    table tbody td[data-label="Actions"] button,
+    table tbody td:last-child button {
+        flex: 1 1 calc(50% - 0.2rem) !important;
+        min-width: 80px !important;
+        max-width: 100% !important;
     }
 
     /* Status badges in cells */
@@ -1467,6 +1501,7 @@ table td:last-child,
     }
 
 }
+
 
 /* Medium mobile (768-991) – keep horizontal scroll but improve padding */
 @media (min-width: 768px) and (max-width: 991px) {
