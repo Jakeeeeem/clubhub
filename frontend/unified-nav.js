@@ -98,7 +98,8 @@ const UnifiedNav = {
       return;
     }
     this._initialized = true;
-    console.log("🚀 UnifiedNav: Initializing standard navigation (v20260429_v18)...");
+    this.status("UnifiedNav: Initializing standard navigation (v20260501_v1)...");
+    console.log("🚀 UnifiedNav: Initializing standard navigation (v20260501_v1)...");
 
     // 🛡️ Fallback mock data injection for demo stability
     // ONLY runs if we are in demo mode AND no real data is present.
@@ -904,89 +905,77 @@ const UnifiedNav = {
     header.classList.add("unified-header");
     document.body.classList.add("dashboard-view");
 
-    // FORCE RE-RENDER if user-name exists (old structure) or if new container is missing
-    const hasOldStructure = header.querySelector('.user-name');
-    const hasNewStructure = header.querySelector('#header-family-switcher-container');
-
-    if (header.querySelector('.logo-area-wrapper') && hasNewStructure && !hasOldStructure) {
+    // FORCE RE-RENDER if header structure is old
+    const hasNewStructure = header.querySelector('.mobile-header-active');
+    if (header.innerHTML.trim() !== "" && hasNewStructure) {
       this.renderHeaderSwitcher();
       this.renderFamilySwitcher();
       this.renderHeaderNotifications();
-      this.renderStripeHeaderButton();
       return;
     }
 
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    const name = (
-      user.firstName ||
-      user.first_name ||
-      user.name ||
-      "User"
-    ).split(" ")[0];
+    const name = (user.firstName || user.first_name || user.name || "User").split(" ")[0];
     const initial = name.charAt(0).toUpperCase();
-
-    const path = window.location.pathname.toLowerCase();
-    const isSubPage = path.includes("-") && !path.includes("dashboard");
     const userRole = this.getUserRole();
-
-    // Only skip re-render if the new family-on-right structure is PRESENT
 
     header.innerHTML = `
       <div class="nav-container">
-        <div class="header-content-unified" style="display: flex; width: 100%; align-items: center; justify-content: space-between; height: 100%;">
-          
-          <!-- Left Section -->
-          <div class="header-section section-left">
-            <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
+        <!-- 📱 Mobile Header: Back | Centered Logo | Notifications + Burger -->
+        <div class="mobile-header-active mobile-only" style="display: flex; width: 100%; align-items: center; justify-content: space-between; height: 100%; position: relative;">
+          <div class="header-section" style="width: 50px; display: flex; align-items: center;">
+            <button class="back-button" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
                 <i class="fa fa-arrow-left" style="font-size: 0.9rem;"></i>
             </button>
-            <div id="header-group-switcher-container" class="header-org-switcher-wrapper desktop-only" style="display:flex; align-items:center;"></div>
+          </div>
+          
+          <div class="header-section" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="window.location.href='dashboard-new.html'">
+            <img src="/images/logo.png" alt="ClubHub" style="height: 30px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.4));">
           </div>
 
-          <!-- Center Section (Centered on Mobile) -->
-          <div class="header-section section-center" style="cursor: pointer; display: flex; align-items: center; justify-content: center;" onclick="window.location.href='dashboard-new.html'">
-            <img src="/images/logo.png" alt="ClubHub" class="logo-img" style="height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
-            <span class="logo-text desktop-only" style="margin-left: 0.6rem; font-weight: 800; font-size: 1.15rem; letter-spacing: -0.5px; color: white;">ClubHub</span>
+          <div class="header-section" style="display: flex; align-items: center; gap: 0.75rem;">
+            <div id="notif-header-btn-container-mobile"></div>
+            <div class="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; background: rgba(220, 38, 38, 0.15); border-radius: 12px; border: 1px solid rgba(220, 38, 38, 0.25); cursor: pointer; color: white;">
+                ${ICONS.menu}
+            </div>
+          </div>
+        </div>
+
+        <!-- 💻 Desktop Header: Logo + Group Switcher | Actions | Profile -->
+        <div class="desktop-header-active desktop-only" style="display: flex; width: 100%; align-items: center; justify-content: space-between; height: 100%;">
+          <div class="dash-header-left" style="display: flex; align-items: center; gap: 2rem;">
+            <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='dashboard-new.html'">
+                <img src="/images/logo.png" alt="ClubHub" style="height: 32px;">
+                <span class="logo-text" style="font-weight: 800; font-size: 1.25rem; color: white;">ClubHub</span>
+            </div>
+            <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
           </div>
 
-          <!-- Right Section -->
-          <div class="header-section section-right" style="display: flex; align-items: center; gap: 0.75rem;">
-            
-            <!-- Mobile Actions -->
-            <div class="mobile-only" style="display: flex; align-items: center; gap: 0.5rem;">
-                <div id="notif-header-btn-container-mobile"></div>
-                <div class="side-menu-trigger" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)">
-                    ${ICONS.menu}
+          <div class="dash-header-right" style="display:flex; align-items:center; gap:1.25rem;">
+            <div class="mode-toggle-container">
+                <div class="header-mode-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.08);">
+                    <div class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" onclick="UnifiedNav.switchMode('group')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer;">Groups Hub</div>
+                    <div class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" onclick="UnifiedNav.switchMode('player')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer;">Player Pro</div>
                 </div>
             </div>
 
-            <!-- Desktop Actions -->
-            <div class="desktop-only" style="display:flex; align-items:center; gap:1.25rem;">
-                <div class="mode-toggle-container">
-                    <div class="header-mode-toggle" id="header-mode-toggle" style="display:flex; background:rgba(255,255,255,0.05); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.08);">
-                        <div class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" onclick="UnifiedNav.switchMode('group')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Groups</div>
-                        <div class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" onclick="UnifiedNav.switchMode('player')" style="padding:0.4rem 1rem; border-radius:999px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">Player</div>
-                    </div>
-                </div>
-
-                ${userRole === 'platform_admin' ? `
-                  <a href="super-admin-dashboard.html" style="color:var(--primary); text-decoration:none; font-size:0.8rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; padding:0.4rem 0.8rem; background:rgba(220,38,38,0.1); border-radius:8px; border:1px solid rgba(220,38,38,0.2);">
-                    <span>Console</span>
-                  </a>
-                ` : ''}
+            ${userRole === 'platform_admin' ? `
+              <a href="super-admin-dashboard.html" style="color:var(--primary); text-decoration:none; font-size:0.8rem; font-weight:700; display:flex; align-items:center; gap:0.4rem; padding:0.4rem 0.8rem; background:rgba(220,38,38,0.1); border-radius:8px; border:1px solid rgba(220,38,38,0.2);">
+                <span>Console</span>
+              </a>
+            ` : ''}
+            
+            <div id="stripe-header-btn-container" style="display:flex;"></div>
+            <div id="notif-header-btn-container" style="display:flex;"></div>
+            
+            <div class="user-action-group" style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.03); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.06);">
+                <div id="header-family-switcher-container" style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'flex' : 'none'}; align-items:center;"></div>
                 
-                <div id="stripe-header-btn-container" style="display:flex;"></div>
-                <div id="notif-header-btn-container" style="display:flex;"></div>
-                
-                <div class="user-action-group" style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.03); padding:4px; border-radius:999px; border:1px solid rgba(255,255,255,0.06);">
-                    <div id="header-family-switcher-container" style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'flex' : 'none'}; align-items:center;"></div>
-                    
-                    <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
-                        style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'none' : 'flex'}; align-items:center; gap:0.65rem; cursor:pointer; transition:all 0.2s; padding: 0 0.75rem 0 0.75rem;">
-                        <div class="user-avatar-sm" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; border:1.5px solid rgba(255,255,255,0.2);">${initial}</div>
-                        <span class="user-name-text" style="font-size:0.8rem; font-weight:700; color:white;">${name}</span>
-                        <svg class="group-switcher-arrow" width="8" height="8" viewBox="0 0 12 12" fill="none" style="opacity: 0.5;"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-                    </div>
+                <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)"
+                    style="display:${(this.getCurrentMode() === 'player' || userRole === 'player' || userRole === 'parent') ? 'none' : 'flex'}; align-items:center; gap:0.65rem; cursor:pointer; transition:all 0.2s; padding: 0 0.75rem 0 0.75rem;">
+                    <div class="user-avatar-sm" style="width:30px; height:30px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0; border:1.5px solid rgba(255,255,255,0.2);">${initial}</div>
+                    <span class="user-name-text" style="font-size:0.8rem; font-weight:700; color:white;">${name}</span>
+                    <svg class="group-switcher-arrow" width="8" height="8" viewBox="0 0 12 12" fill="none" style="opacity: 0.5;"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
                 </div>
             </div>
           </div>
@@ -994,11 +983,10 @@ const UnifiedNav = {
       </div>
     `;
 
-    // Switchers now move to sidebar by request
-    // CRITICAL: Sidebar must render BEFORE switcher components on mobile so containers exist
+    // Sidebar must render BEFORE switcher components on mobile so containers exist
     this.renderSidebar();
 
-    // CRITICAL: Call renderers immediately after HTML injection to ensure switchers appear
+    // Call renderers immediately after HTML injection to ensure switchers appear in their targets
     this.renderHeaderSwitcher();
     this.renderFamilySwitcher();
     this.updateModeUI();
@@ -1014,7 +1002,6 @@ const UnifiedNav = {
     if (mobileNotifContainer) this.renderHeaderNotifications(mobileNotifContainer);
 
     this.syncUserData();
-
     this.renderTopTabs();
   },
 
@@ -1340,18 +1327,19 @@ const UnifiedNav = {
   },
 
   renderHeaderSwitcher() {
-    // 1. Desktop Header Switcher (Left side)
-    const hContainer = document.getElementById("header-group-switcher-container") ||
-      document.getElementById("header-org-switcher");
+    const isMobile = window.innerWidth < 992;
+    
+    // 1. Desktop Header Switcher (Left side) - ONLY on desktop
+    if (!isMobile) {
+      const hContainer = document.getElementById("header-group-switcher-container") ||
+        document.getElementById("header-org-switcher");
 
-    if (hContainer) {
-      // ALWAYS try to render group switcher if it exists
-      if (!hContainer.__groupSwitcherInstance) {
+      if (hContainer && !hContainer.__groupSwitcherInstance) {
         this.renderGroupSwitcher(hContainer);
       }
     }
 
-    // 2. Mobile Sidebar Switcher
+    // 2. Mobile Sidebar Switcher - ALWAYS on mobile
     const sContainer = document.getElementById("sidebar-switcher-target");
     if (sContainer && !sContainer.__groupSwitcherInstance) {
       this.renderGroupSwitcher(sContainer);
@@ -1402,51 +1390,58 @@ const UnifiedNav = {
     header.classList.add("pro-header", "unified-header");
 
     const isMobile = window.innerWidth < 992;
-    header.innerHTML = `
-            <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 1rem; height: 100%;">
-                <!-- Left Side: Back Button (Mobile Only) -->
-                <div class="header-left" style="display: flex; align-items: center; min-width: 44px;">
-                    <button class="back-button mobile-only" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
+    if (isMobile) {
+        // Strict Mobile Layout
+        header.innerHTML = `
+            <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 100%; position: relative;">
+                <div class="header-left" style="width: 50px; display: flex; align-items: center;">
+                    <button class="back-button" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
                         <i class="fa fa-arrow-left" style="font-size: 0.9rem;"></i>
                     </button>
                 </div>
-
-                <!-- Center: Logo (Centered on Mobile) -->
-                <div class="logo-area" onclick="window.location.href='index.html'" style="cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 1; min-width: 0;">
-                    <img src="/images/logo.png" alt="Logo" class="logo-img" style="height: 24px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.2));">
-                    <span class="logo-text desktop-only" style="margin-left: 0.6rem; font-weight: 800; font-size: 1.15rem; letter-spacing: -0.5px;">ClubHub</span>
+                
+                <div class="header-center" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="window.location.href='index.html'">
+                    <img src="/images/logo.png" alt="ClubHub" style="height: 28px; filter: drop-shadow(0 0 10px rgba(220,67,67,0.3));">
                 </div>
 
-                <!-- Right Side: Burger (Mobile) / Profile (Desktop) -->
-                <div class="header-right" style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; min-width: 44px; z-index: 10;">
-                    <!-- Notification Bell (Shared) -->
-                    <div id="header-notifications-container" class="header-notif-wrapper"></div>
-
-                    <!-- Burger (Mobile Only) -->
-                    <div class="side-menu-trigger mobile-only" id="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="margin:0 !important; width: 36px !important; height: 36px !important; background: rgba(220, 38, 38, 0.12); border-radius: 10px; border: 1px solid rgba(220, 38, 38, 0.2); display: flex !important; align-items: center; justify-content: center;">
+                <div class="header-right" style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div id="notif-header-btn-container-mobile"></div>
+                    <div class="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(220, 38, 38, 0.15); border-radius: 12px; border: 1px solid rgba(220, 38, 38, 0.25); cursor: pointer; color: white;">
                         ${ICONS.menu}
                     </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // Strict Desktop Layout
+        header.innerHTML = `
+            <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 1rem; height: 100%;">
+                <div class="dash-header-left" style="display: flex; align-items: center; gap: 2rem;">
+                    <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='index.html'">
+                        <img src="/images/logo.png" alt="ClubHub" style="height: 32px;">
+                        <span class="logo-text" style="font-weight: 800; font-size: 1.25rem; color: white;">ClubHub</span>
+                    </div>
+                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
+                </div>
 
-                    <!-- Profile & Switchers (Desktop Only) -->
-                    <div id="header-group-switcher-container" class="header-org-switcher-wrapper desktop-only"></div>
-                    <div id="header-family-switcher-container" class="header-family-switcher-wrapper desktop-only"></div>
+                <div class="header-right" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
+                    <div id="header-notifications-container"></div>
+                    <div id="header-family-switcher-container"></div>
                     
                     ${!isLoggedIn ? `
-                        <div class="header-auth desktop-only" style="display: flex; gap: 0.5rem; align-items: center;">
-                            <a href="login.html" class="btn btn-secondary btn-small">Login</a>
-                        </div>
+                        <a href="login.html" class="btn btn-secondary btn-small">Login</a>
                     ` : `
-                        <div class="user-profile-trigger desktop-only" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)" style="display: flex; align-items: center; cursor: pointer;">
-                            <div class="user-details" style="text-align: right; margin-right: 0.6rem;">
-                                <span class="user-name" id="header-user-name" style="display: block; font-weight: 700; font-size: 0.85rem;">${user ? user.first_name : 'User'}</span>
-                                <span style="display: block; font-size: 0.6rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px;">Account</span>
+                        <div class="user-profile-trigger" id="profileTrigger" onclick="UnifiedNav.toggleProfileDropdown(true)" style="display: flex; align-items: center; cursor: pointer; gap: 0.75rem;">
+                            <div class="user-details" style="text-align: right;">
+                                <span class="user-name" style="display: block; font-weight: 700; font-size: 0.85rem; color: white;">${user ? user.first_name : 'User'}</span>
                             </div>
-                            <div class="user-avatar-sm" id="header-user-avatar" style="width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.15); font-size: 0.85rem; background: linear-gradient(135deg, #dc2626, #991b1b);">${user ? (user.first_name ? user.first_name[0] : '?') : '?'}</div>
+                            <div class="user-avatar-sm" style="width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.15); font-size: 0.85rem; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">${user ? (user.first_name ? user.first_name[0] : '?') : '?'}</div>
                         </div>
                     `}
                 </div>
             </div>
         `;
+    }
 
     // Deferred rendering for switchers to ensure DOM is ready
     requestAnimationFrame(() => {
