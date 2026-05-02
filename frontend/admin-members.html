@@ -17,6 +17,19 @@
     <link rel="stylesheet" href="styles.css?v=20260502">
     <link rel="stylesheet" href="design-system.css?v=20260502">
     <link rel="stylesheet" href="unified-nav.css?v=20260502">
+    <style id="ch-inline-overrides">
+        /* Immediate overrides to ensure mobile card and search layout updates without waiting for cached CSS */
+        .dashboard-container, .container { padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
+        .dashboard-section table:not(.no-mobile-cards) tr { padding: 0.85rem 0.9rem !important; margin-bottom: 0.6rem !important; }
+        .dashboard-section table:not(.no-mobile-cards) td[data-label="Name"], .dashboard-section table:not(.no-mobile-cards) td:first-child { flex-direction: column !important; align-items: flex-start !important; text-align: left !important; padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
+        .dashboard-section table:not(.no-mobile-cards) td[data-label="Name"] > div:first-child { font-weight: 800 !important; font-size: 1rem !important; line-height: 1.05 !important; }
+        .dashboard-section table:not(.no-mobile-cards) td[data-label="Name"] > div:nth-child(2) { font-size: 0.78rem !important; color: rgba(203,213,225,0.9) !important; margin-top: 0.18rem !important; }
+        input[placeholder="Search members..."] { width: 220px !important; max-width: 48% !important; min-width: 140px !important; padding: 0.55rem 0.9rem !important; border-radius: 10px !important; box-sizing: border-box !important; }
+        @media (max-width: 991px) {
+            input[placeholder="Search members..."] { width: calc(100% - 1.2rem) !important; display:block !important; margin-top: 0.6rem !important; }
+            .dashboard-section table:not(.no-mobile-cards) tr { padding-left: 0.85rem !important; padding-right: 0.85rem !important; }
+        }
+    </style>
     <style>
         .feed-entry {
             display: flex;
