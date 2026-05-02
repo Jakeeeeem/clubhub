@@ -6141,8 +6141,8 @@ input:focus + .toggle-slider {
         background: rgba(255,255,255,0.03) !important;
         border: 1px solid rgba(255,255,255,0.07) !important;
         border-radius: 10px !important;
-        padding: 0.25rem 0.75rem !important;
-        margin-bottom: 0.5rem !important;
+        padding: 0.85rem 0.9rem !important;
+        margin-bottom: 0.6rem !important;
         position: relative !important;
     }
     .dashboard-section table:not(.no-mobile-cards) td {
@@ -6151,9 +6151,9 @@ input:focus + .toggle-slider {
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
-        padding: 0.4rem 0 !important;
+        padding: 0.5rem 0 !important;
         text-align: right !important;
-        font-size: 0.82rem !important;
+        font-size: 0.88rem !important;
         gap: 0.5rem !important;
     }
     .dashboard-section table:not(.no-mobile-cards) td:last-child {
@@ -6163,6 +6163,67 @@ input:focus + .toggle-slider {
         gap: 0.35rem !important;
         padding-top: 0.45rem !important;
         padding-bottom: 0.45rem !important;
+    }
+
+    /* Stack name and email in the first column for better readability on mobile */
+    .dashboard-section table:not(.no-mobile-cards) td[data-label="Name"],
+    .dashboard-section table:not(.no-mobile-cards) td:first-child {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        text-align: left !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .dashboard-section table:not(.no-mobile-cards) td[data-label="Name"] > div:first-child {
+        font-weight: 800 !important;
+        font-size: 1rem !important;
+        color: #ffffff !important;
+        line-height: 1.05 !important;
+    }
+
+    .dashboard-section table:not(.no-mobile-cards) td[data-label="Name"] > div:nth-child(2) {
+        font-size: 0.78rem !important;
+        color: var(--text-muted) !important;
+        margin-top: 0.18rem !important;
+    }
+
+    /* Reduce empty space between cards horizontally by tightening container padding */
+    .dashboard-container, .container {
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
+    }
+
+    /* Search box: make it neater on desktop and full-width on mobile */
+    input[placeholder="Search members..."], input[aria-label="Search members"] {
+        width: 220px !important;
+        max-width: 48% !important;
+        min-width: 140px !important;
+        box-sizing: border-box !important;
+        padding: 0.55rem 0.9rem !important;
+        border-radius: 10px !important;
+        background: rgba(255,255,255,0.03) !important;
+        border: 1px solid rgba(255,255,255,0.06) !important;
+        color: #cbd5e1 !important;
+        font-size: 0.95rem !important;
+    }
+
+    @media (max-width: 991px) {
+        input[placeholder="Search members..."], input[aria-label="Search members"] {
+            width: calc(100% - 1.2rem) !important;
+            max-width: none !important;
+            display: block !important;
+            margin: 0.6rem 0 0 !important;
+            align-self: stretch !important;
+            padding: 0.7rem 1rem !important;
+            font-size: 0.95rem !important;
+        }
+
+        /* Make the card edges a bit wider on mobile for touch comfort */
+        .dashboard-section table:not(.no-mobile-cards) tr {
+            padding-left: 0.85rem !important;
+            padding-right: 0.85rem !important;
+        }
     }
     .dashboard-section table:not(.no-mobile-cards) td[data-label]::before {
         content: attr(data-label) !important;

@@ -295,6 +295,42 @@
                         </div>
                     </div>
                 </div>
+                <script>
+                    (function(){
+                        function plansToCards(){
+                            if(window.innerWidth > 991) return;
+                            const wrapper = document.querySelector('#finance-plans-view .table-responsive') || document.querySelector('.table-responsive');
+                            if(!wrapper) return;
+                            const table = wrapper.querySelector('table');
+                            if(!table) return;
+                            const tbody = table.querySelector('tbody');
+                            if(!tbody) return;
+                            const rows = Array.from(tbody.querySelectorAll('tr'));
+                            if(rows.length === 0) return;
+
+                            const list = document.createElement('div'); list.className='mobile-card-list';
+                            rows.forEach(row=>{
+                                if(row.children.length === 1 && row.children[0].hasAttribute('colspan')) return;
+                                const card = document.createElement('div'); card.className='mobile-card';
+                                Array.from(row.children).forEach((td, idx)=>{
+                                    const th = table.querySelectorAll('thead th')[idx];
+                                    const label = th ? th.textContent.trim() : td.getAttribute('data-label') || '';
+                                    const value = td.textContent.trim();
+                                    const item = document.createElement('div'); item.className='row-item';
+                                    const l = document.createElement('div'); l.className='row-label'; l.textContent=label;
+                                    const v = document.createElement('div'); v.className='row-value'; v.textContent=value;
+                                    item.appendChild(l); item.appendChild(v); card.appendChild(item);
+                                });
+                                list.appendChild(card);
+                            });
+                            table.parentElement.replaceChild(list, table);
+                        }
+
+                        document.addEventListener('DOMContentLoaded', plansToCards);
+                        const body = document.getElementById('paymentPlansTableBody');
+                        if(body){ new MutationObserver(()=> setTimeout(plansToCards,60)).observe(body,{childList:true,subtree:true}); }
+                    })();
+                </script>
             </div>
 
                 <!-- Secondary Revenue Breakdown -->

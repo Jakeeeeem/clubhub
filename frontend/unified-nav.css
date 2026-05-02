@@ -78,6 +78,27 @@
     body:not(.no-bottom-spacing) { padding-bottom: 72px !important; }
 }
 
+/* Mobile action visibility tweaks */
+@media (max-width: 991px) {
+    /* Ensure action cells and buttons float above any overlays */
+    table tbody td[data-label="Actions"],
+    table tbody td:last-child {
+        position: relative !important;
+        z-index: 60 !important;
+    }
+
+    .table-action-more, table tbody td[data-label="Actions"] button, .hidden-actions button {
+        -webkit-tap-highlight-color: transparent !important;
+        -webkit-user-select: none !important;
+        touch-action: manipulation !important;
+        z-index: 70 !important;
+    }
+
+    /* If any translucent overlay accidentally covers rows, make sure action sheet is above it */
+    .ch-action-sheet { z-index: 100000 !important; }
+    .ch-action-sheet .ch-action-sheet-panel { z-index: 100001 !important; }
+}
+
 /* 🛡️ Legacy Navigation Shield: Prevent old UI from surfacing on dashboards */
 .dashboard-view #loggedInNav, 
 .dashboard-view #loggedOutNav, 
@@ -626,6 +647,45 @@
 
     /* Ensure page content isn't hidden behind bottom nav */
     body:not(.no-bottom-spacing) { padding-bottom: 64px !important; }
+}
+
+/* Mobile header simplification and sidebar scroll behavior */
+@media (max-width: 991px) {
+    /* Hide heavy switchers and center elements to reduce header clutter on small screens */
+    .header-family-switcher-wrapper, .header-org-switcher-wrapper, .section-center {
+        display: none !important;
+    }
+
+    /* Slightly smaller, cleaner header visuals */
+    .pro-header, header.header { height: 52px !important; padding: 0 0.6rem !important; }
+    .side-menu-trigger { width:40px !important; height:40px !important; border-radius:10px !important; }
+
+    /* When the mobile sidebar/menu is open, make the header non-fixed so the sidebar content
+       (switchers, groups, and other controls) can be part of the scrollable area rather
+       than being pushed below a sticky header that consumes vertical space. */
+    body.sidebar-open .pro-header,
+    body.sidebar-open header.header {
+        position: static !important;
+        z-index: 0 !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+
+    /* Make the sidebar itself fully scrollable and occupy full viewport so its contents move
+       naturally with touch scrolling instead of being constrained by the sticky header. */
+    .pro-sidebar {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-top: 0 !important; /* allow header-like content to sit at top of sidebar */
+    }
+
+    /* Ensure switchers and large header widgets are visible inside the sidebar when it opens */
+    .pro-sidebar .header-family-switcher-wrapper,
+    .pro-sidebar .header-org-switcher-wrapper,
+    .pro-sidebar .group-switcher,
+    .pro-sidebar .sidebar-header {
+        display: block !important;
+    }
 }
 
 /* --- Global Header (Standardized) --- */
@@ -1348,7 +1408,7 @@ table td:last-child,
    📱 MOBILE CARD-MODE TABLE SYSTEM
    Converts all tables to labeled cards on screens < 768px
    ============================================================ */
-@media (max-width: 767px) {
+@media (max-width: 991px) {
 
     /* Wrap all tables in a scroll container so they don't overflow */
     .table-responsive {
@@ -1382,7 +1442,7 @@ table td:last-child,
         background: rgba(255, 255, 255, 0.03) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
         border-radius: 12px !important;
-        margin-bottom: 0.75rem !important;
+        margin-bottom: 0.9rem !important;
         padding: 0.5rem 0 !important;
         overflow: hidden !important;
         transition: background 0.2s !important;
@@ -1397,10 +1457,10 @@ table td:last-child,
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        padding: 0.6rem 1rem !important;
+        padding: 0.8rem 1rem !important;
         border: none !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
-        font-size: 0.875rem !important;
+        font-size: 0.95rem !important;
         min-width: 0 !important;
         width: 100% !important;
         box-sizing: border-box !important;
@@ -1411,14 +1471,15 @@ table td:last-child,
     /* The data-label pseudo element — left-aligned column name */
     table tbody td::before {
         content: attr(data-label) !important;
-        font-size: 0.68rem !important;
+        font-size: 0.72rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.6px !important;
-        color: rgba(255, 255, 255, 0.35) !important;
+        color: rgba(255, 255, 255, 0.42) !important;
         white-space: nowrap !important;
         flex-shrink: 0 !important;
         text-align: left !important;
+        margin-right: 0.6rem !important;
     }
 
     /* Actions cell: full-width block, no space-between, stacked buttons */
@@ -1481,6 +1542,36 @@ table td:last-child,
         min-width: 80px !important;
         max-width: 100% !important;
     }
+
+/* Restore desktop/tablet layout for Actions column so buttons remain visible
+   and inline on larger screens. Mobile stacked/wrapped buttons above remain
+   controlled by the media query for max-width:991px. */
+@media (min-width: 992px) {
+    table tbody td[data-label="Actions"],
+    table tbody td:last-child {
+        display: table-cell !important;
+        padding: 0.5rem 0.75rem !important;
+        vertical-align: middle !important;
+    }
+
+    table tbody td[data-label="Actions"]::before,
+    table tbody td:last-child::before {
+        display: none !important;
+    }
+
+    table tbody td[data-label="Actions"] button,
+    table tbody td:last-child button {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: auto !important;
+        min-width: 0 !important;
+        margin: 0 0.35rem 0 0 !important;
+        font-size: 0.9rem !important;
+        padding: 0.35rem 0.65rem !important;
+        border-radius: 8px !important;
+    }
+}
 
     /* Status badges in cells */
     table tbody td .badge,
@@ -1662,6 +1753,27 @@ table td:last-child,
         align-items: center !important;
         gap: 0.5rem !important;
         transition: all 0.3s ease !important;
+    /* Mobile action sheet and bottom nav touch improvements */
+    @media (max-width: 991px) {
+        .ch-action-sheet { pointer-events: auto; }
+        .ch-action-sheet .ch-action-sheet-backdrop { transition: opacity 0.18s ease; }
+        .ch-action-sheet .ch-action-sheet-panel { transform: translateY(0); }
+
+        .ch-action-sheet .ch-action-sheet-panel button { 
+            background: rgba(255,255,255,0.02); 
+            border: 1px solid rgba(255,255,255,0.04); 
+            padding: 12px 14px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            color: #fff; 
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            width: 100%;
+        }
+
+        .table-action-more { min-width:44px; min-height:44px; border-radius:10px; }
+    }
     }
 
     .headline-tab.active {
@@ -1745,6 +1857,46 @@ table td:last-child,
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
+/* FAB (floating action button) */
+.ch-fab {
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+.ch-fab:active { transform: scale(0.96); }
+
+/* Bottom sheet */
+.ch-bottom-sheet { pointer-events: auto; }
+.ch-bottom-sheet .ch-bottom-backdrop { transition: opacity 0.18s ease; }
+.ch-bottom-sheet .ch-bottom-panel { transform: translateY(0); }
+.ch-bottom-sheet .ch-bottom-panel .ch-bottom-content { padding-top: 6px; }
+
+/* Ensure content spacing with fixed header and bottom nav */
+body.has-bottom-nav { padding-bottom: 72px !important; }
+body.has-fixed-header { padding-top: 72px !important; }
+
+/* Mobile table -> card list conversion styles */
+.mobile-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+.mobile-card-list .mobile-card {
+    background: linear-gradient(180deg, hsla(0,0%,100%,0.02), hsla(0,0%,100%,0.01));
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 1rem;
+    border-radius: 12px;
+}
+.mobile-card-list .mobile-card .row-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.mobile-card-list .mobile-card .row-item:last-child { border-bottom: none; }
+.mobile-card-list .row-label { font-weight:700; font-size:0.75rem; color: rgba(255,255,255,0.7); text-transform:uppercase; }
+.mobile-card-list .row-value { font-size:0.95rem; color: #fff; text-align:right; }
+
 
 @media (max-width: 991px) {
     .top-headline-tabs {

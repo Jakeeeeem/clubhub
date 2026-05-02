@@ -14,9 +14,9 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="apple-touch-icon" href="/images/logo.png">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="design-system.css">
-    <link rel="stylesheet" href="unified-nav.css">
+    <link rel="stylesheet" href="styles.css?v=20260502">
+    <link rel="stylesheet" href="design-system.css?v=20260502">
+    <link rel="stylesheet" href="unified-nav.css?v=20260502">
     <style>
         .feed-entry {
             display: flex;
@@ -187,10 +187,11 @@
                         <span class="stat-number" id="activeEvents">6</span>
                         <div class="stat-change">2 upcoming this week</div>
                     </div>
-                    <div class="stat-card" onclick="window.location.href='admin-scout-approvals.html'" style="cursor: pointer;">
+                    <div class="stat-card" style="opacity:0.45; cursor:default; pointer-events:none;" title="Hidden — returning in next phase">
                         <span class="stat-label">Pending Scouts</span>
                         <span class="stat-number" id="pendingScouts" style="color:#f59e0b;">3</span>
                         <div class="stat-change" style="color:#f59e0b;">Requires verification</div>
+                        <div style="margin-top:0.5rem; font-size:0.78rem; color:var(--text-muted);">Hidden — coming in next phase</div>
                     </div>
                 </div>
 
@@ -284,6 +285,7 @@
                         </div>
                     </div>
                 </div>
+                        <!-- Removed legacy membersToCards converter — CSS and UnifiedNav now handle mobile card-mode -->
             </div>
 
             <!-- Staff Section -->

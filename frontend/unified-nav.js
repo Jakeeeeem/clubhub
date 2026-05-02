@@ -333,6 +333,8 @@ const UnifiedNav = {
           this.renderHeader();
           this.renderSidebar();
           this.renderBottomNav();
+          // Render mobile FAB for quick actions and generic bottom sheet support
+          if (typeof this.renderFAB === 'function') this.renderFAB();
           this.renderMenu();
           this.renderTopTabs();
         } else if (isLandingPage) {
@@ -442,6 +444,169 @@ const UnifiedNav = {
         console.error("❌ Stage 3 (Data Sync) failed:", err);
       }
     }, 150);
+  },
+
+  /* Render a floating action button (FAB) on mobile dashboards */
+  renderFAB() {
+    try {
+      if (document.getElementById('__ch-fab')) return;
+      const isMobile = window.innerWidth <= 991;
+      if (!isMobile) return;
+
+      const fab = document.createElement('button');
+      fab.id = '__ch-fab';
+      fab.className = 'ch-fab mobile-only';
+      fab.setAttribute('aria-label', 'Quick actions');
+      fab.style.cssText = 'position:fixed;right:16px;bottom:84px;z-index:10050;display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--primary),#b91c1c);color:#fff;border:none;box-shadow:0 12px 30px rgba(0,0,0,0.5);cursor:pointer;font-size:22px;';
+      fab.innerHTML = '+';
+
+      fab.onclick = (e) => {
+        e.stopPropagation();
+        if (typeof this.openPrimaryAction === 'function') {
+          this.openPrimaryAction();
+          return;
+        }
+        this.toggleSidebar(true);
+      };
+
+      document.body.appendChild(fab);
+    } catch (e) {
+      console.warn('renderFAB failed', e);
+    }
+  },
+
+  /* Generic bottom sheet helper: content HTML string -> shown panel */
+  openBottomSheet({ title = '', html = '' } = {}) {
+    try {
+      // Remove existing
+      document.getElementById('__ch-bottom-sheet')?.remove();
+
+      const sheet = document.createElement('div');
+      sheet.id = '__ch-bottom-sheet';
+      sheet.className = 'ch-bottom-sheet';
+      sheet.style.cssText = 'position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;z-index:100100;pointer-events:auto;';
+
+      sheet.innerHTML = `
+        <div class="ch-bottom-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.5);"></div>
+        <div class="ch-bottom-panel" style="width:100%;max-width:900px;background:linear-gradient(180deg,#0f0f10,#121214);border-top-left-radius:16px;border-top-right-radius:16px;padding:1rem;box-shadow:0 -20px 60px rgba(0,0,0,0.6);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div style="font-weight:800;color:#fff;font-size:1rem;">${title}</div>
+            <button aria-label="Close" style="background:none;border:none;color:rgba(255,255,255,0.75);font-size:20px;padding:6px;" onclick="document.getElementById('__ch-bottom-sheet')?.remove()">&times;</button>
+          </div>
+          <div class="ch-bottom-content" style="max-height:65vh;overflow:auto;">${html}</div>
+        </div>
+      `;
+
+      document.body.appendChild(sheet);
+      sheet.querySelector('.ch-bottom-backdrop').addEventListener('click', () => sheet.remove());
+    } catch (e) {
+      console.warn('openBottomSheet failed', e);
+    }
+  },
+
+  /* Primary FAB action: show quick actions sheet */
+  openPrimaryAction() {
+    const html = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-primary" onclick="UnifiedNav.openCreateMemberSheet();">+ Create Member</button>
+        <button class="btn btn-primary" onclick="UnifiedNav.openCreateTeamSheet();">+ Create Team</button>
+        <button class="btn btn-secondary" onclick="UnifiedNav.toggleSidebar(true);">Open Menu</button>
+      </div>
+    `;
+    this.openBottomSheet({ title: 'Quick Actions', html });
+  },
+
+  openCreateMemberSheet() {
+    const html = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="font-weight:700;font-size:0.85rem;color:rgba(255,255,255,0.9);">First name</label>
+        <input id="__ch_new_member_first" type="text" style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:#fff;">
+        <label style="font-weight:700;font-size:0.85rem;color:rgba(255,255,255,0.9);">Last name</label>
+        <input id="__ch_new_member_last" type="text" style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:#fff;">
+        <label style="font-weight:700;font-size:0.85rem;color:rgba(255,255,255,0.9);">Email</label>
+        <input id="__ch_new_member_email" type="email" style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:#fff;">
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="btn btn-secondary" onclick="document.getElementById('__ch-bottom-sheet')?.remove()">Cancel</button>
+          <button class="btn btn-primary" id="__ch_create_member_btn">Create Member</button>
+        </div>
+      </div>
+    `;
+
+    this.openBottomSheet({ title: 'Create Member', html });
+
+    setTimeout(() => {
+      const btn = document.getElementById('__ch_create_member_btn');
+      if (!btn) return;
+      btn.onclick = async () => {
+        const first = document.getElementById('__ch_new_member_first')?.value || '';
+        const last = document.getElementById('__ch_new_member_last')?.value || '';
+        const email = document.getElementById('__ch_new_member_email')?.value || '';
+
+        // Prefer platform modal if available
+        if (typeof openModal === 'function' && document.getElementById('addMemberModal')) {
+          document.getElementById('__ch-bottom-sheet')?.remove();
+          openModal('addMemberModal');
+          return;
+        }
+
+        try {
+          if (window.apiService && typeof apiService.post === 'function') {
+            await apiService.post('/api/members', { first_name: first, last_name: last, email });
+          }
+        } catch (e) {
+          console.warn('Failed to create member via API', e);
+        }
+
+        if (typeof showNotification === 'function') showNotification('Member created', 'success');
+        else alert('Member created');
+        document.getElementById('__ch-bottom-sheet')?.remove();
+      };
+    }, 60);
+  },
+
+  openCreateTeamSheet() {
+    const html = `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="font-weight:700;font-size:0.85rem;color:rgba(255,255,255,0.9);">Team name</label>
+        <input id="__ch_new_team_name" type="text" style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:#fff;">
+        <label style="font-weight:700;font-size:0.85rem;color:rgba(255,255,255,0.9);">Age group / Notes</label>
+        <input id="__ch_new_team_notes" type="text" style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);color:#fff;">
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="btn btn-secondary" onclick="document.getElementById('__ch-bottom-sheet')?.remove()">Cancel</button>
+          <button class="btn btn-primary" id="__ch_create_team_btn">Create Team</button>
+        </div>
+      </div>
+    `;
+
+    this.openBottomSheet({ title: 'Create Team', html });
+
+    setTimeout(() => {
+      const btn = document.getElementById('__ch_create_team_btn');
+      if (!btn) return;
+      btn.onclick = async () => {
+        const name = document.getElementById('__ch_new_team_name')?.value || '';
+        const notes = document.getElementById('__ch_new_team_notes')?.value || '';
+
+        // Prefer platform modal if available
+        if (typeof openModal === 'function' && document.getElementById('createTeamModal')) {
+          document.getElementById('__ch-bottom-sheet')?.remove();
+          openModal('createTeamModal');
+          return;
+        }
+
+        try {
+          if (window.apiService && typeof apiService.post === 'function') {
+            await apiService.post('/api/teams', { name, notes });
+          }
+        } catch (e) {
+          console.warn('Failed to create team via API', e);
+        }
+
+        if (typeof showNotification === 'function') showNotification('Team created', 'success');
+        else alert('Team created');
+        document.getElementById('__ch-bottom-sheet')?.remove();
+      };
+    }, 60);
   },
 
   /**
@@ -1407,10 +1572,10 @@ const UnifiedNav = {
                 </div>
 
                 <div class="header-right" style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div id="notif-header-btn-container-mobile"></div>
-                    <div class="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(220, 38, 38, 0.15); border-radius: 12px; border: 1px solid rgba(220, 38, 38, 0.25); cursor: pointer; color: white;">
-                        ${ICONS.menu}
-                    </div>
+                  <div id="notif-header-btn-container-mobile" style="display:flex;"></div>
+                  <div class="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(220, 38, 38, 0.15); border-radius: 12px; border: 1px solid rgba(220, 38, 38, 0.25); cursor: pointer; color: white;">
+                    ${ICONS.menu}
+                  </div>
                 </div>
             </div>
         `;
@@ -1427,8 +1592,10 @@ const UnifiedNav = {
                 </div>
 
                 <div class="header-right" style="display: flex; align-items: center; justify-content: flex-end; gap: 1.25rem;">
-                    <div id="header-notifications-container"></div>
-                    <div id="header-family-switcher-container"></div>
+                  <!-- Backwards-compatible notification/action containers -->
+                  <div id="header-notifications-container" style="display:flex;"></div>
+                  <div id="notif-header-btn-container" style="display:flex;"></div>
+                  <div id="header-family-switcher-container"></div>
                     
                     ${!isLoggedIn ? `
                         <a href="login.html" class="btn btn-secondary btn-small">Login</a>
@@ -1909,13 +2076,21 @@ const UnifiedNav = {
           background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4);
           color:#60a5fa; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
           font-weight:700; cursor:pointer; margin-right:0.4rem; transition:all 0.15s;
-        " onmouseover="this.style.background='rgba(59,130,246,0.3)'" onmouseout="this.style.background='rgba(59,130,246,0.15)'">✏️ Edit</button>
+        " onmouseover="this.style.background='rgba(59,130,246,0.3)'" onmouseout="this.style.background='rgba(59,130,246,0.15)'>✏️ Edit</button>
         ${assignPlanBtn}
         <button onclick="event.stopPropagation(); UnifiedNav.handleTableDelete(this)" style="
           background:rgba(220,38,38,0.12); border:1px solid rgba(220,38,38,0.35);
           color:#f87171; border-radius:8px; padding:0.3rem 0.65rem; font-size:0.75rem;
           font-weight:700; cursor:pointer; transition:all 0.15s;
-        " onmouseover="this.style.background='rgba(220,38,38,0.28)'" onmouseout="this.style.background='rgba(220,38,38,0.12)'">🗑️ Delete</button>
+        " onmouseover="this.style.background='rgba(220,38,38,0.28)'" onmouseout="this.style.background='rgba(220,38,38,0.12)'>🗑️ Delete</button>
+      `;
+
+      // On narrow screens, replace inline buttons with a single overflow action that opens a bottom sheet
+      const isMobileTable = typeof window !== 'undefined' && window.innerWidth <= 991;
+      const overflowButtonHtml = `
+        <button class="table-action-more" aria-label="More actions" onclick="event.stopPropagation(); UnifiedNav.openRowActions(this)" style="background:transparent;border:none;padding:8px;border-radius:10px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:inherit;">
+          <svg width=20 height=20 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+        </button>
       `;
 
       // Add or replace action buttons in each body row
@@ -1923,17 +2098,71 @@ const UnifiedNav = {
         // Skip rows that are clearly for loading or empty states (usually have a single cell with colspan)
         if (row.cells.length === 1 && row.cells[0].hasAttribute("colspan")) return;
 
+        const buildButton = (text, clickHandler, opts = {}) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = text;
+          b.addEventListener('click', (e) => { e.stopPropagation(); clickHandler(b); });
+          // apply inline styles from templates
+          Object.assign(b.style, {
+            background: opts.background || 'transparent',
+            border: opts.border || 'none',
+            color: opts.color || 'inherit',
+            borderRadius: opts.borderRadius || '8px',
+            padding: opts.padding || '0.3rem 0.65rem',
+            fontSize: opts.fontSize || '0.75rem',
+            fontWeight: opts.fontWeight || '700',
+            cursor: 'pointer',
+            marginRight: opts.marginRight || '0.4rem'
+          });
+          return b;
+        };
+
+        const attachActionsToCell = (td) => {
+          td.style.cssText = isMobileTable ? 'text-align:right; white-space:nowrap;' : 'text-align:right; white-space:nowrap;';
+          // clear existing
+          td.innerHTML = '';
+          if (isMobileTable) {
+            // overflow button
+            const overflow = document.createElement('button');
+            overflow.className = 'table-action-more';
+            overflow.setAttribute('aria-label', 'More actions');
+            overflow.style.cssText = 'background:transparent;border:none;padding:8px;border-radius:10px;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:inherit;';
+            overflow.innerHTML = '<svg width=20 height=20 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>';
+            overflow.addEventListener('click', (e) => { e.stopPropagation(); UnifiedNav.openRowActions(overflow); });
+
+            const hidden = document.createElement('div');
+            hidden.className = 'hidden-actions';
+            hidden.style.display = 'none';
+
+            // add buttons into hidden container
+            hidden.appendChild(buildButton('✏️ Edit', (b) => UnifiedNav.handleTableEdit(b), { background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.4)', color: '#60a5fa' }));
+            if (isPlayerTable) {
+              hidden.appendChild(buildButton('💳 Assign Plan', (b) => UnifiedNav.handleAssignPlan(b), { background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.4)', color: '#c084fc', marginRight: '0.4rem' }));
+            }
+            hidden.appendChild(buildButton('🗑️ Delete', (b) => UnifiedNav.handleTableDelete(b), { background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.35)', color: '#f87171', marginRight: '0' }));
+
+            td.appendChild(overflow);
+            td.appendChild(hidden);
+          } else {
+            // desktop: inline buttons
+            td.appendChild(buildButton('✏️ Edit', (b) => UnifiedNav.handleTableEdit(b), { background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.4)', color: '#60a5fa' }));
+            if (isPlayerTable) {
+              td.appendChild(buildButton('💳 Assign Plan', (b) => UnifiedNav.handleAssignPlan(b), { background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.4)', color: '#c084fc' }));
+            }
+            td.appendChild(buildButton('🗑️ Delete', (b) => UnifiedNav.handleTableDelete(b), { background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.35)', color: '#f87171', marginRight: '0' }));
+          }
+        };
+
         if (actionsIndex !== -1 && row.children.length > actionsIndex) {
-          // Replace content of existing Actions cell
           const td = row.children[actionsIndex];
-          td.style.cssText = "text-align:right; white-space:nowrap;";
-          td.innerHTML = buttonsHtml;
+          td.setAttribute('data-label', 'Actions');
+          attachActionsToCell(td);
         } else {
-          // Append new cell
-          const td = document.createElement("td");
-          td.setAttribute("data-label", "Actions");
-          td.style.cssText = "text-align:center; white-space:nowrap;";
-          td.innerHTML = buttonsHtml;
+          const td = document.createElement('td');
+          td.setAttribute('data-label', 'Actions');
+          td.style.cssText = 'text-align:center; white-space:nowrap;';
+          attachActionsToCell(td);
           row.appendChild(td);
         }
       });
@@ -2168,6 +2397,54 @@ const UnifiedNav = {
         showNotification("Failed to assign plan", "error");
       }
     };
+  },
+
+  openRowActions(trigger) {
+    try {
+      // Find the hidden actions HTML nearby
+      const td = trigger.closest('td');
+      if (!td) return;
+      const hidden = td.querySelector('.hidden-actions');
+      const actionsHtml = hidden ? hidden.innerHTML : '';
+
+      // Remove existing sheet if any
+      document.getElementById('__ch-action-sheet')?.remove();
+
+      const sheet = document.createElement('div');
+      sheet.id = '__ch-action-sheet';
+      sheet.className = 'ch-action-sheet';
+      sheet.style.cssText = 'position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;z-index:100000;pointer-events:auto;';
+
+      sheet.innerHTML = `
+        <div class="ch-action-sheet-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);"></div>
+        <div class="ch-action-sheet-panel" style="width:100%;max-width:760px;background:linear-gradient(180deg,#0f0f10,#121214);border-top-left-radius:16px;border-top-right-radius:16px;padding:1rem;box-shadow:0 -20px 60px rgba(0,0,0,0.6);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <div style="font-weight:800;color:#fff;font-size:1rem;">Actions</div>
+            <button onclick="document.getElementById('__ch-action-sheet')?.remove()" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:1.2rem;padding:6px;">&times;</button>
+          </div>
+          <div class="ch-action-sheet-content" style="display:flex;flex-direction:column;gap:0.5rem;">
+            ${actionsHtml}
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(sheet);
+
+      // Close handlers
+      sheet.querySelector('.ch-action-sheet-backdrop').addEventListener('click', () => sheet.remove());
+
+      // Ensure action buttons inside sheet behave normally (remove stopPropagation on calls)
+      sheet.querySelectorAll('button').forEach(b => b.addEventListener('click', (e) => {
+        // Let existing handlers run; then close sheet for destructive actions
+        setTimeout(() => {
+          if (b.textContent.trim().toLowerCase().includes('delete') || b.textContent.trim().toLowerCase().includes('assign') || b.textContent.trim().toLowerCase().includes('save')) {
+            sheet.remove();
+          }
+        }, 10);
+      }));
+    } catch (e) {
+      console.warn('openRowActions failed', e);
+    }
   },
 
   _confirmAssignPlan(name) {

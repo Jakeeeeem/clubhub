@@ -250,6 +250,54 @@
                 </div>
             </div>
 
+        <!-- Mobile conversion script: convert tables to stacked cards for small screens -->
+        <script>
+            (function(){
+                function tableToCards(containerSelector){
+                    try{
+                        if (window.innerWidth > 991) return;
+                        const container = document.querySelector(containerSelector);
+                        if(!container) return;
+                        const table = container.querySelector('table');
+                        if(!table) return;
+                        const tbody = table.querySelector('tbody');
+                        if(!tbody) return;
+
+                        const rows = Array.from(tbody.querySelectorAll('tr'));
+                        const cardList = document.createElement('div');
+                        cardList.className = 'mobile-card-list';
+
+                        rows.forEach(row => {
+                            // Skip placeholder rows
+                            if(row.children.length === 1 && row.children[0].hasAttribute('colspan')) return;
+                            const card = document.createElement('div');
+                            card.className = 'mobile-card';
+                            Array.from(row.children).forEach(td => {
+                                const label = td.getAttribute('data-label') || '';
+                                const value = td.textContent.trim();
+                                const item = document.createElement('div');
+                                item.className = 'row-item';
+                                const l = document.createElement('div'); l.className='row-label'; l.textContent = label;
+                                const v = document.createElement('div'); v.className='row-value'; v.textContent = value;
+                                item.appendChild(l);
+                                item.appendChild(v);
+                                card.appendChild(item);
+                            });
+                            cardList.appendChild(card);
+                        });
+
+                        // Replace table with cardList
+                        table.parentElement.replaceChild(cardList, table);
+                    }catch(e){console.warn('tableToCards conversion failed', e);} 
+                }
+
+                document.addEventListener('DOMContentLoaded', function(){
+                    tableToCards('#staffListContainer .table-responsive');
+                    tableToCards('#membersListContainer .table-responsive');
+                });
+            })();
+        </script>
+
             <!-- Members Section -->
             <div id="members" class="dashboard-section" style="display:none; padding:1.5rem;">
                 <div class="glass-card" style="padding:1.5rem;">

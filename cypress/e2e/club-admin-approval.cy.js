@@ -3,7 +3,14 @@
 
 describe("Club Admin Scout Approval UI", () => {
   before(() => {
-    cy.visit("/admin-dashboard.html");
+    cy.visit("/admin-dashboard.html", {
+      onBeforeLoad(win) {
+        try {
+          win.localStorage.setItem('isDemoSession', 'true');
+          win.localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-admin', userType: 'admin', firstName: 'Demo', lastName: 'Admin' }));
+        } catch (e) {}
+      }
+    });
   });
 
   it("loads pending scout approvals", () => {

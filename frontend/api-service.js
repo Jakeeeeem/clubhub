@@ -61,8 +61,12 @@ if (typeof ApiService === 'undefined') {
    * User requested "all working data not mock" - forcing live data for everything.
    */
   shouldMock() {
-    // FORCE LIVE DATA for all requests as per user request
-    return false;
+    // Allow mock/demo responses when `isDemoSession` is set in localStorage.
+    try {
+      return localStorage.getItem('isDemoSession') === 'true';
+    } catch (e) {
+      return false;
+    }
   }
 
   // Generic GET method for dashboard loaders
