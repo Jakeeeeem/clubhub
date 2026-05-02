@@ -24,10 +24,35 @@
         .dashboard-section table:not(.no-mobile-cards) td[data-label="Name"], .dashboard-section table:not(.no-mobile-cards) td:first-child { flex-direction: column !important; align-items: flex-start !important; text-align: left !important; padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
         .dashboard-section table:not(.no-mobile-cards) td[data-label="Name"] > div:first-child { font-weight: 800 !important; font-size: 1rem !important; line-height: 1.05 !important; }
         .dashboard-section table:not(.no-mobile-cards) td[data-label="Name"] > div:nth-child(2) { font-size: 0.78rem !important; color: rgba(203,213,225,0.9) !important; margin-top: 0.18rem !important; }
-        input[placeholder="Search members..."] { width: 220px !important; max-width: 48% !important; min-width: 140px !important; padding: 0.55rem 0.9rem !important; border-radius: 10px !important; box-sizing: border-box !important; }
+        input[placeholder="Search members..."] { width: 420px !important; max-width: 75% !important; min-width: 160px !important; padding: 0.65rem 1rem !important; border-radius: 12px !important; box-sizing: border-box !important; }
         @media (max-width: 991px) {
             input[placeholder="Search members..."] { width: calc(100% - 1.2rem) !important; display:block !important; margin-top: 0.6rem !important; }
             .dashboard-section table:not(.no-mobile-cards) tr { padding-left: 0.85rem !important; padding-right: 0.85rem !important; }
+        }
+        /* Make header title occupy its own line and place add button on a separate row */
+        .members-header { display:block !important; }
+        .members-header .section-title { display:block !important; }
+        .members-header > div { margin-top: 0.5rem; }
+        @media (max-width: 640px) {
+            .members-header > div { display:block !important; width:100% !important; text-align:right !important; }
+            .members-header > div .btn { display:inline-block !important; }
+        }
+        /* Widen mobile cards for readability and touch targets */
+        @media (max-width: 991px) {
+            .dashboard-section table:not(.no-mobile-cards) tr { padding: 1.1rem !important; margin-bottom: 1rem !important; border-radius: 14px !important; max-width: calc(100% - 1.4rem) !important; width: calc(100% - 1.4rem) !important; }
+        }
+        /* Make members header, search and cards occupy full mobile width */
+        @media (max-width: 991px) {
+            .container, .dashboard-container { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+            .members-header { display:flex !important; flex-direction:column !important; gap:0.6rem !important; }
+            .members-header > div { width:100% !important; display:flex !important; justify-content:flex-end !important; }
+            .members-header .btn { width:100% !important; max-width:none !important; align-self:flex-end !important; }
+            input#members-search { width:100% !important; max-width:none !important; padding:0.8rem 1rem !important; }
+            .dashboard-section table:not(.no-mobile-cards), .dashboard-section table:not(.no-mobile-cards) tbody { width:100% !important; }
+            .dashboard-section table:not(.no-mobile-cards) tr { display:block !important; width:100% !important; box-sizing:border-box !important; padding:1rem !important; margin-bottom:1rem !important; border-radius:14px !important; }
+            .dashboard-section table:not(.no-mobile-cards) td, .dashboard-section table:not(.no-mobile-cards) th { display:block !important; width:100% !important; padding:0.35rem 0 !important; }
+            .dashboard-section table:not(.no-mobile-cards) td[data-label="Actions"] { text-align:left !important; }
+            .dashboard-section table:not(.no-mobile-cards) td[data-label="Actions"] .btn { width:100% !important; display:block !important; margin-bottom:0.5rem !important; }
         }
     </style>
     <style>
@@ -150,6 +175,43 @@
                 grid-template-columns: 1fr 1fr !important;
             }
         }
+
+        // Search/filter members by name or email
+        (function attachMemberSearch() {
+            function debounce(fn, wait) {
+                let t;
+                return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); };
+            }
+
+            function filterMembers(query) {
+                const tbody = document.getElementById('membersTableBody');
+                if (!tbody) return;
+                const q = (query || '').trim().toLowerCase();
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                if (!q) {
+                    rows.forEach(r => r.style.display = 'table-row');
+                    return;
+                }
+                rows.forEach(r => {
+                    const text = (r.textContent || '').toLowerCase();
+                    if (text.indexOf(q) !== -1) r.style.display = '';
+                    else r.style.display = 'none';
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const search = document.getElementById('members-search');
+                if (!search) return;
+                const debounced = debounce(e => filterMembers(e.target.value), 180);
+                search.addEventListener('input', debounced);
+                // Re-apply filter after members are reloaded
+                const originalLoad = window.loadMembers;
+                window.loadMembers = async function() {
+                    if (typeof originalLoad === 'function') await originalLoad();
+                    filterMembers(search.value);
+                };
+            });
+        })();
     </style>
 </head>
 
@@ -267,16 +329,16 @@
             <!-- Members Section -->
             <div id="members" class="dashboard-section active" style="display:block; padding:1.5rem;">
                 <div class="glass-card" style="padding:1.5rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                        <h3 class="section-title" style="margin:0;">👥 Member Management</h3>
-                        <div style="display:flex; gap:0.75rem;">
+                    <div class="members-header" style="margin-bottom:0.75rem;">
+                        <h3 class="section-title" style="margin:0 0 0.5rem 0;">👥 Member Management</h3>
+                        <div style="display:flex; justify-content:flex-end;">
                             <button class="btn btn-primary btn-small" onclick="openModal('addMemberModal')">+ Add
                                 Member</button>
                         </div>
                     </div>
                     <div style="margin-bottom:1rem;">
                         <input id="members-search" type="text" placeholder="Search members..." aria-label="Search members"
-                            style="width:100%; max-width:520px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:0.7rem 1rem; border-radius:10px; color:#cbd5e1; font-size:0.95rem;">
+                            style="width:100%; max-width:720px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:0.8rem 1rem; border-radius:12px; color:#cbd5e1; font-size:0.98rem;">
                     </div>
                     <div id="membersListContainer">
                         <div class="table-responsive">

@@ -1,13 +1,13 @@
-const CACHE_NAME = "clubhub-v7.0.3"; // Bumped version to force clients to refresh caches
+const CACHE_NAME = "clubhub-v7.0.4"; // Bumped again to force clients to refresh caches
 const urlsToCache = [
   "/",
   "/index.html",
-  "/styles.css",
+  "/styles.css?v=20260502",
+  "/unified-nav.css?v=20260502",
+  "/unified-nav.js?v=20260502",
   "/script.js",
   "/api-service.js",
   "/dialog-service.js",
-  "/unified-nav.css",
-  "/unified-nav.js",
   "/group-switcher.js",
   "/group-switcher.css",
   "/images/logo.png",
