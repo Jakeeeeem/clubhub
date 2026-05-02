@@ -747,6 +747,17 @@
     <script src="squad-messenger.js"></script>
 
     <script>
+        async function loadDashboardStats() {
+            if (typeof apiService === 'undefined') return;
+            try {
+                const stats = await apiService.get('/api/admin/stats');
+                if (!stats) return;
+                if (stats.totalMembers !== undefined) { const el = document.getElementById('totalMembers'); if (el) el.textContent = stats.totalMembers; }
+                if (stats.monthlyRevenue !== undefined) { const el = document.getElementById('monthlyRevenue'); if (el) el.textContent = '£' + stats.monthlyRevenue.toLocaleString(); }
+                if (stats.activeEvents !== undefined) { const el = document.getElementById('activeEvents'); if (el) el.textContent = stats.activeEvents; }
+            } catch (e) { /* silent - demo fallback will be used */ }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             // Auth check
             if (typeof checkAuthStatus === 'function') {
@@ -760,12 +771,12 @@
                 showSection(hash);
             }
 
-            // Load initial data
-            loadDashboardStats();
-            loadTeams();
-            loadAvailableCoaches();
-            loadAvailableForms();
-            loadScoutApprovals();
+            // Load initial data (guarded calls)
+            if (typeof loadDashboardStats === 'function') await loadDashboardStats();
+            if (typeof loadTeams === 'function') loadTeams();
+            if (typeof loadAvailableCoaches === 'function') loadAvailableCoaches();
+            if (typeof loadAvailableForms === 'function') loadAvailableForms();
+            if (typeof loadScoutApprovals === 'function') loadScoutApprovals();
             // default tab
             const tp = document.getElementById('tabPlatform'); if (tp) tp.classList.add('active');
         });
