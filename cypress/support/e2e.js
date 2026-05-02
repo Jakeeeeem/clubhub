@@ -13,6 +13,16 @@ beforeEach(() => {
   cy.intercept('GET', '**/coach-chat.html', { fixture: 'coach-chat.html' }).as('coachHtml');
   cy.intercept('GET', '**/tournaments*', { fixture: 'tournaments.json' }).as('tournamentsReq');
   cy.intercept('POST', '**/messages', { statusCode: 200, body: { success: true, message: 'Demo action successful' } }).as('postMessage');
+  // Additional targeted intercepts for messaging and coach/tournament APIs
+  cy.intercept('GET', '**/api/messages*', { fixture: 'messages.json' }).as('getMessages');
+  cy.intercept('GET', '**/api/tournaments*', { fixture: 'tournaments.json' }).as('getTournaments');
+  cy.intercept('GET', '**/api/tournaments/**', { fixture: 'tournaments.json' }).as('getTournamentById');
+  cy.intercept('GET', '**/api/coach/squad*', { statusCode: 200, body: { players: [ { id: 'player1', first_name: 'Demo', last_name: 'Player' } ] } }).as('getCoachSquad');
+  cy.intercept('GET', '**/api/members*', (req) => {
+    req.reply({ statusCode: 200, body: { members: [ { id: 'coach1', first_name: 'Coach', last_name: 'Demo', role: 'coach' } ], players: [ { id: 'player1', first_name: 'Player', last_name: 'Demo' } ] } });
+  }).as('getMembers');
+  // Proxy POST messages to ensure tests asserting send work regardless of backend
+  cy.intercept('POST', '**/api/messages*', { statusCode: 200, body: { success: true, message: 'Demo action successful' } }).as('postApiMessage');
 
   // Generic safety: convert any HTML responses for GET requests into a small JSON fallback.
   // This prevents app code calling response.json() from throwing when the dev static server
