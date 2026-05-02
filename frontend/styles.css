@@ -6225,6 +6225,41 @@ input:focus + .toggle-slider {
             padding-right: 0.85rem !important;
         }
     }
+
+/* Make mobile cards larger and action buttons readable/tappable */
+@media (max-width: 991px) {
+    .dashboard-section table:not(.no-mobile-cards) tr {
+        padding: 1rem !important;
+        margin-bottom: 0.9rem !important;
+        border-radius: 12px !important;
+    }
+
+    .dashboard-section table:not(.no-mobile-cards) td[data-label] > div:first-child {
+        font-size: 1.05rem !important;
+        font-weight: 800 !important;
+        color: #fff !important;
+    }
+
+    /* Show action buttons as full-width tappable buttons */
+    .dashboard-section table:not(.no-mobile-cards) td[data-label="Actions"],
+    .dashboard-section table:not(.no-mobile-cards) td:last-child {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        padding-top: 0.6rem !important;
+        padding-bottom: 0.6rem !important;
+    }
+
+    .dashboard-section table:not(.no-mobile-cards) td[data-label="Actions"] button,
+    .dashboard-section table:not(.no-mobile-cards) td:last-child button {
+        width: 100% !important;
+        display: block !important;
+        padding: 0.75rem 0.9rem !important;
+        font-size: 0.95rem !important;
+        border-radius: 10px !important;
+        text-align: center !important;
+    }
+}
     .dashboard-section table:not(.no-mobile-cards) td[data-label]::before {
         content: attr(data-label) !important;
         font-weight: 700 !important;

@@ -1774,6 +1774,12 @@ table td:last-child,
 
         .table-action-more { min-width:44px; min-height:44px; border-radius:10px; }
     }
+
+    /* On mobile, show the hidden actions directly and hide the overflow button */
+    @media (max-width: 991px) {
+        .hidden-actions { display: flex !important; flex-direction: column !important; gap: 0.5rem !important; }
+        .table-action-more { display: none !important; }
+    }
     }
 
     .headline-tab.active {
