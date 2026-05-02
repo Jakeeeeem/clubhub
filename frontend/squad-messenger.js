@@ -172,43 +172,56 @@ const SquadMessenger = {
   async _fetchContacts() {
     try {
       const currentUser = SquadMessenger._currentUser();
-      const role = currentUser.userType || currentUser.account_type || 'player';
+      const role = (currentUser.userType || currentUser.account_type || 'player').toString().toLowerCase();
 
-      // Everyone can message - fetch group members
       let contacts = [];
-      try {
-        // Admin/Org accounts should go straight to members list
-        if (role === 'admin' || role === 'organization' || role === 'group') {
-           throw new Error("Skip coach endpoint for admin");
+
+      // Admin: full access to members & staff
+      if (role === 'admin' || role === 'organization' || role === 'owner') {
+        try {
+          const memRes = await apiService.makeRequest('/members');
+          if (memRes) {
+            const players = memRes.players || memRes.members || memRes.data || [];
+            contacts = contacts.concat((Array.isArray(players) ? players : []).map(p => ({ ...p, _role: 'player' })));
+            const staff = memRes.staff || memRes.coaches || memRes.admins || [];
+            contacts = contacts.concat((Array.isArray(staff) ? staff : []).map(s => ({ ...s, _role: (s.role || s.userType || 'staff').toLowerCase() })));
+          }
+        } catch (e) {
+          console.warn('[SquadMessenger] Admin contacts fetch failed, continuing:', e);
         }
-        const squadRes = await apiService.makeRequest('/coach/squad');
-        if (squadRes && Array.isArray(squadRes.players)) {
-          contacts = contacts.concat(squadRes.players.map(p => ({ ...p, _role: 'player' })));
+
+      // Coach: only their squad players + group admins
+      } else if (role === 'coach') {
+        try {
+          const squadRes = await apiService.makeRequest('/coach/squad');
+          if (squadRes && Array.isArray(squadRes.players)) {
+            contacts = contacts.concat(squadRes.players.map(p => ({ ...p, _role: 'player' })));
+          }
+        } catch (e) {
+          console.warn('[SquadMessenger] Coach squad fetch failed:', e);
         }
-      } catch (e) {
-        // If coach endpoint fails (e.g. for Admin), try the general members endpoint
-        if (role === 'admin' || role === 'organization') {
-           const memRes = await apiService.makeRequest('/members');
-           if (memRes && Array.isArray(memRes.players)) {
-             contacts = contacts.concat(memRes.players.map(p => ({ ...p, _role: 'player' })));
-           }
+
+        try {
+          const adminRes = await apiService.makeRequest('/members?role=admin');
+          const admins = adminRes?.admins || adminRes?.members || [];
+          if (Array.isArray(admins)) contacts = contacts.concat(admins.map(a => ({ ...a, _role: 'admin' })));
+        } catch (e) {
+          console.warn('[SquadMessenger] Coach admin fetch failed:', e);
         }
+
+      // Player: minimal contacts (only used for rendering existing threads) — fetch inbox only
+      } else {
+        try {
+          const staffRes = await apiService.makeRequest('/members?role=coach');
+          const coaches = staffRes?.coaches || staffRes?.members || [];
+          if (Array.isArray(coaches)) contacts = contacts.concat(coaches.map(c => ({ ...c, _role: 'coach' })));
+        } catch (e) {}
+        try {
+          const adminRes = await apiService.makeRequest('/members?role=admin');
+          const admins = adminRes?.admins || adminRes?.members || [];
+          if (Array.isArray(admins)) contacts = contacts.concat(admins.map(a => ({ ...a, _role: 'admin' })));
+        } catch (e) {}
       }
-
-      try {
-        const staffRes = await apiService.makeRequest('/members?role=coach');
-        if (staffRes && Array.isArray(staffRes.coaches)) {
-          contacts = contacts.concat(staffRes.coaches.map(c => ({ ...c, _role: 'coach' })));
-        }
-      } catch (e) {}
-
-      try {
-        const adminRes = await apiService.makeRequest('/members?role=admin');
-        if (adminRes && Array.isArray(adminRes.admins || adminRes.members)) {
-          const admins = adminRes.admins || adminRes.members || [];
-          contacts = contacts.concat(admins.filter(a => a.role === 'admin' || a.userType === 'admin').map(a => ({ ...a, _role: 'admin' })));
-        }
-      } catch (e) {}
 
       // Deduplicate by id, remove self
       const myId = currentUser.id;
@@ -430,6 +443,32 @@ const SquadMessenger = {
     if (!this.state.activeUserId) {
       if (typeof showNotification === 'function') showNotification('Select a conversation first', 'info');
       return;
+    }
+
+    // Permission checks based on role
+    const currentUser = SquadMessenger._currentUser();
+    const role = (currentUser.userType || currentUser.account_type || 'player').toString().toLowerCase();
+    const myId = currentUser.id;
+
+    // Players may only reply to existing threads
+    if (role === 'player') {
+      const threadExists = this.state.allMessages.some(m => (
+        (m.sender_id == myId && m.receiver_id == this.state.activeUserId) ||
+        (m.sender_id == this.state.activeUserId && m.receiver_id == myId)
+      ));
+      if (!threadExists) {
+        if (typeof showNotification === 'function') showNotification('Players can only reply to existing conversations', 'info');
+        return;
+      }
+    }
+
+    // Coaches can only message their squad players and group admins (contacts list already filtered, but double-check)
+    if (role === 'coach') {
+      const allowedIds = new Set((this.state.allContacts || []).map(c => (c.id || c.user_id).toString()));
+      if (!allowedIds.has(String(this.state.activeUserId))) {
+        if (typeof showNotification === 'function') showNotification('You are only allowed to message your squad or group admins', 'info');
+        return;
+      }
     }
 
     try {
