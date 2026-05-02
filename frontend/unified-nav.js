@@ -26,6 +26,70 @@ const ICONS = {
     bibs: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.62 1.96V10a8 8 0 0 0 16 0V5.42a2 2 0 0 0-1.62-1.96z"/></svg></i>`,
     academy: `<i class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><polygon points="10 8 15 10 10 12 10 8"/></svg></i>`,
   },
+
+  /**
+   * Per-page mobile fallback conversions for tables that need custom handling
+   */
+  performPerPageFallbacks() {
+    const file = window.location.pathname.split('/').pop() || '';
+
+    const convertSelector = (sel) => {
+      try {
+        const el = document.querySelector(sel);
+        if (!el) return false;
+        const table = el.tagName.toLowerCase() === 'table' ? el : el.querySelector('table');
+        if (!table) return false;
+        // reuse earlier generic conversion logic
+        const headers = Array.from((table.querySelector('thead') || table).querySelectorAll('th')).map(h => h.textContent.trim());
+        const rows = Array.from((table.querySelector('tbody') || table).querySelectorAll('tr'));
+        if (rows.length === 0) return false;
+        const list = document.createElement('div'); list.className = 'mobile-card-list';
+        rows.forEach(row => {
+          const tds = Array.from(row.querySelectorAll('td'));
+          if (tds.length === 0) return;
+          const card = document.createElement('div'); card.className = 'mobile-card';
+          tds.forEach((td, i) => {
+            const label = td.getAttribute('data-label') || headers[i] || `Column ${i+1}`;
+            const item = document.createElement('div'); item.className = 'row-item';
+            const l = document.createElement('div'); l.className='row-label'; l.textContent = label;
+            const v = document.createElement('div'); v.className='row-value'; v.innerHTML = td.innerHTML.trim();
+            item.appendChild(l); item.appendChild(v); card.appendChild(item);
+          });
+          list.appendChild(card);
+        });
+        try { table.parentElement.replaceChild(list, table); return true; } catch (e) { console.warn('per-page replace failed', e); return false; }
+      } catch (e) { return false; }
+    };
+
+    // Admin Scout Approvals: convert the main approvals table
+    if (file.includes('admin-scout-approvals')) {
+      convertSelector('#scoutApprovalsList table') || convertSelector('table');
+    }
+
+    // League management: standings & fixtures
+    if (file.includes('league-management')) {
+      convertSelector('.standings-table') || convertSelector('table.standings-table');
+      convertSelector('.fixtures-table') || convertSelector('table.fixtures-table');
+    }
+
+    // Training manager: registrants table
+    if (file.includes('training-manager')) {
+      convertSelector('.registrants-table') || convertSelector('table.registrants-table');
+    }
+
+    // Admin teams & coach teams: convert team lists
+    if (file.includes('admin-teams') || file.includes('coach-teams')) {
+      convertSelector('#teamsList table') || convertSelector('table');
+    }
+
+    // Fallback: pages that explicitly opt-in with data-mobile-cards attribute
+    try {
+      document.querySelectorAll('[data-mobile-cards]').forEach(el => {
+        if (el.tagName.toLowerCase() === 'table') convertSelector(el);
+        else convertSelector(el);
+      });
+    } catch (e) { /* ignore */ }
+  },
   back: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
 };
 

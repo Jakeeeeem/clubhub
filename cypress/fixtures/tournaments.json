@@ -1,3 +1,7 @@
 [
+  { "id": "tour1", "title": "Demo Tournament A", "date": "2026-06-01", "status": "Active" },
+  { "id": "tour2", "title": "Demo Tournament B", "date": "2026-07-12", "status": "Upcoming" }
+]
+[
   { "id": "t1", "name": "Spring Cup", "location": "Demo Stadium" }
 ]

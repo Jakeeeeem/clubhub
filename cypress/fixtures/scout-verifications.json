@@ -1,0 +1,18 @@
+[
+  {
+    "id": "sv1",
+    "name": "Oliver Brown",
+    "email": "oliver.brown@example.com",
+    "created_at": "2026-05-01T12:00:00Z",
+    "status": "pending",
+    "notes": "Demo scout submission"
+  },
+  {
+    "id": "sv2",
+    "name": "Sophie Green",
+    "email": "sophie.green@example.com",
+    "created_at": "2026-04-30T09:30:00Z",
+    "status": "pending",
+    "notes": "Demo scout submission 2"
+  }
+]

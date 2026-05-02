@@ -769,25 +769,41 @@
             try {
                 const requests = await apiService.getPlatformScoutVerifications('pending');
                 loading.style.display = 'none';
-                if (!requests || !requests.length) {
+                // Normalize response shapes: support array, wrapped { requests: [...] } or single object
+                let normalized = [];
+                if (Array.isArray(requests)) normalized = requests;
+                else if (requests && Array.isArray(requests.requests)) normalized = requests.requests;
+                else if (requests && typeof requests === 'object') normalized = [requests];
+
+                if (!normalized || normalized.length === 0) {
                     list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending scout approval requests at this time.</div>';
                     return;
                 }
 
-                list.innerHTML = requests.map(r => `
+                list.innerHTML = normalized.map(r => {
+                    const name = r.name || r.display_name || r.player_name || 'Unknown';
+                    const contact = r.email || r.contact || '';
+                    const createdRaw = r.created_at || r.submitted_at || r.timestamp || r.createdAt || new Date().toISOString();
+                    let createdStr = '';
+                    try { createdStr = new Date(createdRaw).toLocaleString(); } catch(e) { createdStr = String(createdRaw); }
+                    const notes = (r.notes || r.message || '').substring(0, 200);
+                    return `
                     <div class="feed-entry" style="align-items:center;">
                         <div class="feed-icon" style="background:rgba(59,130,246,0.08); color:#60a5fa;">🕵️</div>
                         <div class="feed-meta">
-                            <strong>${r.name || r.display_name || 'Unknown'}</strong>
-                            <span style="display:block; color:var(--text-muted); font-size:0.85rem;">${r.email || r.contact || ''} · Requested: ${new Date(r.created_at).toLocaleString()}</span>
-                            <div style="margin-top:0.5rem;"><em style="color:var(--text-muted);">${(r.notes || '').substring(0, 200)}</em></div>
+                            <strong>${name}</strong>
+                            <span style="display:block; color:var(--text-muted); font-size:0.85rem;">${contact} · Requested: ${createdStr}</span>
+                            <div style="margin-top:0.5rem;"><em style="color:var(--text-muted);">${notes}</em></div>
                         </div>
                         <div style="margin-left:1rem; display:flex; gap:0.5rem;">
                             <button class="btn btn-primary btn-small" onclick="resolveApproval('${r.id}','approved')">Approve</button>
                             <button class="btn btn-text btn-small" onclick="resolveApproval('${r.id}','rejected')">Reject</button>
                         </div>
                     </div>
-                `).join('');
+                `;
+                }).join('');
+                // Ensure list is visible after rendering
+                try { list.style.display = 'block'; } catch(e) {}
             } catch (err) {
                 loading.style.display = 'none';
                 console.error('Failed to load scout approvals', err);
