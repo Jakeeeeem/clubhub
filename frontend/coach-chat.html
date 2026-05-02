@@ -654,7 +654,11 @@
                     const table = container.querySelector('table');
                     if(!table) return;
                     const rows = Array.from(tbody.querySelectorAll('tr'));
-                    if(rows.length === 0) return;
+                    if(rows.length === 0) {
+                        rows.push(document.createElement('tr'));
+                        rows[0].appendChild(document.createElement('td'));
+                        rows[0].children[0].textContent = '';
+                    }
                     const list = document.createElement('div'); list.className='mobile-card-list';
                     rows.forEach(row=>{
                         if(row.children.length === 1 && row.children[0].hasAttribute('colspan')) return;
@@ -706,5 +710,38 @@
                 }
             }
         });
+
+        // Extra safety: force convert any remaining tables into mobile cards
+        (function(){
+            function convert(){
+                if(window.innerWidth > 991) return;
+                document.querySelectorAll('.table-responsive').forEach(wrapper=>{
+                    if(!wrapper) return;
+                    if(wrapper.querySelector('.mobile-card-list')) return;
+                    const table = wrapper.querySelector('table'); if(!table) return;
+                    const tbody = table.querySelector('tbody') || table;
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    if(rows.length === 0) return;
+                    const list = document.createElement('div'); list.className='mobile-card-list';
+                    rows.forEach(row=>{
+                        if(row.children.length === 1 && row.children[0].hasAttribute('colspan')) return;
+                        const card = document.createElement('div'); card.className='mobile-card';
+                        Array.from(row.children).forEach((td, idx)=>{
+                            const th = table.querySelectorAll('thead th')[idx];
+                            const label = th ? th.textContent.trim() : td.getAttribute('data-label') || '';
+                            const value = td.textContent.trim();
+                            const item = document.createElement('div'); item.className='row-item';
+                            const l = document.createElement('div'); l.className='row-label'; l.textContent=label;
+                            const v = document.createElement('div'); v.className='row-value'; v.textContent=value;
+                            item.appendChild(l); item.appendChild(v); card.appendChild(item);
+                        });
+                        list.appendChild(card);
+                    });
+                    try{ table.parentElement.replaceChild(list, table); }catch(e){}
+                });
+            }
+            document.addEventListener('DOMContentLoaded', convert);
+            new MutationObserver(()=> setTimeout(convert,80)).observe(document.body, { childList:true, subtree:true });
+        })();
 </body>
 </html>

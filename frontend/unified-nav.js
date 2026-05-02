@@ -3026,6 +3026,127 @@ const UnifiedNav = {
     // 2. Process all tables to ensure card-mode works
     this.autoLabelTables();
 
+    // 2b. Convert remaining .table-responsive tables into `.mobile-card-list` for consistent mobile UX
+    try {
+      document.querySelectorAll('.table-responsive').forEach(container => {
+        if (!container) return;
+        // Skip if already converted
+        if (container.querySelector('.mobile-card-list')) return;
+        const table = container.querySelector('table');
+        if (!table) return;
+
+        // Only convert on narrow screens
+        if (window.innerWidth > 991) return;
+
+        const tbody = table.querySelector('tbody') || table;
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        if (rows.length === 0) return;
+
+        const list = document.createElement('div');
+        list.className = 'mobile-card-list';
+
+        rows.forEach(row => {
+          if (row.children.length === 1 && row.children[0].hasAttribute('colspan')) return;
+          const card = document.createElement('div');
+          card.className = 'mobile-card';
+          Array.from(row.children).forEach(td => {
+            const label = td.getAttribute('data-label') || '';
+            const value = td.textContent.trim();
+            const item = document.createElement('div');
+            item.className = 'row-item';
+            const l = document.createElement('div'); l.className='row-label'; l.textContent = label;
+            const v = document.createElement('div'); v.className='row-value'; v.textContent = value;
+            item.appendChild(l);
+            item.appendChild(v);
+            card.appendChild(item);
+          });
+          list.appendChild(card);
+        });
+
+        // Replace table with the card list
+        try { table.parentElement.replaceChild(list, table); }
+        catch (e) { console.warn('UnifiedNav: table->cards replace failed', e); }
+      });
+    } catch (e) { console.warn('UnifiedNav: convert tables to cards failed', e); }
+
+    // 2c. Inject mobile-cards stylesheet if missing
+    try {
+      if (!document.getElementById('mobile-cards-css')) {
+        const link = document.createElement('link');
+        link.id = 'mobile-cards-css';
+        link.rel = 'stylesheet';
+        link.href = 'mobile-cards.css';
+        document.head.appendChild(link);
+      }
+    } catch (e) { console.warn('UnifiedNav: inject mobile css failed', e); }
+
+    // 2d. Convert generic tables to mobile cards, unless explicitly opted-out with .no-mobile-convert
+    try {
+      const allTables = Array.from(document.querySelectorAll('table'));
+      allTables.forEach(table => {
+        if (!table || table.closest('.mobile-card-list')) return;
+        if (table.classList.contains('no-mobile-convert')) return;
+        // skip tables already inside special non-data containers
+        if (table.closest('form') && table.querySelector('input[type="checkbox"]')) return;
+
+        // Only on narrow screens
+        if (window.innerWidth > 991) return;
+
+        // Avoid converting small layout tables
+        const cols = table.querySelectorAll('th, td').length;
+        if (cols === 0) return;
+
+        // Build label set
+        let headers = [];
+        const thead = table.querySelector('thead');
+        if (thead) headers = Array.from(thead.querySelectorAll('th')).map(h => h.textContent.trim());
+        if (headers.length === 0) {
+          // fallback to first row THs or data-labels
+          const firstRow = table.querySelector('tr');
+          if (firstRow) headers = Array.from(firstRow.querySelectorAll('th')).map(h => h.textContent.trim());
+        }
+
+        const tbody = table.querySelector('tbody') || table;
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        if (rows.length === 0) return;
+
+        const list = document.createElement('div');
+        list.className = 'mobile-card-list';
+
+        rows.forEach(row => {
+          // skip header rows with th only
+          if (row.querySelectorAll('th').length && row.querySelectorAll('td').length === 0) return;
+          const tds = Array.from(row.querySelectorAll('td'));
+          if (tds.length === 0) return;
+
+          const card = document.createElement('div');
+          card.className = 'mobile-card';
+
+          tds.forEach((td, idx) => {
+            const label = td.getAttribute('data-label') || headers[idx] || `Column ${idx+1}`;
+            const value = td.innerHTML.trim();
+            const item = document.createElement('div');
+            item.className = 'row-item';
+            const l = document.createElement('div'); l.className='row-label'; l.textContent = label;
+            const v = document.createElement('div'); v.className='row-value'; v.innerHTML = value;
+            item.appendChild(l);
+            item.appendChild(v);
+            card.appendChild(item);
+          });
+
+          list.appendChild(card);
+        });
+
+        try { table.parentElement.replaceChild(list, table); }
+        catch (e) { console.warn('UnifiedNav: generic table->cards replace failed', e); }
+      });
+    } catch (e) { console.warn('UnifiedNav: generic table conversion failed', e); }
+
+    // Run per-page fallbacks for pages that need custom conversions
+    try {
+      if (typeof this.performPerPageFallbacks === 'function') this.performPerPageFallbacks();
+    } catch (e) { console.warn('UnifiedNav: per-page fallbacks failed', e); }
+
     // 3. Global layout fixes
     document.body.style.overflowX = "hidden";
 

@@ -48,7 +48,9 @@ const SquadMessenger = {
           <div style="padding:1rem 1.25rem; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
             <span style="font-weight:700; font-size:0.95rem;">💬 Messages</span>
             <div style="display:flex; gap:0.5rem;">
-              ${isPlayer ? '' : `
+              ${isPlayer ? `
+                <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()">+ New</button>
+              ` : `
                 <button class="btn btn-secondary btn-small" onclick="SquadMessenger.showMassMessage()" title="Broadcast to group">📢 Broadcast</button>
                 <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()">+ New</button>
               `}
@@ -65,8 +67,8 @@ const SquadMessenger = {
           <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.07);">
             <button id="sq-tab-convos" onclick="SquadMessenger.switchTab('convos')"
               style="flex:1; padding:0.6rem; background:rgba(220,38,38,0.08); color:#f87171; border:none; border-bottom:2px solid var(--primary); font-size:0.8rem; font-weight:600; cursor:pointer;">Conversations</button>
-            ${isPlayer ? '' : `<button id="sq-tab-contacts" onclick="SquadMessenger.switchTab('contacts')"
-              style="flex:1; padding:0.6rem; background:transparent; color:rgba(255,255,255,0.4); border:none; border-bottom:2px solid transparent; font-size:0.8rem; font-weight:600; cursor:pointer;">Contacts</button>`}
+            <button id="sq-tab-contacts" onclick="SquadMessenger.switchTab('contacts')"
+              style="flex:1; padding:0.6rem; background:transparent; color:rgba(255,255,255,0.4); border:none; border-bottom:2px solid transparent; font-size:0.8rem; font-weight:600; cursor:pointer;">Contacts</button>
           </div>
 
           <!-- Conversation List -->
@@ -450,14 +452,11 @@ const SquadMessenger = {
     const role = (currentUser.userType || currentUser.account_type || 'player').toString().toLowerCase();
     const myId = currentUser.id;
 
-    // Players may only reply to existing threads
+    // Players: allow new conversations but only to contacts (coaches/admins)
     if (role === 'player') {
-      const threadExists = this.state.allMessages.some(m => (
-        (m.sender_id == myId && m.receiver_id == this.state.activeUserId) ||
-        (m.sender_id == this.state.activeUserId && m.receiver_id == myId)
-      ));
-      if (!threadExists) {
-        if (typeof showNotification === 'function') showNotification('Players can only reply to existing conversations', 'info');
+      const allowedIds = new Set((this.state.allContacts || []).map(c => (c.id || c.user_id).toString()));
+      if (!allowedIds.has(String(this.state.activeUserId))) {
+        if (typeof showNotification === 'function') showNotification('Players can only message coaches or admins', 'info');
         return;
       }
     }

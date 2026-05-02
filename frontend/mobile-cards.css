@@ -1,0 +1,40 @@
+/* Mobile card list styles for table->card conversion */
+.mobile-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 12px;
+}
+.mobile-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 6px 18px rgba(12,12,14,0.06);
+  color: #111;
+  overflow: hidden;
+  border: 1px solid rgba(15,15,15,0.04);
+}
+.mobile-card .row-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  align-items: baseline;
+}
+.mobile-card .row-label {
+  color: #666;
+  font-size: 0.82rem;
+  flex: 0 0 42%;
+}
+.mobile-card .row-value {
+  color: #111;
+  font-size: 0.95rem;
+  text-align: right;
+  flex: 1 1 auto;
+}
+.mobile-card .row-value small { color: #666 }
+@media (prefers-color-scheme: dark) {
+  .mobile-card { background: #0f1720; color: #e6eef8; border-color: rgba(255,255,255,0.03); }
+  .mobile-card .row-label { color: #9aa3b2 }
+  .mobile-card .row-value { color: #e6eef8 }
+}

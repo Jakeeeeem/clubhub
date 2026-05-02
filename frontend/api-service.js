@@ -466,18 +466,32 @@ if (typeof ApiService === 'undefined') {
   }
 
   async _handleResponse(response, endpoint, options) {
-    const contentType = response.headers.get("content-type");
+    const contentType = (response.headers.get("content-type") || "").toLowerCase();
     let data;
 
-    if (contentType && contentType.includes("application/json")) {
-      data = await response.json();
-    } else {
-      const text = await response.text();
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = { message: text };
+    try {
+      if (contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+        } catch (jsonErr) {
+          const rawText = await response.text();
+          console.error(`❗ JSON parse error for ${endpoint} (status ${response.status}). Response begins:`,
+            rawText && rawText.slice ? rawText.slice(0, 800) : rawText);
+          try { window.__apiServiceLastError = { endpoint, status: response.status, rawText }; } catch(e) {}
+          data = { __raw_text__: rawText, message: rawText };
+        }
+      } else {
+        const text = await response.text();
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          try { window.__apiServiceLastError = { endpoint, status: response.status, rawText: text }; } catch(e) {}
+          data = { __raw_text__: text, message: text };
+        }
       }
+    } catch (err) {
+      console.error(`❌ Unexpected error reading response for ${endpoint}:`, err);
+      throw err;
     }
 
     if (!response.ok) {

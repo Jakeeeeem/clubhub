@@ -398,6 +398,46 @@
     <script src="group-switcher.js?v=20260429_v18"></script>
     <script src="pwa-install.js"></script>
     <script src="unified-nav.js?v=20260429_v18"></script>
+    <script>
+        // Ensure tables convert to mobile cards immediately for admins
+        (function(){
+            function convertAll(){
+                if (window.innerWidth > 991) return;
+                document.querySelectorAll('.table-responsive').forEach(wrapper=>{
+                    if(!wrapper) return;
+                    if(wrapper.querySelector('.mobile-card-list')) return;
+                    const table = wrapper.querySelector('table'); if(!table) return;
+                    const tbody = table.querySelector('tbody') || table;
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    // If table has no data rows yet, still create an empty card placeholder
+                    if(rows.length === 0) {
+                        rows.push(document.createElement('tr'));
+                        rows[0].appendChild(document.createElement('td'));
+                        rows[0].children[0].textContent = '';
+                    }
+                    const list = document.createElement('div'); list.className='mobile-card-list';
+                    rows.forEach(row=>{
+                        if(row.children.length === 1 && row.children[0].hasAttribute('colspan')) return;
+                        const card = document.createElement('div'); card.className='mobile-card';
+                        Array.from(row.children).forEach((td, idx)=>{
+                            const th = table.querySelectorAll('thead th')[idx];
+                            const label = th ? th.textContent.trim() : td.getAttribute('data-label') || '';
+                            const value = td.textContent.trim();
+                            const item = document.createElement('div'); item.className='row-item';
+                            const l = document.createElement('div'); l.className='row-label'; l.textContent=label;
+                            const v = document.createElement('div'); v.className='row-value'; v.textContent=value;
+                            item.appendChild(l); item.appendChild(v); card.appendChild(item);
+                        });
+                        list.appendChild(card);
+                    });
+                    try{ table.parentElement.replaceChild(list, table); }catch(e){/* ignore */}
+                });
+            }
+            document.addEventListener('DOMContentLoaded', convertAll);
+            // Observe dynamic table population
+            new MutationObserver(()=> setTimeout(convertAll, 80)).observe(document.body, { childList:true, subtree:true });
+        })();
+    </script>
     <script src="squad-messenger.js"></script>
     <script src="dashboard-loaders.js"></script>
 

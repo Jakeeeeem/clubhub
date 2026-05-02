@@ -283,7 +283,13 @@ body.clubhub-unified {
         scroll-snap-align: center;
     }
 
-    /* Modern Table to Card Conversion */
+    /* Modern Table -> Mobile Card conversion
+       Prefer the JS-converted `.mobile-card-list` structure and
+       give it a premium, clean card look. Neutralize the outer
+       `.table-responsive` wrapper on mobile to avoid double
+       rounded/bordered nesting when tables are replaced. */
+
+    /* Keep a minimal fallback for plain tables (no JS conversion) */
     .table-responsive table, table.data-table, table.modern-table {
         display: block;
         width: 100%;
@@ -292,15 +298,49 @@ body.clubhub-unified {
 
     .table-responsive thead, table.data-table thead { display: none; }
 
-    .table-responsive tr, table.data-table tr {
-        display: block;
-        background: hsla(0, 0%, 100%, 0.02);
-        border: 1px solid var(--glass-border);
-        border-radius: var(--radius-lg);
-        padding: 1.25rem;
+    /* Neutralize outer wrapper so cards inside are the single visual unit */
+    .table-responsive {
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
         margin-bottom: 1rem;
+        overflow: visible;
     }
 
+    /* JS-converted structure: use these styles for clean, premium cards */
+    .mobile-card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .mobile-card {
+        background: linear-gradient(180deg, hsla(0,0%,100%,0.02), transparent);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: 1rem 1rem;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.28);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .mobile-card .row-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .mobile-card .row-item:last-child { border-bottom: none; }
+
+    .row-label { font-weight: 700; color: rgba(255,255,255,0.6); font-size: 0.8rem; }
+    .row-value { color: #fff; font-weight: 700; text-align: right; }
+
+    /* Fallback for tables not converted by JS: keep values readable */
     .table-responsive td, table.data-table td {
         display: flex !important;
         justify-content: space-between !important;
