@@ -104,7 +104,7 @@ const SquadMessenger = {
 
           <!-- Input Bar -->
           <div style="padding:0.85rem 1.25rem; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:0.65rem; align-items:flex-end; background:rgba(0,0,0,0.15);">
-            <textarea id="sq-input" placeholder="Type a message... (Ctrl+Enter to send)" rows="2"
+            <textarea id="sq-input" placeholder="Type a message... (Enter to send, Shift+Enter for newline)" rows="2"
               onkeydown="SquadMessenger.handleKey(event)"
               style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:white; padding:0.7rem 1rem; font-size:0.88rem; resize:none; font-family:inherit; line-height:1.5; outline:none;"></textarea>
             <button onclick="SquadMessenger.send()"
@@ -415,9 +415,9 @@ const SquadMessenger = {
       const name = `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.name || 'Unknown';
       const role = roleLabel[c._role] || '';
       return `
-        <label style="display:flex; align-items:center; gap:0.65rem; padding:0.5rem 0.4rem; cursor:pointer; border-radius:8px; transition:background 0.15s;"
+        <label for="sq-mass-recipient-${id}" style="display:flex; align-items:center; gap:0.65rem; padding:0.5rem 0.4rem; cursor:pointer; border-radius:8px; transition:background 0.15s;"
                onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-          <input type="checkbox" value="${id}" style="width:16px; height:16px; accent-color:var(--primary); flex-shrink:0;">
+          <input id="sq-mass-recipient-${id}" name="sq-mass-recipient" type="checkbox" value="${id}" style="width:16px; height:16px; accent-color:var(--primary); flex-shrink:0;">
           <span style="font-size:0.83rem; font-weight:600; flex:1;">${role} ${name}</span>
         </label>`;
     }).join('');
@@ -627,7 +627,10 @@ const SquadMessenger = {
   },
 
   handleKey(event) {
-    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+    // Send on Enter (unless Shift is held for newline). Respect IME composition.
+    if (event.key === 'Enter') {
+      if (event.isComposing) return; // allow IME to compose
+      if (event.shiftKey) return; // allow Shift+Enter to insert newline
       event.preventDefault();
       this.send();
     }
@@ -712,6 +715,10 @@ const SquadMessenger = {
     if (modal) modal.style.display = 'none';
   },
   showMassMessage() {
+    // Ensure contacts are loaded and recipient list is rendered before showing modal
+    try { await this._fetchContacts(); } catch (e) { /* ignore */ }
+    // Re-render recipients to ensure checkboxes exist
+    try { this._renderMassRecipients(); } catch (e) { /* ignore */ }
     const modal = document.getElementById('sq-mass-modal');
     if (modal) modal.style.display = 'flex';
   },

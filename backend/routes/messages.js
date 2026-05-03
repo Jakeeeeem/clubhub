@@ -127,6 +127,20 @@ router.post("/", authenticateToken, injectOrgContext, async (req, res) => {
 
     const newMessage = result.rows[0];
     
+    // Create an in-app notification for the recipient (no email)
+    try {
+      const notifTitle = `New message from ${req.user.first_name || 'Someone'}`;
+      const notifMessage = (content.length > 240) ? content.substring(0, 237) + '…' : content;
+      await query(
+        `INSERT INTO notifications (user_id, title, message, notification_type, action_url)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [receiverId, notifTitle, notifMessage, 'general', `/messages.html?with=${senderId}`]
+      );
+    } catch (notifErr) {
+      console.warn('Failed to create notification for message recipient:', notifErr);
+      // don't block message success on notification failure
+    }
+
     res.status(201).json({
       success: true,
       message: "Message sent",

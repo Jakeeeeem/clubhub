@@ -2674,8 +2674,9 @@ const UnifiedNav = {
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
 
-    // Explicit player path check
-    if (/player-|schedule|finances|shop|chat/.test(url)) return "player";
+    // Explicit player path check — only treat explicit player pages as player mode.
+    // Do NOT treat generic 'chat' or 'messenger' pages as player mode to avoid accidental context switches.
+    if (/player-|player-dashboard|player-dashboard.html/.test(url)) return "player";
 
     // Fallback to role-based default
     if (userRole === "player" || userRole === "parent") return "player";
