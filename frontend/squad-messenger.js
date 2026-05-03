@@ -158,6 +158,8 @@ const SquadMessenger = {
 
   /** Load all data and render the initial view */
   async load() {
+    // Ensure API context (current group/org) is populated so requests include org headers
+    try { await apiService.refreshContext(); } catch (e) { /* ignore */ }
     await Promise.all([
       this._fetchMessages(),
       this._fetchContacts(),
@@ -171,21 +173,41 @@ const SquadMessenger = {
       // Normalize message shape to expected keys used by the renderer
       this.state.allMessages = raw.map(m => {
         const created = m.created_at || m.createdAt || m.timestamp || m.time || m.date || null;
-        const senderName = m.sender_name || m.sender || m.senderName || ((m.senderId || m.sender_id) ? '' : '');
+        // Prefer numeric/id fields for sender/receiver; don't fall back to name strings
+        const senderId = (typeof m.sender_id !== 'undefined' && m.sender_id !== null) ? m.sender_id : (typeof m.senderId !== 'undefined' ? m.senderId : null);
+        const receiverId = (typeof m.receiver_id !== 'undefined' && m.receiver_id !== null) ? m.receiver_id : (typeof m.receiverId !== 'undefined' ? m.receiverId : null);
+        const senderName = m.sender_name || m.sender || m.senderName || '';
         const receiverName = m.receiver_name || m.receiver || m.receiverName || '';
-        const unreadFlag = typeof m.unread !== 'undefined' ? !!m.unread : (typeof m.is_read !== 'undefined' ? !m.is_read : !!m.read);
+        // Normalize read flag: prefer explicit `read` or `is_read`, then derive from `unread` if present
+        let readFlag = false;
+        if (typeof m.read !== 'undefined') readFlag = !!m.read;
+        else if (typeof m.is_read !== 'undefined') readFlag = !!m.is_read;
+        else if (typeof m.unread !== 'undefined') readFlag = !m.unread;
+        else readFlag = false;
+
         return {
           id: m.id || m.message_id || null,
-          sender_id: m.sender_id || m.senderId || m.senderId || m.sender || null,
-          receiver_id: m.receiver_id || m.receiverId || m.receiverId || m.receiver || null,
+          sender_id: senderId,
+          receiver_id: receiverId,
           sender_name: senderName,
           receiver_name: receiverName,
           content: m.content || m.body || m.message || '',
           created_at: created,
-          read: !unreadFlag,
+          read: readFlag,
           type: m.type || m.message_type || 'direct'
         };
       });
+      // Merge in any locally-stored optimistic messages so they survive reloads
+      try {
+        const stored = JSON.parse(localStorage.getItem('sq_local_messages') || '[]');
+        if (Array.isArray(stored) && stored.length) {
+          // append stored messages that don't already exist by a simple id/content check
+          stored.forEach(s => {
+            const exists = this.state.allMessages.some(m => (m.id && s.id && m.id == s.id) || (m.content == s.content && m.created_at == s.created_at));
+            if (!exists) this.state.allMessages.push(s);
+          });
+        }
+      } catch (e) {}
       this._renderConversations();
     } catch (err) {
       console.error('[SquadMessenger] Messages load error:', err);
@@ -251,6 +273,8 @@ const SquadMessenger = {
       // Deduplicate by id, remove self
       const myId = currentUser.id;
       const seen = new Set();
+      // Normalize contacts to stable shape before dedupe
+      contacts = contacts.map(c => this._normalizeContact(c));
       this.state.allContacts = contacts.filter(c => {
         const id = c.id || c.user_id;
         if (!id || id == myId || seen.has(id)) return false;
@@ -450,6 +474,7 @@ const SquadMessenger = {
     const area = document.getElementById('sq-messages');
     if (!area) return;
     const myId = SquadMessenger._currentUser().id;
+    console.log('[SquadMessenger] _renderThread', { userId, myId, totalMessages: (this.state.allMessages||[]).length });
 
     const thread = this.state.allMessages
       .filter(m => (
@@ -468,6 +493,7 @@ const SquadMessenger = {
       </div>`;
       return;
     }
+    console.log('[SquadMessenger] _renderThread rendering', { threadLength: thread.length });
 
     area.innerHTML = thread.map(msg => {
       const isMine = msg.sender_id == myId;
@@ -523,33 +549,56 @@ const SquadMessenger = {
       }
     }
 
+    // Optimistically render the message locally before network round-trip
+    const optimisticMsg = {
+      id: null,
+      sender_id: myId,
+      receiver_id: this.state.activeUserId,
+      sender_name: `${currentUser.firstName || currentUser.first_name || ''} ${currentUser.lastName || currentUser.last_name || ''}`.trim(),
+      receiver_name: this.state.activeName,
+      content: content,
+      created_at: new Date().toISOString(),
+      read: false,
+      type: 'direct',
+      __local: true
+    };
+    console.log('[SquadMessenger] send optimistic', { optimisticMsg });
+    this.state.allMessages.push(optimisticMsg);
+    // persist optimistic messages so they remain after reload
+    try {
+      const stored = JSON.parse(localStorage.getItem('sq_local_messages') || '[]');
+      stored.push(optimisticMsg);
+      localStorage.setItem('sq_local_messages', JSON.stringify(stored));
+    } catch (e) {}
+    input.value = '';
+    this._renderThread(this.state.activeUserId);
+    this._renderConversations();
+
     try {
       const result = await apiService.makeRequest('/messages', {
         method: 'POST',
         body: JSON.stringify({ receiverId: this.state.activeUserId, content }),
       });
-      input.value = '';
       const payload = (result && result.data) ? result.data : result || {};
-      const created = payload.created_at || payload.createdAt || payload.timestamp || new Date().toISOString();
-      const sentMsg = {
-        id: payload.id || payload.messageId || null,
-        sender_id: (typeof myId !== 'undefined' && myId !== null) ? myId : (payload.sender_id || payload.senderId || null),
-        receiver_id: payload.receiver_id || payload.receiverId || this.state.activeUserId,
-        sender_name: payload.sender_name || payload.sender || `${currentUser.firstName || currentUser.first_name || ''} ${currentUser.lastName || currentUser.last_name || ''}`.trim(),
-        receiver_name: payload.receiver_name || payload.receiver || this.state.activeName,
-        content: content || payload.content || payload.message,
-        created_at: created,
-        read: false,
-        type: payload.type || 'direct'
-      };
-      // mark as local so it appears immediately in the UI even if backend data hasn't caught up
-      sentMsg.__local = true;
-      this.state.allMessages.push(sentMsg);
+      // Update optimistic message with server-assigned id/timestamp if available
+      optimisticMsg.id = payload.id || payload.messageId || optimisticMsg.id;
+      optimisticMsg.created_at = payload.created_at || payload.createdAt || payload.timestamp || optimisticMsg.created_at;
+      optimisticMsg.__local = false;
       this._renderThread(this.state.activeUserId);
       this._renderConversations();
     } catch (err) {
       console.error('[SquadMessenger] Send error:', err);
+      optimisticMsg.__failed = true;
+      // keep failed message in local storage
+      try {
+        const stored = JSON.parse(localStorage.getItem('sq_local_messages') || '[]');
+        const idx = stored.findIndex(s => s.created_at === optimisticMsg.created_at && s.content === optimisticMsg.content);
+        if (idx === -1) stored.push(optimisticMsg); else stored[idx] = optimisticMsg;
+        localStorage.setItem('sq_local_messages', JSON.stringify(stored));
+      } catch (e) {}
       if (typeof showNotification === 'function') showNotification('Failed to send message', 'error');
+      this._renderThread(this.state.activeUserId);
+      this._renderConversations();
     }
   },
 
@@ -654,6 +703,23 @@ const SquadMessenger = {
   // ── HELPERS ──────────────────────────────────────────────────────────────
   _currentUser() {
     try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+  },
+
+  _normalizeContact(c) {
+    if (!c) return c;
+    const id = c.id || c.user_id || c.userId || c.memberId || null;
+    const name = (c.first_name || c.firstName || c.name || '').trim();
+    const [first_name, ...rest] = name ? name.split(' ') : [''];
+    const last_name = rest.join(' ');
+    const role = (c._role || c.role || c.userType || c.type || '').toString().toLowerCase();
+    return {
+      ...c,
+      id,
+      user_id: id,
+      first_name: first_name || (c.first_name || ''),
+      last_name: last_name || (c.last_name || ''),
+      _role: role || (c._role || ''),
+    };
   },
 
   stopPolling() {

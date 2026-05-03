@@ -1,6 +1,14 @@
 describe('Messenger — create new conversation', () => {
   it('allows composing a message without an active convo and sending after picking recipient', () => {
-    cy.visit('/coach-chat.html');
+    // Seed deterministic localStorage for test user/context before page load
+    cy.visit('/coach-chat.html', {
+      onBeforeLoad(win) {
+        try {
+          win.localStorage.setItem('isDemoSession', 'true');
+          win.localStorage.setItem('currentUser', JSON.stringify({ id: 'cypress-user-1', first_name: 'Cypress', last_name: 'User', account_type: 'player' }));
+        } catch (e) {}
+      }
+    });
 
     // Ensure messenger section is visible (JS-driven navigation)
     cy.window().then((win) => {

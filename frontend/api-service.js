@@ -135,6 +135,16 @@ if (typeof ApiService === 'undefined') {
           const role = (response.currentGroup.user_role || response.currentGroup.role || "").toLowerCase();
           localStorage.setItem("userType", ["admin", "organization", "owner", "staff"].includes(role) ? "organization" : "player");
       }
+      // Persist current group id for downstream callers and header injection
+      try {
+        const groupId = response.currentGroup?.id || response.currentGroup?.groupId || response.currentGroup?.organizationId || null;
+        if (groupId) {
+          localStorage.setItem('clubId', groupId);
+          localStorage.setItem('activeOrganizationId', groupId);
+        }
+      } catch (e) {
+        /* ignore */
+      }
     }
     return response;
   }
