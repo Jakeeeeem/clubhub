@@ -1075,8 +1075,18 @@ const UnifiedNav = {
 
     // Reset any dashboard-specific header classes so landing pages render cleanly.
     header.classList.remove("pro-header", "unified-header");
-    header.classList.add("header");
+    header.className = "header";
     header.style.width = "100%";
+    header.style.position = "relative";
+
+    document.body.classList.remove("dashboard-view", "app-layout", "sidebar-collapsed");
+    document.body.classList.add("landing-view");
+
+    const homeBottomNav = document.getElementById("homeBottomNav");
+    if (homeBottomNav) homeBottomNav.remove();
+
+    const bottomNav = document.querySelector('nav.pro-bottom-nav, nav.unified-bottom-nav');
+    if (bottomNav) bottomNav.remove();
 
     if (!isLoggedIn) {
       header.innerHTML = `
@@ -1124,7 +1134,7 @@ const UnifiedNav = {
   },
 
   logout() {
-    console.log("👋 UnifiedNav logging out...");
+    console.log("� UnifiedNav.logout called - starting logout process");
     if (typeof apiService !== "undefined" && apiService.logout) {
       apiService.logout().catch(error => {
         console.warn("⚠️ UnifiedNav API logout failed, continuing local cleanup:", error);
@@ -1154,6 +1164,7 @@ const UnifiedNav = {
       main.classList.remove("dashboard-main");
     }
 
+    console.log("✅ UnifiedNav logout completed - redirecting to home");
     window.location.href = "index.html";
   },
 
@@ -3534,4 +3545,29 @@ if (window.UNIFIED_NAV_ENABLED !== false && _unifiedNavShouldAutoInit) {
   }
 } else {
   console.log("⛔ UnifiedNav Auto-Init suppressed on non-dashboard page", { path: window.location.pathname, isLanding: _unifiedNavIsLanding, hasPattern: _unifiedNavHasPattern, explicit: window.UNIFIED_NAV_ENABLED });
+}
+
+// Always render landing header on index.html regardless of auto-init suppression
+if (_unifiedNavIsLanding) {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      const token = localStorage.getItem("authToken");
+      const userJson = localStorage.getItem("currentUser");
+      let user = null;
+      try {
+        if (userJson && userJson !== "undefined" && userJson !== "null") user = JSON.parse(userJson);
+      } catch (e) { }
+      const isLoggedIn = !!(token && user);
+      UnifiedNav.ensureLandingHeader(isLoggedIn, user);
+    });
+  } else {
+    const token = localStorage.getItem("authToken");
+    const userJson = localStorage.getItem("currentUser");
+    let user = null;
+    try {
+      if (userJson && userJson !== "undefined" && userJson !== "null") user = JSON.parse(userJson);
+    } catch (e) { }
+    const isLoggedIn = !!(token && user);
+    UnifiedNav.ensureLandingHeader(isLoggedIn, user);
+  }
 }

@@ -6,23 +6,17 @@ async function handleLogin(e) {
 
     const email = document.getElementById("loginEmail").value;
     const password = document.getElementById("loginPassword").value;
-    const demoMode = document.getElementById("demoMode")?.checked;
 
     if (!email || !password) {
       showNotification("Please fill in all fields", "error");
       return;
     }
 
-    if (demoMode) {
-      console.log("🛡️ DEMO BYPASS: Logging in via demo mode...");
-      localStorage.setItem("isDemoSession", "true");
-    } else {
-      localStorage.removeItem("isDemoSession");
-    }
-
     console.log("🔑 Attempting login for:", email);
 
-    const response = await apiService.login(email, password, demoMode);
+    // Normal login flow should never auto-enable demo mode from the landing page.
+    localStorage.removeItem("isDemoSession");
+    const response = await apiService.login(email, password);
 
     console.log("✅ Login successful:", response);
 
@@ -452,6 +446,7 @@ async function determineUserRedirect(user) {
 
 // Enhanced logout function
 async function handleLogout() {
+  console.log("🔐 handleLogout called - starting logout process");
   try {
     console.log("👋 Logging out user...");
 
@@ -478,7 +473,7 @@ async function handleLogout() {
       AppState.events = [];
     }
 
-    console.log("✅ Logout successful");
+    console.log("✅ Logout successful - redirecting to home");
     showNotification("Logged out successfully", "success");
 
     // Redirect to home page

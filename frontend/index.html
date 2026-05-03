@@ -26,23 +26,28 @@
     <link rel="stylesheet" href="design-system.css?v=20260429_v18">
     <link rel="stylesheet" href="unified-nav.css?v=20260429_v18">
     <script>
-        // CRITICAL: Force Service Worker Unregistration if stuck on old version
+        // CRITICAL: In local dev, always unregister service workers and clear caches so the latest frontend assets load.
         (function() {
-            const TARGET_SW_VERSION = '7.0.2';
-            const currentSwVersion = localStorage.getItem('CH_SW_VERSION');
-            if (currentSwVersion !== TARGET_SW_VERSION && 'serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(registrations => {
-                    for(let registration of registrations) {
-                        registration.unregister();
-                        console.log('🗑️ Unregistered old ServiceWorker');
+            const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            if (!isLocalhost || !('serviceWorker' in navigator)) return;
+
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    registration.unregister();
+                    console.log('🗑️ Unregistered local ServiceWorker');
+                }
+            }).catch((error) => {
+                console.warn('Failed to unregister ServiceWorker:', error);
+            });
+
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    for (let name of names) {
+                        caches.delete(name);
+                        console.log('🗑️ Cleared cache:', name);
                     }
-                    localStorage.setItem('CH_SW_VERSION', TARGET_SW_VERSION);
-                    // Clear caches too
-                    if ('caches' in window) {
-                        caches.keys().then(names => {
-                            for (let name of names) caches.delete(name);
-                        });
-                    }
+                }).catch((error) => {
+                    console.warn('Failed to clear caches:', error);
                 });
             }
         })();
@@ -50,8 +55,8 @@
     <link rel="stylesheet" href="landing-overrides.css?v=20260429_v18">
 </head>
 
-<body class="clubhub-unified">
-    <header class="header unified-header">
+<body class="clubhub-unified landing-view">
+    <header class="header">
         <nav class="nav container">
             <div class="logo">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image">
@@ -67,7 +72,7 @@
         </nav>
     </header>
 
-    <nav class="pro-bottom-nav mobile-only" id="homeBottomNav" style="display: none;">
+    <nav class="pro-bottom-nav mobile-only" id="homeBottomNav" style="display: none !important;">
         <div class="nav-container" id="pro-bottom-nav-content">
             <!-- Populated by UnifiedNav.renderBottomNav() -->
         </div>
@@ -561,27 +566,12 @@
                                 style="width: auto; margin: 0;">
                             Remember Me
                         </label>
-                        <label
-                            style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: var(--primary); font-weight: bold;">
-                            <input type="checkbox" id="demoMode" name="demoMode" value="yes" checked
-                                style="width: auto; margin: 0;">
-                            Demo Mode
-                        </label>
                         <a href="forgot-password.html"
                             style="color: var(--primary); font-size: 0.85rem; text-decoration: none;">Forgot
                             Password?</a>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Login</button>
-                
-                <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; text-align: center;">
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Quick Demo Access</p>
-                    <div style="display: flex; gap: 0.75rem;">
-                        <button type="button" class="btn btn-secondary btn-small" style="flex: 1; border-color: var(--primary); color: #fff;" onclick="quickDemoLogin('admin')">🛡️ Admin</button>
-                        <button type="button" class="btn btn-secondary btn-small" style="flex: 1; border-color: var(--primary); color: #fff;" onclick="quickDemoLogin('player')">👤 Player</button>
-                        <button type="button" class="btn btn-secondary btn-small" style="flex: 1; border-color: var(--primary); color: #fff;" onclick="quickDemoLogin('scout')">🔭 Scout</button>
-                    </div>
-                </div>
             </form>
         </div>
     </div>
@@ -616,18 +606,6 @@
 
     <script>
         // Simple functions that work with your enhanced login handler
-        function quickDemoLogin(role) {
-            const email = role === 'admin' ? 'demo-admin@clubhub.com' : (role === 'scout' ? 'demo-scout@clubhub.com' : 'demo-player@clubhub.com');
-            const password = 'password123';
-            
-            document.getElementById('loginEmail').value = email;
-            document.getElementById('loginPassword').value = password;
-            document.getElementById('demoMode').checked = true;
-            
-            // Trigger submit
-            document.getElementById('loginForm').dispatchEvent(new Event('submit'));
-        }
-
         function showSignupOptions() {
             if (typeof showModal === 'function') {
                 showModal('registerModal');
@@ -729,22 +707,7 @@
     </script>
 
     <!-- Load your existing handlers -->
-        <script>
-            // Auto-enable demo session on localhost to help local testing
-            try {
-                if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
-                    localStorage.setItem('isDemoSession', 'true');
-                    // Provide a lightweight demo auth token so app auth checks pass locally
-                    if (!localStorage.getItem('authToken')) {
-                        localStorage.setItem('authToken', 'demo-token');
-                    }
-                    if (!localStorage.getItem('currentUser')) {
-                        localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-user', first_name: 'Demo', last_name: 'User', role: 'player', groupId: 'demo-club-id' }));
-                    }
-                }
-            } catch (e) { console.warn('Demo auto-enable failed', e); }
-        </script>
-    <script src="app-state.js?v=20260429_v18"></script>
+        <script src="app-state.js?v=20260429_v18"></script>
     <script src="api-service.js?v=20260429_v18" onerror="console.log('API service not found')"></script>
     <script src="dialog-service.js?v=20260429_v18"></script>
     <script src="enhanced-login-handler.js?v=20260429_v18" onerror="console.log('Enhanced login handler not found')"></script>
