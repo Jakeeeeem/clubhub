@@ -356,8 +356,29 @@ if (typeof ApiService === 'undefined') {
       const response = await fetch(fullUrl, config);
       return await this._handleResponse(response, endpoint, options);
     } catch (error) {
+      // If the local frontend is served from a separate host/port and /api is not proxied,
+      // retry once against the backend host at localhost:3000.
+      const isLocalHost = this._isLocalDevOrigin();
+      const hasNotRetried = !options._backendFallbackTried;
+      if (isLocalHost && hasNotRetried && error && error.status === 404) {
+        const fallbackUrl = `http://localhost:3000/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+        if (fallbackUrl !== fullUrl) {
+          console.warn(`⚠️ Local API 404 on ${fullUrl}. Retrying against ${fallbackUrl}`);
+          try {
+            const fallbackResponse = await fetch(fallbackUrl, config);
+            return await this._handleResponse(fallbackResponse, endpoint, { ...options, _backendFallbackTried: true });
+          } catch (fallbackError) {
+            return this._handleError(fallbackError, requestId, endpoint, options);
+          }
+        }
+      }
       return this._handleError(error, requestId, endpoint, options);
     }
+  }
+
+  _isLocalDevOrigin() {
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
   }
 
   // Helper to handle all demo interceptions in one place
