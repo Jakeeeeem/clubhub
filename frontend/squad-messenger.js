@@ -714,7 +714,7 @@ const SquadMessenger = {
     const modal = document.getElementById('sq-new-modal');
     if (modal) modal.style.display = 'none';
   },
-  showMassMessage() {
+  async showMassMessage() {
     // Ensure contacts are loaded and recipient list is rendered before showing modal
     try { await this._fetchContacts(); } catch (e) { /* ignore */ }
     // Re-render recipients to ensure checkboxes exist

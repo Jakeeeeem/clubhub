@@ -229,6 +229,31 @@ svg { color: inherit; fill: currentColor; }
     .mobile-only { display: block !important; }
 }
 
+/*
+  Mobile: disable sticky/fixed menu behavior globally so menus scroll with page
+  (User requested no sticky menus on mobile). This overrides scattered
+  `position: fixed` / `position: sticky` rules for common nav/sidebar selectors.
+*/
+@media (max-width: 991px) {
+    header.header, .pro-header, .nav-container, .top-headline-tabs,
+    .pro-sidebar, .sidebar, .dashboard-layout-sidebar, .layout-with-sidebar,
+    .pro-bottom-nav, .side-menu-trigger, .side-menu, .sidebar-header {
+        position: static !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        z-index: auto !important;
+        transform: none !important;
+    }
+
+    /* Ensure any elements explicitly using sticky behave as normal flow */
+    .sticky, .is-sticky, [data-sticky] { position: static !important; top: auto !important; }
+
+    /* If sidebars were hidden by display rules, keep existing behavior but non-sticky */
+    .pro-sidebar:not(.active) { display: none !important; }
+}
+
 
 * {
     margin: 0;
