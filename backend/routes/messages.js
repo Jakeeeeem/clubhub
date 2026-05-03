@@ -15,19 +15,15 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
     const allowedTypes = ["all", "direct", "announcement", "team"];
     const type = allowedTypes.includes(req.query.type) ? req.query.type : "all";
 
-    if (!orgId) {
-      return res.status(403).json({ error: "Select an active group before viewing messages" });
-    }
+    const typeFilter = type === "all" ? "" : "AND m.type = $2";
+    let params, query_sql;
 
-    const typeFilter = type === "all" ? "" : "AND m.type = $3";
-    const params = type === "all" ? [userId, orgId] : [userId, orgId, type];
-
-    // Query to get the latest messages for the authenticated user within the active organization.
-    // Announcement messages are visible to all active group members.
-    const result = await query(
-      `SELECT m.*, 
-              u.first_name || ' ' || u.last_name as sender_name,
-              target.first_name || ' ' || target.last_name as receiver_name
+    if (orgId) {
+      // Query with org filter
+      params = type === "all" ? [userId, orgId] : [userId, orgId, type];
+      query_sql = `SELECT m.*, 
+              COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as sender_name,
+              COALESCE(target.first_name, '') || ' ' || COALESCE(target.last_name, '') as receiver_name
        FROM messages m
        LEFT JOIN users u ON m.sender_id = u.id
        LEFT JOIN users target ON m.receiver_id = target.id
@@ -38,19 +34,36 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
            OR m.receiver_id = $1
          )
          ${typeFilter}
-       ORDER BY m.created_at DESC`,
-      params
-    );
+       ORDER BY m.created_at DESC`;
+    } else {
+      // Query without org filter (for demo or unauthenticated contexts)
+      params = type === "all" ? [userId] : [userId, type];
+      query_sql = `SELECT m.*, 
+              COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as sender_name,
+              COALESCE(target.first_name, '') || ' ' || COALESCE(target.last_name, '') as receiver_name
+       FROM messages m
+       LEFT JOIN users u ON m.sender_id = u.id
+       LEFT JOIN users target ON m.receiver_id = target.id
+       WHERE (
+         m.sender_id = $1
+         OR m.receiver_id = $1
+       )
+         ${typeFilter}
+       ORDER BY m.created_at DESC`;
+    }
+
+    const result = await query(query_sql, params);
 
     // Map to the format expected by the frontend
     const messages = result.rows.map(m => ({
       id: m.id,
-      sender: m.sender_id === userId ? "You" : m.sender_name,
-      senderId: m.sender_id,
-      receiverId: m.receiver_id,
+      sender_id: m.sender_id,
+      sender_name: (m.sender_name || 'Unknown').trim(),
+      receiver_id: m.receiver_id,
+      receiver_name: (m.receiver_name || 'Unknown').trim(),
       content: m.content,
-      timestamp: m.created_at,
-      unread: !m.is_read && m.receiver_id === userId,
+      created_at: m.created_at,
+      read: m.is_read,
       type: m.type
     }));
 
@@ -60,6 +73,7 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch messages" });
   }
 });
+
 
 /**
  * POST /api/messages

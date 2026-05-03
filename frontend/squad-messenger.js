@@ -46,35 +46,35 @@ const SquadMessenger = {
         <div class="sq-left" style="background:rgba(8,8,10,0.92); border-right:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; min-height:0; height:100%;">
 
           <!-- Header -->
-          <div style="padding:0.85rem 1rem; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
-            <span class="sq-left-header-title" style="display:flex; align-items:center; gap:0.45rem; font-weight:700; font-size:0.95rem;">💬 Messages</span>
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
+          <div style="padding:0.5rem 0.75rem; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; gap:0.4rem;">
+            <span class="sq-left-header-title" style="display:flex; align-items:center; gap:0.45rem; font-weight:700; font-size:0.85rem;">💬 Messages</span>
+            <div style="display:flex; gap:0.3rem; flex-wrap:wrap; justify-content:flex-end;">
               ${isPlayer ? `
-                <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()">+ New</button>
+                <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()" style="padding:0.35rem 0.65rem; font-size:0.75rem;">+ New</button>
               ` : `
-                <button class="btn btn-secondary btn-small" onclick="SquadMessenger.showMassMessage()" title="Broadcast to group">📢 Broadcast</button>
-                <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()">+ New</button>
+                <button class="btn btn-secondary btn-small" onclick="SquadMessenger.showMassMessage()" title="Broadcast to group" style="padding:0.35rem 0.65rem; font-size:0.75rem;">📢 BC</button>
+                <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()" style="padding:0.35rem 0.65rem; font-size:0.75rem;">+ New</button>
               `}
             </div>
           </div>
 
           <!-- Search -->
-          <div style="padding:0.6rem 0.75rem;">
-            <input type="text" id="sq-search" placeholder="Search conversations..." oninput="SquadMessenger.filterConversations(this.value)"
-              style="width:100%; padding:0.45rem 0.75rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:white; font-size:0.82rem; box-sizing:border-box;">
+          <div style="padding:0.4rem 0.6rem;">
+            <input type="text" id="sq-search" placeholder="Search..." oninput="SquadMessenger.filterConversations(this.value)"
+              style="width:100%; padding:0.4rem 0.6rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:white; font-size:0.75rem; box-sizing:border-box;">
           </div>
 
           <!-- Tabs: Conversations | Contacts -->
-          <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.07);">
+          <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.07); gap:0;">
             <button id="sq-tab-convos" onclick="SquadMessenger.switchTab('convos')"
-              style="flex:1; padding:0.6rem; background:rgba(220,38,38,0.08); color:#f87171; border:none; border-bottom:2px solid var(--primary); font-size:0.8rem; font-weight:600; cursor:pointer;">Conversations</button>
+              style="flex:1; padding:0.45rem 0.4rem; background:rgba(220,38,38,0.08); color:#f87171; border:none; border-bottom:2px solid var(--primary); font-size:0.75rem; font-weight:600; cursor:pointer;">Convos</button>
             <button id="sq-tab-contacts" onclick="SquadMessenger.switchTab('contacts')"
-              style="flex:1; padding:0.6rem; background:transparent; color:rgba(255,255,255,0.4); border:none; border-bottom:2px solid transparent; font-size:0.8rem; font-weight:600; cursor:pointer;">Contacts</button>
+              style="flex:1; padding:0.45rem 0.4rem; background:transparent; color:rgba(255,255,255,0.4); border:none; border-bottom:2px solid transparent; font-size:0.75rem; font-weight:600; cursor:pointer;">Contacts</button>
           </div>
 
           <!-- Conversation List -->
-          <div id="sq-conversations" style="flex:1; overflow-y:auto; padding:0.4rem;">
-            <div style="text-align:center; padding:2rem; color:rgba(255,255,255,0.35); font-size:0.82rem;">Loading conversations...</div>
+          <div id="sq-conversations" style="flex:1; overflow-y:auto; padding:0.3rem 0.4rem;">
+            <div style="text-align:center; padding:1.5rem 0.5rem; color:rgba(255,255,255,0.35); font-size:0.75rem;">Loading conversations...</div>
           </div>
 
           <!-- Contacts List (hidden by default) -->
@@ -87,32 +87,32 @@ const SquadMessenger = {
         <div class="sq-right" style="display:flex; flex-direction:column; background:rgba(255,255,255,0.015); min-height:0; height:100%;">
 
           <!-- Chat Header -->
-          <div id="sq-chat-header" class="sq-chat-header" style="padding:1rem 1.25rem; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; gap:0.75rem; min-height:68px;">
-            <button id="sq-convo-toggle-btn" onclick="SquadMessenger.toggleMobileDrawer()" style="display:none; padding:0.55rem 0.9rem; border:none; border-radius:12px; background:rgba(255,255,255,0.08); color:white; font-size:0.82rem; cursor:pointer; white-space:nowrap;">Conversations</button>
-            <div id="sq-chat-avatar" style="width:38px; height:38px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.95rem; flex-shrink:0; opacity:0.3;">?</div>
+          <div id="sq-chat-header" class="sq-chat-header" style="padding:0.7rem 0.9rem; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; gap:0.6rem; min-height:auto;">
+            <button id="sq-convo-toggle-btn" onclick="SquadMessenger.toggleMobileDrawer()" style="display:none; padding:0.4rem 0.7rem; border:none; border-radius:8px; background:rgba(255,255,255,0.08); color:white; font-size:0.7rem; cursor:pointer; white-space:nowrap;">Conversations</button>
+            <div id="sq-chat-avatar" style="width:32px; height:32px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0; opacity:0.3;">?</div>
             <div style="flex:1; min-width:0;">
-              <div id="sq-chat-name" style="font-weight:700; font-size:0.95rem; color:rgba(255,255,255,0.4);">Select a conversation</div>
-              <div id="sq-chat-sub" style="font-size:0.73rem; color:rgba(255,255,255,0.3);">Choose someone from the panel on the left</div>
+              <div id="sq-chat-name" style="font-weight:700; font-size:0.85rem; color:rgba(255,255,255,0.4);">Select</div>
+              <div id="sq-chat-sub" style="font-size:0.65rem; color:rgba(255,255,255,0.3); display:none;">Choose from list</div>
             </div>
           </div>
 
           <!-- Messages Area -->
-          <div id="sq-messages" style="flex:1; overflow-y:auto; padding:1.25rem; display:flex; flex-direction:column; gap:0.65rem;">
+          <div id="sq-messages" style="flex:1; overflow-y:auto; padding:0.7rem 0.6rem; display:flex; flex-direction:column; gap:0.5rem;">
             <div style="text-align:center; margin:auto; opacity:0.25;">
-              <div style="font-size:3rem;">💬</div>
-              <p style="font-size:0.82rem; margin-top:0.5rem;">Select a conversation</p>
+              <div style="font-size:2.2rem;">💬</div>
+              <p style="font-size:0.75rem; margin-top:0.3rem;">Select</p>
             </div>
           </div>
 
           <!-- Input Bar -->
-          <div class="sq-input-bar" style="padding:0.85rem 1.25rem; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:0.65rem; align-items:flex-end; background:rgba(0,0,0,0.15); position:relative; z-index:2;">
-            <textarea id="sq-input" placeholder="Type a message... (Enter to send, Shift+Enter for newline)" rows="2"
+          <div class="sq-input-bar" style="padding:0.6rem 0.75rem; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:0.5rem; align-items:flex-end; background:rgba(0,0,0,0.15); position:relative; z-index:2;">
+            <textarea id="sq-input" placeholder="Message..." rows="2"
               onkeydown="SquadMessenger.handleKey(event)"
-              style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:14px; color:white; padding:0.85rem 1rem; font-size:0.9rem; resize:none; font-family:inherit; line-height:1.5; outline:none; min-height:48px;"></textarea>
+              style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:white; padding:0.6rem 0.8rem; font-size:0.8rem; resize:none; font-family:inherit; line-height:1.4; outline:none; min-height:40px;"></textarea>
             <button onclick="SquadMessenger.send()"
-              style="height:48px; width:48px; border-radius:14px; background:var(--primary); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:opacity 0.15s; box-shadow: 0 12px 28px rgba(220,38,38,0.28);"
+              style="height:40px; width:40px; border-radius:10px; background:var(--primary); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:opacity 0.15s; box-shadow: 0 12px 28px rgba(220,38,38,0.28);"
               onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
           </div>
         </div>
@@ -528,11 +528,11 @@ const SquadMessenger = {
       const senderInitial = (msg.sender_name || '?').charAt(0).toUpperCase();
       const bubbleMaxWidth = window.innerWidth <= 991 ? '90%' : '74%';
       return `
-        <div class="sq-message-row ${isMine ? 'sent' : 'received'}" style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'}; gap:0.65rem; align-items:flex-end;">
-          ${!isMine ? `<div class="sq-message-avatar" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;">${senderInitial}</div>` : ''}
-          <div class="sq-chat-bubble ${isMine ? 'sent' : 'received'}" style="width:auto; min-width:0; max-width:${bubbleMaxWidth}; padding:0.85rem 1rem; border-radius:${isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px'}; background:${isMine ? 'linear-gradient(135deg, rgba(216, 61, 61, 0.95), rgba(221, 73, 73, 0.95))' : 'rgba(255,255,255,0.08)'}; color:${isMine ? '#fff' : '#f4f4f8'}; font-size:0.92rem; line-height:1.5; white-space:pre-wrap; word-break:break-word;">
-            <div class="sq-chat-content" style="margin-bottom:0.45rem;">${msg.content}</div>
-            <div class="sq-chat-time" style="font-size:0.68rem; color:rgba(255,255,255,0.55); text-align:${isMine ? 'right' : 'left'};">${time}</div>
+        <div class="sq-message-row ${isMine ? 'sent' : 'received'}" style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'}; gap:0.4rem; align-items:flex-end;">
+          ${!isMine ? `<div class="sq-message-avatar" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;">${senderInitial}</div>` : ''}
+          <div class="sq-chat-bubble ${isMine ? 'sent' : 'received'}" style="width:auto; min-width:0; max-width:${bubbleMaxWidth}; padding:0.6rem 0.85rem; border-radius:${isMine ? '16px 16px 3px 16px' : '16px 16px 16px 3px'}; background:${isMine ? 'linear-gradient(135deg, rgba(216, 61, 61, 0.95), rgba(221, 73, 73, 0.95))' : 'rgba(255,255,255,0.08)'}; color:${isMine ? '#fff' : '#f4f4f8'}; font-size:0.8rem; line-height:1.4; white-space:pre-wrap; word-break:break-word;">
+            <div class="sq-chat-content" style="margin-bottom:0.35rem;">${msg.content}</div>
+            <div class="sq-chat-time" style="font-size:0.62rem; color:rgba(255,255,255,0.5); text-align:${isMine ? 'right' : 'left'};">${time}</div>
           </div>
         </div>`;
     }).join('');
@@ -878,7 +878,7 @@ const SquadMessenger = {
         }
       } else {
         root.classList.remove('sq-mobile');
-        root.style.gridTemplateColumns = 'minmax(280px,320px) 1fr';
+        root.style.gridTemplateColumns = 'minmax(260px,300px) 1fr';
         if (left) {
           left.style.display = 'flex';
           left.classList.remove('drawer-open');
