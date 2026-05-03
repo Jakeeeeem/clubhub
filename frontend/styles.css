@@ -204,6 +204,9 @@ svg { color: inherit; fill: currentColor; }
 
     /* Make main content stack and avoid wide columns */
     .dashboard-main, .main, main { padding-top: 80px !important; }
+    body.clubhub-unified.dashboard-page .dashboard-main,
+    body.clubhub-unified.dashboard-page .main,
+    body.clubhub-unified.dashboard-page main { padding-top: 10px !important; }
     .container { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
 
     /* Buttons become full-width in key action groups */
@@ -244,6 +247,19 @@ svg { color: inherit; fill: currentColor; }
         min-height: 0 !important;
         height: 100% !important;
     }
+    .sq-messenger.sq-mobile {
+        height: auto !important;
+        min-height: auto !important;
+    }
+    .sq-messenger.sq-mobile .sq-left,
+    .sq-messenger.sq-mobile .sq-right {
+        height: auto !important;
+        min-height: 0 !important;
+    }
+    .sq-messenger.sq-mobile .sq-right {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
     .sq-messenger .sq-left > div,
     .sq-messenger .sq-right > div {
         padding-left: 0.75rem !important;
@@ -259,8 +275,10 @@ svg { color: inherit; fill: currentColor; }
     .sq-message-row {
         width: 100% !important;
         display: flex !important;
+        flex-wrap: wrap !important;
     }
     .sq-chat-bubble {
+        width: auto !important;
         word-break: break-word !important;
         white-space: pre-wrap !important;
         box-shadow: 0 12px 30px rgba(0,0,0,0.18) !important;
@@ -270,13 +288,71 @@ svg { color: inherit; fill: currentColor; }
     .sq-chat-bubble.sent {
         background: linear-gradient(135deg, rgba(216,61,61,0.96), rgba(221,73,73,0.96)) !important;
         color: #fff !important;
+        margin-left: auto !important;
+        max-width: 80% !important;
     }
     .sq-chat-bubble.received {
         background: rgba(255,255,255,0.08) !important;
         color: #f4f4f8 !important;
+        max-width: 80% !important;
     }
     .sq-message-row:hover .sq-chat-bubble {
         transform: translateY(-1px);
+    }
+    .sq-messenger.sq-mobile .sq-chat-bubble {
+        width: auto !important;
+        max-width: min(76%, calc(100% - 2rem)) !important;
+        padding: 0.85rem 0.95rem !important;
+        border-radius: 18px !important;
+    }
+    .sq-messenger.sq-mobile .sq-chat-bubble.sent,
+    .sq-messenger.sq-mobile .sq-chat-bubble.received {
+        max-width: min(76%, calc(100% - 2rem)) !important;
+    }
+    .sq-messenger.sq-mobile .sq-message-row {
+        justify-content: flex-start !important;
+        gap: 0.55rem !important;
+    }
+    .sq-messenger.sq-mobile .sq-message-row.sent {
+        justify-content: flex-end !important;
+    }
+    .sq-messenger.sq-mobile .sq-message-row.received .sq-chat-avatar {
+        margin-right: 0.5rem !important;
+    }
+    .sq-messenger.sq-mobile .sq-chat-header {
+        padding: 0.75rem 0.95rem !important;
+        gap: 0.5rem !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+    .sq-messenger.sq-mobile .sq-chat-header > div,
+    .sq-messenger.sq-mobile .sq-chat-header > button {
+        flex-shrink: 0 !important;
+        min-width: 0 !important;
+    }
+    .sq-messenger.sq-mobile #sq-chat-name {
+        font-size: 1rem !important;
+        color: #fff !important;
+        line-height: 1.2 !important;
+    }
+    .sq-messenger.sq-mobile #sq-chat-sub {
+        font-size: 0.75rem !important;
+        color: rgba(255,255,255,0.68) !important;
+        white-space: normal !important;
+    }
+    .sq-messenger.sq-mobile #sq-chat-avatar {
+        width: 34px !important;
+        height: 34px !important;
+    }
+    .sq-messenger.sq-mobile #sq-convo-toggle-btn {
+        padding: 0.55rem 0.95rem !important;
+        border-radius: 999px !important;
+        font-size: 0.82rem !important;
+        white-space: nowrap !important;
+    }
+    .sq-messenger.sq-mobile .sq-input-bar {
+        padding: 0.85rem 0.95rem !important;
     }
     .sq-chat-header {
         position: sticky !important;

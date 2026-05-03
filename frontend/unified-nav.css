@@ -660,11 +660,13 @@
     .pro-header, header.header { height: 52px !important; padding: 0 0.6rem !important; }
     .side-menu-trigger { width:40px !important; height:40px !important; border-radius:10px !important; }
 
-    /* When the mobile sidebar/menu is open, make the header non-fixed so the sidebar content
-       (switchers, groups, and other controls) can be part of the scrollable area rather
-       than being pushed below a sticky header that consumes vertical space. */
+    /* When the mobile sidebar/menu is open, hide the top header so the sidebar feels fullscreen.
+       This also allows sidebar contents and switchers to scroll naturally in a full-height panel. */
     body.sidebar-open .pro-header,
     body.sidebar-open header.header {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
         position: static !important;
         z-index: 0 !important;
         box-shadow: none !important;
@@ -677,13 +679,16 @@
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         padding-top: 0 !important; /* allow header-like content to sit at top of sidebar */
+        max-height: 100vh !important;
     }
 
     /* Ensure switchers and large header widgets are visible inside the sidebar when it opens */
     .pro-sidebar .header-family-switcher-wrapper,
     .pro-sidebar .header-org-switcher-wrapper,
     .pro-sidebar .group-switcher,
-    .pro-sidebar .sidebar-header {
+    .pro-sidebar .sidebar-header,
+    .pro-sidebar #sidebar-switcher-target,
+    .pro-sidebar #sidebar-family-switcher-container {
         display: block !important;
     }
 }

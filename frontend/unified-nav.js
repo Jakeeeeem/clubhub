@@ -1267,7 +1267,7 @@ const UnifiedNav = {
 
       // Build inner HTML for aside
       const asideInner = `
-                <!-- Slim header: logo + close + switchers -->
+                <!-- Slim header: logo + close -->
                 <div class="sidebar-header" style="padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 0.85rem; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;">
                         <div style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;" onclick="window.location.href='index.html'">
@@ -1278,8 +1278,13 @@ const UnifiedNav = {
                         <button onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">&times;</button>
                         ` : ''}
                     </div>
+                </div>
+
+                <!-- Single scrollable area: nav + logout -->
+                <div class="sidebar-scroll-area" style="flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch;">
+
                     ${window.innerWidth < 992 ? `
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
                         <div class="mode-pills" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.08);">
                             <button onclick="UnifiedNav.switchMode('group')" class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'group' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'group' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Groups Hub</button>
                             <button onclick="UnifiedNav.switchMode('player')" class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'player' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'player' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Player Pro</button>
@@ -1290,10 +1295,6 @@ const UnifiedNav = {
                         </div>
                     </div>
                     ` : ''}
-                </div>
-
-                <!-- Single scrollable area: nav + logout -->
-                <div class="sidebar-scroll-area" style="flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch;">
 
                     <!-- Nav Links -->
                     <div id="sidebar-nav-content" class="sidebar-nav" style="padding: 0.5rem; flex: 1;">

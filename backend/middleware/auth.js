@@ -134,7 +134,7 @@ async function injectOrgContext(req, res, next) {
 
   // 🛡️ UUID Validation to prevent postgres crashes on mock strings
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const isBypass = req.headers.authorization?.includes("demo-token-");
+  const isBypass = !!req.headers.authorization?.match(/demo-token/i);
 
   if (orgId && !uuidRegex.test(orgId)) {
       if (isBypass) {

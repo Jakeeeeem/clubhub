@@ -189,9 +189,9 @@ if (typeof ApiService === 'undefined') {
 
     console.log("🔍 Detecting environment:", { hostname });
 
-    // Local development
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:3000/api";
+    // Local development: use same origin for local dev hosts so frontend-server proxies work
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") {
+      return `${window.location.origin}/api`;
     }
 
     // Production — .io domain (primary live domain, but API is on .net)
@@ -501,12 +501,9 @@ if (typeof ApiService === 'undefined') {
 
     // --- MESSAGING & NOTIFICATIONS ---
     if (endpoint.includes("/messages")) {
-      if (method === "GET") {
-        return this.getAdminDashboardFallback().messages || [];
-      }
-      if (method === "POST" || method === "PATCH") {
-        return { success: true, message: "Demo action successful" };
-      }
+      // Always allow real message API calls to reach backend so messages
+      // are persisted in the database instead of being kept in demo cache.
+      return null;
     }
 
     if (endpoint.includes("/notifications")) {
