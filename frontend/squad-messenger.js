@@ -702,7 +702,27 @@ const SquadMessenger = {
 
   // ── HELPERS ──────────────────────────────────────────────────────────────
   _currentUser() {
-    try { return JSON.parse(localStorage.getItem('currentUser') || '{}'); } catch (e) { return {}; }
+    try {
+      const raw = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      // Normalize shape
+      const user = {
+        id: raw.id || raw.user_id || raw.userId || null,
+        firstName: raw.first_name || raw.firstName || raw.firstName || raw.firstName || raw.first || '',
+        lastName: raw.last_name || raw.lastName || raw.lastName || raw.last || '',
+        account_type: raw.account_type || raw.accountType || raw.userType || raw.role || null,
+        userType: raw.userType || raw.account_type || raw.accountType || raw.role || null,
+        email: raw.email || raw.user_email || null,
+      };
+      // If user appears to be admin by account_type, do not treat activePlayerId as role switch
+      const activePlayerId = localStorage.getItem('activePlayerId');
+      if (activePlayerId && (user.account_type && ['organization', 'admin', 'owner'].includes(user.account_type))) {
+        // preserve admin account type
+        return user;
+      }
+      // If no explicit role, but activePlayerId exists, expose it
+      if (!user.account_type && activePlayerId) user.account_type = 'player';
+      return user;
+    } catch (e) { return {}; }
   },
 
   _normalizeContact(c) {

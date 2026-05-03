@@ -84,7 +84,14 @@ if (typeof ApiService === 'undefined') {
 
       // In demo mode, we should simulate the role change based on the group the user is switching to.
       // If the user has activePlayerId, they are definitely a player in this context.
-      const role = user.activePlayerId ? "player" : user.role || "admin";
+      // Determine role: prefer explicit user.role or account_type. Only treat as player
+      // if there's an activePlayerId and the user's account_type/role do not indicate an organization/admin.
+      let role = user.role || (user.account_type || user.accountType);
+      if (!role) {
+        role = user.activePlayerId ? 'player' : 'admin';
+      } else {
+        role = role.toString().toLowerCase();
+      }
 
       const demoClubs = this.getAdminDashboardFallback().groups;
       const mockFamily = [

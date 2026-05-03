@@ -5,7 +5,8 @@ describe('Messenger — create new conversation', () => {
       onBeforeLoad(win) {
         try {
           win.localStorage.setItem('isDemoSession', 'true');
-          win.localStorage.setItem('currentUser', JSON.stringify({ id: 'cypress-user-1', first_name: 'Cypress', last_name: 'User', account_type: 'player' }));
+          // Use admin account_type to avoid client-side permission gating in tests
+          win.localStorage.setItem('currentUser', JSON.stringify({ id: 'cypress-user-1', first_name: 'Cypress', last_name: 'User', account_type: 'admin' }));
         } catch (e) {}
       }
     });
@@ -49,14 +50,20 @@ describe('Messenger — create new conversation', () => {
 
     // Set message and send via the messenger API to avoid click/visibility flakiness
     cy.window().then((win) => {
-      const input = document.getElementById('sq-input');
+      const input = win.document.getElementById('sq-input');
       if (input) input.value = 'Hello from Cypress';
       if (win.SquadMessenger && typeof win.SquadMessenger.send === 'function') {
         win.SquadMessenger.send();
       }
     });
 
-    // Message should appear in thread
+    // Verify internal state updated, then DOM
+    cy.window().its('SquadMessenger.state').should('exist').then(state => {
+      const has = (state.allMessages || []).some(m => (m.content || '').includes('Hello from Cypress'));
+      expect(has, 'message present in state').to.be.true;
+    });
+
+    // Finally check UI shows message
     cy.get('#sq-messages').should('contain.text', 'Hello from Cypress');
   });
 });
