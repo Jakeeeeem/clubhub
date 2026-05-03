@@ -64,6 +64,10 @@
         }
         .stat-val { font-size: 1.2rem; font-weight: 800; color: #fff; display: block; }
         .stat-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+
+        #adminTournamentListContainer {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+        }
         
         /* Bracket Admin Styles */
         .bracket-admin-tools {
@@ -75,6 +79,64 @@
             border-radius: 12px;
             border: 1px dashed rgba(255,255,255,0.1);
         }
+
+        @media (max-width: 991px) {
+            .admin-comp-header {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 1rem !important;
+            }
+            .admin-comp-actions {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.75rem !important;
+            }
+            .admin-comp-actions button {
+                width: 100% !important;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+            }
+            #adminTournamentListContainer {
+                grid-template-columns: repeat(1, 1fr) !important;
+                gap: 1rem !important;
+            }
+            .bracket-admin-tools {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.75rem !important;
+            }
+            .bracket-admin-tools span {
+                margin-left: 0 !important;
+            }
+            .bracket-tree-container {
+                padding: 1rem !important;
+                min-height: 320px !important;
+            }
+            .tab-btn {
+                min-width: 100px !important;
+                width: auto !important;
+            }
+            .tab-btn + .tab-btn {
+                margin-top: 0.5rem !important;
+            }
+            .comp-card {
+                padding: 1.25rem !important;
+            }
+            .dashboard-container {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            .admin-comp-header h1 {
+                font-size: clamp(2.4rem, 5vw, 3rem) !important;
+            }
+            .admin-badge {
+                width: fit-content !important;
+            }
+            .dashboard-main {
+                padding-top: 130px !important;
+            }
+        }
     </style>
 </head>
 <body class="clubhub-unified dashboard-page admin-theme">
@@ -85,7 +147,7 @@
         <div class="container dashboard-container">
             
             <div id="admin-comp-list" class="dashboard-section active">
-                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2rem;">
+                <div class="admin-comp-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2rem;">
                     <div>
                         <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
                             <h1 class="neon-text" style="margin:0;">Competition Management</h1>
@@ -93,7 +155,7 @@
                         </div>
                         <p style="color:var(--text-muted); margin:0;">Create and manage league structures, knockout brackets, and tournament rules.</p>
                     </div>
-                    <div style="display:flex; gap:1rem;">
+                    <div class="admin-comp-actions" style="display:flex; gap:1rem;">
                         <button class="btn btn-secondary" onclick="openModal('setupLeagueModal')">Setup League</button>
                         <button class="btn btn-primary" onclick="openModal('createTournamentModal')">+ New Tournament</button>
                     </div>

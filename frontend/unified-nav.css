@@ -558,15 +558,18 @@
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
-        width: 100% !important;
+        right: 0 !important;
+        width: 100vw !important;
+        min-width: 100vw !important;
+        box-sizing: border-box !important;
         height: 56px !important;
-        padding: 0 0.85rem !important;
+        padding: 0 0.75rem !important;
         display: flex !important;
         align-items: center !important;
         background: linear-gradient(90deg, rgba(12,12,14,0.98), rgba(22,22,24,0.96)) !important;
         border-bottom: 1px solid rgba(255,255,255,0.04) !important;
         box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important;
-        z-index: 5000 !important;
+        z-index: 10000 !important;
         backdrop-filter: blur(10px) !important;
     }
 
@@ -580,6 +583,11 @@
         max-width: none !important;
         padding: 0 !important;
         gap: 0.5rem !important;
+    }
+
+    .main.dashboard-main,
+    .main {
+        padding-top: 130px !important;
     }
 
     .logo-area-wrapper.mobile-only { display: flex !important; align-items: center !important; gap: 0.5rem !important; }
@@ -1078,6 +1086,8 @@ header.header .nav-container,
     z-index: 10001;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     box-shadow: 20px 0 60px rgba(0, 0, 0, 0.8);
     transform: translateX(-105%);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1120,6 +1130,8 @@ header.header .nav-container,
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s !important;
         z-index: 10001 !important; /* Fixed: MUST be > 10000 for overlay */
         visibility: hidden;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
     
     .pro-sidebar.active {
@@ -1153,21 +1165,27 @@ header.header .nav-container,
 
 /* --- Nav Menu in Sidebar --- */
 .sidebar-nav {
-    flex: 1;
-    overflow-y: auto;
+    flex: 1 1 auto;
+    overflow-y: visible;
     padding: 0 1.5rem;
     scrollbar-width: none; /* Hide scrollbar Firefox */
     list-style: none !important;
+}
+
+.pro-sidebar .sidebar-header,
+.pro-sidebar .header-family-switcher-wrapper,
+.pro-sidebar .header-org-switcher-wrapper,
+.pro-sidebar .group-switcher,
+.pro-sidebar #sidebar-switcher-target,
+.pro-sidebar #sidebar-family-switcher-container {
+    position: relative !important;
+    top: auto !important;
 }
 
 .sidebar-nav ul, .sidebar-nav li {
     list-style: none !important;
     padding: 0;
     margin: 0;
-}
-
-.sidebar-nav::-webkit-scrollbar {
-    display: none; /* Hide scrollbar Chrome/Safari */
 }
 
 .nav-group-title {
@@ -1851,7 +1869,7 @@ table td:last-child,
     }
 
     .main, .dashboard-main {
-        padding-top: 80px !important;
+        padding-top: 120px !important;
         padding-bottom: 100px !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -2550,8 +2568,7 @@ body.clubhub-unified .logo { display: flex; align-items: center; gap: 0.5rem; }
 }
 
 .main, .dashboard-main {
-    padding-top: calc(var(--nav-height) + 18px) !important;
-}
+        padding-top: 96px !important;
 
 body.has-top-tabs .main, 
 body.has-top-tabs .dashboard-main {

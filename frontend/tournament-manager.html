@@ -223,6 +223,47 @@
             gap: 1rem;
             margin: 2rem 0;
         }
+
+        @media (max-width: 991px) {
+            .bracket {
+                gap: 1rem;
+                padding: 1rem;
+                min-height: auto;
+            }
+            .bracket-round {
+                min-width: 220px;
+            }
+            .bracket-match-wrapper::after,
+            .bracket-match-wrapper:nth-child(even)::before,
+            .bracket-round:not(:first-child) .bracket-match-wrapper .bracket-match::before,
+            .bracket-round:not(:last-child) .bracket-match-wrapper:nth-child(odd)::after {
+                display: none !important;
+            }
+            .round-header {
+                position: relative;
+                top: 0;
+                width: auto;
+                margin-bottom: 0.75rem;
+                text-align: left;
+            }
+            .bracket-team {
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 0.5rem;
+            }
+            .bracket-team span {
+                max-width: 100%;
+            }
+            .team-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .dashboard-container {
+                padding: 1rem;
+            }
+            main {
+                padding-top: 120px;
+            }
+        }
     </style>
 </head>
 
