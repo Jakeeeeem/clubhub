@@ -218,11 +218,13 @@ svg { color: inherit; fill: currentColor; }
     .sq-messenger {
         width: 100% !important;
         max-width: 100% !important;
-        min-height: calc(100vh - 140px) !important;
+        min-height: auto !important;
         height: auto !important;
         grid-template-columns: 1fr !important;
         gap: 0 !important;
         margin: 0 !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
     }
     .sq-messenger .sq-left,
     .sq-messenger .sq-right {
@@ -239,11 +241,71 @@ svg { color: inherit; fill: currentColor; }
     .sq-messenger .sq-right {
         padding: 0 !important;
         margin: 0 !important;
+        min-height: 0 !important;
+        height: 100% !important;
     }
     .sq-messenger .sq-left > div,
     .sq-messenger .sq-right > div {
         padding-left: 0.75rem !important;
         padding-right: 0.75rem !important;
+    }
+    .sq-messenger #sq-messages {
+        min-height: 0 !important;
+    }
+    .sq-conv-item, .sq-contact-item {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .sq-message-row {
+        width: 100% !important;
+        display: flex !important;
+    }
+    .sq-chat-bubble {
+        word-break: break-word !important;
+        white-space: pre-wrap !important;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.18) !important;
+        border: 1px solid rgba(255,255,255,0.06) !important;
+        transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .sq-chat-bubble.sent {
+        background: linear-gradient(135deg, rgba(216,61,61,0.96), rgba(221,73,73,0.96)) !important;
+        color: #fff !important;
+    }
+    .sq-chat-bubble.received {
+        background: rgba(255,255,255,0.08) !important;
+        color: #f4f4f8 !important;
+    }
+    .sq-message-row:hover .sq-chat-bubble {
+        transform: translateY(-1px);
+    }
+    .sq-chat-header {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 3 !important;
+        background: rgba(10,10,12,0.92) !important;
+        backdrop-filter: blur(14px) !important;
+    }
+    .sq-input-bar {
+        position: sticky !important;
+        bottom: 0 !important;
+        z-index: 4 !important;
+        background: rgba(10,10,12,0.98) !important;
+        backdrop-filter: blur(20px) !important;
+    }
+    .sq-message-avatar {
+        min-width: 32px !important;
+        min-height: 32px !important;
+        border-radius: 50% !important;
+        background: rgba(255,255,255,0.08) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 700 !important;
+        color: #fff !important;
+    }
+    .sq-back-btn {
+        font-size: 1rem !important;
+        color: rgba(255,255,255,0.8) !important;
     }
 
     /* Bottom nav stickiness and spacing */

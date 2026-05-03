@@ -11,7 +11,7 @@ const router = express.Router();
 router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
   try {
     const userId = req.user.id;
-    const orgId = req.user.organization_id;
+    const orgId = req.orgContext?.organization_id || req.user.organization_id || req.user.currentOrganizationId || req.user.currentGroupId || req.user.clubId || req.user.groupId;
     const allowedTypes = ["all", "direct", "announcement", "team"];
     const type = allowedTypes.includes(req.query.type) ? req.query.type : "all";
 
@@ -69,7 +69,7 @@ router.post("/", authenticateToken, injectOrgContext, async (req, res) => {
   try {
     const { receiverId, content: rawContent, type = "direct" } = req.body;
     const senderId = req.user.id;
-    const orgId = req.user.organization_id;
+    const orgId = req.orgContext?.organization_id || req.user.organization_id || req.user.currentOrganizationId || req.user.currentGroupId || req.user.clubId || req.user.groupId;
     const content = (rawContent || "").trim();
     const validTypes = ["direct", "announcement", "team"];
     const messageType = validTypes.includes(type) ? type : "direct";

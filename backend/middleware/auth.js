@@ -130,27 +130,26 @@ async function injectOrgContext(req, res, next) {
     const userId = req.user.id;
     // Check for an organization header, otherwise look up the user's current preference
     const orgHeader = req.headers["x-organization-id"] || req.headers["x-club-id"];
-    let orgId = orgHeader;
+  let orgId = orgHeader || req.user.organization_id || req.user.currentOrganizationId || req.user.currentGroupId || req.user.clubId || req.user.groupId;
 
-    // 🛡️ UUID Validation to prevent postgres crashes on mock strings
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    const isBypass = req.headers.authorization?.includes("demo-token-");
+  // 🛡️ UUID Validation to prevent postgres crashes on mock strings
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const isBypass = req.headers.authorization?.includes("demo-token-");
 
-    if (orgId && !uuidRegex.test(orgId)) {
-        if (isBypass) {
-            orgId = 'd359a5fb-0787-4dde-9631-d30a9d8e827f'; // Elite Pro Academy fallback
-        } else {
-            orgId = null;
-        }
-    }
+  if (orgId && !uuidRegex.test(orgId)) {
+      if (isBypass) {
+          orgId = 'd359a5fb-0787-4dde-9631-d30a9d8e827f'; // Elite Pro Academy fallback
+      } else {
+          orgId = null;
+      }
+  }
 
-    if (!orgId) {
-      const prefs = await pool.query(
-        "SELECT current_organization_id FROM user_preferences WHERE user_id = $1",
-        [userId],
-      );
-      orgId = prefs.rows[0]?.current_organization_id;
-    }
+  if (!orgId) {
+    const prefs = await pool.query(
+      "SELECT current_organization_id FROM user_preferences WHERE user_id = $1",
+      [userId],
+    );
+    orgId = prefs.rows[0]?.current_organization_id || req.user.organization_id;
 
     if (!orgId) {
       req.orgContext = null;

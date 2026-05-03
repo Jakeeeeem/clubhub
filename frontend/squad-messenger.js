@@ -23,6 +23,7 @@ const SquadMessenger = {
     allContacts: [],
     pollingTimer: null,
     containerId: null,
+    drawerOpen: false,
   },
 
   /**
@@ -39,13 +40,13 @@ const SquadMessenger = {
     const isPlayer = role === 'player';
 
     container.innerHTML = `
-      <div class="sq-messenger" style="display:grid; grid-template-columns:300px 1fr; gap:0; height:calc(100vh - 180px); border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.07);">
+      <div class="sq-messenger" style="position:relative; display:grid; grid-template-columns:minmax(280px,320px) 1fr; gap:0; height:100%; min-height:0; overflow:hidden; border-radius:16px; background:rgba(10,10,12,0.94); border:1px solid rgba(255,255,255,0.08);">
 
         <!-- LEFT: Contacts / Conversation List -->
-        <div class="sq-left" style="background:rgba(0,0,0,0.3); border-right:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column;">
+        <div class="sq-left" style="background:rgba(8,8,10,0.92); border-right:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; min-height:0; height:100%;">
 
           <!-- Header -->
-          <div style="padding:1rem 1.25rem; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
+          <div style="padding:0.85rem 1rem; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
             <span style="font-weight:700; font-size:0.95rem;">💬 Messages</span>
             <div style="display:flex; gap:0.5rem;">
               ${isPlayer ? `
@@ -83,12 +84,13 @@ const SquadMessenger = {
         </div>
 
         <!-- RIGHT: Chat Window -->
-        <div class="sq-right" style="display:flex; flex-direction:column; background:rgba(255,255,255,0.015);">
+        <div class="sq-right" style="display:flex; flex-direction:column; background:rgba(255,255,255,0.015); min-height:0; height:100%;">
 
           <!-- Chat Header -->
-          <div id="sq-chat-header" style="padding:1rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; gap:1rem; min-height:68px;">
+          <div id="sq-chat-header" class="sq-chat-header" style="padding:1rem 1.25rem; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; gap:0.75rem; min-height:68px;">
+            <button id="sq-convo-toggle-btn" onclick="SquadMessenger.toggleMobileDrawer()" style="display:none; padding:0.55rem 0.9rem; border:none; border-radius:12px; background:rgba(255,255,255,0.08); color:white; font-size:0.82rem; cursor:pointer; white-space:nowrap;">Conversations</button>
             <div id="sq-chat-avatar" style="width:38px; height:38px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.95rem; flex-shrink:0; opacity:0.3;">?</div>
-            <div style="flex:1;">
+            <div style="flex:1; min-width:0;">
               <div id="sq-chat-name" style="font-weight:700; font-size:0.95rem; color:rgba(255,255,255,0.4);">Select a conversation</div>
               <div id="sq-chat-sub" style="font-size:0.73rem; color:rgba(255,255,255,0.3);">Choose someone from the panel on the left</div>
             </div>
@@ -103,17 +105,18 @@ const SquadMessenger = {
           </div>
 
           <!-- Input Bar -->
-          <div style="padding:0.85rem 1.25rem; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:0.65rem; align-items:flex-end; background:rgba(0,0,0,0.15);">
+          <div class="sq-input-bar" style="padding:0.85rem 1.25rem; border-top:1px solid rgba(255,255,255,0.07); display:flex; gap:0.65rem; align-items:flex-end; background:rgba(0,0,0,0.15); position:relative; z-index:2;">
             <textarea id="sq-input" placeholder="Type a message... (Enter to send, Shift+Enter for newline)" rows="2"
               onkeydown="SquadMessenger.handleKey(event)"
-              style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:white; padding:0.7rem 1rem; font-size:0.88rem; resize:none; font-family:inherit; line-height:1.5; outline:none;"></textarea>
+              style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:14px; color:white; padding:0.85rem 1rem; font-size:0.9rem; resize:none; font-family:inherit; line-height:1.5; outline:none; min-height:48px;"></textarea>
             <button onclick="SquadMessenger.send()"
-              style="height:46px; width:46px; border-radius:12px; background:var(--primary); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:opacity 0.15s;"
+              style="height:48px; width:48px; border-radius:14px; background:var(--primary); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:opacity 0.15s; box-shadow: 0 12px 28px rgba(220,38,38,0.28);"
               onmouseover="this.style.opacity=0.85" onmouseout="this.style.opacity=1">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
           </div>
         </div>
+        <div class="sq-drawer-overlay" onclick="SquadMessenger.closeMobileDrawer()" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.3); z-index:45; opacity:0; transition:opacity 0.2s ease; pointer-events:none;"></div>
       </div>
 
       <!-- New Message Modal -->
@@ -333,17 +336,16 @@ const SquadMessenger = {
     return `
       <div class="sq-conv-item" data-userid="${c.otherId}" data-name="${c.otherName.replace(/"/g,'&quot;')}"
         onclick="SquadMessenger.openConversation('${c.otherId}', '${c.otherName.replace(/'/g,"\\'")}', this)"
-        style="display:flex; align-items:center; gap:0.65rem; padding:0.65rem 0.75rem; border-radius:10px; cursor:pointer; margin-bottom:2px; transition:background 0.15s;
-               background:${isActive ? 'rgba(220,38,38,0.15)' : 'transparent'}; border:1px solid ${isActive ? 'rgba(220,38,38,0.3)' : 'transparent'};">
-        <div style="width:34px; height:34px; border-radius:50%; background:${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.82rem; flex-shrink:0;">${initial}</div>
+        style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 0.85rem; border-radius:14px; cursor:pointer; margin-bottom:0.35rem; transition:background 0.18s ease, transform 0.18s ease; background:${isActive ? 'rgba(220,38,38,0.16)' : 'rgba(255,255,255,0.01)'}; border:1px solid ${isActive ? 'rgba(220,38,38,0.28)' : 'rgba(255,255,255,0.04)'};">
+        <div style="width:38px; height:38px; border-radius:50%; background:${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.08)'}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; flex-shrink:0;">${initial}</div>
         <div style="flex:1; min-width:0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
-            <span style="font-weight:${unread > 0 ? 700 : 500}; font-size:0.855rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px;">${c.otherName}</span>
-            <span style="font-size:0.65rem; color:rgba(255,255,255,0.3); flex-shrink:0;">${time}</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+            <span style="font-weight:${unread > 0 ? 700 : 600}; font-size:0.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;">${c.otherName}</span>
+            <span style="font-size:0.68rem; color:rgba(255,255,255,0.35); flex-shrink:0;">${time}</span>
           </div>
-          <div style="font-size:0.73rem; color:rgba(255,255,255,0.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${preview || 'No messages yet'}</div>
+          <div style="font-size:0.75rem; color:rgba(255,255,255,0.45); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${preview || 'No messages yet'}</div>
         </div>
-        ${unread > 0 ? `<div style="width:18px;height:18px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:800;flex-shrink:0;">${unread}</div>` : ''}
+        ${unread > 0 ? `<div style="width:20px;height:20px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:0.66rem;font-weight:800;flex-shrink:0;">${unread}</div>` : ''}
       </div>`;
   },
 
@@ -364,15 +366,15 @@ const SquadMessenger = {
       const init = name.charAt(0).toUpperCase();
       const role = roleLabel[c._role] || c._role || '';
       return `
-        <div onclick="${clickFn}('${id}', '${name.replace(/'/g,"\\'")}', null)"
-             style="display:flex; align-items:center; gap:0.65rem; padding:0.6rem 0.75rem; border-radius:10px; cursor:pointer; transition:background 0.15s; margin-bottom:2px;"
-             onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
-          <div style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; flex-shrink:0;">${init}</div>
+        <div class="sq-contact-item" onclick="${clickFn}('${id}', '${name.replace(/'/g,"\\'")}', null)"
+             style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 0.85rem; border-radius:14px; cursor:pointer; transition:background 0.18s ease; margin-bottom:0.35rem; background:rgba(255,255,255,0.01); border:1px solid rgba(255,255,255,0.04);"
+             onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.01)'">
+          <div style="width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; flex-shrink:0;">${init}</div>
           <div style="flex:1; min-width:0;">
-            <div style="font-size:0.85rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div>
-            <div style="font-size:0.7rem; color:rgba(255,255,255,0.35);">${role}</div>
+            <div style="font-size:0.88rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div>
+            <div style="font-size:0.73rem; color:rgba(255,255,255,0.42);">${role}</div>
           </div>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         </div>`;
     }).join('');
   },
@@ -437,6 +439,7 @@ const SquadMessenger = {
       if (contact) resolvedName = (contact.first_name || contact.firstName || contact.name || `${contact.firstName || contact.first_name || ''} ${contact.lastName || contact.last_name || ''}`).trim();
     }
     this.state.activeName = resolvedName || name || '';
+    if (window.innerWidth <= 991) this.state.drawerOpen = false;
 
     // Update chat header
     const avatar = document.getElementById('sq-chat-avatar');
@@ -522,13 +525,13 @@ const SquadMessenger = {
     area.innerHTML = thread.map(msg => {
       const isMine = msg.sender_id == myId;
       const time   = new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const senderInitial = (msg.sender_name || '?').charAt(0).toUpperCase();
       return `
-        <div style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'}; align-items:flex-end; gap:0.5rem;">
-          ${!isMine ? `<div style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.66rem;font-weight:700;flex-shrink:0;">${(msg.sender_name||'?').charAt(0)}</div>` : ''}
-          <div style="max-width:68%; padding:0.6rem 0.95rem; border-radius:${isMine ? '14px 14px 3px 14px' : '14px 14px 14px 3px'};
-                      background:${isMine ? 'var(--primary)' : 'rgba(255,255,255,0.07)'}; color:white; font-size:0.875rem; line-height:1.5;">
-            <div>${msg.content}</div>
-            <div style="font-size:0.62rem; color:rgba(255,255,255,0.45); margin-top:3px; text-align:right;">${time}</div>
+        <div class="sq-message-row ${isMine ? 'sent' : 'received'}" style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'}; gap:0.65rem; align-items:flex-end;">
+          ${!isMine ? `<div class="sq-message-avatar" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;">${senderInitial}</div>` : ''}
+          <div class="sq-chat-bubble ${isMine ? 'sent' : 'received'}" style="max-width:74%; padding:0.85rem 1rem; border-radius:${isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px'}; background:${isMine ? 'linear-gradient(135deg, rgba(216, 61, 61, 0.95), rgba(221, 73, 73, 0.95))' : 'rgba(255,255,255,0.08)'}; color:${isMine ? '#fff' : '#f4f4f8'}; font-size:0.92rem; line-height:1.5; white-space:pre-wrap; word-break:break-word;">
+            <div class="sq-chat-content" style="margin-bottom:0.45rem;">${msg.content}</div>
+            <div class="sq-chat-time" style="font-size:0.68rem; color:rgba(255,255,255,0.55); text-align:${isMine ? 'right' : 'left'};">${time}</div>
           </div>
         </div>`;
     }).join('');
@@ -777,7 +780,23 @@ const SquadMessenger = {
     // Close active thread on mobile and show conversations list
     this.state.activeUserId = null;
     this.state.activeName = null;
+    this.state.drawerOpen = false;
     this._renderConversations();
+    this._applyMobileView();
+  },
+
+  toggleMobileDrawer() {
+    this.state.drawerOpen = !this.state.drawerOpen;
+    this._applyMobileView();
+  },
+
+  openMobileDrawer() {
+    this.state.drawerOpen = true;
+    this._applyMobileView();
+  },
+
+  closeMobileDrawer() {
+    this.state.drawerOpen = false;
     this._applyMobileView();
   },
 
@@ -797,17 +816,63 @@ const SquadMessenger = {
       const isMobile = window.innerWidth <= 991;
       if (isMobile) {
         root.classList.add('sq-mobile');
+        const overlay = root.querySelector('.sq-drawer-overlay');
+        const drawerButton = root.querySelector('#sq-convo-toggle-btn');
+        if (drawerButton) drawerButton.style.display = this.state.activeUserId ? 'inline-flex' : 'none';
+        if (right) {
+          right.style.position = 'relative';
+          right.style.zIndex = '1';
+        }
+        if (left) {
+          left.style.position = 'absolute';
+          left.style.top = '0';
+          left.style.left = '0';
+          left.style.width = 'min(320px, 92vw)';
+          left.style.maxWidth = '320px';
+          left.style.height = '100%';
+          left.style.zIndex = '50';
+          left.style.boxShadow = '18px 0 48px rgba(0,0,0,0.45)';
+          left.style.background = 'rgba(8,8,10,0.95)';
+        }
+
         if (this.state.activeUserId) {
-          if (left) left.style.display = 'none';
           if (right) right.style.display = 'flex';
+          if (left) {
+            left.style.display = this.state.drawerOpen ? 'flex' : 'none';
+            left.classList.toggle('drawer-open', this.state.drawerOpen);
+          }
+          if (overlay) {
+            overlay.style.display = this.state.drawerOpen ? 'block' : 'none';
+            overlay.style.pointerEvents = this.state.drawerOpen ? 'auto' : 'none';
+            overlay.style.opacity = this.state.drawerOpen ? '1' : '0';
+          }
         } else {
-          if (left) left.style.display = 'flex';
+          if (left) {
+            left.style.display = 'flex';
+            left.classList.add('drawer-open');
+          }
           if (right) right.style.display = 'none';
+          if (overlay) {
+            overlay.style.display = 'none';
+            overlay.style.pointerEvents = 'none';
+            overlay.style.opacity = '0';
+          }
         }
       } else {
         root.classList.remove('sq-mobile');
-        if (left) left.style.display = 'flex';
+        if (left) {
+          left.style.display = 'flex';
+          left.classList.remove('drawer-open');
+        }
         if (right) right.style.display = 'flex';
+        const overlay = root.querySelector('.sq-drawer-overlay');
+        if (overlay) {
+          overlay.style.display = 'none';
+          overlay.style.pointerEvents = 'none';
+          overlay.style.opacity = '0';
+        }
+        const drawerButton = root.querySelector('#sq-convo-toggle-btn');
+        if (drawerButton) drawerButton.style.display = 'none';
       }
       // Ensure input visibility
       const input = root.querySelector('#sq-input');
