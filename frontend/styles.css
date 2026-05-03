@@ -215,6 +215,37 @@ svg { color: inherit; fill: currentColor; }
     /* Cards become full-width stacked with larger spacing */
     .card, .card-elite, .event-card, .testimonial-card { width: 100% !important; margin-bottom: 1rem !important; padding: 1rem !important; }
 
+    .sq-messenger {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: calc(100vh - 140px) !important;
+        height: auto !important;
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+        margin: 0 !important;
+    }
+    .sq-messenger .sq-left,
+    .sq-messenger .sq-right {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        border-radius: 0 !important;
+    }
+    .sq-messenger .sq-left {
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    }
+    .sq-messenger .sq-left,
+    .sq-messenger .sq-right {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .sq-messenger .sq-left > div,
+    .sq-messenger .sq-right > div {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
     /* Bottom nav stickiness and spacing */
     .pro-bottom-nav { height: 56px !important; padding-bottom: 6px !important; }
     body:not(.no-bottom-spacing) { padding-bottom: 72px !important; }

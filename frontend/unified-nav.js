@@ -1267,35 +1267,33 @@ const UnifiedNav = {
 
       // Build inner HTML for aside
       const asideInner = `
-                <!-- Slim sticky header: logo + close only -->
-                <div class="sidebar-header" style="padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
-                    <div style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;" onclick="window.location.href='index.html'">
-                        <img src="images/logo.png" alt="ClubHub" style="height: 24px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.3));" onerror="this.style.display='none'">
-                        <span class="logo-text" style="font-weight: 800; font-size: 1.05rem; color: white; letter-spacing: -0.4px;">ClubHub</span>
+                <!-- Slim header: logo + close + switchers -->
+                <div class="sidebar-header" style="padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 0.85rem; flex-shrink: 0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;" onclick="window.location.href='index.html'">
+                            <img src="images/logo.png" alt="ClubHub" style="height: 24px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.3));" onerror="this.style.display='none'">
+                            <span class="logo-text" style="font-weight: 800; font-size: 1.05rem; color: white; letter-spacing: -0.4px;">ClubHub</span>
+                        </div>
+                        ${window.innerWidth < 992 ? `
+                        <button onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">&times;</button>
+                        ` : ''}
                     </div>
                     ${window.innerWidth < 992 ? `
-                    <button onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">&times;</button>
-                    ` : ''}
-                </div>
-
-                <!-- Single scrollable area: switchers + nav + logout -->
-                <div class="sidebar-scroll-area" style="flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch;">
-
-                    ${window.innerWidth < 992 ? `
-                    <!-- Mode Switcher Pills -->
-                    <div style="padding: 1rem 1.25rem 0.5rem;">
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <div class="mode-pills" style="display: flex; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 100px; border: 1px solid rgba(255,255,255,0.08);">
                             <button onclick="UnifiedNav.switchMode('group')" class="mode-pill ${this.getCurrentMode() === 'group' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'group' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'group' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Groups Hub</button>
                             <button onclick="UnifiedNav.switchMode('player')" class="mode-pill ${this.getCurrentMode() === 'player' ? 'active' : ''}" style="flex: 1; border: none; background: ${this.getCurrentMode() === 'player' ? '#fff' : 'transparent'}; color: ${this.getCurrentMode() === 'player' ? '#000' : '#fff'}; font-size: 0.65rem; font-weight: 800; padding: 8px; border-radius: 100px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;">Player Pro</button>
                         </div>
-                    </div>
-
-                    <!-- Group & Family Switchers -->
-                    <div style="padding: 0.5rem 1.25rem;">
-                        <div id="sidebar-switcher-target" style="width: 100%;"></div>
-                        <div id="sidebar-family-switcher-container" class="mobile-only" style="width: 100%;"></div>
+                        <div style="display: grid; gap: 0.75rem;">
+                            <div id="sidebar-switcher-target" style="width: 100%;"></div>
+                            <div id="sidebar-family-switcher-container" class="mobile-only" style="width: 100%;"></div>
+                        </div>
                     </div>
                     ` : ''}
+                </div>
+
+                <!-- Single scrollable area: nav + logout -->
+                <div class="sidebar-scroll-area" style="flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch;">
 
                     <!-- Nav Links -->
                     <div id="sidebar-nav-content" class="sidebar-nav" style="padding: 0.5rem; flex: 1;">
@@ -1623,23 +1621,24 @@ const UnifiedNav = {
     if (isMobile) {
         // Strict Mobile Layout
         header.innerHTML = `
-            <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 100%; position: relative;">
-                <div class="header-left" style="width: 50px; display: flex; align-items: center;">
-                    <button class="back-button" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.1);">
+            <div class="nav-container header-content-unified" style="display:flex; align-items:center; justify-content:space-between; width:100%; height:100%; position:relative; gap:0.75rem;">
+                <div class="header-section section-left" style="display:flex; align-items:center; gap:0.5rem;">
+                    <button class="back-button" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.12);">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                     </button>
-                </div>
-                
-                <div class="header-center" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; cursor: pointer; gap: 0.5rem;" onclick="window.location.href='index.html'">
-                    <img src="images/logo.png" alt="ClubHub" style="height: 26px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.4));" onerror="this.style.display='none'">
-                    <span style="font-weight: 800; font-size: 1.05rem; color: white; letter-spacing: -0.4px;">ClubHub</span>
+                    <div id="backend-header-button-container" style="display:flex; align-items:center; gap:0.4rem;"></div>
                 </div>
 
-                <div class="header-right" style="display: flex; align-items: center; gap: 0.75rem;">
-                  <div id="notif-header-btn-container-mobile" style="display:flex;"></div>
-                  <div class="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(220, 38, 38, 0.15); border-radius: 12px; border: 1px solid rgba(220, 38, 38, 0.25); cursor: pointer; color: white;">
+                <div class="header-section section-center" onclick="window.location.href='index.html'" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; gap:0.45rem; cursor:pointer; pointer-events:auto; min-width:0; max-width:calc(100% - 160px);">
+                    <img src="images/logo.png" alt="ClubHub" style="height:24px; filter:drop-shadow(0 0 6px rgba(220,67,67,0.35));" onerror="this.style.display='none'">
+                    <span style="font-weight:800; font-size:1rem; color:white; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; display:inline-block;">ClubHub</span>
+                </div>
+
+                <div class="header-section section-right" style="display:flex; align-items:center; gap:0.65rem;">
+                  <div id="notif-header-btn-container-mobile" style="display:flex; align-items:center;"></div>
+                  <button class="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:rgba(220,38,38,0.12); border-radius:12px; border:1px solid rgba(220,38,38,0.22); cursor:pointer; color:white;">
                     ${ICONS.menu}
-                  </div>
+                  </button>
                 </div>
             </div>
         `;
