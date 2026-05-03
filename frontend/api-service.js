@@ -10,10 +10,11 @@ if (typeof ApiService === 'undefined') {
     // Persistence of demo mode: always read from localStorage
     this.isDemo = localStorage.getItem("isDemoSession") === "true";
     
-    // Signal to other scripts that unified nav is active (Dashboard pages only)
+    // Signal to other scripts that unified nav is active for dashboard-style pages only.
     const path = location.pathname.toLowerCase();
     const isLanding = path.includes('index.html') || path.endsWith('/') || path === '';
-    if (!isLanding) {
+    const dashboardMarker = /dashboard|members|teams|events|finances|shop|schedule|scout|finder|booking|messenger|chat/;
+    if (!isLanding && dashboardMarker.test(path)) {
         window.UNIFIED_NAV_ENABLED = true;
     }
     
@@ -294,10 +295,7 @@ if (typeof ApiService === 'undefined') {
   async makeRequest(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const requestId = `${options.method || "GET"}_${endpoint}`;
-
-    if (!this.retryCount[requestId]) {
-      this.retryCount[requestId] = 0;
-    }
+    let fullUrl = null;
 
     const headers = {
       "Content-Type": "application/json",
@@ -347,7 +345,7 @@ if (typeof ApiService === 'undefined') {
       }
 
       const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-      const fullUrl = this.baseURL.endsWith('/api') && cleanEndpoint.startsWith('/api')
+      fullUrl = this.baseURL.endsWith('/api') && cleanEndpoint.startsWith('/api')
         ? `${this.baseURL.replace(/\/api$/, '')}${cleanEndpoint}`
         : `${this.baseURL}${cleanEndpoint}`;
       
@@ -363,7 +361,7 @@ if (typeof ApiService === 'undefined') {
       if (isLocalHost && hasNotRetried && error && error.status === 404) {
         const fallbackUrl = `http://localhost:3000/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
         if (fallbackUrl !== fullUrl) {
-          console.warn(`⚠️ Local API 404 on ${fullUrl}. Retrying against ${fallbackUrl}`);
+          console.warn(`⚠️ Local API 404 on ${fullUrl || 'unknown url'}. Retrying against ${fallbackUrl}`);
           try {
             const fallbackResponse = await fetch(fallbackUrl, config);
             return await this._handleResponse(fallbackResponse, endpoint, { ...options, _backendFallbackTried: true });

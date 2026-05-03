@@ -40,15 +40,15 @@ const SquadMessenger = {
     const isPlayer = role === 'player';
 
     container.innerHTML = `
-      <div class="sq-messenger" style="position:relative; display:grid; grid-template-columns:minmax(280px,320px) 1fr; gap:0; height:100%; min-height:0; overflow:hidden; border-radius:16px; background:rgba(10,10,12,0.94); border:1px solid rgba(255,255,255,0.08);">
+      <div class="sq-messenger" style="width:100%; min-width:0; position:relative; display:grid; grid-template-columns:minmax(280px,320px) 1fr; gap:0; height:100%; min-height:0; overflow:hidden; border-radius:16px; background:rgba(10,10,12,0.94); border:1px solid rgba(255,255,255,0.08);">
 
         <!-- LEFT: Contacts / Conversation List -->
         <div class="sq-left" style="background:rgba(8,8,10,0.92); border-right:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; min-height:0; height:100%;">
 
           <!-- Header -->
           <div style="padding:0.85rem 1rem; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
-            <span style="font-weight:700; font-size:0.95rem;">💬 Messages</span>
-            <div style="display:flex; gap:0.5rem;">
+            <span class="sq-left-header-title" style="display:flex; align-items:center; gap:0.45rem; font-weight:700; font-size:0.95rem;">💬 Messages</span>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end;">
               ${isPlayer ? `
                 <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()">+ New</button>
               ` : `
@@ -526,10 +526,11 @@ const SquadMessenger = {
       const isMine = msg.sender_id == myId;
       const time   = new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
       const senderInitial = (msg.sender_name || '?').charAt(0).toUpperCase();
+      const bubbleMaxWidth = window.innerWidth <= 991 ? '90%' : '74%';
       return `
         <div class="sq-message-row ${isMine ? 'sent' : 'received'}" style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'}; gap:0.65rem; align-items:flex-end;">
           ${!isMine ? `<div class="sq-message-avatar" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;">${senderInitial}</div>` : ''}
-          <div class="sq-chat-bubble ${isMine ? 'sent' : 'received'}" style="width:auto; min-width:0; max-width:74%; padding:0.85rem 1rem; border-radius:${isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px'}; background:${isMine ? 'linear-gradient(135deg, rgba(216, 61, 61, 0.95), rgba(221, 73, 73, 0.95))' : 'rgba(255,255,255,0.08)'}; color:${isMine ? '#fff' : '#f4f4f8'}; font-size:0.92rem; line-height:1.5; white-space:pre-wrap; word-break:break-word;">
+          <div class="sq-chat-bubble ${isMine ? 'sent' : 'received'}" style="width:auto; min-width:0; max-width:${bubbleMaxWidth}; padding:0.85rem 1rem; border-radius:${isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px'}; background:${isMine ? 'linear-gradient(135deg, rgba(216, 61, 61, 0.95), rgba(221, 73, 73, 0.95))' : 'rgba(255,255,255,0.08)'}; color:${isMine ? '#fff' : '#f4f4f8'}; font-size:0.92rem; line-height:1.5; white-space:pre-wrap; word-break:break-word;">
             <div class="sq-chat-content" style="margin-bottom:0.45rem;">${msg.content}</div>
             <div class="sq-chat-time" style="font-size:0.68rem; color:rgba(255,255,255,0.55); text-align:${isMine ? 'right' : 'left'};">${time}</div>
           </div>
@@ -816,10 +817,14 @@ const SquadMessenger = {
       const isMobile = window.innerWidth <= 991;
       if (isMobile) {
         root.classList.add('sq-mobile');
+        root.style.width = '100%';
+        root.style.minWidth = '0';
         root.style.gridTemplateColumns = '1fr';
         root.style.height = 'auto';
         const overlay = root.querySelector('.sq-drawer-overlay');
         const drawerButton = root.querySelector('#sq-convo-toggle-btn');
+        const title = root.querySelector('.sq-left-header-title');
+        if (title) title.style.display = 'none';
         if (drawerButton) drawerButton.style.display = this.state.activeUserId ? 'inline-flex' : 'none';
         if (right) {
           right.style.position = 'relative';
@@ -835,8 +840,8 @@ const SquadMessenger = {
           left.style.zIndex = '50';
           if (this.state.activeUserId) {
             left.style.position = 'absolute';
-            left.style.width = 'min(320px, 92vw)';
-            left.style.maxWidth = '320px';
+            left.style.width = '100%';
+            left.style.maxWidth = '100%';
             left.style.boxShadow = '18px 0 48px rgba(0,0,0,0.45)';
             left.style.background = 'rgba(8,8,10,0.95)';
           } else {

@@ -322,7 +322,7 @@ const UnifiedNav = {
 
     const isLoggedIn = !!(token && user);
     const isDashboardPath = /dashboard|members|teams|events|finances|shop|schedule|scout|finder|finder-/.test(path) || /finder/.test(fullUrl);
-    const isLanding = (fileName === "index.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html") && !fullUrl.includes('#');
+    const isLanding = (fileName === "index.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html");
 
     if (isDashboardPath && !isLoggedIn && !isDemo) {
       console.warn("🔒 Unauthorized access to dashboard. Redirecting...");
@@ -340,7 +340,7 @@ const UnifiedNav = {
     const isLandingPage = isLanding;
 
     // isDashboard should only be true if it matches dashboard patterns AND is NOT the landing page
-    const isDashboard = !isLandingPage && (hasDashboardPattern || hasDashboardClass || hasDashboardMarker || window.UNIFIED_NAV_ENABLED === true || isLoggedIn);
+    const isDashboard = !isLandingPage && (hasDashboardPattern || hasDashboardClass || hasDashboardMarker || window.UNIFIED_NAV_ENABLED === true);
 
     console.log("📍 UnifiedNav Detection:", {
       isDesktop,
@@ -388,7 +388,7 @@ const UnifiedNav = {
     try {
       if (!isDesktop) {
         console.log("📱 Mobile View");
-        if (isDashboard || (isLoggedIn && !isLandingPage)) {
+        if (isDashboard) {
           if (!isLoggedIn && localStorage.getItem("isDemoSession") !== "true") {
             console.warn("🔒 Unauthenticated mobile dashboard access. Redirecting to home...");
             window.location.href = "index.html";
@@ -404,6 +404,8 @@ const UnifiedNav = {
         } else if (isLandingPage) {
           this.renderHeader(); // Unified simple header for landing too
           this.toggleSidebar(false);
+        } else {
+          this.renderHeader();
         }
       } else {
         console.log("💻 Desktop View");
