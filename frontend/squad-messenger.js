@@ -149,6 +149,11 @@ const SquadMessenger = {
         </div>
       </div>
     `;
+    // Initialize queued message storage
+    this._queuedMessage = null;
+
+    // Auto-load data so the messenger is ready immediately after mount
+    setTimeout(() => { this.load().catch(() => {}); }, 16);
   },
 
   /** Load all data and render the initial view */
@@ -333,8 +338,17 @@ const SquadMessenger = {
   },
 
   _pickContact(id, name) {
+    // Close modal and set active conversation
     SquadMessenger.closeNewMessageModal();
     SquadMessenger.openConversation(id, name, null);
+    // If a message was queued (typed before picking recipient), send it now
+    if (this._queuedMessage) {
+      const input = document.getElementById('sq-input');
+      if (input) { input.value = this._queuedMessage; }
+      this._queuedMessage = null;
+      // Small delay to let UI render
+      setTimeout(() => SquadMessenger.send(), 50);
+    }
     // Switch back to conversations tab
     SquadMessenger.switchTab('convos');
   },
@@ -442,8 +456,12 @@ const SquadMessenger = {
     const input   = document.getElementById('sq-input');
     const content = input?.value?.trim();
     if (!content) return;
+    // If no conversation selected, open the New Message modal and queue the message
     if (!this.state.activeUserId) {
-      if (typeof showNotification === 'function') showNotification('Select a conversation first', 'info');
+      // store queued message so it will be sent after recipient picked
+      this._queuedMessage = content;
+      if (typeof showNotification === 'function') showNotification('Choose a recipient to send this message', 'info');
+      this.openNewMessageModal();
       return;
     }
 
@@ -598,6 +616,29 @@ const SquadMessenger = {
 
   stopPolling() {
     clearInterval(this.state.pollingTimer);
+  },
+
+  /**
+   * Create a new conversation by sending an initial message to the first participant.
+   * This is a convenience wrapper around the messages API so callers can treat
+   * conversations as an atomic create + open operation.
+   * @param {Array<string>} participants - array of user ids
+   * @param {string} initialMessage - initial message text
+   */
+  async createConversation(participants = [], initialMessage = '') {
+    if (!Array.isArray(participants) || !participants.length) throw new Error('participants required');
+    const receiverId = participants[0];
+    const payload = { receiverId, content: initialMessage };
+    try {
+      const res = await apiService.sendMessage(payload);
+      // If successful, refresh messages and open thread
+      await this._fetchMessages();
+      this.openConversation(receiverId, null, null);
+      return res;
+    } catch (err) {
+      console.error('[SquadMessenger] createConversation error', err);
+      throw err;
+    }
   },
 };
 
