@@ -152,6 +152,11 @@ const SquadMessenger = {
     // Initialize queued message storage
     this._queuedMessage = null;
 
+    // Mobile responsiveness: wire up the shared mobile-view handler
+    try {
+      window.addEventListener('resize', this._applyMobileView.bind(this));
+      setTimeout(() => this._applyMobileView(), 50);
+    } catch (e) { /* ignore */ }
     // Auto-load data so the messenger is ready immediately after mount
     setTimeout(() => { this.load().catch(() => {}); }, 16);
   },
@@ -441,6 +446,23 @@ const SquadMessenger = {
     if (chatName) { chatName.textContent = (this.state.activeName || ''); chatName.style.color = this.state.activeName ? 'white' : 'rgba(255,255,255,0.4)'; }
     if (chatSub)  chatSub.textContent = `Active in squad — msgs:${(this.state.allMessages||[]).length} activeUser:${this.state.activeUserId || ''}`;
 
+    // Mobile: add a back button to return to conversations list
+    try {
+      const header = document.getElementById('sq-chat-header');
+      if (header) {
+        let back = header.querySelector('.sq-back-btn');
+        if (!back) {
+          back = document.createElement('button');
+          back.className = 'sq-back-btn';
+          back.style.cssText = 'margin-right:8px;background:none;border:none;color:rgba(255,255,255,0.8);font-size:1.1rem;cursor:pointer;display:none;';
+          back.textContent = '←';
+          back.onclick = () => { SquadMessenger._closeThreadMobile(); };
+          header.insertBefore(back, header.firstChild);
+        }
+        if (window.innerWidth <= 991) back.style.display = 'inline-flex'; else back.style.display = 'none';
+      }
+    } catch (e) {}
+
     // Highlight selection
     document.querySelectorAll('.sq-conv-item, .sq-contact-item').forEach(el => {
       el.style.background = 'transparent';
@@ -452,6 +474,8 @@ const SquadMessenger = {
     }
 
     this._renderThread(userId);
+    // Ensure mobile view updates to show thread when needed
+    try { this._applyMobileView(); } catch (e) { /* ignore */ }
 
     // Mark messages as read
     const unread = this.state.allMessages.filter(m => m.sender_id == userId && !m.read);
@@ -742,8 +766,46 @@ const SquadMessenger = {
     };
   },
 
+  _closeThreadMobile() {
+    // Close active thread on mobile and show conversations list
+    this.state.activeUserId = null;
+    this.state.activeName = null;
+    this._renderConversations();
+    this._applyMobileView();
+  },
+
   stopPolling() {
     clearInterval(this.state.pollingTimer);
+  },
+
+  // Apply mobile view rules (exposed so other methods can trigger it)
+  _applyMobileView() {
+    try {
+      const containerId = this.state.containerId;
+      if (!containerId) return;
+      const root = document.querySelector(`#${containerId} .sq-messenger`);
+      if (!root) return;
+      const left = root.querySelector('.sq-left');
+      const right = root.querySelector('.sq-right');
+      const isMobile = window.innerWidth <= 991;
+      if (isMobile) {
+        root.classList.add('sq-mobile');
+        if (this.state.activeUserId) {
+          if (left) left.style.display = 'none';
+          if (right) right.style.display = 'flex';
+        } else {
+          if (left) left.style.display = 'flex';
+          if (right) right.style.display = 'none';
+        }
+      } else {
+        root.classList.remove('sq-mobile');
+        if (left) left.style.display = 'flex';
+        if (right) right.style.display = 'flex';
+      }
+      // Ensure input visibility
+      const input = root.querySelector('#sq-input');
+      if (input) input.style.display = 'block';
+    } catch (e) { /* ignore */ }
   },
 
   /**
