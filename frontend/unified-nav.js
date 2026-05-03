@@ -405,8 +405,10 @@ const UnifiedNav = {
           this.renderMenu();
           this.renderTopTabs();
         } else if (isLandingPage) {
-          this.renderHeader(); // Unified simple header for landing too
+          this.ensureLandingHeader(isLoggedIn, user);
           this.toggleSidebar(false);
+          const sidebar = document.getElementById("pro-sidebar");
+          if (sidebar) sidebar.remove();
         } else {
           this.renderHeader();
         }
@@ -1071,6 +1073,11 @@ const UnifiedNav = {
     let header = document.querySelector(".pro-header, header.header");
     if (!header) return;
 
+    // Reset any dashboard-specific header classes so landing pages render cleanly.
+    header.classList.remove("pro-header", "unified-header");
+    header.classList.add("header");
+    header.style.width = "100%";
+
     if (!isLoggedIn) {
       header.innerHTML = `
         <div class="nav-container nav container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -1129,6 +1136,12 @@ const UnifiedNav = {
     sessionStorage.clear();
     window.UNIFIED_NAV_ENABLED = false;
     document.body.classList.remove("dashboard-view", "app-layout", "loading", "sidebar-collapsed");
+
+    const header = document.querySelector(".pro-header, header.header");
+    if (header) {
+      header.classList.remove("pro-header", "unified-header");
+      header.classList.add("header");
+    }
 
     const main = document.querySelector("main, .dashboard-main, .dashboard-container, #overview, #members");
     if (main) {
