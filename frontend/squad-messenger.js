@@ -167,7 +167,25 @@ const SquadMessenger = {
   async _fetchMessages() {
     try {
       const data = await apiService.makeRequest('/messages');
-      this.state.allMessages = Array.isArray(data) ? data : [];
+      const raw = Array.isArray(data) ? data : [];
+      // Normalize message shape to expected keys used by the renderer
+      this.state.allMessages = raw.map(m => {
+        const created = m.created_at || m.createdAt || m.timestamp || m.time || m.date || null;
+        const senderName = m.sender_name || m.sender || m.senderName || ((m.senderId || m.sender_id) ? '' : '');
+        const receiverName = m.receiver_name || m.receiver || m.receiverName || '';
+        const unreadFlag = typeof m.unread !== 'undefined' ? !!m.unread : (typeof m.is_read !== 'undefined' ? !m.is_read : !!m.read);
+        return {
+          id: m.id || m.message_id || null,
+          sender_id: m.sender_id || m.senderId || m.senderId || m.sender || null,
+          receiver_id: m.receiver_id || m.receiverId || m.receiverId || m.receiver || null,
+          sender_name: senderName,
+          receiver_name: receiverName,
+          content: m.content || m.body || m.message || '',
+          created_at: created,
+          read: !unreadFlag,
+          type: m.type || m.message_type || 'direct'
+        };
+      });
       this._renderConversations();
     } catch (err) {
       console.error('[SquadMessenger] Messages load error:', err);
@@ -340,6 +358,7 @@ const SquadMessenger = {
   _pickContact(id, name) {
     // Close modal and set active conversation
     SquadMessenger.closeNewMessageModal();
+    console.log('[SquadMessenger] _pickContact selection', { id, name });
     SquadMessenger.openConversation(id, name, null);
     // If a message was queued (typed before picking recipient), send it now
     if (this._queuedMessage) {
@@ -378,15 +397,25 @@ const SquadMessenger = {
   // ── OPEN CONVERSATION ────────────────────────────────────────────────────
   async openConversation(userId, name, element) {
     this.state.activeUserId = userId;
-    this.state.activeName   = name;
+    console.log('[SquadMessenger] openConversation called', { userId, name, contactsLoaded: (this.state.allContacts||[]).length });
+    // Resolve name from contacts if not supplied. If contacts not loaded, fetch them.
+    let resolvedName = name;
+    if (!resolvedName) {
+      if (!(this.state.allContacts && this.state.allContacts.length)) {
+        try { await this._fetchContacts(); } catch (e) { /* ignore */ }
+      }
+      const contact = (this.state.allContacts || []).find(c => String(c.id || c.user_id) === String(userId));
+      if (contact) resolvedName = (contact.first_name || contact.firstName || contact.name || `${contact.firstName || contact.first_name || ''} ${contact.lastName || contact.last_name || ''}`).trim();
+    }
+    this.state.activeName = resolvedName || name || '';
 
     // Update chat header
     const avatar = document.getElementById('sq-chat-avatar');
     const chatName = document.getElementById('sq-chat-name');
     const chatSub  = document.getElementById('sq-chat-sub');
-    if (avatar)   { avatar.textContent = name.charAt(0).toUpperCase(); avatar.style.opacity = '1'; }
-    if (chatName) { chatName.textContent = name; chatName.style.color = 'white'; }
-    if (chatSub)  chatSub.textContent = 'Active in squad';
+    if (avatar)   { avatar.textContent = (this.state.activeName || '?').charAt(0).toUpperCase(); avatar.style.opacity = '1'; }
+    if (chatName) { chatName.textContent = (this.state.activeName || ''); chatName.style.color = this.state.activeName ? 'white' : 'rgba(255,255,255,0.4)'; }
+    if (chatSub)  chatSub.textContent = `Active in squad — msgs:${(this.state.allMessages||[]).length} activeUser:${this.state.activeUserId || ''}`;
 
     // Highlight selection
     document.querySelectorAll('.sq-conv-item, .sq-contact-item').forEach(el => {
@@ -423,7 +452,13 @@ const SquadMessenger = {
     const myId = SquadMessenger._currentUser().id;
 
     const thread = this.state.allMessages
-      .filter(m => (m.sender_id == myId && m.receiver_id == userId) || (m.sender_id == userId && m.receiver_id == myId))
+      .filter(m => (
+        // regular messages where either side matches current user
+        (m.sender_id == myId && m.receiver_id == userId) ||
+        (m.sender_id == userId && m.receiver_id == myId) ||
+        // local-only messages created by this client (no sender_id yet)
+        (m.__local && String(m.receiver_id) === String(userId))
+      ))
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
     if (!thread.length) {
@@ -494,18 +529,22 @@ const SquadMessenger = {
         body: JSON.stringify({ receiverId: this.state.activeUserId, content }),
       });
       input.value = '';
-
-      const currentUser = SquadMessenger._currentUser();
-      this.state.allMessages.push({
-        ...(result || {}),
-        sender_id:    currentUser.id,
-        receiver_id:  this.state.activeUserId,
-        sender_name:  `${currentUser.firstName || currentUser.first_name || ''} ${currentUser.lastName || currentUser.last_name || ''}`.trim(),
-        receiver_name: this.state.activeName,
-        content,
+      const payload = (result && result.data) ? result.data : result || {};
+      const created = payload.created_at || payload.createdAt || payload.timestamp || new Date().toISOString();
+      const sentMsg = {
+        id: payload.id || payload.messageId || null,
+        sender_id: (typeof myId !== 'undefined' && myId !== null) ? myId : (payload.sender_id || payload.senderId || null),
+        receiver_id: payload.receiver_id || payload.receiverId || this.state.activeUserId,
+        sender_name: payload.sender_name || payload.sender || `${currentUser.firstName || currentUser.first_name || ''} ${currentUser.lastName || currentUser.last_name || ''}`.trim(),
+        receiver_name: payload.receiver_name || payload.receiver || this.state.activeName,
+        content: content || payload.content || payload.message,
+        created_at: created,
         read: false,
-        created_at: new Date().toISOString(),
-      });
+        type: payload.type || 'direct'
+      };
+      // mark as local so it appears immediately in the UI even if backend data hasn't caught up
+      sentMsg.__local = true;
+      this.state.allMessages.push(sentMsg);
       this._renderThread(this.state.activeUserId);
       this._renderConversations();
     } catch (err) {
@@ -588,7 +627,10 @@ const SquadMessenger = {
   },
 
   // ── MODALS ───────────────────────────────────────────────────────────────
-  openNewMessageModal() {
+  async openNewMessageModal() {
+    // Ensure contacts are loaded when opening the New Message modal so programmatic
+    // flows (tests, quick selects) can access `state.allContacts` immediately.
+    try { await this._fetchContacts(); } catch (e) { /* ignore */ }
     const modal = document.getElementById('sq-new-modal');
     if (modal) modal.style.display = 'flex';
   },

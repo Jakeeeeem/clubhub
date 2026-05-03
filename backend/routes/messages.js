@@ -101,13 +101,16 @@ router.post("/", authenticateToken, injectOrgContext, async (req, res) => {
     const isPlayerRole = ["player", "parent"].includes(senderRole) || req.user.accountType === "adult";
     const adminRoles = ["owner", "admin", "manager"];
 
+    // Allow players to send direct messages to admins and coaches.
+    // Historically players were restricted to admins only; relax to include 'coach'
     if (isPlayerRole) {
       if (messageType !== "direct") {
-        return res.status(403).json({ error: "Players can only reply to admins via direct messages." });
+        return res.status(403).json({ error: "Players can only send direct messages." });
       }
 
-      if (!adminRoles.includes(receiverRole)) {
-        return res.status(403).json({ error: "Players may only message admins within their active group." });
+      const allowedReceiverRoles = adminRoles.concat(['coach']);
+      if (!allowedReceiverRoles.includes(receiverRole)) {
+        return res.status(403).json({ error: "Players may only message coaches or admins within their active group." });
       }
     }
 
