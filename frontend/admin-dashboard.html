@@ -854,13 +854,6 @@
             connectedBox.style.display = 'none';
             errorBox.style.display = 'none';
 
-            // Demo bypass for Stripe status check
-            if (localStorage.getItem("isDemoSession") === "true") {
-                loading.style.display = 'none';
-                onboardBox.style.display = 'block';
-                return;
-            }
-
             try {
                 const data = await apiService.makeRequest('/payments/stripe/connect/status');
 

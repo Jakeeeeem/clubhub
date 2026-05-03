@@ -1853,8 +1853,8 @@ table td:last-child,
     .main, .dashboard-main {
         padding-top: 80px !important;
         padding-bottom: 100px !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 
     /* ── TOP HEADLINE TABS (MODERN PREMIUM) ─────────────────────────────── */

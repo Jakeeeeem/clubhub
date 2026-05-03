@@ -164,6 +164,11 @@ const SquadMessenger = {
     setTimeout(() => { this.load().catch(() => {}); }, 16);
   },
 
+  async init(containerId) {
+    this.mount(containerId);
+    await this.load();
+  },
+
   /** Load all data and render the initial view */
   async load() {
     // Ensure API context (current group/org) is populated so requests include org headers
@@ -176,25 +181,38 @@ const SquadMessenger = {
 
   async _fetchMessages() {
     try {
-      const data = await apiService.makeRequest('/messages');
-      const raw = Array.isArray(data) ? data : [];
+      let data;
+      const orgId = (typeof apiService.getCurrentOrg === 'function' ? apiService.getCurrentOrg()?.id : null) || localStorage.getItem('clubId') || localStorage.getItem('activeOrganizationId');
+      if (orgId && typeof apiService.getMessengerConversations === 'function') {
+        data = await apiService.getMessengerConversations(orgId);
+      } else {
+        data = await apiService.makeRequest('/messages');
+      }
+
+      const raw = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data?.messages)
+            ? data.messages
+            : Array.isArray(data?.conversations)
+              ? data.conversations
+              : [];
+
       // Normalize message shape to expected keys used by the renderer
       this.state.allMessages = raw.map(m => {
         const created = m.created_at || m.createdAt || m.timestamp || m.time || m.date || null;
-        // Prefer numeric/id fields for sender/receiver; don't fall back to name strings
         const senderId = (typeof m.sender_id !== 'undefined' && m.sender_id !== null) ? m.sender_id : (typeof m.senderId !== 'undefined' ? m.senderId : null);
         const receiverId = (typeof m.receiver_id !== 'undefined' && m.receiver_id !== null) ? m.receiver_id : (typeof m.receiverId !== 'undefined' ? m.receiverId : null);
         const senderName = m.sender_name || m.sender || m.senderName || '';
         const receiverName = m.receiver_name || m.receiver || m.receiverName || '';
-        // Normalize read flag: prefer explicit `read` or `is_read`, then derive from `unread` if present
         let readFlag = false;
         if (typeof m.read !== 'undefined') readFlag = !!m.read;
         else if (typeof m.is_read !== 'undefined') readFlag = !!m.is_read;
         else if (typeof m.unread !== 'undefined') readFlag = !m.unread;
-        else readFlag = false;
 
         return {
-          id: m.id || m.message_id || null,
+          id: m.id || m.message_id || m.messageId || null,
           sender_id: senderId,
           receiver_id: receiverId,
           sender_name: senderName,
@@ -205,23 +223,65 @@ const SquadMessenger = {
           type: m.type || m.message_type || 'direct'
         };
       });
-      // Merge in any locally-stored optimistic messages so they survive reloads
+
       try {
         const stored = JSON.parse(localStorage.getItem('sq_local_messages') || '[]');
         if (Array.isArray(stored) && stored.length) {
-          // append stored messages that don't already exist by a simple id/content check
           stored.forEach(s => {
             const exists = this.state.allMessages.some(m => (m.id && s.id && m.id == s.id) || (m.content == s.content && m.created_at == s.created_at));
             if (!exists) this.state.allMessages.push(s);
           });
         }
       } catch (e) {}
+
       this._renderConversations();
     } catch (err) {
       console.error('[SquadMessenger] Messages load error:', err);
       const el = document.getElementById('sq-conversations');
       if (el) el.innerHTML = '<div style="text-align:center;padding:2rem;color:#f87171;font-size:0.82rem;">Could not load messages.</div>';
     }
+  },
+
+  _extractContactArray(response) {
+    if (!response) return [];
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response.data)) return response.data;
+    if (Array.isArray(response.players)) return response.players;
+    if (Array.isArray(response.members)) return response.members;
+    if (Array.isArray(response.users)) return response.users;
+    if (Array.isArray(response.staff)) return response.staff;
+    if (Array.isArray(response.coaches)) return response.coaches;
+    if (Array.isArray(response.admins)) return response.admins;
+    if (Array.isArray(response.squad)) return response.squad;
+    if (Array.isArray(response.results)) return response.results;
+    return [];
+  },
+
+  _deriveContactsFromMessages() {
+    const myId = String(this._currentUser().id || '');
+    const contacts = [];
+    const seen = new Set();
+    this.state.allMessages.forEach(m => {
+      const items = [
+        { id: m.sender_id, name: m.sender_name, role: 'player' },
+        { id: m.receiver_id, name: m.receiver_name, role: 'player' }
+      ];
+      items.forEach(item => {
+        const id = item.id ? String(item.id) : null;
+        if (!id || id === myId || seen.has(id)) return;
+        seen.add(id);
+        const name = (item.name || '').trim();
+        const [first_name, ...rest] = name ? name.split(' ') : [''];
+        contacts.push({
+          id,
+          user_id: id,
+          first_name: first_name || '',
+          last_name: rest.join(' '),
+          _role: item.role || 'player'
+        });
+      });
+    });
+    return contacts;
   },
 
   async _fetchContacts() {
@@ -235,11 +295,19 @@ const SquadMessenger = {
       if (role === 'admin' || role === 'organization' || role === 'owner') {
         try {
           const memRes = await apiService.makeRequest('/members');
-          if (memRes) {
-            const players = memRes.players || memRes.members || memRes.data || [];
-            contacts = contacts.concat((Array.isArray(players) ? players : []).map(p => ({ ...p, _role: 'player' })));
-            const staff = memRes.staff || memRes.coaches || memRes.admins || [];
-            contacts = contacts.concat((Array.isArray(staff) ? staff : []).map(s => ({ ...s, _role: (s.role || s.userType || 'staff').toLowerCase() })));
+          const members = this._extractContactArray(memRes);
+          const players = this._extractContactArray(memRes.players || memRes.members || memRes.data || members);
+          const staff = this._extractContactArray(memRes.staff || memRes.coaches || memRes.admins || members);
+
+          contacts = contacts.concat(players.map(p => ({ ...p, _role: 'player' })));
+          contacts = contacts.concat(staff.map(s => ({ ...s, _role: (s.role || s.userType || s.account_type || 'staff').toString().toLowerCase() })));
+
+          if (!staff.length && Array.isArray(members)) {
+            const inferredStaff = members.filter(item => {
+              const itemRole = (item.role || item.userType || item.account_type || '').toString().toLowerCase();
+              return ['coach', 'admin', 'organization', 'owner', 'staff', 'manager'].includes(itemRole);
+            });
+            contacts = contacts.concat(inferredStaff.map(s => ({ ...s, _role: (s.role || s.userType || s.account_type || 'staff').toString().toLowerCase() })));
           }
         } catch (e) {
           console.warn('[SquadMessenger] Admin contacts fetch failed, continuing:', e);
@@ -249,17 +317,16 @@ const SquadMessenger = {
       } else if (role === 'coach') {
         try {
           const squadRes = await apiService.makeRequest('/coach/squad');
-          if (squadRes && Array.isArray(squadRes.players)) {
-            contacts = contacts.concat(squadRes.players.map(p => ({ ...p, _role: 'player' })));
-          }
+          const squadPlayers = this._extractContactArray(squadRes.players || squadRes.squad || squadRes.data || squadRes);
+          contacts = contacts.concat(squadPlayers.map(p => ({ ...p, _role: 'player' })));
         } catch (e) {
           console.warn('[SquadMessenger] Coach squad fetch failed:', e);
         }
 
         try {
           const adminRes = await apiService.makeRequest('/members?role=admin');
-          const admins = adminRes?.admins || adminRes?.members || [];
-          if (Array.isArray(admins)) contacts = contacts.concat(admins.map(a => ({ ...a, _role: 'admin' })));
+          const admins = this._extractContactArray(adminRes.admins || adminRes.members || adminRes.data || adminRes);
+          contacts = contacts.concat(admins.map(a => ({ ...a, _role: 'admin' })));
         } catch (e) {
           console.warn('[SquadMessenger] Coach admin fetch failed:', e);
         }
@@ -268,20 +335,37 @@ const SquadMessenger = {
       } else {
         try {
           const staffRes = await apiService.makeRequest('/members?role=coach');
-          const coaches = staffRes?.coaches || staffRes?.members || [];
-          if (Array.isArray(coaches)) contacts = contacts.concat(coaches.map(c => ({ ...c, _role: 'coach' })));
-        } catch (e) {}
+          const coaches = this._extractContactArray(staffRes.coaches || staffRes.members || staffRes.data || staffRes);
+          contacts = contacts.concat(coaches.map(c => ({ ...c, _role: 'coach' })));
+        } catch (e) {
+          console.warn('[SquadMessenger] Player coach contacts fetch failed:', e);
+        }
         try {
           const adminRes = await apiService.makeRequest('/members?role=admin');
-          const admins = adminRes?.admins || adminRes?.members || [];
-          if (Array.isArray(admins)) contacts = contacts.concat(admins.map(a => ({ ...a, _role: 'admin' })));
-        } catch (e) {}
+          const admins = this._extractContactArray(adminRes.admins || adminRes.members || adminRes.data || adminRes);
+          contacts = contacts.concat(admins.map(a => ({ ...a, _role: 'admin' })));
+        } catch (e) {
+          console.warn('[SquadMessenger] Player admin contacts fetch failed:', e);
+        }
+
+        if (!contacts.length) {
+          try {
+            const fallbackRes = await apiService.makeRequest('/members');
+            const fallbackMembers = this._extractContactArray(fallbackRes);
+            const fallbackPlayers = fallbackMembers.filter(item => {
+              const itemRole = (item.role || item.userType || item.account_type || '').toString().toLowerCase();
+              return ['player', 'parent', 'athlete', 'child'].includes(itemRole);
+            });
+            contacts = contacts.concat(fallbackPlayers.map(p => ({ ...p, _role: 'player' })));
+          } catch (e) {
+            console.warn('[SquadMessenger] Player fallback contacts fetch failed:', e);
+          }
+        }
       }
 
       // Deduplicate by id, remove self
       const myId = currentUser.id;
       const seen = new Set();
-      // Normalize contacts to stable shape before dedupe
       contacts = contacts.map(c => this._normalizeContact(c));
       this.state.allContacts = contacts.filter(c => {
         const id = c.id || c.user_id;
@@ -289,6 +373,10 @@ const SquadMessenger = {
         seen.add(id);
         return true;
       });
+
+      if (!this.state.allContacts.length) {
+        this.state.allContacts = this._deriveContactsFromMessages();
+      }
 
       this._renderContacts();
       this._renderContactPicker();
@@ -917,8 +1005,10 @@ const SquadMessenger = {
     const receiverId = participants[0];
     const payload = { receiverId, content: initialMessage };
     try {
-      const res = await apiService.sendMessage(payload);
-      // If successful, refresh messages and open thread
+      const res = await apiService.makeRequest('/messages', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
       await this._fetchMessages();
       this.openConversation(receiverId, null, null);
       return res;

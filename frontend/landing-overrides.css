@@ -14,13 +14,35 @@
   width: 100% !important;
   z-index: 1000 !important;
   border-bottom: 1px solid rgba(255,255,255,0.06) !important;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.4) !important;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.25) !important;
+  height: auto !important;
+  min-height: 64px !important;
+  padding: 0 1rem !important;
+}
+
+.clubhub-unified:not(.dashboard-view) header.header .nav,
+.clubhub-unified:not(.dashboard-view) .pro-header .nav-container {
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+
+.clubhub-unified:not(.dashboard-view) .logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.clubhub-unified:not(.dashboard-view) .nav-buttons {
+  gap: 0.75rem !important;
+  align-items: center !important;
 }
 
 /* Ensure hero sits under header and remains visible */
 .landing-hero {
-  min-height: 100vh;
-  padding-top: 100px; /* account for header height */
+  min-height: calc(100vh - 72px);
+  padding-top: 0;
 }
 
 /* Keep floating PWA button but hide header-specific install button behavior on landing */
@@ -36,8 +58,8 @@
   display: flex;
   align-items: center;
   text-align: center;
-  min-height: 100vh;
-  padding: 10rem 0 6rem; /* preserved spacing */
+  min-height: calc(100vh - 72px);
+  padding: 6rem 0 4rem !important;
   position: relative;
 }
 
@@ -70,14 +92,26 @@
 .clubhub-unified:not(.dashboard-view) .pwa-install-wrapper.desktop-only {
   display: none !important;
 }
+
 /* Mobile Hero Spacing */
 @media (max-width: 991px) {
   .landing-hero {
-    padding: 8rem 0 4rem !important;
+    padding: 6rem 0 3rem !important;
     min-height: auto;
   }
   
   .hero-title {
-    font-size: 3rem !important;
+    font-size: 2.6rem !important;
+  }
+
+  .clubhub-unified:not(.dashboard-view) header.header,
+  .clubhub-unified:not(.dashboard-view) .pro-header {
+    min-height: 56px !important;
+    padding: 0 0.75rem !important;
+  }
+
+  .clubhub-unified:not(.dashboard-view) .nav-buttons {
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
   }
 }
