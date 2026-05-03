@@ -281,11 +281,22 @@ function handlePostAuthRedirect() {
 }
 
 function clearAuthData() {
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("currentUser");
-  localStorage.removeItem("userType");
+  const authKeys = ["authToken", "currentUser", "userType", "activePlayerId", "isDemoSession", "userFamily", "cachedClubs", "cachedEvents"];
+  authKeys.forEach(key => localStorage.removeItem(key));
   AppState.currentUser = null;
   AppState.userType = null;
+  window.UNIFIED_NAV_ENABLED = false;
+  document.body.classList.remove("dashboard-view", "app-layout", "loading", "sidebar-collapsed");
+  const main = document.querySelector("main, .dashboard-main, .dashboard-container, #overview, #members");
+  if (main) {
+    main.style.marginLeft = "";
+    main.style.width = "";
+    main.style.paddingLeft = "";
+    main.style.paddingRight = "";
+    main.style.maxWidth = "";
+    main.style.paddingBottom = "";
+    main.classList.remove("dashboard-main");
+  }
 }
 
 async function handleLogin(e) {

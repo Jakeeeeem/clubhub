@@ -465,10 +465,10 @@ async function handleLogout() {
     }
 
     // Clear local storage
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("cachedClubs");
-    localStorage.removeItem("cachedEvents");
+    const authKeys = ["authToken", "currentUser", "userType", "activePlayerId", "isDemoSession", "userFamily", "cachedClubs", "cachedEvents"];
+    authKeys.forEach(key => localStorage.removeItem(key));
+    window.UNIFIED_NAV_ENABLED = false;
+    document.body.classList.remove("dashboard-view", "app-layout", "loading", "sidebar-collapsed");
 
     // Update global state
     if (typeof AppState !== "undefined") {

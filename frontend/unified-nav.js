@@ -338,14 +338,17 @@ const UnifiedNav = {
     const hasDashboardMarker = !!(document.querySelector('.dashboard-main') || document.querySelector('.finder-container') || document.querySelector('.dashboard-container'));
 
     const isLandingPage = isLanding;
+    const isExplicitlyEnabled = window.UNIFIED_NAV_ENABLED === true;
 
     // isDashboard should only be true if it matches dashboard patterns AND is NOT the landing page
-    const isDashboard = !isLandingPage && (hasDashboardPattern || hasDashboardClass || hasDashboardMarker || window.UNIFIED_NAV_ENABLED === true);
+    const isDashboard = !isLandingPage && (hasDashboardPattern || hasDashboardClass || hasDashboardMarker || isExplicitlyEnabled);
 
     console.log("📍 UnifiedNav Detection:", {
       isDesktop,
       isDashboard,
       isLandingPage,
+      isExplicitlyEnabled,
+      isExplicitlyEnabled,
       isLoggedIn,
       path,
       fileName,
@@ -1114,12 +1117,31 @@ const UnifiedNav = {
   },
 
   logout() {
-    console.log("👋 Logging out...");
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("activePlayerId");
+    console.log("👋 UnifiedNav logging out...");
+    if (typeof apiService !== "undefined" && apiService.logout) {
+      apiService.logout().catch(error => {
+        console.warn("⚠️ UnifiedNav API logout failed, continuing local cleanup:", error);
+      });
+    }
+
+    const authKeys = ["authToken", "currentUser", "userType", "activePlayerId", "isDemoSession", "userFamily", "cachedClubs", "cachedEvents"];
+    authKeys.forEach(key => localStorage.removeItem(key));
     sessionStorage.clear();
-    window.location.href = "login.html";
+    window.UNIFIED_NAV_ENABLED = false;
+    document.body.classList.remove("dashboard-view", "app-layout", "loading", "sidebar-collapsed");
+
+    const main = document.querySelector("main, .dashboard-main, .dashboard-container, #overview, #members");
+    if (main) {
+      main.style.marginLeft = "";
+      main.style.width = "";
+      main.style.paddingLeft = "";
+      main.style.paddingRight = "";
+      main.style.maxWidth = "";
+      main.style.paddingBottom = "";
+      main.classList.remove("dashboard-main");
+    }
+
+    window.location.href = "index.html";
   },
 
   /**
@@ -3215,21 +3237,23 @@ const UnifiedNav = {
     } catch (e) { console.warn('UnifiedNav: per-page fallbacks failed', e); }
 
     // 3. Global layout fixes
-    document.body.style.overflowX = "hidden";
+    if (isDashboard) {
+      document.body.style.overflowX = "hidden";
 
-    const main = document.querySelector("main, .dashboard-main, .dashboard-container, #overview, #members");
-    if (main) {
-      main.style.paddingBottom = "100px";
-      if (!isMobile) {
-        main.style.marginLeft = "280px";
-        main.style.width = "calc(100% - 280px)";
-      } else {
-        main.style.paddingLeft = "0";
-        main.style.paddingRight = "0";
-        main.style.width = "100%";
+      const main = document.querySelector("main, .dashboard-main, .dashboard-container, #overview, #members");
+      if (main) {
+        main.style.paddingBottom = "100px";
+        if (!isMobile) {
+          main.style.marginLeft = "280px";
+          main.style.width = "calc(100% - 280px)";
+        } else {
+          main.style.paddingLeft = "0";
+          main.style.paddingRight = "0";
+          main.style.width = "100%";
+        }
+        main.style.maxWidth = "100%";
+        main.classList.add("dashboard-main");
       }
-      main.style.maxWidth = "100%";
-      main.classList.add("dashboard-main");
     }
 
     // 4. Force grid stacking if missed by CSS
@@ -3477,9 +3501,15 @@ window.alert = function (msg) {
 };
 
 // 🏗️ Auto-initialize Unified Navigation System
-// Initialize by default on any page that includes this script,
-// unless a page explicitly sets window.UNIFIED_NAV_ENABLED = false.
-if (window.UNIFIED_NAV_ENABLED !== false) {
+// Initialize only on dashboard-style pages unless explicitly enabled.
+const _unifiedNavPath = window.location.pathname.toLowerCase();
+const _unifiedNavFile = _unifiedNavPath.split('/').pop() || 'index.html';
+const _unifiedNavIsLanding = _unifiedNavFile === 'index.html' || _unifiedNavFile === 'index' || _unifiedNavPath === '/' || _unifiedNavPath === '';
+const _unifiedNavMarkers = ["dashboard", "admin-", "coach-", "player-", "super-admin-", "scout-", "finder", "booking", "messenger", "finances", "schedule", "chat", "shop"];
+const _unifiedNavHasPattern = _unifiedNavMarkers.some(marker => window.location.href.toLowerCase().includes(marker));
+const _unifiedNavShouldAutoInit = !_unifiedNavIsLanding && (_unifiedNavHasPattern || window.UNIFIED_NAV_ENABLED === true);
+
+if (window.UNIFIED_NAV_ENABLED !== false && _unifiedNavShouldAutoInit) {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       console.log("🚀 UnifiedNav Auto-Init (DOMContentLoaded)");
@@ -3489,4 +3519,6 @@ if (window.UNIFIED_NAV_ENABLED !== false) {
     console.log("🚀 UnifiedNav Auto-Init (Immediate)");
     UnifiedNav.init();
   }
+} else {
+  console.log("⛔ UnifiedNav Auto-Init suppressed on non-dashboard page", { path: window.location.pathname, isLanding: _unifiedNavIsLanding, hasPattern: _unifiedNavHasPattern, explicit: window.UNIFIED_NAV_ENABLED });
 }
