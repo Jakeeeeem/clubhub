@@ -61,9 +61,18 @@ if (typeof ApiService === 'undefined') {
    * User requested "all working data not mock" - forcing live data for everything.
    */
   shouldMock() {
-    // Allow mock/demo responses when `isDemoSession` is set in localStorage.
+    // Allow mock/demo responses only when `isDemoSession` is true AND
+    // the app is running in a local/dev host (never allow on production/live hosts).
     try {
-      return localStorage.getItem('isDemoSession') === 'true';
+      const isDemo = localStorage.getItem('isDemoSession') === 'true';
+      if (!isDemo) return false;
+      const host = (window.location && window.location.hostname) ? window.location.hostname.toLowerCase() : '';
+      // Allow demo on local machines and common dev hosts (localhost, 127.0.0.1, 0.0.0.0)
+      if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') return true;
+      // Allow demo on render/staging preview hosts if explicitly desired
+      if (host.endsWith('.onrender.com') || host.endsWith('.vercel.app') || host.endsWith('.netlify.app')) return true;
+      // In all other cases (production domains) do not mock, even if localStorage flag exists
+      return false;
     } catch (e) {
       return false;
     }
