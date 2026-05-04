@@ -823,19 +823,14 @@ router.post("/seed-demo-users", async (req, res) => {
 });
 
 // CURRENT USER (/api/auth/me) — Authorization: Bearer <token>
-router.get("/me", async (req, res) => {
+router.get("/me", authenticateToken, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization || "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    if (!token) return res.status(401).json({ error: "No token provided" });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+    const userId = req.user.id;
     let u;
     try {
       const userRes = await query(
         "SELECT id, email, first_name, last_name, account_type, completed_tours FROM users WHERE id = $1",
-        [decoded.id],
+        [userId],
       );
       if (userRes.rows.length === 0)
         return res.status(404).json({ error: "User not found" });
@@ -843,7 +838,7 @@ router.get("/me", async (req, res) => {
     } catch (dbErr) {
       const userRes = await query(
         "SELECT id, email, first_name, last_name, account_type FROM users WHERE id = $1",
-        [decoded.id],
+        [userId],
       );
       if (userRes.rows.length === 0)
         return res.status(404).json({ error: "User not found" });

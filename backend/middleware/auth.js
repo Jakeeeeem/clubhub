@@ -150,11 +150,12 @@ async function injectOrgContext(req, res, next) {
       [userId],
     );
     orgId = prefs.rows[0]?.current_organization_id || req.user.organization_id;
+  }
 
-    if (!orgId) {
-      req.orgContext = null;
-      return next();
-    }
+  if (!orgId) {
+    req.orgContext = null;
+    return next();
+  }
 
     // UUID validation helper
     const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
