@@ -292,6 +292,7 @@ app.get("/api/public-debug/:id", async (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", require("./routes/auth-context")); // Enhanced auth with org context
 app.use("/api/organizations", require("./routes/organizations")); // New unified system
+app.use("/api/groups", require("./routes/organizations")); // Alias for frontend compatibility
 app.use("/api/invitations", require("./routes/invitations")); // Invitation system
 app.use("/api/platform-admin", require("./routes/platform-admin")); // Platform admin routes
 app.use("/api/clubs", clubRoutes);

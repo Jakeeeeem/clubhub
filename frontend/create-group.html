@@ -420,7 +420,7 @@
                     body: JSON.stringify(data)
                 });
 
-                if (response.success && response.group) {
+                if (response.success && response.organization) {
                     const orgId = response.organization.id;
                     console.log('✅ Group created with ID:', orgId);
 
@@ -448,11 +448,13 @@
 
                     // Refresh context to load the new organization
                     console.log('🔄 Refreshing context...');
-                    await apiService.refreshContext();
+                    if (typeof apiService.refreshContext === 'function') {
+                        await apiService.refreshContext();
+                    }
 
                     // Redirect to dashboard after 2 seconds
                     setTimeout(() => {
-                        window.location.href = 'coach-dashboard.html';
+                        window.location.href = 'admin-dashboard.html';
                     }, 2000);
                 } else {
                     throw new Error(response.error || 'Failed to create group');
@@ -490,9 +492,5 @@
             </div>
         </div>
     </footer>
-    <script src="api-service.js?v=20260429_v18"></script>
-    <script src="pwa-install.js"></script>
-    <script src="dialog-service.js"></script>
 </body>
-
 </html>
