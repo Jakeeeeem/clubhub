@@ -22,37 +22,12 @@
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="apple-touch-icon" href="/images/logo.png">
 
-    <link rel="stylesheet" href="styles.css?v=20260429_v18">
-    <link rel="stylesheet" href="design-system.css?v=20260429_v18">
-    <link rel="stylesheet" href="unified-nav.css?v=20260429_v18">
-    <script>
-        // CRITICAL: In local dev, always unregister service workers and clear caches so the latest frontend assets load.
-        (function() {
-            const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-            if (!isLocalhost || !('serviceWorker' in navigator)) return;
-
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let registration of registrations) {
-                    registration.unregister();
-                    console.log('🗑️ Unregistered local ServiceWorker');
-                }
-            }).catch((error) => {
-                console.warn('Failed to unregister ServiceWorker:', error);
-            });
-
-            if ('caches' in window) {
-                caches.keys().then(names => {
-                    for (let name of names) {
-                        caches.delete(name);
-                        console.log('🗑️ Cleared cache:', name);
-                    }
-                }).catch((error) => {
-                    console.warn('Failed to clear caches:', error);
-                });
-            }
-        })();
-    </script>
-    <link rel="stylesheet" href="landing-overrides.css?v=20260429_v18">
+    <link rel="stylesheet" href="styles.css?v=20260504_v4">
+    <link rel="stylesheet" href="design-system.css?v=20260504_v4">
+    <link rel="stylesheet" href="unified-nav.css?v=20260504_v4">
+    <script src="api-service.js?v=20260504_v4"></script>
+    <script src="unified-nav.js?v=20260504_v4"></script>
+    <link rel="stylesheet" href="landing-overrides.css?v=20260504_v4">
 </head>
 
 <body class="clubhub-unified landing-view">
@@ -706,15 +681,11 @@
 
     </script>
 
-    <!-- Load your existing handlers -->
-        <script src="app-state.js?v=20260429_v18"></script>
-    <script src="api-service.js?v=20260429_v18" onerror="console.log('API service not found')"></script>
-    <script src="dialog-service.js?v=20260429_v18"></script>
-    <script src="enhanced-login-handler.js?v=20260429_v18" onerror="console.log('Enhanced login handler not found')"></script>
-
-    <!-- PWA Install Handler -->
-    <script src="pwa-install.js?v=20260429_v18"></script>
-    <script src="unified-nav.js?v=20260429_v18"></script>
+    <!-- Load all core handlers -->
+    <script src="app-state.js?v=20260504_v4"></script>
+    <script src="dialog-service.js?v=20260504_v4"></script>
+    <script src="enhanced-login-handler.js?v=20260504_v4"></script>
+    <script src="pwa-install.js?v=20260504_v4"></script>
 </body>
 
 </html>

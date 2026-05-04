@@ -5,52 +5,55 @@
 
 .clubhub-unified:not(.dashboard-view) header.header,
 .clubhub-unified:not(.dashboard-view) .pro-header {
-  background: rgba(10, 10, 12, 0.92) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  position: absolute !important;
+  background: rgba(10, 10, 15, 0.65) !important;
+  /* Lighter opacity as requested */
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  position: fixed !important;
+  /* Fixed is more reliable for 'follow on scroll' */
   top: 0 !important;
   left: 0 !important;
   width: 100% !important;
   z-index: 1000 !important;
-  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.25) !important;
-  height: auto !important;
-  min-height: 64px !important;
-  padding: 0 1rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3) !important;
+  height: 96px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
 }
 
 .clubhub-unified:not(.dashboard-view) header.header .nav,
 .clubhub-unified:not(.dashboard-view) .pro-header .nav-container {
+  display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
   width: 100% !important;
-  padding: 0 !important;
+  height: 100% !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 0 2.5rem !important;
+  box-sizing: border-box !important;
 }
 
 .clubhub-unified:not(.dashboard-view) .logo {
   display: flex !important;
   align-items: center !important;
-  gap: 0.75rem !important;
+  gap: 1rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .clubhub-unified:not(.dashboard-view) .nav-buttons {
-  gap: 0.75rem !important;
+  display: flex !important;
+  gap: 1.25rem !important;
   align-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* Ensure hero sits under header and remains visible */
-.landing-hero {
-  min-height: calc(100vh - 72px);
-  padding-top: 0;
-}
-
-/* Keep floating PWA button but hide header-specific install button behavior on landing */
-.clubhub-unified:not(.dashboard-view) .pwa-install-btn {
-  display: none !important;
-}
-
-/* Landing hero background moved to CSS (removed inline styles) */
+/* Landing hero: background and layout */
 .landing-hero {
   background-image: url('images/players-hero.jpg');
   background-size: cover;
@@ -58,60 +61,71 @@
   display: flex;
   align-items: center;
   text-align: center;
-  min-height: calc(100vh - 72px);
-  padding: 6rem 0 4rem !important;
+  min-height: calc(100vh - 96px);
+  /* Adjusted for sticky header */
+  padding: 13rem 0 4rem !important;
   position: relative;
 }
 
-
-/* Landing hero overlay: stronger but transparent top so header shows clearly */
+/* Landing hero overlay */
 .clubhub-unified:not(.dashboard-view) .landing-hero::before {
   content: "" !important;
   position: absolute !important;
   inset: 0 !important;
-  /* stronger overlay while preserving clear header area */
-  background: linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.18) 0%,
-    rgba(0,0,0,0.30) 12%,
-    rgba(0,0,0,0.50) 35%,
-    rgba(0,0,0,0.70) 100%
-  ) !important;
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.2) 0%,
+      rgba(0, 0, 0, 0.4) 35%,
+      rgba(0, 0, 0, 0.7) 100%) !important;
   pointer-events: none !important;
   z-index: 6 !important;
 }
 
-.landing-hero .container { position: relative; z-index: 10; }
+.landing-hero .container {
+  position: relative;
+  z-index: 10;
+}
 
-/* Remove the global header offset on the landing page so the header overlays the hero */
 .clubhub-unified:not(.dashboard-view) .main {
   padding-top: 0 !important;
 }
 
-/* Hide the desktop PWA install wrapper injected into the header on the landing page */
+.clubhub-unified:not(.dashboard-view) .pwa-install-btn,
 .clubhub-unified:not(.dashboard-view) .pwa-install-wrapper.desktop-only {
   display: none !important;
 }
 
-/* Mobile Hero Spacing */
+/* Mobile Adjustments */
 @media (max-width: 991px) {
   .landing-hero {
-    padding: 6rem 0 3rem !important;
+    padding: 3rem 0 !important;
     min-height: auto;
   }
-  
+
   .hero-title {
     font-size: 2.6rem !important;
   }
 
   .clubhub-unified:not(.dashboard-view) header.header,
   .clubhub-unified:not(.dashboard-view) .pro-header {
-    min-height: 56px !important;
-    padding: 0 0.75rem !important;
+    height: 80px !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: rgba(10, 10, 15, 0.7) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 1.25rem !important;
+    box-sizing: border-box !important;
+    z-index: 1000 !important;
   }
 
   .clubhub-unified:not(.dashboard-view) .nav-buttons {
-    flex-wrap: wrap !important;
+    display: flex !important;
+    gap: 0.75rem !important;
+    align-items: center !important;
     justify-content: flex-end !important;
   }
 }

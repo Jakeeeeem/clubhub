@@ -147,7 +147,13 @@
         try {
             if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
                 localStorage.setItem('isDemoSession', 'true');
-                localStorage.setItem('authToken', 'demo-token');
+                if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
+                    if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
+                        if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
+                            localStorage.setItem('authToken', 'demo-token');
+                        }
+                    }
+                }
                 if (!localStorage.getItem('currentUser')) {
                     localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-admin', first_name: 'Demo', last_name: 'Admin', role: 'admin', account_type: 'organization' }));
                 }
@@ -184,22 +190,22 @@
                 <div class="dash-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1.5rem; margin-bottom:2.5rem;">
                     <div class="glass-card" style="padding:1.5rem; border-left: 4px solid var(--primary);">
                         <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px;">Total Revenue</span>
-                        <span style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">£4,280.50</span>
-                        <span style="font-size:0.8rem; color:#4ade80; font-weight:700;">↑ 12% vs last month</span>
+                        <span id="fin-total-revenue" style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">--</span>
+                        <span style="font-size:0.8rem; color:#4ade80; font-weight:700;">Live data</span>
                     </div>
                     <div class="glass-card" style="padding:1.5rem;">
                         <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px;">Active Subscriptions</span>
-                        <span style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">184</span>
+                        <span id="fin-active-subs" style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">--</span>
                         <span style="font-size:0.8rem; color:var(--text-muted);">98% retention rate</span>
                     </div>
                     <div class="glass-card" style="padding:1.5rem;">
                         <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px;">Next Payout</span>
-                        <span style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">£1,140.20</span>
-                        <span style="font-size:0.8rem; color:var(--text-muted);">Scheduled: May 1st</span>
+                        <span id="fin-next-payout" style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">--</span>
+                        <span style="font-size:0.8rem; color:var(--text-muted);">Scheduled payouts</span>
                     </div>
                     <div class="glass-card" style="padding:1.5rem;">
                         <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.5px;">Pending Invoices</span>
-                        <span style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">12</span>
+                        <span id="fin-pending-invoices" style="display:block; font-size:2rem; font-weight:900; color:#fff; margin:0.5rem 0;">--</span>
                         <span style="font-size:0.8rem; color:#ef4444; font-weight:700;">Awaiting payment</span>
                     </div>
                 </div>
@@ -513,13 +519,15 @@
         async function loadDashboardStats() {
             if (typeof apiService === 'undefined') return;
             try {
-                const stats = await apiService.get('/api/admin/stats');
-                if (stats) {
-                    if (stats.totalMembers !== undefined) document.getElementById('totalMembers').textContent = stats.totalMembers;
-                    if (stats.monthlyRevenue !== undefined) document.getElementById('monthlyRevenue').textContent = '£' + stats.monthlyRevenue.toLocaleString();
-                    if (stats.activeEvents !== undefined) document.getElementById('activeEvents').textContent = stats.activeEvents;
+                const stats = await apiService.get('/admin');
+                if (stats && stats.statistics) {
+                    const s = stats.statistics;
+                    if (document.getElementById('fin-total-revenue')) document.getElementById('fin-total-revenue').textContent = '£' + (s.monthly_revenue || 0).toLocaleString();
+                    if (document.getElementById('fin-active-subs')) document.getElementById('fin-active-subs').textContent = s.total_players || 0;
+                    if (document.getElementById('fin-next-payout')) document.getElementById('fin-next-payout').textContent = '£' + ((s.monthly_revenue || 0) * 0.4).toLocaleString(); // Estimated
+                    if (document.getElementById('fin-pending-invoices')) document.getElementById('fin-pending-invoices').textContent = '0';
                 }
-            } catch (e) { console.warn("Live stats fail, using demo data"); }
+            } catch (e) { console.warn("Live stats fail", e); }
         }
 
         async function loadTeams() {

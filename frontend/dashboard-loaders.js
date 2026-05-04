@@ -7,6 +7,7 @@ window.DashboardLoaders = {
     async initAdmin() {
         console.log("🚀 Initializing Admin Dashboard Data...");
         this.loadStats();
+        this.loadStripeStatus();
         this.loadActivityFeed();
         this.loadRecentMembers();
         this.loadTeams();
@@ -29,23 +30,14 @@ window.DashboardLoaders = {
                 if (document.getElementById('activeEvents')) {
                     document.getElementById('activeEvents').textContent = s.total_events || 0;
                 }
-                if (document.getElementById('pendingScouts')) {
-                    document.getElementById('pendingScouts').textContent = s.pending_invites || 0;
-                }
             }
         } catch (e) { 
-            console.warn("Stats load failed, using demo fallback", e); 
-            // Fallback for demo/missing endpoints
-            const demoStats = {
-                total_players: 124,
-                monthly_revenue: 3450,
-                total_events: 12,
-                pending_invites: 5
-            };
-            if (document.getElementById('totalMembers')) document.getElementById('totalMembers').textContent = demoStats.total_players;
-            if (document.getElementById('monthlyRevenue')) document.getElementById('monthlyRevenue').textContent = '£' + demoStats.monthly_revenue.toLocaleString();
-            if (document.getElementById('activeEvents')) document.getElementById('activeEvents').textContent = demoStats.total_events;
-            if (document.getElementById('pendingScouts')) document.getElementById('pendingScouts').textContent = demoStats.pending_invites;
+            console.warn("Stats load failed", e); 
+            // Clear stats on failure
+            ['totalMembers', 'monthlyRevenue', 'activeEvents'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '0';
+            });
         }
     },
 
@@ -54,7 +46,10 @@ window.DashboardLoaders = {
         if (!container) return;
         try {
             const { activity } = await apiService.get('/feed');
-            if (!activity || activity.length === 0) throw new Error("Empty activity");
+            if (!activity || activity.length === 0) {
+                container.innerHTML = '<div style="padding:1rem; opacity:0.5; font-size:0.85rem;">No recent activity</div>';
+                return;
+            }
             
             container.innerHTML = activity.map(a => `
                 <div class="feed-entry">
@@ -69,23 +64,29 @@ window.DashboardLoaders = {
                 </div>
             `).join('');
         } catch (e) { 
-            // Demo Fallback
-            container.innerHTML = [
-                { type: 'user_signup', title: 'New Player Joined', user_email: 'marcus.t@example.com', timestamp: new Date(Date.now() - 1000*60*45) },
-                { type: 'payment', title: 'Membership Paid', user_email: 'sarah.d@example.com', timestamp: new Date(Date.now() - 1000*60*60*2) },
-                { type: 'event', title: 'Session Scheduled', user_email: 'coach.james@clubhub.io', timestamp: new Date(Date.now() - 1000*60*60*5) }
-            ].map(a => `
-                <div class="feed-entry">
-                    <div class="feed-icon" style="background:${a.type === 'user_signup' ? 'rgba(74,222,128,0.1)' : a.type === 'payment' ? 'rgba(59,130,246,0.1)' : 'rgba(220,38,38,0.1)'}; color:${a.type === 'user_signup' ? '#4ade80' : a.type === 'payment' ? '#60a5fa' : '#f87171'};">
-                        ${a.type === 'user_signup' ? '👤' : a.type === 'payment' ? '💳' : '📅'}
-                    </div>
-                    <div class="feed-meta">
-                        <strong>${a.title}</strong>
-                        <span>${a.user_email || ''}</span>
-                    </div>
-                    <span class="feed-time">${this.formatRelativeTime(a.timestamp)}</span>
-                </div>
-            `).join('');
+            container.innerHTML = '<div style="padding:1rem; opacity:0.5; font-size:0.85rem;">Failed to load activity</div>';
+        }
+    },
+
+    async loadStripeStatus() {
+        const text = document.getElementById('stripeStatusText');
+        const indicator = document.getElementById('stripeStatusIndicator');
+        if (!text || !indicator) return;
+
+        try {
+            const status = await apiService.getStripeConnectStatus();
+            if (status && status.connected) {
+                text.textContent = 'Connected';
+                text.style.color = '#4ade80';
+                indicator.innerHTML = '<span style="color:#4ade80;">✅ Payouts Active</span>';
+            } else {
+                text.textContent = 'Disconnected';
+                text.style.color = '#f87171';
+                indicator.innerHTML = '<span style="color:#f59e0b;">⚠️ Setup Required</span>';
+            }
+        } catch (e) {
+            text.textContent = 'Offline';
+            indicator.textContent = 'API Unavailable';
         }
     },
 

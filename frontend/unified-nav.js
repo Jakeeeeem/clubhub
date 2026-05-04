@@ -162,7 +162,7 @@ const UnifiedNav = {
       return;
     }
     this._initialized = true;
-    console.log("🚀 UnifiedNav: Initializing standard navigation (v20260501_v2)...");
+    console.log("🚀 UnifiedNav: Initializing standard navigation (v20260504_v4)...");
 
     // 🛡️ Fallback mock data injection for demo stability
     // ONLY runs if we are in demo mode AND no real data is present.
@@ -193,37 +193,8 @@ const UnifiedNav = {
     this._initialized = true;
 
     // ⚡ SYSTEM RESET & SYNC: check for ?reset=system to clear all state
-    const CURRENT_VERSION = "2.1.3";
-    const storedVersion = localStorage.getItem("CH_UI_VERSION");
-    const urlParams = new URLSearchParams(window.location.search);
-
-    if (urlParams.get('reset') === 'system' || (storedVersion && storedVersion !== CURRENT_VERSION)) {
-      console.warn("⚡ System Sync: Clearing legacy cache for version " + CURRENT_VERSION);
-
-      // Save critical flags before clearing
-      const isDemo = localStorage.getItem('isDemoSession');
-      const token = localStorage.getItem('authToken');
-      const user = localStorage.getItem('currentUser');
-
-      localStorage.clear();
-
-      // Restore session to prevent forced logout unless it's a manual reset
-      if (urlParams.get('reset') !== 'system') {
-        if (isDemo) localStorage.setItem('isDemoSession', isDemo);
-        if (token) localStorage.setItem('authToken', token);
-        if (user) localStorage.setItem('currentUser', user);
-      }
-
-      localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
-
-      if (urlParams.get('reset') === 'system' || (storedVersion && storedVersion !== CURRENT_VERSION)) {
-        console.log("♻️ Version mismatch or manual reset, reloading...");
-        window.location.href = window.location.origin + window.location.pathname;
-        return;
-      }
-    } else if (!storedVersion) {
-      localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
-    }
+    const CURRENT_VERSION = "20260504_v4";
+    localStorage.setItem("CH_UI_VERSION", CURRENT_VERSION);
 
     // Ensure every page has the basic shell before adding the unified header/sidebar
     if (typeof this.ensureLayoutShell === "function") {
@@ -322,7 +293,7 @@ const UnifiedNav = {
 
     const isLoggedIn = !!(token && user);
     const isDashboardPath = /dashboard|members|teams|events|finances|shop|schedule|scout|finder|finder-/.test(path) || /finder/.test(fullUrl);
-    const isLanding = (fileName === "index.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html");
+    const isLanding = (fileName === "index.html" || fileName === "login.html" || fileName === "signup.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html");
 
     if (isDashboardPath && !isLoggedIn && !isDemo) {
       console.warn("🔒 Unauthorized access to dashboard. Redirecting...");
@@ -370,7 +341,7 @@ const UnifiedNav = {
       document.body.classList.add("landing-view");
     }
     // 🛡️ Context Sync: Ensure we have latest roles and family data for switcher
-    if (typeof apiService !== 'undefined' && typeof apiService.getContext === 'function') {
+    if (isLoggedIn && typeof apiService !== 'undefined' && typeof apiService.getContext === 'function') {
       try {
         apiService.getContext()
           .then(context => {
@@ -1090,12 +1061,12 @@ const UnifiedNav = {
 
     if (!isLoggedIn) {
       header.innerHTML = `
-        <div class="nav-container nav container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div class="nav-container nav container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; height: 100%;">
             <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 32px; width: 32px;">
                 <span class="logo-text neon-text" style="font-weight: 800; font-size: 1.2rem;">ClubHub</span>
             </div>
-            <div class="nav-buttons">
+            <div class="nav-buttons" style="display: flex; align-items: center; gap: 1.5rem;">
                 <button class="btn btn-secondary" onclick="showModal('loginModal')">Login</button>
                 <button class="btn btn-primary" onclick="showSignupOptions()">Sign Up</button>
             </div>
@@ -1105,7 +1076,7 @@ const UnifiedNav = {
       const name =
         (user ? user.firstName || user.first_name : "User") || "User";
       header.innerHTML = `
-        <div class="nav-container nav container" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div class="nav-container nav container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; height: 100%;">
             <div class="logo" onclick="window.location.href='index.html'" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
                 <img src="images/logo.png" alt="ClubHub Logo" class="logo-image" style="height: 32px; width: 32px;">
                 <span class="logo-text neon-text" style="font-weight: 800; font-size: 1.2rem;">ClubHub</span>
@@ -2868,15 +2839,23 @@ const UnifiedNav = {
 
     // URL-based overrides (if user is navigating to a specific dash)
     if (p.includes("super-admin")) finalRole = "superadmin";
-    else if (p.includes("admin") || p.includes("members") || p.includes("teams") || p.includes("form-builder")) finalRole = "admin";
+    else if (p.includes("admin-") || p.includes("members") || p.includes("teams") || p.includes("form-builder")) finalRole = "admin";
     else if (p.includes("scout") || p.includes("scouting")) finalRole = "scout";
-    else if (p.includes("coach")) finalRole = "coach";
+    else if (p.includes("coach-")) finalRole = "coach";
     else if (p.includes("player-") || p.includes("schedule")) finalRole = "player";
+    else if (p.includes("tactical-board")) {
+      // Preserve admin or coach role on tactical board
+      if (userRole === "admin" || userRole === "organization" || userRole === "owner") finalRole = "admin";
+      else if (userRole === "coach" || userRole === "staff") finalRole = "coach";
+      else finalRole = "admin"; // Default for tactical board access
+    }
     else if (dashboardMode === "player") finalRole = "player";
 
-    // Safety check: if user is admin but on a coach page, stay admin
-    if (userRole === "admin" && finalRole === "coach") {
-      finalRole = "admin";
+    // Safety check: if user is admin/coach but on a generic page, preserve their role
+    if ((userRole === "admin" || userRole === "coach") && (finalRole === "player" || !finalRole)) {
+      if (!/player-|schedule|finances|shop|chat/.test(url)) {
+        finalRole = userRole;
+      }
     }
 
     const finalIsSuperAdmin = finalRole === "superadmin";
@@ -3123,6 +3102,11 @@ const UnifiedNav = {
    */
   performMobileUXSweep() {
     const isMobile = window.innerWidth <= 991;
+    const isDashboard = window.location.pathname.includes("dashboard") || 
+                        window.location.pathname.includes("chat") || 
+                        window.location.pathname.includes("messenger") ||
+                        document.body.classList.contains("dashboard-page");
+
     if (!isMobile) {
       document.querySelectorAll('.mobile-only').forEach(el => el.style.display = 'none');
       return;

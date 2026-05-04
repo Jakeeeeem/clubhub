@@ -103,7 +103,7 @@
 }
 
 .group-role {
-  display: none;
+  display: block;
 }
 
 .group-switcher-arrow {
@@ -434,8 +434,8 @@
 }
 
   .group-role {
-  display: none;
-}
+    display: block;
+  }
 
   .group-item-name {
     font-size: 14px;

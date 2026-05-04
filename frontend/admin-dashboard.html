@@ -15,9 +15,9 @@
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="apple-touch-icon" href="/images/logo.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" crossorigin="anonymous">
-    <link rel="stylesheet" href="styles.css?v=20260429_v18">
-    <link rel="stylesheet" href="design-system.css?v=20260429_v18">
-    <link rel="stylesheet" href="unified-nav.css?v=20260429_v18">
+    <link rel="stylesheet" href="styles.css?v=20260504_v3">
+    <link rel="stylesheet" href="design-system.css?v=20260504_v3">
+    <link rel="stylesheet" href="unified-nav.css?v=20260504_v3">
     <link rel="stylesheet" href="quick-fixes.css?v=20260502">
     <script>
         // CRITICAL: Force Service Worker Unregistration if stuck on old version
@@ -204,18 +204,7 @@
     </style>
 </head>
 
-    <script>
-        // Auto-enable demo session on localhost for visual tests
-        try {
-            if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
-                localStorage.setItem('isDemoSession', 'true');
-                localStorage.setItem('authToken', 'demo-token');
-                if (!localStorage.getItem('currentUser')) {
-                    localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-admin', first_name: 'Demo', last_name: 'Admin', role: 'admin', account_type: 'organization' }));
-                }
-            }
-        } catch (e) { console.warn('Demo auto-enable failed', e); }
-    </script>
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
 <body class="clubhub-unified dashboard-page">
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
 
@@ -250,10 +239,10 @@
                         <span class="stat-number" id="activeEvents">--</span>
                         <div class="stat-change">Live data</div>
                     </div>
-                    <div class="stat-card" onclick="window.location.href='admin-scout-approvals.html'" style="cursor: pointer; display: none;">
-                        <span class="stat-label">Pending Scouts</span>
-                        <span class="stat-number" id="pendingScouts" style="color:#f59e0b;">3</span>
-                        <div class="stat-change" style="color:#f59e0b;">Requires verification</div>
+                    <div class="stat-card" onclick="window.location.href='admin-finances.html'" style="cursor: pointer;">
+                        <span class="stat-label">Stripe Status</span>
+                        <span class="stat-number" id="stripeStatusText" style="font-size: 1.5rem;">Checking...</span>
+                        <div class="stat-change" id="stripeStatusIndicator">Connecting...</div>
                     </div>
                 </div>
 
@@ -266,23 +255,9 @@
                                     updates</span>
                             </div>
                             <div id="activityFeed">
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">👤
-                                    </div>
-                                    <div class="feed-meta">
-                                        <strong>New member joined — Marcus Thompson</strong>
-                                        <span>Player account · Under 16s squad</span>
-                                    </div>
-                                    <span class="feed-time">2m ago</span>
-                                </div>
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(220,38,38,0.1);color:#f87171;">💳
-                                    </div>
-                                    <div class="feed-meta">
-                                        <strong>Payment received — £75</strong>
-                                        <span>Monthly subscription · Sarah Davies</span>
-                                    </div>
-                                    <span class="feed-time">18m ago</span>
+                                <div style="padding:1.5rem; text-align:center; opacity:0.5;">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                    <span style="margin-left:0.5rem; font-size:0.85rem;">Loading activity...</span>
                                 </div>
                             </div>
                         </div>
@@ -340,27 +315,8 @@
                                 </thead>
                                 <tbody style="font-size:0.9rem;">
                                     <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Marcus Thompson</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Player</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 16s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Sarah Davies</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Parent</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 12s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
+                                        <td colspan="5" style="padding: 2.5rem; text-align: center; opacity: 0.5;">
+                                            No members added to this organization yet.
                                         </td>
                                     </tr>
                                 </tbody>
@@ -638,14 +594,14 @@
             </div>
         </div>
     </div>
-    <script src="app-state.js?v=20260429_v18"></script>
-    <script src="api-service.js?v=20260429_v18"></script>
-    <script src="enhanced-login-handler.js?v=20260429_v18"></script>
-    <script src="group-switcher.js?v=20260429_v18"></script>
-    <script src="pwa-install.js?v=20260429_v18"></script>
-    <script src="unified-nav.js?v=20260429_v18"></script>
-    <script src="squad-messenger.js?v=20260429_v18"></script>
-    <script src="dashboard-loaders.js?v=20260429_v18"></script>
+    <script src="app-state.js?v=20260504_v3"></script>
+    <script src="api-service.js?v=20260504_v3"></script>
+    <script src="enhanced-login-handler.js?v=20260504_v3"></script>
+    <script src="group-switcher.js?v=20260504_v3"></script>
+    <script src="pwa-install.js?v=20260504_v3"></script>
+    <script src="unified-nav.js?v=20260504_v3"></script>
+    <script src="squad-messenger.js?v=20260504_v3"></script>
+    <script src="dashboard-loaders.js?v=20260504_v3"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -687,7 +643,10 @@
             if (!container) return;
             try {
                 const { activity } = await apiService.get('/api/feed');
-                if (!activity || activity.length === 0) return;
+                if (!activity || activity.length === 0) {
+                    container.innerHTML = '<div style="padding:1.5rem; text-align:center; opacity:0.5; font-size:0.85rem;">No recent activity.</div>';
+                    return;
+                }
                 
                 container.innerHTML = activity.map(a => `
                     <div class="feed-entry">

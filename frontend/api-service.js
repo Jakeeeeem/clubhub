@@ -23,8 +23,13 @@ if (typeof ApiService === 'undefined') {
       this.baseURL,
     );
 
-    // Test connection on initialization
-    this.testConnection();
+    // Test connection on initialization if not on landing page and only if potentially authenticated
+    const pathName = (window.location.pathname || '').toLowerCase();
+    const isLnd = pathName === '/' || pathName.includes('index.html') || pathName === '' || pathName.includes('login.html') || pathName.includes('signup.html');
+    
+    if (!isLnd && localStorage.getItem('authToken')) {
+      this.testConnection();
+    }
     this.context = null;
 
     // Scouting Methods
@@ -62,18 +67,13 @@ if (typeof ApiService === 'undefined') {
    * User requested "all working data not mock" - forcing live data for everything.
    */
   shouldMock() {
-    // Allow mock/demo responses only when `isDemoSession` is true AND
-    // the app is running in a local/dev host (never allow on production/live hosts).
     try {
+      const forceLive = localStorage.getItem('forceLiveData') === 'true';
+      if (forceLive) return false;
+
+      // ONLY mock if isDemoSession is explicitly true
       const isDemo = localStorage.getItem('isDemoSession') === 'true';
-      if (!isDemo) return false;
-      const host = (window.location && window.location.hostname) ? window.location.hostname.toLowerCase() : '';
-      // Allow demo on local machines and common dev hosts (localhost, 127.0.0.1, 0.0.0.0)
-      if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') return true;
-      // Allow demo on render/staging preview hosts if explicitly desired
-      if (host.endsWith('.onrender.com') || host.endsWith('.vercel.app') || host.endsWith('.netlify.app')) return true;
-      // In all other cases (production domains) do not mock, even if localStorage flag exists
-      return false;
+      return isDemo;
     } catch (e) {
       return false;
     }
@@ -86,6 +86,9 @@ if (typeof ApiService === 'undefined') {
 
   async getContext() {
     if (this.context) return this.context;
+    
+    // 🛡️ Skip if no token (guest user)
+    if (!localStorage.getItem('authToken')) return null;
 
     // 🛡️ Demo session bypass
     if (this.shouldMock()) {
@@ -150,7 +153,10 @@ if (typeof ApiService === 'undefined') {
       if (response.family) localStorage.setItem("userFamily", JSON.stringify(response.family));
       if (response.currentGroup) {
           const role = (response.currentGroup.user_role || response.currentGroup.role || "").toLowerCase();
-          localStorage.setItem("userType", ["admin", "organization", "owner", "staff"].includes(role) ? "organization" : "player");
+          const normalizedRole = ["admin", "organization", "owner", "staff"].includes(role) ? "admin" : 
+                                 ["coach", "assistant_coach"].includes(role) ? "coach" : 
+                                 role === "scout" ? "scout" : "player";
+          localStorage.setItem("userType", normalizedRole);
       }
       // Persist current group id for downstream callers and header injection
       try {
@@ -354,22 +360,39 @@ if (typeof ApiService === 'undefined') {
       const response = await fetch(fullUrl, config);
       return await this._handleResponse(response, endpoint, options);
     } catch (error) {
-      // If the local frontend is served from a separate host/port and /api is not proxied,
-      // retry once against the backend host at localhost:3000.
+      // Retry strategy for local development:
+      // 1) If frontend is served locally and the API isn't proxied, try the same-origin /api path first (useful when using dev proxy).
+      // 2) If that fails and we haven't retried yet, try the common fallback host at http://localhost:3000.
       const isLocalHost = this._isLocalDevOrigin();
       const hasNotRetried = !options._backendFallbackTried;
-      if (isLocalHost && hasNotRetried && error && error.status === 404) {
-        const fallbackUrl = `http://localhost:3000/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-        if (fallbackUrl !== fullUrl) {
-          console.warn(`⚠️ Local API 404 on ${fullUrl || 'unknown url'}. Retrying against ${fallbackUrl}`);
-          try {
+      const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+      if (isLocalHost && hasNotRetried) {
+        // Attempt same-origin proxy first (e.g. frontend dev server proxies /api -> backend)
+        try {
+          const originFallback = `${window.location.origin.replace(/:\d+$|$/, '')}/api${cleanEndpoint}`.replace(/([^:])\/\//g, '$1/');
+          if (originFallback !== fullUrl) {
+            console.warn(`⚠️ Local API error on ${fullUrl || 'unknown url'}. Retrying against proxied origin ${originFallback}`);
+            const originResp = await fetch(originFallback, config);
+            return await this._handleResponse(originResp, endpoint, { ...options, _backendFallbackTried: true });
+          }
+        } catch (originErr) {
+          // ignore and try next fallback
+        }
+
+        // As a last resort, try explicit localhost:3000 (common backend port)
+        try {
+          const fallbackUrl = `http://localhost:3000/api${cleanEndpoint}`;
+          if (fallbackUrl !== fullUrl) {
+            console.warn(`⚠️ Local API error on ${fullUrl || 'unknown url'}. Retrying against ${fallbackUrl}`);
             const fallbackResponse = await fetch(fallbackUrl, config);
             return await this._handleResponse(fallbackResponse, endpoint, { ...options, _backendFallbackTried: true });
-          } catch (fallbackError) {
-            return this._handleError(fallbackError, requestId, endpoint, options);
           }
+        } catch (fallbackError) {
+          return this._handleError(fallbackError, requestId, endpoint, options);
         }
       }
+
       return this._handleError(error, requestId, endpoint, options);
     }
   }
@@ -387,6 +410,40 @@ if (typeof ApiService === 'undefined') {
     // --- SYSTEM & AUTH ---
     if (endpoint.includes("/health")) {
       return { status: 'healthy', demo: true };
+    }
+
+    if (endpoint.includes("/auth/login")) {
+      const body = JSON.parse(options.body || "{}");
+      console.log("🔐 Demo Login Attempt:", body.email);
+      return {
+        success: true,
+        token: "demo-token-" + Date.now(),
+        user: {
+          id: "demo-user-id",
+          email: body.email || "demo@clubhub.com",
+          firstName: "Demo",
+          lastName: "User",
+          account_type: "adult",
+          role: "player"
+        }
+      };
+    }
+
+    if (endpoint.includes("/auth/register")) {
+      const body = JSON.parse(options.body || "{}");
+      console.log("📝 Demo Registration Attempt:", body.email);
+      return {
+        success: true,
+        token: "demo-token-" + Date.now(),
+        user: {
+          id: "demo-user-id",
+          email: body.email,
+          firstName: body.firstName || "New",
+          lastName: body.lastName || "User",
+          account_type: body.accountType || "adult",
+          role: body.accountType === "group" ? "admin" : "player"
+        }
+      };
     }
 
     // --- PLATFORM-ADMIN: scout verifications (demo fallback) ---
@@ -501,7 +558,7 @@ if (typeof ApiService === 'undefined') {
             if (endpoint.includes("/stats")) {
                 return {
                     totalMembers: fb.players.length + fb.staff.length,
-                    monthlyRevenue: fb.statistics.monthly_revenue || 3840,
+                    monthlyRevenue: fb.statistics.monthly_revenue || 0,
                     activeEvents: fb.events.length,
                     pendingScouts: 3
                 };
@@ -519,9 +576,25 @@ if (typeof ApiService === 'undefined') {
     }
 
     // --- MESSAGING & NOTIFICATIONS ---
-    if (endpoint.includes("/messages")) {
-      // Always allow real message API calls to reach backend so messages
-      // are persisted in the database instead of being kept in demo cache.
+    if (endpoint.includes("/messages") && method === "GET") {
+      if (localStorage.getItem("isDemoSession") === "true") {
+        const fb = this.getAdminDashboardFallback();
+        const allMessages = fb.messages || [];
+
+        // Conversation list or org-specific conversation list
+        if (endpoint === "/messages" || endpoint.startsWith("/messages?")) {
+          return { messages: allMessages, success: true };
+        }
+
+        // Single message / conversation detail
+        const messageIdMatch = endpoint.match(/^\/messages\/(.+)$/);
+        if (messageIdMatch) {
+          const messageId = messageIdMatch[1];
+          const message = allMessages.find(m => m.id === messageId);
+          return message ? { message } : { message: null };
+        }
+      }
+      // Allow real message API calls to reach backend so messages are persisted by default.
       return null;
     }
 
@@ -569,7 +642,7 @@ if (typeof ApiService === 'undefined') {
       const isDemo = localStorage.getItem("isDemoSession") === "true";
       const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-      if ((response.status === 401 || response.status === 403 || response.status === 404 || response.status >= 500) && this.shouldMock()) {
+      if ((response.status === 401 || response.status === 403 || response.status === 404 || response.status === 405 || response.status >= 500) && this.shouldMock()) {
         try {
           console.warn(`⚠️ API Error ${response.status} on ${endpoint} - Attempting demo fallback...`);
           const fallback = await this._interceptDemoRequest(endpoint, options);
@@ -580,12 +653,19 @@ if (typeof ApiService === 'undefined') {
         // If no mock available, fall through to normal error handling below
       }
 
-      // Don't trigger logout for 401/403 in demo mode
+      // Don't trigger logout for 401/403 in demo mode or on auth pages
+    const isAuthPage = window.location.pathname.includes("index.html") || 
+                       window.location.pathname.includes("login.html") || 
+                       window.location.pathname.includes("signup.html") ||
+                       window.location.pathname === "/";
+
       if ((response.status === 401 || response.status === 403) && localStorage.getItem("isDemoSession") !== "true") {
-        console.warn("🔐 Session expired, logging out...");
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("currentUser");
-        if (!window.location.pathname.includes("index.html") && !window.location.pathname.includes("signup.html")) {
+        console.warn("🔐 Session expired or unauthorized, logging out...", endpoint);
+        
+        // Only clear and redirect if we're not already on an auth/landing page
+        if (!isAuthPage) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("currentUser");
           window.location.href = "index.html";
         }
       }
@@ -2066,6 +2146,7 @@ if (typeof ApiService === 'undefined') {
     } catch (error) {
       console.warn("❌ Failed to fetch admin dashboard data:", error);
 
+      const isDemo = localStorage.getItem("isDemoSession") === 'true';
       if (isDemo) return this.getAdminDashboardFallback();
 
       try {
@@ -2401,7 +2482,7 @@ if (typeof ApiService === 'undefined') {
     
     if (!isDemo) {
         return {
-          groups: [], clubs: [], players: [], staff: [], events: [], teams: [], payments: [], products: [], campaigns: [], listings: [], tournaments: [],
+          groups: [], clubs: [], players: [], staff: [], events: [], teams: [], payments: [], products: [], campaigns: [], listings: [], tournaments: [], feed: [],
           statistics: { total_groups: 0, total_players: 0, total_staff: 0, total_events: 0, total_teams: 0, monthly_revenue: 0 }
         };
     }
@@ -2570,7 +2651,7 @@ if (typeof ApiService === 'undefined') {
         total_staff: 12,
         total_events: 5,
         total_teams: 6,
-        monthly_revenue: 7100,
+        monthly_revenue: 0,
         pending_payments: 4,
         attendance_avg: 94,
       }
@@ -2585,16 +2666,20 @@ if (typeof ApiService === 'undefined') {
         : "📚 Using player dashboard fallback data",
     );
 
-    if (!isDemo)
+    if (!isDemo) {
+      const storedUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
       return {
-        player: null,
+        player: storedUser,
         groups: [],
         teams: [],
         events: [],
         payments: [],
         bookings: [],
         applications: [],
+        activities: [],
+        performance: { goals: 0, assists: 0, matchesPlayed: 0 }
       };
+    }
 
     const activeId = localStorage.getItem("activePlayerId") || "demo-player-id";
     let player = {
@@ -2705,6 +2790,12 @@ if (typeof ApiService === 'undefined') {
 
   getCoachDashboardFallback() {
     const isDemo = localStorage.getItem("isDemoSession") === "true";
+    if (!isDemo) {
+        return {
+            stats: { total_players: 0, upcoming_sessions: 0, attendance_average: 0, win_rate: 0 },
+            teams: [], players: [], events: [], recent_matches: [], activity: []
+        };
+    }
     console.log("✨ Using Rich Demo Coach Dashboard Data");
 
     const adminData = this.getAdminDashboardFallback();
@@ -2750,6 +2841,7 @@ if (typeof ApiService === 'undefined') {
   }
 
   async testConnection() {
+    if (!localStorage.getItem('authToken')) return true;
     try {
       console.log("🔍 Testing API connection...");
       const health = await this.healthCheck();
@@ -3531,11 +3623,11 @@ if (typeof ApiService === 'undefined') {
     return await this.makeRequest(`/messages?org_id=${orgId}`);
   }
 
-  async getMessages(conversationId) {
+  async getConversationMessages(conversationId) {
     return await this.makeRequest(`/messages/${conversationId}`);
   }
 
-  async sendMessage(conversationId, data) {
+  async postConversationMessage(conversationId, data) {
     return await this.makeRequest(`/messages/${conversationId}`, {
       method: "POST",
       body: JSON.stringify(data),

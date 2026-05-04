@@ -184,7 +184,12 @@ const SquadMessenger = {
       let data;
       const orgId = (typeof apiService.getCurrentOrg === 'function' ? apiService.getCurrentOrg()?.id : null) || localStorage.getItem('clubId') || localStorage.getItem('activeOrganizationId');
       if (orgId && typeof apiService.getMessengerConversations === 'function') {
-        data = await apiService.getMessengerConversations(orgId);
+        try {
+          data = await apiService.getMessengerConversations(orgId);
+        } catch (fallbackErr) {
+          console.warn('[SquadMessenger] Messenger fetch with orgId failed, retrying generic /messages', fallbackErr);
+          data = await apiService.makeRequest('/messages');
+        }
       } else {
         data = await apiService.makeRequest('/messages');
       }

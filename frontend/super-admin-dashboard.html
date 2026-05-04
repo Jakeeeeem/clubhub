@@ -36,18 +36,7 @@
     </style>
 </head>
 <body class="clubhub-unified dashboard-page">
-    <script>
-        // Auto-enable demo session on localhost for visual tests
-        try {
-            if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
-                localStorage.setItem('isDemoSession', 'true');
-                localStorage.setItem('authToken', 'demo-token');
-                if (!localStorage.getItem('currentUser')) {
-                    localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-super', first_name: 'Demo', last_name: 'Super', role: 'superadmin', account_type: 'superadmin' }));
-                }
-            }
-        } catch (e) { console.warn('Demo auto-enable failed', e); }
-    </script>
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
     <header class="header"></header>
 
@@ -61,25 +50,25 @@
 
             <!-- Platform Stats -->
             <div class="stats-grid">
-                <div class="stat-card" onclick="showSection('groups')" style="cursor: pointer;">
+                <div class="stat-card">
                     <span class="stat-label">Groups</span>
-                    <span class="stat-number" id="globalStats-totalGroups">142</span>
-                    <div class="stat-change">↑ 4 new this month</div>
+                    <span class="stat-number" id="globalStats-totalGroups">0</span>
+                    <div class="stat-change" style="color:rgba(255,255,255,0.3);">No active groups</div>
                 </div>
-                <div class="stat-card" onclick="showSection('users')" style="cursor: pointer;">
+                <div class="stat-card">
                     <span class="stat-label">Total Users</span>
-                    <span class="stat-number" id="totalUsers">4,821</span>
-                    <div class="stat-change">↑ 234 this month</div>
+                    <span class="stat-number" id="totalUsers">0</span>
+                    <div class="stat-change" style="color:rgba(255,255,255,0.3);">No users registered</div>
                 </div>
-                <div class="stat-card" onclick="showSection('overview')" style="cursor: pointer;">
+                <div class="stat-card">
                     <span class="stat-label">MRR</span>
-                    <span class="stat-number" id="platformMRR">£18.4k</span>
-                    <div class="stat-change">↑ 9% vs last month</div>
+                    <span class="stat-number" id="platformMRR">£0</span>
+                    <div class="stat-change" style="color:rgba(255,255,255,0.3);">Monthly Revenue</div>
                 </div>
-                <div class="stat-card" onclick="showSection('activity')" style="cursor: pointer;">
+                <div class="stat-card">
                     <span class="stat-label">System Health</span>
-                    <span class="stat-number" style="color:#4ade80;">99.8%</span>
-                    <div class="stat-change">Uptime — last 30d</div>
+                    <span class="stat-number" style="color:#4ade80;">100%</span>
+                    <div class="stat-change">Operational</div>
                 </div>
             </div>
 
@@ -93,53 +82,8 @@
                             <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">Live log</span>
                         </div>
                         <div id="platformFeed">
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">🏢</div>
-                                <div class="feed-meta">
-                                    <strong>New group registered — Riverside FC Academy</strong>
-                                    <span>Manchester · Football · 72 members imported</span>
-                                </div>
-                                <span class="feed-time">3m ago</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(96,165,250,0.1);color:#60a5fa;">💳</div>
-                                <div class="feed-meta">
-                                    <strong>Subscription upgraded — Pro Plan</strong>
-                                    <span>Northside Rugby Club · £149/mo → £299/mo</span>
-                                </div>
-                                <span class="feed-time">28m ago</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(251,191,36,0.1);color:#fbbf24;">⚠️</div>
-                                <div class="feed-meta">
-                                    <strong>Payment failed — City Athletics</strong>
-                                    <span>Monthly billing · Card declined · Auto-retry in 24h</span>
-                                </div>
-                                <span class="feed-time">1h ago</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">👤</div>
-                                <div class="feed-meta">
-                                    <strong>New super-admin account created</strong>
-                                    <span>Dan Harris · Eastside Sports Complex</span>
-                                </div>
-                                <span class="feed-time">2h ago</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(167,139,250,0.1);color:#a78bfa;">🔒</div>
-                                <div class="feed-meta">
-                                    <strong>Security alert — Multiple failed logins</strong>
-                                    <span>IP: 185.220.x.x · Blocked after 5 attempts</span>
-                                </div>
-                                <span class="feed-time">3h ago</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">🏢</div>
-                                <div class="feed-meta">
-                                    <strong>New group registered — West Coast Swim Club</strong>
-                                    <span>Bristol · Swimming · Trial plan</span>
-                                </div>
-                                <span class="feed-time">Yesterday</span>
+                            <div style="padding: 2rem; text-align: center; opacity: 0.5;">
+                                <p>No platform activity recorded.</p>
                             </div>
                         </div>
                     </div>
@@ -161,28 +105,9 @@
                             </thead>
                             <tbody>
                                 <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                    <td data-label="Group" style="padding:0.65rem 0;color:#f1f5f9;">Riverside FC Academy</td>
-                                    <td data-label="Plan" style="padding:0.65rem 0;color:var(--text-muted);">Pro</td>
-                                    <td data-label="Members" style="padding:0.65rem 0;color:var(--text-muted);">72</td>
-                                    <td data-label="Status" style="padding:0.65rem 0;"><span style="background:rgba(74,222,128,0.15);color:#4ade80;padding:2px 8px;border-radius:6px;font-size:0.75rem;">Active</span></td>
-                                </tr>
-                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                    <td data-label="Group" style="padding:0.65rem 0;color:#f1f5f9;">Northside Rugby Club</td>
-                                    <td data-label="Plan" style="padding:0.65rem 0;color:var(--text-muted);">Elite</td>
-                                    <td data-label="Members" style="padding:0.65rem 0;color:var(--text-muted);">148</td>
-                                    <td data-label="Status" style="padding:0.65rem 0;"><span style="background:rgba(74,222,128,0.15);color:#4ade80;padding:2px 8px;border-radius:6px;font-size:0.75rem;">Active</span></td>
-                                </tr>
-                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                    <td data-label="Group" style="padding:0.65rem 0;color:#f1f5f9;">City Athletics</td>
-                                    <td data-label="Plan" style="padding:0.65rem 0;color:var(--text-muted);">Starter</td>
-                                    <td data-label="Members" style="padding:0.65rem 0;color:var(--text-muted);">31</td>
-                                    <td data-label="Status" style="padding:0.65rem 0;"><span style="background:rgba(239,68,68,0.15);color:#f87171;padding:2px 8px;border-radius:6px;font-size:0.75rem;">Payment Due</span></td>
-                                </tr>
-                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                    <td data-label="Group" style="padding:0.65rem 0;color:#f1f5f9;">West Coast Swim Club</td>
-                                    <td data-label="Plan" style="padding:0.65rem 0;color:var(--text-muted);">Trial</td>
-                                    <td data-label="Members" style="padding:0.65rem 0;color:var(--text-muted);">14</td>
-                                    <td data-label="Status" style="padding:0.65rem 0;"><span style="background:rgba(251,191,36,0.15);color:#fbbf24;padding:2px 8px;border-radius:6px;font-size:0.75rem;">Trial</span></td>
+                                    <td colspan="4" style="padding: 2.5rem; text-align: center; opacity: 0.5;">
+                                        No organizations registered yet.
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>

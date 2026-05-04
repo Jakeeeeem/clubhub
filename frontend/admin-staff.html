@@ -147,7 +147,13 @@
         try {
             if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
                 localStorage.setItem('isDemoSession', 'true');
-                localStorage.setItem('authToken', 'demo-token');
+                if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
+                    if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
+                        if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
+                            localStorage.setItem('authToken', 'demo-token');
+                        }
+                    }
+                }
                 if (!localStorage.getItem('currentUser')) {
                     localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-admin', first_name: 'Demo', last_name: 'Admin', role: 'admin', account_type: 'organization' }));
                 }
@@ -203,27 +209,11 @@
                                 <span
                                     style="margin-left:auto;font-size:0.75rem;font-weight:400;color:var(--text-muted);">Live
                                     updates</span>
-                            </div>
-                            <div id="activityFeed">
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">👤
+                                                         <div id="activityFeed">
+                                    <div style="padding: 2rem; text-align: center; opacity: 0.5;">
+                                        <p>No recent activity.</p>
                                     </div>
-                                    <div class="feed-meta">
-                                        <strong>New member joined — Marcus Thompson</strong>
-                                        <span>Player account · Under 16s squad</span>
-                                    </div>
-                                    <span class="feed-time">2m ago</span>
-                                </div>
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(220,38,38,0.1);color:#f87171;">💳
-                                    </div>
-                                    <div class="feed-meta">
-                                        <strong>Payment received — £75</strong>
-                                        <span>Monthly subscription · Sarah Davies</span>
-                                    </div>
-                                    <span class="feed-time">18m ago</span>
-                                </div>
-                            </div>
+                                </div>            </div>
                         </div>
 
                         <div class="glass-card" style="padding:1.5rem;margin-top:1.5rem;">
@@ -325,32 +315,13 @@
                                         <th style="padding:0.75rem 0; text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody style="font-size:0.9rem;">
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Marcus Thompson</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Player</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 16s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                        <td data-label="Name" style="padding:1rem 0;"> Sarah Davies</td>
-                                        <td data-label="Role" style="padding:1rem 0;">Parent</td>
-                                        <td data-label="Squad" style="padding:1rem 0;">Under 12s</td>
-                                        <td data-label="Status" style="padding:1rem 0;"><span class="badge"
-                                                style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
-                                        </td>
-                                        <td data-label="Actions" style="padding:1rem 0; text-align:right;"><button
-                                                class="btn btn-text btn-small"
-                                                onclick="showNotification('Member details coming soon', 'info')">View</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
+                                    <tbody style="font-size:0.9rem;">
+                                        <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                                            <td colspan="5" style="padding: 2.5rem; text-align: center; opacity: 0.5;">
+                                                No members found.
+                                            </td>
+                                        </tr>
+                                    </tbody>
                             </table>
                         </div>
                     </div>

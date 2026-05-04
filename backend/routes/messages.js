@@ -11,12 +11,17 @@ const router = express.Router();
 router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
   try {
     const userId = req.user.id;
-    const orgId = req.orgContext?.organization_id || req.user.organization_id || req.user.currentOrganizationId || req.user.currentGroupId || req.user.clubId || req.user.groupId;
+    const explicitOrgId = req.query.org_id || req.query.organizationId || req.query.groupId || req.query.orgId || null;
+    const orgId = explicitOrgId || req.orgContext?.organization_id || req.user.organization_id || req.user.currentOrganizationId || req.user.currentGroupId || req.user.clubId || req.user.groupId;
     const allowedTypes = ["all", "direct", "announcement", "team"];
     const type = allowedTypes.includes(req.query.type) ? req.query.type : "all";
 
-    const typeFilter = type === "all" ? "" : "AND m.type = $2";
     let params, query_sql;
+    let typeFilter = "";
+
+    if (type !== "all") {
+      typeFilter = "AND m.type = $3";
+    }
 
     if (orgId) {
       // Query with org filter

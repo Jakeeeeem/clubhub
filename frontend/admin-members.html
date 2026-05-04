@@ -177,7 +177,8 @@
                 grid-template-columns: 1fr 1fr !important;
             }
         }
-
+    </style>
+    <script>
         // Search/filter members by name or email
         (function attachMemberSearch() {
             function debounce(fn, wait) {
@@ -214,21 +215,10 @@
                 };
             });
         })();
-    </style>
+    </script>
 </head>
 
-    <script>
-        // Auto-enable demo session on localhost for visual tests
-        try {
-            if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
-                localStorage.setItem('isDemoSession', 'true');
-                localStorage.setItem('authToken', 'demo-token');
-                if (!localStorage.getItem('currentUser')) {
-                    localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-admin', first_name: 'Demo', last_name: 'Admin', role: 'admin', account_type: 'organization' }));
-                }
-            }
-        } catch (e) { console.warn('Demo auto-enable failed', e); }
-    </script>
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
 <body class="clubhub-unified dashboard-page">
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
 
@@ -249,26 +239,25 @@
             <div id="overview" class="dashboard-section" style="display:none;">
                 <div class="stats-row"
                     style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                    <div class="stat-card" onclick="window.location.href='admin-members.html'" style="cursor: pointer;">
+                    <div class="stat-card">
                         <span class="stat-label">Total Members</span>
-                        <span class="stat-number" id="totalMembers">47</span>
-                        <div class="stat-change">↑ 3 this month</div>
+                        <span class="stat-number" id="totalMembers">0</span>
+                        <div class="stat-change" style="color:rgba(255,255,255,0.3);">No members yet</div>
                     </div>
-                    <div class="stat-card" onclick="window.location.href='admin-finances.html'" style="cursor: pointer;">
+                    <div class="stat-card">
                         <span class="stat-label">Revenue (30d)</span>
-                        <span class="stat-number" id="monthlyRevenue">£3,840</span>
-                        <div class="stat-change">↑ 12% vs last month</div>
+                        <span class="stat-number" id="monthlyRevenue">£0</span>
+                        <div class="stat-change" style="color:rgba(255,255,255,0.3);">No revenue recorded</div>
                     </div>
-                    <div class="stat-card" onclick="window.location.href='admin-tournament-manager.html'" style="cursor: pointer;">
+                    <div class="stat-card">
                         <span class="stat-label">Active Events</span>
-                        <span class="stat-number" id="activeEvents">6</span>
-                        <div class="stat-change">2 upcoming this week</div>
+                        <span class="stat-number" id="activeEvents">0</span>
+                        <div class="stat-change" style="color:rgba(255,255,255,0.3);">No active events</div>
                     </div>
-                    <div class="stat-card" style="opacity:0.45; cursor:default; pointer-events:none;" title="Hidden — returning in next phase">
-                        <span class="stat-label">Pending Scouts</span>
-                        <span class="stat-number" id="pendingScouts" style="color:#f59e0b;">3</span>
-                        <div class="stat-change" style="color:#f59e0b;">Requires verification</div>
-                        <div style="margin-top:0.5rem; font-size:0.78rem; color:var(--text-muted);">Hidden — coming in next phase</div>
+                    <div class="stat-card">
+                        <span class="stat-label">Pending Reviews</span>
+                        <span class="stat-number" id="pendingScouts" style="color:rgba(255,255,255,0.3);">0</span>
+                        <div class="stat-change" style="color:rgba(255,255,255,0.3);">System health</div>
                     </div>
                 </div>
 
@@ -281,23 +270,8 @@
                                     updates</span>
                             </div>
                             <div id="activityFeed">
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">👤
-                                    </div>
-                                    <div class="feed-meta">
-                                        <strong>New member joined — Marcus Thompson</strong>
-                                        <span>Player account · Under 16s squad</span>
-                                    </div>
-                                    <span class="feed-time">2m ago</span>
-                                </div>
-                                <div class="feed-entry">
-                                    <div class="feed-icon" style="background:rgba(220,38,38,0.1);color:#f87171;">💳
-                                    </div>
-                                    <div class="feed-meta">
-                                        <strong>Payment received — £75</strong>
-                                        <span>Monthly subscription · Sarah Davies</span>
-                                    </div>
-                                    <span class="feed-time">18m ago</span>
+                                <div style="padding: 2rem; text-align: center; opacity: 0.5;">
+                                    <p>No recent activity.</p>
                                 </div>
                             </div>
                         </div>

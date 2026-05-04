@@ -15,7 +15,7 @@
 /* Base Mobile Height Overrides */
 @media (max-width: 991px) {
     .pro-header, header.header, .header { 
-        height: 64px !important; 
+        height: 72px !important; 
         padding: 0 1rem !important; 
         display: flex !important;
         align-items: center !important;
@@ -90,6 +90,7 @@
     .table-action-more, table tbody td[data-label="Actions"] button, .hidden-actions button {
         -webkit-tap-highlight-color: transparent !important;
         -webkit-user-select: none !important;
+        user-select: none !important;
         touch-action: manipulation !important;
         z-index: 70 !important;
     }
@@ -227,6 +228,54 @@
         display: flex;
         align-items: center;
         min-width: 0;
+    }
+    
+    .header-org-switcher-wrapper .group-switcher,
+    .header-family-switcher-wrapper .group-switcher {
+        margin: 0;
+        min-width: 0;
+    }
+    .header-org-switcher-wrapper .group-switcher-trigger,
+    .header-family-switcher-wrapper .group-switcher-trigger {
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        margin: 0 !important;
+        min-width: 0 !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+    .header-org-switcher-wrapper .group-switcher-current,
+    .header-family-switcher-wrapper .group-switcher-current {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        min-width: 0 !important;
+    }
+    .header-org-switcher-wrapper .group-info,
+    .header-family-switcher-wrapper .group-info {
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+    .header-org-switcher-wrapper .group-name,
+    .header-family-switcher-wrapper .group-name {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 180px !important;
+    }
+    .header-org-switcher-wrapper .group-role,
+    .header-family-switcher-wrapper .group-role {
+        display: block !important;
+        color: rgba(255,255,255,0.65) !important;
+        font-size: 0.65rem !important;
+        line-height: 1.2 !important;
+        margin-top: 0.08rem !important;
+    }
+    .header-org-switcher-wrapper .group-avatar,
+    .header-family-switcher-wrapper .group-avatar {
+        width: 28px !important;
+        height: 28px !important;
     }
     
     .header-family-switcher-wrapper {
@@ -665,8 +714,40 @@
     }
 
     /* Slightly smaller, cleaner header visuals */
-    .pro-header, header.header { height: 52px !important; padding: 0 0.6rem !important; }
+    .pro-header, header.header,
+    .dashboard-view .pro-header, .dashboard-view header.header,
+    body.clubhub-unified.dashboard-page .pro-header, body.clubhub-unified.dashboard-page header.header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 52px !important;
+        padding: 0 0.75rem !important;
+        box-sizing: border-box !important;
+        z-index: 9999 !important;
+    }
+    .pro-header .nav-container,
+    header.header .nav-container,
+    .dashboard-view .pro-header .nav-container,
+    .dashboard-view header.header .nav-container,
+    .nav.container {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
     .side-menu-trigger { width:40px !important; height:40px !important; border-radius:10px !important; }
+
+    /* Push page content below fixed mobile header */
+    .dashboard-view .main,
+    .dashboard-view .dashboard-main,
+    .dashboard-view .app-container,
+    body.clubhub-unified.dashboard-page .main,
+    body.clubhub-unified.dashboard-page .dashboard-main,
+    body.clubhub-unified.dashboard-page .app-container {
+        padding-top: calc(52px + 1rem) !important;
+    }
 
     /* When the mobile sidebar/menu is open, hide the top header so the sidebar feels fullscreen.
        This also allows sidebar contents and switchers to scroll naturally in a full-height panel. */
@@ -703,7 +784,7 @@
 
 /* --- Global Header (Standardized) --- */
 .pro-header, header.header {
-    height: 80px;
+    height: 88px;
     background: rgba(8, 8, 10, 0.8) !important;
     backdrop-filter: blur(30px) saturate(180%) !important;
     -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
@@ -1817,7 +1898,7 @@ table td:last-child,
     }
 
     .pro-header {
-        height: 64px !important;
+        height: 72px !important;
         background: rgba(10, 10, 12, 0.8) !important;
         backdrop-filter: blur(20px) saturate(180%) !important;
         -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
@@ -2568,8 +2649,8 @@ body.clubhub-unified .logo { display: flex; align-items: center; gap: 0.5rem; }
 }
 
 .main, .dashboard-main {
-        padding-top: 96px !important;
-
+    padding-top: 96px !important;
+}
 body.has-top-tabs .main, 
 body.has-top-tabs .dashboard-main {
     padding-top: calc(var(--nav-height) + 72px) !important;

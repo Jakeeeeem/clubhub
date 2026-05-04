@@ -60,18 +60,7 @@
     </style>
 </head>
 <body>
-    <script>
-        // Auto-enable demo session on localhost for visual tests
-        try {
-            if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
-                localStorage.setItem('isDemoSession', 'true');
-                localStorage.setItem('authToken', 'demo-token');
-                if (!localStorage.getItem('currentUser')) {
-                    localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-coach', first_name: 'Demo', last_name: 'Coach', role: 'coach', account_type: 'coach' }));
-                }
-            }
-        } catch (e) { console.warn('Demo auto-enable failed', e); }
-    </script>
+    <script>window.UNIFIED_NAV_ENABLED = true;</script>
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
 
     <!-- Unified Navigation will inject the Header and Sidebar automatically -->
@@ -118,53 +107,8 @@
                             <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">Live updates</span>
                         </div>
                         <div id="coachFeedContainer">
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">✅</div>
-                                <div class="feed-meta">
-                                    <strong>Marcus Thompson confirmed attendance</strong>
-                                    <span>Tuesday training · Under 16s</span>
-                                </div>
-                                <span class="feed-time">5m ago</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(251,191,36,0.1);color:#fbbf24;">📝</div>
-                                <div class="feed-meta">
-                                    <strong>Player review submitted — Liam Brown</strong>
-                                    <span>Performance rating: 4.2/5 · Good positioning</span>
-                                </div>
-                                <span class="feed-time">32m ago</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(239,68,68,0.1);color:#f87171;">❌</div>
-                                <div class="feed-meta">
-                                    <strong>Absence reported — Kyle Adams</strong>
-                                    <span>Tuesday training · Family commitment</span>
-                                </div>
-                                <span class="feed-time">1h ago</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(96,165,250,0.1);color:#60a5fa;">📨</div>
-                                <div class="feed-meta">
-                                    <strong>New player application — Ethan Reid</strong>
-                                    <span>Under 18s · Midfielder · Awaiting review</span>
-                                </div>
-                                <span class="feed-time">2h ago</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(167,139,250,0.1);color:#a78bfa;">🏃</div>
-                                <div class="feed-meta">
-                                    <strong>Training plan updated — Endurance block</strong>
-                                    <span>4 weeks · April–May cycle · 18 drills</span>
-                                </div>
-                                <span class="feed-time">Yesterday</span>
-                            </div>
-                            <div class="feed-entry">
-                                <div class="feed-icon" style="background:rgba(74,222,128,0.1);color:#4ade80;">🏆</div>
-                                <div class="feed-meta">
-                                    <strong>Match result logged — Won 3-1 vs City FC</strong>
-                                    <span>Saturday league · Man of the match: M. Thompson</span>
-                                </div>
-                                <span class="feed-time">3 days ago</span>
+                            <div style="padding: 2rem; text-align: center; opacity: 0.5;">
+                                <p>No recent activity.</p>
                             </div>
                         </div>
                     </div>
@@ -174,20 +118,9 @@
                             <span style="font-size:1rem;font-weight:700;color:#fff;">📅 Upcoming Sessions</span>
                             <button class="btn btn-secondary btn-small" style="margin-left:auto;" onclick="openModal('addEventModal')">Plan Session</button>
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:0.75rem;">
-                            <div style="padding:0.75rem;background:rgba(255,255,255,0.03);border-radius:10px;border-left:3px solid #dc2626;display:flex;justify-content:space-between;align-items:center;">
-                                <div>
-                                    <div style="font-size:0.85rem;font-weight:600;color:#f1f5f9;">Tuesday Evening Training</div>
-                                    <div style="font-size:0.75rem;color:var(--text-muted);">Tue 1 Apr · 18:00–19:30 · Astro Pitch 2</div>
-                                </div>
-                                <span style="font-size:0.75rem;color:#4ade80;font-weight:600;">14 ✓</span>
-                            </div>
-                            <div style="padding:0.75rem;background:rgba(255,255,255,0.03);border-radius:10px;border-left:3px solid #3b82f6;display:flex;justify-content:space-between;align-items:center;">
-                                <div>
-                                    <div style="font-size:0.85rem;font-weight:600;color:#f1f5f9;">Saturday Fixture — Riverside Cup</div>
-                                    <div style="font-size:0.75rem;color:var(--text-muted);">Sat 5 Apr · 10:00 · Riverside Stadium</div>
-                                </div>
-                                <span style="font-size:0.75rem;color:#60a5fa;font-weight:600;">18 ✓</span>
+                        <div id="coachUpcomingSessions" style="display:flex;flex-direction:column;gap:0.75rem;">
+                            <div style="padding: 1.5rem; text-align: center; opacity: 0.5; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+                                <p style="font-size: 0.85rem; margin: 0;">No sessions scheduled.</p>
                             </div>
                         </div>
                     </div>
@@ -210,40 +143,8 @@
                     <div class="glass-card" style="padding:1.5rem;">
                         <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">👥 My Squad</div>
                         <div id="squadList">
-                            <div class="player-row">
-                                <div class="player-av">MT</div>
-                                <div style="flex:1;">
-                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">Marcus Thompson</div>
-                                    <div style="font-size:0.72rem;color:var(--text-muted);">Forward</div>
-                                </div>
-                                <span style="font-size:0.75rem;color:#4ade80;">✓</span>
-                            </div>
-                            <div class="player-row">
-                                <div class="player-av">LB</div>
-                                <div style="flex:1;">
-                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">Liam Brown</div>
-                                    <div style="font-size:0.72rem;color:var(--text-muted);">Midfielder</div>
-                                </div>
-                                <span style="font-size:0.75rem;color:#4ade80;">✓</span>
-                            </div>
-                            <div class="player-row">
-                                <div class="player-av">KA</div>
-                                <div style="flex:1;">
-                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">Kyle Adams</div>
-                                    <div style="font-size:0.72rem;color:var(--text-muted);">Defender</div>
-                                </div>
-                                <span style="font-size:0.75rem;color:#f87171;">✗</span>
-                            </div>
-                            <div class="player-row">
-                                <div class="player-av">JW</div>
-                                <div style="flex:1;">
-                                    <div style="font-size:0.85rem;color:#f1f5f9;font-weight:600;">James Wilson</div>
-                                    <div style="font-size:0.72rem;color:var(--text-muted);">Goalkeeper</div>
-                                </div>
-                                <span style="font-size:0.75rem;color:#4ade80;">✓</span>
-                            </div>
-                            <div style="padding-top:0.75rem;text-align:center;">
-                                <button class="btn btn-secondary btn-small" style="width:100%;">View Full Squad</button>
+                            <div style="padding: 2rem; text-align: center; opacity: 0.5;">
+                                <p>No players in squad.</p>
                             </div>
                         </div>
                     </div>

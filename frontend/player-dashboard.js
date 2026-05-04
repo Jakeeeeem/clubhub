@@ -650,10 +650,10 @@ async function loadPlannerFeed() {
       }));
       renderItems(mapped);
     } else {
-      renderItems(demoItems);
+      container.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.3);font-size:0.9rem;">No recent updates in your feed.</div>';
     }
   } catch (err) {
-    renderItems(demoItems);
+    container.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.3);font-size:0.9rem;">No recent updates in your feed.</div>';
   }
 }
 async function postToPlannerFeed() {

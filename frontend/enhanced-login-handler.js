@@ -23,6 +23,8 @@ async function handleLogin(e) {
     // Store user data
     localStorage.setItem("authToken", response.token);
     localStorage.setItem("currentUser", JSON.stringify(response.user));
+    // Ensure authenticated sessions prefer live backend data (no demo fallback)
+    localStorage.setItem("forceLiveData", "true");
 
     // CRITICAL: Update apiService token so subsequent API calls work
     apiService.setToken(response.token);
@@ -315,20 +317,9 @@ async function determineUserRedirect(user) {
     user,
   });
 
-  // 0. EXPLICIT DEMO REDIRECTS - Force correct dashboard for demo accounts
-  const isDemoAccount = 
-    userEmail === "demo-admin@clubhub.com" ||
-    userEmail === "admin@proclubdemo.com" ||
-    userEmail === "demo-coach@clubhub.com" ||
-    userEmail === "coach@proclubdemo.com" ||
-    userEmail === "demo-player@clubhub.com" ||
-    userEmail === "player@proclubdemo.com" ||
-    userEmail === "superadmin@clubhub.com";
-
-  if (isDemoAccount) {
-    console.log("🛡️ Demo account detected - forcing isDemoSession=true");
-    localStorage.setItem("isDemoSession", "true");
-  }
+  // Do not force demo mode for specific emails here — authenticated users
+  // should always be able to use the real backend when available. Demo
+  // sessions can still be enabled explicitly by setting `isDemoSession`.
 
   if (
     userEmail === "demo-admin@clubhub.com" ||
