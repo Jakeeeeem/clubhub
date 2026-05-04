@@ -1147,12 +1147,12 @@ router.get("/context", authenticateToken, async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // Get all organizations user belongs to (Unified: Direct Memberships + Player Profiles)
+    // Get all organizations user belongs to (Unified: Direct Memberships + Player Profiles + Direct Ownership)
     const orgsResult = await query(
       `
       SELECT DISTINCT ON (o.id, player_id) 
         o.id, o.name, o.sport, o.location, o.logo_url, 
-        COALESCE(om.role, 'player') as role, 
+        COALESCE(om.role, CASE WHEN o.owner_id = $1 THEN 'owner' ELSE 'player' END) as role, 
         COALESCE(om.status, 'active') as status,
         p.id as player_id,
         (CASE WHEN p.id IS NOT NULL THEN (p.first_name || ' ' || p.last_name) ELSE NULL END) as player_name
@@ -1161,6 +1161,7 @@ router.get("/context", authenticateToken, async (req, res) => {
       LEFT JOIN players p ON o.id = p.club_id AND p.user_id = $1
       WHERE (om.user_id = $1 AND om.status = 'active')
          OR (p.user_id = $1)
+         OR (o.owner_id = $1)
       ORDER BY o.id, p.id, o.name
     `,
       [userId],
@@ -1369,11 +1370,13 @@ router.post("/switch-group", authenticateToken, async (req, res) => {
             return res.status(400).json({ success: false, error: "Group ID is required" });
         }
 
-        // Verify membership
+        // Verify membership (Direct Membership OR Player Profile OR Direct Ownership)
         const memberCheck = await query(
             `SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2 AND status = 'active'
              UNION
-             SELECT 1 FROM players WHERE user_id = $1 AND club_id = $2`,
+             SELECT 1 FROM players WHERE user_id = $1 AND club_id = $2
+             UNION
+             SELECT 1 FROM organizations WHERE owner_id = $1 AND id = $2`,
             [userId, organizationId]
         );
 

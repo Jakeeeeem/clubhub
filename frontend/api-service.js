@@ -196,8 +196,13 @@ if (typeof ApiService === 'undefined') {
 
     console.log("🔍 Detecting environment:", { hostname });
 
-    // Local development: use same origin for local dev hosts so frontend-server proxies work
+    // Local development detection
     if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") {
+      // If we are on one of these hostnames but the port is NOT 3000, 
+      // we assume the backend is on 3000 and the frontend is on 8080/8081.
+      if (window.location.port !== "3000") {
+        return "http://localhost:3000/api";
+      }
       return `${window.location.origin}/api`;
     }
 

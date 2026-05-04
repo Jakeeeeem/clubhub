@@ -2777,8 +2777,12 @@ const UnifiedNav = {
       // Check if user has groups before routing to an admin dashboard
       try {
         if (typeof apiService !== 'undefined') {
-          const context = await apiService.getContext();
-          if (!context || !context.groups || context.groups.length === 0) {
+          // Use refreshContext to bypass cache and get fresh group list
+          const context = await apiService.refreshContext();
+          
+          // Only redirect if the call succeeded AND we explicitly confirmed 0 groups.
+          // If the call failed (!context), don't redirect to create-group as it might be a temporary error.
+          if (context && context.success && (!context.groups || context.groups.length === 0)) {
             window.location.href = "create-group.html";
             this.toggleSidebar(false);
             return;
