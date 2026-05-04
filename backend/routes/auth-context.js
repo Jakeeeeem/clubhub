@@ -51,9 +51,11 @@ router.post("/switch-organization", authenticateToken, async (req, res) => {
         SELECT om.role, o.* 
         FROM organizations o
         LEFT JOIN organization_members om ON o.id = om.organization_id AND om.user_id = $2
+        LEFT JOIN players p ON o.id = p.club_id AND p.user_id = $2
         WHERE o.id = $1 
         AND (
           (om.user_id = $2 AND om.status = 'active')
+          OR (p.user_id = $2)
           OR o.owner_id = $2
         )
       `,
@@ -142,20 +144,22 @@ router.get("/context", authenticateToken, async (req, res) => {
       `);
       organizations = allOrgsResult.rows;
     } else {
-      // Unified check: Direct Memberships + Direct Ownership
+      // Unified check: Direct Memberships + Player Profiles + Direct Ownership
       const orgsResult = await pool.query(
         `
-        SELECT 
+        SELECT DISTINCT ON (o.id)
           o.id, o.name, o.slug, o.logo_url, o.cover_image_url,
           o.sport, o.location, o.description, o.website, o.philosophy, o.images,
           o.primary_color, o.secondary_color, o.email, o.phone,
-          COALESCE(om.role, 'owner') as user_role, 
+          COALESCE(om.role, CASE WHEN o.owner_id = $1 THEN 'owner' ELSE 'player' END) as user_role, 
           COALESCE(om.status, 'active') as member_status
         FROM organizations o
         LEFT JOIN organization_members om ON o.id = om.organization_id AND om.user_id = $1
+        LEFT JOIN players p ON o.id = p.club_id AND p.user_id = $1
         WHERE (om.user_id = $1 AND om.status = 'active')
+           OR (p.user_id = $1)
            OR (o.owner_id = $1)
-        ORDER BY o.name ASC
+        ORDER BY o.id, o.name ASC
       `,
         [userId],
       );

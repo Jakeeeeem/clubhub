@@ -2686,20 +2686,33 @@ const UnifiedNav = {
   },
 
   getCurrentMode() {
+    const url = window.location.href;
+    const p = window.location.pathname;
+
+    // Priority 1: Specific page-based overrides (ALWAYS win)
+    if (p.includes("admin-dashboard.html") || p.includes("admin-")) return "group";
+    if (
+      p.includes("player-dashboard.html") || 
+      p.includes("player-") || 
+      p.includes("club-finder.html") || 
+      p.includes("team-finder.html") || 
+      p.includes("venue-finder.html") || 
+      p.includes("tournament-finder.html") || 
+      p.includes("apply.html") ||
+      p.includes("club-detail.html")
+    ) return "player";
+    if (p.includes("coach-dashboard.html") || p.includes("coach-")) return "group";
+
+    // Priority 2: localStorage user preference
     const storedMode = localStorage.getItem("dashboardMode");
     if (storedMode) return storedMode;
 
-    const url = window.location.href;
+    // Priority 3: Fallback to role-based default
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
-
-    // Explicit player path check — only treat explicit player pages as player mode.
-    // Do NOT treat generic 'chat' or 'messenger' pages as player mode to avoid accidental context switches.
-    if (/player-|player-dashboard|player-dashboard.html/.test(url)) return "player";
-
-    // Fallback to role-based default
-    if (userRole === "player" || userRole === "parent") return "player";
-    return "group";
+    
+    if (userRole === "organization" || userRole === "admin" || userRole === "coach") return "group";
+    return "player";
   },
 
   getUserRole() {
