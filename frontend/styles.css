@@ -730,11 +730,14 @@ svg {
 
 input,
 select,
-textarea {
+textarea,
+.form-control,
+.form-select {
     font-family: inherit;
     color-scheme: dark;
     color: #ffffff !important;
     background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
 /* Fix for browser autofill background/text color */
@@ -4039,8 +4042,8 @@ main.main.home-main {
 }
 
 .modal-content {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 24px;
     max-width: 700px;
     width: 100%;
@@ -4055,13 +4058,13 @@ main.main.home-main {
 
 .modal-header {
     padding: 2rem 2rem 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color) !important;
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
-    background: var(--bg-card);
+    background: var(--bg-card) !important;
     z-index: 10;
     border-radius: 24px 24px 0 0;
 }
@@ -4121,10 +4124,10 @@ main.main.home-main {
 .modal .form-group textarea {
     width: 100%;
     padding: 0.875rem 1.125rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid var(--border-color);
     border-radius: var(--input-radius);
-    color: var(--text-main);
+    color: var(--text-main) !important;
     font-size: 0.95rem;
     transition: var(--transition);
 }
