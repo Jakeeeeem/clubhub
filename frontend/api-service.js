@@ -659,7 +659,7 @@ if (typeof ApiService === 'undefined') {
                        window.location.pathname.includes("signup.html") ||
                        window.location.pathname === "/";
 
-      if ((response.status === 401 || response.status === 403) && localStorage.getItem("isDemoSession") !== "true") {
+      if (response.status === 401 && localStorage.getItem("isDemoSession") !== "true") {
         console.warn("🔐 Session expired or unauthorized, logging out...", endpoint);
         
         // Only clear and redirect if we're not already on an auth/landing page

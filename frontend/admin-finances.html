@@ -363,27 +363,39 @@
                     <div class="glass-card" style="padding:2rem;">
                         <h3 style="margin:0 0 2rem; color:#fff; font-size:1.25rem; font-weight:800;">Audit Log</h3>
                         <div id="financeTransactions" style="display:flex; flex-direction:column; gap:1.25rem;">
-                            <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
-                                <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem;">
-                                    <strong style="color:#fff;">Subscription Renewal</strong>
-                                    <span style="color:#4ade80; font-weight:800;">+£45.00</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
-                                    <span>James Wilson</span>
-                                    <span>2 mins ago</span>
-                                </div>
-                            </div>
-                            <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
-                                <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem;">
-                                    <strong style="color:#fff;">Kit Purchase</strong>
-                                    <span style="color:#4ade80; font-weight:800;">+£22.50</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
-                                    <span>Sarah Palmer</span>
-                                    <span>45 mins ago</span>
-                                </div>
-                            </div>
+                            <!-- Dynamically populated or empty if no data -->
                         </div>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', () => {
+                                const container = document.getElementById('financeTransactions');
+                                if (localStorage.getItem('isDemoSession') === 'true') {
+                                    container.innerHTML = `
+                                        <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
+                                            <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem;">
+                                                <strong style="color:#fff;">Subscription Renewal</strong>
+                                                <span style="color:#4ade80; font-weight:800;">+£45.00</span>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                                                <span>James Wilson</span>
+                                                <span>2 mins ago</span>
+                                            </div>
+                                        </div>
+                                        <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
+                                            <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem;">
+                                                <strong style="color:#fff;">Kit Purchase</strong>
+                                                <span style="color:#4ade80; font-weight:800;">+£22.50</span>
+                                            </div>
+                                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                                                <span>Sarah Palmer</span>
+                                                <span>45 mins ago</span>
+                                            </div>
+                                        </div>
+                                    `;
+                                } else {
+                                    container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.9rem;">No recent transactions.</div>';
+                                }
+                            });
+                        </script>
                     </div>
                 </div>
                 <div id="messenger" class="dashboard-section" style="display:none; padding:0.5rem;">

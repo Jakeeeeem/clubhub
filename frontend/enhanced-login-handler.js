@@ -109,6 +109,9 @@ async function handleLogin(e) {
       setTimeout(() => {
         window.location.href = decodeURIComponent(returnUrl);
       }, 1000);
+      return; // Exit since we are redirecting
+    }
+
     // --- HARDENED BYPASS SYNC ---
     // If this was a bypass, we MUST refresh the context from the REAL backend 
     // to ensure our local 'currentUser.id' matches the database UUID for messaging.
@@ -118,13 +121,13 @@ async function handleLogin(e) {
     }
 
     // Determine where to redirect based on user type
-      const redirectUrl = await determineUserRedirect(response.user);
-      console.log("🏠 Redirecting to:", redirectUrl);
-      showNotification("Login successful!", "success");
-      setTimeout(() => {
-        window.location.href = redirectUrl;
-      }, 1000);
-    }
+    const redirectUrl = await determineUserRedirect(response.user);
+    console.log("🏠 Redirecting to:", redirectUrl);
+    showNotification("Login successful!", "success");
+    setTimeout(() => {
+      window.location.href = redirectUrl;
+    }, 1000);
+
   } catch (error) {
     console.error("❌ Login failed:", error);
     // Enhanced error reporting for frontend

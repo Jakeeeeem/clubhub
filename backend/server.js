@@ -306,6 +306,7 @@ app.use("/api/pitches", pitchesRoutes);
 app.use("/api/schedules", schedulesRoutes);
 app.use("/api/live", liveRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.get("/api/feed", (req, res) => res.json({ activity: [] }));
 app.use("/api/invites", invitesRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/campaigns", campaignRoutes);

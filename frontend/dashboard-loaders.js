@@ -18,7 +18,7 @@ window.DashboardLoaders = {
 
     async loadStats() {
         try {
-            const stats = await apiService.get('/admin');
+            const stats = await apiService.get('/dashboard/admin');
             if (stats && stats.statistics) {
                 const s = stats.statistics;
                 if (document.getElementById('totalMembers')) {
