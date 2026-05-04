@@ -548,17 +548,26 @@
                 <div class="modal-close" onclick="closeModal('addMemberModal')">&times;</div>
             </div>
             <div class="modal-body">
-                <form id="addMemberForm" onsubmit="event.preventDefault(); alert('Member invite sent!'); closeModal('addMemberModal');">
+                <form id="addMemberForm" onsubmit="handleAdminAddMember(event)">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" name="firstName" placeholder="e.g. John" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" name="lastName" placeholder="e.g. Smith" required>
+                    </div>
                     <div class="form-group">
                         <label>Email Address</label>
-                        <input type="email" placeholder="e.g. member@example.com" required>
+                        <input type="email" name="email" placeholder="e.g. member@example.com" required>
                     </div>
                     <div class="form-group">
                         <label>Role</label>
-                        <select style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
+                        <select name="role" required style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
                             <option value="player">Player</option>
                             <option value="parent">Parent</option>
-                            <option value="staff">Staff / Coach</option>
+                            <option value="coach">Coach</option>
+                            <option value="staff">Staff / Admin</option>
                         </select>
                     </div>
                 </form>
@@ -577,14 +586,22 @@
                 <div class="modal-close" onclick="closeModal('addEventModal')">&times;</div>
             </div>
             <div class="modal-body">
-                <form id="addEventForm" onsubmit="event.preventDefault(); alert('Event created!'); closeModal('addEventModal');">
+                <form id="addEventForm" onsubmit="handleAdminCreateEvent(event)">
                     <div class="form-group">
                         <label>Event Title</label>
-                        <input type="text" placeholder="e.g. Weekly Training" required>
+                        <input type="text" name="title" placeholder="e.g. Weekly Training" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" name="location" placeholder="e.g. Main Pitch" required>
                     </div>
                     <div class="form-group">
                         <label>Date</label>
-                        <input type="date" required>
+                        <input type="date" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" name="time" required>
                     </div>
                 </form>
             </div>
@@ -957,6 +974,68 @@
             } catch (err) {
                 console.error('Club verify failed', err);
                 showNotification('Failed to update club scout status: ' + (err.message || err), 'error');
+            }
+        }
+        async function handleAdminAddMember(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                first_name: formData.get('firstName'),
+                last_name: formData.get('lastName'),
+                email: formData.get('email'),
+                role: formData.get('role')
+            };
+
+            try {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.textContent = 'Sending Invite...';
+
+                await apiService.post('/api/members', data);
+                
+                showNotification(`Invite sent to ${data.email}!`, "success");
+                closeModal('addMemberModal');
+                e.target.reset();
+                if (typeof loadRecentMembers === 'function') loadRecentMembers();
+            } catch (err) {
+                console.error("Member add failed:", err);
+                showNotification("Failed to send invite: " + err.message, "error");
+            } finally {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = false;
+                btn.textContent = 'Send Invite';
+            }
+        }
+
+        async function handleAdminCreateEvent(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                title: formData.get('title'),
+                event_date: formData.get('date'),
+                event_time: formData.get('time'),
+                location: formData.get('location'),
+                type: 'training',
+                capacity: 0,
+                notify_members: true
+            };
+
+            try {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.textContent = 'Publishing...';
+
+                await apiService.createEvent(data);
+                showNotification("Event created and published!", "success");
+                closeModal('addEventModal');
+                e.target.reset();
+                if (typeof loadActivityFeed === 'function') loadActivityFeed();
+            } catch (err) {
+                showNotification("Failed to create event: " + err.message, "error");
+            } finally {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = false;
+                btn.textContent = 'Create Event';
             }
         }
     </script>
