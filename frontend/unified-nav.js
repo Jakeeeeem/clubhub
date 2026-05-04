@@ -2777,16 +2777,20 @@ const UnifiedNav = {
       // Check if user has groups before routing to an admin dashboard
       try {
         if (typeof apiService !== 'undefined') {
+          console.log("🔄 switchMode: Fetching fresh context to verify groups...");
           // Use refreshContext to bypass cache and get fresh group list
           const context = await apiService.refreshContext();
+          console.log("📦 switchMode context result:", context);
           
           // Only redirect if the call succeeded AND we explicitly confirmed 0 groups.
           // If the call failed (!context), don't redirect to create-group as it might be a temporary error.
           if (context && context.success && (!context.groups || context.groups.length === 0)) {
+            console.warn("⚠️ No groups found in context. Redirecting to create-group.html");
             window.location.href = "create-group.html";
             this.toggleSidebar(false);
             return;
           }
+          console.log(`✅ ${context?.groups?.length || 0} groups found. Proceeding to dashboard.`);
         }
       } catch (e) {
         console.warn("Failed to check group context during switchMode", e);

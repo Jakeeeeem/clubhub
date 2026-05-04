@@ -49,11 +49,13 @@ router.post("/switch-organization", authenticateToken, async (req, res) => {
       const memberCheck = await pool.query(
         `
         SELECT om.role, o.* 
-        FROM organization_members om
-        INNER JOIN organizations o ON om.organization_id = o.id
-        WHERE om.organization_id = $1 
-        AND om.user_id = $2 
-        AND om.status = 'active'
+        FROM organizations o
+        LEFT JOIN organization_members om ON o.id = om.organization_id AND om.user_id = $2
+        WHERE o.id = $1 
+        AND (
+          (om.user_id = $2 AND om.status = 'active')
+          OR o.owner_id = $2
+        )
       `,
         [organizationId, userId],
       );
@@ -65,6 +67,7 @@ router.post("/switch-organization", authenticateToken, async (req, res) => {
         });
       }
       organization = memberCheck.rows[0];
+      if (!organization.role) organization.role = 'owner';
     }
 
     // Update user preference
@@ -139,16 +142,19 @@ router.get("/context", authenticateToken, async (req, res) => {
       `);
       organizations = allOrgsResult.rows;
     } else {
+      // Unified check: Direct Memberships + Direct Ownership
       const orgsResult = await pool.query(
         `
         SELECT 
           o.id, o.name, o.slug, o.logo_url, o.cover_image_url,
           o.sport, o.location, o.description, o.website, o.philosophy, o.images,
           o.primary_color, o.secondary_color, o.email, o.phone,
-          om.role as user_role, om.status as member_status
+          COALESCE(om.role, 'owner') as user_role, 
+          COALESCE(om.status, 'active') as member_status
         FROM organizations o
-        INNER JOIN organization_members om ON o.id = om.organization_id
-        WHERE om.user_id = $1 AND om.status = 'active'
+        LEFT JOIN organization_members om ON o.id = om.organization_id AND om.user_id = $1
+        WHERE (om.user_id = $1 AND om.status = 'active')
+           OR (o.owner_id = $1)
         ORDER BY o.name ASC
       `,
         [userId],

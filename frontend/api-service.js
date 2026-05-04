@@ -19,8 +19,13 @@ if (typeof ApiService === 'undefined') {
     }
     
     console.log(
-      "🌐 Enhanced API Service initialized with baseURL:",
-      this.baseURL,
+      "🌐 Enhanced API Service initialized!",
+      {
+        baseURL: this.baseURL,
+        hostname: window.location.hostname,
+        port: window.location.port,
+        protocol: window.location.protocol
+      }
     );
 
     // Test connection on initialization if not on landing page and only if potentially authenticated
@@ -198,10 +203,9 @@ if (typeof ApiService === 'undefined') {
 
     // Local development detection
     if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0") {
-      // If we are on one of these hostnames but the port is NOT 3000, 
-      // we assume the backend is on 3000 and the frontend is on 8080/8081.
+      // Use the same hostname (localhost or 127.0.0.1) but explicitly use port 3000 for backend
       if (window.location.port !== "3000") {
-        return "http://localhost:3000/api";
+        return `${window.location.protocol}//${hostname}:3000/api`;
       }
       return `${window.location.origin}/api`;
     }
