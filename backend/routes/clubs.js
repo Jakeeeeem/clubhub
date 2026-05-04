@@ -3,6 +3,7 @@ const { query, queries, withTransaction } = require("../config/database");
 const {
   authenticateToken,
   requireOrganization,
+  injectOrgContext,
   optionalAuth,
 } = require("../middleware/auth");
 const { body, validationResult } = require("express-validator");
@@ -311,6 +312,7 @@ router.get("/:id/teams", optionalAuth, async (req, res) => {
 router.post(
   "/",
   authenticateToken,
+  injectOrgContext,
   requireOrganization,
   clubValidation,
   async (req, res) => {

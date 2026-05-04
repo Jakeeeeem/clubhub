@@ -3,6 +3,7 @@ const { query, queries } = require("../config/database");
 const {
   authenticateToken,
   requireOrganization,
+  injectOrgContext
 } = require("../middleware/auth");
 
 const router = express.Router();
@@ -11,6 +12,7 @@ const router = express.Router();
 router.get(
   "/admin",
   authenticateToken,
+  injectOrgContext,
   requireOrganization,
   async (req, res) => {
     try {

@@ -202,7 +202,12 @@ async function injectOrgContext(req, res, next) {
 function requireRole(allowedRoles) {
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-  return (req, res, next) => {
+  return async (req, res, next) => {
+    // 🛡️ Auto-inject if missing
+    if (!req.orgContext && req.user) {
+      await new Promise((resolve) => injectOrgContext(req, res, resolve));
+    }
+
     if (!req.orgContext) {
       return res.status(403).json({
         error: "No organization context found",
@@ -222,14 +227,31 @@ function requireRole(allowedRoles) {
 }
 
 // Middleware to check if user is an organization (admin)
-function requireOrganization(req, res, next) {
-  if (req.user.accountType !== "organization") {
-    return res.status(403).json({
-      error: "Access denied",
-      message: "Organization account required",
-    });
+async function requireOrganization(req, res, next) {
+  // 🛡️ Robust Check: If orgContext is missing, attempt to inject it now 
+  // (handles routes that forgot to include injectOrgContext middleware)
+  if (!req.orgContext && req.user) {
+    await new Promise((resolve) => injectOrgContext(req, res, resolve));
   }
-  next();
+
+  // 1. Check global account type (Legacy/Direct)
+  if (req.user && req.user.accountType === "organization") {
+    return next();
+  }
+
+  // 2. Check current organization context role (Switcher support)
+  // Allows 'owner' or 'admin' roles to pass even if global account type is 'adult/player'
+  if (
+    req.orgContext &&
+    (req.orgContext.role === "owner" || req.orgContext.role === "admin")
+  ) {
+    return next();
+  }
+
+  return res.status(403).json({
+    error: "Access denied",
+    message: "Organization account or Admin role required",
+  });
 }
 
 // Middleware to check if user is an adult user
@@ -309,6 +331,11 @@ function requirePermission(permission) {
       return res
         .status(401)
         .json({ error: "Access denied", message: "Authentication required" });
+    }
+
+    // 🛡️ Auto-inject if missing
+    if (!req.orgContext && req.user) {
+      await new Promise((resolve) => injectOrgContext(req, res, resolve));
     }
 
     const permName = (permission || "").toString();

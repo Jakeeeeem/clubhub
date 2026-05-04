@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const emailService = require('../services/email-service');
-const { authenticateToken, requireOrganization } = require('../middleware/auth');
+const { authenticateToken, requireOrganization, injectOrgContext } = require('../middleware/auth');
 
 // Send generic email (Admin only or strict validation needed?)
 // For now, restricting to authenticated users for demo purposes
@@ -27,7 +27,7 @@ router.post('/send', authenticateToken, async (req, res) => {
 });
 
 // Send club invite email
-router.post('/send-invite', authenticateToken, requireOrganization, async (req, res) => {
+router.post('/send-invite', authenticateToken, injectOrgContext, requireOrganization, async (req, res) => {
   try {
     const { email, clubName, inviterName, inviteLink, personalMessage, clubRole, logoUrl } = req.body;
 

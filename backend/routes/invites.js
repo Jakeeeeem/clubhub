@@ -3,6 +3,7 @@ const { query, queries, withTransaction } = require("../config/database");
 const {
   authenticateToken,
   requireOrganization,
+  injectOrgContext,
   optionalAuth,
 } = require("../middleware/auth");
 const emailService = require("../services/email-service");
@@ -48,6 +49,7 @@ const inviteValidation = [
 router.post(
   "/generate",
   authenticateToken,
+  injectOrgContext,
   requireOrganization,
   inviteValidation,
   async (req, res) => {
