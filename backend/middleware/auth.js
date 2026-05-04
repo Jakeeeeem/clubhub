@@ -167,18 +167,21 @@ async function injectOrgContext(req, res, next) {
     }
 
     // Get membership and role
+    // Unified check: Check organization_members OR if user is the direct owner_id in organizations
     const memberResult = await pool.query(
       `
       SELECT o.id as organization_id, o.name, o.logo_url, o.sport, 
-             om.role, om.status, om.permissions
+             COALESCE(om.role, CASE WHEN o.owner_id = $2 THEN 'owner' ELSE NULL END) as role,
+             COALESCE(om.status, 'active') as status,
+             om.permissions
       FROM organizations o
-      INNER JOIN organization_members om ON o.id = om.organization_id
-      WHERE o.id = $1 AND om.user_id = $2 AND om.status = 'active'
+      LEFT JOIN organization_members om ON o.id = om.organization_id AND om.user_id = $2
+      WHERE o.id = $1 AND (om.status = 'active' OR o.owner_id = $2)
     `,
       [orgId, userId],
     );
 
-    if (memberResult.rows.length === 0) {
+    if (memberResult.rows.length === 0 || !memberResult.rows[0].role) {
       req.orgContext = null;
     } else {
       req.orgContext = memberResult.rows[0];
