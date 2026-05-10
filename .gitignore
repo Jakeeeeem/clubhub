@@ -32,3 +32,6 @@ review_screenshots/
 *.jpg
 *.jpeg
 *.gif
+
+# Operational utility scripts (contain env refs, not for version control)
+take_screenshots.js

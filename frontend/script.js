@@ -808,15 +808,16 @@ function redirectToDashboard() {
 
   // Priority 2: Staff/Admin Roles (Allows players to view as admins if they have permission)
   if (["owner", "admin", "manager", "staff"].includes(userRole)) {
-    // Proactive check: if we have context and no managed organizations, go straight to creation
-    const organizations = AppState.context?.organizations || [];
-    const hasManagedOrg = organizations.some((org) => {
+    // Only redirect to create-group if we have explicit context confirming 0 managed orgs.
+    // If AppState.context is undefined, we cannot confirm 0 orgs — go to admin-dashboard.
+    const organizations = AppState.context?.organizations;
+    const hasManagedOrg = !organizations || organizations.some((org) => {
       const role = (org.user_role || org.role || "").toLowerCase();
       return ["owner", "admin", "manager", "staff"].includes(role);
     });
 
     if (!hasManagedOrg && !AppState.currentUser?.is_platform_admin) {
-      console.log("👋 No managed organizations found, heading to creation...");
+      console.log("👋 No managed organizations confirmed, heading to creation...");
       window.location.href = "create-group.html";
     } else {
       window.location.href = "admin-dashboard.html";
@@ -826,11 +827,9 @@ function redirectToDashboard() {
 
   // Priority 3: Global Account Type (organization account = admin dashboard)
   if (userType === "organization") {
-    const organizations = AppState.context?.organizations || [];
-    if (
-      organizations.length === 0 &&
-      !AppState.currentUser?.is_platform_admin
-    ) {
+    // Only redirect to create-group when we have explicit confirmed 0 orgs.
+    const organizations = AppState.context?.organizations;
+    if (organizations && organizations.length === 0 && !AppState.currentUser?.is_platform_admin) {
       window.location.href = "create-group.html";
     } else {
       window.location.href = "admin-dashboard.html";

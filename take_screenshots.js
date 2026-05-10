@@ -17,14 +17,14 @@ const categories = {
 };
 
 const categoryCredentials = {
-    'admin': { email: 'demo-admin@clubhub.com', pass: 'password123' },
-    'super-admin': { email: 'superadmin@clubhub.com', pass: 'Super@123' },
-    'coach': { email: 'demo-coach@clubhub.com', pass: 'password123' },
-    'player': { email: 'demo-player@clubhub.com', pass: 'password123' },
-    'scout': { email: 'demo-admin@clubhub.com', pass: 'password123' },
-    'management': { email: 'demo-admin@clubhub.com', pass: 'password123' },
-    'group': { email: 'demo-admin@clubhub.com', pass: 'password123' },
-    'others': { email: 'demo-admin@clubhub.com', pass: 'password123' },
+    'admin':      { email: 'demo-admin@clubhub.com',  pass: process.env.DEMO_PASS || 'changeme' },
+    'super-admin':{ email: 'superadmin@clubhub.com',  pass: process.env.SUPER_PASS || 'changeme' },
+    'coach':      { email: 'demo-coach@clubhub.com',  pass: process.env.DEMO_PASS || 'changeme' },
+    'player':     { email: 'demo-player@clubhub.com', pass: process.env.DEMO_PASS || 'changeme' },
+    'scout':      { email: 'demo-admin@clubhub.com',  pass: process.env.DEMO_PASS || 'changeme' },
+    'management': { email: 'demo-admin@clubhub.com',  pass: process.env.DEMO_PASS || 'changeme' },
+    'group':      { email: 'demo-admin@clubhub.com',  pass: process.env.DEMO_PASS || 'changeme' },
+    'others':     { email: 'demo-admin@clubhub.com',  pass: process.env.DEMO_PASS || 'changeme' },
     'public': null,
     'auth': null,
     'discovery': null

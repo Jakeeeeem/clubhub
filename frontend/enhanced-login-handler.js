@@ -356,9 +356,12 @@ async function determineUserRedirect(user) {
 
     console.log("📦 Context response:", context);
 
-    if (context && context.groups && context.groups.length > 0) {
+    // Backend returns `organizations`; frontend historically used `groups` — support both
+    const userGroups = (context && (context.groups && context.groups.length > 0 ? context.groups : context.organizations)) || [];
+
+    if (context && userGroups.length > 0) {
       const currentOrg =
-        context.currentGroup || context.groups[0];
+        context.currentGroup || context.currentOrganization || userGroups[0];
       const role = (
         currentOrg.user_role ||
         currentOrg.role ||
@@ -366,7 +369,7 @@ async function determineUserRedirect(user) {
       ).toLowerCase();
 
       console.log(
-        `✅ User has ${context.groups.length} group(s)!`,
+        `✅ User has ${userGroups.length} group(s)!`,
       );
       console.log(`📍 Current org: ${currentOrg.name}, Role: ${role}`);
 
@@ -399,13 +402,18 @@ async function determineUserRedirect(user) {
     } else {
       console.log("ℹ️ No active group memberships found.");
       console.log(
-        "⚠️ User is group type but has NO memberships → create-group.html",
+        "⚠️ User has NO group memberships confirmed by context",
       );
 
-      // Only redirect to create-group if they truly have ZERO orgs
-      if (userType === "group" || userType === "admin") {
+      // Only redirect to create-group if they are an organization account type
+      // AND context explicitly confirmed 0 orgs (context is not null)
+      if (context && userGroups.length === 0 && (userType === "organization" || userType === "admin")) {
+        console.log("⚠️ Sending organization account with 0 orgs → create-group.html");
         return "create-group.html";
       }
+
+      // For all other cases (player/adult accounts, or context failure), go to player dashboard
+      return "player-dashboard.html";
     }
   } catch (error) {
     console.error("❌ Context check failed during redirect:", error);

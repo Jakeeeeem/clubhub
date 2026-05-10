@@ -134,6 +134,20 @@ if (typeof ApiService === 'undefined') {
 
     try {
       this.context = await this.makeRequest("/auth/context");
+      // Normalize: backend returns `organizations`, but frontend also checks `groups`.
+      // Ensure both keys are always present and in sync.
+      if (this.context) {
+        const orgs = this.context.organizations || this.context.groups || [];
+        this.context.organizations = orgs;
+        this.context.groups = orgs;
+        // Also alias currentGroup / currentOrganization for callers that use either name
+        if (!this.context.currentGroup && this.context.currentOrganization) {
+          this.context.currentGroup = this.context.currentOrganization;
+        }
+        if (!this.context.currentOrganization && this.context.currentGroup) {
+          this.context.currentOrganization = this.context.currentGroup;
+        }
+      }
       return this.context;
     } catch (error) {
       console.error("Failed to get context:", error);
