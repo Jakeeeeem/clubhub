@@ -164,10 +164,24 @@ if (typeof ApiService === 'undefined') {
       if (response.family) localStorage.setItem("userFamily", JSON.stringify(response.family));
       if (response.currentGroup) {
           const role = (response.currentGroup.user_role || response.currentGroup.role || "").toLowerCase();
-          const normalizedRole = ["admin", "organization", "owner", "staff"].includes(role) ? "admin" : 
-                                 ["coach", "assistant_coach"].includes(role) ? "coach" : 
-                                 role === "scout" ? "scout" : "player";
-          localStorage.setItem("userType", normalizedRole);
+          if (role) {
+            const normalizedRole = ["admin", "organization", "owner", "staff", "manager"].includes(role) ? "admin" : 
+                                   ["coach", "assistant_coach"].includes(role) ? "coach" : 
+                                   role === "scout" ? "scout" : "player";
+            localStorage.setItem("userType", normalizedRole);
+            console.log(`🔄 refreshContext: userType updated to '${normalizedRole}' (org role: '${role}')`);
+          }
+      } else if (response.organizations && response.organizations.length > 0) {
+          // Fallback: derive role from first org in the list
+          const firstOrg = response.organizations[0];
+          const role = (firstOrg.user_role || firstOrg.role || "").toLowerCase();
+          if (role) {
+            const normalizedRole = ["admin", "organization", "owner", "staff", "manager"].includes(role) ? "admin" : 
+                                   ["coach", "assistant_coach"].includes(role) ? "coach" : 
+                                   role === "scout" ? "scout" : "player";
+            localStorage.setItem("userType", normalizedRole);
+            console.log(`🔄 refreshContext: userType updated to '${normalizedRole}' from orgs fallback (role: '${role}')`);
+          }
       }
       // Persist current group id for downstream callers and header injection
       try {
@@ -1895,7 +1909,7 @@ if (typeof ApiService === 'undefined') {
 
   async getNotifications() {
     
-    if (isDemo && !this.baseURL.includes("localhost")) {
+    if (this.shouldMock() && !this.baseURL.includes("localhost")) {
       return [
         {
           id: "n1",

@@ -2797,7 +2797,8 @@ const UnifiedNav = {
           
           // Only redirect if the call succeeded AND we explicitly confirmed 0 groups.
           // If the call failed (!context), don't redirect to create-group as it might be a temporary error.
-          if (context && context.success && (!context.groups || context.groups.length === 0)) {
+          const userGroups = context.groups || context.organizations || [];
+          if (context && context.success && userGroups.length === 0) {
             console.warn("⚠️ No groups found in context. Redirecting to create-group.html");
             window.location.href = "create-group.html";
             this.toggleSidebar(false);
@@ -2809,8 +2810,13 @@ const UnifiedNav = {
         console.warn("Failed to check group context during switchMode", e);
       }
 
+      // After refreshContext(), localStorage 'userType' is updated to reflect the org role
+      // (e.g. 'admin' for owners). Read that FIRST, not account_type which is the signup-time value.
+      const updatedType = localStorage.getItem("userType");
       const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      const type = user.account_type || localStorage.getItem("userType");
+      const type = updatedType || user.account_type || "";
+
+      console.log(`🔀 switchMode: type='${type}' (userType='${updatedType}', account_type='${user.account_type}')`);
 
       if (
         type === "platform_admin" ||
