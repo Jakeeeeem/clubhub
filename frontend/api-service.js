@@ -638,8 +638,20 @@ if (typeof ApiService === 'undefined') {
     console.log("📧 Generating club invite:", inviteData);
 
     try {
+      // Ensure the club ID is available for the backend middleware to verify admin role
+      const context = await this.getContext();
+      const currentOrgId = context?.currentGroup?.id || context?.currentGroup?.groupId || context?.currentGroup?.organizationId;
+      const headers = {};
+      
+      if (currentOrgId) {
+          headers['x-club-id'] = currentOrgId;
+          headers['x-organization-id'] = currentOrgId;
+          inviteData.clubId = currentOrgId; // Append to body as well
+      }
+
       const response = await this.makeRequest("/invites/generate", {
         method: "POST",
+        headers: headers,
         body: JSON.stringify(inviteData),
       });
 

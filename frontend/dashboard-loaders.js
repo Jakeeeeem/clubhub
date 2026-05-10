@@ -22,7 +22,10 @@ window.DashboardLoaders = {
             if (stats && stats.statistics) {
                 const s = stats.statistics;
                 if (document.getElementById('totalMembers')) {
-                    document.getElementById('totalMembers').textContent = s.total_players || 0;
+                    // Ensure the owner is counted even if no players are assigned
+                    let total = s.total_players || 0;
+                    if (total === 0) total = 1;
+                    document.getElementById('totalMembers').textContent = total;
                 }
                 if (document.getElementById('monthlyRevenue')) {
                     document.getElementById('monthlyRevenue').textContent = '£' + (s.monthly_revenue || 0).toLocaleString();

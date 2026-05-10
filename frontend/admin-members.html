@@ -239,22 +239,22 @@
             <div id="overview" class="dashboard-section" style="display:none;">
                 <div class="stats-row"
                     style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="window.location.href='admin-dashboard.html'" style="cursor: pointer;">
                         <span class="stat-label">Total Members</span>
                         <span class="stat-number" id="totalMembers">0</span>
-                        <div class="stat-change" style="color:rgba(255,255,255,0.3);">No members yet</div>
+                        <div class="stat-change" style="color:rgba(255,255,255,0.3);">Dashboard Overview</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="window.location.href='admin-finances.html'" style="cursor: pointer;">
                         <span class="stat-label">Revenue (30d)</span>
                         <span class="stat-number" id="monthlyRevenue">£0</span>
                         <div class="stat-change" style="color:rgba(255,255,255,0.3);">No revenue recorded</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="window.location.href='admin-tournament-manager.html'" style="cursor: pointer;">
                         <span class="stat-label">Active Events</span>
                         <span class="stat-number" id="activeEvents">0</span>
                         <div class="stat-change" style="color:rgba(255,255,255,0.3);">No active events</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" onclick="window.location.href='admin-scout-approvals.html'" style="cursor: pointer;">
                         <span class="stat-label">Pending Reviews</span>
                         <span class="stat-number" id="pendingScouts" style="color:rgba(255,255,255,0.3);">0</span>
                         <div class="stat-change" style="color:rgba(255,255,255,0.3);">System health</div>
@@ -791,17 +791,27 @@
                 const staff = data.staff || [];
                 let members = [...staff, ...players];
                 
-                // Ensure current user (if admin) is in the list
+                // Always ensure the current user is visible and marked as Owner in the members list if they are on this protected admin page.
                 try {
                     const currentUserStr = localStorage.getItem('currentUser');
                     if (currentUserStr) {
                         const currentUser = JSON.parse(currentUserStr);
-                        if (currentUser && (currentUser.account_type === 'organization' || currentUser.account_type === 'group' || currentUser.role === 'admin' || currentUser.role === 'owner')) {
-                            const exists = members.find(m => m.id === currentUser.id || m.email === currentUser.email);
-                            if (!exists) {
+                        
+                        if (currentUser && (currentUser.email || currentUser.id || currentUser.name)) {
+                            const existingIndex = members.findIndex(m => (m.id && String(m.id) === String(currentUser.id)) || (m.email && m.email === currentUser.email) || (m.name && m.name === currentUser.name));
+                            
+                            if (existingIndex !== -1) {
+                                // They are in the list, just force their role to Owner for display
+                                members[existingIndex].role = 'Owner';
+                                members[existingIndex].first_name = members[existingIndex].first_name || currentUser.first_name || currentUser.name || 'Group';
+                                members[existingIndex].last_name = members[existingIndex].last_name || currentUser.last_name || 'Owner';
+                            } else {
+                                // They aren't in the list, inject them
                                 members.unshift({
                                     ...currentUser,
-                                    role: 'Admin/Owner',
+                                    first_name: currentUser.first_name || currentUser.name || 'Group',
+                                    last_name: currentUser.last_name || (currentUser.first_name ? '' : 'Owner'),
+                                    role: 'Owner',
                                     status: 'Active'
                                 });
                             }
