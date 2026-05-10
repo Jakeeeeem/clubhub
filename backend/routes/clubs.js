@@ -308,12 +308,10 @@ router.get("/:id/teams", optionalAuth, async (req, res) => {
   }
 });
 
-// Create new club (organization only)
 router.post(
   "/",
   authenticateToken,
   injectOrgContext,
-  requireOrganization,
   clubValidation,
   async (req, res) => {
     try {

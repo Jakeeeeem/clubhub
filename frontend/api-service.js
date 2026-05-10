@@ -169,9 +169,14 @@ if (typeof ApiService === 'undefined') {
                                    ["coach", "assistant_coach"].includes(role) ? "coach" : 
                                    role === "scout" ? "scout" : "player";
             localStorage.setItem("userType", normalizedRole);
+            if (typeof AppState !== 'undefined') AppState.userType = normalizedRole;
             console.log(`🔄 refreshContext: userType updated to '${normalizedRole}' (org role: '${role}')`);
           }
-      } else if (response.organizations && response.organizations.length > 0) {
+      } else {
+          console.warn("⚠️ refreshContext: No current group found in context response.");
+      }
+      
+      if (response.organizations && response.organizations.length > 0) {
           // Fallback: derive role from first org in the list
           const firstOrg = response.organizations[0];
           const role = (firstOrg.user_role || firstOrg.role || "").toLowerCase();
@@ -180,7 +185,8 @@ if (typeof ApiService === 'undefined') {
                                    ["coach", "assistant_coach"].includes(role) ? "coach" : 
                                    role === "scout" ? "scout" : "player";
             localStorage.setItem("userType", normalizedRole);
-            console.log(`🔄 refreshContext: userType updated to '${normalizedRole}' from orgs fallback (role: '${role}')`);
+            if (typeof AppState !== 'undefined') AppState.userType = normalizedRole;
+            console.log(`🔄 refreshContext (fallback): userType updated to '${normalizedRole}' (org role: '${role}')`);
           }
       }
       // Persist current group id for downstream callers and header injection
@@ -2020,6 +2026,14 @@ if (typeof ApiService === 'undefined') {
     } catch (error) {
       console.warn("❌ Failed to fetch campaigns:", error);
       return [];
+    }
+  }
+
+  async healthCheck() {
+    try {
+      return await this.makeRequest("/auth/context");
+    } catch (error) {
+      return { success: false, error: error.message };
     }
   }
 

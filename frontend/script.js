@@ -182,11 +182,36 @@ async function checkAuthState() {
       AppState.userType = user.account_type;
       AppState.isLoggedIn = true;
 
+      // Determine if we should upgrade userType based on role in ANY organization
+      const effectiveRole = user.role?.toLowerCase() || "";
+      const hasAdminRoleInCurrent = ["owner", "admin", "manager", "staff", "platform_admin"].includes(effectiveRole);
+      
+      const organizations = context?.organizations || context?.groups || [];
+      const hasAnyAdminRole = hasAdminRoleInCurrent || organizations.some(org => {
+          const role = (org.user_role || org.role || "").toLowerCase();
+          return ["owner", "admin", "manager", "staff"].includes(role);
+      });
+      
+      const isAdminUser = hasAnyAdminRole || user.is_platform_admin || 
+                          ["organization", "admin", "group", "owner"].includes(user.account_type?.toLowerCase()) ||
+                          ["organization", "admin", "group", "owner"].includes(user.userType?.toLowerCase());
+
       // Update localStorage with fresh data
       localStorage.setItem("currentUser", JSON.stringify(user));
-      localStorage.setItem("userType", user.account_type);
+      
+      // Upgrade userType to 'admin' if the user has administrative privileges,
+      // regardless of their base account type (player/adult).
+      const currentStoredType = localStorage.getItem("userType");
+      const needsUpgrade = isAdminUser && (currentStoredType === "adult" || currentStoredType === "player" || !currentStoredType);
+      
+      if (needsUpgrade) {
+        localStorage.setItem("userType", "admin");
+        AppState.userType = "admin";
+      } else {
+        AppState.userType = currentStoredType || user.account_type;
+      }
 
-      console.log("✅ User loaded from API:", user.email, "| Role:", user.role);
+      console.log("✅ User loaded from API:", user.email, "| Role:", user.role, "| Admin Privs:", isAdminUser, "| Final Type:", AppState.userType);
     } catch (error) {
       console.warn(
         "⚠️ API user fetch failed, trying localStorage fallback:",
@@ -257,11 +282,15 @@ function handlePostAuthRedirect() {
   });
 
   // 1. Initial Login/Landing Redirect
+  const pathname = window.location.pathname;
+  // Force redirection check on landing pages OR if we are on a dashboard and need to verify mode
+  const isDashboard = pathname.includes("-dashboard.html");
   if (
     AppState.currentUser &&
-    (window.location.pathname === "/" ||
-      window.location.pathname.endsWith("index.html") ||
-      window.location.pathname.endsWith("login.html"))
+    (pathname === "/" ||
+      pathname.endsWith("index.html") ||
+      pathname.endsWith("login.html") ||
+      isDashboard)
   ) {
     console.log("🔄 Redirecting authenticated user to dashboard...");
     redirectToDashboard();
@@ -790,20 +819,52 @@ function redirectToDashboard() {
       "organization";
   }
 
-  const userType = AppState.userType; // Global type: 'organization' | 'adult' | ...
-  const userRole = AppState.currentUser?.role; // Contextual role from API
+  const dashboardMode = localStorage.getItem("dashboardMode");
+  const userRole = (AppState.currentUser?.role || "").toLowerCase();
+  const userType = AppState.userType || "";
+  const organizations = AppState.context?.organizations || [];
 
-  console.log(
-    "🔄 Redirecting | Global Type:",
-    userType,
-    "| Context Role:",
-    userRole,
-  );
+  console.group("🔀 Navigation Debug Diagnostic");
+  console.log("👤 User Role:", userRole);
+  console.log("💼 Account Type:", userType);
+  console.log("📦 Dashboard Mode:", dashboardMode);
+  console.log("🏢 Organizations Found:", organizations.length);
+  if (organizations.length > 0) {
+      console.table(organizations.map(o => ({ name: o.name, role: o.user_role || o.role })));
+  }
+  console.groupEnd();
+
+  // Priority -1: Prevent infinite redirect loops
+  const target = ""; // We'll compute this below
+  const currentPath = window.location.pathname;
+  
+  const checkRedirect = (dest) => {
+      if (currentPath.includes(dest)) {
+          console.log(`✅ Already on target page: ${dest}. Skipping redirect.`);
+          return true;
+      }
+      return false;
+  };
+
+  // Priority 0: Respect explicit mode if set
+  const dashboardMode = localStorage.getItem("dashboardMode");
+  
+  if (dashboardMode === "group" && !currentPath.includes("admin-dashboard") && !currentPath.includes("coach-dashboard")) {
+      console.log("🎯 Dashboard mode 'group' active, prioritizing admin view");
+      // Fall through to admin/coach checks below
+  } else if (dashboardMode === "player" && !currentPath.includes("player-dashboard")) {
+      console.log("🎯 Dashboard mode 'player' active, prioritizing player view");
+      if (!checkRedirect("player-dashboard.html")) window.location.href = "player-dashboard.html";
+      return;
+  }
 
   // Priority 1: Player/Parent Roles
   if (userRole === "player" || userRole === "parent") {
-    window.location.href = "player-dashboard.html";
-    return;
+    // Only force redirect if we are NOT in explicit group mode
+    if (dashboardMode !== "group") {
+        if (!checkRedirect("player-dashboard.html")) window.location.href = "player-dashboard.html";
+        return;
+    }
   }
 
   // Priority 2: Staff/Admin Roles (Allows players to view as admins if they have permission)
@@ -818,9 +879,9 @@ function redirectToDashboard() {
 
     if (!hasManagedOrg && !AppState.currentUser?.is_platform_admin) {
       console.log("👋 No managed organizations confirmed, heading to creation...");
-      window.location.href = "create-group.html";
+      if (!checkRedirect("create-group.html")) window.location.href = "create-group.html";
     } else {
-      window.location.href = "admin-dashboard.html";
+      if (!checkRedirect("admin-dashboard.html")) window.location.href = "admin-dashboard.html";
     }
     return;
   }
@@ -830,9 +891,9 @@ function redirectToDashboard() {
     // Only redirect to create-group when we have explicit confirmed 0 orgs.
     const organizations = AppState.context?.organizations;
     if (organizations && organizations.length === 0 && !AppState.currentUser?.is_platform_admin) {
-      window.location.href = "create-group.html";
+      if (!checkRedirect("create-group.html")) window.location.href = "create-group.html";
     } else {
-      window.location.href = "admin-dashboard.html";
+      if (!checkRedirect("admin-dashboard.html")) window.location.href = "admin-dashboard.html";
     }
     return;
   }
@@ -841,22 +902,30 @@ function redirectToDashboard() {
     ["coach", "assistant-coach", "coaching-supervisor"].includes(userRole) ||
     userType === "coach"
   ) {
-    window.location.href = "coach-dashboard.html";
+    if (!checkRedirect("coach-dashboard.html")) window.location.href = "coach-dashboard.html";
     return;
   }
 
   if (userRole === "superadmin" || AppState.currentUser?.is_platform_admin) {
-    window.location.href = "super-admin-dashboard.html";
+    if (!checkRedirect("super-admin-dashboard.html")) window.location.href = "super-admin-dashboard.html";
     return;
   }
 
   // Priority 3: Fallback based on account type
   switch (userType) {
-    case "adult":
-      window.location.href = "player-dashboard.html";
+    case "organization":
+    case "admin":
+      if (!checkRedirect("admin-dashboard.html")) window.location.href = "admin-dashboard.html";
       break;
+    case "adult":
     default:
-      window.location.href = "player-dashboard.html";
+      // If user has admin mode active, go to admin even if they are 'adult' type
+      if (dashboardMode === "group") {
+          if (!checkRedirect("admin-dashboard.html")) window.location.href = "admin-dashboard.html";
+      } else {
+          if (!checkRedirect("player-dashboard.html")) window.location.href = "player-dashboard.html";
+      }
+      break;
   }
 }
 

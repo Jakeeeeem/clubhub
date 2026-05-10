@@ -309,12 +309,8 @@
     <script src="dialog-service.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            const userType = user.account_type || localStorage.getItem('userType');
-            const isPlayer = userType === 'player' || userType === 'talent' || userType === 'parent';
-            if (isPlayer) {
-                window.location.href = 'player-dashboard.html';
-            }
+            // Player redirect removed to allow all users to create a group
+            // as per user request to remove hierarchy.
         });
         let selectedLogoFile = null;
 

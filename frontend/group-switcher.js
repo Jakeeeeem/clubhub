@@ -322,6 +322,7 @@ if (window.__groupSwitcherDefined) {
                     .join("")
             }
           </div>
+          ${this.groups.length === 0 ? `
           <div class="group-switcher-footer">
             <button class="group-switcher-action" onclick="window.location.href='create-group.html'">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -330,6 +331,7 @@ if (window.__groupSwitcherDefined) {
               Create Group
             </button>
           </div>
+          ` : ''}
         </div>
       </div>
     `;

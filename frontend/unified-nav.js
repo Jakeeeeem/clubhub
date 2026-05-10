@@ -2784,6 +2784,9 @@ const UnifiedNav = {
   },
 
   async switchMode(mode) {
+    localStorage.setItem("dashboardMode", mode);
+    console.log(`📡 switchMode: Mode persisted as '${mode}'`);
+    
     if (mode === "player") {
       window.location.href = "player-dashboard.html";
     } else {
@@ -2814,26 +2817,42 @@ const UnifiedNav = {
       // (e.g. 'admin' for owners). Read that FIRST, not account_type which is the signup-time value.
       const updatedType = localStorage.getItem("userType");
       const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      const type = updatedType || user.account_type || "";
+      let type = updatedType || user.account_type || user.userType || "";
+      
+      // If we are switching to group mode, and the user is an admin-capable account, 
+      // ensure we treat them as an admin even if their current role is 'player'.
+      if (mode === "group" && ["organization", "admin", "group", "owner"].includes(user.account_type?.toLowerCase())) {
+          type = "admin";
+      }
 
-      console.log(`🔀 switchMode: type='${type}' (userType='${updatedType}', account_type='${user.account_type}')`);
+      console.log(`🔀 switchMode: Attempting to switch to 'group' mode. Current state:`, {
+        targetMode: 'group',
+        userTypeInStorage: updatedType,
+        userAccountType: user.account_type,
+        resolvedType: type,
+        currentPath: window.location.pathname
+      });
 
       if (
         type === "platform_admin" ||
         window.location.href.includes("super-admin")
       ) {
+        console.log("🚀 Navigating to super-admin-dashboard.html");
         window.location.href = "super-admin-dashboard.html";
       } else if (
         type === "coach" ||
         window.location.href.includes("coach-dashboard")
       ) {
+        console.log("🚀 Navigating to coach-dashboard.html");
         window.location.href = "coach-dashboard.html";
       } else if (
         type === "scout" ||
         window.location.href.includes("scout-dashboard")
       ) {
+        console.log("🚀 Navigating to scout-dashboard.html");
         window.location.href = "scout-dashboard.html";
       } else {
+        console.log("🚀 Navigating to admin-dashboard.html");
         window.location.href = "admin-dashboard.html";
       }
     }
@@ -2859,7 +2878,7 @@ const UnifiedNav = {
       }
     } catch (e) { }
 
-    const userRole = (user.account_type || user.userType || localStorage.getItem("userType") || "").toLowerCase();
+    const userRole = (localStorage.getItem("userType") || user.account_type || user.userType || "").toLowerCase();
 
     const isPlayer = /player-|schedule|finances|shop|chat/.test(url) || userRole === "player" || userRole === "parent";
     const isSuperAdmin = userRole === "platform_admin" || userRole === "superadmin" || url.includes("super-admin");
@@ -2879,9 +2898,13 @@ const UnifiedNav = {
     const p = window.location.pathname.toLowerCase();
 
     // 🛡️ ROLE PROTECTION: Only allow admin/coach/scout overrides if user has appropriate base role
-    const canBeAdmin = ["admin", "organization", "owner", "staff", "platform_admin", "superadmin"].includes(userRole);
-    const canBeCoach = ["coach", "staff", "admin", "owner"].includes(userRole);
-    const canBeScout = ["scout", "admin", "owner", "platform_admin"].includes(userRole);
+    const effectiveAccountType = (user.account_type || user.userType || "").toLowerCase();
+    const canBeAdmin = ["admin", "organization", "owner", "staff", "platform_admin", "superadmin", "adult", "group"].includes(userRole) || 
+                       ["admin", "organization", "owner", "staff", "platform_admin", "superadmin", "adult", "group"].includes(effectiveAccountType);
+    const canBeCoach = ["coach", "staff", "admin", "owner", "adult"].includes(userRole) || 
+                       ["coach", "staff", "admin", "owner", "adult", "group", "organization"].includes(effectiveAccountType);
+    const canBeScout = ["scout", "admin", "owner", "platform_admin", "adult"].includes(userRole) || 
+                       ["scout", "admin", "owner", "platform_admin", "adult", "group", "organization"].includes(effectiveAccountType);
 
     // 🛡️ SECURITY REDIRECT: Prevent unauthorized access to administrative pages
     if (!canBeAdmin && (p.includes("admin-") || p.includes("members") || p.includes("teams") || p.includes("form-builder"))) {
@@ -2901,7 +2924,7 @@ const UnifiedNav = {
     }
 
     // URL-based overrides (if user is navigating to a specific dash)
-    if (p.includes("super-admin") && (userRole === "platform_admin" || userRole === "superadmin")) {
+    if (p.includes("super-admin") && (userRole === "platform_admin" || userRole === "superadmin" || user.is_platform_admin)) {
         finalRole = "superadmin";
     }
     else if ((p.includes("admin-") || p.includes("/members") || p.includes("/teams") || p.includes("form-builder")) && canBeAdmin) {
@@ -2924,9 +2947,17 @@ const UnifiedNav = {
       else if (canBeCoach) finalRole = "coach";
       else finalRole = "player";
     }
+    else if (dashboardMode === "group") {
+        // Force admin mode for Groups Hub if user has privileges
+        if (canBeAdmin || isAdmin) {
+            finalRole = "admin";
+        }
+    }
     else if (dashboardMode === "player") {
         finalRole = "player";
     }
+
+    // Safety check: if user is admin/coach but on a generic page, preserve their role
 
     // Safety check: if user is admin/coach but on a generic page, preserve their role
     if ((userRole === "admin" || userRole === "coach") && (finalRole === "player" || !finalRole)) {
