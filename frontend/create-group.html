@@ -308,6 +308,14 @@
     <script src="pwa-install.js"></script>
     <script src="dialog-service.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userType = user.account_type || localStorage.getItem('userType');
+            const isPlayer = userType === 'player' || userType === 'talent' || userType === 'parent';
+            if (isPlayer) {
+                window.location.href = 'player-dashboard.html';
+            }
+        });
         let selectedLogoFile = null;
 
         // Logo upload handling

@@ -847,13 +847,6 @@
             try {
                     const { teams } = await apiService.get('/api/teams');
                     let teamsToRender = teams;
-                    if ((!teamsToRender || teamsToRender.length === 0) && localStorage.getItem('isDemoSession') === 'true') {
-                        // Demo fallback teams for local visual testing
-                        teamsToRender = [
-                            { id: 'demo-team-1', name: 'Under 12s', coach_name: 'Alex Morgan', player_count: 14 },
-                            { id: 'demo-team-2', name: 'Under 16s', coach_name: 'Sam Riley', player_count: 18 },
-                        ];
-                    }
 
                     if (!teamsToRender || teamsToRender.length === 0) {
                         container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
@@ -954,12 +947,7 @@
             const email = formData.get('email');
             
             // Demo mode bypass
-            if (localStorage.getItem('isDemoSession') === 'true') {
-                showNotification("Demo Mode: Invitation simulated for " + email, "success");
-                closeModal('addMemberModal');
-                e.target.reset();
-                return;
-            }
+            
 
             const data = {
                 email: email,

@@ -184,7 +184,7 @@ if (window.__groupSwitcherDefined) {
           );
 
           // If Platform Admin, fetch ALL organizations (only when not in demo mode)
-          const isDemo = localStorage.getItem("isDemoSession") === "true";
+          const isDemo = false;
           if (this.isPlatformAdmin && !isDemo) {
             try {
               console.log(

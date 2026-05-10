@@ -142,24 +142,7 @@
     </style>
 </head>
 
-    <script>
-        // Auto-enable demo session on localhost for visual tests
-        try {
-            if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
-                localStorage.setItem('isDemoSession', 'true');
-                if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
-                    if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
-                        if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
-                            localStorage.setItem('authToken', 'demo-token');
-                        }
-                    }
-                }
-                if (!localStorage.getItem('currentUser')) {
-                    localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-admin', first_name: 'Demo', last_name: 'Admin', role: 'admin', account_type: 'organization' }));
-                }
-            }
-        } catch (e) { console.warn('Demo auto-enable failed', e); }
-    </script>
+    
 <body class="clubhub-unified dashboard-page">
     <script>window.UNIFIED_NAV_ENABLED = true;</script>
 
@@ -368,30 +351,7 @@
                         <script>
                             document.addEventListener('DOMContentLoaded', () => {
                                 const container = document.getElementById('financeTransactions');
-                                if (localStorage.getItem('isDemoSession') === 'true') {
-                                    container.innerHTML = `
-                                        <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
-                                            <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem;">
-                                                <strong style="color:#fff;">Subscription Renewal</strong>
-                                                <span style="color:#4ade80; font-weight:800;">+£45.00</span>
-                                            </div>
-                                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
-                                                <span>James Wilson</span>
-                                                <span>2 mins ago</span>
-                                            </div>
-                                        </div>
-                                        <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); font-size:0.9rem;">
-                                            <div style="display:flex; justify-content:space-between; margin-bottom:0.35rem;">
-                                                <strong style="color:#fff;">Kit Purchase</strong>
-                                                <span style="color:#4ade80; font-weight:800;">+£22.50</span>
-                                            </div>
-                                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
-                                                <span>Sarah Palmer</span>
-                                                <span>45 mins ago</span>
-                                            </div>
-                                        </div>
-                                    `;
-                                } else {
+                                 else {
                                     container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.9rem;">No recent transactions.</div>';
                                 }
                             });
@@ -548,13 +508,6 @@
             try {
                     const { teams } = await apiService.get('/api/teams');
                     let teamsToRender = teams;
-                    if ((!teamsToRender || teamsToRender.length === 0) && localStorage.getItem('isDemoSession') === 'true') {
-                        // Demo fallback teams for local visual testing
-                        teamsToRender = [
-                            { id: 'demo-team-1', name: 'Under 12s', coach_name: 'Alex Morgan', player_count: 14 },
-                            { id: 'demo-team-2', name: 'Under 16s', coach_name: 'Sam Riley', player_count: 18 },
-                        ];
-                    }
 
                     if (!teamsToRender || teamsToRender.length === 0) {
                         container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';

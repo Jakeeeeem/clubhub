@@ -48,6 +48,8 @@ class TourService {
    * @param {Array} steps - Array of step objects { target, title, text, position }
    */
   start(tourId, steps) {
+    // Walkthrough disabled per user request
+    return;
     // 1. Check database-synced state first (highest priority)
     const dbCompletedTours =
       window.AppState?.currentUser?.completed_tours || [];

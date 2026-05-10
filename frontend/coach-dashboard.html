@@ -559,6 +559,14 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userType = user.account_type || localStorage.getItem('userType');
+            const isAuthorized = userType === 'admin' || userType === 'organization' || userType === 'coach';
+            
+            if (!isAuthorized) {
+                window.location.href = 'player-dashboard.html';
+                return;
+            }
             // Auth handled by UnifiedNav
 
             // Initialize coach dashboard logic

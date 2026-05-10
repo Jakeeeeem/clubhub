@@ -364,7 +364,7 @@
                 let tournaments = await apiService.makeRequest('/events?public=true&eventType=tournament');
 
                 // Demo tournaments fallback if needed
-                if (!tournaments || tournaments.length === 0 && localStorage.getItem('isDemoSession') === 'true') {
+                if (!tournaments || tournaments.length === 0 ) {
                     const fallback = new ApiService().getAdminDashboardFallback();
                     tournaments = (fallback.tournaments || []).filter(t => t.is_public);
                 }

@@ -215,33 +215,7 @@ async function initializePlayerDashboard() {
     wireFormEventListeners();
     wireFamilyListeners();
 
-    // Load dashboard data and provide demo fallbacks if necessary
-    await loadPlayerDataWithFallback().catch((e) => {
-      console.warn("loadPlayerDataWithFallback failed:", e);
-    });
-
-    // If demo session and no payments loaded, inject demo payment so Orders UI shows example data
-    if (localStorage.getItem("isDemoSession") === "true") {
-      if (!PlayerDashboardState.payments || PlayerDashboardState.payments.length === 0) {
-        PlayerDashboardState.payments = [
-          {
-            id: "demo-pay-1",
-            due_date: new Date().toISOString(),
-            description: "Tournament Registration — Riverside Cup",
-            amount: 25.0,
-            payment_status: "pending",
-          },
-          {
-            id: "demo-pay-2",
-            due_date: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
-            description: "Membership Fee",
-            amount: 120.0,
-            payment_status: "paid",
-          },
-        ];
-      }
-    }
-
+    // Data loaded successfully
     await loadPlayerDataWithFallback();
 
     loadPlayerOverview();
@@ -616,12 +590,6 @@ function loadFullSchedule() {
 async function loadPlannerFeed() {
   const container = document.getElementById("plannerFeedContainer");
   if (!container) return;
-
-  const demoItems = [
-    { avatar: 'JD', bg: 'var(--primary)', author: 'Coach John Doe', time: '2 hours ago', text: "Great session today! Focus on the defensive positioning from Tuesday's drill." },
-    { avatar: 'EA', bg: '#4f46e5', author: 'Elite Academy', time: 'Yesterday', text: 'Summer tournament registration is now open. Sign up before May 5th!' },
-    { avatar: 'RS', bg: '#10b981', author: 'Coach R. Smith', time: '2 days ago', text: 'New training video uploaded — Set piece routines. Watch before Thursday!' },
-  ];
 
   const renderItems = (items) => {
     container.innerHTML = items.map((item, i) => `

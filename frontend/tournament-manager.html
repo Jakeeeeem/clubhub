@@ -756,7 +756,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // Check auth status
             const user = JSON.parse(localStorage.getItem('currentUser'));
-            const isDemo = localStorage.getItem('isDemoSession') === 'true';
+            const isDemo = false;
             
             if (!isDemo && (!user || (user.userType !== 'admin' && user.userType !== 'organization'))) {
                 window.location.href = 'index.html';

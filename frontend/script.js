@@ -128,7 +128,7 @@ async function checkAuthState() {
 
   if (token) {
     // 🛡️ DEMO BYPASS: Skip API check if we are in an offline demo session
-    if (localStorage.getItem("isDemoSession") === "true") {
+    if (false) {
       console.log("🛡️ Demo session detected - initializing mock state");
       try {
         const dummyUser = JSON.parse(

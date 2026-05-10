@@ -22,8 +22,21 @@
       const groupId = params.get('group') || localStorage.getItem('activeGroupId');
       const group = Groups.GroupSwitcher.get(groupId);
       if(!group){ document.getElementById('membersList').innerText = 'No group selected'; return; }
+      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const userType = user.account_type || localStorage.getItem('userType');
+      const isPlayer = userType === 'player' || userType === 'talent' || userType === 'parent';
+
       const node = document.getElementById('membersList');
-      node.innerHTML = group.members.map(m=>`<div style="padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;"><div><strong>${m.name}</strong><div style="font-size:0.9rem;color:rgba(255,255,255,0.6);">${m.role}</div></div><div><button class="btn btn-outline" data-id="${m.id}">Remove</button></div></div>`).join('');
+      node.innerHTML = group.members.map(m=>`
+        <div style="padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <strong>${m.name}</strong>
+            <div style="font-size:0.9rem;color:rgba(255,255,255,0.6);">${m.role}</div>
+          </div>
+          <div>
+            ${!isPlayer ? `<button class="btn btn-outline" data-id="${m.id}">Remove</button>` : ''}
+          </div>
+        </div>`).join('');
     })();
   </script>
 </body>

@@ -166,7 +166,7 @@ const UnifiedNav = {
 
     // 🛡️ Fallback mock data injection for demo stability
     // ONLY runs if we are in demo mode AND no real data is present.
-    if (localStorage.getItem('isDemoSession') === 'true' && localStorage.getItem('forceLiveData') !== 'true') {
+    if (false && localStorage.getItem('forceLiveData') !== 'true') {
       const existingFamily = localStorage.getItem('userFamily');
       if (!existingFamily || existingFamily === '[]') {
         const mockFamily = [
@@ -281,7 +281,7 @@ const UnifiedNav = {
     // 0. AUTH PROTECTION: Immediate redirect if on backend but not logged in
     const token = localStorage.getItem("authToken");
     const userJson = localStorage.getItem("currentUser");
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
+    const isDemo = false;
     let user = null;
     try {
       if (userJson && userJson !== "undefined" && userJson !== "null") user = JSON.parse(userJson);
@@ -363,7 +363,7 @@ const UnifiedNav = {
       if (!isDesktop) {
         console.log("📱 Mobile View");
         if (isDashboard) {
-          if (!isLoggedIn && localStorage.getItem("isDemoSession") !== "true") {
+          if (!isLoggedIn && true) {
             console.warn("🔒 Unauthenticated mobile dashboard access. Redirecting to home...");
             window.location.href = "index.html";
             return;
@@ -386,7 +386,7 @@ const UnifiedNav = {
       } else {
         console.log("💻 Desktop View");
         if (isDashboard) {
-          if (!isLoggedIn && localStorage.getItem("isDemoSession") !== "true") {
+          if (!isLoggedIn && true) {
             console.warn(
               "🔒 Unauthenticated dashboard access. Redirecting to home...",
             );
@@ -1414,7 +1414,7 @@ const UnifiedNav = {
     const roleNow = (this.getUserRole() || '').toLowerCase();
     const isPlayerView = modeNow === 'player' || roleNow === 'player' || roleNow === 'parent';
     const family = JSON.parse(localStorage.getItem("userFamily") || "[]");
-    const isDemo = localStorage.getItem('isDemoSession') === 'true';
+    const isDemo = false;
 
     console.log(`🔍 Family Switcher Check: mode=${modeNow}, role=${roleNow}, isPlayerView=${isPlayerView}, familyCount=${family.length}`);
 
@@ -2872,19 +2872,55 @@ const UnifiedNav = {
     let finalRole = (userRole || "player").toLowerCase();
     const p = window.location.pathname.toLowerCase();
 
-    // URL-based overrides (if user is navigating to a specific dash)
-    if (p.includes("super-admin")) finalRole = "superadmin";
-    else if (p.includes("admin-") || p.includes("members") || p.includes("teams") || p.includes("form-builder")) finalRole = "admin";
-    else if (p.includes("scout") || p.includes("scouting")) finalRole = "scout";
-    else if (p.includes("coach-")) finalRole = "coach";
-    else if (p.includes("player-") || p.includes("schedule")) finalRole = "player";
-    else if (p.includes("tactical-board")) {
-      // Preserve admin or coach role on tactical board
-      if (userRole === "admin" || userRole === "organization" || userRole === "owner") finalRole = "admin";
-      else if (userRole === "coach" || userRole === "staff") finalRole = "coach";
-      else finalRole = "admin"; // Default for tactical board access
+    // 🛡️ ROLE PROTECTION: Only allow admin/coach/scout overrides if user has appropriate base role
+    const canBeAdmin = ["admin", "organization", "owner", "staff", "platform_admin", "superadmin"].includes(userRole);
+    const canBeCoach = ["coach", "staff", "admin", "owner"].includes(userRole);
+    const canBeScout = ["scout", "admin", "owner", "platform_admin"].includes(userRole);
+
+    // 🛡️ SECURITY REDIRECT: Prevent unauthorized access to administrative pages
+    if (!canBeAdmin && (p.includes("admin-") || p.includes("members") || p.includes("teams") || p.includes("form-builder"))) {
+        console.warn("🛡️ Security: Unauthorized access attempt to admin page. Redirecting to player dashboard.");
+        window.location.href = "player-dashboard.html";
+        return;
     }
-    else if (dashboardMode === "player") finalRole = "player";
+    if (!canBeCoach && p.includes("coach-")) {
+        console.warn("🛡️ Security: Unauthorized access attempt to coach page. Redirecting to player dashboard.");
+        window.location.href = "player-dashboard.html";
+        return;
+    }
+    if (!canBeScout && (p.includes("scout-") || p.includes("scouting.html"))) {
+        console.warn("🛡️ Security: Unauthorized access attempt to scout page. Redirecting to player dashboard.");
+        window.location.href = "player-dashboard.html";
+        return;
+    }
+
+    // URL-based overrides (if user is navigating to a specific dash)
+    if (p.includes("super-admin") && (userRole === "platform_admin" || userRole === "superadmin")) {
+        finalRole = "superadmin";
+    }
+    else if ((p.includes("admin-") || p.includes("/members") || p.includes("/teams") || p.includes("form-builder")) && canBeAdmin) {
+        // Ensure we don't match coach-teams or other coach pages
+        if (!p.includes("coach-")) {
+            finalRole = "admin";
+        }
+    }
+    else if ((p.includes("scout") || p.includes("scouting")) && canBeScout) {
+        finalRole = "scout";
+    }
+    else if (p.includes("coach-") && canBeCoach) {
+        finalRole = "coach";
+    }
+    else if (p.includes("player-") || p.includes("schedule") || p.includes("finances") || p.includes("chat")) {
+        finalRole = "player";
+    }
+    else if (p.includes("tactical-board")) {
+      if (canBeAdmin) finalRole = "admin";
+      else if (canBeCoach) finalRole = "coach";
+      else finalRole = "player";
+    }
+    else if (dashboardMode === "player") {
+        finalRole = "player";
+    }
 
     // Safety check: if user is admin/coach but on a generic page, preserve their role
     if ((userRole === "admin" || userRole === "coach") && (finalRole === "player" || !finalRole)) {
@@ -2945,12 +2981,12 @@ const UnifiedNav = {
       menuHtml = `
         <div class="nav-group-title"><span>Coaching Hub</span></div>
         <a href="coach-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'overview')" class="sidebar-link ${isActive('coach-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
-        <a href="admin-members.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-members.html', 'members')" class="sidebar-link ${isActive('admin-members.html')}">${ICONS.nav.players}<span>Squad Manager</span></a>
-        <a href="admin-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-teams.html', 'teams')" class="sidebar-link ${isActive('admin-teams.html')}">${ICONS.nav.teams}<span>Squads & Teams</span></a>
-        <a href="admin-events.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-events.html', 'events')" class="sidebar-link ${isActive('admin-events.html')}">${ICONS.nav.events}<span>Event Manager</span></a>
-        <a href="admin-venues.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-venues.html', 'venues')" class="sidebar-link ${isActive('admin-venues.html')}">${ICONS.nav.venue}<span>My Venues</span></a>
+        <a href="coach-players.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-players.html', 'players')" class="sidebar-link ${isActive('coach-players.html')}">${ICONS.nav.players}<span>Squad Manager</span></a>
+        <a href="coach-teams.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-teams.html', 'teams')" class="sidebar-link ${isActive('coach-teams.html')}">${ICONS.nav.teams}<span>Squads & Teams</span></a>
+        <a href="coach-events.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-events.html', 'events')" class="sidebar-link ${isActive('coach-events.html')}">${ICONS.nav.events}<span>Event Manager</span></a>
+        <a href="venue-booking.html" onclick="return UnifiedNav.handleNavClick(event, 'venue-booking.html', 'venues')" class="sidebar-link ${isActive('venue-booking.html')}">${ICONS.nav.venue}<span>Venue Booking</span></a>
         <a href="coach-tournament-manager.html" onclick="return UnifiedNav.handleNavClick(event, 'coach-tournament-manager.html', 'tournament-manager')" class="sidebar-link ${isActive('coach-tournament-manager.html')}">${ICONS.nav.trophy}<span>Tournament Hub</span></a>
-        <a href="admin-academy-tv.html" onclick="return UnifiedNav.handleNavClick(event, 'admin-academy-tv.html', 'academy-tv')" class="sidebar-link ${isActive('admin-academy-tv.html')}">${ICONS.nav.academy}<span>Academy TV</span></a>
+        <a href="player-academy-tv.html" onclick="return UnifiedNav.handleNavClick(event, 'player-academy-tv.html', 'academy-tv')" class="sidebar-link ${isActive('player-academy-tv.html')}">${ICONS.nav.academy}<span>Academy TV</span></a>
         
         <div class="nav-group-title"><span>Tools</span></div>
         <a href="coach-dashboard.html#coach-messenger" onclick="return UnifiedNav.handleNavClick(event, 'coach-dashboard.html', 'messenger')" class="sidebar-link ${p.includes('messenger') ? 'active' : ''}">${ICONS.nav.chat}<span>Squad Messenger</span></a>

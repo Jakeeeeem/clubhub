@@ -592,6 +592,15 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userType = user.account_type || localStorage.getItem('userType');
+            const isAuthorized = userType === 'admin' || userType === 'organization' || userType === 'coach';
+            
+            if (!isAuthorized) {
+                window.location.href = 'player-dashboard.html';
+                return;
+            }
+
             // Check auth
             if (typeof checkAuthStatus === 'function') {
                 const ok = await checkAuthStatus();

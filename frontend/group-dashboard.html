@@ -54,7 +54,17 @@
         document.getElementById('groupInfo').innerText = 'No group selected.';
       }
 
+      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const userType = user.account_type || localStorage.getItem('userType');
+      const isPlayer = userType === 'player' || userType === 'talent' || userType === 'parent';
+      
+      if (isPlayer) {
+        const createBtn = document.getElementById('createEventBtn');
+        if (createBtn) createBtn.style.display = 'none';
+      }
+
       document.getElementById('createEventBtn').onclick = ()=>{
+        if (isPlayer) return;
         const title = prompt('Event title');
         const starts = prompt('Start ISO datetime (e.g. 2026-04-20T10:00)');
         if(title && starts){

@@ -170,16 +170,6 @@ window.DashboardLoaders = {
             const response = await apiService.get('/members') || {};
             let players = response.players || [];
             
-            if ((!players || players.length === 0) && localStorage.getItem('isDemoSession') === 'true') {
-                players = [
-                    { id: 'p1', first_name: 'Marcus', last_name: 'Thompson', role: 'Player', team_name: 'Under 16s', status: 'Active' },
-                    { id: 'p2', first_name: 'Sarah', last_name: 'Davies', role: 'Parent', team_name: 'Under 12s', status: 'Active' },
-                    { id: 'p3', first_name: 'James', last_name: 'Wilson', role: 'Player', team_name: 'First Team', status: 'Active' },
-                    { id: 'p4', first_name: 'Emma', last_name: 'Knight', role: 'Coach', team_name: 'Under 14s', status: 'Active' },
-                    { id: 'p5', first_name: 'Oliver', last_name: 'Smith', role: 'Player', team_name: 'Under 16s', status: 'Active' }
-                ];
-            }
-
             if (!players || players.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="padding:3rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
                 return;

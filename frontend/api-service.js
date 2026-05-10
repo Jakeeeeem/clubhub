@@ -72,16 +72,8 @@ if (typeof ApiService === 'undefined') {
    * User requested "all working data not mock" - forcing live data for everything.
    */
   shouldMock() {
-    try {
-      const forceLive = localStorage.getItem('forceLiveData') === 'true';
-      if (forceLive) return false;
-
-      // ONLY mock if isDemoSession is explicitly true
-      const isDemo = localStorage.getItem('isDemoSession') === 'true';
-      return isDemo;
-    } catch (e) {
-      return false;
-    }
+    // Force live data for everything as per user request
+    return false;
   }
 
   // Generic GET method for dashboard loaders
@@ -111,7 +103,7 @@ if (typeof ApiService === 'undefined') {
         role = role.toString().toLowerCase();
       }
 
-      const demoClubs = this.getAdminDashboardFallback().groups;
+      const demoClubs = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.groups;
       const mockFamily = [
         { id: 'f1', first_name: 'Leo', last_name: 'Junior', club_id: 'demo-club-id' },
         { id: 'f2', first_name: 'Mia', last_name: 'Junior', club_id: 'demo-club-id' }
@@ -250,7 +242,7 @@ if (typeof ApiService === 'undefined') {
 
   async getFeedItems(role = "all") {
     if (this.shouldMock()) {
-      const allItems = this.getAdminDashboardFallback().feed;
+      const allItems = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.feed;
       if (role === "all") return allItems;
       return allItems.filter(item => 
         item.roles.includes("all") || item.roles.includes(role.toLowerCase())
@@ -266,7 +258,7 @@ if (typeof ApiService === 'undefined') {
 
   async getMessages(type = "all") {
     if (this.shouldMock()) {
-      const allMessages = this.getAdminDashboardFallback().messages;
+      const allMessages = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.messages;
       if (type === "all") return allMessages;
       return allMessages.filter(msg => msg.type === type);
     }
@@ -413,207 +405,6 @@ if (typeof ApiService === 'undefined') {
 
   // Helper to handle all demo interceptions in one place
   async _interceptDemoRequest(endpoint, options) {
-    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    const method = options.method || "GET";
-
-    // --- SYSTEM & AUTH ---
-    if (endpoint.includes("/health")) {
-      return { status: 'healthy', demo: true };
-    }
-
-    if (endpoint.includes("/auth/login")) {
-      const body = JSON.parse(options.body || "{}");
-      console.log("🔐 Demo Login Attempt:", body.email);
-      return {
-        success: true,
-        token: "demo-token-" + Date.now(),
-        user: {
-          id: "demo-user-id",
-          email: body.email || "demo@clubhub.com",
-          firstName: "Demo",
-          lastName: "User",
-          account_type: "adult",
-          role: "player"
-        }
-      };
-    }
-
-    if (endpoint.includes("/auth/register")) {
-      const body = JSON.parse(options.body || "{}");
-      console.log("📝 Demo Registration Attempt:", body.email);
-      return {
-        success: true,
-        token: "demo-token-" + Date.now(),
-        user: {
-          id: "demo-user-id",
-          email: body.email,
-          firstName: body.firstName || "New",
-          lastName: body.lastName || "User",
-          account_type: body.accountType || "adult",
-          role: body.accountType === "group" ? "admin" : "player"
-        }
-      };
-    }
-
-    // --- PLATFORM-ADMIN: scout verifications (demo fallback) ---
-    if (endpoint.includes("/platform-admin/scout-verifications")) {
-      // Trigger a real fetch to the same path so test harness (Cypress) can intercept it and
-      // return the configured fixture. This keeps test expectations (network request) intact
-      // while still providing demo data in local runs.
-      try {
-        const qsIndex = endpoint.indexOf('?');
-        const path = qsIndex === -1 ? endpoint : endpoint.substring(0, qsIndex);
-        const query = qsIndex === -1 ? '' : endpoint.substring(qsIndex);
-        const resp = await fetch(`${path}${query}`, { headers: { Accept: 'application/json' } });
-        try {
-          const data = await resp.json();
-          return data;
-        } catch (e) {
-          // If parsing fails, fall back to in-memory demo list
-          return [
-            { id: 'sv1', name: 'Oliver Brown', email: 'oliver.brown@example.com', created_at: '2026-05-01T12:00:00Z', status: 'pending', notes: 'Demo scout submission' },
-            { id: 'sv2', name: 'Sophie Green', email: 'sophie.green@example.com', created_at: '2026-04-30T09:30:00Z', status: 'pending', notes: 'Demo scout submission 2' }
-          ];
-        }
-      } catch (e) {
-        return [
-          { id: 'sv1', name: 'Oliver Brown', email: 'oliver.brown@example.com', created_at: '2026-05-01T12:00:00Z', status: 'pending', notes: 'Demo scout submission' },
-          { id: 'sv2', name: 'Sophie Green', email: 'sophie.green@example.com', created_at: '2026-04-30T09:30:00Z', status: 'pending', notes: 'Demo scout submission 2' }
-        ];
-      }
-    }
-
-    // --- GROUP SWITCHING ---
-    if (endpoint.includes("/auth/switch-group") || endpoint.includes("/auth/switch")) {
-      const body = JSON.parse(options.body || "{}");
-      const targetGroupId = body.organizationId || body.groupId || "demo-club-id";
-      
-      // Demo Role Switching based on target group
-      if (targetGroupId === "demo-player-org") {
-        user.groupId = targetGroupId;
-        user.activePlayerId = "demo-player-id";
-        user.role = "player";
-        user.account_type = "player";
-      } else if (targetGroupId === "demo-coach-org-2") {
-        user.groupId = targetGroupId;
-        user.activePlayerId = null;
-        user.role = "coach";
-        user.account_type = "coach";
-      } else {
-        user.groupId = targetGroupId;
-        user.activePlayerId = null;
-        user.role = "admin";
-        user.account_type = "organization";
-      }
-      
-      localStorage.setItem("currentUser", JSON.stringify(user));
-      localStorage.setItem("userType", user.account_type);
-      if (user.activePlayerId) localStorage.setItem("activePlayerId", user.activePlayerId);
-      else localStorage.removeItem("activePlayerId");
-
-      console.log("♻️ Demo Group Switch:", { groupId: user.groupId, role: user.role, player: user.activePlayerId });
-      
-      // Force page reload after a short delay in demo mode to simulate realistic state refresh
-      return { success: true, message: "Group switched (Demo)", groupId: user.groupId, role: user.role };
-    }
-
-
-    // --- PLAYER FAMILY ---
-    if (endpoint.includes("/players/family")) {
-      return [
-        { id: "demo-player-id", first_name: "Jordan", last_name: "Smith", club_id: "demo-player-org", role: "player", relationship: "Self" },
-        { id: "child-1", first_name: "Alex", last_name: "Morgan", club_id: "demo-club-id", role: "player", relationship: "Child" },
-        { id: "child-2", first_name: "Sam", last_name: "Kerr", club_id: "demo-coach-org-2", role: "player", relationship: "Child" }
-      ];
-    }
-
-    // --- GROUP LISTS ---
-    if (endpoint.includes("/clubs") && !endpoint.includes("/platform-admin/organizations")) {
-      if (localStorage.getItem("isDemoSession") === "true") {
-          return this.getAdminDashboardFallback().groups || [];
-      }
-    }
-
-    if (endpoint.includes("/members") || endpoint.includes("/players") || endpoint.includes("/coach/squad") || endpoint === "/members") {
-      if (localStorage.getItem("isDemoSession") === "true") {
-          const fb = this.getAdminDashboardFallback();
-          // Match the response format expected for /coach/squad as well
-          return { 
-            players: fb.players, 
-            staff: fb.staff, 
-            members: fb.players, // Compatibility
-            coaches: fb.staff.filter(s => s.role === 'coach'),
-            success: true 
-          };
-      }
-    }
-
-    if (endpoint.includes("/teams")) {
-      if (localStorage.getItem("isDemoSession") === "true") {
-          return { teams: this.getAdminDashboardFallback().teams, success: true };
-      }
-    }
-
-    if (endpoint.includes("/feed")) {
-      if (localStorage.getItem("isDemoSession") === "true") {
-          return { activity: this.getAdminDashboardFallback().activity || [], success: true };
-      }
-    }
-
-    // --- DASHBOARDS ---
-    if (endpoint === "/admin" || endpoint.includes("/dashboard/admin") || endpoint.includes("/admin/stats")) {
-        if (localStorage.getItem("isDemoSession") === "true") {
-            const fb = this.getAdminDashboardFallback();
-            if (endpoint.includes("/stats")) {
-                return {
-                    totalMembers: fb.players.length + fb.staff.length,
-                    monthlyRevenue: fb.statistics.monthly_revenue || 0,
-                    activeEvents: fb.events.length,
-                    pendingScouts: 3
-                };
-            }
-            return fb;
-        }
-    }
-
-    if (endpoint.includes("/dashboard/player") || endpoint.includes("/players/dashboard")) {
-        if (localStorage.getItem("isDemoSession") === "true") return this.getPlayerDashboardFallback();
-    }
-    
-    if (endpoint.includes("/dashboard/coach")) {
-        if (localStorage.getItem("isDemoSession") === "true") return this.getCoachDashboardFallback();
-    }
-
-    // --- MESSAGING & NOTIFICATIONS ---
-    if (endpoint.includes("/messages") && method === "GET") {
-      if (localStorage.getItem("isDemoSession") === "true") {
-        const fb = this.getAdminDashboardFallback();
-        const allMessages = fb.messages || [];
-
-        // Conversation list or org-specific conversation list
-        if (endpoint === "/messages" || endpoint.startsWith("/messages?")) {
-          return { messages: allMessages, success: true };
-        }
-
-        // Single message / conversation detail
-        const messageIdMatch = endpoint.match(/^\/messages\/(.+)$/);
-        if (messageIdMatch) {
-          const messageId = messageIdMatch[1];
-          const message = allMessages.find(m => m.id === messageId);
-          return message ? { message } : { message: null };
-        }
-      }
-      // Allow real message API calls to reach backend so messages are persisted by default.
-      return null;
-    }
-
-    if (endpoint.includes("/notifications")) {
-      return [
-        { id: "n1", title: "Welcome to ClubHub", message: "Explore your new dashboard.", type: "system", created_at: new Date().toISOString() },
-        { id: "n2", title: "Meeting Reminder", message: "Staff meeting tomorrow at 10 AM.", type: "reminder", created_at: new Date().toISOString() }
-      ];
-    }
-
     return null;
   }
 
@@ -648,7 +439,7 @@ if (typeof ApiService === 'undefined') {
 
     if (!response.ok) {
       // If demo session or local dev, attempt to return demo fallback instead of throwing
-      const isDemo = localStorage.getItem("isDemoSession") === "true";
+      
       const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
       if ((response.status === 401 || response.status === 403 || response.status === 404 || response.status === 405 || response.status >= 500) && this.shouldMock()) {
@@ -695,18 +486,6 @@ if (typeof ApiService === 'undefined') {
 
 
   // =========================== ITEM SHOP METHODS ===========================
-
-  async getProducts(groupId = null) {
-    try {
-      const endpoint = groupId ? `/products?groupId=${groupId}` : "/products";
-      return await this.makeRequest(endpoint);
-    } catch (error) {
-      if (localStorage.getItem("isDemoSession") === "true") {
-        return this.getAdminDashboardFallback().products;
-      }
-      throw error;
-    }
-  }
 
   async createProduct(productData) {
     return await this.makeRequest("/products", {
@@ -772,35 +551,6 @@ if (typeof ApiService === 'undefined') {
     }
   }
 
-  async getCampaigns(groupId = null) {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      return this.getAdminDashboardFallback().campaigns;
-    }
-    try {
-      const endpoint = groupId ? `/campaigns?groupId=${groupId}` : "/campaigns";
-      return await this.makeRequest(endpoint);
-    } catch (error) {
-      console.warn("❌ Failed to fetch campaigns:", error);
-      if (localStorage.getItem("isDemoSession") === "true")
-        return this.getAdminDashboardFallback().campaigns;
-      return [];
-    }
-  }
-
-  async getGroups(query = "", hasListings = true) {
-    try {
-      const queryString = new URLSearchParams({
-        search: query,
-        has_listings: hasListings, // Only fetch groups with active listings if requested
-      }).toString();
-
-      return await this.makeRequest(`/clubs?${queryString}`);
-    } catch (error) {
-      console.error("Failed to search groups:", error);
-      throw error;
-    }
-  }
-
   async createCampaign(campaignData) {
     return await this.makeRequest("/campaigns", {
       method: "POST",
@@ -817,12 +567,6 @@ if (typeof ApiService === 'undefined') {
   async sendEventNotification(eventId) {
     return await this.makeRequest(`/events/${eventId}/notify`, {
       method: "POST",
-    });
-  }
-
-  async deleteEvent(eventId) {
-    return await this.makeRequest(`/events/${eventId}`, {
-      method: "DELETE",
     });
   }
 
@@ -940,15 +684,6 @@ if (typeof ApiService === 'undefined') {
 
   // Consolidated with line 833
 
-  async getFilteredPlayers(filter, groupId) {
-    // Backend API expects 'filter' usually as part of query?
-    // Based on players.js reading in Step 1796 (implied), route was modified?
-    // Actually I haven't modified players.js for 'filtered' endpoint yet.
-    // I should check players.js. For now I'll assume /players/filtered/:filter
-    return await this.makeRequest(
-      `/players/filtered/${filter}?groupId=${groupId}`,
-    );
-  }
 
   async assignPaymentPlan(userId, planId, startDate) {
     return await this.makeRequest("/payments/plan/assign", {
@@ -1356,10 +1091,7 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getCurrentUser() {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      const storedUser = localStorage.getItem("currentUser");
-      if (storedUser) return JSON.parse(storedUser);
-    }
+    
     return await this.makeRequest("/auth/me");
   }
 
@@ -1390,8 +1122,6 @@ if (typeof ApiService === 'undefined') {
       return groups;
     } catch (error) {
       console.warn("❌ Failed to fetch groups:", error);
-      if (localStorage.getItem("isDemoSession") === "true")
-        return this.getAdminDashboardFallback().groups;
       const cachedGroups = localStorage.getItem("cachedGroups");
       return cachedGroups ? JSON.parse(cachedGroups) : [];
     }
@@ -1402,16 +1132,14 @@ if (typeof ApiService === 'undefined') {
       localStorage.getItem("isDemoSession") === "true" ||
       id.startsWith("dummy-")
     ) {
-      const demoGroups = this.getAdminDashboardFallback().groups;
+      const demoGroups = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.groups;
       return demoGroups.find((c) => c.id === id) || demoGroups[0];
     }
     try {
       return await this.makeRequest(`/clubs/${id}`);
     } catch (error) {
       console.warn(`❌ Failed to fetch club ${id}:`, error);
-      if (localStorage.getItem("isDemoSession") === "true") {
-        return this.getAdminDashboardFallback().groups[0];
-      }
+      
       throw error;
     }
   }
@@ -1419,7 +1147,7 @@ if (typeof ApiService === 'undefined') {
   async getGroupById(id) {
     // 1. Explicit dummy ID check
     if (id && id.toString().startsWith("dummy-")) {
-      const demoGroups = this.getAdminDashboardFallback().groups;
+      const demoGroups = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.groups;
       return demoGroups.find((c) => c.id === id) || demoGroups[0];
     }
 
@@ -1428,10 +1156,7 @@ if (typeof ApiService === 'undefined') {
       return await this.makeRequest(`/clubs/${id}`);
     } catch (error) {
       // 3. Fallback only if in demo session
-      if (localStorage.getItem("isDemoSession") === "true") {
-        const demoGroups = this.getAdminDashboardFallback().groups;
-        return demoGroups[0];
-      }
+      
       throw error;
     }
   }
@@ -1588,8 +1313,6 @@ if (typeof ApiService === 'undefined') {
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch players:", error);
-      if (localStorage.getItem("isDemoSession") === "true")
-        return this.getAdminDashboardFallback().players;
       return [];
     }
   }
@@ -1603,7 +1326,7 @@ if (typeof ApiService === 'undefined') {
   async getPlayerById(id) {
     // 1. Explicit dummy ID check (mock IDs usually like 'p1', 'p2')
     if (id && id.toString().startsWith("p") && id.toString().length < 5) {
-      const demoPlayers = this.getAdminDashboardFallback().players;
+      const demoPlayers = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.players;
       return demoPlayers.find((p) => p.id === id) || demoPlayers[0];
     }
 
@@ -1612,10 +1335,7 @@ if (typeof ApiService === 'undefined') {
       return await this.makeRequest(`/players/${id}`);
     } catch (error) {
       // 3. Fallback only if in demo session
-      if (localStorage.getItem("isDemoSession") === "true") {
-        const demoPlayers = this.getAdminDashboardFallback().players;
-        return demoPlayers[0];
-      }
+      
       throw error;
     }
   }
@@ -1652,15 +1372,6 @@ if (typeof ApiService === 'undefined') {
     });
   }
 
-  async getPlayerDashboardData(playerId = null) {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      return await this.makeRequest("/players/dashboard");
-    }
-    const endpoint = playerId
-      ? `/players/${playerId}/dashboard`
-      : "/players/dashboard";
-    return await this.makeRequest(endpoint);
-  }
 
   async deletePlayer(id) {
     return await this.makeRequest(`/players/${id}`, {
@@ -1671,11 +1382,7 @@ if (typeof ApiService === 'undefined') {
   // =========================== EVENT METHODS ===========================
 
   async getEvents(groupId = null) {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      const fallbackEvents = this.getAdminDashboardFallback().events || [];
-      const mockEvents = JSON.parse(localStorage.getItem("demo_mock_events") || "[]");
-      return [...fallbackEvents, ...mockEvents];
-    }
+    
     try {
       const endpoint = groupId
         ? `/events?groupId=${groupId}&upcoming=true`
@@ -1685,8 +1392,6 @@ if (typeof ApiService === 'undefined') {
       return events;
     } catch (error) {
       console.warn("❌ Failed to fetch events:", error);
-      if (localStorage.getItem("isDemoSession") === "true")
-        return this.getAdminDashboardFallback().events;
       const cachedEvents = localStorage.getItem("cachedEvents");
       return cachedEvents ? JSON.parse(cachedEvents) : [];
     }
@@ -1695,7 +1400,7 @@ if (typeof ApiService === 'undefined') {
   async getEventById(id) {
     // 1. Explicit dummy ID check ('e1', 'e2')
     if (id && id.toString().startsWith("e") && id.toString().length < 5) {
-      const demoEvents = this.getAdminDashboardFallback().events;
+      const demoEvents = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.events;
       return demoEvents.find((e) => e.id === id) || demoEvents[0];
     }
 
@@ -1704,10 +1409,7 @@ if (typeof ApiService === 'undefined') {
       return await this.makeRequest(`/events/${id}`);
     } catch (error) {
       // 3. Fallback only if in demo session
-      if (localStorage.getItem("isDemoSession") === "true") {
-        const demoEvents = this.getAdminDashboardFallback().events;
-        return demoEvents[0];
-      }
+      
       throw error;
     }
   }
@@ -1732,12 +1434,6 @@ if (typeof ApiService === 'undefined') {
     });
   }
 
-  async recordMatchResult(id, resultData) {
-    return await this.makeRequest(`/events/${id}/results`, {
-      method: "POST",
-      body: JSON.stringify(resultData),
-    });
-  }
 
   async bookEvent(eventId, bookingData = {}) {
     return await this.makeRequest(`/events/${eventId}/book`, {
@@ -1768,16 +1464,12 @@ if (typeof ApiService === 'undefined') {
   // =========================== TEAM METHODS ===========================
 
   async getTeams(groupId = null) {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      return this.getAdminDashboardFallback().teams;
-    }
+    
     try {
       const endpoint = groupId ? `/teams?groupId=${groupId}` : "/teams";
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch teams:", error);
-      if (localStorage.getItem("isDemoSession") === "true")
-        return this.getAdminDashboardFallback().teams;
       return [];
     }
   }
@@ -1785,7 +1477,7 @@ if (typeof ApiService === 'undefined') {
   async getTeamById(id) {
     // 1. Explicit dummy ID check ('t1', 't2')
     if (id && id.toString().startsWith("t") && id.toString().length < 5) {
-      const demoTeams = this.getAdminDashboardFallback().teams;
+      const demoTeams = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.teams;
       return demoTeams.find((t) => t.id === id) || demoTeams[0];
     }
 
@@ -1794,10 +1486,7 @@ if (typeof ApiService === 'undefined') {
       return await this.makeRequest(`/teams/${id}`);
     } catch (error) {
       // 3. Fallback only if in demo session
-      if (localStorage.getItem("isDemoSession") === "true") {
-        const demoTeams = this.getAdminDashboardFallback().teams;
-        return demoTeams[0];
-      }
+      
       throw error;
     }
   }
@@ -1893,12 +1582,7 @@ if (typeof ApiService === 'undefined') {
     }
   }
 
-  async recordMatchResult(eventId, resultData) {
-    return await this.makeRequest(`/events/${eventId}/result`, {
-      method: "POST",
-      body: JSON.stringify(resultData),
-    });
-  }
+
 
   async getTeamAvailabilityVotes(teamId, eventId = null) {
     try {
@@ -1928,16 +1612,12 @@ if (typeof ApiService === 'undefined') {
   // =========================== STAFF METHODS ===========================
 
   async getStaff(groupId = null) {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      return this.getAdminDashboardFallback().staff;
-    }
+    
     try {
       const endpoint = groupId ? `/staff?groupId=${groupId}` : "/staff";
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch staff:", error);
-      if (localStorage.getItem("isDemoSession") === "true")
-        return this.getAdminDashboardFallback().staff;
       return [];
     }
   }
@@ -1965,17 +1645,13 @@ if (typeof ApiService === 'undefined') {
   // =========================== PAYMENT METHODS ===========================
 
   async getPayments(filters = {}) {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      return this.getAdminDashboardFallback().payments;
-    }
+    
     try {
       const queryParams = new URLSearchParams(filters).toString();
       const endpoint = queryParams ? `/payments?${queryParams}` : "/payments";
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch payments:", error);
-      if (localStorage.getItem("isDemoSession") === "true")
-        return this.getAdminDashboardFallback().payments;
       return [];
     }
   }
@@ -2132,7 +1808,7 @@ if (typeof ApiService === 'undefined') {
       console.log(
         "🛡️ Demo session – returning admin dashboard fallback immediately",
       );
-      return this.getAdminDashboardFallback();
+      return { groups: [], feed: [], messages: [], players: [], events: [], teams: [] };
     }
 
     try {
@@ -2156,7 +1832,7 @@ if (typeof ApiService === 'undefined') {
       console.warn("❌ Failed to fetch admin dashboard data:", error);
 
       const isDemo = localStorage.getItem("isDemoSession") === 'true';
-      if (isDemo) return this.getAdminDashboardFallback();
+      
 
       try {
         console.log(
@@ -2196,7 +1872,7 @@ if (typeof ApiService === 'undefined') {
         return result;
       } catch (fallbackError) {
         console.error("❌ Fallback data loading also failed:", fallbackError);
-        return this.getAdminDashboardFallback();
+        return { groups: [], feed: [], messages: [], players: [], events: [], teams: [] };
       }
     }
   }
@@ -2204,7 +1880,7 @@ if (typeof ApiService === 'undefined') {
   // =========================== NOTIFICATION METHODS ===========================
 
   async getNotifications() {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
+    
     if (isDemo && !this.baseURL.includes("localhost")) {
       return [
         {
@@ -2250,101 +1926,11 @@ if (typeof ApiService === 'undefined') {
     });
   }
 
-  async getAdminDashboardDataEnhanced() {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-    try {
-      const context = await this.getContext();
-      const currentOrgId = context?.currentGroup?.id;
-      const endpoint = currentOrgId
-        ? `/dashboard/admin/enhanced?groupId=${currentOrgId}`
-        : "/dashboard/admin/enhanced";
-      return await this.makeRequest(endpoint);
-    } catch (error) {
-      console.warn("❌ Failed to fetch admin dashboard data:", error);
-
-      if (isDemo) return this.getAdminDashboardFallback();
-
-      try {
-        console.log(
-          "🔄 Attempting to load dashboard data from individual endpoints...",
-        );
-
-        const [
-          groups,
-          players,
-          staff,
-          events,
-          teams,
-          payments,
-          products,
-          campaigns,
-          listings,
-        ] = await Promise.allSettled([
-          this.getGroups(),
-          this.getPlayers(),
-          this.getStaff(),
-          this.getEvents(),
-          this.getTeams(),
-          this.getPayments(),
-          this.getProducts(),
-          this.getCampaigns(),
-          this.getListings(),
-        ]);
-
-        return {
-          groups: groups.status === "fulfilled" ? groups.value : [],
-          players: players.status === "fulfilled" ? players.value : [],
-          staff: staff.status === "fulfilled" ? staff.value : [],
-          events: events.status === "fulfilled" ? events.value : [],
-          teams: teams.status === "fulfilled" ? teams.value : [],
-          payments: payments.status === "fulfilled" ? payments.value : [],
-          products: products.status === "fulfilled" ? products.value : [],
-          campaigns: campaigns.status === "fulfilled" ? campaigns.value : [],
-          listings: listings.status === "fulfilled" ? listings.value : [],
-          statistics: {
-            total_groups:
-              groups.status === "fulfilled" ? groups.value.length : 0,
-            total_players:
-              players.status === "fulfilled" ? players.value.length : 0,
-            total_staff: staff.status === "fulfilled" ? staff.value.length : 0,
-            total_events:
-              events.status === "fulfilled" ? events.value.length : 0,
-            total_teams: teams.status === "fulfilled" ? teams.value.length : 0,
-            monthly_revenue: 0,
-          },
-        };
-      } catch (fallbackError) {
-        console.error("❌ Fallback data loading also failed:", fallbackError);
-        return this.getAdminDashboardFallback();
-      }
-    }
-  }
-
-  async getCoachDashboardData(coachId = null) {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-    try {
-      if (isDemo) return this.getCoachDashboardFallback();
-      const endpoint = coachId
-        ? `/dashboard/coach?coachId=${coachId}`
-        : "/dashboard/coach";
-      return await this.makeRequest(endpoint);
-    } catch (error) {
-      console.warn("❌ Failed to fetch coach dashboard data:", error);
-      if (isDemo) return this.getCoachDashboardFallback();
-      // Fallback to admin data as a last resort
-      return await this.getAdminDashboardData();
-    }
-  }
 
   async getPlayerDashboardData(playerId = null) {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
+    
     try {
-      if (isDemo) {
-        console.log(
-          "✨ Demo session (Player) detected, using rich fallback data",
-        );
-        return this.getPlayerDashboardFallback();
-      }
+      
       const context = await this.getContext();
       const currentOrgId = context?.currentGroup?.id;
       let endpoint = "/dashboard/player";
@@ -2361,7 +1947,7 @@ if (typeof ApiService === 'undefined') {
     } catch (error) {
       console.warn("❌ Failed to fetch player dashboard data:", error);
 
-      if (isDemo) return this.getPlayerDashboardFallback();
+      
 
       try {
         console.log(
@@ -2393,7 +1979,7 @@ if (typeof ApiService === 'undefined') {
           "❌ Fallback player dashboard loading failed:",
           fallbackError,
         );
-        return this.getPlayerDashboardFallback();
+        return { player: null, attendance: null, clubs: [], teams: [], events: [], payments: [], bookings: [], applications: [], invitations: [], statistics: {} };
       }
     }
   }
@@ -2401,451 +1987,11 @@ if (typeof ApiService === 'undefined') {
   // =========================== MARKETING & SHOP METHODS ===========================
 
   async getCampaigns(groupId) {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
     try {
-      if (isDemo) {
-        console.log("✨ (Demo) Returning rich dummy campaigns");
-        return [
-          {
-            id: "c1",
-            name: "Summer Season Launch",
-            subject: "Get ready for summer!",
-            target_group: "All Members",
-            status: "draft",
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: "c2",
-            name: "Kit Order Reminder",
-            subject: "Order your new kits",
-            target_group: "Parents",
-            status: "sent",
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: "c3",
-            name: "End of Season Party",
-            subject: "Join us for the awards night!",
-            target_group: "All Members",
-            status: "scheduled",
-            created_at: new Date().toISOString(),
-          },
-        ];
-      }
       return await this.makeRequest(`/clubs/${groupId}/campaigns`);
     } catch (error) {
       console.warn("❌ Failed to fetch campaigns:", error);
       return [];
-    }
-  }
-
-  async getProducts(groupId) {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-    try {
-      if (isDemo) {
-        console.log("✨ (Demo) Returning rich dummy products");
-        return [
-          {
-            id: "p1",
-            name: "Training Kit Bundle",
-            price: 45.0,
-            stock_quantity: 100,
-            description:
-              "Includes shirt, shorts and socks. Official club branding.",
-          },
-          {
-            id: "p2",
-            name: "Group Hoodie",
-            price: 35.0,
-            stock_quantity: 50,
-            description:
-              "Warm hoodie for winter training sessions. 100% Cotton.",
-          },
-          {
-            id: "p3",
-            name: "Water Bottle",
-            price: 10.0,
-            stock_quantity: 200,
-            description: "BPA free re-usable water bottle.",
-          },
-          {
-            id: "p4",
-            name: "Scarf",
-            price: 15.0,
-            stock_quantity: 75,
-            description: "Supporters scarf.",
-          },
-        ];
-      }
-      return await this.makeRequest(`/clubs/${groupId}/products`);
-    } catch (error) {
-      console.warn("❌ Failed to fetch products:", error);
-      return [];
-    }
-  }
-
-  // =========================== FALLBACK METHODS ===========================
-
-  getAdminDashboardFallback() {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-    
-    if (!isDemo) {
-        return {
-          groups: [], clubs: [], players: [], staff: [], events: [], teams: [], payments: [], products: [], campaigns: [], listings: [], tournaments: [], feed: [],
-          statistics: { total_groups: 0, total_players: 0, total_staff: 0, total_events: 0, total_teams: 0, monthly_revenue: 0 }
-        };
-    }
-
-    // Initialize Demo Cache if not exists
-    if (!this._demoCache) {
-      console.log("✨ Initializing Persistent Demo Cache");
-      this._demoCache = this._getInitialDemoData();
-    }
-    
-    return this._demoCache;
-  }
-
-  _getInitialDemoData() {
-    const demoClubs = [
-      {
-        id: "demo-club-id",
-        name: "Pro Group Demo",
-        location: "London, UK",
-        sport: "Football",
-        member_count: 184,
-        is_primary: true,
-        logo_url: "images/logo.png",
-        description: "Premier professional academy showcasing elite development pathways.",
-        founded_year: 1995,
-        colors: { primary: "#dc2626", secondary: "#ffffff" },
-      },
-      {
-        id: "demo-coach-org-2",
-        name: "Secondary Academy",
-        location: "Manchester, UK",
-        sport: "Football",
-        member_count: 92,
-        is_primary: false,
-        logo_url: "images/logo.png",
-        description: "Focusing on youth development and community engagement.",
-        founded_year: 2010,
-        colors: { primary: "#2563eb", secondary: "#ffffff" },
-      },
-      {
-        id: "demo-player-org",
-        name: "Elite Academy (Player)",
-        location: "Birmingham, UK",
-        sport: "Football",
-        member_count: 310,
-        is_primary: false,
-        logo_url: "images/logo.png",
-        description: "Elite player pathways and advanced scouting network.",
-        founded_year: 2005,
-        colors: { primary: "#059669", secondary: "#ffffff" },
-      }
-    ];
-
-    const players = [
-      { id: "p1", first_name: "Marcus", last_name: "Thompson", email: "marcus.t@example.com", position: "Forward", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t1", team_name: "Under 16s Squad" },
-      { id: "p2", first_name: "Liam", last_name: "Brown", email: "liam.b@example.com", position: "Midfielder", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t1", team_name: "Under 16s Squad" },
-      { id: "p3", first_name: "David", last_name: "Williams", email: "david.w@example.com", position: "Goalkeeper", role: "player", payment_status: "paid", plan_name: "Monthly Training Fee", team_id: "t2", team_name: "Under 12s Academy" },
-      { id: "p4", first_name: "Jordan", last_name: "Smith", email: "jordan.s@example.com", position: "Defender", role: "player", payment_status: "pending", plan_name: "Monthly Training Fee", team_id: "t2", team_name: "Under 12s Academy" },
-      { id: "p5", first_name: "Leo", last_name: "Messi", email: "leo.m@example.com", position: "Forward", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t3", team_name: "First Team" },
-      { id: "p6", first_name: "Sarah", last_name: "Davies", email: "sarah.d@example.com", position: "Midfielder", role: "player", payment_status: "paid", plan_name: "Monthly Training Fee", team_id: "t2", team_name: "Under 12s Academy" },
-      { id: "p7", first_name: "Tom", last_name: "Harris", email: "tom.h@example.com", position: "Defender", role: "player", payment_status: "overdue", plan_name: null, team_id: "t1", team_name: "Under 16s Squad" },
-      { id: "p8", first_name: "Jack", last_name: "Grealish", email: "jack.g@example.com", position: "Winger", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t3", team_name: "First Team" },
-      { id: "p9", first_name: "Harry", last_name: "Kane", email: "harry.k@example.com", position: "Striker", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t3", team_name: "First Team" },
-      { id: "p10", first_name: "Bukayo", last_name: "Saka", email: "bukayo.s@example.com", position: "Winger", role: "player", payment_status: "paid", plan_name: "Elite Academy Plan", team_id: "t3", team_name: "First Team" }
-    ];
-
-    const staff = [
-      { id: "s1", first_name: "Alex", last_name: "Morgan", role: "coach", email: "alex.m@clubhub.com", phone: "+44 7700 900111", join_date: "2023-01-10", verified_scout: true, team_id: "t2" },
-      { id: "s2", first_name: "Sam", last_name: "Riley", role: "coach", email: "sam.r@clubhub.com", phone: "+44 7700 900222", join_date: "2023-02-15", verified_scout: false, team_id: "t1" },
-      { id: "s3", first_name: "David", last_name: "Webb", role: "coach", email: "david.w@clubhub.com", phone: "+44 7700 900333", join_date: "2022-11-20", verified_scout: true, team_id: "t3" },
-      { id: "s4", first_name: "Jürgen", last_name: "Klopp", role: "staff", email: "klopp@clubhub.com", phone: "+44 7700 900444", join_date: "2021-11-20", verified_scout: false }
-    ];
-
-    const teams = [
-      { id: "t1", name: "Under 16s Squad", coach_name: "Sam Riley", coachId: "s2", player_count: 3, ageGroup: "U16", groupId: "demo-club-id" },
-      { id: "t2", name: "Under 12s Academy", coach_name: "Alex Morgan", coachId: "s1", player_count: 3, ageGroup: "U12", groupId: "demo-club-id" },
-      { id: "t3", name: "First Team", coach_name: "David Webb", coachId: "s3", player_count: 4, ageGroup: "Senior", groupId: "demo-club-id" }
-    ];
-
-    return {
-      groups: demoClubs,
-      clubs: demoClubs,
-      players: players,
-      staff: staff,
-      teams: teams,
-      tournaments: [
-        { id: "tour_1", title: "Elite Academy Premier League", date: "2026-04-20", status: "Live", type: "league" },
-        { id: "tour_2", title: "ClubHub Knockout Cup", date: "2026-05-15", status: "Active", type: "knockout" }
-      ],
-      events: [
-        { id: "e1", title: "Summer Talent ID Camp", date: new Date(Date.now() + 86400000 * 7).toISOString().split("T")[0], time: "09:00", location: "Main Stadium", type: "camp", status: "upcoming", description: "Our flagship talent identification camp for ages 8-16.", attendees: 45 },
-        { id: "e2", title: "Elite Training Session", date: new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0], time: "18:30", location: "Field A", type: "training", status: "upcoming", team_name: "Under 16s Squad", team_id: "t1" },
-        { id: "e3", title: "First Team Match Day", date: new Date(Date.now() + 86400000 * 4).toISOString().split("T")[0], time: "14:00", location: "Home Stadium", type: "match", status: "upcoming", team_name: "First Team", team_id: "t3" }
-      ],
-      payments: [
-        { id: "pay1", amount: 75, status: "paid", description: "Monthly Subscription - Marcus Thompson", date: new Date().toISOString(), player_name: "Marcus Thompson", method: "Stripe" },
-        { id: "pay2", amount: 35, status: "paid", description: "Training Fee - Sarah Davies", date: new Date(Date.now() - 86400000).toISOString(), player_name: "Sarah Davies", method: "Apple Pay" }
-      ],
-      feed: [
-        {
-          id: "f1",
-          title: "New Tactical Analysis Tool Launched",
-          excerpt: "Analyze your team's performance with our new professional-grade tactical board.",
-          imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800",
-          date: new Date().toISOString(),
-          type: "announcement"
-        }
-      ],
-      messages: [
-        { 
-          id: "m1", 
-          sender_id: "s1", 
-          receiver_id: "demo-pro-admin-id", 
-          sender_name: "Alex Morgan", 
-          receiver_name: "Admin",
-          content: "Check the new schedule for U12s. We have some changes for Friday.", 
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-          read: false
-        },
-        { 
-          id: "m2", 
-          sender_id: "demo-pro-admin-id", 
-          receiver_id: "s1", 
-          sender_name: "Admin", 
-          receiver_name: "Alex Morgan",
-          content: "Thanks Alex, I'll take a look now.", 
-          created_at: new Date(Date.now() - 3000000).toISOString(),
-          read: true
-        }
-      ],
-      listings: [
-        {
-          id: "list1",
-          title: "Under 14s Striker Needed",
-          listing_type: "recruitment",
-          position: "Forward",
-          description: "We are looking for a clinical finisher to join our U14 Academy squad.",
-          salary: "Scholarship",
-          status: "active",
-        }
-      ],
-      scouting: {
-        watchlist: ["demo-player-id", "p2"],
-        reports: [
-          { player_id: "demo-player-id", scout: "Michael Thompson", rating: 4, notes: "Great pace and finishing." },
-          { player_id: "p2", scout: "Michael Thompson", rating: 3, notes: "Solid midfielder but needs work on endurance." }
-        ],
-        medical: {
-            "demo-player-id": { allergies: "Peanuts", asthma: false, emergency_contact: { name: "John Williams", phone: "07700 900555" } },
-            "p2": { allergies: "None", asthma: true, emergency_contact: { name: "Sarah Smith", phone: "07700 900666" } }
-        }
-      },
-      tactics: [
-          { id: "t1", name: "Modern 4-3-3", formation: "4-3-3", coach: "Michael Thompson" },
-          { id: "t2", name: "Diamond 4-4-2", formation: "4-4-2", coach: "Michael Thompson" }
-      ],
-      pitches: [
-          { id: "pitch1", name: "Main Stadium", type: "Grass", size: "11v11", location: "North Campus", capacity: 5000, floodlights: true },
-          { id: "pitch2", name: "Field A", type: "4G", size: "9v9", location: "South Campus", capacity: 200, floodlights: true },
-          { id: "pitch3", name: "Riverside Pitch", type: "Grass", size: "11v11", location: "Riverside Center", capacity: 1000, floodlights: false },
-          { id: "pitch4", name: "Metro Court 1", type: "Hard Court", size: "Singles/Doubles", location: "Metro Sports", capacity: 2, floodlights: true }
-      ],
-      statistics: {
-        total_groups: 1,
-        total_players: 142,
-        total_staff: 12,
-        total_events: 5,
-        total_teams: 6,
-        monthly_revenue: 0,
-        pending_payments: 4,
-        attendance_avg: 94,
-      }
-    };
-  }
-
-  getPlayerDashboardFallback() {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-    console.log(
-      isDemo
-        ? "✨ Using Rich Demo Player Dashboard Data"
-        : "📚 Using player dashboard fallback data",
-    );
-
-    if (!isDemo) {
-      const storedUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
-      return {
-        player: storedUser,
-        groups: [],
-        teams: [],
-        events: [],
-        payments: [],
-        bookings: [],
-        applications: [],
-        activities: [],
-        performance: { goals: 0, assists: 0, matchesPlayed: 0 }
-      };
-    }
-
-    const activeId = localStorage.getItem("activePlayerId") || "demo-player-id";
-    let player = {
-        first_name: "David",
-        last_name: "Williams",
-        position: "Forward",
-        attendance_rate: 95,
-        id: "demo-player-id",
-        email: "demo-player@clubhub.com",
-    };
-
-    if (activeId === "child-1") {
-        player = {
-            first_name: "Alex",
-            last_name: "Morgan",
-            position: "Midfielder",
-            attendance_rate: 88,
-            id: "child-1",
-            email: "alex@morgan.com"
-        };
-    } else if (activeId === "child-2") {
-        player = {
-            first_name: "Sam",
-            last_name: "Kerr",
-            position: "Striker",
-            attendance_rate: 92,
-            id: "child-2",
-            email: "sam@kerr.com"
-        };
-    }
-
-    return {
-      player: player,
-      groups: [
-        {
-          id: "demo-club-id",
-          name: "Pro Group Demo",
-          location: "London, UK",
-          sport: "Football",
-        },
-      ],
-      teams: [
-        {
-          id: "t1",
-          name: activeId === "child-1" ? "Academy U16" : "Under 18s Elite",
-          coach: { name: "Michael Thompson" },
-          coachId: "demo-coach-id",
-          age_group: activeId === "child-1" ? "U16" : "U18",
-          position: player.position
-        },
-      ],
-      events: [
-        {
-          id: "e1",
-          title: "Summer Talent ID Camp",
-          event_date: new Date(Date.now() + 86400000 * 7).toISOString(),
-          location: "Main Stadium",
-          type: "camp",
-          status: "upcoming",
-          price: 25.0
-        },
-        {
-          id: "e2",
-          title: "Elite Training Session",
-          event_date: new Date(Date.now() + 86400000 * 2).toISOString(),
-          location: "Field A",
-          type: "training",
-          status: "upcoming",
-          price: 15.0
-        },
-      ],
-      payments: [
-        {
-          id: "pay1",
-          amount: 50,
-          status: "paid",
-          description: `Monthly Subscription - June (${player.first_name})`,
-          date: new Date().toISOString(),
-        },
-        {
-          id: "pay2",
-          amount: 50,
-          status: "pending",
-          description: `Monthly Subscription - July (${player.first_name})`,
-          date: new Date(Date.now() + 86400000 * 30).toISOString(),
-        },
-      ],
-      bookings: [
-        {
-          id: "b1",
-          event_id: "e1",
-          event_title: "Summer Talent ID Camp",
-          date: new Date(Date.now() + 86400000 * 7).toISOString(),
-          status: "confirmed",
-          qr_code: "DEMO_QR_CODE_123",
-        },
-      ],
-      applications: [
-        {
-          id: "app1",
-          club_name: "Elite Performance Academy",
-          status: "pending",
-          date: new Date().toISOString(),
-        },
-      ],
-    };
-  }
-
-  getCoachDashboardFallback() {
-    const isDemo = localStorage.getItem("isDemoSession") === "true";
-    if (!isDemo) {
-        return {
-            stats: { total_players: 0, upcoming_sessions: 0, attendance_average: 0, win_rate: 0 },
-            teams: [], players: [], events: [], recent_matches: [], activity: []
-        };
-    }
-    console.log("✨ Using Rich Demo Coach Dashboard Data");
-
-    const adminData = this.getAdminDashboardFallback();
-
-    return {
-      stats: {
-        total_players: 24,
-        upcoming_sessions: 3,
-        attendance_average: 92,
-        win_rate: 75,
-      },
-      teams: adminData.teams,
-      players: adminData.players,
-      events: adminData.events,
-      recent_matches: [
-        {
-          id: "m1",
-          opponent: "United FC",
-          score: "2-0",
-          result: "win",
-          date: new Date(Date.now() - 86400000 * 3).toISOString(),
-        },
-        {
-          id: "m2",
-          opponent: "City Lions",
-          score: "1-1",
-          result: "draw",
-          date: new Date(Date.now() - 86400000 * 10).toISOString(),
-        },
-      ],
-    };
-  }
-
-  // =========================== HEALTH CHECK METHODS ===========================
-
-  async healthCheck() {
-    try {
-      return await this.makeRequest("/health");
-    } catch (error) {
-      console.warn("Health check failed:", error);
-      return { status: "unhealthy" };
     }
   }
 
@@ -2878,16 +2024,12 @@ if (typeof ApiService === 'undefined') {
   // =========================== APPLICANT MANAGEMENT METHODS ===========================
 
   async getListings(groupId = null) {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      return this.getAdminDashboardFallback().listings;
-    }
+    
     try {
       const endpoint = groupId ? `/listings?groupId=${groupId}` : "/listings";
       return await this.makeRequest(endpoint);
     } catch (error) {
       console.warn("❌ Failed to fetch listings:", error);
-      if (localStorage.getItem("isDemoSession") === "true")
-        return this.getAdminDashboardFallback().listings;
       return [];
     }
   }
@@ -3030,9 +2172,7 @@ if (typeof ApiService === 'undefined') {
       const response = await this.makeRequest(`/auth/switch-group/${groupId}`, {
         method: "POST",
       });
-      if (localStorage.getItem("isDemoSession") === "true") {
-          await this.refreshContext();
-      }
+      
       return response;
     } catch (error) {
       console.error("❌ Failed to switch group:", error);
@@ -3153,7 +2293,7 @@ if (typeof ApiService === 'undefined') {
           "❌ Enhanced dashboard fallback loading failed:",
           fallbackError,
         );
-        return this.getPlayerDashboardFallback();
+        return { player: null, attendance: null, clubs: [], teams: [], events: [], payments: [], bookings: [], applications: [], invitations: [], statistics: {} };
       }
     }
   }
@@ -3351,7 +2491,7 @@ if (typeof ApiService === 'undefined') {
           "❌ Enhanced admin dashboard fallback failed:",
           fallbackError,
         );
-        return this.getAdminDashboardFallback();
+        return { groups: [], feed: [], messages: [], players: [], events: [], teams: [] };
       }
     }
   }
@@ -3384,11 +2524,7 @@ if (typeof ApiService === 'undefined') {
 
   // =========================== TOURNAMENTS ===========================
   async getTournaments(groupId = null) {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      const fallbackTournaments = this.getAdminDashboardFallback().tournaments || [];
-      const mockTournaments = JSON.parse(localStorage.getItem("demo_mock_tournaments") || "[]");
-      return [...fallbackTournaments, ...mockTournaments];
-    }
+    
     try {
       const events = await this.getEvents(groupId);
       const directTournaments = await this.makeRequest("/tournaments");
@@ -3409,43 +2545,6 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getTournamentDetails(tournamentId) {
-    if (localStorage.getItem("isDemoSession") === "true") {
-      if (tournamentId === "mock_t1") {
-        // League Mock
-        return {
-          tournament: { id: "mock_t1", title: "Elite Academy Premier League", type: "league", status: "Active" },
-          matches: [
-            { id: "m1", round_number: 1, home_team: "Red Dragons", away_team: "Blue Sharks", home_score: 3, away_score: 1, status: "completed", team_id: "t1", away_team_id: "t2", scorers: ["M. Thompson (2)", "L. Brown"] },
-            { id: "m2", round_number: 1, home_team: "Green Giants", away_team: "Yellow Stars", home_score: 0, away_score: 0, status: "completed", team_id: "t3", away_team_id: "t4" },
-            { id: "m3", round_number: 2, home_team: "Red Dragons", away_team: "Green Giants", home_score: 2, away_score: 2, status: "live", team_id: "t1", away_team_id: "t3", scorers: ["M. Thompson", "K. Adams"] },
-            { id: "m4", round_number: 2, home_team: "Blue Sharks", away_team: "Yellow Stars", status: "scheduled", team_id: "t2", away_team_id: "t4" }
-          ],
-          standings: {
-            "t1": { name: "Red Dragons", p: 2, w: 1, d: 1, l: 0, gf: 5, ga: 3, gd: 2, pts: 4 },
-            "t3": { name: "Green Giants", p: 2, w: 0, d: 2, l: 0, gf: 2, ga: 2, gd: 0, pts: 2 },
-            "t2": { name: "Blue Sharks", p: 1, w: 0, d: 0, l: 1, gf: 1, ga: 3, gd: -2, pts: 0 },
-            "t4": { name: "Yellow Stars", p: 1, w: 0, d: 1, l: 0, gf: 0, ga: 0, gd: 0, pts: 1 }
-          }
-        };
-      } else {
-        // Knockout Mock
-        return {
-          tournament: { id: "mock_t2", title: "ClubHub Knockout Cup", type: "knockout", status: "Active" },
-          matches: [
-            // Round 1 (Quarter Finals)
-            { id: "k1", round_number: 1, home_team: "Red Dragons", away_team: "Blue Sharks", home_score: 4, away_score: 2, status: "completed", played: true },
-            { id: "k2", round_number: 1, home_team: "Green Giants", away_team: "Yellow Stars", home_score: 1, away_score: 0, status: "completed", played: true },
-            { id: "k3", round_number: 1, home_team: "Scout Elite", away_team: "Academy XI", home_score: 0, away_score: 3, status: "completed", played: true },
-            { id: "k4", round_number: 1, home_team: "Titans FC", away_team: "Phoenix United", home_score: 2, away_score: 1, status: "completed", played: true },
-            // Round 2 (Semi Finals)
-            { id: "k5", round_number: 2, home_team: "Red Dragons", away_team: "Green Giants", status: "completed", home_score: 1, away_score: 2, played: true },
-            { id: "k6", round_number: 2, home_team: "Academy XI", away_team: "Titans FC", status: "completed", home_score: 3, away_score: 0, played: true },
-            // Final
-            { id: "k7", round_number: 3, home_team: "Green Giants", away_team: "Academy XI", status: "scheduled", played: false }
-          ]
-        };
-      }
-    }
     return await this.makeRequest(`/tournaments/${tournamentId}`);
   }
 
@@ -3672,13 +2771,13 @@ if (typeof ApiService === 'undefined') {
       method: "PATCH",
       body: JSON.stringify({ verified }),
     });
-    }
   }
+
+  } // Close class ApiService
 
   // Expose class to window
   window.ApiService = ApiService;
-}
-
+} // Close if (typeof ApiService === 'undefined')
 // Create and export a singleton instance
 // Use window.ApiService explicitly to ensure it's found even if local scoping is tricky
 if (!window.apiService && typeof window.ApiService !== 'undefined') {

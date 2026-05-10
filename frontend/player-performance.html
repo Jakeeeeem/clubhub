@@ -28,24 +28,7 @@
   <link rel="stylesheet" href="tour-service.css?v=20260429_v18">
   <script src="tour-service.js?v=20260429_v18"></script>
   <link rel="stylesheet" href="design-system.css?v=20260429_v18">
-  <script>
-    // Head-level demo auto-enable to set auth before any other scripts run
-    try {
-      if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && !localStorage.getItem('authToken')) {
-        localStorage.setItem('isDemoSession', 'true');
-        if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
-            if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
-                if (!localStorage.getItem('authToken') && localStorage.getItem('isDemoSession') === 'true') {
-                  localStorage.setItem('authToken', 'demo-token');
-                }
-            }
-        }
-        if (!localStorage.getItem('currentUser')) {
-          localStorage.setItem('currentUser', JSON.stringify({ id: 'demo-user', first_name: 'Demo', last_name: 'User', role: 'player', account_type: 'player', clubId: 'demo-club-id' }));
-        }
-      }
-    } catch (e) { console.warn('Head demo auto-enable failed', e); }
-  </script>
+  
 </head>
 
 <body class="clubhub-unified dashboard-page">
@@ -276,12 +259,7 @@
                 </div>
               </div>
 
-              <div id="plannerFeedContainer" class="activity-card-list">
-                <!-- Activity items will be loaded here via JS -->
-                <div class="premium-feed-item">
-                  <div class="feed-header">
-                    <div class="author-info">
-                      <div class="author-avatar" style="background: var(--primary);">JD</div>
+              <div id="plannerFeedContainer" class="activity-card-list"></div>
                       <div>
                         <div style="font-weight: 700;">Coach John Doe</div>
                         <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">2 hours ago</div>
@@ -305,11 +283,7 @@
             <div class="planner-sidebar">
               <div class="glass-panel" style="padding: 1.5rem;">
                 <h3 style="margin-bottom: 1.5rem; font-family: var(--font-heading);">📅 Your Schedule</h3>
-                <div id="dailyPlannerContainer" style="display: grid; gap: 1rem;">
-                  <!-- Planner items loaded via JS -->
-                  <div class="planner-day-row" style="background: hsla(0, 0%, 100%, 0.03); border: 1px solid hsla(0, 0%, 100%, 0.05);">
-                    <div class="day-indicator">
-                      <div class="day-number" style="color: var(--primary);">24</div>
+                <div id="dailyPlannerContainer" style="display: grid; gap: 1rem;"></div>
                       <div class="day-name">Mar</div>
                     </div>
                     <div class="event-details">
@@ -780,7 +754,7 @@
       const currentUser = localStorage.getItem('currentUser');
 
       // Allow demo sessions to bypass server auth during local testing
-      if ((localStorage.getItem('isDemoSession') !== 'true') && (!token || !currentUser)) {
+      if (!token || !currentUser) {
         console.warn('🚫 No authentication found, redirecting to login...');
         window.location.href = 'index.html';
         return;

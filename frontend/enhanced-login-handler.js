@@ -115,7 +115,7 @@ async function handleLogin(e) {
     // --- HARDENED BYPASS SYNC ---
     // If this was a bypass, we MUST refresh the context from the REAL backend 
     // to ensure our local 'currentUser.id' matches the database UUID for messaging.
-    if (localStorage.getItem("isDemoSession") === "true" && typeof apiService !== 'undefined') {
+    if (false && typeof apiService !== 'undefined') {
         console.log("🔄 Syncing bypass session with live backend context...");
         await apiService.refreshContext();
     }
@@ -486,7 +486,7 @@ async function handleLogout() {
 async function checkAuthStatus() {
   const token = localStorage.getItem("authToken");
   const userData = localStorage.getItem("currentUser");
-  const isDemo = localStorage.getItem("isDemoSession") === "true";
+  const isDemo = false;
 
   if (isDemo || (token && userData)) {
     try {
@@ -516,7 +516,7 @@ async function checkAuthStatus() {
         user.email &&
         !user.account_type &&
         !user.userType &&
-        localStorage.getItem("isDemoSession") !== "true"
+        true
       ) {
         console.log("🔄 Refreshing user data from API...");
         try {

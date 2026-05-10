@@ -181,9 +181,12 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Check auth status
-            const user = JSON.parse(localStorage.getItem('currentUser'));
-            if (!user || (user.userType !== 'admin' && user.userType !== 'organization')) {
-                window.location.href = 'index.html';
+            const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const userType = user.account_type || localStorage.getItem('userType');
+            const isAuthorized = userType === 'admin' || userType === 'organization' || userType === 'coach';
+            
+            if (!user || !isAuthorized) {
+                window.location.href = 'player-dashboard.html';
                 return;
             }
 
@@ -229,15 +232,7 @@
 
                 displayVenues(filtered);
             } catch (error) {
-                console.error('Load venues error:', error);
-                // alert('Failed to load venues');
-                // Fallback demo data
-                const demoVenues = [
-                    { id: 'v1', name: 'Elite Sports Complex', location: 'Birmingham', capacity: 100, hourly_rate: 45, surface: '4G', is_floodlit: true, has_changing_rooms: true, description: 'Premium 4G pitch with top-tier lighting.' },
-                    { id: 'v2', name: 'Greenfields Stadium', location: 'London', capacity: 5000, hourly_rate: 150, surface: 'Grass', is_floodlit: true, has_changing_rooms: true, description: 'Large capacity grass stadium.' },
-                    { id: 'v3', name: 'Community Hub Court', location: 'Manchester', capacity: 20, hourly_rate: 20, surface: 'Indoors', is_floodlit: false, has_changing_rooms: true, description: 'Indoor community court.' }
-                ];
-                displayVenues(demoVenues);
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">Failed to load venues. Please try again later.</p>';
             }
         }
 

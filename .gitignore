@@ -25,3 +25,10 @@ playground/
 .vscode/
 .idea/
 backend/clubhub-dev.env
+
+# Screenshots and Media
+review_screenshots/
+*.png
+*.jpg
+*.jpeg
+*.gif
