@@ -1289,10 +1289,12 @@ const UnifiedNav = {
                 <!-- Slim header: logo + close -->
                 <div class="sidebar-header" style="padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 0.85rem; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;">
+                        ${window.innerWidth < 992 ? `
                         <div style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;" onclick="window.location.href='index.html'">
                             <img src="images/logo.png" alt="ClubHub" style="height: 24px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.3));" onerror="this.style.display='none'">
                             <span class="logo-text" style="font-weight: 800; font-size: 1.05rem; color: white; letter-spacing: -0.4px;">ClubHub</span>
                         </div>
+                        ` : ''}
                         ${window.innerWidth < 992 ? `
                         <button onclick="UnifiedNav.toggleSidebar(false)" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;">&times;</button>
                         ` : ''}
@@ -3115,9 +3117,10 @@ const UnifiedNav = {
         // Insert container after the title
         title.parentNode.insertBefore(container, title.nextSibling);
 
-        // Collapse by default ONLY if explicitly set
-        const isCollapsed = document.body.classList.contains("sidebar-collapsed");
-        container.style.display = isCollapsed ? "none" : "block";
+        // Always open by default as requested
+        container.style.display = "block";
+        const toggle = title.querySelector(".group-toggle");
+        if (toggle) toggle.textContent = "▾";
 
         title.addEventListener("click", () => {
           const open = container.style.display !== "none";

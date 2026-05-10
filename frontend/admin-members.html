@@ -322,11 +322,11 @@
                                 <thead>
                                     <tr
                                         style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
-                                        <th style="padding:0.75rem 0;">Name</th>
-                                        <th style="padding:0.75rem 0;">Role</th>
-                                        <th style="padding:0.75rem 0;">Squad</th>
-                                        <th style="padding:0.75rem 0;">Status</th>
-                                        <th style="padding:0.75rem 0; text-align:right;">Actions</th>
+                                        <th style="padding:0.75rem 0.5rem;">Name</th>
+                                        <th style="padding:0.75rem 0.5rem;">Role</th>
+                                        <th style="padding:0.75rem 0.5rem;">Squad</th>
+                                        <th style="padding:0.75rem 0.5rem;">Status</th>
+                                        <th style="padding:0.75rem 0.5rem; text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="membersTableBody" style="font-size:0.9rem;">
@@ -789,7 +789,25 @@
                 const data = await apiService.getAdminDashboardData();
                 const players = data.players || [];
                 const staff = data.staff || [];
-                const members = [...staff, ...players];
+                let members = [...staff, ...players];
+                
+                // Ensure current user (if admin) is in the list
+                try {
+                    const currentUserStr = localStorage.getItem('currentUser');
+                    if (currentUserStr) {
+                        const currentUser = JSON.parse(currentUserStr);
+                        if (currentUser && (currentUser.account_type === 'organization' || currentUser.account_type === 'group' || currentUser.role === 'admin' || currentUser.role === 'owner')) {
+                            const exists = members.find(m => m.id === currentUser.id || m.email === currentUser.email);
+                            if (!exists) {
+                                members.unshift({
+                                    ...currentUser,
+                                    role: 'Admin/Owner',
+                                    status: 'Active'
+                                });
+                            }
+                        }
+                    }
+                } catch (e) { console.warn("Failed to inject owner to members list", e); }
                 
                 if (members.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
@@ -802,19 +820,19 @@
                     
                     return `
                     <tr data-id="${m.id}">
-                        <td data-label="Name" style="padding:1rem 0;">
-                            <div style="font-weight:700; color:#fff;">${m.first_name} ${m.last_name}</div>
+                        <td data-label="Name" style="padding:1rem 0.5rem;">
+                            <div style="font-weight:700; color:#fff;">${m.first_name} ${m.last_name || ''}</div>
                             <div style="font-size:0.75rem; color:var(--text-muted);">${m.email || ''}</div>
                         </td>
-                        <td data-label="Role" style="padding:1rem 0;">
+                        <td data-label="Role" style="padding:1rem 0.5rem;">
                             <span class="badge" style="background:rgba(255,255,255,0.05); color:#fff; font-size:0.7rem;">${(m.role || 'Member').toUpperCase()}</span>
                         </td>
-                        <td data-label="Squad" style="padding:1rem 0; color:var(--text-muted);">${m.team_name || 'N/A'}</td>
-                        <td data-label="Status" style="padding:1rem 0;">
+                        <td data-label="Squad" style="padding:1rem 0.5rem; color:var(--text-muted);">${m.team_name || 'N/A'}</td>
+                        <td data-label="Status" style="padding:1rem 0.5rem;">
                             <span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
                             ${planBadge}
                         </td>
-                        <td data-label="Actions" style="padding:1rem 0; text-align:right;">
+                        <td data-label="Actions" style="padding:1rem 0.5rem; text-align:right;">
                             <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
                                 ${isPlayer ? `<button class="btn btn-text btn-small" style="color:var(--accent-cyan);" onclick="openAssignPlanModal('${m.id}', '${m.first_name} ${m.last_name}')">Assign Plan</button>` : ''}
                                 <button class="btn btn-text btn-small" onclick="openEditMemberModal('${m.id}', '${m.first_name}', '${m.last_name}', '${m.email}', '${m.role}')">Edit</button>

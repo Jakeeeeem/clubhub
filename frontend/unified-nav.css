@@ -310,7 +310,7 @@
     .sidebar-link {
         display: flex !important;
         align-items: center !important;
-        padding: 12px 18px !important;
+        padding: 8px 18px !important;
         border-radius: 12px !important;
         font-size: 0.95rem !important;
         font-weight: 600 !important;
@@ -1275,8 +1275,8 @@ header.header .nav-container,
     color: #fff;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    margin: 0.6rem 0 0.25rem;
-    padding: 0.65rem 1rem;
+    margin: 0.4rem 0 0.15rem;
+    padding: 0.4rem 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1302,7 +1302,7 @@ header.header .nav-container,
     display: flex;
     align-items: center;
     gap: 0.85rem;
-    padding: 0.85rem 1rem;
+    padding: 0.6rem 1rem;
     color: rgba(255, 255, 255, 0.65);
     text-decoration: none;
     font-size: 0.95rem;
@@ -2751,7 +2751,7 @@ body.has-top-tabs .dashboard-main {
 /* Sub-menu links are slightly smaller for better hierarchy */
 .nav-group .sidebar-link {
     font-size: 0.88rem !important;
-    padding: 10px 16px !important;
+    padding: 6px 16px !important;
     margin-left: 4px !important;
     margin-right: 4px !important;
     color: rgba(255,255,255,0.5) !important;
