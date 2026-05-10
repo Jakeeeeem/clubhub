@@ -971,19 +971,23 @@
                 btn.innerHTML = 'Sending...';
             }
 
-            const formData = new FormData(e.target);
-            const email = formData.get('email');
-            
-            // Demo mode bypass
-            
+            const email = document.getElementById('addEmail').value;
+            const firstName = document.getElementById('addFirstName').value;
+            const lastName = document.getElementById('addLastName').value;
+            const clubRole = document.getElementById('addRole').value;
+            const squadId = document.getElementById('addSquadSelect') ? document.getElementById('addSquadSelect').value : null;
+            const dob = document.getElementById('addDOB') ? document.getElementById('addDOB').value : null;
+            const position = document.getElementById('addPosition') ? document.getElementById('addPosition').value : null;
 
             const data = {
                 email: email,
-                firstName: formData.get('firstName'),
-                lastName: formData.get('lastName'),
-                clubRole: formData.get('role'),
-                teamId: formData.get('squadId') || null,
-                message: formData.get('message') || "",
+                firstName: firstName,
+                lastName: lastName,
+                clubRole: clubRole,
+                teamId: squadId || null,
+                dateOfBirth: dob || null,
+                position: position || null,
+                message: "",
                 isPublic: false
             };
 
