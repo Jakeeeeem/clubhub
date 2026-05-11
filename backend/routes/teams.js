@@ -307,28 +307,72 @@ router.post(
         });
       }
 
-      const result = await query(
-        `
-      INSERT INTO teams (name, age_group, sport, description, coach_id, club_id)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `,
-        [
-          name,
-          ageGroup || null,
-          sport,
-          description || null,
-          coachId || null,
-          clubId,
-        ],
-      );
+      // Create team and optionally attach players in a transaction
+      const creation = await withTransaction(async (client) => {
+        const insertRes = await client.query(
+          `
+          INSERT INTO teams (name, age_group, sport, description, coach_id, club_id)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          RETURNING *
+        `,
+          [name, ageGroup || null, sport, description || null, coachId || null, clubId],
+        );
 
-      const newTeam = result.rows[0];
+        const newTeam = insertRes.rows[0];
 
-      res.status(201).json({
-        message: "Team created successfully",
-        team: newTeam,
+        // If the frontend provided playerIds, attach them to the team
+        if (Array.isArray(req.body.playerIds) && req.body.playerIds.length > 0) {
+          for (const pid of req.body.playerIds) {
+            // Verify player belongs to this club
+            const pRes = await client.query("SELECT * FROM players WHERE id = $1 AND club_id = $2", [pid, clubId]);
+            if (pRes.rows.length === 0) continue; // skip invalid players
+
+            await client.query(
+              `INSERT INTO team_players (team_id, player_id, position, jersey_number, created_at)
+               VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT DO NOTHING`,
+              [newTeam.id, pid, null, null],
+            );
+          }
+        }
+
+        return newTeam;
       });
+
+      // After transaction, send optional notifications/emails (non-blocking)
+      if (Array.isArray(req.body.playerIds) && req.body.playerIds.length > 0 && req.body.notifyPlayers) {
+        try {
+          for (const pid of req.body.playerIds) {
+            try {
+              const playerRow = await query('SELECT p.*, u.email as user_email, u.first_name as user_first FROM players p LEFT JOIN users u ON p.user_id = u.id WHERE p.id = $1', [pid]);
+              if (playerRow.rows.length === 0) continue;
+              const p = playerRow.rows[0];
+              const recipientEmail = p.user_email || p.email;
+              const firstName = p.user_first || p.first_name || '';
+
+              // Send assignment email (best-effort)
+              await emailService.sendTeamAssignmentEmail({
+                email: recipientEmail,
+                firstName: firstName,
+                teamName: creation.name,
+                clubName: club.name || clubResult.rows[0].name,
+                position: null,
+                jerseyNumber: null,
+              });
+
+              // Create in-app notification
+              if (p.user_id) {
+                await query(queries.createNotification, [p.user_id, `You've been added to ${creation.name}`, `You have been added to the team ${creation.name} at ${club.name || clubResult.rows[0].name}`, 'team_assignment', `/player-dashboard.html`]);
+              }
+            } catch (innerErr) {
+              console.warn('Non-fatal: failed to notify player', pid, innerErr.message || innerErr);
+            }
+          }
+        } catch (notifyErr) {
+          console.error('Failed to send team notifications:', notifyErr);
+        }
+      }
+
+      res.status(201).json({ message: 'Team created successfully', team: creation });
     } catch (error) {
       console.error("Create team error:", error);
       res.status(500).json({

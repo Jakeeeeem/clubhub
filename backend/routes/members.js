@@ -42,21 +42,48 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
     queryText += " ORDER BY u.first_name, u.last_name";
     
     const result = await pool.query(queryText, params);
-    
-    // Format to matches what the frontend expects
-    // The frontend looks for .players, .coaches, .admins, or .members
-    const members = result.rows;
-    const players = members.filter(m => m.role === 'player');
-    const coaches = members.filter(m => m.role === 'coach' || m.role === 'assistant-coach' || m.role === 'staff');
-    const admins = members.filter(m => m.role === 'admin' || m.role === 'owner' || m.role === 'manager');
 
-    res.json({
-      success: true,
-      members,
-      players,
-      coaches,
-      admins
+    // Also include active players from the players table (covers cases where organization_members row is missing)
+    const playersResult = await pool.query(
+      `SELECT p.id as player_id, p.user_id, p.first_name, p.last_name, p.email, p.club_id
+       FROM players p
+       WHERE p.club_id = $1`,
+      [orgId]
+    );
+
+    // Merge rows, preferring organization_members rows, but add any players missing from org members
+    const membersByKey = new Map();
+    function addMemberRow(r) {
+      const key = r.user_id || r.email || r.id || r.player_id;
+      if (!key) return;
+      if (!membersByKey.has(String(key))) membersByKey.set(String(key), r);
+      else {
+        const existing = membersByKey.get(String(key));
+        membersByKey.set(String(key), Object.assign({}, existing, r));
+      }
+    }
+
+    result.rows.forEach(addMemberRow);
+    playersResult.rows.forEach(r => {
+      // Normalize shape similar to org members
+      const normalized = {
+        id: r.user_id || r.player_id,
+        user_id: r.user_id,
+        first_name: r.first_name,
+        last_name: r.last_name,
+        email: r.email,
+        role: 'player',
+        status: 'active'
+      };
+      addMemberRow(normalized);
     });
+
+    const members = Array.from(membersByKey.values());
+    const players = members.filter(m => (m.role || '').toString() === 'player');
+    const coaches = members.filter(m => ['coach', 'assistant-coach', 'staff'].includes((m.role || '').toString()));
+    const admins = members.filter(m => ['admin', 'owner', 'manager'].includes((m.role || '').toString()));
+
+    res.json({ success: true, members, players, coaches, admins });
   } catch (error) {
     console.error("Failed to fetch members:", error);
     res.status(500).json({ error: "Internal server error" });

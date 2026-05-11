@@ -2315,12 +2315,42 @@ const UnifiedNav = {
     console.log("📋 Tables auto-labeled + action buttons injected");
   },
 
-  handleTableEdit(btn) {
+  async handleTableEdit(btn) {
     const row = btn.closest("tr");
     if (!row) return;
 
     // Check for specialized handler
     if (typeof window.openEditMemberModal === 'function') {
+      const memberId = row.dataset.id;
+      // Prefer authoritative API data when we have an id or an email present in the row.
+      if (memberId && typeof apiService === 'object') {
+        try {
+          // Prefer canonical /members endpoint for authoritative data
+          let membersResp = null;
+          try { membersResp = await apiService.get('/members'); } catch (e) { membersResp = null; }
+          let all = [];
+          if (membersResp) {
+            all = ([]).concat(membersResp.members || membersResp.players || [], membersResp.staff || []);
+          } else if (typeof apiService.getAdminDashboardData === 'function') {
+            const data = await apiService.getAdminDashboardData();
+            all = ([]).concat(data.staff || [], data.players || [], data.members || []);
+          }
+          const found = all.find(m => String(m.id) === String(memberId) || String(m.user_id) === String(memberId) || (m.email && m.email.toLowerCase() === (row.querySelector('td div[style*="font-size:0.75rem"]')?.textContent || '').toLowerCase()));
+          if (found) {
+            console.debug('unified-nav: opening edit modal with canonical member data', found);
+            const first = found.first_name || found.first || '';
+            const last = found.last_name || found.last || '';
+            const email = found.email || '';
+            const role = found.role || '';
+            window.openEditMemberModal(found.id || memberId, first, last, email, role);
+            return;
+          }
+        } catch (e) {
+          console.warn('unified-nav: failed to load member data for edit modal', e);
+        }
+      }
+
+      // Fallback: try to parse visible cells (keeps existing behavior if API not available)
       const name = row.querySelector("td")?.textContent.trim() || "";
       const roleCell = Array.from(row.querySelectorAll("td")).find(td => td.getAttribute('data-label') === 'Role');
       const role = roleCell ? roleCell.textContent.trim() : "";
@@ -2331,9 +2361,9 @@ const UnifiedNav = {
       const last = lastParts.join(" ");
 
       // Find ID from delete button or similar if available, or use row index
-      const memberId = btn.closest('tr').dataset.id || 'temp-id';
+      const fallbackId = memberId || btn.closest('tr').dataset.id || 'temp-id';
 
-      window.openEditMemberModal(memberId, first, last, email, role);
+      window.openEditMemberModal(fallbackId, first, last, email, role);
       return;
     }
 

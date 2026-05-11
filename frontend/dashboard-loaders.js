@@ -18,25 +18,17 @@ window.DashboardLoaders = {
 
     async loadStats() {
         try {
-            const stats = await apiService.get('/dashboard/admin');
-            if (stats && stats.statistics) {
-                const s = stats.statistics;
-                if (document.getElementById('totalMembers')) {
-                    // Ensure the owner is counted even if no players are assigned
-                    let total = s.total_players || 0;
-                    if (total === 0) total = 1;
-                    document.getElementById('totalMembers').textContent = total;
-                }
-                if (document.getElementById('monthlyRevenue')) {
-                    document.getElementById('monthlyRevenue').textContent = '£' + (s.monthly_revenue || 0).toLocaleString();
-                }
-                if (document.getElementById('activeEvents')) {
-                    document.getElementById('activeEvents').textContent = s.total_events || 0;
-                }
-            }
-        } catch (e) { 
-            console.warn("Stats load failed", e); 
-            // Clear stats on failure
+            // Use the same admin dashboard data source as members list to ensure consistent counts
+            const data = await apiService.getAdminDashboardData();
+            const stats = data && data.statistics ? data.statistics : {};
+            const totalPlayers = parseInt(stats.total_players || stats.totalPlayers || (data.players ? data.players.length : 0), 10) || 0;
+            const totalStaff = parseInt(stats.total_staff || stats.totalStaff || (data.staff ? data.staff.length : 0), 10) || 0;
+            const totalMembers = totalPlayers + totalStaff || 0;
+            if (document.getElementById('totalMembers')) document.getElementById('totalMembers').textContent = totalMembers;
+            if (document.getElementById('monthlyRevenue')) document.getElementById('monthlyRevenue').textContent = '£' + (parseFloat(stats.monthly_revenue) || 0).toLocaleString();
+            if (document.getElementById('activeEvents')) document.getElementById('activeEvents').textContent = stats.total_events || 0;
+        } catch (e) {
+            console.warn("Stats load failed", e);
             ['totalMembers', 'monthlyRevenue', 'activeEvents'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = '0';

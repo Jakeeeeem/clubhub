@@ -749,14 +749,14 @@
         </div>
     </div>
 
-    <script src="app-state.js"></script>
-    <script src="api-service.js?v=20260429_v18"></script>
-    <script src="enhanced-login-handler.js"></script>
-    <script src="group-switcher.js?v=20260429_v18"></script>
-    <script src="pwa-install.js"></script>
-    <script src="unified-nav.js?v=20260429_v18"></script>
-    <script src="squad-messenger.js"></script>
-    <script src="dashboard-loaders.js"></script>
+    <script src="app-state.js?v=20260511_force1"></script>
+    <script src="api-service.js?v=20260511_force1"></script>
+    <script src="enhanced-login-handler.js?v=20260511_force1"></script>
+    <script src="group-switcher.js?v=20260511_force1"></script>
+    <script src="pwa-install.js?v=20260511_force1"></script>
+    <script src="unified-nav.js?v=20260511_force1"></script>
+    <script src="squad-messenger.js?v=20260511_force1"></script>
+    <script src="dashboard-loaders.js?v=20260511_force1"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -809,10 +809,52 @@
             if (!tbody) return;
 
             try {
-                const data = await apiService.getAdminDashboardData();
-                const players = data.players || [];
-                const staff = data.staff || [];
-                let members = [...staff, ...players];
+                // Prefer the canonical members endpoint (includes merged players/staff/invites)
+                // Dashboard data can differ (it contains additional invite test rows), so
+                // use /members when available and fall back to dashboard for legacy pages.
+                let players = [];
+                let staff = [];
+                try {
+                    const membersResp = await apiService.get('/members');
+                    if (membersResp && (membersResp.members || membersResp.players || membersResp.staff)) {
+                        // Normalize shapes: some responses provide `members`, others `players`/`staff`.
+                        players = membersResp.players || membersResp.members || [];
+                        staff = membersResp.staff || [];
+                    } else {
+                        const data = await apiService.getAdminDashboardData();
+                        players = data.players || [];
+                        staff = data.staff || [];
+                    }
+                } catch (e) {
+                    // If /members is unavailable or errors, gracefully fall back to dashboard data
+                    try {
+                        const data = await apiService.getAdminDashboardData();
+                        players = data.players || [];
+                        staff = data.staff || [];
+                    } catch (ee) {
+                        console.error('Failed to load members or dashboard data', ee);
+                        players = [];
+                        staff = [];
+                    }
+                }
+                // Debug: log raw counts so we can trace mismatches between dashboard stats and UI
+                try { console.log('DEBUG: dashboard data — players:', players.length, 'staff:', staff.length, 'raw players emails:', players.map(p=>p.email).slice(0,10)); } catch(e) {}
+
+                // Merge staff + players into a unique members list keyed by user_id -> email -> id
+                const memberMap = new Map();
+                function putMember(m) {
+                    const key = m.user_id || m.email || m.id || (m.first_name+':'+m.last_name);
+                    if (!key) return;
+                    if (!memberMap.has(key)) memberMap.set(key, m);
+                    else {
+                        // Merge missing fields from the other record
+                        const existing = memberMap.get(key);
+                        memberMap.set(key, Object.assign({}, existing, m));
+                    }
+                }
+                staff.forEach(putMember);
+                players.forEach(putMember);
+                const members = Array.from(memberMap.values());
                 
                 // Owner display is provided by the server; avoid client-side injection to prevent spoofing.
                 
@@ -824,7 +866,25 @@
                 // Build rows using DOM APIs to avoid template interpolation issues.
                 tbody.innerHTML = '';
                 const frag = document.createDocumentFragment();
-                members.forEach(m => {
+                // Determine owner id robustly: prefer org record (works for admins and regular players), fallback to context if needed.
+                let ownerIdFromCtx = null;
+                try {
+                    const ctxForOwner = await apiService.getContext();
+                    const orgId = ctxForOwner?.currentGroup?.id || localStorage.getItem('clubId') || null;
+                    if (orgId) {
+                        try {
+                            const orgResp = await apiService.get(`/organizations/${orgId}`);
+                            ownerIdFromCtx = orgResp?.organization?.owner_id || orgResp?.organization?.ownerId || null;
+                        } catch (oe) {
+                            ownerIdFromCtx = ctxForOwner?.currentGroup?.owner_id || ctxForOwner?.currentGroup?.ownerId || ctxForOwner?.currentOrganization?.owner_id || null;
+                        }
+                    } else {
+                        ownerIdFromCtx = ctxForOwner?.currentGroup?.owner_id || ctxForOwner?.currentGroup?.ownerId || ctxForOwner?.currentOrganization?.owner_id || null;
+                    }
+                } catch (e) {
+                    ownerIdFromCtx = null;
+                }
+                for (const m of members) {
                     const isInvite = (m.source || '').toString().toLowerCase() === 'invite' || (m.join_status || '').toString().toLowerCase() === 'invited' || (m.status || '').toString().toLowerCase() === 'pending';
                     // Consider a member a registered player only when they are a real user record
                     // (have `user_id`) and their join_status is explicitly `registered`.
@@ -832,7 +892,14 @@
                     const isRegisteredPlayer = Boolean(m.user_id) && ((m.join_status || '').toString().toLowerCase() === 'registered');
                     const planName = m.payment_plan_name || m.plan_name || m.plan_name_display;
                     const displayRole = (m.role || 'Member');
-                    const isOwner = displayRole.toString().toLowerCase() === 'owner' || displayRole.toString().toLowerCase() === 'group owner';
+                    // Robust owner detection: use pre-fetched owner id from context or role text
+                    let isOwner = false;
+                    const ownerId = ownerIdFromCtx;
+                    if (ownerId && (m.user_id === ownerId || m.id === ownerId || m.userId === ownerId)) isOwner = true;
+                    if (!isOwner) {
+                        const roleText = (displayRole || '').toString().toLowerCase();
+                        if (roleText.includes('owner')) isOwner = true;
+                    }
 
                     const tr = document.createElement('tr');
                     tr.dataset.id = m.id || '';
@@ -863,7 +930,8 @@
                     const tdActions = document.createElement('td'); tdActions.setAttribute('data-label','Actions'); tdActions.style.padding = '1rem 0.5rem'; tdActions.style.textAlign = 'right';
                     const actionsDiv = document.createElement('div'); actionsDiv.style.display = 'flex'; actionsDiv.style.gap = '0.5rem'; actionsDiv.style.justifyContent = 'flex-end';
 
-                    if (isRegisteredPlayer) {
+                    // Actions: Edit always available. Assign Plan only for registered non-owner players.
+                    if (!isInvite && isRegisteredPlayer && !isOwner) {
                         const assignBtn = document.createElement('button'); assignBtn.className = 'btn btn-text btn-small'; assignBtn.style.color = 'var(--accent-cyan)'; assignBtn.textContent = 'Assign Plan';
                         assignBtn.addEventListener('click', () => openAssignPlanModal(m.id, (m.first_name||'') + ' ' + (m.last_name||'')));
                         actionsDiv.appendChild(assignBtn);
@@ -877,6 +945,10 @@
                         const resendBtn = document.createElement('button'); resendBtn.className = 'btn btn-text btn-small'; resendBtn.style.color = '#f59e0b'; resendBtn.textContent = 'Resend Invite';
                         resendBtn.addEventListener('click', () => resendInvite(m.id));
                         actionsDiv.appendChild(resendBtn);
+                        // Allow cancelling invite instead of delete: show cancel to remove invite
+                        const cancelBtn = document.createElement('button'); cancelBtn.className = 'btn btn-text btn-small'; cancelBtn.style.color = '#f87171'; cancelBtn.textContent = 'Cancel';
+                        cancelBtn.addEventListener('click', () => deleteMember(m.id, m.role||''));
+                        actionsDiv.appendChild(cancelBtn);
                     } else if (isOwner) {
                         const ownerBtn = document.createElement('button'); ownerBtn.className = 'btn btn-text btn-small'; ownerBtn.style.opacity = '0.5'; ownerBtn.style.pointerEvents = 'none'; ownerBtn.textContent = 'Owner';
                         actionsDiv.appendChild(ownerBtn);
@@ -895,7 +967,7 @@
                     tr.appendChild(tdActions);
 
                     frag.appendChild(tr);
-                });
+                }
                 tbody.appendChild(frag);
             } catch (e) {
                 console.error("Failed to load members:", e);
@@ -906,13 +978,17 @@
         async function loadDashboardStats() {
             if (typeof apiService === 'undefined') return;
             try {
-                const stats = await apiService.get('/api/admin/stats');
-                if (stats) {
-                    if (stats.totalMembers !== undefined) document.getElementById('totalMembers').textContent = stats.totalMembers;
-                    if (stats.monthlyRevenue !== undefined) document.getElementById('monthlyRevenue').textContent = '£' + stats.monthlyRevenue.toLocaleString();
-                    if (stats.activeEvents !== undefined) document.getElementById('activeEvents').textContent = stats.activeEvents;
-                }
-            } catch (e) { console.warn("Live stats fail, using demo data"); }
+                // Use the same admin dashboard data source as the Members list to ensure counts match
+                const data = await apiService.getAdminDashboardData();
+                const stats = data && data.statistics ? data.statistics : {};
+                // Total Members: combine players and staff counts from the dashboard statistics
+                const totalPlayers = parseInt(stats.total_players || stats.totalPlayers || (data.players ? data.players.length : 0), 10) || 0;
+                const totalStaff = parseInt(stats.total_staff || stats.totalStaff || (data.staff ? data.staff.length : 0), 10) || 0;
+                const totalMembers = totalPlayers + totalStaff;
+                document.getElementById('totalMembers').textContent = totalMembers;
+                if (stats.monthly_revenue !== undefined) document.getElementById('monthlyRevenue').textContent = '£' + (parseFloat(stats.monthly_revenue) || 0).toLocaleString();
+                if (stats.total_events !== undefined) document.getElementById('activeEvents').textContent = stats.total_events;
+            } catch (e) { console.warn("Live stats fail, using demo data", e); }
         }
 
         async function loadTeams() {
@@ -1152,12 +1228,52 @@
             }
         };
 
-        window.openEditMemberModal = function(id, first, last, email, role) {
-            document.getElementById('editMemberId').value = id;
-            document.getElementById('editFirstName').value = first;
-            document.getElementById('editLastName').value = last;
-            document.getElementById('editEmail').value = email;
-            document.getElementById('editRole').value = (role || 'player').toLowerCase();
+        window.openEditMemberModal = async function(id, first, last, email, role) {
+            // Robust population: if the incoming values look incorrect (missing email or email contains a name),
+            // fetch the authoritative member data from the admin dashboard and use that instead.
+            const looksLikeEmail = (s) => typeof s === 'string' && /@/.test(s);
+            let useRemote = false;
+            try {
+                if (!email || !looksLikeEmail(email)) useRemote = true;
+                if (looksLikeEmail(last) && !looksLikeEmail(email)) useRemote = true;
+                // Also guard against someone passing the full name into the email param
+                if (email && typeof email === 'string' && !looksLikeEmail(email) && /\s/.test(email)) useRemote = true;
+            } catch (e) { useRemote = true; }
+
+            let resolved = { id, first_name: first || '', last_name: last || '', email: email || '', role: role || 'player' };
+            if (useRemote) {
+                try {
+                    // Prefer canonical members endpoint
+                    let membersResp = null;
+                    try { membersResp = await apiService.get('/members'); } catch (e) { membersResp = null; }
+                    let all = [];
+                    if (membersResp) {
+                        all = ([]).concat(membersResp.members || membersResp.players || [], membersResp.staff || []);
+                    } else {
+                        const data = await apiService.getAdminDashboardData();
+                        all = ([]).concat(data.staff || [], data.players || [], data.members || []);
+                    }
+                    const found = all.find(m => String(m.id) === String(id) || String(m.user_id) === String(id) || (m.email && m.email.toLowerCase() === (email || '').toLowerCase()));
+                    if (found) {
+                        console.debug('admin-members: resolved member via /members for edit modal', found);
+                        resolved = {
+                            id: found.id || found.user_id || id,
+                            first_name: found.first_name || found.first || '',
+                            last_name: found.last_name || found.last || found.last_name || '',
+                            email: found.email || '',
+                            role: found.role || role || 'player'
+                        };
+                    }
+                } catch (e) {
+                    console.warn('Failed to fetch member data for edit modal, falling back to provided values', e);
+                }
+            }
+
+            document.getElementById('editMemberId').value = resolved.id || id || '';
+            document.getElementById('editFirstName').value = resolved.first_name || '';
+            document.getElementById('editLastName').value = resolved.last_name || '';
+            document.getElementById('editEmail').value = resolved.email || '';
+            document.getElementById('editRole').value = (resolved.role || 'player').toLowerCase();
             openModal('editMemberModal');
         };
 

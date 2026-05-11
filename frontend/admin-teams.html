@@ -224,6 +224,10 @@
                             const b2 = document.getElementById('teamPlayersTableBody');
                             if(b1){ new MutationObserver(()=> setTimeout(tablesToCards,60)).observe(b1,{childList:true,subtree:true}); }
                             if(b2){ new MutationObserver(()=> setTimeout(tablesToCards,60)).observe(b2,{childList:true,subtree:true}); }
+                            // Load coaches and players for create/edit modals
+                            document.addEventListener('DOMContentLoaded', () => {
+                                setTimeout(() => { loadAvailableCoaches(); loadAvailablePlayers(); }, 60);
+                            });
                         })();
                     </script>
 
@@ -286,6 +290,16 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>Add Players to Team</label>
+                        <select id="teamPlayersSelect" name="playerIds" multiple style="width:100%; min-height:120px; padding:0.5rem; background:rgba(0,0,0,0.03); border:1px solid rgba(255,255,255,0.04); color:#fff;">
+                            <!-- Dynamically populated list of players -->
+                        </select>
+                        <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">Tip: hold Shift/Cmd to select multiple players.</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:0.6rem;"><input type="checkbox" id="notifyPlayersCheckbox"> Notify players by email</label>
+                    </div>
+                    <div class="form-group">
                         <label>Registration Form (Jotform)</label>
                         <select name="formId" id="formSelect">
                             <option value="">-- No custom form --</option>
@@ -304,25 +318,38 @@
     <div id="editTeamModal" class="modal" style="display:none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Edit Entry</h2>
+                <h2>Edit Team</h2>
                 <div class="modal-close" onclick="closeModal('editTeamModal')">&times;</div>
             </div>
             <div class="modal-body">
                 <form id="editTeamForm" onsubmit="handleEditTeam(event)">
                     <input type="hidden" id="editTeamId" name="teamId">
+                    <input type="hidden" id="editSport" name="sport">
                     <div class="form-group">
-                        <label>SQUAD NAME</label>
+                        <label>Team Name</label>
                         <input type="text" id="editTeamName" name="teamName" required>
                     </div>
                     <div class="form-group">
-                        <label>LEAD COACH</label>
+                        <label>Assign Head Coach</label>
                         <select name="coachId" id="editCoachSelect">
                             <option value="">-- Select Coach --</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>PLAYERS</label>
-                        <input type="text" id="editTeamPlayersCount" readonly style="background:rgba(255,255,255,0.05); color:var(--text-muted); cursor:not-allowed;">
+                        <label>Add / Remove Players</label>
+                        <select id="editTeamPlayersSelect" name="playerIds" multiple style="width:100%; min-height:120px; padding:0.5rem; background:rgba(0,0,0,0.03); border:1px solid rgba(255,255,255,0.04); color:#fff;">
+                            <!-- Dynamically populated -->
+                        </select>
+                        <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">Tip: hold Shift/Cmd to select multiple players.</div>
+                    </div>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:0.6rem;"><input type="checkbox" id="editNotifyPlayersCheckbox"> Notify newly added players by email</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Form (Jotform)</label>
+                        <select name="formId" id="editFormSelect">
+                            <option value="">-- No custom form --</option>
+                        </select>
                     </div>
                 </form>
             </div>
@@ -614,7 +641,7 @@
             const select = document.getElementById('coachSelect');
             if (!select) return;
             try {
-                const { coaches } = await apiService.get('/api/members?role=coach');
+                const { coaches } = await apiService.get('/members?role=coach');
                 coaches.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.id;
@@ -622,6 +649,28 @@
                     select.appendChild(opt);
                 });
             } catch (e) { }
+        }
+
+        async function loadAvailablePlayers() {
+            const select = document.getElementById('teamPlayersSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">Loading players...</option>';
+            try {
+                const { players } = await apiService.get('/members');
+                select.innerHTML = '';
+                if (!players || players.length === 0) {
+                    select.innerHTML = '<option value="">No players found</option>';
+                    return;
+                }
+                players.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id || p.user_id || p.player_id || '';
+                    opt.textContent = `${p.first_name || ''} ${p.last_name || ''} ${p.email ? '• ' + p.email : ''}`;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                select.innerHTML = '<option value="">Failed to load players</option>';
+            }
         }
 
         async function loadAvailableForms() {
@@ -643,36 +692,88 @@
             const formData = new FormData(e.target);
             const data = {
                 name: formData.get('teamName'),
-                coach_id: formData.get('coachId') || null,
-                form_id: formData.get('formId') || null
+                coachId: formData.get('coachId') || null,
+                formId: formData.get('formId') || null
             };
 
+            // Collect selected players and notify flag
+            const playerSelect = document.getElementById('teamPlayersSelect');
+            if (playerSelect) {
+                const selected = Array.from(playerSelect.selectedOptions).map(o => o.value).filter(Boolean);
+                if (selected.length) data.playerIds = selected;
+            }
+            const notify = document.getElementById('notifyPlayersCheckbox');
+            data.notifyPlayers = notify && notify.checked ? true : false;
+
             try {
+                // Ensure club context and required fields
+                const ctx = await apiService.getContext();
+                const clubId = ctx?.currentGroup?.id || (window.AppState && window.AppState.currentUser && window.AppState.currentUser.clubId);
+                if (!clubId) throw new Error('No club context available');
+                data.clubId = clubId;
+                data.sport = ctx?.currentGroup?.sport || data.sport || 'football';
+
                 await apiService.post('/teams', data);
                 closeModal('createTeamModal');
                 loadTeams();
                 if (typeof showNotification === 'function') showNotification('Team created successfully!', 'success');
             } catch (err) {
                 console.error("Team creation failed:", err);
-                if (typeof showNotification === 'function') showNotification("Failed to create team: " + err.message, "error");
+                if (typeof showNotification === 'function') showNotification("Failed to create team: " + (err.message || err), "error");
             }
         }
 
-        window.openEditTeamModal = function(id, name, coachId, playerCount) {
-            document.getElementById('editTeamId').value = id;
-            document.getElementById('editTeamName').value = name;
-            
-            // Populate coach select in edit modal with same options as create modal
-            const editSelect = document.getElementById('editCoachSelect');
-            const createSelect = document.getElementById('coachSelect');
-            editSelect.innerHTML = createSelect.innerHTML;
-            
-            if (coachId) editSelect.value = coachId;
-            else editSelect.value = "";
-            
-            document.getElementById('editTeamPlayersCount').value = `${playerCount} Players`;
-            
-            openModal('editTeamModal');
+        window.openEditTeamModal = async function(id, name, coachId, playerCount) {
+            try {
+                document.getElementById('editTeamId').value = id;
+                // Fetch team details to prefill sport and players
+                let team = {};
+                try { team = await apiService.get(`/teams/${id}`); } catch(e){ team = { id, name }; }
+
+                document.getElementById('editTeamName').value = name || team.name || '';
+                document.getElementById('editSport').value = team.sport || '';
+
+                // Populate coach select from create modal
+                const editSelect = document.getElementById('editCoachSelect');
+                const createSelect = document.getElementById('coachSelect');
+                if (createSelect && editSelect) editSelect.innerHTML = createSelect.innerHTML;
+                if (coachId) editSelect.value = coachId; else if (team.coach_id) editSelect.value = team.coach_id; else editSelect.value = '';
+
+                // Populate players list and mark selected players
+                const playersSelect = document.getElementById('editTeamPlayersSelect');
+                if (playersSelect) {
+                    playersSelect.innerHTML = '<option value="">Loading players...</option>';
+                    try {
+                        const { players } = await apiService.get('/members');
+                        const teamPlayerIds = new Set((team.players || []).map(p => p.id));
+                        playersSelect.innerHTML = '';
+                        players.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p.id || p.user_id || p.player_id || '';
+                            opt.textContent = `${p.first_name || ''} ${p.last_name || ''} ${p.email ? '• ' + p.email : ''}`;
+                            if (teamPlayerIds.has(opt.value)) opt.selected = true;
+                            playersSelect.appendChild(opt);
+                        });
+                    } catch (pe) {
+                        playersSelect.innerHTML = '<option value="">Failed to load players</option>';
+                    }
+                }
+
+                // Populate form select
+                const editForm = document.getElementById('editFormSelect');
+                const createForm = document.getElementById('formSelect');
+                if (createForm && editForm) editForm.innerHTML = createForm.innerHTML;
+                if (team.form_id && editForm) editForm.value = team.form_id;
+
+                // Reset notify checkbox
+                const notify = document.getElementById('editNotifyPlayersCheckbox');
+                if (notify) notify.checked = false;
+
+                openModal('editTeamModal');
+            } catch (err) {
+                console.error('Failed to open edit modal', err);
+                showNotification('Failed to open edit modal', 'error');
+            }
         };
 
         window.handleEditTeam = async function(e) {
@@ -680,8 +781,19 @@
             const teamId = document.getElementById('editTeamId').value;
             const data = {
                 name: document.getElementById('editTeamName').value,
-                coach_id: document.getElementById('editCoachSelect').value || null
+                coachId: document.getElementById('editCoachSelect').value || null,
+                sport: document.getElementById('editSport').value || 'football',
+                formId: document.getElementById('editFormSelect') ? document.getElementById('editFormSelect').value || null : null
             };
+
+            // Collect selected players and notify flag
+            const playerSelect = document.getElementById('editTeamPlayersSelect');
+            if (playerSelect) {
+                const selected = Array.from(playerSelect.selectedOptions).map(o => o.value).filter(Boolean);
+                if (selected.length) data.playerIds = selected;
+            }
+            const notify = document.getElementById('editNotifyPlayersCheckbox');
+            data.notifyPlayers = notify && notify.checked ? true : false;
 
             try {
                 await apiService.put(`/teams/${teamId}`, data);
