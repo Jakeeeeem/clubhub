@@ -87,7 +87,7 @@ router.get("/", authenticateToken, async (req, res) => {
           : 0,
     }));
 
-    res.json(teamsWithStats);
+    res.json({ success: true, teams: teamsWithStats });
   } catch (error) {
     console.error("Get teams error:", error);
     res.status(500).json({
