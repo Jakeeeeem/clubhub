@@ -738,7 +738,25 @@
                             <option value="parent">Parent</option>
                             <option value="staff">Staff / Coach</option>
                             <option value="admin">Administrator</option>
+                            <option value="owner">Owner</option>
                         </select>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" id="editDOB">
+                        </div>
+                        <div class="form-group">
+                            <label>Position</label>
+                            <input type="text" id="editPosition" placeholder="e.g. Midfielder">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Assign to Squad</label>
+                        <select id="editSquadSelect" style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); color:#fff; border-radius:12px;">
+                            <option value="">-- No Squad --</option>
+                        </select>
+                    </div>
                     </div>
                 </form>
             </div>
@@ -786,17 +804,15 @@
         });
 
         async function loadTeamsForDropdown() {
-            const select = document.getElementById('addSquadSelect');
-            if (!select) return;
+            const addSelect = document.getElementById('addSquadSelect');
+            const editSelect = document.getElementById('editSquadSelect');
+            if (!addSelect && !editSelect) return;
             try {
                 const { teams } = await apiService.get('/teams');
                 if (teams && teams.length > 0) {
-                    teams.forEach(t => {
-                        const opt = document.createElement('option');
-                        opt.value = t.id;
-                        opt.textContent = t.name;
-                        select.appendChild(opt);
-                    });
+                    const options = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+                    if (addSelect) addSelect.innerHTML = '<option value="">-- No Squad --</option>' + options;
+                    if (editSelect) editSelect.innerHTML = '<option value="">-- No Squad --</option>' + options;
                 }
             } catch (e) {
                 console.warn("Failed to load squads for dropdown", e);
@@ -938,7 +954,10 @@
                     }
 
                     const editBtn = document.createElement('button'); editBtn.className = 'btn btn-text btn-small'; editBtn.textContent = 'Edit';
-                    editBtn.addEventListener('click', () => openEditMemberModal(m.id, m.first_name||'', m.last_name||'', m.email||'', m.role||''));
+                    editBtn.addEventListener('click', () => {
+                        // Pass the whole member object to ensure all fields are available
+                        openEditMemberModal(m.id, m);
+                    });
                     actionsDiv.appendChild(editBtn);
 
                     if (isInvite) {
@@ -1284,7 +1303,10 @@
                 first_name: document.getElementById('editFirstName').value,
                 last_name: document.getElementById('editLastName').value,
                 email: document.getElementById('editEmail').value,
-                role: document.getElementById('editRole').value
+                role: document.getElementById('editRole').value,
+                dateOfBirth: document.getElementById('editDOB') ? document.getElementById('editDOB').value : null,
+                position: document.getElementById('editPosition') ? document.getElementById('editPosition').value : null,
+                teamId: document.getElementById('editSquadSelect') ? document.getElementById('editSquadSelect').value : null
             };
 
             try {

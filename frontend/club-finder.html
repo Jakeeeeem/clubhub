@@ -328,13 +328,7 @@
 
             try {
                 // Fetch clubs from API
-                // Currently getGroups(query) is basic, we'll implement more local filtering for demo/UX speed
                 let clubs = await apiService.getGroups(query);
-
-                // Add some "Unclaimed" demo clubs if we're in a real search
-                if (clubs.length < 5) {
-                    clubs = [...clubs, ...getPlaceholderClubs()];
-                }
 
                 // Apply advanced filtering locally
                 const filtered = clubs.filter(c => {
@@ -355,7 +349,7 @@
 
             } catch (err) {
                 console.error("Club finder error:", err);
-                grid.innerHTML = '<p class="text-danger center">Failed to connect to club service. Refreshing...</p>';
+                grid.innerHTML = '<p class="text-danger center">No groups found. Start by refining your search.</p>';
             }
 
             try {
@@ -363,16 +357,9 @@
                 // Fetch public tournaments
                 let tournaments = await apiService.makeRequest('/events?public=true&eventType=tournament');
 
-                // Demo tournaments fallback if needed
-                if (!tournaments || tournaments.length === 0 ) {
-                    const fallback = new ApiService().getAdminDashboardFallback();
-                    tournaments = (fallback.tournaments || []).filter(t => t.is_public);
-                }
-
                 // Filter tournaments locally
                 const filteredTournaments = tournaments.filter(t => {
                     const matchesQuery = !query || t.title.toLowerCase().includes(query) || (t.location && t.location.toLowerCase().includes(query));
-                    // Add more if needed
                     return matchesQuery;
                 });
 
@@ -461,15 +448,6 @@
 
         function registerForTournament(tournamentId) {
             window.location.href = `payment.html?eventId=${tournamentId}&type=tournament_reg`;
-        }
-
-        function getPlaceholderClubs() {
-            // These would eventually be indexed from a public scraped database of grassroots clubs
-            return [
-                { id: 'u1', name: 'Elite Performance Academy', sport: 'Football', location: 'Birmingham', color: '#10b981', unclaimed: true, available_positions: [{ age_group: 'U12' }] },
-                { id: 'u2', name: 'Hoop Dreams Bristol', sport: 'Basketball', location: 'Bristol', color: '#f59e0b', unclaimed: true, available_positions: [{ age_group: 'U16' }] },
-                { id: 'u3', name: 'Riverside Rangers FC', sport: 'Football', location: 'London', color: '#3b82f6', unclaimed: false, available_positions: [{ age_group: 'Seniors' }] }
-            ];
         }
 
         function resetFilters() {

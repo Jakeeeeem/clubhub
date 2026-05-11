@@ -90,6 +90,84 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/members/:id/update
+ * Update a member's details across users and role-specific tables.
+ */
+router.post('/:id/update', authenticateToken, injectOrgContext, requireOrganization, async (req, res) => {
+  const targetUserId = req.params.id;
+  const orgId = req.user.organization_id;
+  const { first_name, last_name, email, role, dateOfBirth, position, teamId } = req.body;
+
+  try {
+    if (!orgId) return res.status(403).json({ error: "No active organization" });
+
+    // 1. Protection for owner
+    const orgRes = await pool.query('SELECT owner_id FROM organizations WHERE id = $1', [orgId]);
+    if (orgRes.rows.length === 0) return res.status(404).json({ error: 'Organization not found' });
+    const isOwner = String(orgRes.rows[0].owner_id) === String(targetUserId);
+
+    // If target is owner, prevent changing role or removing them
+    if (isOwner && role && role !== 'owner') {
+      return res.status(403).json({ error: 'Cannot change owner role' });
+    }
+
+    await withTransaction(async (client) => {
+      // 2. Update user basic info (only if user exists)
+      await client.query(
+        'UPDATE users SET first_name = $1, last_name = $2, email = $3 WHERE id = $4',
+        [first_name, last_name, email, targetUserId]
+      );
+
+      // 3. Update organization member role
+      await client.query(
+        'UPDATE organization_members SET role = $1 WHERE organization_id = $2 AND user_id = $3',
+        [role, orgId, targetUserId]
+      );
+
+      // 4. Update role-specific tables
+      if (role === 'player') {
+        const playerRes = await client.query('SELECT id FROM players WHERE user_id = $1 AND club_id = $2', [targetUserId, orgId]);
+        let playerId = null;
+        
+        if (playerRes.rows.length > 0) {
+          playerId = playerRes.rows[0].id;
+          await client.query(
+            'UPDATE players SET first_name = $1, last_name = $2, email = $3, date_of_birth = $4, position = $5 WHERE id = $6',
+            [first_name, last_name, email, dateOfBirth, position, playerId]
+          );
+        } else {
+          const newPlayer = await client.query(
+            'INSERT INTO players (user_id, club_id, first_name, last_name, email, date_of_birth, position) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+            [targetUserId, orgId, first_name, last_name, email, dateOfBirth, position]
+          );
+          playerId = newPlayer.rows[0].id;
+        }
+
+        // Handle squad assignment
+        if (playerId) {
+          if (teamId) {
+            await client.query('DELETE FROM team_players WHERE player_id = $1 AND team_id IN (SELECT id FROM teams WHERE club_id = $2)', [playerId, orgId]);
+            await client.query('INSERT INTO team_players (team_id, player_id, position) VALUES ($1, $2, $3)', [teamId, playerId, position]);
+          } else {
+            await client.query('DELETE FROM team_players WHERE player_id = $1 AND team_id IN (SELECT id FROM teams WHERE club_id = $2)', [playerId, orgId]);
+          }
+        }
+      } else if (['staff', 'coach', 'admin', 'owner'].includes(role)) {
+        await client.query(
+          'INSERT INTO staff (user_id, club_id, role, first_name, last_name, email) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (user_id, club_id) DO UPDATE SET role = $3, first_name = $4, last_name = $5, email = $6',
+          [targetUserId, orgId, role, first_name, last_name, email]
+        );
+      }
+    });
+
+    res.json({ success: true, message: 'Member updated successfully' });
+  } catch (err) {
+    console.error('Update member error:', err);
+    res.status(500).json({ error: 'Failed to update member' });
+  }
+});
+
 module.exports = router;
 
 // DELETE /api/members/:id - remove a member from the current organization

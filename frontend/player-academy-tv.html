@@ -109,18 +109,9 @@
         const data = await TrainingService.getDrills();
         playerDrills = data.drills || [];
         
-        // Mock data if empty
-        if (playerDrills.length === 0) {
-            playerDrills = [
-                { id: 'p1', title: 'Speed & Agility', category: 'Fitness', difficulty: 'Intermediate', duration_minutes: 15, description: 'Explosive movements and change of direction.', demo_video_url: 'https://www.youtube.com/watch?v=SAn_209YFvA' },
-                { id: 'p2', title: 'Ball Mastery 101', category: 'Drills', difficulty: 'Beginner', duration_minutes: 10, description: 'Core technical skills for every player.', demo_video_url: 'https://www.youtube.com/watch?v=K3H5mK14jX0' },
-                { id: 'p3', title: 'Defensive Positioning', category: 'Tactics', difficulty: 'Advanced', duration_minutes: 25, description: 'Zonal marking and communication.', demo_video_url: 'https://www.youtube.com/watch?v=vVjH96MhSps' },
-                { id: 'p4', title: 'Precision Passing', category: 'Drills', difficulty: 'Intermediate', duration_minutes: 12, description: 'Short and long range accuracy test.', demo_video_url: 'https://www.youtube.com/watch?v=f-B5HnF57zM' },
-                { id: 'p5', title: 'Strength Core', category: 'Fitness', difficulty: 'Beginner', duration_minutes: 20, description: 'Building the foundation for physical play.', demo_video_url: 'https://www.youtube.com/watch?v=SAn_209YFvA' }
-            ];
+        if (playerDrills.length > 0) {
+            updateFeatured(playerDrills[0]);
         }
-        
-        updateFeatured(playerDrills[0]);
         renderGallery();
       } catch (err) {
         console.error("Player library fail:", err);
@@ -146,6 +137,17 @@
         const matchesSearch = v.title.toLowerCase().includes(search);
         return matchesTab && matchesSearch;
       });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1/-1; padding: 4rem; text-align: center; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📺</div>
+            <h3 style="margin: 0; color: #fff;">No sessions found</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Try a different category or search term.</p>
+          </div>
+        `;
+        return;
+      }
 
       container.innerHTML = filtered.map(v => `
         <div class="glass-card video-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;" onclick="watchVideo('${v.demo_video_url}', '${v.title}')">

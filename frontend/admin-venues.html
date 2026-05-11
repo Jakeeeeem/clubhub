@@ -161,13 +161,18 @@
         async function handleAddVenue(e) {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
+            const ctx = await apiService.getContext();
+            const orgId = ctx?.currentOrganization?.id || (window.AppState && window.AppState.currentUser && (window.AppState.currentUser.clubId || window.AppState.currentUser.currentOrganizationId));
+
             const data = {
                 name: document.getElementById('venueName').value,
                 address: document.getElementById('venueAddress').value,
                 type: document.getElementById('venueType').value,
                 capacity: parseInt(document.getElementById('venueCapacity').value),
                 price: parseFloat(document.getElementById('venuePrice').value || 0),
-                stripe_price_id: document.getElementById('venueStripeId').value
+                hourlyRate: parseFloat(document.getElementById('venuePrice').value || 0), // Backend expects hourlyRate
+                stripe_price_id: document.getElementById('venueStripeId').value,
+                organizationId: orgId
             };
 
             try {

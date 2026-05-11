@@ -1024,7 +1024,7 @@ async function handleCreateEvent(e) {
     opponent: formData.get('teamEventOpponent') || formData.get('opponent') || '',
     team_id: formData.get('eventTeamId'),
     recurrence: formData.get('recurring') || 'none',
-    organization_id: AppState.currentUser.currentOrganizationId || AppState.currentUser.clubId
+    clubId: AppState.currentUser.clubId || AppState.currentUser.currentOrganizationId || AppState.currentUser.currentGroupId
   };
 
   const notify = formData.get('notifyPlayers') === 'on';

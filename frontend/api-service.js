@@ -63,24 +63,10 @@ if (typeof ApiService === 'undefined') {
             body: JSON.stringify(options)
         });
 
-    // Cache for feed and messages in demo mode
-    this._mockFeed = null;
-    this._mockMessages = null;
+
   }
 
-  /**
-   * Determine if we should return mock data or hit the live API.
-   * We only return mock data if isDemoSession is true AND we have a basic demo token.
-   * If it's a 'demo-token-' (bypass) or real JWT, we hit the backend.
-   */
-  /**
-   * Determine if we should return mock data or hit the live API.
-   * User requested "all working data not mock" - forcing live data for everything.
-   */
-  shouldMock() {
-    // Force live data for everything as per user request
-    return false;
-  }
+
 
   // Generic GET method for dashboard loaders
   async get(endpoint, options = {}) {
@@ -93,50 +79,7 @@ if (typeof ApiService === 'undefined') {
     // 🛡️ Skip if no token (guest user)
     if (!localStorage.getItem('authToken')) return null;
 
-    // 🛡️ Demo session bypass
-    if (this.shouldMock()) {
-      console.log("🛡️ Returning mock context for demo session");
-      const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
 
-      // In demo mode, we should simulate the role change based on the group the user is switching to.
-      // If the user has activePlayerId, they are definitely a player in this context.
-      // Determine role: prefer explicit user.role or account_type. Only treat as player
-      // if there's an activePlayerId and the user's account_type/role do not indicate an organization/admin.
-      let role = user.role || (user.account_type || user.accountType);
-      if (!role) {
-        role = user.activePlayerId ? 'player' : 'admin';
-      } else {
-        role = role.toString().toLowerCase();
-      }
-
-      const demoClubs = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.groups;
-      const mockFamily = [
-        { id: 'f1', first_name: 'Leo', last_name: 'Junior', club_id: 'demo-club-id' },
-        { id: 'f2', first_name: 'Mia', last_name: 'Junior', club_id: 'demo-club-id' }
-      ];
-      
-      // 🛡️ Sync local storage if needed for demo
-      if (!localStorage.getItem('userFamily') || localStorage.getItem('userFamily') === '[]') {
-        localStorage.setItem("userFamily", JSON.stringify(mockFamily));
-      }
-
-      this.context = {
-        success: true,
-        user: user,
-        family: mockFamily,
-        currentGroup: {
-          id: user.groupId || "d359a5fb-0787-4dde-9631-d30a9d8e827f",
-          name: user.activePlayerId ? "Elite Academy (Player)" : "Pro Group Demo",
-          role: role,
-          user_role: role,
-        },
-        groups: demoClubs,
-        organizations: demoClubs,
-        clubs: demoClubs
-      };
-      
-      return this.context;
-    }
 
     try {
       this.context = await this.makeRequest("/auth/context");
@@ -281,13 +224,6 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getFeedItems(role = "all") {
-    if (this.shouldMock()) {
-      const allItems = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.feed;
-      if (role === "all") return allItems;
-      return allItems.filter(item => 
-        item.roles.includes("all") || item.roles.includes(role.toLowerCase())
-      );
-    }
     try {
       return await this.makeRequest(`/feed?role=${role}`);
     } catch (err) {
@@ -297,19 +233,10 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getMessages(type = "all") {
-    if (this.shouldMock()) {
-      const allMessages = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.messages;
-      if (type === "all") return allMessages;
-      return allMessages.filter(msg => msg.type === type);
-    }
     return await this.makeRequest(`/messages?type=${type}`);
   }
 
   async sendMessage(messageData) {
-    if (this.shouldMock()) {
-      console.log("🛡️ Demo mode: Simulating message send", messageData);
-      return { success: true, message: "Message sent (simulated)" };
-    }
     return await this.makeRequest("/messages", {
       method: "POST",
       body: JSON.stringify(messageData)
@@ -382,14 +309,7 @@ if (typeof ApiService === 'undefined') {
     };
 
     try {
-      // 🛡️ INTERCEPT REQUESTS IN DEMO MODE
-      if (this.shouldMock()) {
-        const interceptResult = await this._interceptDemoRequest(endpoint, options);
-        if (interceptResult !== null) {
-          console.log(`🛡️ Intercepted Demo Request: ${options.method || "GET"} ${endpoint}`, interceptResult);
-          return interceptResult;
-        }
-      }
+
 
       // Normalize endpoint: ensure it starts with a single leading slash and
       // strip any accidental leading `/api` so callers may pass either
@@ -487,10 +407,7 @@ if (typeof ApiService === 'undefined') {
     return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
   }
 
-  // Helper to handle all demo interceptions in one place
-  async _interceptDemoRequest(endpoint, options) {
-    return null;
-  }
+
 
   async _handleResponse(response, endpoint, options) {
     const contentType = (response.headers.get("content-type") || "").toLowerCase();
@@ -526,16 +443,7 @@ if (typeof ApiService === 'undefined') {
       
       const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-      if ((response.status === 401 || response.status === 403 || response.status === 404 || response.status === 405 || response.status >= 500) && this.shouldMock()) {
-        try {
-          console.warn(`⚠️ API Error ${response.status} on ${endpoint} - Attempting demo fallback...`);
-          const fallback = await this._interceptDemoRequest(endpoint, options);
-          if (fallback !== null) return fallback;
-        } catch (e) {
-          console.warn("Demo fallback failed:", e);
-        }
-        // If no mock available, fall through to normal error handling below
-      }
+
 
       // Don't trigger logout for 401/403 in demo mode or on auth pages
     const isAuthPage = window.location.pathname.includes("index.html") || 
@@ -1025,101 +933,6 @@ if (typeof ApiService === 'undefined') {
 
   async login(email, password, demoBypass = false) {
     localStorage.removeItem("isDemoSession");
-    // 🚀 PURE FRONTEND BYPASS
-    const normalizedEmail = (email || "").toLowerCase().trim();
-    const demoUsers = {
-      "superadmin@clubhub.com": {
-        id: "demo-super-admin-id",
-        first_name: "Super",
-        last_name: "Admin",
-        account_type: "group",
-        is_platform_admin: true,
-        userType: "admin",
-        role: "superadmin",
-        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
-      },
-      "demo-admin@clubhub.com": {
-        id: "a575b4f0-99a1-4b33-a661-5f81f4acaeee", // Real seeded UUID
-        first_name: "John",
-        last_name: "Smith",
-        account_type: "group",
-        userType: "group",
-        role: "admin",
-        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
-      },
-      "demo-coach@clubhub.com": {
-        id: "9e64ccf6-9c75-4354-acc9-9c74be7085d7", // Real seeded UUID
-        first_name: "Michael",
-        last_name: "Thompson",
-        account_type: "coach",
-        userType: "coach",
-        role: "coach",
-        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
-      },
-      "demo-player@clubhub.com": {
-        id: "demo-pro-player-id",
-        first_name: "David",
-        last_name: "Williams",
-        account_type: "player",
-        userType: "player",
-        role: "player",
-        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
-      },
-      "admin@clubhub.com": {
-        id: "demo-admin-id",
-        first_name: "Demo",
-        last_name: "Admin",
-        account_type: "admin",
-        userType: "admin",
-        role: "admin",
-        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
-      },
-      "coach@clubhub.com": {
-        id: "demo-coach-id",
-        first_name: "Michael",
-        last_name: "Coach",
-        account_type: "coach",
-        userType: "coach",
-        role: "coach",
-        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
-      },
-      "player@clubhub.com": {
-        id: "demo-player-id",
-        first_name: "John",
-        last_name: "Player",
-        account_type: "player",
-        userType: "player",
-        role: "player",
-        groupId: "d359a5fb-0787-4dde-9631-d30a9d8e827f", // Elite Pro Academy
-      },
-    };
-
-    if (demoBypass && demoUsers[normalizedEmail]) {
-      console.log("✨ Pure Frontend Bypass Triggered for:", normalizedEmail);
-      localStorage.setItem("isDemoSession", "true");
-      const mockUser = demoUsers[normalizedEmail];
-      const mockResponse = {
-        message: "Demo login successful (Frontend Bypass)",
-        token: "demo-token-" + Date.now(),
-        user: {
-          id: mockUser.id,
-          email: normalizedEmail,
-          firstName: mockUser.first_name,
-          lastName: mockUser.last_name,
-          account_type: mockUser.account_type,
-          userType: mockUser.userType,
-          role: mockUser.role,
-          groupId: mockUser.groupId,
-          currentGroupId: mockUser.groupId,
-        },
-      };
-
-      // Store locally so the rest of the app thinks we are logged in
-      this.setToken(mockResponse.token);
-      localStorage.setItem("currentUser", JSON.stringify(mockResponse.user));
-
-      return mockResponse;
-    }
 
     const response = await this.makeRequest("/auth/login", {
       method: "POST",
@@ -1224,13 +1037,6 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getGroup(id) {
-    if (
-      localStorage.getItem("isDemoSession") === "true" ||
-      id.startsWith("dummy-")
-    ) {
-      const demoGroups = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.groups;
-      return demoGroups.find((c) => c.id === id) || demoGroups[0];
-    }
     try {
       return await this.makeRequest(`/clubs/${id}`);
     } catch (error) {
@@ -1241,11 +1047,6 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getGroupById(id) {
-    // 1. Explicit dummy ID check
-    if (id && id.toString().startsWith("dummy-")) {
-      const demoGroups = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.groups;
-      return demoGroups.find((c) => c.id === id) || demoGroups[0];
-    }
 
     // 2. Try real API
     try {
@@ -1420,11 +1221,6 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getPlayerById(id) {
-    // 1. Explicit dummy ID check (mock IDs usually like 'p1', 'p2')
-    if (id && id.toString().startsWith("p") && id.toString().length < 5) {
-      const demoPlayers = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.players;
-      return demoPlayers.find((p) => p.id === id) || demoPlayers[0];
-    }
 
     // 2. Try real API
     try {
@@ -1494,11 +1290,6 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getEventById(id) {
-    // 1. Explicit dummy ID check ('e1', 'e2')
-    if (id && id.toString().startsWith("e") && id.toString().length < 5) {
-      const demoEvents = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.events;
-      return demoEvents.find((e) => e.id === id) || demoEvents[0];
-    }
 
     // 2. Try real API
     try {
@@ -1571,11 +1362,6 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getTeamById(id) {
-    // 1. Explicit dummy ID check ('t1', 't2')
-    if (id && id.toString().startsWith("t") && id.toString().length < 5) {
-      const demoTeams = { groups: [], feed: [], messages: [], players: [], events: [], teams: [] }.teams;
-      return demoTeams.find((t) => t.id === id) || demoTeams[0];
-    }
 
     // 2. Try real API
     try {
