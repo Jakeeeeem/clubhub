@@ -242,32 +242,58 @@
 
         async function filterVenues() {
             const grid = document.getElementById('venueResultsGrid');
-            const venues = [
-                { id: 1, name: 'St. George\'s Park', type: '3G Astro', location: 'Burton', price: '£45/hr', surface: '3G', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800' },
-                { id: 2, name: 'Elite Sports Hub', type: 'Grass Pitch', location: 'Manchester', price: '£30/hr', surface: 'Grass', image: 'https://images.unsplash.com/photo-1529900948632-5a634ad6d8f6?auto=format&fit=crop&q=80&w=800' },
-                { id: 3, name: 'The Arena', type: 'Indoor Court', location: 'London', price: '£60/hr', surface: 'Hard', image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800' }
-            ];
+            const search = document.getElementById('venueSearch').value;
+            const type = document.getElementById('typeFilter').value;
+            const location = document.getElementById('locationSearch').value;
+            const surface = document.getElementById('surfaceFilter').value;
+            
+            try {
+                // Fetch real venues from API
+                let url = '/venues';
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (params.toString()) url += `?${params.toString()}`;
+                
+                let venues = await apiService.makeRequest(url) || [];
+                
+                // Client-side filtering for properties not supported directly by the API yet
+                venues = venues.filter(v => {
+                    const matchType = !type || (v.facility_type && v.facility_type.toLowerCase() === type.toLowerCase()) || (v.type && v.type.toLowerCase() === type.toLowerCase());
+                    const matchLocation = !location || (v.location && v.location.toLowerCase().includes(location.toLowerCase()));
+                    const matchSurface = !surface || (v.surface && v.surface.toLowerCase() === surface.toLowerCase());
+                    return matchType && matchLocation && matchSurface;
+                });
 
-            grid.innerHTML = venues.map(v => `
-                <div class="club-card">
-                    <div class="club-banner">
-                        <img src="${v.image}" class="venue-image">
-                        <span class="price-badge">${v.price}</span>
-                    </div>
-                    <div class="club-content">
-                        <h3 class="club-name">${v.name}</h3>
-                        <div class="club-meta">
-                            <span>📍 ${v.location}</span>
-                            <span>🏗️ ${v.type}</span>
+                if (venues.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: var(--text-muted);"><h3>No venues found</h3><p>Try adjusting your search criteria</p></div>';
+                    return;
+                }
+
+                grid.innerHTML = venues.map(v => `
+                    <div class="club-card">
+                        <div class="club-banner">
+                            <img src="${v.image_url || 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800'}" class="venue-image" onerror="this.src='https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800'">
+                            ${v.price_per_hour ? `<span class="price-badge">£${v.price_per_hour}/hr</span>` : '<span class="price-badge">Contact for price</span>'}
                         </div>
-                        <div class="tag-list">
-                            <span class="tag">Instant Booking</span>
-                            <span class="tag">Changing Rooms</span>
+                        <div class="club-content">
+                            <h3 class="club-name">${v.name}</h3>
+                            <div class="club-meta">
+                                <span>📍 ${v.location || 'Location varies'}</span>
+                                <span>🏗️ ${v.facility_type || v.type || 'Facility'}</span>
+                            </div>
+                            <div class="tag-list">
+                                ${v.surface ? `<span class="tag">${v.surface}</span>` : ''}
+                                ${v.indoor ? `<span class="tag">Indoor</span>` : ''}
+                                ${v.floodlights ? `<span class="tag">Floodlit</span>` : ''}
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;" onclick="window.location.href='venue-booking.html?id=${v.id}'">Check Availability</button>
                         </div>
-                        <button class="btn btn-primary" style="width:100%;" onclick="alert('Booking flow starting...')">Check Availability</button>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (error) {
+                console.error("Error fetching venues:", error);
+                grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: #f87171;">Failed to load venues.</div>';
+            }
         }
     </script>
 </body>

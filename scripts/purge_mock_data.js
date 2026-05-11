@@ -1,3 +1,5 @@
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../backend/.env') });
 const { query, withTransaction } = require("../backend/config/database");
 
 async function purgeMockData() {

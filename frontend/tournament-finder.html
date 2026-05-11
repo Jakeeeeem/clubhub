@@ -292,32 +292,60 @@
 
         async function filterTourneys() {
             const grid = document.getElementById('tourneyResultsGrid');
-            const tourneys = [
-                { id: 1, title: 'Champions League 24', format: 'Group + KO', location: 'National', price: '£150/team', icon: '⚽' },
-                { id: 2, title: 'Winter Blitz', format: 'Knockout', location: 'Regional', price: '£50/team', icon: '❄️' },
-                { id: 3, title: 'Elite Invitational', format: 'League', location: 'London', price: 'Invite Only', icon: '👑' }
-            ];
+            const search = document.getElementById('tourneySearch').value;
+            const format = document.getElementById('formatFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const ageGroup = document.getElementById('ageFilter').value;
+            
+            try {
+                let url = '/events?public=true&eventType=tournament';
+                
+                let tourneys = await apiService.makeRequest(url) || [];
+                // Unify if nested
+                if (tourneys.events) tourneys = tourneys.events;
+                if (tourneys.data) tourneys = tourneys.data;
+                if (!Array.isArray(tourneys)) tourneys = [];
+                
+                // Client-side filtering
+                tourneys = tourneys.filter(t => {
+                    const matchSearch = !search || (t.title && t.title.toLowerCase().includes(search.toLowerCase()));
+                    const matchFormat = !format || (t.format && t.format.toLowerCase() === format.toLowerCase());
+                    const matchStatus = !status || (t.status && t.status.toLowerCase() === status.toLowerCase());
+                    return matchSearch && matchFormat && matchStatus;
+                });
 
-            grid.innerHTML = tourneys.map(t => `
-                <div class="club-card">
-                    <div class="club-banner">
-                        <span class="format-badge">${t.format}</span>
-                        ${t.icon}
-                    </div>
-                    <div class="club-content">
-                        <h3 class="club-name">${t.title}</h3>
-                        <div class="club-meta">
-                            <span>📍 ${t.location}</span>
-                            <span>💰 ${t.price}</span>
+                if (tourneys.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: var(--text-muted);"><h3>No tournaments found</h3><p>Try adjusting your search criteria</p></div>';
+                    return;
+                }
+
+                grid.innerHTML = tourneys.map(t => {
+                    const formatDisplay = t.format || 'Knockout';
+                    return `
+                    <div class="club-card">
+                        <div class="club-banner">
+                            <span class="format-badge">${formatDisplay}</span>
+                            🏆
                         </div>
-                        <div class="tag-list">
-                            <span class="tag">Ranked Event</span>
-                            <span class="tag">Live Brackets</span>
+                        <div class="club-content">
+                            <h3 class="club-name">${t.title}</h3>
+                            <div class="club-meta">
+                                <span>📍 ${t.location || 'TBA'}</span>
+                                <span>💰 ${t.price && t.price > 0 ? `£${t.price}` : 'Free'}</span>
+                            </div>
+                            <div class="tag-list">
+                                <span class="tag">Tournament</span>
+                                <span class="tag">${t.status === 'live' ? 'Live Brackets' : 'Registering'}</span>
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;" onclick="window.location.href='event-qr.html?id=${t.id}'">View Details</button>
                         </div>
-                        <button class="btn btn-primary" style="width:100%;" onclick="alert('Viewing bracket...')">Enter Tournament</button>
                     </div>
-                </div>
-            `).join('');
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error fetching tournaments:", error);
+                grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: #f87171;">Failed to load tournaments.</div>';
+            }
         }
     </script>
 </body>

@@ -21,18 +21,22 @@ const teamValidation = [
 ];
 
 // Get all teams (with optional club filter)
-router.get("/", authenticateToken, async (req, res) => {
+const { optionalAuth } = require("../middleware/auth");
+router.get("/", optionalAuth, async (req, res) => {
   try {
-    const { clubId, sport, ageGroup } = req.query;
+    const { clubId, sport, ageGroup, public: isPublic } = req.query;
 
     let queryText = `
       SELECT t.*, 
              s.first_name as coach_first_name,
              s.last_name as coach_last_name,
+             c.name as club_name,
+             c.location as club_location,
              COUNT(tp.player_id) as player_count
       FROM teams t
       LEFT JOIN staff s ON t.coach_id = s.id
       LEFT JOIN team_players tp ON t.id = tp.team_id
+      LEFT JOIN organizations c ON t.club_id = c.id
       WHERE 1=1
     `;
     const queryParams = [];
@@ -43,7 +47,9 @@ router.get("/", authenticateToken, async (req, res) => {
       paramCount++;
       queryText += ` AND t.club_id = $${paramCount}`;
       queryParams.push(clubId);
-    } else {
+    } else if (isPublic === "true") {
+      // Public search
+    } else if (req.user) {
       // Enforce Isolation: If no clubId, limit to user's clubs
       paramCount++;
       queryText += ` AND t.club_id IN (
@@ -52,6 +58,8 @@ router.get("/", authenticateToken, async (req, res) => {
            SELECT club_id FROM staff WHERE user_id = $${paramCount}
        )`;
       queryParams.push(req.user.id);
+    } else {
+        return res.status(401).json({ error: "Unauthorized" });
     }
 
     // Filter by sport if provided

@@ -12,7 +12,7 @@ const { body, validationResult } = require("express-validator");
 const router = express.Router();
 
 // GET /api/venues - List all venues
-router.get("/", authenticateToken, async (req, res) => {
+router.get("/", optionalAuth, async (req, res) => {
   try {
     const { organizationId, search } = req.query;
 

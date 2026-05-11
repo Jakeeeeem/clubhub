@@ -242,32 +242,62 @@
 
         async function filterTeams() {
             const grid = document.getElementById('teamResultsGrid');
-            const teams = [
-                { id: 1, name: 'Lightning Bolts U14', club: 'City FC', sport: 'Football', location: 'London', icon: '⚽' },
-                { id: 2, name: 'Tidal Wave Juniors', club: 'Surf Academy', sport: 'Basketball', location: 'Brighton', icon: '🏀' },
-                { id: 3, name: 'Iron Giants Elite', club: 'Rugby Union', sport: 'Rugby', location: 'Leicester', icon: '🏉' }
-            ];
+            const search = document.getElementById('teamSearch').value;
+            const sport = document.getElementById('sportFilter').value;
+            const location = document.getElementById('locationSearch').value;
+            const recruiting = document.getElementById('recruitFilter').value;
+            
+            try {
+                let url = '/teams?public=true';
+                if (sport) url += `&sport=${sport}`;
+                
+                let res = await apiService.makeRequest(url) || {};
+                let teams = res.teams || [];
+                
+                // Client-side filtering
+                teams = teams.filter(t => {
+                    const matchSearch = !search || (t.name && t.name.toLowerCase().includes(search.toLowerCase()));
+                    const matchLocation = !location || (t.club_location && t.club_location.toLowerCase().includes(location.toLowerCase()));
+                    // Simple recruiting mock check, as we haven't added a recruiting boolean to the db yet. Assume all are open if "yes" or "no"
+                    return matchSearch && matchLocation;
+                });
 
-            grid.innerHTML = teams.map(t => `
-                <div class="club-card">
-                    <div class="club-banner">
-                        <div style="position:absolute; bottom:10px; left:20px; font-size:2rem;">${t.icon}</div>
-                        <span class="recruit-badge">Recruiting</span>
-                    </div>
-                    <div class="club-content">
-                        <h3 class="club-name">${t.name}</h3>
-                        <div class="club-meta">
-                            <span>🛡️ ${t.club}</span>
-                            <span>📍 ${t.location}</span>
+                if (teams.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: var(--text-muted);"><h3>No teams found</h3><p>Try adjusting your search criteria</p></div>';
+                    return;
+                }
+
+                grid.innerHTML = teams.map(t => {
+                    let icon = '⚽';
+                    const sportLower = (t.sport || '').toLowerCase();
+                    if (sportLower.includes('basket')) icon = '🏀';
+                    if (sportLower.includes('rugby')) icon = '🏉';
+
+                    return `
+                    <div class="club-card">
+                        <div class="club-banner">
+                            <div style="position:absolute; bottom:10px; left:20px; font-size:2rem;">${icon}</div>
+                            <span class="recruit-badge">Recruiting</span>
                         </div>
-                        <div class="tag-list">
-                            <span class="tag">${t.sport}</span>
-                            <span class="tag">Immediate Start</span>
+                        <div class="club-content">
+                            <h3 class="club-name">${t.name}</h3>
+                            <div class="club-meta">
+                                <span>🛡️ ${t.club_name || 'Independent'}</span>
+                                <span>📍 ${t.club_location || 'TBA'}</span>
+                            </div>
+                            <div class="tag-list">
+                                <span class="tag" style="text-transform: capitalize;">${t.sport || 'Multi-sport'}</span>
+                                ${t.age_group ? `<span class="tag">${t.age_group}</span>` : ''}
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;" onclick="window.location.href='team-detail.html?id=${t.id}'">View Squad</button>
                         </div>
-                        <button class="btn btn-primary" style="width:100%;" onclick="alert('Applying to team...')">Apply to Join</button>
                     </div>
-                </div>
-            `).join('');
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error fetching teams:", error);
+                grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: #f87171;">Failed to load teams.</div>';
+            }
         }
     </script>
 </body>

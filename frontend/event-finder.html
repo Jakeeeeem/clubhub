@@ -245,35 +245,72 @@
 
         async function filterEvents() {
             const grid = document.getElementById('eventResultsGrid');
-            const events = [
-                { id: 1, title: 'Regional Summer Cup', cat: 'Tournament', location: 'Birmingham', date: { day: '12', month: 'Jun' }, icon: '🏆' },
-                { id: 2, title: 'Pro Scout Showcase', cat: 'Pro Trial', location: 'London', date: { day: '25', month: 'Jun' }, icon: '⚽' },
-                { id: 3, title: 'Elite Skills Camp', cat: 'Training Camp', location: 'Bristol', date: { day: '05', month: 'Jul' }, icon: '🔥' }
-            ];
+            const search = document.getElementById('eventSearch').value;
+            const category = document.getElementById('catFilter').value;
+            const location = document.getElementById('locationSearch').value;
+            const ageGroup = document.getElementById('ageFilter').value;
+            
+            try {
+                let url = '/events?public=true';
+                if (category) url += `&eventType=${category}`;
+                
+                let events = await apiService.makeRequest(url) || [];
+                // Unify events list if it comes nested
+                if (events.events) events = events.events;
+                if (events.data) events = events.data;
+                if (!Array.isArray(events)) events = [];
+                
+                // Client-side filtering
+                events = events.filter(e => {
+                    const matchSearch = !search || (e.title && e.title.toLowerCase().includes(search.toLowerCase()));
+                    const matchLocation = !location || (e.location && e.location.toLowerCase().includes(location.toLowerCase()));
+                    // ageGroup filtering depends on how age data is stored in your DB, assuming custom logic or skipping for now if complex
+                    return matchSearch && matchLocation;
+                });
 
-            grid.innerHTML = events.map(e => `
-                <div class="club-card">
-                    <div class="club-banner">
-                        <div class="date-badge">
-                            <span class="day">${e.date.day}</span>
-                            <span class="month">${e.date.month}</span>
+                if (events.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: var(--text-muted);"><h3>No events found</h3><p>Try adjusting your search criteria</p></div>';
+                    return;
+                }
+
+                grid.innerHTML = events.map(e => {
+                    const dateRaw = e.event_date || e.date;
+                    const eventDate = dateRaw ? new Date(dateRaw) : new Date();
+                    const day = eventDate.getDate().toString().padStart(2, '0');
+                    const month = eventDate.toLocaleString('default', { month: 'short' });
+                    
+                    let icon = '🔥';
+                    const type = (e.event_type || e.type || '').toLowerCase();
+                    if (type === 'tournament') icon = '🏆';
+                    if (type === 'trial' || type === 'match') icon = '⚽';
+                    
+                    return `
+                    <div class="club-card">
+                        <div class="club-banner">
+                            <div class="date-badge">
+                                <span class="day">${day}</span>
+                                <span class="month">${month}</span>
+                            </div>
+                            ${icon}
                         </div>
-                        ${e.icon}
+                        <div class="club-content">
+                            <h3 class="club-name">${e.title}</h3>
+                            <div class="club-meta">
+                                <span>📍 ${e.location || 'TBA'}</span>
+                            </div>
+                            <div class="tag-list">
+                                <span class="tag" style="text-transform: capitalize;">${e.event_type || e.type || 'Event'}</span>
+                                ${e.price && e.price > 0 ? `<span class="tag">Entry: £${e.price}</span>` : '<span class="tag">Free / TBC</span>'}
+                            </div>
+                            <button class="btn btn-primary" style="width:100%;" onclick="window.location.href='event-qr.html?id=${e.id}'">View Details</button>
+                        </div>
                     </div>
-                    <div class="club-content">
-                        <h3 class="club-name">${e.title}</h3>
-                        <div class="club-meta">
-                            <span>📅 Coming Soon</span>
-                            <span>📍 ${e.location}</span>
-                        </div>
-                        <div class="tag-list">
-                            <span class="tag">${e.cat}</span>
-                            <span class="tag">Global Listing</span>
-                        </div>
-                        <button class="btn btn-primary" style="width:100%;" onclick="alert('Registering for event...')">Register Now</button>
-                    </div>
-                </div>
-            `).join('');
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error("Error fetching events:", error);
+                grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: #f87171;">Failed to load events.</div>';
+            }
         }
     </script>
 </body>
