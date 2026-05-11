@@ -553,7 +553,7 @@
             try {
                 // In demo, we just show notification
                 
-                await apiService.post(`/api/teams/${teamId}/remove-player`, { playerId });
+                await apiService.post(`/teams/${teamId}/remove-player`, { playerId });
                 window.showNotification("Player removed", "success");
                 viewTeam(teamId, document.getElementById('detailTeamName').textContent);
             } catch (e) {
@@ -590,7 +590,7 @@
 
             try {
                 
-                await apiService.post(`/api/teams/${teamId}/add-player`, { playerId });
+                await apiService.post(`/teams/${teamId}/add-player`, { playerId });
                 window.showNotification("Player added", "success");
                 closeModal('addPlayerToTeamModal');
                 viewTeam(teamId, document.getElementById('detailTeamName').textContent);
@@ -602,7 +602,7 @@
         window.deleteTeam = async function(id) {
             if (!confirm("Are you sure you want to delete this team?")) return;
             try {
-                await apiService.delete(`/api/teams/${id}`);
+                await apiService.delete(`/teams/${id}`);
                 window.showNotification("Team deleted", "success");
                 loadTeams();
             } catch (e) {
@@ -648,7 +648,7 @@
             };
 
             try {
-                await apiService.post('/api/teams', data);
+                await apiService.post('/teams', data);
                 closeModal('createTeamModal');
                 loadTeams();
                 if (typeof showNotification === 'function') showNotification('Team created successfully!', 'success');
@@ -684,7 +684,7 @@
             };
 
             try {
-                await apiService.put(`/api/teams/${teamId}`, data);
+                await apiService.put(`/teams/${teamId}`, data);
                 closeModal('editTeamModal');
                 loadTeams();
                 if (typeof showNotification === 'function') showNotification('Team updated successfully!', 'success');

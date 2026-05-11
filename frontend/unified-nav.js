@@ -638,7 +638,7 @@ const UnifiedNav = {
 
         try {
           if (window.apiService && typeof apiService.post === 'function') {
-            await apiService.post('/api/teams', { name, notes });
+            await apiService.post('/teams', { name, notes });
           }
         } catch (e) {
           console.warn('Failed to create team via API', e);

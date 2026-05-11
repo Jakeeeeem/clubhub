@@ -15,6 +15,24 @@ const urlsToCache = [
 
 // Install event - cache resources
 self.addEventListener("install", (event) => {
+  // If running on localhost during development, unregister this service worker
+  // immediately and clear caches so dev assets aren't stuck behind the SW.
+  try {
+    const host = self.location && self.location.hostname;
+    if (host === '127.0.0.1' || host === 'localhost') {
+      event.waitUntil(
+        (async () => {
+          try {
+            const regs = await self.registration.unregister();
+          } catch (e) {}
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        })()
+      );
+      return;
+    }
+  } catch (e) {}
+
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log("Opened cache");

@@ -718,7 +718,7 @@
             const container = document.getElementById('teamsListContainer');
             if (!container) return;
             try {
-                    const { teams } = await apiService.get('/api/teams');
+                    const { teams } = await apiService.get('/teams');
                     let teamsToRender = teams;
 
                     if (!teamsToRender || teamsToRender.length === 0) {
@@ -781,7 +781,7 @@
             };
 
             try {
-                await apiService.post('/api/teams', data);
+                await apiService.post('/teams', data);
                 closeModal('createTeamModal');
                 loadTeams();
                 if (typeof showAlert === 'function') showAlert('Team created successfully!', 'Success', 'success');

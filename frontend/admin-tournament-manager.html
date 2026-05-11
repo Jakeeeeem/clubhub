@@ -498,7 +498,7 @@
             
             try {
                 // In a real app, this would be specific to this tournament
-                const { teams } = await apiService.get('/api/teams');
+                const { teams } = await apiService.get('/teams');
                 if (!teams || teams.length === 0) {
                     container.innerHTML = '<p style="opacity:0.5; text-align:center; padding:2rem;">No teams participating yet.</p>';
                     return;
@@ -676,7 +676,7 @@
             list.innerHTML = '<p style="opacity:0.5; text-align:center;">Fetching club squads...</p>';
             
             try {
-                const { teams } = await apiService.get('/api/teams');
+                const { teams } = await apiService.get('/teams');
                 if (!teams || teams.length === 0) {
                     list.innerHTML = '<p style="opacity:0.5; text-align:center;">No teams found in your club.</p>';
                     return;

@@ -223,8 +223,12 @@ router.get(
         parseInt(parentInvitesResult.rows[0].count) || 0;
 
       // Calculate statistics
-      const totalPlayers =
-        playersResult.rows.length + pendingPlayersCount + pendingParentsCount;
+      // playersResult currently contains both registered players and pending invites
+      // so count registered players explicitly to avoid double-counting invites.
+      const registeredPlayersCount = playersResult.rows.filter(
+        (r) => (r.join_status || '').toString().toLowerCase() === 'registered'
+      ).length;
+      const totalPlayers = registeredPlayersCount + pendingPlayersCount + pendingParentsCount;
       const totalStaff = staffResult.rows.length;
       const totalEvents = eventsResult.rows.length;
       const totalTeams = teamsResult.rows.length;

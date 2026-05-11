@@ -2,19 +2,24 @@
 let deferredPrompt;
 let installButton;
 
-// Register service worker
+// Register service worker (skip registration on localhost for faster dev feedback)
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    // Adding version to SW registration to force update detection
-    navigator.serviceWorker
-      .register("/service-worker.js?v=7.0.2")
-      .then((registration) => {
-        console.log("✅ ServiceWorker registered:", registration.scope);
-      })
-      .catch((error) => {
-        console.log("❌ ServiceWorker registration failed:", error);
-      });
-  });
+  const host = location.hostname;
+  if (host === '127.0.0.1' || host === 'localhost') {
+    console.log('Dev: skipping service worker registration on localhost');
+  } else {
+    window.addEventListener("load", () => {
+      // Adding version to SW registration to force update detection
+      navigator.serviceWorker
+        .register("/service-worker.js?v=7.0.2")
+        .then((registration) => {
+          console.log("✅ ServiceWorker registered:", registration.scope);
+        })
+        .catch((error) => {
+          console.log("❌ ServiceWorker registration failed:", error);
+        });
+    });
+  }
 }
 
 // Check if user has dismissed the banner before

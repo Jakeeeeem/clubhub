@@ -970,7 +970,7 @@
             const select = document.getElementById('eventTargetSelect');
             if (!select) return;
             try {
-                const { teams } = await apiService.get('/api/teams');
+                const { teams } = await apiService.get('/teams');
                 // Keep the 'global' option
                 select.innerHTML = '<option value="global">Whole Club (Global)</option>';
                 (teams||[]).forEach(t => {

@@ -1,3 +1,9 @@
+// Ensure legacy pages relying on a global `isPlayer` flag don't throw
+// ReferenceError when older cached HTML/JS runs in the browser.
+window.isPlayer = window.isPlayer || false;
+// Provide a true global binding for legacy code that references `isPlayer` unqualified.
+var isPlayer = window.isPlayer;
+
 if (typeof ApiService === 'undefined') {
   var ApiService = class {
   constructor() {
@@ -385,7 +391,13 @@ if (typeof ApiService === 'undefined') {
         }
       }
 
-      const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      // Normalize endpoint: ensure it starts with a single leading slash and
+      // strip any accidental leading `/api` so callers may pass either
+      // `/teams` or `/api/teams` without producing `/api/api/...` requests.
+      let ep = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      ep = ep.replace(/^\/api(?=\/|$)/i, '');
+      const cleanEndpoint = ep;
+
       fullUrl = this.baseURL.endsWith('/api') && cleanEndpoint.startsWith('/api')
         ? `${this.baseURL.replace(/\/api$/, '')}${cleanEndpoint}`
         : `${this.baseURL}${cleanEndpoint}`;
