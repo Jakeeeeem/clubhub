@@ -915,6 +915,13 @@ router.delete(
       // Verify user owns the club or is an admin staff
       const clubResult = await query(queries.findClubById, [player.club_id]);
       const club = clubResult.rows[0];
+      // Prevent deleting the organization's owner account via player deletion
+      if (player.user_id && club && String(player.user_id) === String(club.owner_id)) {
+        return res.status(403).json({
+          error: "Cannot delete owner",
+          message: "The owner of the organization cannot be removed via this endpoint",
+        });
+      }
 
       let isAuthorized = club.owner_id === req.user.id;
 

@@ -798,21 +798,34 @@
                         const currentUser = JSON.parse(currentUserStr);
                         
                         if (currentUser && (currentUser.email || currentUser.id || currentUser.name)) {
-                            const existingIndex = members.findIndex(m => (m.id && String(m.id) === String(currentUser.id)) || (m.email && m.email === currentUser.email) || (m.name && m.name === currentUser.name));
-                            
+                            // Prefer matching an ACTIVE member record (not a pending invite) when choosing the existing index
+                            let existingIndex = -1;
+                            if (currentUser.email) {
+                                existingIndex = members.findIndex(m => (m.email && m.email === currentUser.email) && !((m.source || '').toString().toLowerCase() === 'invite' || (m.join_status || '').toString().toLowerCase() === 'invited' || (m.status || '').toString().toLowerCase() === 'pending'));
+                            }
+                            // fallback - match by id or any email/name match
+                            if (existingIndex === -1) {
+                                existingIndex = members.findIndex(m => (m.id && String(m.id) === String(currentUser.id)) || (m.email && m.email === currentUser.email) || (m.name && m.name === currentUser.name));
+                            }
+
                             if (existingIndex !== -1) {
-                                // They are in the list, just force their role to Owner for display
+                                // They are in the list, ensure they are shown as Owner and Active for display
                                 members[existingIndex].role = 'Owner';
                                 members[existingIndex].first_name = members[existingIndex].first_name || currentUser.first_name || currentUser.name || 'Group';
                                 members[existingIndex].last_name = members[existingIndex].last_name || currentUser.last_name || 'Owner';
+                                members[existingIndex].status = 'Active';
+                                members[existingIndex].join_status = 'registered';
+                                members[existingIndex].source = members[existingIndex].source || 'player';
                             } else {
-                                // They aren't in the list, inject them
+                                // They aren't in the list, inject them as an active owner
                                 members.unshift({
                                     ...currentUser,
                                     first_name: currentUser.first_name || currentUser.name || 'Group',
                                     last_name: currentUser.last_name || (currentUser.first_name ? '' : 'Owner'),
                                     role: 'Owner',
-                                    status: 'Active'
+                                    status: 'Active',
+                                    join_status: 'registered',
+                                    source: 'player'
                                 });
                             }
                         }
@@ -825,9 +838,13 @@
                 }
 
                 tbody.innerHTML = members.map(m => {
-                    const isPlayer = (m.role || '').toLowerCase() === 'player';
+                    const isInvite = (m.source || '').toString().toLowerCase() === 'invite' || (m.join_status || '').toString().toLowerCase() === 'invited' || (m.status || '').toString().toLowerCase() === 'pending';
+                    const isRegisteredPlayer = !isInvite && ((m.role || '').toString().toLowerCase() === 'player' || (m.source || '').toString().toLowerCase() === 'player' || (m.join_status || '').toString().toLowerCase() === 'registered');
                     const planBadge = isPlayer ? (m.plan_name ? `<span class="badge" style="background:rgba(220,38,38,0.1); color:var(--primary); font-size:0.7rem; margin-top:0.25rem; display:block;">${m.plan_name}</span>` : `<span class="badge" style="background:rgba(255,255,255,0.05); color:var(--text-muted); font-size:0.7rem; margin-top:0.25rem; display:block;">No Plan</span>`) : '';
-                    
+                    const displayRole = (m.role || 'Member');
+                    const isOwner = displayRole.toString().toLowerCase() === 'owner' || displayRole.toString().toLowerCase() === 'group owner';
+                    const statusBadge = isInvite ? `<span class="badge" style="background:rgba(250,204,21,0.12); color:#f59e0b;">Pending</span>` : `<span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>`;
+
                     return `
                     <tr data-id="${m.id}">
                         <td data-label="Name" style="padding:1rem 0.5rem;">
@@ -839,14 +856,14 @@
                         </td>
                         <td data-label="Squad" style="padding:1rem 0.5rem; color:var(--text-muted);">${m.team_name || 'N/A'}</td>
                         <td data-label="Status" style="padding:1rem 0.5rem;">
-                            <span class="badge" style="background:rgba(74,222,128,0.1); color:#4ade80;">Active</span>
+                            ${statusBadge}
                             ${planBadge}
                         </td>
                         <td data-label="Actions" style="padding:1rem 0.5rem; text-align:right;">
                             <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                                ${isPlayer ? `<button class="btn btn-text btn-small" style="color:var(--accent-cyan);" onclick="openAssignPlanModal('${m.id}', '${m.first_name} ${m.last_name}')">Assign Plan</button>` : ''}
-                                <button class="btn btn-text btn-small" onclick="openEditMemberModal('${m.id}', '${m.first_name}', '${m.last_name}', '${m.email}', '${m.role}')">Edit</button>
-                                <button class="btn btn-text btn-small" style="color:#f87171;" onclick="deleteMember('${m.id}')">🗑️</button>
+                                ${ isRegisteredPlayer ? `<button class="btn btn-text btn-small" style="color:var(--accent-cyan);" onclick="openAssignPlanModal('${m.id}', '${(m.first_name||'').replace(/'/g,"\\'")} ${(m.last_name||'').replace(/'/g,"\\'")}')">Assign Plan</button>` : ''}
+                                <button class="btn btn-text btn-small" onclick="openEditMemberModal('${m.id}', '${(m.first_name||'').replace(/'/g,"\\'")}', '${(m.last_name||'').replace(/'/g,"\\'")}', '${(m.email||'').replace(/'/g,"\\'")}', '${(m.role||'').replace(/'/g,"\\'")}')">Edit</button>
+                                ${ isInvite ? `<button class="btn btn-text btn-small" style="color:#f59e0b;" onclick="resendInvite('${m.id}')">Resend Invite</button>` : (isOwner ? `<button class="btn btn-text btn-small" style="opacity:0.5; pointer-events:none;">Owner</button>` : `<button class="btn btn-text btn-small" style="color:#f87171;" onclick="deleteMember('${m.id}','${(m.role||'').replace(/'/g,"\\'")}')">🗑️</button>`) }
                             </div>
                         </td>
                     </tr>
@@ -992,13 +1009,17 @@
             };
 
             try {
-                const response = await apiService.generateGroupInvite(data);
-                if (response.success) {
-                    showNotification("Invitation sent to " + email, "success");
-                    closeModal('addMemberModal');
-                    e.target.reset();
-                    loadMembers();
-                }
+                    console.log('🔍 Invite payload:', data);
+                    const response = await apiService.generateGroupInvite(data);
+                    console.log('🔍 Invite response:', response);
+                    if (response && response.success) {
+                        showNotification("Invitation sent to " + email, "success");
+                        closeModal('addMemberModal');
+                        e.target.reset();
+                        loadMembers();
+                    } else {
+                        console.warn('Invite did not return success:', response);
+                    }
             } catch (err) {
                 console.error("Invite failed:", err);
                 showNotification(err.message || "Failed to send invitation", "error");
@@ -1131,7 +1152,11 @@
             }
         };
 
-        window.deleteMember = async function(id) {
+        window.deleteMember = async function(id, role) {
+            // Prevent deleting the owner
+            if (role && String(role).toLowerCase() === 'owner') {
+                return showNotification('Cannot remove the owner of the group', 'error');
+            }
             if (!confirm("Are you sure you want to remove this member?")) return;
             try {
                 await apiService.delete(`/api/members/${id}`);
@@ -1139,6 +1164,17 @@
                 loadMembers();
             } catch (err) {
                 showNotification("Failed to remove member", "error");
+            }
+        };
+
+        window.resendInvite = async function(id) {
+            if (!confirm('Resend this invite email?')) return;
+            try {
+                await apiService.post(`/api/invites/${id}/resend`, {});
+                showNotification('Invite resent', 'success');
+            } catch (err) {
+                console.error('Resend invite error', err);
+                showNotification('Failed to resend invite', 'error');
             }
         };
 

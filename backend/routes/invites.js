@@ -54,6 +54,18 @@ router.post(
   inviteValidation,
   async (req, res) => {
     try {
+      // Debug: log incoming invite request for tracing issues where admin gets replaced
+      try {
+        console.log('🔔 /api/invites/generate called by user:', req.user && req.user.id ? req.user.id : 'unknown');
+        console.log('🔔 Invite request body:', JSON.stringify(req.body));
+        console.log('🔔 Invite request headers (selected):', {
+          'x-club-id': req.headers['x-club-id'],
+          'x-organization-id': req.headers['x-organization-id'],
+          host: req.headers.host,
+        });
+      } catch (e) {
+        console.warn('Failed to log invite request debug info', e);
+      }
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
@@ -303,6 +315,50 @@ router.post(
     }
   },
 );
+
+// Resend invite email for a pending invite
+router.post('/:id/resend', authenticateToken, injectOrgContext, requireOrganization, async (req, res) => {
+  try {
+    const inviteId = req.params.id;
+    const inviteRes = await query('SELECT * FROM invitations WHERE id = $1', [inviteId]);
+    if (inviteRes.rows.length === 0) return res.status(404).json({ error: 'Invite not found' });
+    const invite = inviteRes.rows[0];
+
+    if (invite.status !== 'pending') return res.status(400).json({ error: 'Invite is not pending' });
+
+    // Only resend for non-public invites (which have an email)
+    if (invite.is_public) return res.status(400).json({ error: 'Cannot resend shareable invite' });
+
+    // Ensure caller has permission in this organization
+    const perm = await query(
+      'SELECT 1 FROM organization_members WHERE organization_id = $1 AND user_id = $2 AND status = \'' + "active" + "'",
+      [invite.organization_id, req.user.id]
+    );
+    if (perm.rows.length === 0) return res.status(403).json({ error: 'Not authorized to resend this invite' });
+
+    // Re-send email
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const inviteLink = `${baseUrl}/invite.html?token=${invite.token}`;
+    try {
+      await emailService.sendClubInviteEmail({
+        email: invite.email,
+        clubName: (await query('SELECT name FROM organizations WHERE id = $1', [invite.organization_id])).rows[0].name,
+        inviterName: `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim(),
+        inviteLink,
+        personalMessage: invite.message,
+        clubRole: invite.role,
+      });
+      console.log(`✅ Resent invite email to ${invite.email}`);
+      return res.json({ success: true, message: 'Invite resent' });
+    } catch (emailErr) {
+      console.error('Failed to resend invite email:', emailErr);
+      return res.status(500).json({ error: 'Failed to resend invite' });
+    }
+  } catch (error) {
+    console.error('Resend invite error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // 🔥 GET INVITE DETAILS (PUBLIC)
 router.get("/details/:token", async (req, res) => {

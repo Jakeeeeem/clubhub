@@ -72,36 +72,78 @@ router.get(
         .map((_, i) => `$${i + 1}`)
         .join(",");
 
-      // Get players with team assignments
+      // Get players with team assignments, plus pending invitations so admin sees 'Invited' rows
       const playersResult = await query(
         `
-  SELECT 
-    p.*,
-    CASE WHEN pp.plan_id IS NOT NULL THEN true ELSE false END as has_payment_plan,
-    pl.name as payment_plan_name,
-    COALESCE(
-      json_agg(
-        json_build_object(
-          'team_id', tp.team_id,
-          'team_name', t.name,
-          'position', tp.position,
-          'jersey_number', tp.jersey_number
-        ) ORDER BY t.name
-      ) FILTER (WHERE tp.team_id IS NOT NULL), 
-      '[]'
-    ) as team_assignments
-  FROM players p
-  LEFT JOIN team_players tp ON p.id = tp.player_id
-  LEFT JOIN teams t ON tp.team_id = t.id
-  LEFT JOIN player_plans pp ON pp.user_id = p.user_id AND pp.is_active = true
-  LEFT JOIN plans pl ON pl.id = pp.plan_id
-  WHERE p.club_id = ANY($1)
-  GROUP BY p.id, pp.plan_id, pl.name
-  ORDER BY p.created_at DESC
-`,
+    SELECT * FROM (
+      -- Registered players
+      SELECT 
+        p.id,
+        p.first_name,
+        p.last_name,
+        p.email,
+        p.phone,
+        p.date_of_birth,
+        p.position,
+        p.club_id,
+        p.monthly_fee,
+        p.user_id,
+        p.created_at,
+        CASE WHEN pp.plan_id IS NOT NULL THEN true ELSE false END as has_payment_plan,
+        pl.name as payment_plan_name,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'team_id', tp.team_id,
+              'team_name', t.name,
+              'position', tp.position,
+              'jersey_number', tp.jersey_number
+            ) ORDER BY t.name
+          ) FILTER (WHERE tp.team_id IS NOT NULL), 
+          '[]'
+        ) as team_assignments,
+        'registered' as join_status,
+        'player' as source,
+        COALESCE(om.role, 'player') as role
+      FROM players p
+      LEFT JOIN team_players tp ON p.id = tp.player_id
+      LEFT JOIN teams t ON tp.team_id = t.id
+      LEFT JOIN player_plans pp ON pp.user_id = p.user_id AND pp.is_active = true
+      LEFT JOIN plans pl ON pl.id = pp.plan_id
+      LEFT JOIN organization_members om ON om.user_id = p.user_id AND om.organization_id = p.club_id
+      WHERE p.club_id = ANY($1)
+      GROUP BY p.id, pp.plan_id, pl.name, om.role
+
+      UNION ALL
+
+      -- Pending invites
+      SELECT
+        i.id,
+        i.first_name,
+        i.last_name,
+        i.email,
+        i.phone,
+        i.date_of_birth,
+        i.position,
+        i.organization_id as club_id,
+        0 as monthly_fee,
+        NULL as user_id,
+        i.created_at,
+        false as has_payment_plan,
+        NULL as payment_plan_name,
+        '[]'::json as team_assignments,
+        'invited' as join_status,
+        'invite' as source,
+        i.role as role
+      FROM invitations i
+      WHERE i.organization_id = ANY($1)
+        AND i.status = 'pending'
+        AND i.role IN ('player','parent')
+    ) combined
+    ORDER BY created_at DESC
+  `,
         [targetClubIds],
       );
-
       // Get staff
       const staffResult = await query(
         `
@@ -201,9 +243,48 @@ router.get(
       const monthlyRevenue = parseFloat(revenueResult.rows[0].total) || 0;
       const hasStripe = clubs.some((c) => !!c.stripe_account_id);
 
+      // Ensure each organization's owner is present in the players list (as an Active Owner)
+      const players = playersResult.rows.slice();
+      for (const club of clubs) {
+        const ownerId = club.owner_id;
+        const ownerPresent = players.some(
+          (p) => p.user_id && String(p.user_id) === String(ownerId),
+        );
+
+        if (!ownerPresent && ownerId) {
+          try {
+            const ownerRes = await query(queries.findUserById, [ownerId]);
+            if (ownerRes.rows.length > 0) {
+              const owner = ownerRes.rows[0];
+              players.unshift({
+                id: owner.id,
+                first_name: owner.first_name || owner.email.split('@')[0],
+                last_name: owner.last_name || 'Owner',
+                email: owner.email,
+                phone: null,
+                date_of_birth: null,
+                position: null,
+                club_id: club.id,
+                monthly_fee: 0,
+                user_id: owner.id,
+                created_at: club.created_at,
+                has_payment_plan: false,
+                payment_plan_name: null,
+                team_assignments: [],
+                join_status: 'registered',
+                source: 'player',
+                role: 'owner',
+              });
+            }
+          } catch (err) {
+            console.warn('Failed to fetch owner user for club', club.id, err.message);
+          }
+        }
+      }
+
       res.json({
         clubs,
-        players: playersResult.rows,
+        players,
         staff: staffResult.rows,
         events: eventsResult.rows,
         teams: teamsResult.rows,
