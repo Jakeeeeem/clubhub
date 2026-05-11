@@ -150,6 +150,18 @@ async function injectOrgContext(req, res, next) {
       [userId],
     );
     orgId = prefs.rows[0]?.current_organization_id || req.user.organization_id;
+
+    if (!orgId) {
+      // 🛡️ Fallback: If no preference, try to find ANY organization this user is a member of
+      // Prioritize organizations they OWN.
+      const fallbackResult = await pool.query(`
+        SELECT organization_id FROM organization_members 
+        WHERE user_id = $1 
+        ORDER BY role = 'owner' DESC, joined_at ASC LIMIT 1
+      `, [userId]);
+      
+      orgId = fallbackResult.rows[0]?.organization_id;
+    }
   }
 
   if (!orgId) {

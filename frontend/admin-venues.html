@@ -166,11 +166,11 @@
 
             const data = {
                 name: document.getElementById('venueName').value,
-                address: document.getElementById('venueAddress').value,
+                location: document.getElementById('venueAddress').value,
                 type: document.getElementById('venueType').value,
                 capacity: parseInt(document.getElementById('venueCapacity').value),
-                price: parseFloat(document.getElementById('venuePrice').value || 0),
-                hourlyRate: parseFloat(document.getElementById('venuePrice').value || 0), // Backend expects hourlyRate
+                hourlyRate: parseFloat(document.getElementById('venuePrice').value || 0),
+                entryPrice: parseFloat(document.getElementById('venuePrice').value || 0),
                 stripe_price_id: document.getElementById('venueStripeId').value,
                 organizationId: orgId
             };

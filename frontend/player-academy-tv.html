@@ -110,11 +110,15 @@
         playerDrills = data.drills || [];
         
         if (playerDrills.length > 0) {
+            document.getElementById('featuredVideo').style.display = 'grid';
             updateFeatured(playerDrills[0]);
+        } else {
+            document.getElementById('featuredVideo').style.display = 'none';
         }
         renderGallery();
       } catch (err) {
         console.error("Player library fail:", err);
+        document.getElementById('featuredVideo').style.display = 'none';
       }
     }
 

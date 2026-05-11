@@ -555,7 +555,7 @@
     <div id="createTeamModal" class="modal" style="display:none;">
         <div class="modal-content glass-card" style="max-width:500px;">
             <div class="modal-header">
-                <h2>Create New Team</h2>
+                <h2 id="teamModalTitle">Create New Team</h2>
                 <div class="modal-close" onclick="closeModal('createTeamModal')">&times;</div>
             </div>
             <div class="modal-body">
@@ -580,7 +580,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('createTeamModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary" form="createTeamForm">Create Team</button>
+                <button type="submit" class="btn btn-primary" form="createTeamForm" id="teamModalSubmitBtn">Create Team</button>
             </div>
         </div>
     </div>
@@ -984,14 +984,14 @@
                         resendBtn.addEventListener('click', () => resendInvite(m.id));
                         actionsDiv.appendChild(resendBtn);
                         const cancelBtn = document.createElement('button'); cancelBtn.className = 'btn btn-text btn-small'; cancelBtn.style.color = '#f87171'; cancelBtn.textContent = 'Cancel';
-                        cancelBtn.addEventListener('click', () => deleteMember(m.id, m.role||''));
+                        cancelBtn.addEventListener('click', () => deleteMember(m.id, m.role || 'player'));
                         actionsDiv.appendChild(cancelBtn);
                     } else if (isOwner) {
                         const ownerBtn = document.createElement('button'); ownerBtn.className = 'btn btn-text btn-small'; ownerBtn.style.opacity = '0.5'; ownerBtn.style.pointerEvents = 'none'; ownerBtn.textContent = 'Owner';
                         actionsDiv.appendChild(ownerBtn);
                     } else {
                         const delBtn = document.createElement('button'); delBtn.className = 'btn btn-text btn-small'; delBtn.style.color = '#f87171'; delBtn.textContent = '🗑️';
-                        delBtn.addEventListener('click', () => deleteMember(m.id, m.role||''));
+                        delBtn.addEventListener('click', () => deleteMember(m.id, m.role || 'player'));
                         actionsDiv.appendChild(delBtn);
                     }
 
@@ -1043,9 +1043,10 @@
                             <h3 style="font-size:1.1rem; margin-bottom:0.25rem;">${t.name}</h3>
                             <span class="badge" style="background:rgba(96,165,250,0.1); color:#60a5fa; font-size:0.7rem;">${t.player_count || 0} Players</span>
                         </div>
-                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Coach: ${t.coach_name || 'Unassigned'}</p>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Coach: ${t.coach_name || t.coach_first_name ? (t.coach_first_name + ' ' + (t.coach_last_name || '')) : 'Unassigned'}</p>
                         <div style="display:flex; gap:0.5rem;">
-                            <button class="btn btn-secondary btn-small" style="flex:1;" onclick="viewTeam('${t.id}')">Manage</button>
+                            <button class="btn btn-secondary btn-small" style="flex:1;" onclick="openEditTeamModal('${t.id}', '${t.name.replace(/'/g, "\\'")}', '${t.coach_id || ''}', '${t.form_id || ''}')">Edit</button>
+                            <button class="btn btn-primary btn-small" style="flex:1;" onclick="viewTeam('${t.id}')">Manage</button>
                             <button class="btn btn-text btn-small" onclick="deleteTeam('${t.id}')">🗑️</button>
                         </div>
                     </div>
@@ -1098,24 +1099,51 @@
             } catch (e) { }
         }
 
+        let editingTeamId = null;
+
+        window.openCreateTeamModal = function() {
+            editingTeamId = null;
+            document.getElementById('teamModalTitle').textContent = 'Create New Team';
+            document.getElementById('teamModalSubmitBtn').textContent = 'Create Team';
+            document.getElementById('createTeamForm').reset();
+            openModal('createTeamModal');
+        };
+
+        window.openEditTeamModal = function(id, name, coachId, formId) {
+            editingTeamId = id;
+            document.getElementById('teamModalTitle').textContent = 'Edit Team';
+            document.getElementById('teamModalSubmitBtn').textContent = 'Save Changes';
+            
+            const form = document.getElementById('createTeamForm');
+            form.querySelector('[name="teamName"]').value = name;
+            form.querySelector('[name="coachId"]').value = coachId || '';
+            form.querySelector('[name="formId"]').value = formId || '';
+            
+            openModal('createTeamModal');
+        };
+
         async function handleCreateTeam(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
             const data = {
                 name: formData.get('teamName'),
-                coach_id: formData.get('coachId') || null,
-                form_id: formData.get('formId') || null
+                coachId: formData.get('coachId') || null,
+                formId: formData.get('formId') || null
             };
 
             try {
-                await apiService.post('/teams', data);
+                if (editingTeamId) {
+                    await apiService.post(`/teams/${editingTeamId}/update`, data);
+                    showNotification("Team updated successfully!", "success");
+                } else {
+                    await apiService.post('/teams', data);
+                    showNotification("Team created successfully!", "success");
+                }
                 closeModal('createTeamModal');
                 loadTeams();
-                if (typeof showAlert === 'function') showAlert('Team created successfully!', 'Success', 'success');
-                else showNotification("Team created successfully!", "success");
             } catch (err) {
-                console.error("Team creation failed:", err);
-                showNotification("Failed to create team: " + err.message, "error");
+                console.error("Team action failed:", err);
+                showNotification("Failed to save team: " + err.message, "error");
             }
         }
 
@@ -1263,52 +1291,32 @@
             }
         };
 
-        window.openEditMemberModal = async function(id, first, last, email, role) {
-            // Robust population: if the incoming values look incorrect (missing email or email contains a name),
-            // fetch the authoritative member data from the admin dashboard and use that instead.
-            const looksLikeEmail = (s) => typeof s === 'string' && /@/.test(s);
-            let useRemote = false;
-            try {
-                if (!email || !looksLikeEmail(email)) useRemote = true;
-                if (looksLikeEmail(last) && !looksLikeEmail(email)) useRemote = true;
-                // Also guard against someone passing the full name into the email param
-                if (email && typeof email === 'string' && !looksLikeEmail(email) && /\s/.test(email)) useRemote = true;
-            } catch (e) { useRemote = true; }
-
-            let resolved = { id, first_name: first || '', last_name: last || '', email: email || '', role: role || 'player' };
-            if (useRemote) {
-                try {
-                    // Prefer canonical members endpoint
-                    let membersResp = null;
-                    try { membersResp = await apiService.get('/members'); } catch (e) { membersResp = null; }
-                    let all = [];
-                    if (membersResp) {
-                        all = ([]).concat(membersResp.members || membersResp.players || [], membersResp.staff || []);
-                    } else {
-                        const data = await apiService.getAdminDashboardData();
-                        all = ([]).concat(data.staff || [], data.players || [], data.members || []);
-                    }
-                    const found = all.find(m => String(m.id) === String(id) || String(m.user_id) === String(id) || (m.email && m.email.toLowerCase() === (email || '').toLowerCase()));
-                    if (found) {
-                        console.debug('admin-members: resolved member via /members for edit modal', found);
-                        resolved = {
-                            id: found.id || found.user_id || id,
-                            first_name: found.first_name || found.first || '',
-                            last_name: found.last_name || found.last || found.last_name || '',
-                            email: found.email || '',
-                            role: found.role || role || 'player'
-                        };
-                    }
-                } catch (e) {
-                    console.warn('Failed to fetch member data for edit modal, falling back to provided values', e);
-                }
+        window.openEditMemberModal = async function(id, member) {
+            if (!member || typeof member !== 'object') {
+                // If only ID was passed, we might need to fetch, but the list should have it
+                console.warn('openEditMemberModal: member object missing, using ID only');
+                member = { id };
             }
 
-            document.getElementById('editMemberId').value = resolved.id || id || '';
-            document.getElementById('editFirstName').value = resolved.first_name || '';
-            document.getElementById('editLastName').value = resolved.last_name || '';
-            document.getElementById('editEmail').value = resolved.email || '';
-            document.getElementById('editRole').value = (resolved.role || 'player').toLowerCase();
+            document.getElementById('editMemberId').value = id || member.id || member.user_id || '';
+            document.getElementById('editFirstName').value = member.first_name || '';
+            document.getElementById('editLastName').value = member.last_name || '';
+            document.getElementById('editEmail').value = member.email || '';
+            document.getElementById('editRole').value = (member.role || 'player').toLowerCase();
+            
+            if (document.getElementById('editDOB')) {
+                // Format date for input[type=date] (YYYY-MM-DD)
+                let dob = member.date_of_birth || member.dob || '';
+                if (dob && dob.includes('T')) dob = dob.split('T')[0];
+                document.getElementById('editDOB').value = dob;
+            }
+            if (document.getElementById('editPosition')) {
+                document.getElementById('editPosition').value = member.position || member.team_position || '';
+            }
+            if (document.getElementById('editSquadSelect')) {
+                document.getElementById('editSquadSelect').value = member.team_id || '';
+            }
+
             openModal('editMemberModal');
         };
 

@@ -797,17 +797,21 @@
         async function handleAdminCreateEvent(e) {
             e.preventDefault();
             const formData = new FormData(e.target);
+            
+            const ctx = await apiService.getContext();
+            const clubId = ctx?.currentOrganization?.id || (window.AppState && window.AppState.currentUser && (window.AppState.currentUser.clubId || window.AppState.currentUser.currentOrganizationId));
+
             const data = {
                 title: formData.get('title'),
                 description: formData.get('description'),
-                event_date: formData.get('date'),
-                event_time: formData.get('time'),
+                eventDate: formData.get('date'),
+                eventTime: formData.get('time'),
                 location: formData.get('location'),
-                type: formData.get('type'),
+                eventType: formData.get('type'),
                 capacity: parseInt(formData.get('capacity')) || 0,
-                team_id: formData.get('target') === 'global' ? null : formData.get('target'),
-                notify_members: formData.get('sendEmail') === 'on',
-                bib_management: formData.get('bib_management') === 'on'
+                teamId: formData.get('target') === 'global' ? null : formData.get('target'),
+                sendEmail: formData.get('sendEmail') === 'on',
+                clubId: clubId
             };
 
             try {

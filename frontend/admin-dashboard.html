@@ -1006,9 +1006,9 @@
                 event_date: formData.get('date'),
                 event_time: formData.get('time'),
                 location: formData.get('location'),
-                type: 'training',
-                capacity: 0,
-                notify_members: true
+                type: formData.get('type') || 'training',
+                capacity: parseInt(formData.get('capacity')) || 0,
+                notify_members: formData.get('notify') === 'on'
             };
 
             try {
