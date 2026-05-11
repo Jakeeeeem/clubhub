@@ -398,6 +398,44 @@ if (typeof ApiService === 'undefined') {
       ep = ep.replace(/^\/api(?=\/|$)/i, '');
       const cleanEndpoint = ep;
 
+      // Special-case normalization for creating teams: backend requires `clubId` and `sport`.
+      if ((config.method || 'GET').toUpperCase() === 'POST' && /\/teams$/i.test(cleanEndpoint)) {
+        try {
+          // Parse body if needed
+          let bodyObj = null;
+          if (options.body && typeof options.body === 'string') {
+            try { bodyObj = JSON.parse(options.body); } catch (e) { bodyObj = null; }
+          } else if (options.body && typeof options.body === 'object') {
+            bodyObj = options.body;
+          }
+          if (!bodyObj) bodyObj = {};
+
+          // Normalize coach_id -> coachId
+          if (bodyObj.coach_id && !bodyObj.coachId) {
+            bodyObj.coachId = bodyObj.coach_id;
+            delete bodyObj.coach_id;
+          }
+
+          // Ensure clubId is present (use context or localStorage)
+          if (!bodyObj.clubId) {
+            const ctx = await this.getContext();
+            const inferred = ctx?.currentGroup?.id || localStorage.getItem('clubId') || localStorage.getItem('activeOrganizationId');
+            if (inferred) bodyObj.clubId = inferred;
+          }
+
+          // Ensure sport has a default
+          if (!bodyObj.sport) {
+            const ctx = await this.getContext();
+            bodyObj.sport = ctx?.currentGroup?.sport || 'Football';
+          }
+
+          options.body = JSON.stringify(bodyObj);
+          config.body = options.body;
+        } catch (e) {
+          console.warn('Could not normalize /teams payload:', e);
+        }
+      }
+
       fullUrl = this.baseURL.endsWith('/api') && cleanEndpoint.startsWith('/api')
         ? `${this.baseURL.replace(/\/api$/, '')}${cleanEndpoint}`
         : `${this.baseURL}${cleanEndpoint}`;
