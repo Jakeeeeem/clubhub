@@ -832,9 +832,17 @@
                 let staff = [];
                 try {
                     const membersResp = await apiService.get('/members');
-                    if (membersResp && (membersResp.members || membersResp.players || membersResp.staff)) {
-                        // Normalize shapes: some responses provide `members`, others `players`/`staff`.
-                        players = membersResp.players || membersResp.members || [];
+                    if (membersResp && membersResp.members) {
+                        // Use the unified members list directly from the API
+                        const members = membersResp.members;
+                        if (members.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
+                            return;
+                        }
+                        await renderMembersTable(members);
+                        return;
+                    } else if (membersResp && (membersResp.players || membersResp.staff)) {
+                        players = membersResp.players || [];
                         staff = membersResp.staff || [];
                     } else {
                         const data = await apiService.getAdminDashboardData();
@@ -842,37 +850,51 @@
                         staff = data.staff || [];
                     }
                 } catch (e) {
-                    // If /members is unavailable or errors, gracefully fall back to dashboard data
+                    console.warn('Failed to load /members, falling back to dashboard data', e);
                     try {
                         const data = await apiService.getAdminDashboardData();
                         players = data.players || [];
                         staff = data.staff || [];
                     } catch (ee) {
-                        console.error('Failed to load members or dashboard data', ee);
+                        console.error('Failed to load dashboard data', ee);
                         players = [];
                         staff = [];
                     }
                 }
-                // Debug: log raw counts so we can trace mismatches between dashboard stats and UI
-                try { console.log('DEBUG: dashboard data — players:', players.length, 'staff:', staff.length, 'raw players emails:', players.map(p=>p.email).slice(0,10)); } catch(e) {}
 
-                // Merge staff + players into a unique members list keyed by user_id -> email -> id
+                // Fallback merge logic for legacy data sources
                 const memberMap = new Map();
                 function putMember(m) {
-                    const key = m.user_id || m.email || m.id || (m.first_name+':'+m.last_name);
+                    const key = m.id || m.user_id || m.email || (m.first_name+':'+m.last_name);
                     if (!key) return;
-                    if (!memberMap.has(key)) memberMap.set(key, m);
+                    if (!memberMap.has(String(key))) memberMap.set(String(key), m);
                     else {
-                        // Merge missing fields from the other record
-                        const existing = memberMap.get(key);
-                        memberMap.set(key, Object.assign({}, existing, m));
+                        const existing = memberMap.get(String(key));
+                        // Prioritize Owner/Admin role
+                        const isOwnerAdmin = (r) => ['owner', 'admin', 'manager'].includes((r||'').toString().toLowerCase());
+                        if (isOwnerAdmin(existing.role)) {
+                            memberMap.set(String(key), Object.assign({}, m, existing));
+                        } else {
+                            memberMap.set(String(key), Object.assign({}, existing, m));
+                        }
                     }
                 }
                 staff.forEach(putMember);
                 players.forEach(putMember);
                 const members = Array.from(memberMap.values());
-                
-                // Owner display is provided by the server; avoid client-side injection to prevent spoofing.
+                await renderMembersTable(members);
+            } catch (err) {
+                console.error('Final loadMembers failure:', err);
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">Error loading members.</td></tr>';
+            }
+        }
+
+        async function renderMembersTable(members) {
+            const tbody = document.getElementById('membersTableBody');
+            if (!tbody) return;
+            
+            try {
+                console.log('[DEBUG] renderMembersTable - members count:', members.length);
                 
                 if (members.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
@@ -900,15 +922,15 @@
                 } catch (e) {
                     ownerIdFromCtx = null;
                 }
+                
+                console.log('[DEBUG] ownerIdFromCtx:', ownerIdFromCtx);
                 for (const m of members) {
+                    console.log('[DEBUG] processing member:', m.email, 'role:', m.role);
                     const isInvite = (m.source || '').toString().toLowerCase() === 'invite' || (m.join_status || '').toString().toLowerCase() === 'invited' || (m.status || '').toString().toLowerCase() === 'pending';
-                    // Consider a member a registered player only when they are a real user record
-                    // (have `user_id`) and their join_status is explicitly `registered`.
-                    // This prevents pending invites from being treated as registered and getting "Assign Plan".
                     const isRegisteredPlayer = Boolean(m.user_id) && ((m.join_status || '').toString().toLowerCase() === 'registered');
                     const planName = m.payment_plan_name || m.plan_name || m.plan_name_display;
                     const displayRole = (m.role || 'Member');
-                    // Robust owner detection: use pre-fetched owner id from context or role text
+                    
                     let isOwner = false;
                     const ownerId = ownerIdFromCtx;
                     if (ownerId && (m.user_id === ownerId || m.id === ownerId || m.userId === ownerId)) isOwner = true;
@@ -936,6 +958,7 @@
                     if (isInvite) { statusBadge.style.background = 'rgba(250,204,21,0.12)'; statusBadge.style.color = '#f59e0b'; statusBadge.textContent = 'Pending'; }
                     else { statusBadge.style.background = 'rgba(74,222,128,0.1)'; statusBadge.style.color = '#4ade80'; statusBadge.textContent = 'Active'; }
                     tdStatus.appendChild(statusBadge);
+                    
                     if (isRegisteredPlayer) {
                         const planSpan = document.createElement('span'); planSpan.className = 'badge'; planSpan.style.display = 'block'; planSpan.style.marginTop = '0.25rem'; planSpan.style.fontSize = '0.7rem';
                         if (planName) { planSpan.style.background = 'rgba(220,38,38,0.1)'; planSpan.style.color = 'var(--primary)'; planSpan.textContent = planName; }
@@ -946,7 +969,6 @@
                     const tdActions = document.createElement('td'); tdActions.setAttribute('data-label','Actions'); tdActions.style.padding = '1rem 0.5rem'; tdActions.style.textAlign = 'right';
                     const actionsDiv = document.createElement('div'); actionsDiv.style.display = 'flex'; actionsDiv.style.gap = '0.5rem'; actionsDiv.style.justifyContent = 'flex-end';
 
-                    // Actions: Edit always available. Assign Plan only for registered non-owner players.
                     if (!isInvite && isRegisteredPlayer && !isOwner) {
                         const assignBtn = document.createElement('button'); assignBtn.className = 'btn btn-text btn-small'; assignBtn.style.color = 'var(--accent-cyan)'; assignBtn.textContent = 'Assign Plan';
                         assignBtn.addEventListener('click', () => openAssignPlanModal(m.id, (m.first_name||'') + ' ' + (m.last_name||'')));
@@ -954,17 +976,13 @@
                     }
 
                     const editBtn = document.createElement('button'); editBtn.className = 'btn btn-text btn-small'; editBtn.textContent = 'Edit';
-                    editBtn.addEventListener('click', () => {
-                        // Pass the whole member object to ensure all fields are available
-                        openEditMemberModal(m.id, m);
-                    });
+                    editBtn.addEventListener('click', () => openEditMemberModal(m.id, m));
                     actionsDiv.appendChild(editBtn);
 
                     if (isInvite) {
-                        const resendBtn = document.createElement('button'); resendBtn.className = 'btn btn-text btn-small'; resendBtn.style.color = '#f59e0b'; resendBtn.textContent = 'Resend Invite';
+                        const resendBtn = document.createElement('button'); resendBtn.className = 'btn btn-text btn-small'; resendBtn.style.color = '#f59e0b'; resendBtn.textContent = 'Resend';
                         resendBtn.addEventListener('click', () => resendInvite(m.id));
                         actionsDiv.appendChild(resendBtn);
-                        // Allow cancelling invite instead of delete: show cancel to remove invite
                         const cancelBtn = document.createElement('button'); cancelBtn.className = 'btn btn-text btn-small'; cancelBtn.style.color = '#f87171'; cancelBtn.textContent = 'Cancel';
                         cancelBtn.addEventListener('click', () => deleteMember(m.id, m.role||''));
                         actionsDiv.appendChild(cancelBtn);
@@ -978,19 +996,17 @@
                     }
 
                     tdActions.appendChild(actionsDiv);
-
                     tr.appendChild(tdName);
                     tr.appendChild(tdRole);
                     tr.appendChild(tdSquad);
                     tr.appendChild(tdStatus);
                     tr.appendChild(tdActions);
-
                     frag.appendChild(tr);
                 }
                 tbody.appendChild(frag);
-            } catch (e) {
-                console.error("Failed to load members:", e);
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--accent-red);">Failed to load members.</td></tr>';
+            } catch (err) {
+                console.error("renderMembersTable error:", err);
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--accent-red);">Failed to render members.</td></tr>';
             }
         }
 

@@ -12,6 +12,7 @@ const router = express.Router();
 router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
   try {
     const orgId = req.user.organization_id;
+    const fs = require('fs');
     
     if (!orgId) {
       return res.status(403).json({ error: "No active organization selected" });
@@ -22,6 +23,7 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
     let queryText = `
       SELECT 
         u.id, 
+        u.id as user_id,
         u.first_name, 
         u.last_name, 
         u.email, 
@@ -59,7 +61,8 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
       if (!membersByKey.has(String(key))) membersByKey.set(String(key), r);
       else {
         const existing = membersByKey.get(String(key));
-        membersByKey.set(String(key), Object.assign({}, existing, r));
+        // Prefer existing data (from organization_members) to preserve roles like 'owner'
+        membersByKey.set(String(key), Object.assign({}, r, existing));
       }
     }
 
@@ -79,11 +82,19 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
     });
 
     const members = Array.from(membersByKey.values());
-    const players = members.filter(m => (m.role || '').toString() === 'player');
-    const coaches = members.filter(m => ['coach', 'assistant-coach', 'staff'].includes((m.role || '').toString()));
-    const admins = members.filter(m => ['admin', 'owner', 'manager'].includes((m.role || '').toString()));
+    const players = members.filter(m => (m.role || '').toString().toLowerCase() === 'player');
+    const staff = members.filter(m => ['coach', 'assistant-coach', 'staff', 'admin', 'owner', 'manager'].includes((m.role || '').toString().toLowerCase()));
 
-    res.json({ success: true, members, players, coaches, admins });
+    const response = { success: true, members, players, staff };
+    try {
+      require('fs').writeFileSync('/Users/christopherjcallaghan/Documents/sites/clubhub/scratch/last_members_resp.json', JSON.stringify({
+        orgId,
+        userId: req.user.id,
+        response
+      }, null, 2));
+    } catch (e) {}
+
+    res.json(response);
   } catch (error) {
     console.error("Failed to fetch members:", error);
     res.status(500).json({ error: "Internal server error" });
