@@ -443,6 +443,8 @@ const UnifiedNav = {
       }
     } catch (err) {
       console.error("❌ Stage 1 (Core Layout) failed:", err);
+      // Ensure body is visible even on error
+      document.body.style.opacity = '1';
     }
 
     // Sidebar: CLOSED (collapsed) by default on desktop unless user explicitly opened it
