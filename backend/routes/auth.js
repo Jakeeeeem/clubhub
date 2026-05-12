@@ -1370,23 +1370,58 @@ router.post("/switch-group", authenticateToken, async (req, res) => {
             return res.status(400).json({ success: false, error: "Group ID is required" });
         }
 
-        // Verify membership (Direct Membership OR Player Profile OR Direct Ownership)
-        const memberCheck = await query(
-            `SELECT 1 FROM organization_members WHERE user_id = $1 AND organization_id = $2 AND status = 'active'
-             UNION
-             SELECT 1 FROM players WHERE user_id = $1 AND club_id = $2
-             UNION
-             SELECT 1 FROM organizations WHERE owner_id = $1 AND id = $2`,
+        // Check platform admin first (can switch to any group)
+        const userCheck = await query("SELECT is_platform_admin FROM users WHERE id = $1", [userId]);
+        const isPlatformAdmin = !!userCheck.rows[0]?.is_platform_admin;
+
+        // Determine role in the target group
+        // Priority: organization_members role > owner > player/staff membership
+        let userRole = null;
+
+        // 1. Check organization_members (most authoritative role)
+        const memberRow = await query(
+            `SELECT role FROM organization_members
+             WHERE user_id = $1 AND organization_id = $2 AND status = 'active'
+             LIMIT 1`,
             [userId, organizationId]
         );
-
-        if (memberCheck.rows.length === 0) {
-            // Check if platform admin
-            const userCheck = await query("SELECT is_platform_admin FROM users WHERE id = $1", [userId]);
-            if (!userCheck.rows[0]?.is_platform_admin) {
-                return res.status(403).json({ success: false, error: "Access denied to this group" });
-            }
+        if (memberRow.rows.length > 0) {
+            userRole = memberRow.rows[0].role;
         }
+
+        // 2. Check if owner
+        if (!userRole) {
+            const ownerRow = await query(
+                `SELECT id FROM organizations WHERE owner_id = $1 AND id = $2 LIMIT 1`,
+                [userId, organizationId]
+            );
+            if (ownerRow.rows.length > 0) userRole = "owner";
+        }
+
+        // 3. Check players table (player members added via admin — no account_type restriction)
+        if (!userRole) {
+            const playerRow = await query(
+                `SELECT id FROM players WHERE user_id = $1 AND club_id = $2 LIMIT 1`,
+                [userId, organizationId]
+            );
+            if (playerRow.rows.length > 0) userRole = "player";
+        }
+
+        // 4. Check staff table
+        if (!userRole) {
+            const staffRow = await query(
+                `SELECT role FROM staff WHERE user_id = $1 AND club_id = $2 AND is_active = true LIMIT 1`,
+                [userId, organizationId]
+            );
+            if (staffRow.rows.length > 0) userRole = staffRow.rows[0].role || "staff";
+        }
+
+        // Deny access if not a member and not a platform admin
+        if (!userRole && !isPlatformAdmin) {
+            return res.status(403).json({ success: false, error: "Access denied to this group" });
+        }
+
+        if (!userRole && isPlatformAdmin) userRole = "platform_admin";
 
         // Update preference
         await query(
@@ -1396,7 +1431,12 @@ router.post("/switch-group", authenticateToken, async (req, res) => {
             [userId, organizationId]
         );
 
-        res.json({ success: true, message: "Group switched successfully" });
+        res.json({
+            success: true,
+            message: "Group switched successfully",
+            role: userRole,           // ← returned so frontend can redirect immediately
+            organizationId,
+        });
     } catch (error) {
         console.error("Switch group error:", error);
         res.status(500).json({ success: false, error: "Failed to switch group" });

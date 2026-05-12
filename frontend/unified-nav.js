@@ -2817,79 +2817,38 @@ const UnifiedNav = {
 
   async switchMode(mode) {
     localStorage.setItem("dashboardMode", mode);
-    console.log(`📡 switchMode: Mode persisted as '${mode}'`);
-    
-    if (mode === "player") {
-      window.location.href = "player-dashboard.html";
-    } else {
-      // Check if user has groups before routing to an admin dashboard
-      try {
-        if (typeof apiService !== 'undefined') {
-          console.log("🔄 switchMode: Fetching fresh context to verify groups...");
-          // Use refreshContext to bypass cache and get fresh group list
-          const context = await apiService.refreshContext();
-          console.log("📦 switchMode context result:", context);
-          
-          // Only redirect if the call succeeded AND we explicitly confirmed 0 groups.
-          // If the call failed (!context), don't redirect to create-group as it might be a temporary error.
-          const userGroups = context.groups || context.organizations || [];
-          if (context && context.success && userGroups.length === 0) {
-            console.warn("⚠️ No groups found in context. Redirecting to create-group.html");
-            window.location.href = "create-group.html";
-            this.toggleSidebar(false);
-            return;
-          }
-          console.log(`✅ ${context?.groups?.length || 0} groups found. Proceeding to dashboard.`);
-        }
-      } catch (e) {
-        console.warn("Failed to check group context during switchMode", e);
-      }
-
-      // After refreshContext(), localStorage 'userType' is updated to reflect the org role
-      // (e.g. 'admin' for owners). Read that FIRST, not account_type which is the signup-time value.
-      const updatedType = localStorage.getItem("userType");
-      const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      let type = updatedType || user.account_type || user.userType || "";
-      
-      // If we are switching to group mode, and the user is an admin-capable account, 
-      // ensure we treat them as an admin even if their current role is 'player'.
-      if (mode === "group" && ["organization", "admin", "group", "owner"].includes(user.account_type?.toLowerCase())) {
-          type = "admin";
-      }
-
-      console.log(`🔀 switchMode: Attempting to switch to 'group' mode. Current state:`, {
-        targetMode: 'group',
-        userTypeInStorage: updatedType,
-        userAccountType: user.account_type,
-        resolvedType: type,
-        currentPath: window.location.pathname
-      });
-
-      if (
-        type === "platform_admin" ||
-        window.location.href.includes("super-admin")
-      ) {
-        console.log("🚀 Navigating to super-admin-dashboard.html");
-        window.location.href = "super-admin-dashboard.html";
-      } else if (
-        type === "coach" ||
-        window.location.href.includes("coach-dashboard")
-      ) {
-        console.log("🚀 Navigating to coach-dashboard.html");
-        window.location.href = "coach-dashboard.html";
-      } else if (
-        type === "scout" ||
-        window.location.href.includes("scout-dashboard")
-      ) {
-        console.log("🚀 Navigating to scout-dashboard.html");
-        window.location.href = "scout-dashboard.html";
-      } else {
-        console.log("🚀 Navigating to admin-dashboard.html");
-        window.location.href = "admin-dashboard.html";
-      }
-    }
     this.toggleSidebar(false);
+
+    if (mode === "player") {
+      // Player Pro → always player-dashboard
+      window.location.href = "player-dashboard.html";
+      return;
+    }
+
+    // Groups Hub → navigate immediately, no API call needed.
+    // Destination is based on what's stored locally (set during login/context refresh).
+    const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    const role = (
+      localStorage.getItem("userType") ||
+      user.role ||
+      user.account_type ||
+      ""
+    ).toLowerCase();
+
+    if (role === "platform_admin" || role === "superadmin") {
+      window.location.href = "super-admin-dashboard.html";
+    } else if (role === "coach" || role === "assistant_coach") {
+      window.location.href = "coach-dashboard.html";
+    } else if (role === "scout") {
+      window.location.href = "scout-dashboard.html";
+    } else {
+      // Everyone else (admin, owner, manager, organization, adult, parent, player)
+      // goes to admin-dashboard — their group's admin view.
+      // If they have no group, admin-dashboard will redirect to create-group.html itself.
+      window.location.href = "admin-dashboard.html";
+    }
   },
+
 
   renderMenu() {
     const nav = document.getElementById("sidebar-nav-content");

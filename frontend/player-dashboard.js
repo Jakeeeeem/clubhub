@@ -184,6 +184,23 @@ async function initializePlayerDashboard() {
       };
     }
 
+    // ── SECTION RESET ────────────────────────────────────────────────
+    // Strip any stale inline display styles from previous navigation
+    // so the CSS `display:none` rule on .dashboard-section takes effect
+    // cleanly. Then immediately show the correct starting section.
+    document.querySelectorAll(".dashboard-section").forEach((s) => {
+      s.style.display = "";   // clear inline — let CSS hide it
+      s.classList.remove("active");
+    });
+
+    // Determine starting section from URL hash or default to 'overview'
+    const hashSection = (window.location.hash || "")
+      .replace(/^#player-/, "")
+      .replace(/^#/, "")
+      .trim() || "overview";
+    _doShowPlayerSection(hashSection);
+    // ────────────────────────────────────────────────────────────────
+
     // Load user from localStorage
     const storedUser = safeGetCurrentUser();
     if (storedUser) {
@@ -202,9 +219,6 @@ async function initializePlayerDashboard() {
       sessionStorage.setItem("activePlayerId", savedPlayerId);
       console.log("📋 Restored active profile:", savedPlayerId);
     }
-
-    // Initial setup of nav buttons - Handled by UnifiedNav init
-    // setupNavButtons(); 
 
     showLoading(true);
 
@@ -2989,25 +3003,38 @@ async function refreshClubData() {
   }
 }
 
+// Debounce guard — prevents rapid section switches from stacking
+let _showPlayerSectionTimer = null;
+
 function showPlayerSection(sectionId) {
-  // Update hash for deep-linking
-  if (window.location.hash !== '#player-' + sectionId && window.location.hash !== '#' + sectionId) {
-    window.location.hash = 'player-' + sectionId;
+  // Debounce: if called rapidly, only execute the last call
+  if (_showPlayerSectionTimer) clearTimeout(_showPlayerSectionTimer);
+  _showPlayerSectionTimer = setTimeout(() => _doShowPlayerSection(sectionId), 30);
+}
+
+function _doShowPlayerSection(sectionId) {
+  // Update hash for deep-linking (replace so we don't flood history)
+  const newHash = '#player-' + sectionId;
+  if (window.location.hash !== newHash && window.location.hash !== '#' + sectionId) {
+    try { history.replaceState(null, '', newHash); } catch(e) { window.location.hash = newHash; }
   }
 
-  document
-    .querySelectorAll(".dashboard-section")
-    .forEach((s) => s.classList.remove("active"));
+  // Hide ALL sections first (explicit display:none stops the flicker)
+  document.querySelectorAll(".dashboard-section").forEach((s) => {
+    s.classList.remove("active");
+    s.style.display = "none";
+  });
 
-  // Remove active class from all nav buttons in grouped nav
+  // Remove active state from all nav controls
   document
     .querySelectorAll(".dashboard-nav-grouped button, .nav-pill")
     .forEach((b) => b.classList.remove("active"));
 
+  // Show only the target section
   const target = byId("player-" + sectionId) || byId(sectionId);
   if (target) {
     target.classList.add("active");
-    target.style.display = "block"; // Ensure it's visible if manually hidden
+    target.style.display = "block";
   }
 
   // Sync with Mobile Tabs and Bottom Nav (Threads Style)
@@ -4167,6 +4194,17 @@ window.toggleNotifications = toggleNotifications;
 window.markAllNotificationsRead = markAllNotificationsRead;
 window.handleNotificationClick = handleNotificationClick;
 window.showPlayerSection = showPlayerSection;
+window._doShowPlayerSection = _doShowPlayerSection;
+
+// Handle browser back/forward navigation between sections (no full reload)
+window.addEventListener("hashchange", () => {
+  const section = (window.location.hash || "")
+    .replace(/^#player-/, "")
+    .replace(/^#/, "")
+    .trim();
+  if (section) _doShowPlayerSection(section);
+});
+
 window.bookEvent = bookEvent;
 window.payNow = payNow;
 window.applyToClub = applyToClub;

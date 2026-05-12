@@ -1,20 +1,53 @@
-// Use central AppState from app-state.js if available, otherwise define it
-window.AppState = window.AppState || {
-  currentUser: null,
-  userType: null,
-  currentPage: "home",
-  dashboardSection: "overview",
-  clubs: [],
-  players: [],
-  staff: [],
-  events: [],
-  bookings: [],
-  teams: [],
-  notifications: [],
-  isLoading: false,
-  isLoggedIn: false,
-};
-const AppState = window.AppState;
+// AppState is defined in app-state.js; ensure it exists
+if (!window.AppState) {
+  window.AppState = {
+    currentUser: null,
+    userType: null,
+    currentPage: "home",
+    dashboardSection: "overview",
+    clubs: [],
+    players: [],
+    staff: [],
+    events: [],
+    bookings: [],
+    teams: [],
+    notifications: [],
+    isLoading: false,
+    isLoggedIn: false,
+    context: null,
+    activeGroupId: null,
+    statistics: {}
+  };
+}
+
+
+// Use the global AppState
+function showNotification(message, type = "info", duration = 5000) {
+  // Ensure container exists
+  let container = document.getElementById("notification-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "notification-container";
+    container.style.position = "fixed";
+    container.style.top = "1rem";
+    container.style.right = "1rem";
+    container.style.zIndex = "10000";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.style.minWidth = "200px";
+  toast.style.marginBottom = "0.5rem";
+  toast.style.padding = "0.75rem 1rem";
+  toast.style.borderRadius = "0.4rem";
+  toast.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)";
+  toast.style.backgroundColor = type === "error" ? "#dc2626" : type === "success" ? "#16a34a" : "#2563eb";
+  toast.style.color = "#fff";
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), duration);
+}
+
 
 // Wait for all scripts to load before initializing
 let initializationAttempts = 0;
@@ -23,6 +56,13 @@ const maxInitializationAttempts = 50; // 5 seconds max wait
 function waitForApiService() {
   return new Promise((resolve, reject) => {
     function checkApiService() {
+        // Ensure shouldMock method exists
+        if (typeof ApiService !== 'undefined' && !ApiService.prototype.shouldMock) {
+          ApiService.prototype.shouldMock = function() {
+            // Demo mode flag or missing token indicates mock usage
+            return this.isDemo || !this.token;
+          };
+        }
       if (typeof apiService !== "undefined") {
         console.log("✅ API Service found, initializing app...");
         resolve();
@@ -678,10 +718,11 @@ async function loadDataFallback() {
   }
 }
 
-async function loadNotifications() {
-  try {
-    if (apiService.getNotifications) {
-      const notifications = await apiService.getNotifications();
+async function getNotifications() {
+    try {
+    // Fallback to mock notifications only in demo mode or when no real API
+    if (apiService.isDemo && !apiService.baseURL.includes("localhost")) {
+      const notifications = await apiService.makeRequest("/notifications");
       AppState.notifications = notifications || [];
       updateNotificationBadge();
     }

@@ -6,6 +6,8 @@ var isPlayer = window.isPlayer;
 
 if (typeof ApiService === 'undefined') {
   var ApiService = class {
+  // Returns true when in demo mode or no auth token, causing mock data usage
+  shouldMock() { return this.isDemo || !this.token; }
   constructor() {
     // Determine base URL based on environment
     this.baseURL = this.getBaseURL();

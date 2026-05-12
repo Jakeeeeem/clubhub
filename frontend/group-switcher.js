@@ -211,35 +211,9 @@ if (window.__groupSwitcherDefined) {
               console.warn("Switcher: Failed to load all groups (403 expected if permissions missing):", error);
             }
           } else {
-            // For non-admins, filter based on dashboard type
-            const path = window.location.pathname;
-            if (
-              path.includes("admin-") ||
-              path.includes("coach-") ||
-              path.includes("super-admin-") ||
-              path.includes("tournament-manager.html") ||
-              path.includes("training-manager.html") ||
-              path.includes("form-builder.html") ||
-              path.includes("email-campaigns.html")
-            ) {
-              groups = groups.filter((group) => {
-                const role = (
-                  group.user_role ||
-                  group.role ||
-                  ""
-                ).toLowerCase();
-                return [
-                  "owner",
-                  "admin",
-                  "manager",
-                  "coach",
-                  "staff",
-                  "assistant_coach",
-                  "platform_admin",
-                  "platform-admin"
-                ].includes(role);
-              });
-            }
+            // ALL users see ALL their groups — the switcher redirects them
+            // to the correct dashboard based on their role in the chosen group.
+            // No group filtering is applied here.
           }
 
           this.groups = groups;
@@ -497,84 +471,109 @@ if (window.__groupSwitcherDefined) {
     }
 
     async switchGroup(groupId, playerId = null) {
-      try {
-        if (typeof showNotification === 'function') showNotification("Switching group...", "info");
+      // Prevent duplicate/concurrent switches
+      if (this._switching) return;
+      this._switching = true;
 
-        const response = await (window.apiService || apiService).makeRequest("/auth/switch-group", {
+      const notify = (msg, type) => {
+        if (typeof showNotification === 'function') showNotification(msg, type);
+      };
+
+      try {
+        this.closeDropdown();
+        notify("Switching group…", "info");
+
+        const svc = window.apiService || (typeof apiService !== 'undefined' ? apiService : null);
+        if (!svc) throw new Error("API service unavailable");
+
+        const response = await svc.makeRequest("/auth/switch-group", {
           method: "POST",
           body: JSON.stringify({ organizationId: groupId }),
         });
 
-        if (response.success) {
-          // Store player ID in localStorage if viewing as a child
-          const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
-          if (playerId) {
-            user.activePlayerId = playerId;
-            console.log(`👶 Switching to child context: Player ID ${playerId}`);
-          } else {
-            delete user.activePlayerId;
-            sessionStorage.removeItem("activePlayerId");
-            console.log(`👤 Switching group: Resetting to default profile`);
-          }
-          user.clubId = groupId;
-          user.currentGroupId = groupId;
-          localStorage.setItem("currentUser", JSON.stringify(user));
+        if (!response || !response.success) {
+          throw new Error(response?.message || "Switch failed");
+        }
 
-          if (typeof showNotification === 'function') showNotification("Group switched successfully!", "success");
+        // Update local user record
+        let user = {};
+        try { user = JSON.parse(localStorage.getItem("currentUser") || "{}"); } catch(e) {}
 
-          // Fetch new context to get updated role
+        if (playerId) {
+          user.activePlayerId = playerId;
+          sessionStorage.setItem("activePlayerId", playerId);
+          console.log(`👶 Switching to child context: Player ID ${playerId}`);
+        } else {
+          delete user.activePlayerId;
+          sessionStorage.removeItem("activePlayerId");
+          console.log(`👤 Switching group: ${groupId}`);
+        }
+        user.clubId = groupId;
+        user.currentGroupId = groupId;
+        localStorage.setItem("currentUser", JSON.stringify(user));
+
+        notify("Group switched!", "success");
+
+        // Use role returned by the API directly — no second round-trip needed
+        let newRole = response.role || null;
+
+        if (!newRole) {
+          // Fallback: refresh context only if backend didn't return role
           try {
-            const context = await apiService.refreshContext();
-            if (context && context.currentGroup) {
-              const newRole =
-                context.currentGroup.user_role || context.currentGroup.role;
+            const context = await svc.refreshContext();
+            if (context) {
+              const grp = context.currentGroup || context.currentOrganization || {};
+              newRole = (grp.user_role || grp.role || context.user?.role || "player");
 
-              // Update local storage user
-              let currentUser = null;
-              try {
-                const stored = localStorage.getItem("currentUser");
-                if (stored) currentUser = JSON.parse(stored);
-              } catch (e) {
-                console.warn("Local storage parse error", e);
-              }
-
-              if (!currentUser || !currentUser.id) {
-                if (context.user) {
-                  currentUser = context.user;
-                } else {
-                  currentUser = { role: newRole };
-                }
-              }
-
-              if (currentUser) currentUser.role = newRole;
-              currentUser.clubId = context.currentGroup.id;
-              currentUser.groupId = context.currentGroup.id;
-
-              localStorage.setItem("currentUser", JSON.stringify(currentUser));
-
-              // Redirect based on role
-              const redirectRole = (newRole || "").toLowerCase();
-              if (["player", "parent", "adult"].includes(redirectRole)) {
-                window.location.href = "player-dashboard.html";
-              } else if (["coach", "assistant-coach"].includes(redirectRole)) {
-                window.location.href = "coach-dashboard.html";
-              } else {
-                window.location.href = "admin-dashboard.html";
-              }
-              return;
+              // Persist refreshed user
+              let cu = {};
+              try { cu = JSON.parse(localStorage.getItem("currentUser") || "{}"); } catch(e) {}
+              if (context.user) Object.assign(cu, context.user);
+              cu.role = newRole;
+              cu.clubId = grp.id || groupId;
+              cu.groupId = grp.id || groupId;
+              localStorage.setItem("currentUser", JSON.stringify(cu));
             }
           } catch (e) {
-            console.warn("Failed to refresh context during switch:", e);
+            console.warn("Context refresh failed after group switch — using fallback role:", e);
           }
-
-          // Fallback
-          setTimeout(() => {
-            window.location.reload();
-          }, 500);
+        } else {
+          // Update stored user with new role immediately
+          let cu = {};
+          try { cu = JSON.parse(localStorage.getItem("currentUser") || "{}"); } catch(e) {}
+          cu.role = newRole;
+          cu.clubId = groupId;
+          cu.groupId = groupId;
+          localStorage.setItem("currentUser", JSON.stringify(cu));
         }
+
+        newRole = newRole || "player";
+
+        // Route to the correct dashboard for this group
+        const r = (newRole || "").toLowerCase().replace(/-/g, "_");
+        const PLAYER_ROLES  = ["player", "parent", "adult", "member"];
+        const COACH_ROLES   = ["coach", "assistant_coach"];
+        const ADMIN_ROLES   = ["owner", "admin", "manager", "staff", "platform_admin"];
+
+        let dest;
+        if (PLAYER_ROLES.includes(r)) {
+          dest = "player-dashboard.html";
+        } else if (COACH_ROLES.includes(r)) {
+          dest = "coach-dashboard.html";
+        } else if (ADMIN_ROLES.includes(r)) {
+          dest = "admin-dashboard.html";
+        } else {
+          // Unknown role → default to player dashboard so everyone can see their groups
+          dest = "player-dashboard.html";
+        }
+
+        console.log(`🔀 Switching to ${dest} (role: ${r})`);
+        window.location.href = dest;
+
       } catch (error) {
         console.error("Failed to switch group:", error);
-        if (typeof showNotification === 'function') showNotification("Failed to switch group", "error");
+        notify("Failed to switch group: " + (error.message || "unknown error"), "error");
+        this._switching = false;
       }
     }
   }
