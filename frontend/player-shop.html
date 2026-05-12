@@ -36,572 +36,28 @@
     window.UNIFIED_NAV_ENABLED = true;
   </script>
   <!-- Unified Navigation will inject the Header and Sidebar automatically -->
-  <header class="header"></header>
+
 
   <main class="main dashboard-main">
     <div class="dashboard container dashboard-container">
       <div class="dashboard-content">
-        <!-- Profile Section -->
-        <div id="player-profile" class="dashboard-section">
-          <div class="glass-panel" style="padding: 2rem;">
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-              <h2 class="neon-text" style="margin: 0;">👤 Personal Profile</h2>
-              <button class="btn btn-primary" onclick="savePlayerProfile()">Save Changes</button>
-            </div>
-            <form id="playerProfileForm" class="profile-form">
-              <div class="dashboard-grid">
-                <div class="form-group">
-                  <label>First Name</label>
-                  <input type="text" id="prof-firstName" required>
-                </div>
-                <div class="form-group">
-                  <label>Last Name</label>
-                  <input type="text" id="prof-lastName" required>
-                </div>
-                <div class="form-group">
-                  <label>Email Address</label>
-                  <input type="email" id="prof-email" readonly style="opacity: 0.6; cursor: not-allowed;">
-                </div>
-                <div class="form-group">
-                  <label>Phone Number</label>
-                  <input type="tel" id="prof-phone">
-                </div>
-                <div class="form-group">
-                  <label>Date of Birth</label>
-                  <input type="date" id="prof-dob">
-                </div>
-                <div class="form-group">
-                  <label>Position / Role</label>
-                  <input type="text" id="prof-position">
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-
         <!-- Shop Section -->
-        <div id="player-shop" class="dashboard-section active" style="display:block;>
-          <div class="glass-panel" style="padding: 0; overflow: hidden; height: 85vh;">
-            <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
-          </div>
-        </div>
-
-        <!-- Family Section -->
-        <div id="player-family" class="dashboard-section">
-          <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <div>
-              <h2 class="neon-text">My Family</h2>
-              <p style="color: rgba(255,255,255,0.6);">Manage child profiles linked to your account</p>
-            </div>
-            <button id="addChildHeaderBtn" class="btn btn-primary" onclick="openAddChildModal()" style="display: none;">+ Add Child</button>
-          </div>
-          
-          <div id="familyGrid" class="dashboard-grid">
-            <!-- Populated by JS -->
-            <div class="glass-card loading-card">Loading family members...</div>
-          </div>
-
-          <!-- Growth & Potential Section -->
-          <div class="glass-panel" style="margin-top: 3rem; padding: 2rem; border-color: var(--primary-glow);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem;">
-              <div>
-                <h3 class="neon-text" style="color: var(--primary); margin: 0 0 0.5rem 0;">📈 Scouting & Growth</h3>
-                <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">Track your professional development and market valuation.</p>
-              </div>
-              <div style="background: hsla(142, 70%, 50%, 0.1); padding: 1rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid hsla(142, 70%, 50%, 0.2);">
-                <span style="display:block; font-size: 0.65rem; color: #4ade80; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Growth Index</span>
-                <span style="font-size: 1.75rem; font-weight: 900; color: #4ade80;">+12.4%</span>
-              </div>
-            </div>
-
-            <div class="dashboard-grid">
-              <!-- Growth Chart Mock -->
-              <div class="glass-card" style="grid-column: span 1; min-height: 200px; display: flex; align-items: flex-end; gap: 8px; padding-top: 3rem;">
-                <div style="flex: 1; height: 40%; background: var(--primary); opacity: 0.3; border-radius: 4px 4px 0 0;"></div>
-                <div style="flex: 1; height: 55%; background: var(--primary); opacity: 0.5; border-radius: 4px 4px 0 0;"></div>
-                <div style="flex: 1; height: 45%; background: var(--primary); opacity: 0.4; border-radius: 4px 4px 0 0;"></div>
-                <div style="flex: 1; height: 70%; background: var(--primary); opacity: 0.7; border-radius: 4px 4px 0 0;"></div>
-                <div style="flex: 1; height: 85%; background: var(--primary); border-radius: 2px 2px 0 0; box-shadow: 0 0 15px var(--primary-glow);"></div>
-                <div style="flex: 1; height: 60%; background: var(--primary); opacity: 0.6; border-radius: 4px 4px 0 0;"></div>
-                <div style="flex: 1; height: 95%; background: #4ade80; border-radius: 4px 4px 0 0; box-shadow: 0 0 15px hsla(142, 70%, 50%, 0.4);"></div>
-                <div style="position: absolute; top: 1rem; left: 1rem; font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700;">6 Month Progress</div>
-              </div>
-
-              <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-                <div class="glass-card">
-                  <span style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700;">Elite Potential</span>
-                  <div style="display:flex; align-items:center; gap: 12px; margin-top: 8px;">
-                    <span style="font-size: 1.5rem; font-weight: 900;">88/100</span>
-                    <div style="flex:1; height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow: hidden;">
-                      <div style="width: 88%; height: 100%; background: #4ade80; border-radius:4px; box-shadow: 0 0 12px #4ade80;"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="glass-card">
-                  <span style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700;">Scout Visibility</span>
-                  <div style="display:flex; flex-direction: column; gap: 4px; margin-top: 8px;">
-                    <span style="font-size: 1.5rem; font-weight: 900; color: var(--primary);">High Intensity</span>
-                    <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">14 Professional Views This Week</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 🧵 Club Feed Section (Blog Roll Style) -->
-        <div id="player-club-feed" class="dashboard-section" style="display: none;">
-          <div class="section-header" style="margin-bottom: 2.5rem;">
-            <h1 class="neon-text">Activity Feed</h1>
-            <p style="color: rgba(255,255,255,0.5);">Updates from your groups, coaches, and upcoming events.</p>
-          </div>
-
-          <div class="dashboard-layout-sidebar">
-            <div class="feed-main-column">
-              <div id="clubFeedComposerWrapper" class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
-                <div style="display: flex; gap: 1rem;">
-                  <div class="author-avatar" style="width: 48px; height: 48px; flex-shrink: 0; background: var(--primary);">Me</div>
-                  <div style="flex: 1;">
-                    <textarea id="newPostContent" 
-                      style="width: 100%; height: 100px; margin-bottom: 1rem; resize: none;" 
-                      placeholder="Share a quick update from training, events or group news."></textarea>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                      <button class="btn btn-secondary">📎 Add Media</button>
-                      <button class="btn btn-primary" onclick="postToCommunityFeed()">Share Update</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div id="communityFeedContainer" class="activity-card-list">
-                <!-- Blog roll items -->
-                <div class="glass-card">Loading community feed...</div>
-              </div>
-            </div>
-
-            <aside class="feed-sidebar">
-              <div class="glass-panel" style="padding: 1.5rem; position: sticky; top: 2rem;">
-                <h4 style="margin-bottom: 1.25rem; font-family: var(--font-heading);">Filter Feed</h4>
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2.5rem;">
-                  <button class="btn btn-primary" style="justify-content: flex-start;">All Updates</button>
-                  <button class="btn btn-secondary" style="justify-content: flex-start;">Groups & Teams</button>
-                  <button class="btn btn-secondary" style="justify-content: flex-start;">Scouting Blogs</button>
-                  <button class="btn btn-secondary" style="justify-content: flex-start;">Announcements</button>
-                </div>
-
-                <h4 style="margin-bottom: 1.25rem; font-family: var(--font-heading);">Trending Tags</h4>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                  <span class="btn btn-secondary btn-small" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; min-height: auto;">#SummerLeague</span>
-                  <span class="btn btn-secondary btn-small" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; min-height: auto;">#ScoutingTips</span>
-                  <span class="btn btn-secondary btn-small" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; min-height: auto;">#Training</span>
-                </div>
-              </div>
-            </aside>
-          </div>
-        </div>
-
-        <!-- 💬 Squad Messenger Section -->
-        <div id="player-club-messenger" class="dashboard-section" style="display: none;">
-          <div class="glass-panel" id="player-messenger-mount" style="height: 80vh; overflow: hidden;"></div>
-        </div>
-
-        <div id="player-overview" class="dashboard-section" style="display:none;">
-          <!-- Player Stats Row -->
-          <div class="dashboard-card-strip">
-            <div class="dashboard-card-strip-item" onclick="showPlayerSection('my-clubs')">
-              <div class="dashboard-card-strip-label">My Groups</div>
-              <div class="dashboard-card-strip-value" id="playerGroupCount">2</div>
-              <div class="dashboard-card-strip-meta">Active memberships</div>
-            </div>
-            <div class="dashboard-card-strip-item active-highlight" onclick="showPlayerSection('teams')">
-              <div class="dashboard-card-strip-label">Next Session</div>
-              <div class="dashboard-card-strip-value">Tue 18:00</div>
-              <div class="dashboard-card-strip-meta">Training · Astro Pitch 2</div>
-            </div>
-            <div class="dashboard-card-strip-item" onclick="showPlayerSection('teams')">
-              <div class="dashboard-card-strip-label">Attendance</div>
-              <div class="dashboard-card-strip-value">84%</div>
-              <div class="dashboard-card-strip-meta">↑ 4% this month</div>
-            </div>
-            <div class="dashboard-card-strip-item" onclick="showPlayerSection('subscriptions')">
-              <div class="dashboard-card-strip-label">Subscription</div>
-              <div class="dashboard-card-strip-value" id="playerSubStatus" style="color: #4ade80;">Paid ✓</div>
-              <div class="dashboard-card-strip-meta">Next due: 1 May</div>
-            </div>
-          </div>
-
-          <div class="dashboard-inline-tabs-premium">
-            <button class="tab-btn active" onclick="showPlayerSection('overview')">Events</button>
-            <button class="tab-btn" onclick="showPlayerSection('club-feed')">Activity</button>
-            <button class="tab-btn" onclick="window.location.href='player-finances.html'">Payments</button>
-            <button class="tab-btn" onclick="showPlayerSection('polls')">Polls</button>
-          </div>
-
-          <div class="dashboard-layout-sidebar">
-            <!-- Main Column: Activity Feed -->
-            <div class="feed-column">
-              <div class="section-header" style="margin-bottom: 2rem;">
-                <h2 class="neon-text">Activity Feed</h2>
-                <p style="color: rgba(255,255,255,0.5);">Latest updates from your coaches and groups</p>
-              </div>
-
-              <!-- Post Creator for activity updates -->
-              <div id="overviewComposerWrapper" class="glass-panel" style="padding: 1.5rem; margin-bottom: 2rem;">
-                <div style="display: flex; gap: 1rem;">
-                  <div class="author-avatar" style="background: var(--primary);">Me</div>
-                  <textarea id="plannerPostContent" 
-                    style="width: 100%; height: 80px; border: none; background: transparent; resize: none;" 
-                    placeholder="Share a quick update from training, events, or match day."></textarea>
-                </div>
-                <div style="display: flex; justify-content: flex-end; margin-top: 1rem; gap: 0.75rem;">
-                  <button class="btn btn-secondary">📎 Attach</button>
-                  <button class="btn btn-primary" onclick="postToPlannerFeed()">Share Update</button>
-                </div>
-              </div>
-
-              <div id="plannerFeedContainer" class="activity-card-list"></div>
-                      <div>
-                        <div style="font-weight: 700;">Coach John Doe</div>
-                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">2 hours ago</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="feed-content">
-                    <p>Great session today everyone! Check out the highlights from the tactical drill. Focus on the defensive positioning.</p>
-                  </div>
-                  <div class="feed-media">
-                    <div style="aspect-ratio: 16/9; background: #000; display: flex; align-items: center; justify-content: center; position: relative;">
-                      <div style="font-size: 3rem; color: #fff; opacity: 0.5;">▶️</div>
-                      <div style="position: absolute; bottom: 1rem; left: 1rem; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem;">Match Highlights: Tactical Drill</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Sidebar: Daily Planner -->
-            <div class="planner-sidebar">
-              <div class="glass-panel" style="padding: 1.5rem;">
-                <h3 style="margin-bottom: 1.5rem; font-family: var(--font-heading);">📅 Your Schedule</h3>
-                <div id="dailyPlannerContainer" style="display: grid; gap: 1rem;"></div>
-                      <div class="day-name">Mar</div>
-                    </div>
-                    <div class="event-details">
-                      <div class="event-time" style="color: var(--primary);">18:00 - 19:30</div>
-                      <div class="event-title">Elite Training Session</div>
-                      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">Main Pitch, Elite Academy</div>
-                    </div>
-                  </div>
-                  <div class="planner-day-row" style="background: hsla(0, 0%, 100%, 0.03); border: 1px solid hsla(0, 0%, 100%, 0.05);">
-                    <div class="day-indicator">
-                      <div class="day-number" style="color: var(--primary);">26</div>
-                      <div class="day-name">Mar</div>
-                    </div>
-                    <div class="event-details">
-                      <div class="event-time" style="color: var(--primary);">19:00 - 20:00</div>
-                      <div class="event-title">Tactical Webinar</div>
-                      <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4);">Online (Zoom)</div>
-                    </div>
-                  </div>
-                </div>
-                <button class="btn btn-secondary" style="margin-top: 1.5rem; width: 100%;" onclick="showPlayerSection('event-finder')">Find More Events</button>
-              </div>
-
-              <!-- Growth Widget (Smaller) -->
-              <div class="glass-card" style="margin-top: 2rem;">
-                <h4 style="margin-bottom: 1rem; color: var(--primary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">📈 Player Growth</h4>
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.75rem;">
-                  <span style="font-size: 1.75rem; font-weight: 800;">88/100</span>
-                  <span style="color: #4ade80; font-size: 0.8rem; font-weight: 700;">+12%</span>
-                </div>
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-                  <div style="width: 88%; height: 100%; background: #4ade80; box-shadow: 0 0 10px #4ade80;"></div>
-                </div>
-              </div>
-            </div>
+        <div id="player-shop" class="dashboard-section active" style="display:block;">
+          <div class="glass-panel" style="padding: 4rem 2rem; text-align: center; height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="background: #eab308; color: #000; font-weight: 800; text-transform: uppercase; padding: 0.5rem 2rem; transform: rotate(-2deg); margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); letter-spacing: 2px; display: inline-block;">Under Construction</div>
+            <div style="font-size: 5rem; margin-bottom: 2rem; animation: float 3s ease-in-out infinite;">🚀</div>
+            <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 1rem; color: white;">Coming Soon</h1>
+            <p style="font-size: 1.1rem; color: rgba(255,255,255,0.6); max-width: 500px; margin-bottom: 2rem; line-height: 1.6;">
+              We're working hard to bring you an awesome new feature. <br>
+              This specialized shop module is currently under development and will be launching shortly.
+            </p>
           </div>
         </div>
       </div>
+    </div>
+  </main>
 
-      <!-- Notifications Section -->
-      <div id="player-notifications" class="dashboard-section" style="display:none;">
-        <div class="glass-panel" style="padding: 2rem;">
-          <h2 class="neon-text">🔔 Notifications</h2>
-          <p style="color: rgba(255,255,255,0.5); margin-bottom: 2rem;">Important alerts and updates from your club, events, and family.</p>
-          <div class="glass-card" style="background: hsla(0, 0%, 100%, 0.03);">
-            <p style="margin: 0; opacity: 0.8;">No new notifications yet. Check back after your next team update or event invitation.</p>
-          </div>
-        </div>
-      </div>
 
-      <!-- Venue Booking Section -->
-      <div id="player-venue-booking" class="dashboard-section">
-        <div class="glass-panel" style="padding: 2rem;">
-          <h2 class="neon-text">🏟️ Venue Booking</h2>
-          <p>Loading booking system...</p>
-        </div>
-      </div>
-
-      <!-- League Management Section -->
-      <div id="player-league-management" class="dashboard-section">
-        <div class="glass-panel" style="padding: 2rem;">
-          <h2 class="neon-text">🥇 Leagues</h2>
-          <p>Loading leagues...</p>
-        </div>
-      </div>
-
-      <!-- My Clubs -->
-      <div id="player-my-clubs" class="dashboard-section">
-        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">My Groups</h2>
-          <div class="dashboard-grid" id="playerClubsContainer"></div>
-        </div>
-
-        <div class="glass-panel" style="padding: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Group Staff</h2>
-          <div class="table-responsive">
-            <table class="modern-table">
-              <thead>
-                <tr>
-                  <th>Staff Name</th>
-                  <th>Role</th>
-                  <th>Contact</th>
-                  <th>Group</th>
-                </tr>
-              </thead>
-              <tbody id="clubStaffTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-        <script>
-          (function(){
-            function clubStaffToCards(){
-              if(window.innerWidth > 991) return;
-              const wrapper = document.querySelector('#player-my-clubs .table-responsive');
-              if(!wrapper) return;
-              const table = wrapper.querySelector('table');
-              if(!table) return;
-              const tbody = table.querySelector('tbody');
-              if(!tbody) return;
-
-              const rows = Array.from(tbody.querySelectorAll('tr'));
-              if(rows.length === 0) return;
-
-              const list = document.createElement('div');
-              list.className = 'mobile-card-list';
-
-              rows.forEach(row => {
-                if(row.children.length === 1 && row.children[0].hasAttribute('colspan')) return;
-                const card = document.createElement('div'); card.className='mobile-card';
-                Array.from(row.children).forEach((td, idx) => {
-                  const th = table.querySelectorAll('thead th')[idx];
-                  const label = th ? th.textContent.trim() : '';
-                  const value = td.textContent.trim();
-                  const item = document.createElement('div'); item.className='row-item';
-                  const l = document.createElement('div'); l.className='row-label'; l.textContent = label;
-                  const v = document.createElement('div'); v.className='row-value'; v.textContent = value;
-                  item.appendChild(l); item.appendChild(v); card.appendChild(item);
-                });
-                list.appendChild(card);
-              });
-
-              table.parentElement.replaceChild(list, table);
-            }
-
-            document.addEventListener('DOMContentLoaded', clubStaffToCards);
-            const body = document.getElementById('clubStaffTableBody');
-            if(body){
-              const mo = new MutationObserver(()=> setTimeout(clubStaffToCards, 60));
-              mo.observe(body, { childList:true, subtree:true });
-            }
-          })();
-        </script>
-      </div>
-
-      <!-- Teams -->
-      <div id="player-teams" class="dashboard-section">
-        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">My Teams</h2>
-          <div id="playerTeamsContainer" style="display:flex;flex-direction:column;gap:1rem;"></div>
-        </div>
-
-        <div class="glass-panel" style="padding: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Team Events & Availability</h2>
-          <div id="teamEventsContainer" class="activity-card-list"></div>
-        </div>
-      </div>
-
-      <!-- Polls & Voting -->
-      <div id="player-polls" class="dashboard-section">
-        <div class="glass-panel" style="padding: 0; overflow: hidden; height: 85vh;">
-          <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
-        </div>
-      </div>
-
-      <!-- Subscriptions -->
-      <div id="player-subscriptions" class="dashboard-section">
-        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">My Subscription</h2>
-          <div id="currentPlanInfo" style="margin-bottom: 2rem;"></div>
-          <div class="subscription-benefits"></div>
-        </div>
-
-        <div class="glass-panel" style="padding: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Change Subscription Plan</h2>
-          <div id="planAssignRow" class="dashboard-grid" style="align-items: flex-end;">
-            <div class="form-group">
-              <label for="planSelector">Choose Plan</label>
-              <select id="planSelector"></select>
-            </div>
-            <div class="form-group">
-              <label for="planStartDate">Start Date</label>
-              <input type="date" id="planStartDate" />
-            </div>
-            <button class="btn btn-primary" id="assignPlanBtn">Update Subscription</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payments -->
-      <div id="player-payments" class="dashboard-section">
-        <div class="dashboard-card-strip">
-          <div class="dashboard-card-strip-item">
-            <div class="dashboard-card-strip-label">Total Due</div>
-            <div class="dashboard-card-strip-value" id="totalDue" style="color: var(--accent-red);">£0</div>
-            <div class="dashboard-card-strip-meta">Outstanding balance</div>
-          </div>
-          <div class="dashboard-card-strip-item">
-            <div class="dashboard-card-strip-label">Next Payment</div>
-            <div class="dashboard-card-strip-value" id="nextPayment">£0</div>
-            <div class="dashboard-card-strip-meta">Due by end of month</div>
-          </div>
-          <div class="dashboard-card-strip-item">
-            <div class="dashboard-card-strip-label">Status</div>
-            <div class="dashboard-card-strip-value" id="paymentStatus" style="font-size: 1.5rem;">Up to Date</div>
-            <div class="dashboard-card-strip-meta">Financial standing</div>
-          </div>
-          <div class="dashboard-card-strip-item">
-            <div class="dashboard-card-strip-label">Total Paid</div>
-            <div class="dashboard-card-strip-value" id="totalPaid" style="color: #4ade80;">£0</div>
-            <div class="dashboard-card-strip-meta">Lifetime contribution</div>
-          </div>
-        </div>
-
-        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Payment History</h2>
-          <div class="table-responsive">
-            <table class="modern-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="paymentHistoryTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="glass-panel" style="padding: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Outstanding Payments</h2>
-          <div id="outstandingPayments" class="activity-card-list"></div>
-        </div>
-      </div>
-
-      <!-- Club Finder -->
-      <div id="player-club-finder" class="dashboard-section">
-        <div class="card">
-          <h3>Find Groups</h3>
-          <div class="search-filters">
-            <div class="form-group">
-              <label for="clubSearchInput">Search Groups</label>
-              <input type="text" id="clubSearchInput" placeholder="Search by name or location..."
-                onkeyup="filterClubs()">
-            </div>
-            <div class="form-group">
-              <label for="clubTypeFilter">Group Type</label>
-              <select id="clubTypeFilter" onchange="filterClubs()">
-                <option value="">All Types</option>
-                <option value="club">Group</option>
-                <option value="event">Event Organizer</option>
-                <option value="tournament">Tournament Organizer</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="clubSportFilter">Sport</label>
-              <select id="clubSportFilter" onchange="filterClubs()">
-                <option value="">All Sports</option>
-                <option value="football">Football</option>
-                <option value="basketball">Basketball</option>
-                <option value="tennis">Tennis</option>
-                <option value="rugby">Rugby</option>
-                <option value="cricket">Cricket</option>
-              </select>
-            </div>
-          </div>
-          <div class="card-grid" id="availableClubsContainer"></div>
-        </div>
-      </div>
-
-      <!-- Event Finder -->
-      <div id="player-event-finder" class="dashboard-section">
-        <div class="card">
-          <h3>Find and Book Events</h3>
-          <div class="search-filters">
-            <div class="form-group">
-              <label for="eventSearchInput">Search Events</label>
-              <input type="text" id="eventSearchInput" placeholder="Search events..." onkeyup="filterPlayerEvents()">
-            </div>
-            <div class="form-group">
-              <label for="playerEventTypeFilter">Event Type</label>
-              <select id="playerEventTypeFilter" onchange="filterPlayerEvents()">
-                <option value="">All Types</option>
-                <option value="camp">Holiday Camps</option>
-                <option value="tournament">Tournaments</option>
-                <option value="talent-id">Talent ID</option>
-                <option value="training">Training</option>
-                <option value="match">Matches</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="playerEventDateFilter">Date From</label>
-              <input type="date" id="playerEventDateFilter" onchange="filterPlayerEvents()">
-            </div>
-          </div>
-          <div class="card-grid" id="availablePlayerEventsContainer"></div>
-        </div>
-      </div>
-
-      <!-- Documents -->
-      <div id="player-documents" class="dashboard-section">
-        <div class="card">
-          <h3>My Documents</h3>
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Document Name</th>
-                  <th>Type</th>
-                  <th>Club</th>
-                  <th>Last Updated</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="playerDocumentsTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Item Shop -->
-      <div id="player-item-shop" class="dashboard-section">
-        <div class="card" style="padding: 0; overflow: hidden; height: 85vh;">
-          <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
-        </div>
-      </div>
     </div>
     </div>
   </main>
@@ -1420,8 +876,14 @@
   <script>
     // Wire messenger section to shared SquadMessenger
     let _playerMessengerMounted = false;
-    const _origShowPlayerSection = typeof showPlayerSection === 'function' ? showPlayerSection : null;
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      const initialHash = window.location.hash;
+
+      // Auth handled by UnifiedNav
+      if (typeof initializePlayerDashboard === 'function') {
+        await initializePlayerDashboard();
+      }
+
       // Intercept section switching at the navigation layer
       if (window.UnifiedNav && window.UnifiedNav.onSectionChange) {
         const _orig = window.UnifiedNav.onSectionChange;
@@ -1450,6 +912,18 @@
             SquadMessenger.load();
           }
         };
+      }
+      
+      // On player-shop.html, we likely want to show the shop section by default if no hash
+      if (!window.location.hash && typeof showPlayerSection === 'function') {
+          showPlayerSection('shop');
+      } else if (window.location.hash && typeof showPlayerSection === 'function') {
+          const hash = window.location.hash;
+          if (hash.startsWith('#player-')) {
+            showPlayerSection(hash.substring(8));
+          } else {
+            showPlayerSection(hash.substring(1));
+          }
       }
     });
   </script>

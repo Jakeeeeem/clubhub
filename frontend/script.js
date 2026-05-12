@@ -847,7 +847,6 @@ function redirectToDashboard() {
   };
 
   // Priority 0: Respect explicit mode if set
-  const dashboardMode = localStorage.getItem("dashboardMode");
   
   if (dashboardMode === "group" && !currentPath.includes("admin-dashboard") && !currentPath.includes("coach-dashboard")) {
       console.log("🎯 Dashboard mode 'group' active, prioritizing admin view");

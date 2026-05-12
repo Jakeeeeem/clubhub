@@ -58,7 +58,7 @@
     window.UNIFIED_NAV_ENABLED = true;
   </script>
   <!-- Unified Navigation will inject the Header and Sidebar automatically -->
-  <header class="header"></header>
+
 
   <main class="main dashboard-main">
     <div class="dashboard container dashboard-container">
@@ -103,8 +103,14 @@
 
         <!-- Shop Section -->
         <div id="player-shop" class="dashboard-section">
-          <div class="glass-panel" style="padding: 0; overflow: hidden; height: 85vh;">
-            <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
+          <div class="glass-panel" style="padding: 4rem 2rem; text-align: center; height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="background: #eab308; color: #000; font-weight: 800; text-transform: uppercase; padding: 0.5rem 2rem; transform: rotate(-2deg); margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); letter-spacing: 2px; display: inline-block;">Under Construction</div>
+            <div style="font-size: 5rem; margin-bottom: 2rem; animation: float 3s ease-in-out infinite;">🚀</div>
+            <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 1rem; color: white;">Coming Soon</h1>
+            <p style="font-size: 1.1rem; color: rgba(255,255,255,0.6); max-width: 500px; margin-bottom: 2rem; line-height: 1.6;">
+              We're working hard to bring you an awesome new feature. <br>
+              This specialized shop module is currently under development and will be launching shortly.
+            </p>
           </div>
         </div>
 
@@ -438,8 +444,14 @@
 
       <!-- Polls & Voting -->
       <div id="player-polls" class="dashboard-section">
-        <div class="glass-panel" style="padding: 0; overflow: hidden; height: 85vh;">
-          <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
+        <div class="glass-panel" style="padding: 4rem 2rem; text-align: center; height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <div style="background: #eab308; color: #000; font-weight: 800; text-transform: uppercase; padding: 0.5rem 2rem; transform: rotate(-2deg); margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); letter-spacing: 2px; display: inline-block;">Under Construction</div>
+          <div style="font-size: 5rem; margin-bottom: 2rem; animation: float 3s ease-in-out infinite;">🗳️</div>
+          <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 1rem; color: white;">Coming Soon</h1>
+          <p style="font-size: 1.1rem; color: rgba(255,255,255,0.6); max-width: 500px; margin-bottom: 2rem; line-height: 1.6;">
+            The Polls & Voting module is currently under development. <br>
+            Soon you'll be able to vote on club decisions and participate in community polls.
+          </p>
         </div>
       </div>
 
@@ -603,8 +615,14 @@
 
       <!-- Item Shop -->
       <div id="player-item-shop" class="dashboard-section">
-        <div class="card" style="padding: 0; overflow: hidden; height: 85vh;">
-          <iframe src="coming-soon.html" style="width: 100%; height: 100%; border: none;"></iframe>
+        <div class="glass-panel" style="padding: 4rem 2rem; text-align: center; height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <div style="background: #eab308; color: #000; font-weight: 800; text-transform: uppercase; padding: 0.5rem 2rem; transform: rotate(-2deg); margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); letter-spacing: 2px; display: inline-block;">Under Construction</div>
+          <div style="font-size: 5rem; margin-bottom: 2rem; animation: float 3s ease-in-out infinite;">🛍️</div>
+          <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 1rem; color: white;">Coming Soon</h1>
+          <p style="font-size: 1.1rem; color: rgba(255,255,255,0.6); max-width: 500px; margin-bottom: 2rem; line-height: 1.6;">
+            Our new Item Shop is launching soon! <br>
+            You'll be able to purchase gear, equipment, and club merchandise directly through the app.
+          </p>
         </div>
       </div>
     </div>
@@ -1047,37 +1065,7 @@
   <script src="player-dashboard.js?v=20260429_v18"></script>
 
   <!-- Initialize -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      if (typeof initializePlayerDashboard === 'function') {
-        initializePlayerDashboard();
-      } else {
-        console.error('initializePlayerDashboard() not found');
-      }
 
-      // Route hash for direct section linking
-      const hash = window.location.hash;
-      if (hash && typeof showPlayerSection === 'function') {
-        if (hash.startsWith('#player-')) {
-          showPlayerSection(hash.substring(8));
-        } else {
-          showPlayerSection(hash.substring(1));
-        }
-      }
-    });
-
-    // Listen for hash changes to support browser navigation (back/forward)
-    window.addEventListener('hashchange', () => {
-      const hash = window.location.hash;
-      if (hash && typeof showPlayerSection === 'function') {
-        if (hash.startsWith('#player-')) {
-          showPlayerSection(hash.substring(8));
-        } else {
-          showPlayerSection(hash.substring(1));
-        }
-      }
-    });
-  </script>
 
   <!-- Mode Toggle Handler -->
   <script>
@@ -1418,15 +1406,23 @@
   <script>
     // Wire messenger section to shared SquadMessenger
     let _playerMessengerMounted = false;
-    const _origShowPlayerSection = typeof showPlayerSection === 'function' ? showPlayerSection : null;
+    
     document.addEventListener('DOMContentLoaded', async () => {
-      // Auth handled by UnifiedNav
+      // Snapshot the ORIGINAL hash before init can change it
+      const initialHash = window.location.hash;
+
       if (typeof initializePlayerDashboard === 'function') {
         await initializePlayerDashboard();
       }
 
-      // Show overview by default
-      if (typeof showPlayerSection === 'function') {
+      // Route using the original requested hash (not whatever init changed it to)
+      if (initialHash && typeof showPlayerSection === 'function') {
+        if (initialHash.startsWith('#player-')) {
+          showPlayerSection(initialHash.substring(8));
+        } else {
+          showPlayerSection(initialHash.substring(1));
+        }
+      } else if (typeof showPlayerSection === 'function') {
         showPlayerSection('overview');
       }
 
@@ -1459,6 +1455,18 @@
           }
         };
       }
+
+      // Listen for hash changes to support browser navigation (back/forward)
+      window.addEventListener('hashchange', () => {
+        const hash = window.location.hash;
+        if (hash && typeof showPlayerSection === 'function') {
+          if (hash.startsWith('#player-')) {
+            showPlayerSection(hash.substring(8));
+          } else {
+            showPlayerSection(hash.substring(1));
+          }
+        }
+      });
     });
   </script>
 </body>

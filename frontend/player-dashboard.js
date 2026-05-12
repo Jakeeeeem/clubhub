@@ -3039,6 +3039,7 @@ function showPlayerSection(sectionId) {
       if (typeof loadPlayerLeagues === "function") loadPlayerLeagues();
       break;
     case "tournament-manager":
+    case "tournaments":
       if (typeof loadPlayerTournaments === "function") loadPlayerTournaments();
       break;
     case "overview":
@@ -3245,32 +3246,11 @@ function loadLeagues() {
   `;
 }
 
-function loadPlayerVenues() {
-  const container = byId("player-venue-booking");
-  if (!container) return;
-  container.innerHTML = `
-    <div class="card">
-        <h3 style="margin-bottom: 1rem;">🏟️ Venue Booking</h3>
-        <p style="color: var(--text-muted); margin-bottom: 2rem;">Venue booking features coming soon.</p>
-    </div>
-  `;
-}
-
-function loadPlayerLeagues() {
-  loadLeagues();
-}
-
-function loadPlayerTournaments() {
-  const container = byId("player-tournament-manager") || byId("player-league-management");
-  if (!container) return;
-  container.innerHTML = `
-    <div class="card">
-        <h3 style="margin-bottom: 1rem;">⚔️ Tournaments</h3>
-        <p style="color: var(--text-muted); margin-bottom: 2rem;">Browse and register for tournaments.</p>
-        <button class="btn btn-primary" onclick="showPlayerSection('event-finder')">Find Tournaments</button>
-    </div>
-  `;
-}
+// Stub forwards — real async implementations are defined further below
+// (JS hoists the last declaration, so these are effectively no-ops)
+function loadPlayerVenues() { /* overridden below */ }
+function loadPlayerLeagues() { /* overridden below */ }
+function loadPlayerTournaments() { /* overridden below */ }
 
 function loadTraining() {
   const container = byId("player-training-manager");
@@ -4299,7 +4279,8 @@ async function loadPlayerTraining() {
 }
 
 async function loadPlayerTournaments() {
-  const container = byId("player-tournament-manager");
+  // Support both IDs: player-tournaments (player-dashboard.html) and player-tournament-manager (legacy)
+  const container = byId("player-tournaments") || byId("player-tournament-manager");
   if (!container) return;
 
   const listView = byId("playerTournamentListView");
@@ -4393,8 +4374,8 @@ window.viewPlayerTournament = async function (tournamentId) {
     renderPlayerStandings(data.standings || []);
 
     // Default to bracket tab
-    const firstTab = detailView.querySelector(".nav-item");
-    if (firstTab) switchPlayerTournamentTab(firstTab, "bracket");
+    const firstTab = detailView.querySelector('.tab-btn');
+    if (firstTab) switchPlayerTournamentTab(firstTab, 'bracket');
   } catch (err) {
     console.error("View player tournament error:", err);
     showNotification("Failed to load tournament details", "error");
@@ -4412,21 +4393,21 @@ window.closePlayerTournamentDetail = function () {
 };
 
 window.switchPlayerTournamentTab = function (btn, tabId) {
-  // Update buttons
-  const nav = btn.parentElement;
-  nav
-    .querySelectorAll(".nav-item")
-    .forEach((b) => b.classList.remove("active"));
-  btn.classList.add("active");
+  // Update buttons — HTML uses .tab-btn, not .nav-item
+  const nav = btn.closest('.tabs');
+  if (nav) nav.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
 
-  // Update content
-  const container = byId("playerTournamentDetailView");
-  container
-    .querySelectorAll(".player-tournament-tab")
-    .forEach((t) => (t.style.display = "none"));
+  // Update content — HTML uses p-tab-content-{id}, not player-tab-{id}
+  const container = byId('playerTournamentDetailView');
+  if (container) {
+    container
+      .querySelectorAll('.player-tournament-tab-content')
+      .forEach((t) => (t.style.display = 'none'));
 
-  const target = byId(`player-tab-${tabId}`);
-  if (target) target.style.display = "block";
+    const target = byId(`p-tab-content-${tabId}`);
+    if (target) target.style.display = 'block';
+  }
 };
 
 function renderPlayerBracket(matches) {

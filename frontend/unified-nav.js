@@ -1921,21 +1921,21 @@ const UnifiedNav = {
 
     if (isPlayerMode || isPlayer) {
       navHtml = `
-                <a href="player-dashboard.html" class="bottom-nav-link active" aria-label="Home" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('overview'); return false; }">
+                <a href="player-dashboard.html" class="bottom-nav-link active" aria-label="Home" onclick="if(window.location.pathname.includes('player-dashboard') && typeof showPlayerSection === 'function') { showPlayerSection('overview'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                     <span>Home</span>
                 </a>
-                <a href="player-dashboard.html" class="bottom-nav-link" aria-label="Teams" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('teams'); return false; }">
+                <a href="player-dashboard.html#teams" class="bottom-nav-link" aria-label="Teams" onclick="if(window.location.pathname.includes('player-dashboard') && typeof showPlayerSection === 'function') { showPlayerSection('teams'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     <span>Teams</span>
                 </a>
-                <a href="player-dashboard.html" class="bottom-nav-link" aria-label="Chat" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('club-messenger'); return false; }">
+                <a href="player-chat.html" class="bottom-nav-link" aria-label="Chat" onclick="if(window.location.pathname.includes('player-dashboard') && typeof showPlayerSection === 'function') { showPlayerSection('club-messenger'); return false; }">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                     <span>Chat</span>
                 </a>
-                <a href="player-dashboard.html" class="bottom-nav-link" aria-label="Events" onclick="if(typeof showPlayerSection === 'function') { showPlayerSection('my-events'); return false; }">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                    <span>Events</span>
+                <a href="player-dashboard.html#tournaments" class="bottom-nav-link" aria-label="Tournaments" onclick="if(window.location.pathname.includes('player-dashboard') && typeof showPlayerSection === 'function') { showPlayerSection('tournaments'); return false; }">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                    <span>Tournaments</span>
                 </a>
                 <a href="#" class="bottom-nav-link" aria-label="More" onclick="UnifiedNav.toggleSidebar(true); return false;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
