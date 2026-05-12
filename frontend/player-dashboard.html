@@ -344,15 +344,20 @@
       <!-- Tournament Management Section -->
       <div id="player-tournaments" class="dashboard-section">
           <div id="playerTournamentListView">
-              <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                      <h2 class="neon-text">My Competitions</h2>
-                      <div style="display:flex; gap:1rem;">
-                          <button class="btn btn-secondary btn-small" onclick="loadPlayerTournaments()">🔄 Refresh</button>
+              <div class="glass-panel" style="padding: 2rem;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                      <div>
+                        <h2 class="neon-text" style="margin:0;">My Competitions</h2>
+                        <p style="color:rgba(255,255,255,0.4); font-size:0.85rem; margin:0.35rem 0 0;">Tournaments and leagues you are enrolled in</p>
+                      </div>
+                      <div style="display:flex; gap:0.75rem; align-items:center;">
+                          <button class="btn btn-secondary btn-small" onclick="showPlayerSection('event-finder')" style="gap:0.4rem;">🔍 Find Events</button>
+                          <button class="btn btn-secondary btn-small" onclick="loadPlayerTournaments()" style="gap:0.4rem;">🔄 Refresh</button>
                       </div>
                   </div>
-                  <div id="playerTournamentListContainer" class="dashboard-grid">
-                      <p style="color:var(--text-muted); font-size:0.875rem;">Loading your active competitions...</p>
+                  <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:1.5rem 0;">
+                  <div id="playerTournamentListContainer" class="dashboard-grid" style="min-height:180px;">
+                      <div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,0.35);">Loading your competitions...</div>
                   </div>
               </div>
           </div>
@@ -389,30 +394,7 @@
           </div>
       </div>
 
-      <!-- My Clubs -->
-      <div id="player-my-clubs" class="dashboard-section">
-        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">My Groups</h2>
-          <div class="dashboard-grid" id="playerClubsContainer"></div>
-        </div>
 
-        <div class="glass-panel" style="padding: 2rem;">
-          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Group Staff</h2>
-          <div class="table-responsive">
-            <table class="modern-table">
-              <thead>
-                <tr>
-                  <th>Staff Name</th>
-                  <th>Role</th>
-                  <th>Contact</th>
-                  <th>Group</th>
-                </tr>
-              </thead>
-              <tbody id="clubStaffTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
       <!-- Schedule -->
       <div id="player-schedule" class="dashboard-section">
@@ -425,6 +407,31 @@
           </div>
           <div id="fullScheduleContainer" class="activity-card-list">
             <p style="color:var(--text-muted);">Loading your full schedule...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clubs / Groups -->
+      <div id="player-my-clubs" class="dashboard-section">
+        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Clubs / Groups</h2>
+          <div id="playerClubsContainer" style="display:flex;flex-direction:column;gap:1rem;"></div>
+        </div>
+
+        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+          <h2 class="neon-text" style="margin-bottom: 1.5rem;">Club Staff</h2>
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Staff Name</th>
+                  <th>Role</th>
+                  <th>Contact</th>
+                  <th>Group</th>
+                </tr>
+              </thead>
+              <tbody id="clubStaffTableBody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -562,6 +569,7 @@
           <div class="card-grid" id="availableClubsContainer"></div>
         </div>
       </div>
+
 
       <!-- Event Finder -->
       <div id="player-event-finder" class="dashboard-section">
@@ -1216,6 +1224,7 @@
           style="justify-content: flex-start; padding: 1.25rem;">
           <span>🏰</span> Discover Clubs
         </button>
+
         <button class="btn btn-secondary" onclick="closeModal('quickActionModal'); showPlayerSection('family');"
           style="justify-content: flex-start; padding: 1.25rem;">
           <span>👨‍👩‍👧‍👦</span> Manage Family

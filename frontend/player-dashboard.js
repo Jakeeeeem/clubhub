@@ -949,12 +949,29 @@ function loadPlayerClubs() {
   }
 
   if (!PlayerDashboardState.clubs.length && !invitationsHTML) {
-    grid.innerHTML =
-      '<div class="empty-state">' +
-      "<h4>No clubs joined yet</h4>" +
-      "<p>Find and apply to clubs to get started</p>" +
-      '<button class="btn btn-primary" onclick="showPlayerSection(\'club-finder\')">Find Clubs</button>' +
-      "</div>";
+    grid.innerHTML = `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 40%;">Club / Group Details</th>
+            <th>Sport</th>
+            <th>Location</th>
+            <th>Members</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 2rem;">
+              <p style="color: var(--text-muted); margin-bottom: 1rem;">No clubs or groups joined yet</p>
+              <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">You will see your groups here once you are invited by an administrator.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    `;
     const staffBody = byId("clubStaffTableBody");
     if (staffBody)
       staffBody.innerHTML =
@@ -968,7 +985,7 @@ function loadPlayerClubs() {
   let clubsHeader =
     PlayerDashboardState.clubs.length > 0
       ? `<h3 style="margin-bottom: 1.2rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.75rem;">
-      <span style="font-size: 1.3rem;">🏰</span> Your Active Clubs
+      <span style="font-size: 1.3rem;">🏰</span> Your Active Clubs / Groups
     </h3>`
       : "";
 
@@ -981,7 +998,7 @@ function loadPlayerClubs() {
       <table class="data-table">
         <thead>
           <tr>
-            <th style="width: 40%;">Club Details</th>
+            <th style="width: 40%;">Club / Group Details</th>
             <th>Sport</th>
             <th>Location</th>
             <th>Members</th>
@@ -1084,7 +1101,6 @@ function loadPlayerTeams() {
           <tr>
             <td colspan="5" style="text-align: center; padding: 2rem;">
               <p style="color: var(--text-muted); margin-bottom: 1rem;">No teams joined yet</p>
-              <button class="btn btn-primary btn-small" onclick="showPlayerSection('club-finder')">Find Clubs to Join</button>
             </td>
           </tr>
         </tbody>
@@ -4290,21 +4306,41 @@ async function loadPlayerTournaments() {
   if (listView) listView.style.display = "block";
   if (detailView) detailView.style.display = "none";
 
-  try {
-    if (grid) grid.innerHTML = "<p>Loading tournaments...</p>";
-    const orgId = localStorage.getItem("currentOrganizationId");
+  const loadingHtml = `
+    <div style="grid-column:1/-1; text-align:center; padding:3rem 1rem; display:flex; flex-direction:column; align-items:center; gap:1rem;">
+      <div style="width:48px;height:48px;border:3px solid rgba(220,38,38,0.3);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      <p style="color:rgba(255,255,255,0.4); font-size:0.9rem;">Loading your competitions...</p>
+    </div>`;
 
-    // Fallback search to current user's club if orgId is missing
+  try {
+    if (grid) grid.innerHTML = loadingHtml;
+
+    // Try every possible source for the org ID
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const finalOrgId =
-      orgId ||
+      localStorage.getItem("currentOrganizationId") ||
+      localStorage.getItem("selectedOrganizationId") ||
       window.AppState?.currentUser?.clubId ||
-      PlayerDashboardState.clubs[0]?.id;
+      window.AppState?.currentUser?.organizationId ||
+      currentUser?.clubId ||
+      currentUser?.organizationId ||
+      currentUser?.club_id ||
+      PlayerDashboardState.clubs[0]?.id ||
+      PlayerDashboardState.clubs[0]?.organization_id;
 
     if (!finalOrgId) {
       if (grid)
         grid.innerHTML = `
-        <div style="text-align: center; padding: 3rem; opacity: 0.6;">
-            <p>Please select a club from the "My Clubs" section to see available tournaments.</p>
+        <div style="grid-column: 1 / -1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 2rem; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1); margin: 1rem 0;">
+          <div style="width: 80px; height: 80px; background: rgba(220,38,38,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(220,38,38,0.2);">🏰</div>
+          <h3 style="margin: 0 0 0.5rem; font-size: 1.25rem; color: #fff; font-weight: 700;">No Club Selected</h3>
+          <p style="margin: 0 0 2rem; color: rgba(255,255,255,0.4); font-size: 0.95rem; text-align: center; max-width: 400px; line-height: 1.6;">
+            You need to be part of a club to see available tournaments. Visit the "My Clubs" section to manage your memberships.
+          </p>
+          <div style="display: flex; gap: 1rem;">
+            <button class="btn btn-primary" onclick="showPlayerSection('my-clubs')" style="padding: 0.75rem 2rem;">Go to My Clubs</button>
+            <button class="btn btn-secondary" onclick="showPlayerSection('event-finder')" style="padding: 0.75rem 2rem;">Browse Events</button>
+          </div>
         </div>`;
       return;
     }
@@ -4316,10 +4352,14 @@ async function loadPlayerTournaments() {
     if (!tournaments || tournaments.length === 0) {
       if (grid)
         grid.innerHTML = `
-            <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
-                <p style="color: var(--text-muted);">No tournaments scheduled in this organization.</p>
-                <p style="font-size: 0.8rem; margin-top: 0.5rem;">Check out the "Event Finder" to discover open competitions!</p>
-            </div>
+          <div style="grid-column:1/-1; text-align:center; padding:4rem 2rem; display:flex; flex-direction:column; align-items:center; gap:1.25rem;">
+            <div style="width:72px;height:72px;border-radius:20px;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.2);display:flex;align-items:center;justify-content:center;font-size:2rem;">🏅</div>
+            <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#fff;">No Active Tournaments</h3>
+            <p style="margin:0;color:rgba(255,255,255,0.45);font-size:0.875rem;max-width:320px;line-height:1.6;">
+              Your club hasn't scheduled any tournaments yet. Explore open competitions to get started.
+            </p>
+            <button class="btn btn-primary btn-small" onclick="showPlayerSection('event-finder')">Browse Open Events →</button>
+          </div>
         `;
       return;
     }
