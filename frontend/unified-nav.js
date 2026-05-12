@@ -162,6 +162,16 @@ const UnifiedNav = {
       return;
     }
     this._initialized = true;
+
+    // ── FLASH PREVENTION ────────────────────────────────────────────
+    // Hide body immediately so the raw un-styled page never shows.
+    // We'll fade it back in after the nav is fully rendered.
+    if (!document.body.style.opacity) {
+      document.body.style.transition = 'opacity 0.18s ease';
+      document.body.style.opacity = '0';
+    }
+    // ────────────────────────────────────────────────────────────────
+
     console.log("🚀 UnifiedNav: Initializing standard navigation (v20260504_v4)...");
 
     // 🛡️ Fallback mock data injection for demo stability
@@ -340,22 +350,27 @@ const UnifiedNav = {
       document.body.classList.remove("dashboard-view", "app-layout");
       document.body.classList.add("landing-view");
     }
-    // 🛡️ Context Sync: Ensure we have latest roles and family data for switcher
+    // 🛡️ Context Sync: Load family data in background — do NOT re-render
+    // while the page is still initializing (that causes the mid-load flash).
     if (isLoggedIn && typeof apiService !== 'undefined' && typeof apiService.getContext === 'function') {
-      try {
-        apiService.getContext()
-          .then(context => {
-            if (context && context.family) {
-              localStorage.setItem("userFamily", JSON.stringify(context.family));
-              this.renderFamilySwitcher();
-            }
-          })
-          .catch(e => {
-            console.warn("⚠️ UnifiedNav: Context sync failed (expected if non-admin)", e);
-          });
-      } catch (e) {
-        console.warn("⚠️ UnifiedNav: Context sync execution failed", e);
-      }
+      // Deferred to AFTER page render completes
+      setTimeout(() => {
+        try {
+          apiService.getContext()
+            .then(context => {
+              if (context && context.family) {
+                localStorage.setItem("userFamily", JSON.stringify(context.family));
+                // Only re-render the family switcher sub-component, not the whole header
+                this.renderFamilySwitcher();
+              }
+            })
+            .catch(e => {
+              console.warn("⚠️ UnifiedNav: Context sync failed (non-fatal)", e);
+            });
+        } catch (e) {
+          console.warn("⚠️ UnifiedNav: Context sync execution failed", e);
+        }
+      }, 800); // Wait until nav has fully rendered
     }
 
     // ── STAGE 1: Core Layout ───────────────────────────────────────────
@@ -407,13 +422,19 @@ const UnifiedNav = {
         }
       }
 
+      // ── FADE IN ──────────────────────────────────────────────────
+      // Nav is now rendered — reveal the page with a smooth fade.
+      requestAnimationFrame(() => {
+        document.body.style.opacity = '1';
+      });
+      // ─────────────────────────────────────────────────────────────
+
       // 🚨 EMERGENCY VISIBILITY FALLBACK
       // If we are on a dashboard and after 2.5s no section is visible, force 'overview'
       if (isDashboard) {
         setTimeout(() => {
           const visibleSections = Array.from(document.querySelectorAll('.dashboard-section, .section')).filter(s => s.style.display !== 'none');
           if (visibleSections.length === 0) {
-            // Quietly handle fallback to avoid console clutter
             const overview = document.getElementById('player-overview') || document.getElementById('overview') || document.querySelector('.dashboard-section');
             if (overview) overview.style.display = 'block';
             document.body.classList.remove('loading');
