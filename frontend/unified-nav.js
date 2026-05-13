@@ -352,21 +352,54 @@ const UnifiedNav = {
       console.warn('UnifiedNav: failed to clear switched flag', e);
     }
 
-    // Temporary URL-change watcher: detect and log unexpected navigations
+    // Temporary URL-change watcher: detect and persist unexpected navigations
     // immediately after init so we can trace which code path triggers them.
     (function installUrlWatcher() {
       try {
+        function pushDebugRedirect(entry) {
+          try {
+            const key = 'debugRedirects';
+            const raw = sessionStorage.getItem(key) || '[]';
+            const arr = JSON.parse(raw);
+            arr.push(entry);
+            // keep recent history only
+            while (arr.length > 40) arr.shift();
+            sessionStorage.setItem(key, JSON.stringify(arr));
+          } catch (e) { /* ignore storage errors */ }
+        }
+
+        // Also capture navigation attempts via beforeunload so we can get a
+        // persisted stack and storage snapshot even if reload happens quickly.
+        window.addEventListener('beforeunload', (ev) => {
+          try {
+            const snapshot = {
+              event: 'beforeunload',
+              url: window.location.href,
+              time: new Date().toISOString(),
+              stack: (new Error('beforeunload stack')).stack,
+            };
+            try { snapshot.localStorage = JSON.stringify(localStorage); } catch (e) { snapshot.localStorage = 'error'; }
+            try { snapshot.sessionStorage = JSON.stringify(sessionStorage); } catch (e) { snapshot.sessionStorage = 'error'; }
+            pushDebugRedirect(snapshot);
+          } catch (e) { /* ignore */ }
+        }, { capture: true, passive: true });
+
         const snapshot = { url: window.location.href };
         const watchUntil = Date.now() + 6000; // watch for 6s
         const poll = setInterval(() => {
           if (window.location.href !== snapshot.url) {
             try {
-              console.warn('🚨 URL changed during UnifiedNav init watch:', { from: snapshot.url, to: window.location.href, time: new Date().toISOString() });
-              try { console.warn('📦 localStorage snapshot:', JSON.stringify(localStorage)); } catch (e) { /* ignore */ }
-              try { console.warn('📦 sessionStorage snapshot:', JSON.stringify(sessionStorage)); } catch (e) { /* ignore */ }
-              // Attempt to capture a stack for debugging (best-effort)
-              const stackErr = new Error('URL-change stack (best-effort)');
-              console.warn(stackErr.stack);
+              const entry = {
+                event: 'url-change-watch',
+                from: snapshot.url,
+                to: window.location.href,
+                time: new Date().toISOString(),
+                stack: (new Error('URL-change stack (best-effort)')).stack,
+              };
+              try { entry.localStorage = JSON.stringify(localStorage); } catch (e) { entry.localStorage = 'error'; }
+              try { entry.sessionStorage = JSON.stringify(sessionStorage); } catch (e) { entry.sessionStorage = 'error'; }
+              console.warn('🚨 URL changed during UnifiedNav init watch:', entry);
+              pushDebugRedirect(entry);
             } catch (e) {
               console.warn('UnifiedNav: url-watch logging failed', e);
             }

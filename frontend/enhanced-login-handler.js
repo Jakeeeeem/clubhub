@@ -143,10 +143,6 @@ async function handleLogin(e) {
     const redirectUrl = await determineUserRedirect(response.user);
     console.log("🏠 Redirecting to:", redirectUrl);
     showNotification("Login successful!", "success");
-    // Determine where to redirect based on user type
-    const redirectUrl = await determineUserRedirect(response.user);
-    console.log("🏠 Redirecting to:", redirectUrl);
-    showNotification("Login successful!", "success");
     setTimeout(() => {
       safeNavigate(redirectUrl);
     }, 1000);
