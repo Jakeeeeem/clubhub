@@ -1,3 +1,22 @@
+// Helper: navigate while respecting a recent-group-switch suppression window.
+function safeNavigate(url) {
+  try {
+    const sup = window.__recentSwitchSuppressUntil || 0;
+    const now = Date.now();
+    if (sup && now < sup) {
+      const wait = sup - now + 120;
+      console.log(`🛑 safeNavigate: delaying navigation to ${url} for ${wait}ms due to recentGroupSwitch suppression.`);
+      setTimeout(() => {
+        try { window.location.href = url; } catch (e) { window.location.assign(url); }
+      }, wait);
+    } else {
+      try { window.location.href = url; } catch (e) { window.location.assign(url); }
+    }
+  } catch (e) {
+    try { window.location.href = url; } catch (err) { window.location.assign(url); }
+  }
+}
+
 async function handleLogin(e) {
   e.preventDefault();
 
@@ -83,7 +102,7 @@ async function handleLogin(e) {
             : "player-dashboard.html";
 
           setTimeout(() => {
-            window.location.href = redirectUrl;
+            safeNavigate(redirectUrl);
           }, 1500);
 
           return; // Exit early since we're handling redirect
@@ -107,7 +126,7 @@ async function handleLogin(e) {
       console.log("🔄 Redirecting to return URL:", returnUrl);
       showNotification("Login successful! Redirecting...", "success");
       setTimeout(() => {
-        window.location.href = decodeURIComponent(returnUrl);
+        safeNavigate(decodeURIComponent(returnUrl));
       }, 1000);
       return; // Exit since we are redirecting
     }
@@ -124,8 +143,12 @@ async function handleLogin(e) {
     const redirectUrl = await determineUserRedirect(response.user);
     console.log("🏠 Redirecting to:", redirectUrl);
     showNotification("Login successful!", "success");
+    // Determine where to redirect based on user type
+    const redirectUrl = await determineUserRedirect(response.user);
+    console.log("🏠 Redirecting to:", redirectUrl);
+    showNotification("Login successful!", "success");
     setTimeout(() => {
-      window.location.href = redirectUrl;
+      safeNavigate(redirectUrl);
     }, 1000);
 
   } catch (error) {
@@ -252,7 +275,7 @@ async function handleRegister(e) {
             : "player-dashboard.html";
 
           setTimeout(() => {
-            window.location.href = redirectUrl;
+            safeNavigate(redirectUrl);
           }, 2000);
 
           return; // Exit early since we're handling redirect

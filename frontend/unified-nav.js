@@ -174,6 +174,10 @@ const UnifiedNav = {
 
     console.log("🚀 UnifiedNav: Initializing standard navigation (v20260504_v4)...");
 
+    // Signal to legacy scripts that the unified nav is active so they can
+    // skip their own redirect heuristics. This reduces conflicting redirects.
+    try { window.UNIFIED_NAV_ENABLED = true; } catch (e) { /* ignore */ }
+
     // 🛡️ Fallback mock data injection for demo stability
     // ONLY runs if we are in demo mode AND no real data is present.
     if (false && localStorage.getItem('forceLiveData') !== 'true') {
@@ -302,12 +306,41 @@ const UnifiedNav = {
     const fullUrl = window.location.href.toLowerCase();
 
     // If we were just redirected after a group switch, clear the transient
-    // flag/query param so other redirect logic doesn't immediately flip us
-    // back to the previous dashboard. This helps prevent rapid redirect loops.
+    // flag/query param, but only if the switch is recent. Install a short
+    // suppression window to reduce the chance other scripts immediately
+    // re-run their redirect logic and cause a flip-flop.
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.has('switched') || sessionStorage.getItem('recentGroupSwitch')) {
-        console.log('🔁 UnifiedNav: Detected recent group switch; clearing transient flag to avoid redirect loop.');
+      const raw = sessionStorage.getItem('recentGroupSwitch');
+      let handled = false;
+
+      if (params.has('switched')) {
+        handled = true;
+      }
+
+      if (raw) {
+        try {
+          const data = JSON.parse(raw);
+          const age = Date.now() - (data.at || 0);
+          const TTL = 5000; // ms
+          if (age >= 0 && age <= TTL) {
+            console.log('🔁 UnifiedNav: Recent group switch detected (age=' + age + 'ms). Applying suppress-until for ' + TTL + 'ms.');
+            // Ensure frontend role matches the switch intent
+            if (data.type) {
+              try { localStorage.setItem('userType', data.type); } catch (e) { /* ignore */ }
+            }
+            // Suppress other redirects for short window
+            window.__recentSwitchSuppressUntil = Date.now() + TTL;
+            handled = true;
+          } else {
+            console.log('🔁 UnifiedNav: recentGroupSwitch found but expired (age=' + age + 'ms).');
+          }
+        } catch (e) {
+          console.warn('UnifiedNav: malformed recentGroupSwitch', e);
+        }
+      }
+
+      if (handled) {
         // Remove 'switched' from URL without reloading
         params.delete('switched');
         const newSearch = params.toString();
@@ -318,6 +351,32 @@ const UnifiedNav = {
     } catch (e) {
       console.warn('UnifiedNav: failed to clear switched flag', e);
     }
+
+    // Temporary URL-change watcher: detect and log unexpected navigations
+    // immediately after init so we can trace which code path triggers them.
+    (function installUrlWatcher() {
+      try {
+        const snapshot = { url: window.location.href };
+        const watchUntil = Date.now() + 6000; // watch for 6s
+        const poll = setInterval(() => {
+          if (window.location.href !== snapshot.url) {
+            try {
+              console.warn('🚨 URL changed during UnifiedNav init watch:', { from: snapshot.url, to: window.location.href, time: new Date().toISOString() });
+              try { console.warn('📦 localStorage snapshot:', JSON.stringify(localStorage)); } catch (e) { /* ignore */ }
+              try { console.warn('📦 sessionStorage snapshot:', JSON.stringify(sessionStorage)); } catch (e) { /* ignore */ }
+              // Attempt to capture a stack for debugging (best-effort)
+              const stackErr = new Error('URL-change stack (best-effort)');
+              console.warn(stackErr.stack);
+            } catch (e) {
+              console.warn('UnifiedNav: url-watch logging failed', e);
+            }
+            clearInterval(poll);
+            return;
+          }
+          if (Date.now() > watchUntil) clearInterval(poll);
+        }, 120);
+      } catch (e) { /* ignore */ }
+    })();
 
     const isLoggedIn = !!(token && user);
     const isDashboardPath = /dashboard|members|teams|events|finances|shop|schedule|scout|finder|finder-/.test(path) || /finder/.test(fullUrl);

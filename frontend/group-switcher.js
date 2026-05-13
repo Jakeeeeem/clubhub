@@ -549,8 +549,18 @@ if (window.__groupSwitcherDefined) {
 
         newRole = newRole || "player";
 
+        // Persist normalized userType so other nav code doesn't mis-detect role
+        const roleNorm = (newRole || "").toLowerCase().replace(/-/g, "_");
+        let normalizedType = 'player';
+        if (['player','parent','adult','member'].includes(roleNorm)) normalizedType = 'player';
+        else if (['coach','assistant_coach','assistant-coach'].includes(roleNorm)) normalizedType = 'coach';
+        else if (['owner','admin','manager','staff','platform_admin'].includes(roleNorm)) normalizedType = 'admin';
+        try {
+          localStorage.setItem('userType', normalizedType);
+        } catch (e) { /* ignore */ }
+
         // Route to the correct dashboard for this group
-        const r = (newRole || "").toLowerCase().replace(/-/g, "_");
+        const r = roleNorm;
         const PLAYER_ROLES  = ["player", "parent", "adult", "member"];
         const COACH_ROLES   = ["coach", "assistant_coach"];
         const ADMIN_ROLES   = ["owner", "admin", "manager", "staff", "platform_admin"];
@@ -569,7 +579,7 @@ if (window.__groupSwitcherDefined) {
 
         console.log(`🔀 Switching to ${dest} (role: ${r})`);
         try {
-          sessionStorage.setItem('recentGroupSwitch', JSON.stringify({ dest, at: Date.now() }));
+          sessionStorage.setItem('recentGroupSwitch', JSON.stringify({ dest, at: Date.now(), type: normalizedType }));
         } catch (e) {
           // ignore storage errors
         }
