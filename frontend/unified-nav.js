@@ -3109,8 +3109,8 @@ const UnifiedNav = {
                     <a href="player-dashboard.html#schedule" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'schedule')" class="sidebar-link ${p.includes('schedule') ? 'active' : ''}">${ICONS.nav.training}<span>Schedule</span></a>
 
                     <!-- Discovery for players: quick access to find clubs/teams and view their clubs -->
-                    <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Find Club</span></a>
-                    <a href="team-finder.html" class="sidebar-link ${isActive('team-finder.html')}">${ICONS.nav.players}<span>Find Team</span></a>
+                    <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Club Finder</span></a>
+                    <a href="team-finder.html" class="sidebar-link ${isActive('team-finder.html')}">${ICONS.nav.players}<span>Team Finder</span></a>
                     <a href="player-dashboard.html#clubs" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'clubs')" class="sidebar-link ${p.includes('clubs') ? 'active' : ''}">${ICONS.nav.teams}<span>My Clubs</span></a>
 
                     <a href="player-dashboard.html#teams" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'teams')" class="sidebar-link ${p.includes('teams') ? 'active' : ''}">${ICONS.nav.teams}<span>My Teams</span></a>
