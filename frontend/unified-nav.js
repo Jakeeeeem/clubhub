@@ -178,6 +178,10 @@ const UnifiedNav = {
     // skip their own redirect heuristics. This reduces conflicting redirects.
     try { window.UNIFIED_NAV_ENABLED = true; } catch (e) { /* ignore */ }
 
+    // Render an on-page debug panel early so users can copy logs even when
+    // the page reloads quickly (useful while diagnosing redirect loops).
+    try { this.renderDebugPanel && this.renderDebugPanel(); } catch (e) { /* ignore */ }
+
     // 🛡️ Fallback mock data injection for demo stability
     // ONLY runs if we are in demo mode AND no real data is present.
     if (false && localStorage.getItem('forceLiveData') !== 'true') {
@@ -642,6 +646,61 @@ const UnifiedNav = {
     } catch (e) {
       console.warn('UnifiedNav: failed to install teams fallbacks', e);
     }
+  },
+  renderDebugPanel() {
+    try {
+      if (document.getElementById('__ch-debug-panel')) return;
+      const panel = document.createElement('div');
+      panel.id = '__ch-debug-panel';
+      panel.style.cssText = 'position:fixed;right:12px;top:12px;z-index:120000;background:rgba(0,0,0,0.75);color:#fff;padding:8px;border-radius:8px;font-size:12px;max-width:420px;max-height:60vh;overflow:auto;box-shadow:0 8px 30px rgba(0,0,0,0.6);';
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+          <strong style="font-size:13px;">Debug</strong>
+          <div style="display:flex;gap:6px;">
+            <button id="__ch-debug-refresh" style="font-size:11px;padding:4px 6px;">Refresh</button>
+            <button id="__ch-debug-copy" style="font-size:11px;padding:4px 6px;">Copy</button>
+          </div>
+        </div>
+        <pre id="__ch-debug-log" style="white-space:pre-wrap;word-break:break-word;margin:0;font-size:11px;max-height:46vh;overflow:auto;color:#e6eef8;background:transparent;"></pre>
+      `;
+      document.body.appendChild(panel);
+
+      const out = document.getElementById('__ch-debug-log');
+      const refresh = document.getElementById('__ch-debug-refresh');
+      const copy = document.getElementById('__ch-debug-copy');
+
+      function load() {
+        try {
+          const items = JSON.parse(sessionStorage.getItem('debugRedirects') || '[]');
+          const snap = {
+            now: new Date().toISOString(),
+            url: window.location.href,
+            localStorage: (() => { try { return JSON.parse(JSON.stringify(localStorage)); } catch (e) { return 'error'; } })(),
+            sessionStorage: (() => { try { return JSON.parse(JSON.stringify(sessionStorage)); } catch (e) { return 'error'; } })(),
+            recent: items.slice(-8).reverse()
+          };
+          out.textContent = JSON.stringify(snap, null, 2);
+        } catch (e) { out.textContent = 'debug load failed: ' + e.message; }
+      }
+
+      refresh.addEventListener('click', load);
+      copy.addEventListener('click', () => {
+        try {
+          const text = out.textContent || '';
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text);
+            copy.textContent = 'Copied';
+            setTimeout(() => copy.textContent = 'Copy', 1200);
+            return;
+          }
+          // fallback: select and prompt
+          const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+          copy.textContent = 'Copied'; setTimeout(() => copy.textContent = 'Copy', 1200);
+        } catch (e) { console.warn('copy failed', e); }
+      });
+
+      load();
+    } catch (e) { /* ignore */ }
   },
 
   /* Render a floating action button (FAB) on mobile dashboards */

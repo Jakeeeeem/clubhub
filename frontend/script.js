@@ -858,6 +858,17 @@ function redirectToDashboard() {
       localStorage.getItem("userType") ||
       AppState.currentUser.account_type ||
       "organization";
+
+    // Suppress redirects immediately after a recent group switch to avoid flip-flop
+    try {
+      const sup = window.__recentSwitchSuppressUntil || 0;
+      if (sup && Date.now() < sup) {
+        console.log('🛑 redirectToDashboard: suppressed due to recent group switch until', new Date(sup).toISOString());
+        return;
+      }
+    } catch (e) {
+      // ignore
+    }
   }
 
   const dashboardMode = localStorage.getItem("dashboardMode");
