@@ -39,6 +39,28 @@
                 });
             }
         })();
+                // Early diagnostics + suppression: extend recent-switch suppression
+                (function(){
+                    try {
+                        const now = Date.now();
+                        const MIN_SUPPRESS = 5000; // ms
+                        const prev = window.__recentSwitchSuppressUntil || 0;
+                        const newUntil = Math.max(prev, now + MIN_SUPPRESS);
+                        window.__recentSwitchSuppressUntil = newUntil;
+                        console.warn('🔁 Early guard: extended __recentSwitchSuppressUntil to', newUntil);
+
+                        // Log quick snapshot for debugging (visible in console & unified debug panel)
+                        try {
+                            console.log('🔍 EarlySnapshot', {
+                                url: window.location.href,
+                                recentGroupSwitch: sessionStorage.getItem('recentGroupSwitch'),
+                                debugRedirects: sessionStorage.getItem('debugRedirects'),
+                                localStorage: (function(){ try { return JSON.parse(JSON.stringify(localStorage)); } catch (e) { return 'error'; }})(),
+                                sessionStorage: (function(){ try { return JSON.parse(JSON.stringify(sessionStorage)); } catch (e) { return 'error'; }})()
+                            });
+                        } catch (e) { /* ignore */ }
+                    } catch (e) { console.warn('Early suppression setup failed', e); }
+                })();
     </script>
     <style>
         .feed-entry {
