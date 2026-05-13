@@ -301,6 +301,24 @@ const UnifiedNav = {
     const fileName = path.split('/').pop() || 'index.html';
     const fullUrl = window.location.href.toLowerCase();
 
+    // If we were just redirected after a group switch, clear the transient
+    // flag/query param so other redirect logic doesn't immediately flip us
+    // back to the previous dashboard. This helps prevent rapid redirect loops.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('switched') || sessionStorage.getItem('recentGroupSwitch')) {
+        console.log('🔁 UnifiedNav: Detected recent group switch; clearing transient flag to avoid redirect loop.');
+        // Remove 'switched' from URL without reloading
+        params.delete('switched');
+        const newSearch = params.toString();
+        const newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
+        history.replaceState({}, '', newUrl);
+        try { sessionStorage.removeItem('recentGroupSwitch'); } catch (e) { /* ignore */ }
+      }
+    } catch (e) {
+      console.warn('UnifiedNav: failed to clear switched flag', e);
+    }
+
     const isLoggedIn = !!(token && user);
     const isDashboardPath = /dashboard|members|teams|events|finances|shop|schedule|scout|finder|finder-/.test(path) || /finder/.test(fullUrl);
     const isLanding = (fileName === "index.html" || fileName === "login.html" || fileName === "signup.html" || fileName === "index" || fileName === "" || path === "/" || path === "/index.html");
@@ -509,6 +527,29 @@ const UnifiedNav = {
         console.error("❌ Stage 3 (Data Sync) failed:", err);
       }
     }, 150);
+
+    // Provide safe fallbacks for team operations so pages that include the
+    // small dashboard widget do not throw ReferenceErrors when the full
+    // teams page's JS isn't present on that HTML file.
+    try {
+      if (typeof window.viewTeam !== 'function') {
+        window.viewTeam = function(teamId, teamName) {
+          console.warn('viewTeam not available on this page — redirecting to teams page');
+          // Preserve attempted team context via hash so the teams page can open that team if it wants
+          window.location.href = `admin-teams.html#team-${teamId}`;
+        };
+      }
+
+      if (typeof window.deleteTeam !== 'function') {
+        window.deleteTeam = function(teamId) {
+          console.warn('deleteTeam not available on this page — redirecting to teams page for deletion');
+          // Redirect to full teams management where deletion is supported
+          window.location.href = `admin-teams.html#team-${teamId}`;
+        };
+      }
+    } catch (e) {
+      console.warn('UnifiedNav: failed to install teams fallbacks', e);
+    }
   },
 
   /* Render a floating action button (FAB) on mobile dashboards */
@@ -3066,6 +3107,12 @@ const UnifiedNav = {
                     <a href="player-dashboard.html" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'overview')" class="sidebar-link ${isActive('player-dashboard.html') && !p.includes('#') ? 'active' : ''}">${ICONS.nav.overview}<span>Overview</span></a>
                     <a href="player-dashboard.html#family" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'player-family')" class="sidebar-link ${p.includes('family') ? 'active' : ''}">${ICONS.nav.players}<span>My Family Hub</span></a>
                     <a href="player-dashboard.html#schedule" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'schedule')" class="sidebar-link ${p.includes('schedule') ? 'active' : ''}">${ICONS.nav.training}<span>Schedule</span></a>
+
+                    <!-- Discovery for players: quick access to find clubs/teams and view their clubs -->
+                    <a href="club-finder.html" class="sidebar-link ${isActive('club-finder.html')}">${ICONS.nav.teams}<span>Find Club</span></a>
+                    <a href="team-finder.html" class="sidebar-link ${isActive('team-finder.html')}">${ICONS.nav.players}<span>Find Team</span></a>
+                    <a href="player-dashboard.html#clubs" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'clubs')" class="sidebar-link ${p.includes('clubs') ? 'active' : ''}">${ICONS.nav.teams}<span>My Clubs</span></a>
+
                     <a href="player-dashboard.html#teams" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'teams')" class="sidebar-link ${p.includes('teams') ? 'active' : ''}">${ICONS.nav.teams}<span>My Teams</span></a>
                     <a href="player-academy-tv.html" onclick="return UnifiedNav.handleNavClick(event, 'player-academy-tv.html', 'academy-tv')" class="sidebar-link ${isActive('player-academy-tv.html')}">${ICONS.nav.academy}<span>Academy TV</span></a>
                     <a href="player-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'player-finances.html', 'payments')" class="sidebar-link ${isActive('player-finances.html') || p.includes('payments') ? 'active' : ''}">${ICONS.nav.finance}<span>Finances</span></a>

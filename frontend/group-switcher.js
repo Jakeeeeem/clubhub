@@ -568,7 +568,18 @@ if (window.__groupSwitcherDefined) {
         }
 
         console.log(`🔀 Switching to ${dest} (role: ${r})`);
-        window.location.href = dest;
+        try {
+          sessionStorage.setItem('recentGroupSwitch', JSON.stringify({ dest, at: Date.now() }));
+        } catch (e) {
+          // ignore storage errors
+        }
+
+        // Append a flag so the landing page can detect a recent switch and avoid
+        // running redirect logic that may cause a loop. Use replace to avoid
+        // polluting history with transient state.
+        const separator = dest.includes('?') ? '&' : '?';
+        const targetUrl = `${dest}${separator}switched=1`;
+        window.location.replace(targetUrl);
 
       } catch (error) {
         console.error("Failed to switch group:", error);
