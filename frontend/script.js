@@ -899,14 +899,19 @@ function redirectToDashboard() {
   };
 
   // Priority 0: Respect explicit mode if set
-  
-  if (dashboardMode === "group" && !currentPath.includes("admin-dashboard") && !currentPath.includes("coach-dashboard")) {
-      console.log("🎯 Dashboard mode 'group' active, prioritizing admin view");
-      // Fall through to admin/coach checks below
-  } else if (dashboardMode === "player" && !currentPath.includes("player-dashboard")) {
-      console.log("🎯 Dashboard mode 'player' active, prioritizing player view");
+  if (dashboardMode === "group") {
+    console.log("🎯 Dashboard mode 'group' active, prioritizing admin view");
+    if (currentPath.includes("admin-dashboard") || currentPath.includes("coach-dashboard") || currentPath.includes("super-admin-dashboard")) {
+      return; // Already on a group/admin/coach page, stay here
+    }
+    // Fall through to admin/coach checks below to let the granular role check decide
+  } else if (dashboardMode === "player") {
+    console.log("🎯 Dashboard mode 'player' active, prioritizing player view");
+    const isPlayerFriendlyPage = currentPath.includes("player-") || currentPath.includes("finder") || currentPath.includes("booking");
+    if (!isPlayerFriendlyPage) {
       if (!checkRedirect("player-dashboard.html")) window.location.href = "player-dashboard.html";
-      return;
+    }
+    return; // Stay on the player dashboard page and return early so we do not check admin roles
   }
 
   // Priority 1: Player/Parent Roles
