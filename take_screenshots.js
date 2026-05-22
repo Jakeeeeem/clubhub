@@ -30,7 +30,7 @@ const categoryCredentials = {
     'discovery': null
 };
 
-const BASE_URL = 'https://clubhubsports.io/';
+const BASE_URL = process.env.BASE_URL || 'https://clubhubsports.io/';
 const OUTPUT_DIR = path.join(__dirname, 'review_screenshots');
 
 async function ensureDir(dir) {

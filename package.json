@@ -1,14 +1,18 @@
 {
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^17.4.0",
+    "express": "^5.2.1",
     "nodemailer": "^7.0.5",
     "pg": "^8.20.0",
     "pg-pool": "^3.13.0",
-    "puppeteer": "^24.42.0"
+    "puppeteer": "^24.42.0",
+    "uuid": "^14.0.0"
   },
   "scripts": {
     "seed:camps": "node scripts/seed-camps.js",
     "seed:tournaments": "node scripts/seed-tournaments.js",
+    "test:local": "DB_HOST=127.0.0.1 DB_PORT=5436 DB_USER=clubhub_dev_db_user DB_PASSWORD=hwkX8WjJLKyPRnPrMrBxetxPXRYpBuRQ DB_NAME=clubhub_dev_db npx jest --runInBand --detectOpenHandles --testTimeout=30000 --json --outputFile=jest-results.json",
     "test:email": "node backend/tests/email-service.test.js",
     "test:bracket": "node backend/tests/bracket.test.js",
     "test:smoke": "node backend/tests/bracket.test.js && node backend/tests/email-service.test.js",

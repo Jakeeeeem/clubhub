@@ -75,6 +75,12 @@ app.use(
         "https://clubhubsports-dev.onrender.com",
         "https://clubhub-dev.onrender.com",
         process.env.FRONTEND_URL,
+        // Common local dev frontend hosts/ports — include explicitly to avoid
+        // CORS failures when the frontend is served on alternate ports.
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
       ].filter(Boolean);
 
       const isLocalhost = origin.match(

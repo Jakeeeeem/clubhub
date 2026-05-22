@@ -6,6 +6,7 @@ describe("Messages API Endpoints", () => {
   let authToken;
   let userId;
   let receiverId;
+  let orgId;
   let insertedMessageId;
 
   beforeAll(async () => {
@@ -33,12 +34,45 @@ describe("Messages API Endpoints", () => {
       accountType: "adult",
     });
     receiverId = reg2.body.user.id;
+
+    // Create a temporary organization and add both users as members so messages can be exchanged
+    const orgRes = await pool.query(
+      `INSERT INTO organizations (name, slug, sport, description, location, owner_id)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [`Test Org ${rand}`, `test-org-${rand}`, 'Football', 'Temporary org for messages.test', 'Local', userId]
+    );
+    orgId = orgRes.rows[0].id;
+
+    await pool.query(
+      `INSERT INTO organization_members (organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, $4)`,
+      [orgId, userId, 'owner', 'active']
+    );
+
+    await pool.query(
+      `INSERT INTO organization_members (organization_id, user_id, role, status)
+       VALUES ($1, $2, $3, $4)`,
+      [orgId, receiverId, 'player', 'active']
+    );
+
+    // Ensure sender preferences point to this org so injectOrgContext picks it up
+    await pool.query(
+      `INSERT INTO user_preferences (user_id, current_organization_id)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id) DO UPDATE SET current_organization_id = $2`,
+      [userId, orgId]
+    );
   });
 
   afterAll(async () => {
     if (userId) {
       await pool.query("DELETE FROM messages WHERE sender_id = $1 OR receiver_id = $1", [userId]);
       await pool.query("DELETE FROM users WHERE id = $1 OR id = $2", [userId, receiverId]);
+      if (orgId) {
+        await pool.query("DELETE FROM organization_members WHERE organization_id = $1", [orgId]);
+        await pool.query("DELETE FROM organizations WHERE id = $1", [orgId]);
+        await pool.query("DELETE FROM user_preferences WHERE user_id = $1", [userId]);
+      }
     }
     await pool.end();
   });

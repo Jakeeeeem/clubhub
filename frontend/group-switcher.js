@@ -235,6 +235,65 @@ if (window.__groupSwitcherDefined) {
               }
           }
 
+            // AUTO-CREATE: If still no organizations are present for this user,
+            // create a minimal placeholder group so the user lands in a usable
+            // organization instead of an empty state. This mirrors Create Group
+            // behavior used elsewhere in the frontend (`/groups` POST endpoint).
+            if (this.groups.length === 0 && !isDemo) {
+              try {
+                const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+                const defaultName = (user && user.email) ? `${user.email.split('@')[0]}'s Club` : 'My Club';
+                console.log('Switcher: No organizations found — creating a default organization:', defaultName);
+                const createResp = await svc.makeRequest('/groups', {
+                  method: 'POST',
+                  body: JSON.stringify({ name: defaultName, sport: 'Football' })
+                });
+
+                  if (createResp && (createResp.organization || createResp.group)) {
+                    const org = createResp.organization || createResp.group;
+                    this.groups = [org];
+                    this.allGroups = [org];
+                    this.currentGroup = org;
+
+                    // Persist to localStorage so other code picks up the new org
+                    try {
+                      let cu = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                      cu.clubId = org.id; cu.currentGroupId = org.id; cu.groupId = org.id; cu.role = cu.role || 'owner';
+                      localStorage.setItem('currentUser', JSON.stringify(cu));
+                      localStorage.setItem('clubId', org.id);
+                      localStorage.setItem('activeOrganizationId', org.id);
+                    } catch (e) { /* ignore storage errors */ }
+
+                    console.log('Switcher: Created default organization with id', org.id);
+                  } else {
+                    // If backend is unreachable or CORS blocks requests, create a
+                    // local placeholder organization so the UI remains usable.
+                    const localOrg = {
+                      id: `local-${Date.now()}`,
+                      name: defaultName,
+                      sport: 'Football',
+                      logo_url: '',
+                      user_role: 'owner',
+                    };
+                    this.groups = [localOrg];
+                    this.allGroups = [localOrg];
+                    this.currentGroup = localOrg;
+
+                    try {
+                      let cu = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                      cu.clubId = localOrg.id; cu.currentGroupId = localOrg.id; cu.groupId = localOrg.id; cu.role = cu.role || 'owner';
+                      localStorage.setItem('currentUser', JSON.stringify(cu));
+                      localStorage.setItem('clubId', localOrg.id);
+                      localStorage.setItem('activeOrganizationId', localOrg.id);
+                    } catch (e) { /* ignore storage errors */ }
+
+                    console.warn('Switcher: Backend unavailable — created local placeholder org', localOrg.id);
+                  }
+              } catch (e) {
+                console.warn('Switcher: Auto-create organization failed', e);
+              }
+            }
+
           this.render();
         }
       } catch (error) {
