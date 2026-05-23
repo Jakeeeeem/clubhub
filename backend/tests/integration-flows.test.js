@@ -11,7 +11,7 @@
 const fetch = require('node-fetch');
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const BASE = process.env.API_URL || 'http://localhost:3000/api';
+const BASE = process.env.API_URL || 'http://127.0.0.1:3000/api';
 
 // Unique suffix so parallel runs don't collide
 const RUN_ID = Date.now();

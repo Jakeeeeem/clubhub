@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Seed Database Script
-# Executes the seed-data.sql file against your database
+# Executes the database/seed-data.sql file against your database
 
 echo "🌱 Seeding database with test data..."
 echo ""
@@ -10,12 +10,12 @@ echo ""
 if command -v psql &> /dev/null; then
     echo "Using psql to seed data..."
     # You'll need to provide your database connection details
-    # psql -h localhost -U your_user -d your_database -f seed-data.sql
+    # psql -h localhost -U your_user -d your_database -f database/seed-data.sql
     echo "❌ Please update this script with your database credentials"
-    echo "Or run the SQL manually from seed-data.sql"
+    echo "Or run the SQL manually from database/seed-data.sql"
 else
     echo "⚠️  psql not found. Please run the SQL commands manually."
-    echo "The SQL file is located at: seed-data.sql"
+    echo "The SQL file is located at: database/seed-data.sql"
 fi
 
 echo ""

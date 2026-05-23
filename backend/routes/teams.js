@@ -77,7 +77,7 @@ router.get("/", optionalAuth, async (req, res) => {
     }
 
     queryText += ` 
-      GROUP BY t.id, s.first_name, s.last_name
+      GROUP BY t.id, t.name, t.age_group, t.sport, t.description, t.coach_id, t.club_id, t.wins, t.losses, t.draws, t.created_at, t.updated_at, s.first_name, s.last_name, c.name, c.location
       ORDER BY t.created_at DESC
     `;
 
@@ -901,7 +901,7 @@ router.get("/:id/stats", authenticateToken, async (req, res) => {
       FROM teams t
       LEFT JOIN team_players tp ON t.id = tp.team_id
       WHERE t.id = $1
-      GROUP BY t.id
+      GROUP BY t.id, t.name, t.age_group, t.sport, t.description, t.coach_id, t.club_id, t.wins, t.losses, t.draws, t.created_at, t.updated_at
     `,
       [teamId],
     );

@@ -112,7 +112,7 @@ router.get(
       LEFT JOIN plans pl ON pl.id = pp.plan_id
       LEFT JOIN organization_members om ON om.user_id = p.user_id AND om.organization_id = p.club_id
       WHERE p.club_id = ANY($1)
-      GROUP BY p.id, pp.plan_id, pl.name, om.role
+      GROUP BY p.id, p.first_name, p.last_name, p.email, p.phone, p.date_of_birth, p.position, p.club_id, p.monthly_fee, p.user_id, p.created_at, pp.plan_id, pl.name, om.role
 
       UNION ALL
 
@@ -179,7 +179,7 @@ router.get(
       LEFT JOIN players p ON tp.player_id = p.id
       LEFT JOIN staff s ON t.coach_id = s.id
       WHERE t.club_id = ANY($1)
-      GROUP BY t.id, s.first_name, s.last_name
+      GROUP BY t.id, t.name, t.age_group, t.sport, t.description, t.coach_id, t.club_id, t.wins, t.losses, t.draws, t.created_at, t.updated_at, s.first_name, s.last_name
       ORDER BY t.created_at DESC
     `,
         [targetClubIds],
@@ -347,7 +347,7 @@ router.get("/coach", authenticateToken, async (req, res) => {
        FROM teams t
        LEFT JOIN team_players tp ON t.id = tp.team_id
        WHERE t.coach_id = $1 OR t.club_id = ANY($2)
-       GROUP BY t.id
+       GROUP BY t.id, t.name, t.age_group, t.sport, t.description, t.coach_id, t.club_id, t.wins, t.losses, t.draws, t.created_at, t.updated_at
        ORDER BY t.name`,
       [coach.id, clubIds]
     );

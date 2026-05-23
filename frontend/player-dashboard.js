@@ -3013,6 +3013,13 @@ function showPlayerSection(sectionId) {
 }
 
 function _doShowPlayerSection(sectionId) {
+  // Normalize section IDs from sidebar/deep links
+  if (sectionId === "clubs") {
+    sectionId = "my-clubs";
+  } else if (sectionId === "player-family") {
+    sectionId = "family";
+  }
+
   // Update hash for deep-linking (replace so we don't flood history)
   const newHash = '#player-' + sectionId;
   if (window.location.hash !== newHash && window.location.hash !== '#' + sectionId) {
@@ -3037,14 +3044,15 @@ function _doShowPlayerSection(sectionId) {
     target.style.display = "block";
   }
 
-  // Sync with Mobile Tabs and Bottom Nav (Threads Style)
-  const allNavLinks = document.querySelectorAll(".nav-link, .tab-item, .nav-pill");
+  // Sync with Mobile Tabs, Bottom Nav, and Sidebar (Threads Style)
+  const allNavLinks = document.querySelectorAll(".nav-link, .tab-item, .nav-pill, .sidebar-link");
   allNavLinks.forEach((link) => {
     link.classList.remove("active");
-    if (
-      link.getAttribute("onclick") &&
-      link.getAttribute("onclick").includes(`'${sectionId}'`)
-    ) {
+    const onclickAttr = link.getAttribute("onclick") || "";
+    const isMatch = onclickAttr.includes(`'${sectionId}'`) ||
+                    (sectionId === "my-clubs" && onclickAttr.includes("'clubs'")) ||
+                    (sectionId === "family" && onclickAttr.includes("'player-family'"));
+    if (isMatch) {
       link.classList.add("active");
       // Scroll into view if it's a tab
       if (link.classList.contains("tab-item") && link.offsetParent) {
@@ -3088,6 +3096,10 @@ function _doShowPlayerSection(sectionId) {
     case "overview":
       loadPlayerOverview();
       break;
+    case "schedule":
+      if (typeof loadFullSchedule === "function") loadFullSchedule();
+      updatePostComposerVisibility();
+      break;
     case "club-feed":
       loadClubFeed();
       updatePostComposerVisibility();
@@ -3096,6 +3108,7 @@ function _doShowPlayerSection(sectionId) {
       loadMessengerConversations();
       updatePostComposerVisibility();
       break;
+    case "clubs":  // alias from sidebar nav
     case "my-clubs":
       loadPlayerClubs();
       updatePostComposerVisibility();

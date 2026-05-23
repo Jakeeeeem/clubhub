@@ -165,7 +165,7 @@ router.get("/:id", optionalAuth, async (req, res) => {
       LEFT JOIN staff s ON t.coach_id = s.id
       LEFT JOIN team_players tp ON t.id = tp.team_id
       WHERE t.club_id = $1
-      GROUP BY t.id, s.first_name, s.last_name
+      GROUP BY t.id, t.name, t.age_group, t.sport, t.description, t.coach_id, t.club_id, t.wins, t.losses, t.draws, t.created_at, t.updated_at, s.first_name, s.last_name
       ORDER BY t.created_at DESC
     `,
       [req.params.id],

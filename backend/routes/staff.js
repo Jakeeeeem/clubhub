@@ -108,7 +108,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
         FROM teams t
         LEFT JOIN team_players tp ON t.id = tp.team_id
         WHERE t.coach_id = $1
-        GROUP BY t.id
+        GROUP BY t.id, t.name, t.age_group, t.sport, t.description, t.coach_id, t.club_id, t.wins, t.losses, t.draws, t.created_at, t.updated_at
         ORDER BY t.created_at DESC
       `,
         [req.params.id],
@@ -972,11 +972,11 @@ router.get("/:id/dashboard", authenticateToken, async (req, res) => {
     if (["coach", "assistant-coach"].includes(staff.role)) {
       const teamsResult = await query(
         `
-        SELECT t.*, COUNT(tp.player_id) as player_count
-        FROM teams t
-        LEFT JOIN team_players tp ON t.id = tp.team_id
-        WHERE t.coach_id = $1
-        GROUP BY t.id
+         SELECT t.*, COUNT(tp.player_id) as player_count
+         FROM teams t
+         LEFT JOIN team_players tp ON t.id = tp.team_id
+         WHERE t.coach_id = $1
+         GROUP BY t.id, t.name, t.age_group, t.sport, t.description, t.coach_id, t.club_id, t.wins, t.losses, t.draws, t.created_at, t.updated_at
       `,
         [req.params.id],
       );

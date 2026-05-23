@@ -757,84 +757,6 @@ router.put(
         }
       }
 
-      // 🔥 NEW: Manual Acceptance Route
-      router.post(
-        "/:id/accept",
-        authenticateToken,
-        requireOrganization,
-        async (req, res) => {
-          try {
-            // Find invitation
-            const inviteResult = await query(
-              "SELECT * FROM invitations WHERE id = $1 AND status = 'pending'",
-              [req.params.id],
-            );
-
-            if (inviteResult.rows.length === 0) {
-              return res
-                .status(404)
-                .json({ error: "No pending invitation found with this ID" });
-            }
-
-            const invite = inviteResult.rows[0];
-
-            // Check permissions
-            const clubResult = await query(queries.findClubById, [
-              invite.organization_id,
-            ]);
-            if (clubResult.rows[0].owner_id !== req.user.id) {
-              return res.status(403).json({ error: "Access denied" });
-            }
-
-            // Begin promotion to player
-            const newPlayerResult = await query(
-              `INSERT INTO players (
-                first_name, last_name, email, date_of_birth, club_id, join_date, 
-                payment_plan_id, plan_price, plan_start_date, stripe_customer_id
-              )
-              VALUES ($1, $2, $3, $4, $5, CURRENT_DATE, $6, $7, $8, $9)
-              RETURNING id`,
-              [
-                invite.first_name,
-                invite.last_name,
-                invite.email,
-                invite.date_of_birth,
-                invite.organization_id,
-                invite.payment_plan_id,
-                invite.plan_price,
-                invite.plan_start_date,
-                invite.stripe_customer_id,
-              ],
-            );
-
-            const newPlayerId = newPlayerResult.rows[0].id;
-
-            // Update invitation status
-            await query(
-              "UPDATE invitations SET status = 'accepted' WHERE id = $1",
-              [req.params.id],
-            );
-
-            // If team_id exists, assign to team
-            if (invite.team_id) {
-              await query(
-                "INSERT INTO team_players (player_id, team_id, joined_at) VALUES ($1, $2, CURRENT_DATE)",
-                [newPlayerId, invite.team_id],
-              );
-            }
-
-            res.json({
-              success: true,
-              message: "Member accepted successfully!",
-              playerId: newPlayerId,
-            });
-          } catch (error) {
-            console.error("Manual accept error:", error);
-            res.status(500).json({ error: "Failed to accept member" });
-          }
-        },
-      );
-
       const result = await query(
         `
       UPDATE players SET 
@@ -890,6 +812,84 @@ router.put(
         error: "Failed to update player",
         message: "An error occurred while updating the player",
       });
+    }
+  },
+);
+
+// 🔥 TOP-LEVEL ROUTE: Manual Acceptance Route
+router.post(
+  "/:id/accept",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      // Find invitation
+      const inviteResult = await query(
+        "SELECT * FROM invitations WHERE id = $1 AND status = 'pending'",
+        [req.params.id],
+      );
+
+      if (inviteResult.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "No pending invitation found with this ID" });
+      }
+
+      const invite = inviteResult.rows[0];
+
+      // Check permissions
+      const clubResult = await query(queries.findClubById, [
+        invite.organization_id,
+      ]);
+      if (clubResult.rows[0].owner_id !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      // Begin promotion to player
+      const newPlayerResult = await query(
+        `INSERT INTO players (
+          first_name, last_name, email, date_of_birth, club_id, join_date, 
+          payment_plan_id, plan_price, plan_start_date, stripe_customer_id
+        )
+        VALUES ($1, $2, $3, $4, $5, CURRENT_DATE, $6, $7, $8, $9)
+        RETURNING id`,
+        [
+          invite.first_name,
+          invite.last_name,
+          invite.email,
+          invite.date_of_birth,
+          invite.organization_id,
+          invite.payment_plan_id,
+          invite.plan_price,
+          invite.plan_start_date,
+          invite.stripe_customer_id,
+        ],
+      );
+
+      const newPlayerId = newPlayerResult.rows[0].id;
+
+      // Update invitation status
+      await query(
+        "UPDATE invitations SET status = 'accepted' WHERE id = $1",
+        [req.params.id],
+      );
+
+      // If team_id exists, assign to team
+      if (invite.team_id) {
+        await query(
+          "INSERT INTO team_players (player_id, team_id, joined_at) VALUES ($1, $2, CURRENT_DATE)",
+          [newPlayerId, invite.team_id],
+        );
+      }
+
+      res.json({
+        success: true,
+        message: "Member accepted successfully!",
+        playerId: newPlayerId,
+      });
+    } catch (error) {
+      console.error("Manual accept error:", error);
+      res.status(500).json({ error: "Failed to accept member" });
     }
   },
 );

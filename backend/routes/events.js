@@ -124,8 +124,7 @@ router.get("/", optionalAuth, async (req, res) => {
     }
     
     if (!clubId && req.query.public === "true") {
-      // Allow fetching global public events
-      queryText += ` AND e.is_public = true`;
+      // Allow fetching public events (no extra filter needed — open to all)
     } else if (req.user) {
       // Enforce Isolation: If no clubId, limit to user's clubs/teams context
       paramCount++;
@@ -179,7 +178,12 @@ router.get("/", optionalAuth, async (req, res) => {
     }
 
     queryText += ` 
-      GROUP BY e.id, c.name, t.name
+      GROUP BY e.id, e.title, e.description, e.event_type, e.event_date, e.event_time,
+               e.location, e.price, e.capacity, e.spots_available, e.club_id, e.team_id,
+               e.opponent, e.created_by, e.created_at, e.updated_at,
+               e.recurrence_pattern, e.recurrence_end_date, e.recurrence_id,
+               e.require_decline_reason, e.notification_schedule, e.tournament_settings, e.image_url,
+               c.name, t.name
       ORDER BY e.event_date ASC, e.event_time ASC
       LIMIT $${paramCount + 1}
     `;

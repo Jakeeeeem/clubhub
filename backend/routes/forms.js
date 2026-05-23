@@ -360,7 +360,7 @@ router.get("/", authenticateToken, requireOrganization, async (req, res) => {
        FROM custom_forms f
        LEFT JOIN custom_form_responses r ON r.form_id = f.id
        WHERE f.organization_id = $1
-       GROUP BY f.id
+       GROUP BY f.id, f.organization_id, f.title, f.description, f.is_active, f.created_at, f.updated_at
        ORDER BY f.created_at DESC`,
       [organizationId],
     );

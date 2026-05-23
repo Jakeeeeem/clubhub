@@ -7,7 +7,7 @@ echo "⏳ Waiting for database..."
 sleep 10
 
 echo "🌱 Seeding database..."
-docker-compose exec -T db psql -U clubhub_dev_db_user -d clubhub_dev_db < seed-complete.sql
+docker-compose exec -T db psql -U clubhub_dev_db_user -d clubhub_dev_db < database/seed-complete.sql
 
 echo ""
 echo "✅ DONE!"

@@ -1852,6 +1852,7 @@ if (typeof ApiService === 'undefined') {
           player: null,
           attendance: null,
           groups: groups.status === "fulfilled" ? groups.value : [],
+          clubs: groups.status === "fulfilled" ? groups.value : [], // Added for compatibility
           teams: teams.status === "fulfilled" ? teams.value : [],
           events: events.status === "fulfilled" ? events.value : [],
           payments: payments.status === "fulfilled" ? payments.value : [],
@@ -2174,6 +2175,7 @@ if (typeof ApiService === 'undefined') {
           children:
             children.status === "fulfilled" ? children.value.children : [],
           groups: groups.status === "fulfilled" ? groups.value : [],
+          clubs: groups.status === "fulfilled" ? groups.value : [], // Added for compatibility
           teams: teams.status === "fulfilled" ? teams.value : [],
           events: events.status === "fulfilled" ? events.value : [],
           payments: payments.status === "fulfilled" ? payments.value : [],
