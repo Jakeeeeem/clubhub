@@ -523,7 +523,7 @@ const UnifiedNav = {
             document.body.style.display = '';
             document.body.classList.remove('loading');
           } catch (e) { /* ignore */ }
-        }, 7000);
+        }, 2500);
       } catch (e) { /* ignore */ }
     }
     // ────────────────────────────────────────────────────────────────
@@ -855,7 +855,7 @@ const UnifiedNav = {
       if (!isDesktop) {
         console.log("📱 Mobile View");
         if (isDashboard) {
-          if (!isLoggedIn && true) {
+          if (!isLoggedIn) {
             console.warn("🔒 Unauthenticated mobile dashboard access. Redirecting to home...");
             window.location.href = "index.html";
             return;
