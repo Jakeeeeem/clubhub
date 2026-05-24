@@ -1248,7 +1248,7 @@ router.post(
         );
         const clubName = ev.rows[0]?.club_name || "Club";
         const inviterName = req.user.name || req.user.email || "ClubHub";
-        const inviteLink = `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/tournaments/${req.params.id}/invite?role=${role}`;
+        const inviteLink = `${process.env.FRONTEND_URL || "https://clubhubsports.io"}/tournaments/${req.params.id}/invite?role=${role}`;
         await emailService.sendClubInviteEmail({
           email,
           clubName,
@@ -1287,7 +1287,7 @@ router.post(
         );
         const clubName = ev.rows[0]?.club_name || "Club";
         const inviterName = req.user.name || req.user.email || "ClubHub";
-        const inviteLink = `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/tournaments/${req.params.id}/register`;
+        const inviteLink = `${process.env.FRONTEND_URL || "https://clubhubsports.io"}/tournaments/${req.params.id}/register`;
         await emailService.sendClubInviteEmail({
           email,
           clubName,
@@ -1742,7 +1742,7 @@ router.post("/teams/:id/submit", async (req, res) => {
               email: toEmail,
               clubName: ev.rows[0]?.title || "Club",
               inviterName: "ClubHub",
-              inviteLink: `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/admin/tournaments/${eventId}`,
+              inviteLink: `${process.env.FRONTEND_URL || "https://clubhubsports.io"}/admin/tournaments/${eventId}`,
               personalMessage: `Team ${teamName} has submitted registration for ${eventTitle}. Please review and approve.`,
               clubRole: "admin",
             });

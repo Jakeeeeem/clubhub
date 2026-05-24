@@ -255,10 +255,21 @@
                 if (category) url += `&eventType=${category}`;
                 
                 let events = await apiService.makeRequest(url) || [];
-                // Unify events list if it comes nested
-                if (events.events) events = events.events;
-                if (events.data) events = events.data;
-                if (!Array.isArray(events)) events = [];
+
+                // Normalize responses that may be wrapped in { events } or { data }
+                function normalizeList(list) {
+                    if (!list) return [];
+                    if (list.events) list = list.events;
+                    if (list.data) list = list.data;
+                    if (!Array.isArray(list)) return [];
+                    return list.map(item => ({
+                        ...item,
+                        title: item.title || item.name || item.event_name,
+                        id: item.id || item.event_id || item.uid
+                    }));
+                }
+
+                events = normalizeList(events);
                 
                 // Client-side filtering
                 events = events.filter(e => {
@@ -274,7 +285,7 @@
                 }
 
                 grid.innerHTML = events.map(e => {
-                    const dateRaw = e.event_date || e.date;
+                    const dateRaw = e.event_date || e.date || e.start_date;
                     const eventDate = dateRaw ? new Date(dateRaw) : new Date();
                     const day = eventDate.getDate().toString().padStart(2, '0');
                     const month = eventDate.toLocaleString('default', { month: 'short' });

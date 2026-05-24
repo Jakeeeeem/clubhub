@@ -111,7 +111,7 @@ class EmailService {
   getBaseHtmlTemplate(content, clubInfo = {}) {
     const clubHubLogo =
       process.env.CLUBHUB_LOGO_URL ||
-      "https://clubhubsports.net/images/logo.png";
+      "https://clubhubsports.io/images/logo.png";
     // User requested only ClubHub logo, ignoring specific club logos for header consistency
 
     return `
@@ -564,7 +564,7 @@ class EmailService {
         <p>You can now view your team schedule, teammates, and track your statistics directly through the ClubHub dashboard.</p>
 
         <div style="text-align: center;">
-          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">View My Team</a>
+          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.io"}/player-dashboard.html" class="btn">View My Team</a>
         </div>
       `;
 
@@ -573,7 +573,7 @@ class EmailService {
         to: email,
         subject,
         html,
-        text: `You have been added to ${teamName}! Login to view: ${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
+        text: `You have been added to ${teamName}! Login to view: ${process.env.FRONTEND_URL || "https://clubhubsports.io"}/player-dashboard.html`,
       });
     } catch (error) {
       console.error("❌ Failed to send team assignment email:", error);
@@ -611,7 +611,7 @@ class EmailService {
         <p>Please update your availability as soon as possible to help the coaching staff plan ahead.</p>
 
         <div style="text-align: center;">
-          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">Confirm Availability</a>
+          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.io"}/player-dashboard.html" class="btn">Confirm Availability</a>
         </div>
       `;
 
@@ -620,7 +620,7 @@ class EmailService {
         to: email,
         subject,
         html,
-        text: `New event scheduled: ${eventTitle} on ${eventDate}. Confirm availability at ${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
+        text: `New event scheduled: ${eventTitle} on ${eventDate}. Confirm availability at ${process.env.FRONTEND_URL || "https://clubhubsports.io"}/player-dashboard.html`,
       });
     } catch (error) {
       console.error("❌ Failed to send event creation email:", error);
@@ -667,7 +667,7 @@ class EmailService {
           status !== "rejected"
             ? `
         <div style="text-align: center;">
-          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">View Dashboard</a>
+          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.io"}/player-dashboard.html" class="btn">View Dashboard</a>
         </div>`
             : ""
         }
@@ -806,7 +806,7 @@ class EmailService {
       // Otherwise, we link to the dashboard.
       const actionLink =
         checkoutUrl ||
-        `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`;
+        `${process.env.FRONTEND_URL || "https://clubhubsports.io"}/player-dashboard.html`;
       const buttonText = checkoutUrl
         ? "Set Up Payment via Stripe"
         : subscriptionId
@@ -900,7 +900,7 @@ class EmailService {
         <p>If you haven't already, please confirm your attendance to help the coaches with planning.</p>
 
         <div style="text-align: center;">
-          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html" class="btn">Confirm Presence</a>
+          <a href="${process.env.FRONTEND_URL || "https://clubhubsports.io"}/player-dashboard.html" class="btn">Confirm Presence</a>
         </div>
       `;
 
@@ -909,7 +909,7 @@ class EmailService {
         to: email,
         subject,
         html,
-        text: `Reminder: ${eventTitle} is in ${leadTime}. Confirm at ${process.env.FRONTEND_URL || "https://clubhubsports.net"}/player-dashboard.html`,
+        text: `Reminder: ${eventTitle} is in ${leadTime}. Confirm at ${process.env.FRONTEND_URL || "https://clubhubsports.io"}/player-dashboard.html`,
       });
     } catch (error) {
       console.error("❌ Failed to send event reminder email:", error);

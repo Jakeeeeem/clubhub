@@ -127,6 +127,299 @@ const ICONS = {
   back: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
 };
 
+// Stylesheet guard: if main stylesheet didn't load, inject a fallback copy.
+(function(){
+  try {
+    // run only once
+    if (window.__clubhubStylesGuard) return;
+    window.__clubhubStylesGuard = true;
+
+    const checkAndInject = () => {
+      try {
+        const body = document.body || document.documentElement;
+        if (!body) return;
+        const cs = window.getComputedStyle(body);
+        // Check a known CSS variable or font-family to detect missing styles
+        const primary = cs.getPropertyValue('--primary') || '';
+        const font = (cs.fontFamily || '').toLowerCase();
+        const looksRaw = (!primary || primary.trim() === '') && (font.includes('serif') || font.includes('times') || font.includes('system-ui') || font.includes('helvetica') || font.includes('arial'));
+
+        const hasStylesheet = !!document.querySelector('link[href*="styles.css"], link[href*="quick-fixes.css"]');
+        if (looksRaw && !hasStylesheet) {
+          const href = 'styles.css?v=20260504_v4';
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = href;
+          link.onerror = () => { console.warn('UnifiedNav: fallback stylesheet failed to load:', href); };
+          document.head.appendChild(link);
+          console.warn('UnifiedNav: injected fallback stylesheet:', href);
+        }
+      } catch (e) { /* ignore */ }
+    };
+
+    // If DOM not ready, check after DOMContentLoaded
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', checkAndInject, { once: true });
+      // also schedule a delayed check
+      setTimeout(checkAndInject, 800);
+    } else {
+      setTimeout(checkAndInject, 60);
+    }
+  } catch (e) { /* ignore */ }
+})();
+
+// Redirect guard: block accidental navigations to legacy .net host and log attempts
+(function(){
+  try {
+    if (window.__clubhubRedirectGuard) return;
+    window.__clubhubRedirectGuard = true;
+    const blockedHost = 'clubhubsports.net';
+
+    const logBlocked = (url, via) => {
+      try {
+        const entry = { url: String(url), via: via || 'unknown', time: Date.now(), stack: (new Error('blocked-redirect')).stack };
+        const key = 'ch_blocked_redirects';
+        const raw = sessionStorage.getItem(key) || '[]';
+        const arr = JSON.parse(raw);
+        arr.push(entry);
+        while (arr.length > 30) arr.shift();
+        sessionStorage.setItem(key, JSON.stringify(arr));
+        console.warn('Blocked navigation to legacy host:', entry.url, 'via', entry.via);
+      } catch (e) { /* ignore logging errors */ }
+    };
+
+    // Override assign/replace
+    try {
+      const origAssign = window.location.assign.bind(window.location);
+      const origReplace = window.location.replace.bind(window.location);
+      window.location.assign = function(url){ if (typeof url === 'string' && url.indexOf(blockedHost) !== -1) { logBlocked(url,'assign'); return; } return origAssign(url); };
+      window.location.replace = function(url){ if (typeof url === 'string' && url.indexOf(blockedHost) !== -1) { logBlocked(url,'replace'); return; } return origReplace(url); };
+    } catch (e) { /* ignore override failures */ }
+
+    // Intercept direct href writes via anchors
+    document.addEventListener('click', function(e){
+      try {
+        const a = e.target.closest && e.target.closest('a');
+        if (!a || !a.href) return;
+        if (a.href.indexOf(blockedHost) !== -1) {
+          e.preventDefault();
+          logBlocked(a.href,'anchor-click');
+        }
+      } catch (e) { /* ignore */ }
+    }, true);
+  } catch (e) { /* ignore */ }
+})();
+
+// Immediate unblock helper: runs early without Console access to hide fullscreen overlays
+(function(){
+  try {
+    if (window.__unifiedNavImmediateUnblock) return;
+    window.__unifiedNavImmediateUnblock = true;
+
+    // Lightweight BFS iterator that visits up to `limit` elements without
+    // forcing a full document traversal (avoids long main-thread work).
+    const limitedElements = (limit) => {
+      const out = [];
+      try {
+        if (!document.body) return out;
+        const q = Array.from(document.body.children || []);
+        while (q.length && out.length < limit) {
+          const n = q.shift();
+          out.push(n);
+          try { q.push(...Array.from(n.children || [])); } catch (e) { /* ignore */ }
+        }
+      } catch (e) { /* ignore */ }
+      return out;
+    };
+
+    const cheapSelectorsClear = () => {
+      try {
+        const selectors = ['.dialog-overlay.active', '.loading-overlay', '#globalLoaderOverlay', '.fullscreen-overlay', '.page-blocker', '.overlay', '.loading', '.loading-card', 'div.loader'];
+        selectors.forEach(sel => {
+          try { const nodes = document.querySelectorAll(sel); if (nodes && nodes.length) { Array.from(nodes).forEach(el => { try { el.classList.remove('active'); el.style.display = 'none'; } catch (e) {} }); } } catch (e) {}
+        });
+        if (document.body) { document.body.style.opacity = '1'; document.body.style.display = ''; document.body.classList.remove('loading'); }
+      } catch (e) { /* ignore */ }
+    };
+
+    const hideBlocking = () => {
+      try {
+        // Only target narrow viewports (mobile) to avoid desktop side-effects
+        if (typeof window === 'undefined' || (window.innerWidth && window.innerWidth > 991)) return false;
+
+        // Always apply the cheap selector clears immediately
+        cheapSelectorsClear();
+
+        // If document is still loading, avoid any heavier scanning — defer it.
+        if (document.readyState === 'loading') {
+          // Schedule a deferred heuristic scan once the browser is idle or after load
+          const schedule = () => {
+            try {
+              if (window.requestIdleCallback) {
+                requestIdleCallback(() => runHeuristicScan(80));
+              } else {
+                setTimeout(() => runHeuristicScan(80), 700);
+              }
+            } catch (e) { /* ignore */ }
+          };
+          if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', schedule, { once: true });
+          } else schedule();
+          return true;
+        }
+
+        // If we are interactive/complete, run a light bounded scan immediately
+        runHeuristicScan(80);
+        try { if (window.UnifiedNavDebugLog) window.UnifiedNavDebugLog('Immediate unblock applied (light)'); } catch (e) {}
+        return true;
+      } catch (e) { return false; }
+    };
+
+    const runHeuristicScan = (limit) => {
+      try {
+        if (window.__unifiedNavFullScanDone) return;
+        const nodes = limitedElements(limit || 80);
+        for (let i = 0; i < nodes.length; i++) {
+          try {
+            const el = nodes[i];
+            // skip obviously small/hidden elements quickly
+            if (!el || !el.offsetParent && el !== document.body) continue;
+            const cs = window.getComputedStyle(el);
+            const z = parseInt(cs.zIndex || '0', 10) || 0;
+            if ((cs.position === 'fixed' || cs.position === 'sticky') && z > 999) {
+              try { const r = el.getBoundingClientRect(); if (r.width >= window.innerWidth - 4 && r.height >= window.innerHeight - 4) el.style.display = 'none'; } catch (e) {}
+            }
+          } catch (e) { /* ignore per-element errors */ }
+        }
+        window.__unifiedNavFullScanDone = true;
+      } catch (e) { /* ignore */ }
+    };
+
+    // Try repeatedly for a short window while page initializes; reduce attempts to avoid CPU churn
+    let attempts = 0;
+    const iv = setInterval(() => {
+      attempts++;
+      const ok = hideBlocking();
+      if (ok || attempts > 4) clearInterval(iv);
+    }, 400);
+    // run once immediately
+    hideBlocking();
+  } catch (e) { /* ignore */ }
+})();
+
+// Mobile-only CSS overrides to forcibly hide common fullscreen overlays early
+(function(){
+  try {
+    if (window.__unifiedNavMobileStyleInjected) return;
+    if (typeof window === 'undefined' || !window.innerWidth) return;
+    if (window.innerWidth > 991) return; // only apply on mobile widths
+
+    const css = `
+      /* UnifiedNav emergency mobile overrides */
+      .dialog-overlay, .dialog-overlay.active, .loading-overlay, #globalLoaderOverlay, .fullscreen-overlay, .page-blocker, .overlay, .loading, .loading-card, div.loader, .ch-bottom-sheet, .ch-action-sheet {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+      html, body {
+        opacity: 1 !important;
+        visibility: visible !important;
+        overflow: auto !important;
+      }
+    `;
+
+    const s = document.createElement('style');
+    s.id = '__unifiedNavMobileOverrides';
+    s.appendChild(document.createTextNode(css));
+    (document.head || document.documentElement).appendChild(s);
+
+    try { if (document.body) { document.body.style.opacity = '1'; document.body.style.display = ''; document.body.style.overflow = 'auto'; } } catch (e) {}
+    window.__unifiedNavMobileStyleInjected = true;
+  } catch (e) { /* ignore */ }
+})();
+
+// Lightweight on-page debug panel (visible even if Console is unreachable)
+(function () {
+  try {
+    if (window.__unifiedNavDebugInjected) return;
+    window.__unifiedNavDebugInjected = true;
+
+    const makePanel = () => {
+      const panel = document.createElement('div');
+      panel.id = '__unifiedNavDebug';
+      panel.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:200000;max-width:360px;max-height:45vh;overflow:auto;background:rgba(10,10,12,0.88);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;border-radius:10px;border:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(6px);padding:8px;font-size:12px;';
+      panel.innerHTML = `
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <strong style="font-size:12px;">UnifiedNav Debug</strong>
+          <button id="__unifiedNavDebugToggle" style="margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff;padding:4px;border-radius:6px;cursor:pointer;font-size:11px;">Hide</button>
+        </div>
+        <div class="log-list" style="display:flex;flex-direction:column;gap:6px;max-height:36vh;overflow:auto;">
+        </div>
+      `;
+
+      document.body.appendChild(panel);
+
+      const toggle = document.getElementById('__unifiedNavDebugToggle');
+      toggle.addEventListener('click', () => {
+        const list = panel.querySelector('.log-list');
+        if (list.style.display === 'none') {
+          list.style.display = '';
+          toggle.textContent = 'Hide';
+        } else {
+          list.style.display = 'none';
+          toggle.textContent = 'Show';
+        }
+      });
+
+      return panel;
+    };
+
+    window.UnifiedNavDebugLog = function (msg) {
+      try {
+        if (document.readyState === 'loading') {
+          // attempt to create panel later if body not ready
+          setTimeout(() => window.UnifiedNavDebugLog(msg), 120);
+          return;
+        }
+        let panel = document.getElementById('__unifiedNavDebug');
+        if (!panel) panel = makePanel();
+        const list = panel.querySelector('.log-list');
+        const entry = document.createElement('div');
+        entry.style.cssText = 'opacity:0.95;padding:6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);font-size:12px;';
+        const text = (typeof msg === 'string') ? msg : (msg && msg.message) ? msg.message : JSON.stringify(msg);
+        entry.textContent = new Date().toLocaleTimeString() + ' — ' + (text || '[empty]');
+        list.insertBefore(entry, list.firstChild);
+        // keep size bounded
+        while (list.childNodes.length > 60) list.removeChild(list.lastChild);
+      } catch (e) { /* ignore */ }
+    };
+
+    // Expose a helper to list blocking elements (for user to screenshot)
+    window.UnifiedNavDumpBlocking = function () {
+      try {
+        const items = [];
+        const sels = ['.dialog-overlay.active', '.loading-overlay', '#globalLoaderOverlay', '.fullscreen-overlay', '.page-blocker', '.overlay', '.loading', 'div.loader', '.loading-card'];
+        sels.forEach(s => {
+          Array.from(document.querySelectorAll(s)).forEach(el => items.push({ sel: s, tag: el.tagName, id: el.id, cls: el.className, disp: getComputedStyle(el).display, z: getComputedStyle(el).zIndex }));
+        });
+        Array.from(document.querySelectorAll('*')).forEach(el => {
+          try {
+            const cs = getComputedStyle(el);
+            const z = parseInt(cs.zIndex || '0', 10) || 0;
+            const r = el.getBoundingClientRect();
+            if ((cs.position === 'fixed' || cs.position === 'sticky') && z > 999 && r.width >= window.innerWidth - 4 && r.height >= window.innerHeight - 4) {
+              items.push({ sel: 'heuristic', tag: el.tagName, id: el.id, cls: el.className, disp: cs.display, z: cs.zIndex });
+            }
+          } catch (e) { }
+        });
+        window.UnifiedNavDebugLog({ message: 'Blocking dump: ' + (items.length) + ' items' });
+        return items;
+      } catch (e) { return []; }
+    };
+  } catch (e) { /* ignore */ }
+})();
+
 // --- GLOBAL LINK HANDLER ---
 // Standardizes behavior across the entire platform
 window.handleNavClick = function (e, page, section) {
@@ -220,6 +513,18 @@ const UnifiedNav = {
     if (!document.body.style.opacity) {
       document.body.style.transition = 'opacity 0.18s ease';
       document.body.style.opacity = '0';
+      // Safety: ensure the page doesn't stay hidden forever if nav rendering stalls
+      try {
+        if (window.__unifiedNavSafetyTimeout) clearTimeout(window.__unifiedNavSafetyTimeout);
+        window.__unifiedNavSafetyTimeout = setTimeout(() => {
+          try {
+            console.warn('🛟 UnifiedNav: safety timeout triggered — forcing page visible');
+            document.body.style.opacity = '1';
+            document.body.style.display = '';
+            document.body.classList.remove('loading');
+          } catch (e) { /* ignore */ }
+        }, 7000);
+      } catch (e) { /* ignore */ }
     }
     // ────────────────────────────────────────────────────────────────
 
@@ -598,6 +903,12 @@ const UnifiedNav = {
       // Nav is now rendered — reveal the page with a smooth fade.
       requestAnimationFrame(() => {
         document.body.style.opacity = '1';
+        try {
+          if (window.__unifiedNavSafetyTimeout) {
+            clearTimeout(window.__unifiedNavSafetyTimeout);
+            delete window.__unifiedNavSafetyTimeout;
+          }
+        } catch (e) { /* ignore */ }
       });
       // ─────────────────────────────────────────────────────────────
 
@@ -684,6 +995,58 @@ const UnifiedNav = {
       }
     }, 150);
 
+    // Localhost-only aggressive unblock & diagnostics: help identify/clear blocking overlays during development
+    try {
+      if (window.location && window.location.hostname && window.location.hostname.indexOf('localhost') !== -1 && !window.__unifiedNavLocalUnblockDone) {
+        setTimeout(() => {
+          try {
+            console.log('🧰 UnifiedNav: localhost unblock attempt — scanning for blocking elements (bounded)');
+            const selectors = ['.dialog-overlay.active', '.loading-overlay', '#globalLoaderOverlay', '.fullscreen-overlay', '.page-blocker', '.overlay', '.loading', 'div.loader', '.loading-card'];
+            const removed = [];
+            selectors.forEach(sel => {
+              Array.from(document.querySelectorAll(sel)).forEach(el => {
+                try { el.classList.remove('active'); el.style.display = 'none'; removed.push(sel); } catch (e) { /* ignore */ }
+              });
+            });
+
+            // Bounded traversal instead of full querySelectorAll('*') to avoid hangs
+            const limitedElements = (limit) => {
+              const out = [];
+              try {
+                if (!document.body) return out;
+                const q = Array.from(document.body.children || []);
+                while (q.length && out.length < limit) {
+                  const n = q.shift();
+                  out.push(n);
+                  try { q.push(...Array.from(n.children || [])); } catch (e) { /* ignore */ }
+                }
+              } catch (e) { /* ignore */ }
+              return out;
+            };
+
+            const nodes = limitedElements(160);
+            nodes.forEach(el => {
+              try {
+                const cs = window.getComputedStyle(el);
+                const z = parseInt(cs.zIndex || '0', 10) || 0;
+                const rect = el.getBoundingClientRect();
+                if ((cs.position === 'fixed' || cs.position === 'sticky') && z > 999 && rect.width >= window.innerWidth - 4 && rect.height >= window.innerHeight - 4) {
+                  el.style.display = 'none';
+                  removed.push(el.tagName.toLowerCase());
+                }
+              } catch (e) { /* ignore per-element errors */ }
+            });
+
+            console.log('🧰 UnifiedNav: localhost unblock removed items count:', removed.length, removed.slice(0,8));
+            try { document.body.style.opacity = '1'; } catch (e) {}
+            try { document.body.style.display = ''; } catch (e) {}
+            try { document.body.classList.remove('loading'); } catch (e) {}
+            window.__unifiedNavLocalUnblockDone = true;
+          } catch (e) { console.warn('🧰 UnifiedNav: localhost unblock failed', e); }
+        }, 1000);
+      }
+    } catch (e) { /* ignore */ }
+
     // Provide safe fallbacks for team operations so pages that include the
     // small dashboard widget do not throw ReferenceErrors when the full
     // teams page's JS isn't present on that HTML file.
@@ -745,6 +1108,12 @@ const UnifiedNav = {
         // Ensure body isn't left translucent/invisible
         try { document.body.style.opacity = '1'; } catch (e) {}
         try { document.body.classList.remove('loading'); } catch (e) {}
+        try {
+          if (window.__unifiedNavSafetyTimeout) {
+            clearTimeout(window.__unifiedNavSafetyTimeout);
+            delete window.__unifiedNavSafetyTimeout;
+          }
+        } catch (e) { /* ignore */ }
       } catch (e) {
         console.warn('UnifiedNav: ensureNoStuckLoaders failed', e);
       }
@@ -1568,7 +1937,7 @@ const UnifiedNav = {
           </div>
           
             <div class="header-section" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='index.html'">
-            <img src="images/logo.png" alt="ClubHub" style="height: 26px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.4)); flex-shrink:0;" onerror="this.onerror=null; this.src='https://clubhubsports.net/images/logo.png';">
+            <img src="images/logo.png" alt="ClubHub" style="height: 26px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.4)); flex-shrink:0;" onerror="this.onerror=null; this.src='https://clubhubsports.io/images/logo.png';">
             <span style="font-weight: 800; font-size: 1rem; color: white; letter-spacing: -0.4px; white-space: nowrap;">ClubHub</span>
           </div>
 
@@ -1584,7 +1953,7 @@ const UnifiedNav = {
         <div class="desktop-header-active desktop-only" style="display: flex; width: 100%; align-items: center; justify-content: space-between; height: 100%;">
           <div class="dash-header-left" style="display: flex; align-items: center; gap: 2rem;">
             <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='dashboard-new.html'">
-            <img src="images/logo.png" alt="ClubHub" style="height: 32px;" onerror="this.onerror=null; this.src='https://clubhubsports.net/images/logo.png';">
+            <img src="images/logo.png" alt="ClubHub" style="height: 32px;" onerror="this.onerror=null; this.src='https://clubhubsports.io/images/logo.png';">
             <span class="logo-text" style="font-weight: 800; font-size: 1.25rem; color: white;">ClubHub</span>
           </div>
             <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
@@ -1682,7 +2051,7 @@ const UnifiedNav = {
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;">
                         ${window.innerWidth < 992 ? `
                         <div style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;" onclick="window.location.href='index.html'">
-                            <img src="images/logo.png" alt="ClubHub" style="height: 24px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.3));" onerror="this.onerror=null; this.src='https://clubhubsports.net/images/logo.png';">
+                                            <img src="images/logo.png" alt="ClubHub" style="height: 24px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.3));" onerror="this.onerror=null; this.src='https://clubhubsports.io/images/logo.png';">
                             <span class="logo-text" style="font-weight: 800; font-size: 1.05rem; color: white; letter-spacing: -0.4px;">ClubHub</span>
                         </div>
                         ` : ''}
@@ -1739,6 +2108,12 @@ const UnifiedNav = {
 
       this.initSidebarSwitcher();
       this.renderMenu();
+      // Quick cleanup: ensure loaders don't remain stuck on mobile after sidebar render
+      try {
+        setTimeout(() => {
+          try { if (typeof this.ensureNoStuckLoaders === 'function') this.ensureNoStuckLoaders(); } catch (e) { /* ignore */ }
+        }, 800);
+      } catch (e) { /* ignore */ }
 
       // If after renderMenu the nav is still empty on mobile, inject the exact player mobile sidebar
       setTimeout(() => {
@@ -1764,6 +2139,46 @@ const UnifiedNav = {
           }
         } catch (e) { /* non-fatal */ }
       }, 120);
+
+      // Extra defensive cleanup: remove persistent fullscreen overlays that may block mobile UX
+      try {
+        setTimeout(() => {
+          try {
+            const removed = [];
+            const blockingSelectors = ['.dialog-overlay.active', '.loading-overlay', '#globalLoaderOverlay', '.fullscreen-overlay', '.page-blocker', '.overlay'];
+            blockingSelectors.forEach(sel => {
+              Array.from(document.querySelectorAll(sel)).forEach(el => {
+                try { el.classList.remove('active'); el.style.display = 'none'; removed.push(sel); } catch (e) {}
+              });
+            });
+
+            // Heuristic: a limited scan of the first N elements to avoid long synchronous loops
+            try {
+              const all = document.body.querySelectorAll('*');
+              const cap = Math.min(all.length, 200);
+              for (let i = 0; i < cap; i++) {
+                try {
+                  const el = all[i];
+                  const cs = window.getComputedStyle(el);
+                  const z = parseInt(cs.zIndex || '0', 10) || 0;
+                  const rect = el.getBoundingClientRect();
+                  if ((cs.position === 'fixed' || cs.position === 'sticky') && z >= 10000 && rect.width >= window.innerWidth - 2 && rect.height >= window.innerHeight - 2) {
+                    try { el.style.display = 'none'; } catch (e) {}
+                    removed.push(el.tagName.toLowerCase());
+                  }
+                } catch (e) { /* ignore per-element errors */ }
+              }
+            } catch (e) { /* ignore */ }
+
+            if (removed.length > 0) console.warn('🔧 UnifiedNav: removed blocking overlays:', removed);
+            try { document.body.style.opacity = '1'; } catch (e) {}
+            try { document.body.classList.remove('loading'); } catch (e) {}
+            try {
+              if (window.__unifiedNavSafetyTimeout) { clearTimeout(window.__unifiedNavSafetyTimeout); delete window.__unifiedNavSafetyTimeout; }
+            } catch (e) { /* ignore */ }
+          } catch (e) { /* ignore cleanup errors */ }
+        }, 1200);
+      } catch (e) { /* ignore scheduling errors */ }
     } catch (err) {
       console.error("❌ Error rendering sidebar:", err);
     }
@@ -2118,7 +2533,7 @@ const UnifiedNav = {
             <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 1rem; height: 100%;">
                 <div class="dash-header-left" style="display: flex; align-items: center; gap: 2rem;">
                     <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='index.html'">
-                        <img src="images/logo.png" alt="ClubHub" style="height: 32px;" onerror="this.onerror=null; this.src='https://clubhubsports.net/images/logo.png';">
+                        <img src="images/logo.png" alt="ClubHub" style="height: 32px;" onerror="this.onerror=null; this.src='https://clubhubsports.io/images/logo.png';">
                         <span class="logo-text" style="font-weight: 800; font-size: 1.25rem; color: white;">ClubHub</span>
                     </div>
                     <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>

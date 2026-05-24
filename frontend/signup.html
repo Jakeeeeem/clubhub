@@ -785,12 +785,31 @@
 
                 // Store auth token and user data
                 console.log('💾 Saving auth state...');
-                localStorage.setItem('authToken', response.token);
-                localStorage.setItem('currentUser', JSON.stringify(response.user));
-                
+                if (response.token) localStorage.setItem('authToken', response.token);
+                if (response.user) localStorage.setItem('currentUser', JSON.stringify(response.user));
                 if (window.AppState) {
                     window.AppState.isLoggedIn = true;
                     window.AppState.currentUser = response.user;
+                }
+
+                // Ensure apiService in-memory token is set, then refresh API context
+                try {
+                    if (typeof apiService !== 'undefined' && typeof apiService.setToken === 'function' && response.token) {
+                        apiService.setToken(response.token);
+                        console.log('🔑 apiService token set in-memory');
+                    }
+                } catch (tErr) {
+                    console.warn('⚠️ Failed to set apiService token (non-fatal):', tErr);
+                }
+
+                try {
+                    if (typeof apiService !== 'undefined' && typeof apiService.refreshContext === 'function') {
+                        console.log('🔄 Refreshing API context after registration...');
+                        await apiService.refreshContext();
+                        console.log('🔄 API context refreshed');
+                    }
+                } catch (ctxErr) {
+                    console.warn('⚠️ Failed to refresh API context after register (non-fatal):', ctxErr);
                 }
 
                 // ============================================================================

@@ -403,16 +403,22 @@ function loadPlayerOverview() {
   const isMainProfile = !PlayerDashboardState.activePlayerId;
 
   if (isMainProfile && stats.totalFamilyMembers !== undefined) {
-    // Show Family Stats
-    updateText("playerClubs", stats.totalClubs || 0);
-    updateText("playerTeams", stats.totalTeams || 0);
-    updateText("playerEvents", stats.totalEvents || 0);
+    // Show Family Stats (fallback to computed counts when statistics object is empty)
+    const statsAreEmpty = !stats || Object.keys(stats).length === 0;
+    const familyClubs = statsAreEmpty ? (PlayerDashboardState.clubs || []).length : (stats.totalClubs || 0);
+    const familyTeams = statsAreEmpty ? (PlayerDashboardState.teams || []).length : (stats.totalTeams || 0);
+    const familyEvents = statsAreEmpty ? (PlayerDashboardState.events || []).length : (stats.totalEvents || 0);
+
+    updateText("playerClubs", familyClubs);
+    updateText("playerTeams", familyTeams);
+    updateText("playerEvents", familyEvents);
 
     // Update labels for parent view
     const attendanceEl = byId("playerAttendance");
     const attendanceLabel = attendanceEl?.nextElementSibling;
     if (attendanceLabel) attendanceLabel.textContent = "Family Members";
-    updateText("playerAttendance", stats.totalFamilyMembers || 0);
+    const familyCount = statsAreEmpty ? (PlayerDashboardState.family || []).length : (stats.totalFamilyMembers || 0);
+    updateText("playerAttendance", familyCount || 0);
 
     const eventsLabel = byId("playerEvents")?.nextElementSibling;
     if (eventsLabel) eventsLabel.textContent = "Family Events";

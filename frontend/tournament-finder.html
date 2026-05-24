@@ -301,10 +301,21 @@
                 let url = '/events?public=true&eventType=tournament';
                 
                 let tourneys = await apiService.makeRequest(url) || [];
-                // Unify if nested
-                if (tourneys.events) tourneys = tourneys.events;
-                if (tourneys.data) tourneys = tourneys.data;
-                if (!Array.isArray(tourneys)) tourneys = [];
+
+                // Normalise responses that may be wrapped in { events } or { data }
+                function normalizeList(list) {
+                    if (!list) return [];
+                    if (list.events) list = list.events;
+                    if (list.data) list = list.data;
+                    if (!Array.isArray(list)) return [];
+                    return list.map(item => ({
+                        ...item,
+                        title: item.title || item.name || item.tournament_name || item.event_name,
+                        id: item.id || item.event_id || item.tournament_id || item.uid
+                    }));
+                }
+
+                tourneys = normalizeList(tourneys);
                 
                 // Client-side filtering
                 tourneys = tourneys.filter(t => {
@@ -320,7 +331,7 @@
                 }
 
                 grid.innerHTML = tourneys.map(t => {
-                    const formatDisplay = t.format || 'Knockout';
+                    const formatDisplay = t.format || t.type || 'Knockout';
                     return `
                     <div class="club-card">
                         <div class="club-banner">

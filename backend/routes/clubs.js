@@ -677,7 +677,7 @@ router.post(
             const ownerEmail =
               club.contact_email || process.env.ADMIN_NOTIFICATION_EMAIL;
             if (ownerEmail) {
-              const inviteLink = `${process.env.FRONTEND_URL || "https://clubhubsports.net"}/clubs/${club.id}/applications`;
+              const inviteLink = `${process.env.FRONTEND_URL || "https://clubhubsports.io"}/clubs/${club.id}/applications`;
               await es.transporter.sendMail({
                 from: process.env.EMAIL_FROM || "noreply@clubhub.app",
                 to: ownerEmail,

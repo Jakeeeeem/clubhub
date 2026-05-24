@@ -1007,8 +1007,27 @@ async function handleCreateEvent(e) {
     opponent: formData.get('teamEventOpponent') || formData.get('opponent') || '',
     team_id: formData.get('eventTeamId'),
     recurrence: formData.get('recurring') || 'none',
-    clubId: AppState.currentUser.clubId || AppState.currentUser.currentOrganizationId || AppState.currentUser.currentGroupId
+    // Provide multiple fallbacks for club/group id to handle varying backend shapes
+    clubId:
+      (AppState && AppState.currentUser && (AppState.currentUser.clubId || AppState.currentUser.currentOrganizationId || AppState.currentUser.currentGroupId)) ||
+      (() => { try { const cu = JSON.parse(localStorage.getItem('currentUser')||'{}'); return cu.clubId || cu.currentOrganizationId || cu.currentGroupId || cu.group_id || cu.club_id || null; } catch (e) { return null; } })()
   };
+
+  // Compute startsAt timestamp/ISO when date + time provided for backend compatibility
+  try {
+    const d = formData.get('eventDate');
+    const t = formData.get('eventTime');
+    if (d) {
+      let iso = d;
+      if (t) iso = `${d}T${t}:00`;
+      // attach both formats: startsAt (ms since epoch) and start_iso for flexible backends
+      const dt = new Date(iso);
+      if (!isNaN(dt.getTime())) {
+        payload.startsAt = dt.getTime();
+        payload.start_iso = dt.toISOString();
+      }
+    }
+  } catch (e) { /* non-fatal */ }
 
   const notify = formData.get('notifyPlayers') === 'on';
 
