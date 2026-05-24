@@ -89,6 +89,40 @@ const ICONS = {
         else convertSelector(el);
       });
     } catch (e) { /* ignore */ }
+
+    // Debugging safeguard: detect external clears of #sidebar-nav-content by wrapping innerHTML setter
+    try {
+      if (!window.__unifiedNavInnerHTMLPatched) {
+        const desc = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+        if (desc && desc.set) {
+          const originalSetter = desc.set;
+          Object.defineProperty(Element.prototype, 'innerHTML', {
+            configurable: true,
+            enumerable: desc.enumerable,
+            get: desc.get,
+            set: function (val) {
+              try {
+                if (this && this.id === 'sidebar-nav-content' && (!val || val.toString().trim() === '')) {
+                  try {
+                    const stack = (new Error('sidebar innerHTML cleared')).stack;
+                    console.warn('🕵️ UnifiedNav Debug: sidebar-nav-content innerHTML being set to empty. Stack:', stack);
+                    // allow original setter to run (it may clear), then schedule re-render
+                    originalSetter.call(this, val);
+                    setTimeout(() => {
+                      try { UnifiedNav.renderMenu(); } catch (e) { /* ignore */ }
+                    }, 4);
+                    return;
+                  } catch (e) { /* ignore debug errors */ }
+                }
+              } catch (e) { /* ignore detection errors */ }
+              // default behavior
+              return originalSetter.call(this, val);
+            }
+          });
+          window.__unifiedNavInnerHTMLPatched = true;
+        }
+      }
+    } catch (e) { /* ignore patch errors */ }
   },
   back: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
 };
@@ -162,6 +196,23 @@ const UnifiedNav = {
       return;
     }
     this._initialized = true;
+
+    // Ensure site-wide quick fixes stylesheet is present on dashboard pages
+    // (centering, spacer hiding) but avoid altering the landing/home header
+    try {
+      const p = (window.location.pathname || '').toLowerCase();
+      const isLandingNow = p === '/' || p === '' || p.endsWith('/index.html') || p.endsWith('index.html');
+      if (!isLandingNow || window.UNIFIED_NAV_ENABLED === true) {
+        const existing = document.querySelector('link[href^="quick-fixes.css"]');
+        if (!existing) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = 'quick-fixes.css?v=20260502';
+          document.head.appendChild(link);
+          console.log('🔧 UnifiedNav: injected quick-fixes.css for mobile fixes');
+        }
+      }
+    } catch (e) { console.warn('UnifiedNav: failed to inject quick-fixes.css', e); }
 
     // ── FLASH PREVENTION ────────────────────────────────────────────
     // Hide body immediately so the raw un-styled page never shows.
@@ -487,6 +538,15 @@ const UnifiedNav = {
 
     // ── STAGE 1: Core Layout ───────────────────────────────────────────
     try {
+      const safeCall = (name, fn) => {
+        try {
+          if (typeof fn === 'function') fn();
+        } catch (e) {
+          console.error(`❗ UnifiedNav: '${name}' threw:`, e);
+          throw e;
+        }
+      };
+
       if (!isDesktop) {
         console.log("📱 Mobile View");
         if (isDashboard) {
@@ -495,20 +555,20 @@ const UnifiedNav = {
             window.location.href = "index.html";
             return;
           }
-          this.renderHeader();
-          this.renderSidebar();
-          this.renderBottomNav();
+          safeCall('renderHeader', () => this.renderHeader());
+          safeCall('renderSidebar', () => this.renderSidebar());
+          safeCall('renderBottomNav', () => this.renderBottomNav());
           // Render mobile FAB for quick actions and generic bottom sheet support
-          if (typeof this.renderFAB === 'function') this.renderFAB();
-          this.renderMenu();
-          this.renderTopTabs();
+          if (typeof this.renderFAB === 'function') safeCall('renderFAB', () => this.renderFAB());
+          safeCall('renderMenu', () => this.renderMenu());
+          safeCall('renderTopTabs', () => this.renderTopTabs());
         } else if (isLandingPage) {
-          this.ensureLandingHeader(isLoggedIn, user);
-          this.toggleSidebar(false);
+          safeCall('ensureLandingHeader', () => this.ensureLandingHeader(isLoggedIn, user));
+          safeCall('toggleSidebarFalse', () => this.toggleSidebar(false));
           const sidebar = document.getElementById("pro-sidebar");
           if (sidebar) sidebar.remove();
         } else {
-          this.renderHeader();
+          safeCall('renderHeader', () => this.renderHeader());
         }
       } else {
         console.log("💻 Desktop View");
@@ -520,17 +580,17 @@ const UnifiedNav = {
             window.location.href = "index.html";
             return;
           }
-          this.ensureDashboardHeader();
-          this.renderSidebar();
-          this.renderMenu();
-          this.renderTopTabs();
+          safeCall('ensureDashboardHeader', () => this.ensureDashboardHeader());
+          safeCall('renderSidebar', () => this.renderSidebar());
+          safeCall('renderMenu', () => this.renderMenu());
+          safeCall('renderTopTabs', () => this.renderTopTabs());
         } else if (isLandingPage) {
-          this.ensureLandingHeader(isLoggedIn, user);
-          this.toggleSidebar(false);
+          safeCall('ensureLandingHeader', () => this.ensureLandingHeader(isLoggedIn, user));
+          safeCall('toggleSidebarFalse', () => this.toggleSidebar(false));
           const sidebar = document.getElementById("pro-sidebar");
           if (sidebar) sidebar.remove();
         } else {
-          this.ensureHeaderElements();
+          safeCall('ensureHeaderElements', () => this.ensureHeaderElements());
         }
       }
 
@@ -572,6 +632,8 @@ const UnifiedNav = {
     }
 
     // ── STAGE 2: Enhancements ──────────────────────────────────────────
+    // Ensure we don't leave the page in a permanently-loading state if APIs fail
+    try { this.ensureNoStuckLoaders && this.ensureNoStuckLoaders(); } catch (e) { /* ignore */ }
     const enhancements = [
       {
         name: "ProfileDropdown",
@@ -644,6 +706,49 @@ const UnifiedNav = {
     } catch (e) {
       console.warn('UnifiedNav: failed to install teams fallbacks', e);
     }
+  },
+
+  /**
+   * Safely clear common loader visuals if API calls stall or auth issues occur.
+   * This prevents pages from appearing stuck with endless spinners.
+   */
+  ensureNoStuckLoaders() {
+    // Run after a short grace period to let normal loads proceed
+    setTimeout(() => {
+      try {
+        // Replace small inline loaders with muted text
+        document.querySelectorAll('.loader, .loader-container, .loading-card').forEach(el => {
+          try {
+            if (el.classList.contains('loading-card')) {
+              el.innerHTML = (el.getAttribute('data-fallback') || 'Offline or no data');
+              el.classList.remove('loading-card');
+              el.classList.add('empty-state-fallback');
+            } else {
+              // Replace spinning loader visuals with a subtle message
+              const parent = el.parentElement || el;
+              const msg = document.createElement('div');
+              msg.style.opacity = '0.7';
+              msg.style.padding = '0.6rem 0';
+              msg.style.fontSize = '0.9rem';
+              msg.style.color = 'var(--text-muted, rgba(255,255,255,0.6))';
+              msg.textContent = el.getAttribute('data-fallback') || 'Content unavailable';
+              parent.replaceChild(msg, el);
+            }
+          } catch (e) { /* ignore per-element errors */ }
+        });
+
+        // Remove any active full-screen dialog overlays that may block the page
+        document.querySelectorAll('.dialog-overlay.active, .loading-overlay, #globalLoaderOverlay').forEach(o => {
+          try { o.classList.remove('active'); o.style.display = 'none'; } catch (e) {}
+        });
+
+        // Ensure body isn't left translucent/invisible
+        try { document.body.style.opacity = '1'; } catch (e) {}
+        try { document.body.classList.remove('loading'); } catch (e) {}
+      } catch (e) {
+        console.warn('UnifiedNav: ensureNoStuckLoaders failed', e);
+      }
+    }, 4000);
   },
   // renderDebugPanel removed
 
@@ -824,6 +929,28 @@ const UnifiedNav = {
       document.body.insertAdjacentElement("afterbegin", hdr);
     }
 
+    // If header exists but is empty (some pages/scripts can clear it), add a minimal fallback
+    const hdrCheck = document.querySelector('.pro-header, header.header');
+    if (hdrCheck && (!hdrCheck.innerHTML || hdrCheck.innerHTML.trim() === '')) {
+      hdrCheck.innerHTML = `
+        <div class="nav-container header-content-unified" style="display:flex; align-items:center; justify-content:space-between; width:100%; height:100%;">
+          <div class="header-section section-left" style="display:flex; align-items:center; gap:0.5rem;">
+            <button class="back-button" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.03); color:white; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer;">←</button>
+            <div id="backend-header-button-container" style="display:flex; align-items:center; gap:0.4rem;"></div>
+            <div id="header-family-switcher-container" style="display:flex; align-items:center; gap:0.4rem;"></div>
+          </div>
+          <div class="header-section section-center" style="display:flex; align-items:center; justify-content:center; gap:0.45rem;"><span class="header-center-title">ClubHub</span></div>
+          <div class="header-section section-right" style="display:flex; align-items:center; gap:0.65rem;">
+            <div id="notif-header-btn-container-mobile" style="display:flex; align-items:center;"></div>
+            <div id="notif-header-btn-container" style="display:flex; align-items:center;"></div>
+            <div id="header-family-switcher-container-right" style="display:flex; align-items:center;"></div>
+            <button class="side-menu-trigger" onclick="UnifiedNav.toggleSidebar(true)" style="width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:rgba(220,38,38,0.12); border-radius:12px; border:1px solid rgba(220,38,38,0.22); cursor:pointer; color:white;">☰</button>
+            <div id="profileTrigger" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;"></div>
+          </div>
+        </div>
+      `;
+    }
+
     // Sidebar placeholder
     if (!document.getElementById("pro-sidebar")) {
       // renderSidebar will create pro-sidebar when needed; create overlay container placeholders so CSS/layout works
@@ -831,13 +958,99 @@ const UnifiedNav = {
       overlay.id = "sidebar-overlay";
       overlay.className = "sidebar-overlay";
       document.body.appendChild(overlay);
-      // create empty aside so code that queries it doesn't fail
+
+      // create a minimal default aside so the mobile sidebar exists immediately
       const aside = document.createElement("aside");
       aside.id = "pro-sidebar";
       aside.className = "pro-sidebar";
-      // Do not set inline display:none here — rely on CSS and `.active` class to control visibility
+      aside.innerHTML = `
+        <div class="sidebar-header" style="padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;">
+          <div style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;" onclick="window.location.href='index.html'">
+            <img src="images/logo.png" alt="ClubHub" style="height:24px;" onerror="this.onerror=null;this.src='https://clubhubsports.net/images/logo.png';">
+            <span style="font-weight:800;color:#fff;">ClubHub</span>
+          </div>
+          <button onclick="UnifiedNav.toggleSidebar(false)" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:#fff;padding:6px;border-radius:8px;">Close</button>
+        </div>
+        <div class="sidebar-scroll-area" style="flex:1;overflow-y:auto;padding:0.75rem;">
+          <div style="display:grid;gap:0.5rem;">
+            <div id="sidebar-switcher-target"></div>
+            <div id="sidebar-family-switcher-container" class="mobile-only"></div>
+          </div>
+          <div id="sidebar-nav-content" class="sidebar-nav" style="padding-top:0.75rem;"></div>
+          <div style="padding:1rem 0; border-top:1px solid rgba(255,255,255,0.04);">
+            <a href="#" onclick="UnifiedNav.logout(); return false;" class="sidebar-link" style="color:#ef4444;">${ICONS.nav.logout}<span style="margin-left:0.5rem;">Sign Out</span></a>
+          </div>
+        </div>
+      `;
       document.body.appendChild(aside);
     }
+
+    // Ensure sidebar has a nav content container so other scripts can populate it
+    try {
+      const sidebar = document.getElementById('pro-sidebar');
+      if (sidebar && !sidebar.querySelector('#sidebar-nav-content')) {
+        const nav = document.createElement('div');
+        nav.id = 'sidebar-nav-content';
+        nav.className = 'sidebar-nav';
+        nav.style.cssText = 'padding: 0.5rem; flex: 1;';
+        sidebar.appendChild(nav);
+      }
+
+      // Watch for accidental clearing of the sidebar by other scripts and restore shell
+      if (!this._sidebarObserverBound && sidebar) {
+        try {
+          const obs = new MutationObserver((mutations) => {
+            let cleared = false;
+            mutations.forEach(m => {
+              if (m.type === 'childList' && m.removedNodes.length > 0) {
+                cleared = cleared || Array.from(m.removedNodes).some(n => n.id === 'sidebar-nav-content' || n.id === 'pro-sidebar');
+              }
+            });
+            if (cleared) {
+              // small debounce to avoid thrashing
+              setTimeout(() => {
+                try {
+                  if (!document.getElementById('sidebar-nav-content')) {
+                    UnifiedNav.renderSidebar();
+                  }
+                } catch (e) { /* ignore */ }
+              }, 80);
+            }
+          });
+          obs.observe(sidebar, { childList: true, subtree: false });
+          this._sidebarObserverBound = true;
+        } catch (e) { /* ignore observer errors */ }
+      }
+    } catch (e) { /* ignore */ }
+
+    // Sync header title from active section (helpful for pages like player-dashboard)
+    try {
+      const syncHeaderTitle = () => {
+        try {
+          const center = document.querySelector('.header-center-title') || document.querySelector('.header-section .header-center-title');
+          if (!center) return;
+          // prefer clearly labeled page titles in common locations
+          const selectors = [
+            '.dashboard-section.active h1',
+            '.dashboard-section.active h2',
+            '.section-header h2',
+            '.page-title',
+            '.neon-text',
+            'h1', 'h2'
+          ];
+          let found = null;
+          for (const s of selectors) {
+            const el = document.querySelector(s);
+            if (el && el.textContent && el.textContent.trim()) { found = el; break; }
+          }
+          if (found) center.textContent = found.textContent.trim();
+        } catch (e) { /* ignore */ }
+      };
+      // run immediately and also when DOM changes (in case SPA content loads later)
+      syncHeaderTitle();
+      const obs = new MutationObserver(() => syncHeaderTitle());
+      obs.observe(document.body, { childList: true, subtree: true });
+    } catch (e) { /* ignore */ }
 
     // Bottom nav: ensure a container exists for mobile bottom nav
     if (!document.getElementById("pro-bottom-nav-content")) {
@@ -861,6 +1074,26 @@ const UnifiedNav = {
         nav.appendChild(inner);
         document.body.appendChild(nav);
       }
+    }
+
+    // Ensure bottom nav container has at least an empty placeholder (so CSS/JS can populate it)
+    const bnc = document.getElementById('pro-bottom-nav-content');
+    if (bnc && (!bnc.innerHTML || bnc.innerHTML.trim() === '')) {
+      // Provide a minimal mobile bottom nav so the footer area is visible until full render occurs
+      bnc.innerHTML = `
+        <a href="player-dashboard.html" class="bottom-nav-link" aria-label="Home"> 
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Home</span>
+        </a>
+        <a href="player-chat.html" class="bottom-nav-link" aria-label="Chat">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span>Chat</span>
+        </a>
+        <a href="#" class="bottom-nav-link" aria-label="More" onclick="UnifiedNav.toggleSidebar(true); return false;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+          <span>More</span>
+        </a>
+      `;
     }
 
     // Ensure there's a main/dashboard container for consistent padding/layout
@@ -1334,8 +1567,8 @@ const UnifiedNav = {
             </button>
           </div>
           
-          <div class="header-section" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='index.html'">
-            <img src="images/logo.png" alt="ClubHub" style="height: 26px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.4)); flex-shrink:0;" onerror="this.style.display='none'">
+            <div class="header-section" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer;" onclick="window.location.href='index.html'">
+            <img src="images/logo.png" alt="ClubHub" style="height: 26px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.4)); flex-shrink:0;" onerror="this.onerror=null; this.src='https://clubhubsports.net/images/logo.png';">
             <span style="font-weight: 800; font-size: 1rem; color: white; letter-spacing: -0.4px; white-space: nowrap;">ClubHub</span>
           </div>
 
@@ -1351,9 +1584,9 @@ const UnifiedNav = {
         <div class="desktop-header-active desktop-only" style="display: flex; width: 100%; align-items: center; justify-content: space-between; height: 100%;">
           <div class="dash-header-left" style="display: flex; align-items: center; gap: 2rem;">
             <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='dashboard-new.html'">
-                <img src="images/logo.png" alt="ClubHub" style="height: 32px;" onerror="this.style.display='none'">
-                <span class="logo-text" style="font-weight: 800; font-size: 1.25rem; color: white;">ClubHub</span>
-            </div>
+            <img src="images/logo.png" alt="ClubHub" style="height: 32px;" onerror="this.onerror=null; this.src='https://clubhubsports.net/images/logo.png';">
+            <span class="logo-text" style="font-weight: 800; font-size: 1.25rem; color: white;">ClubHub</span>
+          </div>
             <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
           </div>
 
@@ -1449,7 +1682,7 @@ const UnifiedNav = {
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;">
                         ${window.innerWidth < 992 ? `
                         <div style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer;" onclick="window.location.href='index.html'">
-                            <img src="images/logo.png" alt="ClubHub" style="height: 24px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.3));" onerror="this.style.display='none'">
+                            <img src="images/logo.png" alt="ClubHub" style="height: 24px; filter: drop-shadow(0 0 8px rgba(220,67,67,0.3));" onerror="this.onerror=null; this.src='https://clubhubsports.net/images/logo.png';">
                             <span class="logo-text" style="font-weight: 800; font-size: 1.05rem; color: white; letter-spacing: -0.4px;">ClubHub</span>
                         </div>
                         ` : ''}
@@ -1506,6 +1739,31 @@ const UnifiedNav = {
 
       this.initSidebarSwitcher();
       this.renderMenu();
+
+      // If after renderMenu the nav is still empty on mobile, inject the exact player mobile sidebar
+      setTimeout(() => {
+        try {
+          const nav = document.getElementById('sidebar-nav-content');
+          if (nav && (!nav.innerHTML || nav.innerHTML.trim() === '') && window.innerWidth < 992) {
+            this.renderMobileSidebarFallback();
+          }
+        } catch (e) { /* ignore */ }
+      }, 140);
+
+      // Fallback: if renderMenu didn't populate the sidebar (some pages may block the menu rendering),
+      // inject a minimal set of links so the sidebar isn't empty for users.
+      setTimeout(() => {
+        try {
+          const nav = document.getElementById('sidebar-nav-content');
+          if (nav && (!nav.innerHTML || nav.innerHTML.trim() === '')) {
+            nav.innerHTML = `
+              <a href="player-dashboard.html" class="sidebar-link">${ICONS.nav.overview}<span>Overview</span></a>
+              <a href="player-dashboard.html#club-messenger" class="sidebar-link">${ICONS.nav.chat}<span>Messenger</span></a>
+              <a href="player-dashboard.html#teams" class="sidebar-link">${ICONS.nav.teams}<span>Teams</span></a>
+            `;
+          }
+        } catch (e) { /* non-fatal */ }
+      }, 120);
     } catch (err) {
       console.error("❌ Error rendering sidebar:", err);
     }
@@ -1551,6 +1809,14 @@ const UnifiedNav = {
 
   renderFamilySwitcher(targetContainer) {
     const isMobile = window.innerWidth < 992;
+    // Derive a page title to show in the mobile header center (prefer page h2/h1 neon-text)
+    const pageTitle = (function() {
+      try {
+        const el = document.querySelector('h2.neon-text, h1.neon-text, .page-title, .section-title');
+        if (el && el.textContent && el.textContent.trim()) return el.textContent.trim();
+      } catch (e) {}
+      return document.title && document.title.trim() ? document.title.trim() : 'ClubHub';
+    })();
 
     // Logic: If we are on desktop, only render in the header. 
     // If we are on mobile, only render in the sidebar (unless a targetContainer is explicitly provided).
@@ -1791,6 +2057,25 @@ const UnifiedNav = {
     const header = document.querySelector("header.header, .pro-header");
     if (!header) return;
 
+    // Avoid overwriting the landing/home page header unless a page opts in
+    try {
+      const p = (window.location.pathname || '').toLowerCase();
+      const isLandingNow = p === '/' || p === '' || p.endsWith('/index.html') || p.endsWith('index.html');
+      if (isLandingNow && window.UNIFIED_NAV_ENABLED !== true) {
+        // Leave the existing landing header alone
+        return;
+      }
+    } catch (e) { /* ignore detection errors */ }
+
+    // Derive a page title for header center (fall back to document.title)
+    const pageTitle = (function() {
+      try {
+        const el = document.querySelector('h2.neon-text, h1.neon-text, .page-title, .section-title');
+        if (el && el.textContent && el.textContent.trim()) return el.textContent.trim();
+      } catch (e) { /* ignore */ }
+      return document.title && document.title.trim() ? document.title.trim() : 'ClubHub';
+    })();
+
     const token = localStorage.getItem("authToken");
     const user = JSON.parse(localStorage.getItem("currentUser") || "{}");
     const isLoggedIn = !!(token && user.id);
@@ -1803,15 +2088,20 @@ const UnifiedNav = {
         header.innerHTML = `
             <div class="nav-container header-content-unified" style="display:flex; align-items:center; justify-content:space-between; width:100%; height:100%; position:relative; gap:0.75rem;">
                 <div class="header-section section-left" style="display:flex; align-items:center; gap:0.5rem;">
-                    <button class="back-button" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.12);">
+                  <button class="back-button" onclick="window.history.back()" style="border:none; background:rgba(255,255,255,0.05); color:white; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(255,255,255,0.12);">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                     </button>
-                    <div id="backend-header-button-container" style="display:flex; align-items:center; gap:0.4rem;"></div>
+                  <div id="backend-header-button-container" style="display:flex; align-items:center; gap:0.4rem;"></div>
+                  <div id="header-family-switcher-container" style="display:flex; align-items:center; gap:0.4rem;"></div>
                 </div>
 
                 <div class="header-section section-center" onclick="window.location.href='index.html'" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; gap:0.45rem; cursor:pointer; pointer-events:auto; min-width:0; max-width:calc(100% - 160px);">
-                    <img src="images/logo.png" alt="ClubHub" style="height:24px; filter:drop-shadow(0 0 6px rgba(220,67,67,0.35));" onerror="this.style.display='none'">
-                    <span style="font-weight:800; font-size:1rem; color:white; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; display:inline-block;">ClubHub</span>
+                  <!-- Inline SVG fallback logo to avoid missing asset issues -->
+                  <svg class="header-logo-svg" width="36" height="32" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ClubHub Logo" style="flex-shrink:0;">
+                    <rect width="120" height="40" rx="8" fill="#dc2630" />
+                    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial" font-weight="800" font-size="18" fill="#fff">CH</text>
+                  </svg>
+                  <span class="header-center-title" style="font-weight:800; font-size:1rem; color:white; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; display:inline-block;">${pageTitle}</span>
                 </div>
 
                 <div class="header-section section-right" style="display:flex; align-items:center; gap:0.65rem;">
@@ -1828,7 +2118,7 @@ const UnifiedNav = {
             <div class="nav-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0 1rem; height: 100%;">
                 <div class="dash-header-left" style="display: flex; align-items: center; gap: 2rem;">
                     <div class="logo-area" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;" onclick="window.location.href='index.html'">
-                        <img src="images/logo.png" alt="ClubHub" style="height: 32px;" onerror="this.style.display='none'">
+                        <img src="images/logo.png" alt="ClubHub" style="height: 32px;" onerror="this.onerror=null; this.src='https://clubhubsports.net/images/logo.png';">
                         <span class="logo-text" style="font-weight: 800; font-size: 1.25rem; color: white;">ClubHub</span>
                     </div>
                     <div id="header-group-switcher-container" class="header-org-switcher-wrapper" style="display:flex; align-items:center;"></div>
@@ -1863,7 +2153,41 @@ const UnifiedNav = {
         this.updateModeUI();
         this.renderTopTabs();
         this.checkStripeStatus();
+        // Mobile title & spacing fallbacks to avoid large blank gaps when data isn't present
+        try { this.ensureMobileTitleFallbacks && this.ensureMobileTitleFallbacks(); } catch (e) { /* ignore */ }
     });
+  },
+
+  /**
+   * Ensures mobile views have visible titles and removes large empty spacers
+   */
+  ensureMobileTitleFallbacks() {
+    try {
+      if (window.innerWidth >= 992) return;
+      const fallback = document.title || window.pageTitle || 'Player Dashboard';
+
+      // Fill any empty title-like elements
+      const titleSelectors = ['.section-title', '.neon-text', '.page-title', '.header-center-title', 'h1.page-title', 'h2.page-title'];
+      titleSelectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          if (!el) return;
+          if (!el.textContent || !el.textContent.trim()) {
+            el.textContent = fallback;
+            el.classList.add('empty-space-fallback');
+          }
+          el.style.textAlign = 'center';
+          el.style.display = 'block';
+        });
+      });
+
+      // Collapse any large spacer nodes that may have been left by templating
+      document.querySelectorAll('.empty-space, .hero-space, .page-hero').forEach(sp => {
+        sp.classList.add('empty-space-fallback');
+      });
+    } catch (e) {
+      // Non-fatal
+      console.warn('UnifiedNav: ensureMobileTitleFallbacks failed', e);
+    }
   },
 
   /**
@@ -3240,7 +3564,113 @@ const UnifiedNav = {
 
     this.stripHashLinks(nav);
 
-    console.log("✅ Sidebar Menu Rendered for:", finalRole);
+    console.log("✅ UnifiedNav: Sidebar Menu Rendered for:", finalRole);
+
+    // Mark render time/role on DOM so we can diagnose later when it's cleared
+    try {
+      const root = document.getElementById('pro-sidebar');
+      if (root) root.setAttribute('data-unifiednav-rendered-at', Date.now());
+      if (nav) nav.setAttribute('data-unifiednav-role', finalRole || 'unknown');
+    } catch (e) { /* ignore */ }
+
+    // Monitor: some pages/scripts clear innerHTML (not removals), so re-render if sidebar becomes empty
+    try {
+      let attempts = 0;
+      const maxAttempts = 60; // monitor longer (approx 10s)
+      const monitor = setInterval(() => {
+        try {
+          const now = document.getElementById('sidebar-nav-content');
+          if (!now) return;
+          if (now.innerHTML && now.innerHTML.trim() !== '') {
+            clearInterval(monitor);
+            return;
+          }
+          attempts++;
+          console.warn('⚠️ UnifiedNav: sidebar content empty after render — re-rendering menu (attempt ' + attempts + ')');
+          try { this.renderMenu(); } catch (e) { console.warn('UnifiedNav: renderMenu retry failed', e); }
+          if (attempts >= maxAttempts) {
+            clearInterval(monitor);
+            console.error('❌ UnifiedNav: sidebar failed to populate after multiple attempts');
+          }
+        } catch (e) { clearInterval(monitor); }
+      }, 180);
+
+      // MutationObserver: watch for subtree/characterData changes that empty the nav and restore it
+      try {
+        const sidebarRoot = document.getElementById('pro-sidebar');
+        if (sidebarRoot && !this._sidebarDeepObserverBound) {
+          const deepObs = new MutationObserver((mutations) => {
+            try {
+              const now = document.getElementById('sidebar-nav-content');
+              if (!now) {
+                // if nav element removed entirely, recreate whole sidebar
+                console.warn('⚠️ UnifiedNav: sidebar-nav-content removed from DOM — re-rendering sidebar');
+                this.renderSidebar();
+                return;
+              }
+              if (!now.innerHTML || now.innerHTML.trim() === '') {
+                console.warn('⚠️ UnifiedNav: detected empty sidebar-nav-content via MutationObserver — re-rendering menu');
+                this.renderMenu();
+              }
+            } catch (e) { /* ignore */ }
+          });
+          deepObs.observe(sidebarRoot, { childList: true, subtree: true, characterData: true, attributes: false });
+          this._sidebarDeepObserverBound = true;
+        }
+      } catch (e) { /* ignore observer errors */ }
+    } catch (e) { /* ignore monitor setup errors */ }
+
+    // Also schedule re-renders at common delayed times to catch other scripts
+    try {
+      const scheduleRender = (delay) => setTimeout(() => {
+        try {
+          const navEl = document.getElementById('sidebar-nav-content');
+          if (navEl && navEl.innerHTML && navEl.innerHTML.trim() !== '') return;
+          console.log('🔁 UnifiedNav: scheduled re-render after', delay, 'ms');
+          this.renderMenu();
+        } catch (e) { /* ignore */ }
+      }, delay);
+      scheduleRender(600);
+      scheduleRender(2000);
+      scheduleRender(5000);
+    } catch (e) { /* ignore */ }
+
+    // Monitor script loads: if another script runs later and clears the sidebar,
+    // re-run renderMenu() after that script finishes loading.
+    try {
+      if (!this._scriptMonitorBound) {
+        const bindScript = (s) => {
+          try {
+            if (!s || s.__unifiedNavBound) return;
+            s.__unifiedNavBound = true;
+            s.addEventListener('load', () => {
+              try {
+                console.log('🔁 UnifiedNav: detected script loaded:', s.src || '[inline]');
+                // small delay to allow loaded script to run its init
+                setTimeout(() => {
+                  try { this.renderMenu(); } catch (e) { /* ignore */ }
+                }, 40);
+              } catch (e) { /* ignore */ }
+            });
+          } catch (e) { /* ignore */ }
+        };
+
+        Array.from(document.scripts || []).forEach(bindScript);
+
+        // Watch for dynamically added scripts
+        try {
+          const headObs = new MutationObserver((mutations) => {
+            mutations.forEach(m => {
+              m.addedNodes && m.addedNodes.forEach(n => {
+                if (n.tagName && n.tagName.toLowerCase() === 'script') bindScript(n);
+              });
+            });
+          });
+          headObs.observe(document.head || document.documentElement, { childList: true, subtree: true });
+          this._scriptMonitorBound = true;
+        } catch (e) { /* ignore */ }
+      }
+    } catch (e) { /* ignore */ }
 
     // Discovery sections are now integrated into the main role-based menu structures above
     // to prevent duplication and ensure consistency across roles.
@@ -3319,6 +3749,61 @@ const UnifiedNav = {
       profileArea.style.display = isPlayer ? "block" : "none";
       if (isPlayer) this.renderProfileSwitcher();
     }
+  },
+
+  renderMobileSidebarFallback() {
+    try {
+      const nav = document.getElementById('sidebar-nav-content');
+      if (!nav) return;
+      // First attempt: call the full renderer so we reproduce the exact original menu
+      try {
+        if (typeof this.renderMenu === 'function') {
+          this.renderMenu();
+          // If renderMenu didn't populate the nav for some reason, fall back to the compact menu shortly after
+          setTimeout(() => {
+            try {
+              const now = document.getElementById('sidebar-nav-content');
+              if (now && now.innerHTML && now.innerHTML.trim() !== '') return;
+              // Minimal but fuller fallback (matches player menu more closely)
+              const fallbackHtml = `
+                <div class="nav-group-title">Main Hub</div>
+                <a href="player-dashboard.html" class="sidebar-link">${ICONS.nav.overview}<span>Overview</span></a>
+                <a href="player-dashboard.html#family" class="sidebar-link">${ICONS.nav.players}<span>My Family Hub</span></a>
+                <a href="player-dashboard.html#schedule" class="sidebar-link">${ICONS.nav.training}<span>Schedule</span></a>
+                <a href="player-dashboard.html#clubs" class="sidebar-link">${ICONS.nav.teams}<span>My Clubs</span></a>
+                <a href="player-dashboard.html#teams" class="sidebar-link">${ICONS.nav.teams}<span>My Teams</span></a>
+                <div class="nav-group-title">Services</div>
+                <a href="player-dashboard.html#club-messenger" class="sidebar-link">${ICONS.nav.chat}<span>Messenger</span></a>
+                <a href="player-shop.html" class="sidebar-link">${ICONS.nav.shop}<span>Club Shop</span></a>
+                <a href="player-dashboard.html#tournaments" class="sidebar-link">${ICONS.nav.trophy}<span>Tournaments</span></a>
+                <div class="nav-group-title">Account</div>
+                <a href="settings.html" class="sidebar-link">${ICONS.nav.settings}<span>Settings</span></a>
+              `;
+              now.innerHTML = fallbackHtml;
+              this.stripHashLinks(now);
+            } catch (e) { /* ignore */ }
+          }, 80);
+          return;
+        }
+      } catch (e) { /* ignore renderMenu errors and fall back */ }
+
+      // Last-resort fallback if renderMenu isn't available
+      const fallbackHtml = `
+        <div class="nav-group-title">Main Hub</div>
+        <a href="player-dashboard.html" class="sidebar-link">${ICONS.nav.overview}<span>Overview</span></a>
+        <a href="player-dashboard.html#family" class="sidebar-link">${ICONS.nav.players}<span>My Family Hub</span></a>
+        <a href="player-dashboard.html#schedule" class="sidebar-link">${ICONS.nav.training}<span>Schedule</span></a>
+        <a href="player-dashboard.html#teams" class="sidebar-link">${ICONS.nav.teams}<span>My Teams</span></a>
+        <div class="nav-group-title">Services</div>
+        <a href="player-dashboard.html#club-messenger" class="sidebar-link">${ICONS.nav.chat}<span>Messenger</span></a>
+        <a href="player-shop.html" class="sidebar-link">${ICONS.nav.shop}<span>Club Shop</span></a>
+        <a href="player-dashboard.html#tournaments" class="sidebar-link">${ICONS.nav.trophy}<span>Tournaments</span></a>
+        <div class="nav-group-title">Account</div>
+        <a href="settings.html" class="sidebar-link">${ICONS.nav.settings}<span>Settings</span></a>
+      `;
+      nav.innerHTML = fallbackHtml;
+      this.stripHashLinks(nav);
+    } catch (e) { console.warn('renderMobileSidebarFallback failed', e); }
   },
 
   renderProfileSwitcher() {
@@ -3589,6 +4074,24 @@ const UnifiedNav = {
     // 3. Ensure dynamic elements are rendered
     this.renderHeaderNotifications();
     this.renderStripeHeaderButton();
+
+    // 3b. Ensure a visible page title is present in the header on mobile.
+    try {
+      const headerTitleEl = document.querySelector('.header-center-title') || document.querySelector('.header-section .header-center-title');
+      if (headerTitleEl) {
+        const candidates = [
+          'h1', 'h2', '.page-title', '.invite-title', '.hero-title', '.club-name', '#title', '.create-group-title', '.form-title'
+        ];
+        let found = null;
+        for (const sel of candidates) {
+          const el = document.querySelector(sel);
+          if (el && el.textContent && el.textContent.trim().length > 0) { found = el; break; }
+        }
+        if (found) {
+          headerTitleEl.textContent = found.textContent.trim();
+        }
+      }
+    } catch (e) { /* ignore title sync errors */ }
 
     // 4. Ensure Video Modal exists for openVideoModal to work
     if (!document.getElementById("videoPlayerModal")) {

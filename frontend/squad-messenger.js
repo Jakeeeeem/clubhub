@@ -36,8 +36,9 @@ const SquadMessenger = {
 
     this.state.containerId = containerId;
     const currentUser = SquadMessenger._currentUser();
-    const role = currentUser.userType || currentUser.account_type || 'player';
+    const role = (currentUser.userType || currentUser.account_type || 'player').toString().toLowerCase();
     const isPlayer = role === 'player';
+    const isPrivileged = ['admin','organization','owner','coach','staff','manager'].includes(role);
 
     container.innerHTML = `
       <div class="sq-messenger" style="width:100%; min-width:0; position:relative; display:grid; grid-template-columns:minmax(280px,320px) 1fr; gap:0; height:100%; min-height:0; overflow:hidden; border-radius:16px; background:rgba(10,10,12,0.94); border:1px solid rgba(255,255,255,0.08);">
@@ -49,11 +50,11 @@ const SquadMessenger = {
           <div style="padding:0.5rem 0.75rem; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; gap:0.4rem;">
             <span class="sq-left-header-title" style="display:flex; align-items:center; gap:0.45rem; font-weight:700; font-size:0.85rem;">💬 Messages</span>
             <div style="display:flex; gap:0.3rem; flex-wrap:wrap; justify-content:flex-end;">
-              ${isPlayer ? `
-                <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()" style="padding:0.35rem 0.65rem; font-size:0.75rem;">+ New</button>
-              ` : `
+              ${isPrivileged ? `
                 <button class="btn btn-secondary btn-small" onclick="SquadMessenger.showMassMessage()" title="Broadcast to group" style="padding:0.35rem 0.65rem; font-size:0.75rem;">📢 BC</button>
                 <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()" style="padding:0.35rem 0.65rem; font-size:0.75rem;">+ New</button>
+              ` : `
+                <button class="btn btn-primary btn-small" onclick="SquadMessenger.openNewMessageModal()" style="padding:0.35rem 0.65rem; font-size:0.75rem;">Reply</button>
               `}
             </div>
           </div>

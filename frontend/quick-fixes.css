@@ -19,3 +19,34 @@ body{background:var(--bg);color:#e6eef8;font-family:Inter,system-ui,-apple-syste
 .header, .main{max-width:1100px;margin:0 auto}
 /* Ensure modals appear above everything */
 .modal{z-index:3000}
+
+/* Mobile responsive fixes: center card text, reduce top spacing */
+@media (max-width: 768px) {
+   :root { --container-padding: 0.6rem; }
+   .container, .header, .main, .content { max-width: 100%; padding: var(--container-padding); margin: 0; }
+   body { padding-top: 0; }
+   .header { height: auto; min-height: 0; padding: 0; }
+   .card, .glass-card, .mobile-card { padding: 0.9rem; text-align: center; }
+   .card h1, .card h2, .card h3, .card h4, .card p, .card .row-label, .card .row-value { text-align: center; color: #fff; margin-left: 0; margin-right: 0; }
+   .card .row-item { flex-direction: column; align-items: center; justify-content: center; padding: 0.5rem 0; }
+   .mobile-card-list { gap: 0.6rem; }
+   img, .avatar, .player-av { max-width: 100%; height: auto; display: inline-block; }
+   /* Hide common spacer helpers that create large empty top areas on mobile */
+   .spacer, .page-spacer, .content-spacer { display: none !important; }
+   /* Strong overrides for dashboard/page-specific layout */
+   body.clubhub-unified.dashboard-page .header { height: 56px !important; padding: 0.4rem 0.6rem !important; }
+   body.clubhub-unified.dashboard-page main.dashboard-main { margin-top: 0 !important; padding-top: 0 !important; }
+   body.clubhub-unified .dashboard-container, .dashboard-content { padding-top: 0 !important; margin-top: 0 !important; }
+   /* Center stat cards and their text */
+   .stat-card-player, .glass-panel, .glass-card, .dashboard-card-strip-item { text-align: center !important; align-items: center !important; }
+   .stat-card-player div, .glass-card h3, .glass-card h4, .glass-card p, .glass-card .row-label, .glass-card .row-value { text-align: center !important; margin-left: 0 !important; margin-right: 0 !important; }
+   /* Make grid collapse to single column and center elements */
+   .dashboard-container .dashboard-grid, .dashboard-container > .dashboard-grid, .dashboard-container .dashboard-layout-sidebar, .dashboard-container .dashboard-grid > * { grid-template-columns: 1fr !important; display: block !important; width: 100% !important; }
+   .dashboard-container [style*="grid-template-columns:repeat(4"] { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 0.75rem !important; }
+   /* Reduce large paddings that create empty space */
+   .glass-panel[style], .glass-card[style] { padding: 0.9rem !important; margin-bottom: 0.9rem !important; }
+   /* Ensure header-center title is visible */
+   .header-center-title, .header-center-title * { display: inline-block !important; visibility: visible !important; opacity: 1 !important; }
+   /* Fix bottom nav overlap by adding padding to main content */
+   main.dashboard-main { padding-bottom: 88px !important; }
+}

@@ -64,9 +64,8 @@
     </style>
 </head>
 <body>
-    <script>
-        // Redirect to the dev page if someone accidentally opens the old page
-    </script>
+    <header class="header"><h1 class="neon-text" style="font-size:1.2rem;margin:0;">Admin Members (Dev)</h1></header>
+    <div id="devOutput"><pre id="devPre" style="white-space:pre-wrap;margin:0; color:#e6eef8; background:transparent; border:none;"></pre></div>
     <script src="api-service.js?v=20260429_v18"></script>
     <script>
     (async function(){
@@ -84,8 +83,9 @@
 
         // Load admin members using current JS API
         const data = await apiService.getAdminDashboardData();
-        // Simple output for dev verification
-        document.body.innerHTML = '<pre style="white-space:pre-wrap;">' + JSON.stringify(data, null, 2) + '</pre>';
+        // Simple output for dev verification — write into the pre so header remains visible
+        const pre = document.getElementById('devPre');
+        if (pre) pre.textContent = JSON.stringify(data, null, 2);
     })();
     </script>
 </body>

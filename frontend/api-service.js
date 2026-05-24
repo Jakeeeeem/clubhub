@@ -494,7 +494,11 @@ if (typeof ApiService === 'undefined') {
         if (!isAuthPage) {
           localStorage.removeItem("authToken");
           localStorage.removeItem("currentUser");
-          window.location.href = "index.html";
+          // Redirect to site root (safer than index.html which may be missing
+          // in some local setups). Root will serve landing page or trigger
+          // unified auth handlers without causing a 404 that leaves the page
+          // stuck in a loading state.
+          window.location.href = "/";
         }
       }
       throw { status: response.status, ...data };

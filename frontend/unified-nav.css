@@ -50,6 +50,27 @@
         height: 100% !important;
     }
 
+    /* DEBUG: Force mobile header and footer visible for troubleshooting. Remove after verification. */
+    .pro-header, header.header, .header { display:flex !important; visibility: visible !important; height: 72px !important; position: static !important; z-index: 9999 !important; }
+    nav.pro-bottom-nav, nav.unified-bottom-nav, .pro-bottom-nav.mobile-only { display:flex !important; visibility: visible !important; z-index: 9999 !important; }
+    .mobile-only { display: flex !important; }
+
+    /* Mobile: ensure page titles/cards fit and don't create large empty gaps */
+    .header-center-title { font-weight:800; font-size:1rem; color:white; display:inline-block; max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    /* Center card titles and fallback spacing adjustments */
+    .glass-card .section-title, .glass-card h2, .neon-text, .page-title {
+        text-align: center !important;
+        margin-top: 0.25rem !important;
+        margin-bottom: 0.6rem !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    /* Reduce large empty gaps where titles may be missing */
+    .empty-space-fallback { min-height: 0 !important; height: auto !important; padding-top: 0 !important; }
+    .neon-text, .section-title { font-size:1rem !important; margin:0 !important; padding:0.25rem 0 !important; line-height:1.1 !important; }
+    .glass-card > h2, .glass-card .section-title { margin:0 0 0.6rem 0 !important; }
+    .glass-card { padding:0.9rem !important; }
+
     .header-section { display: flex; align-items: center; }
     .section-left { width: 44px; justify-content: flex-start; }
     .section-center { 

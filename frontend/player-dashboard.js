@@ -220,6 +220,31 @@ async function initializePlayerDashboard() {
       console.log("📋 Restored active profile:", savedPlayerId);
     }
 
+    // Quick context check: if backend rejects /auth/context (no token or invalid),
+    // show a guest fallback to avoid endless loaders.
+    const showGuestFallback = async () => {
+      try {
+        const container = document.querySelector('.dashboard-container') || document.querySelector('.main') || document.body;
+        if (!container) return;
+        container.innerHTML = `\n          <div style="padding:2.5rem; text-align:center;">\n            <h2 style="margin-bottom:0.5rem;">Sign in to view the Dashboard</h2>\n            <p style="opacity:0.8; margin-bottom:1.25rem;">You appear to be signed out or offline. Please sign in to load live data.</p>\n            <div style="display:flex; gap:0.75rem; justify-content:center;">\n              <a href="login.html" class="btn btn-primary">Sign in</a>\n              <a href="/" class="btn btn-secondary">Return Home</a>\n            </div>\n          </div>\n        `;
+      } catch (e) { /* ignore */ }
+    };
+
+    // Check context with short timeout
+    let ctx = null;
+    try {
+      if (typeof apiService !== 'undefined' && typeof apiService.getContext === 'function') {
+        const ctxPromise = apiService.getContext().catch(() => null);
+        ctx = await Promise.race([ctxPromise, new Promise(res => setTimeout(() => res(null), 2200))]);
+      }
+    } catch (e) { ctx = null; }
+
+    if (!ctx) {
+      console.warn('Unified dashboard: no context available; showing guest fallback');
+      await showGuestFallback();
+      return;
+    }
+
     showLoading(true);
 
     wirePlayersFilterTabs();

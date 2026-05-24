@@ -73,12 +73,14 @@
   <script src="tour-service.js?v=20260504_v4"></script>
   <link rel="stylesheet" href="design-system.css?v=20260504_v4">
   <script>window.UNIFIED_NAV_ENABLED = true;</script>
+  <link rel="stylesheet" href="quick-fixes.css?v=20260502">
 </head>
 
 <body class="clubhub-unified dashboard-page">
   <script>
     window.UNIFIED_NAV_ENABLED = true;
   </script>
+  
   <!-- Unified Navigation will inject the Header and Sidebar automatically -->
 
 
@@ -909,12 +911,22 @@
 
   <!-- Optional script.js - load without breaking if missing -->
   <script>
-    const scriptEl = document.createElement('script');
-    scriptEl.src = 'script.js';
-    scriptEl.onerror = function () {
-      console.warn('script.js failed to load - using fallback functions');
-    };
-    document.head.appendChild(scriptEl);
+    (function(){
+      const scriptName = 'script.js';
+      const already = Array.from(document.getElementsByTagName('script')).some(s => {
+        try { return s.src && (s.src.endsWith(scriptName) || s.src.includes(scriptName + '?')); } catch (e) { return false; }
+      });
+      if (already) {
+        console.log('🔁 script.js already included, skipping dynamic load');
+        return;
+      }
+      const scriptEl = document.createElement('script');
+      scriptEl.src = 'script.js';
+      scriptEl.onerror = function () {
+        console.warn('script.js failed to load - using fallback functions');
+      };
+      document.head.appendChild(scriptEl);
+    })();
   </script>
 
   <!-- Add Child Modal -->
@@ -1089,8 +1101,7 @@
   </div>
 
   <!-- Player dashboard -->
-  <script src="dialog-service.js?v=20260429_v18"></script>
-  <script src="player-dashboard.js?v=20260429_v18"></script>
+  <!-- Player dashboard (single, latest copy included at bottom) -->
 
   <!-- Initialize -->
 
@@ -1428,6 +1439,7 @@
   <script src="training.js?v=20260504_v4"></script>
   <script src="pwa-install.js?v=20260504_v4"></script>
   <script src="unified-nav.js?v=20260504_v4"></script>
+  <script>window.pageTitle = document.title || 'Player Dashboard';</script>
   <script src="squad-messenger.js?v=20260504_v4"></script>
   <script src="player-dashboard.js?v=20260504_v4"></script>
   <script>
